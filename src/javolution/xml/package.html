@@ -1,0 +1,198 @@
+<body>
+<p>Provides support for the encoding of objects, and the objects reachable from them,
+   into <code>XML</code>; and the complementary reconstruction of the
+   object graph from <code>XML</code>. </p>
+<p> This facility is similar to existing products such as
+    <a href="http://jsx.org/">JSX</a> or <a href="http://xstream.codehaus.org/">
+    XStream</a>, with the following advantages:<ul>
+    <li> Integrated with NIO high-performance framework (e.g. <code>ByteBuffer</code>),
+         performance on a par or better than default Java(tm) Serialization/Deserialization 
+         (<a href="http://javolution.org/doc/benchmark.html">benchmark data</a>).</li>
+    <li> Runs on any platform including J2ME CLDC 1.1 It does not require reflection or 
+         or any interface (e.g. <code>Serializable</code>) to be implemented.</li>
+    <li> Allows for sharing and unicity  (through the use of factory methods instead of constructors).</li>
+    <li> XML mapping is customizable and is not tight to the class internal representation 
+         (backward compatibility ensured even when implementation changes or obfuscation is used).</li>
+    <li> XML mapping can be defined for a top class (or interface) and is automatically inherited by all sub-classes
+         (or all implementing classes).</li>
+    <li> XML mapping can be dynamically changed.</li>
+    </ul>
+    
+<p> The default XML mapping for a class and its sub-classes is defined using 
+    a <code>static final</code> {@link javolution.xml.XmlFormat XmlFormat} instance. For example:<pre>
+    
+    public abstract class Person {
+        private String _name;
+        private Date _birth;
+
+        // Default xml format for Person and its sub-classes.
+       protected static final XmlFormat PERSON_XML = new XmlFormat(Person.class) {
+           public void format(Object obj, XmlElement xml) {
+               Person person = (Person) obj;
+               xml.setAttribute("name", person._name);
+               xml.setAttribute("birth", person._birth.toString());
+           }
+           public Object parse(XmlElement xml) {
+               Person person = (Person) xml.object();
+               person._name = xml.getAttribute("name", ""); 
+               person._birth = new Date(xml.getAttribute("birth", ""));
+               return person;
+           }
+       };
+    }</pre>
+    Sub-classes may override the inherited XML format:<pre>
+    public class Student extends Person {
+        private String _school;  
+    
+         // Adds school as XML attribute for Student instances.
+        protected static final XmlFormat STUDENT_XML = new XmlFormat(Student.class) {
+            public void format(Object obj, XmlElement xml) {
+                PERSON_XML.format(obj, xml); // Calls Person's format.
+                Student student = (Student) obj;
+                xml.setAttribute("school", student._school);
+            }
+            public Object parse(XmlElement xml) {
+                Student student = (Student) PERSON_XML.parse(xml); // Calls Person's parse.
+                student._school = xml.getAttribute("school", "");
+                return student;
+            }
+        };
+    }</pre>
+    The following writes a student instance to a file, then reads it:<pre>
+        ObjectWriter ow = ObjectWriter.newInstance();
+        ow.write(student, new FileOutputStream("C:/student.xml"));
+
+        ObjectReader or = ObjectReader.newInstance();
+        Student s = (Student) or.read(new FileInputStream("C:/student.xml"));
+    </pre>    
+        
+    XML formats can be dynamically created or modified. The following creates a 
+    {@link javolution.realtime.LocalContext local} XML mapping for all classes 
+    implementing the <code>java.util.Collection</code> interface (lists, sets, etc.):<pre>
+        XmlFormat collectionXml = new XmlFormat() {
+            public void format(Object obj, XmlElement xml) {
+                Collection c = (Collection) obj;
+                xml.addAll(c); // Child elements.
+            }
+            public Object parse(XmlElement xml) {
+                Collection c = (Collection) xml.object();
+                c.addAll(xml);
+                return c;
+            }
+        };
+        XmlFormat.setInstance(collectionXml, java.util.Collection.class); // Local setting.
+        </pre>
+    Here is an example of valid XML representation for a list of persons:<pre>
+      &lt;java.util.ArrayList&gt;
+         &lt;Student name="John Doe" birth="January 1, 1977" school="Princeton"/&gt;
+         &lt;javolution.util.FastList&gt;
+           &lt;Student name="Jean Emar" birth="October 23, 1975" school="MIT"/&gt;
+           &lt;Employee name="Oscar Thon" birth="August 7, 1976"/&gt;
+         &lt;/javolution.util.FastList&gt;
+      &lt;/java.util.ArrayList&gt;</pre>
+    <i>Note: XML serialization/deserialization is a recursive process, e.g.
+        <code>List</code> instances may contain other <code>List</code> instances.</i>
+   
+<p> The {@link javolution.xml.XmlFormat XmlFormat} does not have to use the class
+    public default constructor ({@link javolution.xml.XmlElement#object xml.object()}),
+    instances can be created using factory methods, private constructors (with constructor parameters
+    set from the XML element) or even retrieved from a collection (if the object is shared
+    or unique).</p>
+
+<p> Cross-references are supported for formats having an 
+    {@link javolution.xml.XmlFormat#identifier identifier} attribute. For example:<pre>
+    public class Polygon { 
+        List _vertices; 
+        
+        protected static final XmlFormat POLYGON_XML = new XmlFormat(Polygon.class) {
+            public String identifier(boolean isReference) { 
+                return isReference ? "ref" : "id";          
+            }                              
+            public void format(Object obj, XmlElement xml) {
+                xml.addAll(vertices); 
+            }
+            public Object parse(XmlElement xml) {
+                Polygon polygon = (Polygon) xml.object();
+                polygon.addAll(xml);
+                return polygon;
+            }
+        };
+    }</pre>
+    Here the XML representation of a graphic composed of three polygons, 
+    the first and the last one being shared:<pre>
+      &lt;Graphic&gt;
+         &lt;Polygon id="1"&gt;
+             &lt;Vertex x="20" y="30"/&gt;
+             &lt;Vertex x="-20" y="10"/&gt;
+             &lt;Vertex x="0" y="-10"/&gt;
+         &lt;/Polygon&gt;
+         &lt;Polygon id="2"&gt;
+             &lt;Vertex x="0" y="0"/&gt;
+             &lt;Vertex x="10" y="-10"/&gt;
+             &lt;Vertex x="-10" y="10"/&gt;
+         &lt;/Polygon&gt;
+         &lt;Polygon ref="1"/&gt;
+      &lt;/Graphic&gt;</pre>
+
+    The value of the identifier attribute can be set explicitly. For example:<pre>
+    public abstract class Person {
+        ...
+        protected static final XmlFormat PERSON_XML = new XmlFormat(Person.class) {
+           public String identifier(boolean isReference) {
+               return isReference ? "ref" : "name"; 
+           }
+           public void format(Object obj, XmlElement xml) {
+               Person person = (Person) obj;
+               xml.setAttribute("name", person._name); // Sets identifier value explicitly.
+               ...
+           }
+           ...
+        };
+    }</pre>
+    
+    Circular references are possible for formats having the 
+    {@link javolution.xml.XmlFormat#preallocate XmlFormat.preallocate(xml)}
+    method implemented.</p>
+
+<p> Finally, here is a code excerpt illustrating how objects can be 
+    efficiently transmitted over the network using the <code>java.nio</code> facility
+    instead of classic I/O (slower):
+    <pre>
+        // Client thread.
+        InetSocketAddress isa = new InetSocketAddress(LOCAL_HOST, PORT);
+        ByteBuffer bb = ByteBuffer.allocateDirect(XML_SIZE);
+        ObjectReader or = ObjectReader.newInstance();
+        SocketChannel sc = null;
+        try { 
+            sc = SocketChannel.open(isa);
+            sc.read(bb);
+            bb.flip();
+            Object obj = or.read(bb); // Reads object.
+            bb.clear();
+        } finally {
+            if (sc != null) sc.close();
+        }
+        ...
+        // Server thread.
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.socket().bind(new InetSocketAddress(PORT));
+        ByteBuffer bb = ByteBuffer.allocateDirect(XML_SIZE);
+        ObjectWriter ow = ObjectWriter.newInstance();
+        SocketChannel sc = null;
+        try { 
+            sc = ssc.accept(); // Waits for connections.
+            ow.write(obj, bb);
+            bb.flip();
+            sc.write(bb); // Writes object.
+            bb.clear();
+        } finally {
+            if (sc != null) sc.close();
+        }
+     </pre>
+     <i>Note: The <code>java.nio.ByteBuffer</code> capacity has to be large enough to hold 
+              the largest XML representation of the objects being transmitted.</i>
+     </p>
+
+<p> For more information on this package you may read the February
+    2001 issue of <b>Dr Dobbs Journal</b>.</p>
+</body>

@@ -1,0 +1,174 @@
+/*
+ * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
+ * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * 
+ * Permission to use, copy, modify, and distribute this software is
+ * freely granted, provided that this notice is preserved.
+ */
+package javolution.xml.sax;
+
+/**
+ * This interface represents a list of XML attributes.
+ * It is a more generic version of <code>org.xml.sax.Attributes</code> with
+ * the <code>String</code> type replaced by <code>CharSequence</code>.
+ *
+ * <p> Note: To parse primitive types attributes (e.g. int, long, double), the
+ *           use of the {@link javolution.lang.TypeFormat} class is
+ *           recommended (faster and avoids memory allocation).</p>
+ *
+ * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 4.5, May 26, 2003
+ */
+public interface Attributes {
+
+    /**
+     * Returns the number of attributes in this list of attributes.
+     *
+     * @return the number of attributes.
+     */
+    int getLength();
+
+    /**
+     * Looks up an attribute's Namespace URI by index.
+     *
+     * @param  index the attribute index (zero-based).
+     * @return the Namespace URI, or an empty character sequence if none is
+     *         available, or <code>null</code> if the index is out of range.
+     * @see    #getLength
+     */
+    CharSequence getURI(int index);
+
+    /**
+     * Looks up an attribute's local name by index.
+     *
+     * @param  index the attribute index (zero-based).
+     * @return the local name, or an empty character sequence if Namespace
+     *         processing is  not being performed, or <code>null</code> if
+     *         the index is out of range.
+     * @see    #getLength
+     */
+    CharSequence getLocalName(int index);
+
+
+    /**
+     * Looks up an attribute's XML 1.0 qualified name by index.
+     *
+     * @param  index the attribute index (zero-based).
+     * @return the XML 1.0 qualified name, or an empty character sequence if
+     *         none is available, or <code>null</code> if the index is out
+     *         of range.
+     * @see    #getLength
+     */
+    CharSequence getQName(int index);
+
+    /**
+     * Looks up an attribute's type by index.
+     *
+     * <p> The attribute type is one of the strings "CDATA", "ID",
+     *    "IDREF", "IDREFS", "NMTOKEN", "NMTOKENS", "ENTITY", "ENTITIES",
+     *    or "NOTATION" (always in upper case).</p>
+     *
+     * <p> If the parser has not read a declaration for the attribute,
+     *     or if the parser does not report attribute types, then it must
+     *     return the value "CDATA" as stated in the XML 1.0 Recommentation
+     *     (clause 3.3.3, "Attribute-TextBuilder Normalization").</p>
+     *
+     * <p> For an enumerated attribute that is not a notation, the
+     *     parser will report the type as "NMTOKEN".</p>
+     *
+     * @param  index the attribute index (zero-based).
+     * @return the attribute's type as a string, or null if the
+     *         index is out of range.
+     * @see    #getLength
+     */
+    String getType(int index);
+
+    /**
+     * Looks up an attribute's value by index.
+     *
+     * <p> If the attribute value is a list of tokens (IDREFS,
+     *     ENTITIES, or NMTOKENS), the tokens will be concatenated
+     *     into a single string with each token separated by a
+     *     single space.</p>
+     *
+     * @param  index the attribute index (zero-based).
+     * @return the attribute's value as a character sequence,
+     *         <code>null</code> if the index is out of range.
+     * @see    #getLength
+     */
+    CharSequence getValue(int index);
+
+    /**
+     * Looks up the index of an attribute by Namespace name.
+     *
+     * @param  uri the Namespace URI, or an empty character sequence if
+     *         the name has no Namespace URI.
+     * @param  localName the attribute's local name.
+     * @return the index of the attribute, or <code>-1</code> if it does not
+     *         appear in the list.
+     */
+    int getIndex(CharSequence uri, CharSequence localName);
+
+    /**
+     * Looks up the index of an attribute by XML 1.0 qualified name.
+     *
+     * @param  qName the qualified (prefixed) name.
+     * @return the index of the attribute, or <code>-1</code> if it does not
+     *         appear in the list.
+     */
+    int getIndex(CharSequence qName);
+
+    /**
+     * Looks up an attribute's type by Namespace name.
+     *
+     * <p> See {@link #getType(int) getType(int)} for a description
+     *     of the possible types.</p>
+     *
+     * @param  uri the Namespace URI, or an empty character sequence if the
+     *         name has no Namespace URI.
+     * @param  localName the local name of the attribute.
+     * @return the attribute type as a string, or null if the attribute is not
+     *         in the list or if Namespace processing is not being performed.
+     */
+    String getType(CharSequence uri, CharSequence localName);
+
+    /**
+     * Looks up an attribute's type by XML 1.0 qualified name.
+     *
+     * <p> See {@link #getType(int) getType(int)} for a description
+     *     of the possible types.</p>
+     *
+     * @param  qName The XML 1.0 qualified name.
+     * @return the attribute type as a string, or null if the attribute is not
+     *         in the list or if qualified names are not available.
+     */
+    String getType(CharSequence qName);
+
+    /**
+     * Looks up an attribute's value by Namespace name.
+     *
+     * <p> See {@link #getValue(int) getValue(int)} for a description
+     *     of the possible values.</p>
+     *
+     * @param  uri the Namespace URI, or the empty character sequence if the
+     *         name has no Namespace URI.
+     * @param  localName the local name of the attribute.
+     * @return the attribute value as a character sequence, or <code>null</code>
+     *         if the attribute is not in the list.
+     */
+    CharSequence getValue(CharSequence uri, CharSequence localName);
+
+    /**
+     * Looks up an attribute's value by XML 1.0 qualified name.
+     *
+     * <p> See {@link #getValue(int) getValue(int)} for a description
+     *     of the possible values.</p>
+     *
+     * @param  qName The XML 1.0 qualified name.
+     * @return the attribute value as a character sequence, or <code>null</code>
+     *         if the attribute is not in the list or if qualified names
+     *         are not available.
+     */
+    CharSequence getValue(CharSequence qName);
+}

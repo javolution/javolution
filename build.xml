@@ -1,0 +1,140 @@
+<!-- ANT BUILD FILE (Ref. http://jakarta.apache.org/ant ) -->
+<project name="Javolution" default="distribution" basedir=".">
+    <description>
+    	Javolution - Java(TM) Solution for Real-Time and Embedded Systems.
+    </description>
+    
+    <target name="info">
+    	<echo>Build Javolution Library (http://javolution.org)</echo>
+        <echo>For native library, please use the "ant gcj" command (http://gcc.gnu.org/java/)</echo>
+    </target>	
+    <target name="init">
+    	<tstamp/>
+        <property name="library"   value="javolution" />
+        <property name="version"   value="2.0" />
+        <property name="release"   value="3" />
+        <property name="src"       value="src" />
+        <property name="bin"       value="bin" />
+        <property name="api"       value="api" />
+        <property name="debug"     value="false" />
+        <property name="optimize"  value="true" />
+        <property name="encoding"  value="UTF-8" />
+    </target>
+	
+	<target name="compile" depends="init">
+        <mkdir dir="${bin}" />
+
+		<!-- Compile everything -->
+        <javac srcdir="${src}" destdir="${bin}" classpath="${bin}" target="1.1" source="1.3"
+               debug="${debug}" optimize="${optimize}" encoding="${encoding}"/> 
+
+		<!-- Removes main class -->
+        <delete>
+            <fileset dir="${bin}" >
+                <include name="javolution/Javolution.class"/>
+            </fileset>
+        </delete> 
+
+		<!-- Sets version information in main class (Javolution class) -->
+        <filter token="VERSION" value="${version}.${release} ${TODAY}"/>
+        <copy file="src/javolution/Javolution.java"
+              todir="${bin}/javolution" filtering="true"/>
+        <javac srcdir="${bin}" destdir="${bin}" classpath="${bin}" target="1.1" source="1.3"
+               debug="${debug}" optimize="${optimize}" encoding="${encoding}"/> 
+
+		<!-- Copies resources if any -->
+		<copy todir="${bin}"  > 
+		    <fileset dir="${src}" >
+		        <include name="**/res-files/*" />
+		    </fileset>
+		</copy>
+    </target>
+	
+    <target name="javadoc" depends="init">
+        <mkdir dir="${api}" />
+        <javadoc sourcepath="${src}"
+                 destdir="${api}"
+                 windowtitle="Javolution v${version} API"
+                 overview="src/overview.html"
+                 author="true"
+                 version="true"
+                 classpath="${bin}"
+                 charset="${encoding}"
+                 encoding="${encoding}"
+                 docencoding="${encoding}"
+                 splitindex="true">
+            <header>
+                <![CDATA[<b><a href="http://javolution.org">Javolution v${version}</a></b>]]>
+            </header>
+            <bottom>
+               <![CDATA[<i>Copyright &#169; 2004 Javolution.</i>]]>
+            </bottom>
+            <packageset dir="${src}" defaultexcludes="yes">
+                <include name="javolution/**/*" />
+                <exclude name="**/doc-files/**"/>
+                <exclude name="**/res-files/**"/>
+            </packageset>
+        </javadoc>
+    </target>
+
+    <target name="jarfile" depends="init">
+        <jar jarfile="${library}.jar"
+             basedir="${bin}"
+             update="false">
+             <manifest>
+                 <attribute name="Main-Class"
+                           value="javolution.Javolution"/>
+                 <attribute name="Specification-Title"
+                            value="Javolution - Java(TM) Solution for Real-Time and Embedded Systems"/>
+                 <attribute name="Specification-Version"
+                            value="${version}"/>
+                 <attribute name="Specification-Vendor"
+                            value="Free Software Foundation"/>
+                 <attribute name="Implementation-Title"
+                            value="javolution"/>
+                 <attribute name="Implementation-URL"
+                            value="http://javolution.org"/>
+                 <attribute name="Implementation-Vendor"
+                            value="Free Software Foundation"/>
+                 <attribute name="Implementation-Version"
+                            value="${version}.${release} ${TODAY}"/>
+             </manifest>
+        </jar>
+    </target>
+
+    <target name="gcj" depends="clean, compile">
+        <!-- Removes java.*.* classes already in libgcj -->
+        <delete>
+            <fileset dir="${bin}" >
+                <include name="java/**/*.class" />
+                <exclude name="**/Appendable.class" /> <!-- Not in libgcj -->
+                <exclude name="**/Enum.class" /> <!-- Not in libgcj -->
+            </fileset>
+        </delete>
+    	<antcall target="jarfile"/>
+        <exec executable="gcj">
+              <arg line='-shared -o ${library}.so ${library}.jar'/>
+        </exec>
+    </target>
+
+	<target name="clean" depends="init">
+        <delete dir="${bin}" />
+        <delete dir="${api}" />
+        <delete file="${library}.jar"/>
+        <delete file="${library}-${version}.${release}-src.zip"/>
+        <delete file="${library}-${version}.${release}-bin.zip"/>
+    </target>
+
+	<target name="distribution" depends="info, clean, compile, jarfile, javadoc">
+        <zip destfile="${library}-${version}.${release}-src.zip" update="false">
+            <zipfileset dir="." prefix="${library}-${version}"
+                        includes="src/**/*, doc/**/*,
+                                  index.html, build.xml" />
+        </zip>
+        <zip destfile="${library}-${version}.${release}-bin.zip" update="false">
+            <zipfileset dir="." prefix="${library}-${version}"
+                        includes="doc/**/*, ${api}/**/*,
+                                  index.html, ${library}.jar" />
+        </zip>
+    </target>
+</project>

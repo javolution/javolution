@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Javolution - Benchmark Results (Microsoft Windows 2000 - Intel Pentium 4 - 2.26 GHz)</TITLE>
+<META content="text/html; charset=utf-8" http-equiv=Content-Type>
+</HEAD>
+<BODY><PRE>
+<B>D:\javolution-2.0>java -jar javolution.jar perf</B>
+
+Javolution - Java(TM) Solution for Real-Time and Embedded Systems
+Version 2.0.3 December 7 2004 (http://javolution.org)
+Benchmark...
+
+////////////////////////////
+// Package: javolution.io //
+////////////////////////////
+
+//////////////////////////////
+// Package: javolution.lang //
+//////////////////////////////
+-- String/StringBuffer/StringBuilder versus Text/TextBuilder --
+"Concatenates this line one hundred times (resulting in a text of about 8000 characters)"
+String "+" operator: 11.11ms
+StringBuffer "append": 165.0µs
+StringBuilder "append": 742.0µs
+Text "plus" (heap): 52.0µs
+Text "plus" (stack): 34.0µs
+TextBuilder "append": 48.0µs
+
+//////////////////////////////////
+// Package: javolution.realtime //
+//////////////////////////////////
+-- Heap versus Stack Allocation (Pool-Context) --
+Object heap creation: 52.5ns
+Object stack creation: 32.2ns
+char[128] heap creation: 3.549µs
+char[128] stack creation: 116.0ns
+char[256] heap creation: 15.167µs
+char[256] stack creation: 73.0ns
+
+//////////////////////////////
+// Package: javolution.util //
+//////////////////////////////
+-- HashMap/LinkedMap versus FastMap --
+HashMap
+    Creates/populates map of 200 entries: 52.06µs
+    Access (get): 57.3ns
+    Iterates through all map entries: 15.82µs
+LinkedHashMap
+    Creates/populates map of 200 entries: 63.2µs
+    Access (get): 77.7ns
+    Iterates through all map entries: 9.28µs
+FastMap
+    Creates/populates map of 200 entries: 30.6µs
+    Access (get): 38.5ns
+    Iterates through all map entries: 8.16µs
+    Statistics: SIZE: 200, CAPACITY: 256, AVG COLLISIONS: 33%, MAX SLOT OCCUPANCY: 5
+
+-- HashSet/LinkedHashSet/TreeSet versus FastSet --
+HashSet
+    Creates/populates set of 200 elements: 50.74µs
+    Access (contains): 60.4ns
+    Iterates through all set elements: 15.24µs
+LinkedHashSet
+    Creates/populates set of 200 elements: 62.46µs
+    Access (contains): 60.4ns
+    Iterates through all set elements: 9.72µs
+FastSet
+    Creates/populates set of 200 elements: 31.88µs
+    Access (contains): 56.5ns
+    Iterates through all set elements: 8.24µs
+
+-- ArrayList/LinkedList versus FastList --
+ArrayList
+    Creates new list and appends 200 elements: 18.26µs
+    Iterates through all list elements: 10.54µs
+LinkedList
+    Creates new list and appends 200 elements: 23.18µs
+    Iterates through all list elements: 8.36µs
+FastList
+    Creates new list and appends 200 elements: 28.12µs
+    Iterates through all list elements: 8.22µs
+
+/////////////////////////////
+// Package: javolution.xml //
+/////////////////////////////
+
+-- Java(TM) Serialization (file stream)--
+Write Time: 846.0ms
+Read Time: 1089.0ms
+
+-- XML Serialization (file stream)--
+Write Time: 885.0ms
+Read Time: 743.0ms
+
+-- Java(TM) Serialization (ByteArray stream)--
+Write Time: 466.0ms
+Read Time: 375.0ms
+
+-- XML Serialization (ByteArray stream)--
+Write Time: 662.0ms
+Read Time: 506.0ms
+
+-- Java(TM) Serialization (client-server) --
+Time (multiple connections): 1673.0ms
+Time (permanent connection): 1420.0ms
+
+-- XML Serialization (client-server) --
+Time (multiple connections): 1221.0ms
+Time (permanent connection): 1459.0ms
+
+-- XML Serialization (client-server, multiple connections, NIO) --
+Time: 1258.0ms
+
+More performance analysis in future versions...
+
+</PRE></BODY></HTML>

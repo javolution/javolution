@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Javolution - Java(TM) Solution for Real-Time and Embedded Systems</TITLE>
+<META content="text/html; charset=utf-8" http-equiv=Content-Type>
+<META content="Java optional library" name=description>
+<META content="java, real-time, embedded, xml, j2me, cldc" name=keywords>
+<BODY aLink=#c19d69 bgColor=#445a45 link=#c19d69 text=#aecaae
+      vLink=#c19d69>
+<FONT face=Verdana><BASEFONT size=2>
+<H1 align=center>Javolution - Java<sup>TM</sup> Solution for Real-Time and Embedded Systems</H1>
+<H4>- Because real-time programming requires a time-predictable standard library.</H4>
+<PRE>
+<I>The ability to simplify means to eliminate the unnecessary so that the necessary may speak.</I>
+<B>Hans Hofmann, Introduction to the Bootstrap, 1993</B></PRE>
+</p>
+<IMG alt=J2ME src="doc/img/j2me.png">
+<IMG alt=J2SE src="doc/img/j2se.png">
+<IMG alt=J2EE src="doc/img/j2ee.png">
+<IMG alt=Javolution src="doc/img/javo.png">
+
+<H3> <b><i>Javolution</i></b> - A Java<sup>TM</sup> Revolution ?</H3>
+<UL>
+<LI> Transparent <A href="api/javolution/realtime/package-summary.html">object recycling</A> - No memory allocation, memory defragmentation or garbage collection ever.</LI>
+<LI> Configurable/Inheritable <A href="api/javolution/xml/package-summary.html">XML serialization/deserialization</A> integrated with NIO framework.</LI>
+<LI> Allow your application/library to run on any platform from the J2ME CLDC 1.1 to the latest J2EE 1.5</LI>
+<LI> <A href="api/javolution/lang/Text.html">Text</A> manipulation several order of magnitude faster than using <code>java.lang.String</code>.</LI>
+<LI> Guaranteed response time. No internal table resize/copy ever performed and for threads running in <A href="api/javolution/realtime/PoolContext.html">PoolContext</A> no garbage collection either.</LI>
+<LI> Low-level <A href="api/javolution/realtime/ConcurrentContext.html">concurrency</A> support.</LI>
+<LI> The <A href="doc/benchmark.html">fastest</A> implementations of the most common interfaces (e.g. <A href="api/javolution/util/FastMap.html">FastMap</A> for <code>java.util.Map</code> interface).</LI>
+<LI> Free...</LI>
+</UL>
+<H3> The "Top 10" reasons why you should be using <b><i>Javolution</i></b>:</H3>
+<OL>
+<LI> Objects can be allocated on the "stack" and transparently recycled.
+     With <b><i>Javolution</i></b>, your application is busy doing the <b>real work</b>
+     not memory management (e.g. <b><i>Javolution</i></b> 
+     <A href="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A> 
+     is 3-5x faster than conventional XML parsers only because it does not waste 2/3 
+     of the CPU doing memory allocation/garbage collection).</LI>
+<LI> <b><i>Javolution</i></b> classes are simple to use, even simpler than most JDK classes. 
+     For example, you don't need to guess the capacity of a 
+     <A href="api/javolution/lang/TextBuilder.html">TextBuilder</A>
+     or a <A href="api/javolution/util/FastList.html">FastList</A>, their size 
+     expand gently without ever incurring expensive resize/copy operations (unlike 
+     standard classes such as <code>StringBuffer</code> or <code>ArrayList</code>).</LI>
+<LI> <b><i>Javolution</i></b> classes are fast, very fast...
+     <A href="api/javolution/lang/Text.html">Text</A> concatenations are several order of 
+     magnitude faster than concatenation using <code>String</code> and several times faster than 
+     concatenations using <code>StringBuffer/StringBuilder</code>
+     (See <A href="doc/benchmark.html">benchmark</A>).</LI>
+<LI> <b><i>Javolution</i></b> runs on any platform from the simplest J2ME CLDC with no garbage collector
+     to the latest J2EE 1.5 Furthermore, with <b><i>Javolution</i></b> your class may implement the 
+     latest interfaces such as <code>Serializable</code>, <code>Comparable</code>,
+     <code>Appendable</code> and still run on the J2ME CLDC platform where these interfaces do not exist.</LI>
+<LI> All <b><i>Javolution</i></b> classes are hard real-time compliant and have highly deterministic
+     behavior (in the microsecond range). 
+     For applications based upon the Real-Time Specification for Java (<a href="http://www.rtj.org/">RTSJ</a>) 
+     all threads (including <code>NoHeapRealtimeThread</code>) can run in ImmortalMemory
+     and avoid memory clashes!</LI>
+<LI> With <b><i>Javolution</i></b>, concurrent algorithms can take advantage of multi-processors systems
+     in a transparent manner
+     (ref. <A href="api/javolution/realtime/ConcurrentContext.html">ConcurrentContext</A>).</LI>
+<LI> Any Java<sup>TM</sup> class can be serialized/deserialized in <a href="api/javolution/xml/XmlFormat.html">XML format</a>
+     in any form you may want (no need to implement <code>Serializable</code> or for the platform to support serialization)!</LI>
+<LI> Using the <b><i>Javolution</i></b> <A href="api/javolution/io/Struct.html">Struct</A>
+     and <A href="api/javolution/io/Union.html">Union</A> base classes, your code can directly
+     share information with C/C++ native applications.</LI>
+<LI> <b><i>Javolution</i></b> provides the fastest implementation of the latest interfaces
+     and gets better and faster every day.</LI>
+<LI> <b><i>Javolution</i></b> is a pure Java<sup>TM</sup> Solution (no native code), small
+      (less than 200 KBytes jar file) and <A href="doc/license.txt">free</A>; permission to use, copy, modify, and 
+      distribute this software is freely granted, provided that copyright notices are preserved.</LI>
+</OL>
+
+<CENTER>
+<H2 align=center><A name="LATEST">Javolution Version 2.0.3</A></H2>
+<A href="api/index.html"><IMG alt=Browse src="doc/img/browse.jpg"></A> 
+<A href="javolution-2.0.3-src.zip"><IMG alt=Source src="doc/img/source.jpg"></A> 
+<A href="javolution-2.0.3-bin.zip"><IMG alt=Library src="doc/img/library.jpg"></A>  
+</CENTER>
+    
+<H3> Features:</H3>
+<UL>
+  <LI> <a href="api/javolution/realtime/package-summary.html">Real-time</a> framework:<ul>
+       <li> Objects can be allocated on the "stack" to avoid garbage collection.</li>
+       <li> Faster code executions by reusing stack/pool objects instead of creating new objects.</li>
+       <li> Easier <a href="api/javolution/realtime/ConcurrentContext.html">concurrent</a>
+            programming in low level methods with no thread creation overhead.</li>
+       </ul></LI>
+  <LI> Supports for the encoding of objects into XML; and the complementary reconstruction
+       of the object graph from XML (<a href="api/javolution/xml/package-summary.html">xml</a> package).</LI>
+  <LI> XML parsing with no <code>String</code> allocation!
+       It allows our <A href="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A>
+       to run several times faster than conventional SAX2 parsers.</LI>
+  <LI> Provides all the latest (JDK1.5) interfaces and exceptions for:<ul>
+       <li> <code>java.lang (e.g CharSequence, Appendable, Cloneable, Comparable ...)</code></li>
+       <li> <code>java.io (e.g Serializable, Flushable ...)</code></li>
+       <li> <code>java.util (e.g List, Map, Set, Formattable ...)</code></li>
+       </ul>
+       It allows your classes to implement the latest interfaces and still run
+       in the embedded world!</LI>
+  <LI> Real-time implementations of 
+       <a href="api/javolution/util/FastMap.html">Map</a>,
+       <a href="api/javolution/util/FastList.html">List</a>
+       and <a href="api/javolution/util/FastSet.html">Set</a>.</LI>
+  <LI> <a href="api/javolution/io/Struct.html">Struct</a>
+       and <a href="api/javolution/io/Union.html">Union</a>  classes for
+       direct interoperability with <code>C/C++</code> applications.</LI>
+  <LI> <A href="api/javolution/util/Reflection.html">Reflection</A>
+       utility class. Any method or constructor can be dynamically invoked using its
+       signature represented as a <code>String</code>.</LI>
+  <LI> <A href="api/javolution/lang/Text.html">Text</A> class, an improved version 
+        of <code>java.lang.String</code> with amazingly fast concatenation speed
+       (faster than using <code>StringBuffer</code>).
+       Also, unlike <code>java.lang.String</code>, the <A href="api/javolution/lang/Text.html">Text</A> 
+       class in not plagued by the substring memory leak <A href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4513622">
+       bug</a>!</LI>
+   <LI> Appendable character sequence 
+       <A href="api/javolution/lang/TextBuilder.html">TextBuilder</A> same operations as 
+       <code>StringBuffer</code>/<code>StringBuilder</code>, but no capacity to specify
+       and no resize/copy operations ever.</LI> 
+   <LI> Utility class <A href="api/javolution/lang/TypeFormat.html">TypeFormat</A> 
+        to parse any <code>CharSequence</code> into primitive types, and format 
+        any primitive type into an <code>Appendable</code> (up to <code>15x</code> faster
+        than the standard parsing/formatting utilities).</LI> 
+   <LI> Miscellaneous <a href="api/javolution/io/package-summary.html">UTF-8 readers/writers</a>,
+        <a href="api/javolution/util/MathLib.html">math functions</a>, 
+       <a href="api/javolution/util/ReetrantLock.html">locks</a>, etc...</LI>
+</UL><BR>
+
+<H3><A name="USAGE">Usage:</A></H3>
+
+<H4><pre>      java -cp javolution.jar ... (JRE1.4, JRE1.5+)</pre></H4>
+<H4><pre>      java -Xbootclasspath/a:javolution.jar ... (J2ME, JRE1.1 .. JRE1.3)</pre></H4>
+
+<P><B>Important:</B> Do not deploy applications using the <code>-Xbootclasspath:</code> or
+                     <code>-Xbootclasspath/p:</code> option to override core Java<sup>TM</sup> classes,
+                     because such a deployment would contravene the Java 2 Runtime Environment binary code license.</P>
+
+<H3><A name="TOOLS">Tools:</A></H3>
+
+<p><i>Runtime Environment: <b>Any</b> (J2ME CLDC, J2SE, J2EE, GCJ)</i></p>
+<p><i>Compilers: <b>All</b> (including <a href="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</a>)</i></p>
+<p><i>Build tool: <A href="http://jakarta.apache.org/ant/">Apache Ant</a></i></p>
+<p><i>Collaborative Tool: <a href="http://javolution.dev.java.net/">java.net</a> (code development, comments, issues, bug reporting).</i></p>
+<p><i>Coding Standard:  <a href="http://java.sun.com/docs/codeconv/index.html">
+        Sun<sup>TM</sup> Code Convention</a> with <a href="doc/coding_standard.txt">Addendum</a>.</i></p>
+<p><i>Preferred Environment: <A href="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding).</i></p>
+<p><i>Self-executable command line arguments:</i>
+    <h4><pre>      java [options] -jar javolution.jar version (shows version information)</pre></h4>
+    <h4><pre>      java [options] -jar javolution.jar test (performs self-tests)</pre></h4>
+    <h4><pre>      java [options] -jar javolution.jar perf (runs benchmark)</pre></h4>
+     <a href="doc/benchmark.html">Here</a> are the benchmark results on a 
+     Single-CPU Intel Pentium 5 2.20GHz running Windows 2000.</i></p>
+
+<H3><A name="LINKS">Links:</A></H3>
+
+Articles related to <b><i>Javolution</i></b> 
+(previously known as: <b>J.A.D.E.</b> <b>J</b>ava <b>A</b>ddition to <b>D</b>efault <b>E</b>nvironment):
+<UL>
+  <LI><A href="http://www.sys-con.com/story/?storyid=45500&DE=1">
+      Turbo-Charging Java for Real-Time Applications</A>
+      (July 2004 issue of <b>Java Developer Journal</b>)</LI>
+  <LI> J.A.D.E. XML support, published in the 2001 February issue of <A href="http://www.ddj.com/">Dr Dobb's</A> Journal.</LI>
+</UL>
+Known projects using <b><i>Javolution</i></b>:
+<UL>
+  <LI> <A href="http://jscience.org/">jScience</a></LI>
+</UL>
+<i> (Let us know if your project uses <b><i>Javolution</i></b> and you would like it to be listed here)</i>
+<p> <b><i>Javolution</i></b>'s users can also show their support with the
+ <a href="http://javolution.org"><img src="doc/img/javolution.png"></a> button
+ (e.g. <code>&lt;a href="http://javolution.org"&gt;&lt;img src="http://javolution.org/doc/img/javolution.png"&gt;&lt;/a&gt;</code>);
+ this is of course purely optional.</p>
+
+<H3><A name="HISTORY">History</A></H3>
+<UL>
+  <LI><B> November 30, 2004:  Javolution 2.0.3</B><BR>
+       Added <A href="api/javolution/xml/XmlInputStream.html">XmlInputStream</A>
+       <A href="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for communication over persistent connections  [2.0.3] <BR>
+       Facilitated the use of <A href="api/javolution/util/FastMap.html">FastMap</A> as identity map (ref. javadoc example) [2.0.3]<BR>
+       Removed limitation on the number of <A href="api/javolution/realtime/Context.html">Context</A> [2.0.3]<BR>
+       Added XML Serialization/Deserialization benchmark [2.0.2]<BR>
+       The <A href="api/javolution/xml/package-summary.html">XML serialization/deserialization</A>
+       is fully integrated with the high-performance NIO facility (ref. last example) [2.0.1]<BR>
+       Added <A href="api/javolution/io/Utf8ByteBufferReader.html">Utf8ByteBufferReader</A>
+       and <A href="api/javolution/io/Utf8ByteBufferWriter.html">Utf8ByteBufferWriter</A> classes
+       for high-performance I/O [2.0.1]<BR>
+       Bootclasspath not necessary only for JRE V1.4+ [2.0.0]<BR>
+       Re-packaged utility classes (moved few classes to <code>javolution.io</code> and <code>javolution.lang</code>) [2.0.0]<BR>
+       Less restrictive <a href="doc/license.txt">licensing</a> (dropped LGPL) [2.0.0]
+  </LI>
+  <LI><B> November 8, 2004:  Javolution 1.1</B><BR>
+       Cleared dangling reference in FastMap (thanks Nicolas) [1.1.2]<BR>
+       Enhanced xml serialization/deserialization <A href="api/javolution/xml/package-summary.html">framework</A> (e.g. circular references support) [1.1.1]<BR>
+       Added cross-platform <A href="api/javolution/util/MathLib.html">math library</A>. [1.1.0]<BR>
+  </LI>
+  <LI><B> October 4, 2004:  Javolution 1.0</B><BR>
+       Optimized FastMap (10% faster) [1.0.8]<BR>
+       Made all <A href="api/javolution/util/package-summary.html">utilities</A> classes <b>public domain</b> [1.0.6]<BR>
+       Added <A href="http://gcc.gnu.org/java/">gcj</A> support [1.0.5]<BR>
+       Added default XML formats for Object, String, Collection and Map [1.0.4]<BR>
+       Migration completed and tested [1.0.3]<BR>
+       Spin-off of <A href="http://jade.dautelle.com">Java(TM) Addition to Default Environment</A> [1.0.0]
+  </LI>
+</UL><BR>
+
+<A href="http://javolution.dev.java.net/" alt="java.net"><IMG align=left hspace=4 src="doc/img/javanet.gif" vspace=4> </A>
+<ADDRESS>Comments To: <A href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</A>
+<BR>Revision: November 30, 2004
+<BR><A href="http://java.sun.com/" target=_blank>Java<SUP>TM</SUP></A> is a trademark of <A href="http://www.sun.com/" target=_blank>Sun Microsystems, Inc</A>
+</FONT></BODY></HTML>

@@ -1,0 +1,51 @@
+<body>
+Javolution - Java<sup>TM</sup> Solution for Real-Time and Embedded Systems.
+
+<a name="license"></a>
+<h3><b>License:</b></h3>
+<p> Permission to use, copy, modify, and distribute this software is freely granted, 
+    provided that copyright notices are preserved (the full license text can be found 
+    <a href="../doc/license.txt">here</a>).</p>
+<p> <b><i>Javolution</i></b>'s users are encouraged to show their support with the
+    <a href="http://javolution.org"><img src="../doc/img/javolution.png"></a> button
+    (e.g. <code>&lt;a href="http://javolution.org"&gt;&lt;img src="http://javolution.org/doc/img/javolution.png"&gt;&lt;/a&gt;</code>);
+    this is of course purely optional.</p>
+
+<a name="overview"></a>
+<h3><b>Overview:</b></h3>
+Although Java<sup>TM</sup> has been very successful on the server-side; It has few shortcomings limiting
+its adoption for others domains such as real-time, embedded or high-performance applications.
+For these, the <b><i>Javolution</i></b> library provides important "pieces" missing
+from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platform even more attractive.
+
+<a name="configuration"></a>
+<h3><b>Configuration:</b></h3>
+<b><i>Javolution</i></b>'s default configuration should satisfy most applications. Nonetheless, it is possible 
+to change these defaults by setting the appropriate system properties 
+(e.g. <code>"java -Djavolution.concurrency=0 ..."</code> to disable low-level concurrent executions).
+<p></p>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 800px;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">System Property</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Default (if not set)</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">"javolution.concurrency"</td>
+      <td style="vertical-align: top;">(Number of Processors) - 1</td>
+      <td style="vertical-align: top;">The maximum number of <a href="javolution/realtime/ConcurrentThread.html">ConcurrentThread</a></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">"javolution.factories"</td>
+      <td style="vertical-align: top;">1024</td>
+      <td style="vertical-align: top;">The maximum number of <a href="javolution/realtime/ObjectFactory.html">ObjectFactory</a></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">"javolution.variables"</td>
+      <td style="vertical-align: top;">1024</td>
+      <td style="vertical-align: top;">The maximum number of <a href="javolution/realtime/LocalContext.Variable.html">LocalContext.Variable</a></td>
+    </tr>
+  </tbody>
+</table>
+</body>

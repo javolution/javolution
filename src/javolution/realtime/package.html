@@ -1,0 +1,430 @@
+<body>
+<p> Provides real-time {@link javolution.realtime.Context} for higher
+    performance and higher predictability of Java bytecode execution.</p>
+  <p> The rationale for this package is:
+  <ul>
+      <li> Object creation is expensive (memory allocation/defragmentation, 
+           object initialization/setup, garbage collection, etc.)</li>
+      <li> Object pooling is error prone and inneficient for small objects
+           (e.g. synchronization)</li>
+      <li> Garbage collection behavior varies widely across VMs (especially in the 
+           embedded world), leading to "Write Once Run (Differently) Everywhere".</li> 
+      <li> Concurrent programming using new threads is cumbersome, inefficient
+           for low-level libraries (too much overhead) and synchronization
+           can be tricky.</li>
+  </ul></p>
+<p> If "new" objects, already built can be access efficiently and transparently 
+    ({@link javolution.realtime.PoolContext PoolContext}) and concurrency 
+    is encapsulated ({@link javolution.realtime.ConcurrentContext ConcurrentContext}),
+    then code execution:
+  <ol>
+      <li> Is faster (see <a href="http://javolution.org/doc/benchmark.html">benchmark</a>)!</li>
+      <li> Is not interrupted by garbage collection (more predictable scheduling 
+           and consistency across VMs)</li>
+      <li> Has no assignment constraint as all objects originate from the heap
+           (Ref. <A href="http://www.jcp.org/jsr/detail/1.jsp">RTSJ</A>
+           assignment rules where heap objects cannot refer to scoped objects).</li>
+      <li> Is distributed over multiple CPUs. Core routines implementations can
+           easily take advantage of concurrent algorithms.</li>
+  </ol></p>
+
+</a>
+<h2><a name="FAQ">Real-time facility FAQ:</a></h2>
+<ol>
+    <a name="FAQ-1"></a>
+    <li><b>Can you explain a little how the PoolContext works? 
+    I looked at the example code in the Javadoc, and I'm still a little fuzzy on where and what 
+    the "magic" is that it performs...</b>
+    <p> 
+    The basic idea is to associate objects pools to Java threads. 
+    These pools can be nested, with the heap being the root of all pools.
+    You may consider pools' objects as part of the thread stack memory, with pools being pushed and 
+    popped as the thread enters/exits {@link javolution.realtime.PoolContext PoolContext}.
+    To allocate from its <b>stack</b>, a thread needs to execute within a pool context
+    and create <i>new</i> objects using {@link javolution.realtime.ObjectFactory factories}
+    (the "new" keyword always allocates on the heap, Javolution does not/cannot change 
+    the Java Virtual Machine behavior). This mechanism is similar to the allocation
+    on the stack of locally declared primitive variables, but now extended to
+    non-primitive objects.
+    </p> 
+    <p><i> Note: Classes encapsulating calls to object factories within
+                their factory methods (e.g. <code>valueOf(...)</code>) and 
+                whose methods do not allocate directly on the heap are known
+                as "real-time compliant".</i></p>
+    </li><p></p>
+
+    <a name="FAQ-2"></a>
+    <li><b>How do I make my own classes real-time compliant?</b>
+    <p> The simplest way is to extend {@link javolution.realtime.RealtimeObject RealtimeObject}
+        and use a factory to create new instances. For example:<pre>
+    public final class Coordinates extends RealtimeObject {
+        private double latitude;
+        private double longitude;        
+        private static final Factory FACTORY = new Factory() {
+              public Object create() {
+                  return new Coordinates();
+              }
+        };
+       private Coordinates() {} 
+       public static Coordinates valueOf(double latitude, double longitude) {
+           Coordinates c = (Coordinates) FACTORY.object();
+           c.latitude = latitude;
+           c.longitude = longitude;
+           return c;
+       }
+    }</pre>
+    Et voila! Your class is now real-time compliant!
+    <p> The following code shows the accelerating effect of pool contexts.<pre>
+     public static void main(String[] args) {
+         Coordinates[] vertices = new Coordinates[1000000];
+         for (int i=0; i < 10; i++) {     
+             long time = System.currentTimeMillis();
+             PoolContext.enter();
+             try {
+                 for (int j = 0; j < vertices.length; j++) {
+                     vertices[j] = Coordinates.valueOf(i, j);
+                 }
+             }finally {
+                 PoolContext.exit();
+             }
+             time = System.currentTimeMillis()-time;
+             System.out.println("Time = " + time);
+         }
+     }</pre>
+        The first iteration is always slower as objects are allocated from the heap
+        and populate the stack.<br> 
+        Subsequent iterations are not only faster but 
+        very consistent in time as no memory allocation/garbage collection 
+        will ever occur.<pre> 
+  Time = 1547
+  Time = 93
+  Time = 94
+  Time = 94
+  Time = 94
+  Time = 93
+  Time = 94
+  Time = 94
+  Time = 93
+  Time = 94</pre>
+  <i>Note: Real-time threads may perform a first iteration at initialization. 
+    This also ensures that all necessary classes are initialized and the critical
+    loop can execute in a very predictable time.</i></p>
+    
+  <p> The same program allocating directly on the heap (e.g. <code>new Coordinates(i, j)</code>)
+     produces the following result:<pre>
+  Time = 937
+  Time = 703
+  Time = 1078
+  Time = 641
+  Time = 656
+  Time = 656
+  Time = 641
+  Time = 671
+  Time = 641
+  Time = 656</pre> 
+  Not only code execution is <b>6x</b> time slower but there is much 
+  more fluctuation in the execution time due to GC.</p>
+    </li><p></p>
+    
+    <a name="FAQ-3"></a>
+    <li><b>As a rule, I am skeptical of classes that pool small objects. 
+     At one time (5 years ago) it was a big win. Over time, the advantage has 
+     diminished as garbage collectors improve. Object pools can make it much more
+     difficult for the garbage collector to do its job efficiently, and can have
+     adverse effects on footprint. (Joshua Bloch) </b>
+    <p> Stack allocation is a simple and transparent way to make your methods "clean" (no garbage 
+        generated), it has also the side effect of making your methods faster 
+        and more time-predictable. If all your methods are "clean" then your whole 
+        application is "clean", faster and more time-predictable (aka real-time).</p>
+    <p> Applications may use the facility to different degrees. 
+        For example, to improve performance one might identify the biggest "garbage producers" 
+        and use stack allocations instead of heap allocations for those only. 
+        Others might want to run high priority threads in a pool context and
+        by avoiding heap allocations (and potential GC wait), make these threads highly deterministic.</p>
+    <p> In practice, very few methods declare a pool context for local stack allocations, 
+        only the "dirty" ones (the one generating a lot of  garbage). Iterations are often good
+        candidates as they typically generate a lot of garbage. For example:<pre>
+   public Matrix pow(int exp) {
+       PoolContext.enter(); // Starts local stack allocation.
+       try { 
+           Matrix pow2 = this;
+           Matrix result = null;
+           while (exp >= 1) { // Iteration.
+                if ((exp & 1) == 1) {
+                   result = (result == null) ? pow2 : result.multiply(pow2);
+                }
+                pow2 = pow2.multiply(pow2);
+                exp >>>= 1;
+           } 
+           return (Matrix) result.export(); // Exports result to outer stack (or heap).
+       } finally {
+            PoolContext.exit(); // Resets local stack (all temporary objects recycled at once).
+       }
+    }</pre></p>
+    <P> For the very "dirty" (e.g. very long interations), one pool context
+        might not be enough and may cause memory overflow. You might have
+        to break down the iteration loop and use inner contexts.<pre>
+    Product[] products = ... // Very long array.
+    Money total = Money.ZERO;
+    PoolContext.enter();
+    try { 
+        for (int i=0; i < products.length;) {
+            PoolContext.enter(); // Inner pool context.
+            try {
+                // Processes up to 1024 products at a time.
+                for (int j=0; (j < 1024) && (i < products.length); j++) {
+                    total = total.add(products[i++].price());
+                } 
+                total.export();
+            } finally {
+                PoolContext.exit();
+            }
+        }
+        total.export();
+    } finally {
+        PoolContext.exit();
+    }</pre>
+  <i>Note: By using multiple layers of small nested pool contexts instead of a single
+           large pool, one keeps the pools' memory footprint very low and still 
+           benefits fully from the facility. Pools of a few dozens objects are
+           almost as efficient as larger pools. This is because entering/exiting
+           pool contexts is fast and the CPU cache is more effective with small pools.</i></p>
+    <p>Individual recycling is possible for methods having access 
+       to the object pool. It is the case for member methods (ref.
+       <b>protected</b> method {@link javolution.realtime.RealtimeObject#recycle recycle}) and
+       methods having direct access to the {@link javolution.realtime.ObjectFactory factory} 
+       instances (usually <b>private</b>). The {@link javolution.realtime.ArrayPool ArrayPool}
+       class has its pools <b>public</b> and therefore allows for individual recycling of any array.<pre>
+    // ArrayPool.
+    ObjectPool pool = ArrayPool.charArray(1024);
+    char[] buffer = (char[]) pool.next(); // Gets buffer from stack (or heap).
+    for (int i = reader.read(buffer, 0, buffer.length); i > 0;) {
+        ...
+    } 
+    pool.recycle(buffer); // Puts buffer back.
+    
+    // Member method (use of <b>protected</b> recycle method).
+    public LargeInteger gcd(LargeInteger that) {
+        LargeInteger a = this.abs();
+        LargeInteger b = that.abs();
+        while (!b.isZero()) {
+            LargeInteger tmp = a.divide(b);
+            LargeInteger c = tmp.getRemainder();
+            tmp.recycle(); // Individual recycling affects local objects only 
+            a.recycle();   // (no effect on heap objects or outer objects).
+            a = b;
+            b = c;
+        }
+        return a;
+    }</pre></p>
+    </li><p></p>
+
+    <a name="FAQ-4"></a>
+    <li><b>Are not PoolContext inherently unsafe (e.g. immutable objects changing
+        suddenly values) ?</b>
+    <p> No, as long as you {@link javolution.realtime.RealtimeObject#export export} the
+        objects which might be referenced outside of the pool context,
+        <b>immutable objects stay immutable!</b> Furthermore, you do not have to 
+        worry about thread synchronization as stack objects are thread-local.</p>
+    <p> In practice, <b>very few</b> methods have to worry about the "export rule". 
+        They are:</p>
+        <ol>
+        <li><p>The methods with the pool context <b><code>try, finally</code></b> block statement defined. 
+            They have to ensure that objects created/modified inside the context scope and 
+            accessible outside of the scope are {@link javolution.realtime.RealtimeObject#export exported}.</p></li>
+        <li><p> The methods creating or modifying <b><code>static</code></b> real-time objects.
+            Becauses <code>static</code> objects can be accessed from any thread, they have to be 
+            {@link javolution.realtime.RealtimeObject#moveHeap moved to the heap} after creation or modification.</p>
+            <i>(Note: There are more efficient ways of sharing data than using the heap.
+                      See next topic on avoiding garbage collection altogether)</i></li>
+        </ol>
+    <p> For additional safety, <b>IllegalAccessError</b> are raised during execution when  
+        the rules above are broken.</p>
+    <p> In truth, stack allocations promote the use of immutable objects 
+        (as their allocation cost is being significantly reduced), reduces thread 
+        interaction (e.g. race conditions) and often lead to safer, faster and more
+        robust applications.</p>
+    <i> <b>Note:</b> There is one thing to be attentive about, though!
+              It is very easy  to make a class real-time compliant by sub-classing 
+              {@link javolution.realtime.RealtimeObject RealtimeObject} or any
+              {@link javolution.realtime.Realtime real-time} class. But if the new class
+              adds new {@link javolution.realtime.Realtime real-time} variable members then the
+              {@link javolution.realtime.Realtime#move move} method has to be 
+              overriden to move these new members as well. For example:<pre>
+        public class MyRealtimeClass extends RealtimeObject {
+            private OtherRealtimeClass _rtMember;
+            public void move(ContextSpace cs)) {
+                 super.move(cs);
+                 _rtMember.move(cs);
+            }
+        }</pre></i></p>
+    </li><p></p>
+
+    <a name="FAQ-5"></a>
+    <li><b>Our application is hard real-time, we cannot afford to run GC 
+        ever, can we still use Javolution ?</b>
+    <p> <b>A resounding Yes!</b> The easiest way is to ensure that all your threads
+         run in a pool context, only static constants are exported to 
+         the heap and your system state can be updated without allocating new objects.
+         This last condition is easily satisfied by using mutable objects or 
+         by {@link javolution.realtime.RealtimeObject#preserve preventing} local (on the stack)
+         immutable objects from being automatically recycled. The following illustrates
+         this new capability and also shows how easy it is for functions to return more than one object
+         (with no garbage generated).<pre>
+         class Navigator extends Thread {
+             private Coordinates position = Coordinates.valueOf(0, 0);
+             private long time;
+             public void run() {
+                 while (true) {
+                     PoolContext.enter();
+                     try {
+                         long newTime = ...;
+                         Coordinates newPosition = calculatePosition(newTime); // On the stack.
+                         synchronized (this) { // Atomic update.
+                             time = newTime;
+                             position.preserve(false); // Allows old position to be recycled.
+                             position = newPosition;
+                             position.preserve(true); // Prevents recycling of new position upon exit.
+                         }                           
+                     } finally {                     
+                         PoolContext.exit();
+                     }
+                 }
+             }
+             public synchronized TimePosition getTimePosition() { // On the stack.
+                 TimePosition tp = (TimePosition) TimePosition.FACTORY.object();
+                 tp.time = time;
+                 tp.position = position.copy(); // Local copy on the stack.
+                 return tp;
+             }
+             public static class TimePosition { // Atomic data structure.
+                  public static final ObjectFactory FACTORY = new ObjectFactory() {
+                      public Object create() { return new TimePosition(); }
+                  }
+                  public long time;
+                  public Coordinates position;
+             }
+          }</pre></p>
+
+         <IMG alt="Hard Real-Time Application (no GC ever)" src="doc-files/realtime.jpg">
+
+         <p> Finally, some JDK library classes may create temporary objects on the heap and 
+         therefore should be avoided or replaced by "cleaner" classes 
+         (e.g. {@link javolution.util.FastMap FastMap} instead of <code>java.lang.HashMap</code>,
+         {@link javolution.lang.TextBuilder TextBuilder} instead of <code>java.lang.StringBuffer</code> 
+         (<code>setLength(0)</code> allocates a new internal array) and
+         {@link javolution.lang.TypeFormat TypeFormat} for parsing/formatting of primitive types).</p>
+    </li><p></p>
+
+    <li><b>Can I use <code>PoolContext</code> with the Java core library?</b>
+    <p> Yes, although these library calls will not execute faster (Java library
+        always uses the heap context). Nonetheless, you may significantly 
+        accelerate your application and reduce garbage by using object factories
+        to produce instances of Java library classes and by executing your code 
+        within a pool context.<pre>
+    private static final ObjectFactory LINE_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new Line2D.Double(); // java.awt.geom.Line2D.Double
+        }
+    };
+    public void paint(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        PoolContext.enter();
+        try {
+            ...
+            Line2D.Double line = (Line2D.Double) LINE_FACTORY.object();
+            line.setLine(x1, y1, x2, y2);
+            g2.draw(line);
+            ...
+        } finally {
+            PoolContext.exit();
+        }
+     }</pre></p>
+    </li><p></p>
+
+    <a name="FAQ-6"></a>
+    <li><b>What performance gain can I expect by using a pool context?</b>
+    <p> Classes avoiding dynamic memory allocation are significantly faster.
+        For example, our XML {@link javolution.xml.sax.RealtimeParser RealtimeParser}
+        is <b>3-5x</b> faster than conventional SAX2 parsers. To avoid synchronization 
+        issues, it is often easier to allocate new objects. Other techniques such 
+        as the "returnValue" parameter are particularly ugly and unsafe
+        as they require mutability. Javolution's real-time facility promotes the dynamic 
+        creation of immutable objects as these object creations are fast and have no adverse
+        effect on garbage collection. Basically, with pool contexts, <b> the CPU is 
+        busy doing the "real thing" not "memory management"!</b></p>
+    <p> The cost of allocating on the heap is somewhat <b>proportional
+        to the size</b> of the object being allocated. By avoiding or postponing this
+        cost you can drastically increase the execution speed.<b> The largest objects
+        benefit the most.</b> For example, adding <code>org.jscience.math.numbers.LargeInteger</code>
+        in a pool context is at least <b>5x</b> faster than adding 
+        <code>java.math.BigInteger</code>, our public domain {@link javolution.lang.Text Text}
+        can be <b>several orders of magnitude faster</b> than <code>java.lang.String</code>
+       (see <a href="http://org/javolution.org/doc/benchmark.html">benchmark</a>).
+        Not surprising when you know that even "empty" <code>Strings</code> 
+        take 40 bytes of memory which have to be initialized and garbage collected!</p>
+    <p> Recycling objects is way more powerful than just recycling memory (aka GC).
+        Our {@link javolution.util.FastMap FastMap} is 
+        a complex object using preallocated linked lists. It is fast but costly
+        to build. Nevertheless, in a pool context it can be used as a throw-away map
+        because <b>the construction cost is then reduced to nothing!</b></p>
+    </li><p></p>
+
+    <a name="FAQ-7"></a>
+    <li><b>Virtual Machines with concurrent garbage collection are becoming more
+           and more popular. Do we still need a real-time facility?</b>
+    <p> Concurrent garbage collection is a perfect complement to Javolution real-time facility
+        (Ref. <a href="http://developer.java.sun.com/developer/technicalArticles/Programming/turbo/">
+        New Hotspot<sup>TM</sup> JVM</a>). In particular, without preemptable
+        garbage collection we cannot ensure that periodic real-time threads start on-time.</p>
+    <p> For real-time applications, the advantages of the facility are threefold:
+        <ul><li> Faster execution. Objects have already been allocated, initialized 
+                 and are more likely to be in the CPU cache <b>(increases responsiveness)</b>.</li>
+            <li> By limiting/eliminating garbage, we ensure that a concurrent collector
+                 can always keep up with the garbage flow and avoid a stop-the-world collection
+                 situation (a disaster for real-time system). Furthermore, the 
+                 collector total CPU usage can be significantly reduced <b>(maximizes processing efficiency)</b>.</li>
+            <li> <code>ConcurrentContext</code> are easy to use in low-level operations 
+                 and have almost no overhead. On multi-processors systems (including processors
+                 with Hyper-Threading technology) sequential high-level operations can automatically
+                 take advantage of all processors available <b>(optimizes CPU repartition)</b>.</li>
+        </ul></p>
+   <p>  Nowadays, more and more virtual machines with schedulable/time-bounded garbage collectors are available
+        (e.g. <a href="http://www.aicas.com/">Jamaica VM</a> or <a href="http://www.aonix.com/perc.html">PERC VM</a>)
+        These VMs have one thing in common though. If they cannot keep up with the garbage flow they 
+        revert to a "stop the world" collection (no much choice there). 
+        Therefore, there is a good incentive to limit garbage either by manually pooling objects
+        (error prone) or by using solutions such as the one advocated here (easier and safer).</p>
+   <p>  For applications based upon the Real-Time Specification for Java (<a href="http://www.rtj.org/">RTSJ</a>)
+        all threads (including <code>NoHeapRealtimeThread</code>) can run in 
+        <code>ImmortalMemory</code> (with pool contexts for the recycling) and avoid memory clashes!</p>
+    </li><p></p>
+    <li><b>I am developping of a realtime music composing application. 
+         The user can make sweeping gestures and the system automatically produces
+         the correct graphic music notation, analyzes the music, sends it over the net
+         to listening peers as well as plays the sound with Java Sound.
+         This represents a lot of "new" objects! How this facility would work when 
+         it is unknown how many  graphic and sound elements the composer may wish to make.</b>
+     <p> This should not be a problem as the pool's size adjusts automatically and transparently.
+         One solution is to run each song creation in a pool context and use 
+         object factories for the objects persistent through the song (e.g. Swing Widgets).
+         Short-live objects can be allocated on the stack (inner pool context) or even on
+         the heap if you are using a concurrent garbage collector. 
+         Because there is no burst of allocation/deallocation, full GC never has 
+         to run and incremental gc interruptions are typically less than a few milliseconds.
+         To ensure the fastest response time, it is recommended to create a "dummy song" 
+         or at least to create the objects expensive to build at start-up 
+         (this has the effect of pre-populating the pools for subsequent utilizations, 
+         kind of <b>"warming up a turbo engine"</b>)!</p>    
+    </li><p></p>
+</ol>
+<h2><a name="CONCLUSION">Conclusion:</a></h2>
+        Soft/Hard Real-Time applications can significantly benefit
+        from this (small) package. It would be nice if it came standard with the Java library.
+        Direct JVM support of thread-local stacks and making the <i>new</i> keyword context sensitive
+        would make Java more powerful, deterministic and execute faster!
+        This changes would be backward compatible as the default context for normal threads
+        is the heap context.<br>
+        If Sun<sup>TM</sup> is interested, I am willing to transfer all rights 
+        to them at <b>no cost</b>!
+</body>
