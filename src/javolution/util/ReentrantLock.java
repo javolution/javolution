@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -12,7 +13,7 @@ package javolution.util;
  *     built-in Java synchronized locks: Once a thread has a lock, it can
  *     re-obtain it any number of times without blocking. </p>
  *
-* @author  <a href="http://gee.cs.oswego.edu/dl/">Doug Lea</a>
+ * @author  <a href="http://gee.cs.oswego.edu/dl/">Doug Lea</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004
  */

@@ -1,11 +1,13 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
+import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ import javolution.lang.Reusable;
  * <p> Instances of this class can be reused for different input streams
  *     and can be part of a higher level component (e.g. parser) in order
  *     to avoid dynamic buffer allocation when the input source changes.
- *     Also wrapping using a <code>j2me.io.BufferedReader</code> is unnescessary
+ *     Also wrapping using a <code>java.io.BufferedReader</code> is unnescessary
  *     as instances of this class embed their own data buffers.</p>
  *
  * <p> Note: This reader is unsynchronized and does not test if the UTF-8
@@ -62,22 +64,12 @@ public final class Utf8StreamReader extends Reader implements Reusable {
     /**
      * Holds the bytes buffer.
      */
-    private final byte[] _bytes;
+    private final byte[] _bytes = new byte[4096];
 
     /**
      * Default constructor.
      */
     public Utf8StreamReader() {
-        this(2048);
-    }
-
-    /**
-     * Creates a {@link Utf8StreamReader} of specified buffer size.
-     *
-     * @param  bufferSize the buffer size in bytes.
-     */
-    public Utf8StreamReader(int bufferSize) {
-        _bytes = new byte[bufferSize];
     }
 
     /**
@@ -90,12 +82,12 @@ public final class Utf8StreamReader extends Reader implements Reusable {
      *
      * @param  inStream the input stream.
      * @return this UTF-8 reader.
-     * @throws Error if this reader is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this reader is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public Utf8StreamReader setInputStream(InputStream inStream) {
         if (_inputStream != null)
-            throw new Error("This reader has not been closed or cleared");
+            throw new IllegalStateException("Reader not closed or reset");
         _inputStream = inStream;
         return this;
     }
@@ -116,15 +108,14 @@ public final class Utf8StreamReader extends Reader implements Reusable {
     }
 
     /**
-     * Closes this reader and {@link #clear clears} it for reuse.
-     * This method has no effect if the stream is halted.
+     * Closes and {@link #reset resets} this reader for reuse.
      *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
         if (_inputStream != null) {
             _inputStream.close();
-            clear();
+            reset();
         }
     }
 
@@ -269,8 +260,8 @@ public final class Utf8StreamReader extends Reader implements Reusable {
         }
     }
 
-    // Implements Reusable interface.
-    public void clear() {
+    // Implements Reusable.
+    public void reset() {
         _code = 0;
         _end = 0;
         _inputStream = null;

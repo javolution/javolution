@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -19,6 +20,9 @@ final class Perf_Io extends Javolution implements Runnable {
      * Executes benchmark.
      */
     public void run() {
+        println("////////////////////////////");
+        println("// Package: javolution.io //");
+        println("////////////////////////////");
         println("");
     }
 

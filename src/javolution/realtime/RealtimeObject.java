@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -8,6 +9,7 @@
 package javolution.realtime;
 
 import j2me.lang.UnsupportedOperationException;
+
 import java.io.IOException;
 
 import javolution.JavolutionError;
@@ -26,35 +28,54 @@ import javolution.lang.TypeFormat;
  *                 return new Foo();
  *             }
  *         };
+ *         private Realtime externalReference = ...;
  *         protected Foo() {} // Default constructor for sub-classes. 
  *         public static Foo newInstance() { // Static factory method.
  *             return (Foo) FACTORY.object();
  *         }
- *         // Method to override when new real-time variable members are added.
- *         public void move(ContextSpace cs) {
- *             super.move(cs);
- *             ... // Moves the additional real-time members.
+ *         
+ *         // Optional, only if Foo has direct or indirect references to external
+ *         // {@link Realtime} objects (intrinsic heap-allocated members
+ *         // themselves are moved implicitly with Foo). 
+ *         public boolean move(ObjectSpace os) { 
+ *             if (super.move(os)) {
+ *                 externalReference.move(os);
+ *                 return true;
+ *             }
+ *             return false;
  *         }
  *     }</pre></p>
  * <p> Instances of this class can be immutable. Instances allocated in a
- *     pool context must be {@link #export exported} if referenced
+ *     pool context must be {@link #export exported} (return value) 
+ *     or {@link #preserve preserved} (static instance) if referenced
  *     after exiting the pool context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 16, 2004
  */
 public abstract class RealtimeObject implements Realtime {
 
     /**
      * The pool this object belongs to or <code>null</code> if this object 
-     * does not belong to a pool (e.g. created using a class constructor).  
+     * is on the heap (e.g. created using a class constructor).  
      */
     private transient Pool _pool;
 
+
     /**
-     * The index of this object in its pool (-1 for preserved objects).
+     * Holds the next object in the pool.  
      */
-    private transient int _poolIndex;
+    private transient RealtimeObject _next;
+
+    /**
+     * Holds the previous object in the pool.  
+     */
+    private transient RealtimeObject _previous;
+
+    /**
+     * Holds the preserve counter.  
+     */
+    private transient int _preserved;
 
     /**
      * Default constructor.
@@ -64,6 +85,8 @@ public abstract class RealtimeObject implements Realtime {
 
     /**
      * Returns the <code>String</code> representation of this object.
+     * This method is final to ensure consistency with {@link #toText()}
+     * (which is the method to override).
      * 
      * @return <code>toText().stringValue()</code>
      */
@@ -81,7 +104,7 @@ public abstract class RealtimeObject implements Realtime {
         tb.append(getClass().getName());
         tb.append('@');
         try {
-            TypeFormat.format(this.hashCode(), 16, tb);
+            TypeFormat.format(System.identityHashCode(this), 16, tb);
             return tb.toText();
         } catch (IOException e) {
             throw new JavolutionError(e);
@@ -91,7 +114,7 @@ public abstract class RealtimeObject implements Realtime {
     /**
      * Exports this object and its <b>local</b> real-time associations out of 
      * the current pool context 
-     * (equivalent to <code>{@link #move move}(ContextSpace.OUTER)</code>).
+     * (equivalent to <code>{@link #move move}(ObjectSpace.OUTER)</code>).
      * This method affects only local objects allocated on the stack
      * and has no effect on heap objects or objects allocated outside of 
      * the current pool context. 
@@ -101,73 +124,116 @@ public abstract class RealtimeObject implements Realtime {
      * @return <code>this</code>
      */
     public final Object export() {
-        move(ContextSpace.OUTER);
+        move(ObjectSpace.OUTER);
         return this;
     }
 
     /**
      * Moves this object and its real-time associations to the heap
-     * (equivalent to <code>{@link #move move}(ContextSpace.HEAP)</code>).
+     * (equivalent to <code>{@link #move move}(ObjectSpace.HEAP)</code>).
      * 
      * @return <code>this</code>
      */
     public final Object moveHeap() {
-        move(ContextSpace.HEAP);
+        move(ObjectSpace.HEAP);
         return this;
     }
 
     /**
-     * Prevents/authorizes this object and its real-time associations 
-     * from being recycled (equivalent to 
-     * <code>{@link #move move}(ContextSpace.SHARED)</code> 
-     * or <code>{@link #move move}(ContextSpace.LOCAL)</code>).
+     * Prevents this object and its real-time associations to be recycled 
+     * (equivalent to <code>{@link #move move}(ObjectSpace.HOLD)</code>).
+     * This method increments this object preserved counter.
      * 
-     * @param isPreserved <code>true</code> if this object can be recycled
-     *        upon pool contex exit; <code>false</code> otherwise.
      * @return <code>this</code>
+     * @see    #unpreserve
      */
-    public final Object preserve(boolean isPreserved) {
-        move(isPreserved ? ContextSpace.SHARED : ContextSpace.LOCAL);
+    public final Object preserve() {
+        move(ObjectSpace.LOCAL);
+        return this;
+    }
+
+    /**
+     * Allows this object and its real-time associations to  
+     * be recycled if not preserved any more (equivalent to 
+     * <code>{@link #move move}(ObjectSpace.LOCAL)</code>).
+     * This method decrements this object preserved counter.
+     * 
+     * @return <code>this</code>
+     * @see    #preserve
+     */
+    public final Object unpreserve() {
+        move(ObjectSpace.LOCAL);
         return this;
     }
 
     // Implements Realtime interface.
-    public void move(ContextSpace cs) {
-        if (cs == ContextSpace.OUTER) { // export()
-            if (((_pool != null) && _pool.isLocal())) { // Local object.
-                _pool.export(this);
+    public boolean move(ObjectSpace os) {
+        
+        // export()
+        if (os == ObjectSpace.OUTER) { 
+            if ((_pool == null) || (!_pool.isLocal())) {
+                return false; // Not on the stack.
             }
-        } else if (cs == ContextSpace.HEAP) {
-            if (_pool != null) {
-                if (_pool.isLocal()) {
-                    _pool.remove(this);
-                } else { // Non-local pools require synchronization.
-                    synchronized (_pool) {
-                        _pool.remove(this);
-                    }
-                }
-            } // Else already on the heap.
-        } else if (cs == ContextSpace.SHARED) {
-            if (_pool != null) {
-                if (_pool.isLocal()) {
-                    _pool.preserve(this);
-                } else { // Non-local pools require synchronization.
-                    synchronized (_pool) {
-                        _pool.preserve(this);
-                    }
+            detach();
+            ObjectPool outer = _pool.getOuter();
+            if (outer == null) { // Heap.
+                _next = null;
+                _previous = null;
+                _pool = null;
+            } else {
+                synchronized (outer) {
+                    insertBefore(((Pool)outer)._next);
                 }
             }
-        } else if (cs == ContextSpace.LOCAL) {
-            if (_pool != null) {
-                if (_pool.isLocal()) {
-                    _pool.unpreserve(this);
-                } else { // Non-local pools require synchronization.
-                    synchronized (_pool) {
-                        _pool.unpreserve(this);
-                    }
+            return true;
+
+        // moveHeap()    
+        } else if (os == ObjectSpace.HEAP) {
+            if (_pool == null) {
+                return false; // Already on the heap.
+            } 
+            synchronized (_pool) { // Might not be local.
+                detach();
+            }
+            _next = null;
+            _previous = null;
+            _pool = null;
+            return true;
+
+        // preserve()    
+        } else if (os == ObjectSpace.HOLD) {
+            if (_pool == null) {
+                return false; // On the heap.
+            }
+            synchronized (_pool) { // Might not be local.
+                if (_preserved++ == 0) {
+                    detach();
+                    insertBefore(_pool._holdTail);
+                    return true;
+                } else {
+                    return false;
                 }
             }
-        } // Ignores others context space (possible extensions).
+
+        // unpreserve()    
+        } else if (os == ObjectSpace.LOCAL) {
+            if ((_pool == null) || (_preserved == 0)) {
+                return false; // On the heap or already local.
+            }
+            synchronized (_pool) { // Might not be local.
+                if (--_preserved == 0) {
+                    detach();
+                    insertBefore(_pool._next);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+        // Ignores others context space (possible extensions).            
+        } else {
+            return true; // Propagates by default. 
+        }
     }
 
     /**
@@ -187,10 +253,34 @@ public abstract class RealtimeObject implements Realtime {
     }
 
     /**
+     * Inserts this object before the one specified.
+     * 
+     * @param the next object after insertion.
+     */ 
+    final void insertBefore(RealtimeObject next) {
+        final RealtimeObject previous = next._previous;
+        _previous = previous;
+        _next = next;
+        _pool = next._pool;
+        next._previous = this;
+        previous._next = this;
+    }
+
+    /**
+     * Detaches this object from its linked list (but does not reset the
+     * objects variable members).
+     */ 
+    final void detach() {
+        _next._previous = _previous;
+        _previous._next = _next;
+    }
+    
+    
+    /**
      * This abstract class represents the factory responsible for the 
      * creation of {@link RealtimeObject} instances.
      */
-    protected static abstract class Factory extends ObjectFactory {
+    public static abstract class Factory extends ObjectFactory {
 
         /**
          * Holds the last used pools from this factory.
@@ -210,24 +300,18 @@ public abstract class RealtimeObject implements Realtime {
          *         executing in a pool context.
          */
         public final Object object() {
-            Thread thread = Thread.currentThread();
-            Pool pool = _cachedPool;
-            if (pool.getUser() == thread) {
-                return (pool._index > 0) ? // Inline pool.next()
-                        pool._objects[--pool._index] : pool.allocate();
+            final Pool pool = _cachedPool;
+            if (pool.getUser() == Thread.currentThread()) {
+                // Inline next()
+                final RealtimeObject next = pool._next;
+                final RealtimeObject tmp = pool._next = next._next;
+                return (tmp != null) ? next : pool.allocate();
             } else {
-                return object2(); // Cache miss.
-            }
-        }
-        private final Object object2() {
-            ObjectPool objectPool = currentPool();
-            if (objectPool != heap()) {
-                Pool pool = (Pool) objectPool;
-                Object obj = pool.next();
-                _cachedPool = pool;
-                return obj;
-            } else {
-                return create();
+                final ObjectPool currentPool = currentPool();
+                if (currentPool != heapPool()) {
+                    _cachedPool = (Pool) currentPool;
+                }
+                return currentPool.next();
             }
         }
 
@@ -236,204 +320,127 @@ public abstract class RealtimeObject implements Realtime {
             return new Pool(this);
         }
     }
-
+    
     /**
      * This inner class represents a pool of {@link RealtimeObject}.
      */
     private static final class Pool extends ObjectPool {
 
         /**
-         * Holds the pool's objects.
+         * Indicates if clean-up has to be performed (switches to false if 
+         * UnsupportedOperationException raised during clean-up).  
          */
-        private RealtimeObject[] _objects = new RealtimeObject[DEFAULT_POOL_SIZE];
+        private boolean _doCleanup = true;
 
         /**
-         * Holds the current pool's index.
+         * Holds reference to heap pool.
          */
-        private int _index;
+        private final ObjectFactory _factory;
 
         /**
-         * Holds the current pool's length.
+         * Holds the head object.
          */
-        private int _length;
+        private final RealtimeObject _activeHead = new Bound();
 
         /**
-         * Indicates if object cleanup is enabled (default <code>true</code>).
+         * Holds the tail object.
          */
-        private boolean _isCleanupEnabled = true;
+        private final RealtimeObject _activeTail = new Bound();
+        
+        /**
+         * Holds the objects on hold
+         */
+        private final RealtimeObject _holdHead = new Bound();
 
         /**
-         * Holds this pool's factory.
+         * Holds the objects on hold
          */
-        private final Factory _factory;
+        private final RealtimeObject _holdTail = new Bound();
+        
+        /**
+         * Holds the next object to return.
+         */
+        private RealtimeObject _next = _activeTail;
 
         /**
-         * Creates a pool for the specified factory.
+         * Creates a pool having the specified heap pool.
          * 
-         * @param factory the factory for this pool.
+         * @param factory owner of this pool.
          */
-        public Pool(Factory factory) {
+        private Pool(Factory factory) {
             _factory = factory;
+            _activeHead._next = _activeTail;
+            _activeTail._previous = _activeHead;
+            _holdHead._next = _holdTail;
+            _holdTail._previous = _holdHead;
         }
 
-        /**
-         * Returns a text representation of this pool for debugging purpose.
-         * 
-         * @return a text representation of this pool's state.
-         */
-        public String toString() {
-            if (this.getUser() != null) {
-                return "LOCAL POOL (Nesting Level: " + getNesting()
-                        + ", Usage: " + (_length - _index) + ", Capacity: "
-                        + _length + ")";
-            } else {
-                return "INACTIVE POOL (Usage: " + (_length - _index)
-                        + ", Capacity: " + _length + ")";
-            }
-        }
-        private int getNesting() {
-            return (getOuter() != null)
-                    ? ((Pool) getOuter()).getNesting() + 1
-                    : 0;
-        }
-
-        // Implements ObjectPool abstract method.
         public Object next() {
-            return (_index > 0) ? _objects[--_index] : allocate();
-        }
+            final RealtimeObject next = _next;
+            _next = next._next;
+            return (_next != null) ? next : allocate();
+        }    
 
-        private Object allocate() {
-            RealtimeObject rtObj = (RealtimeObject) _factory.create();
-            if (_length >= _objects.length) { // Resizes.
-                RealtimeObject[] tmp = new RealtimeObject[_length * 2];
-                System.arraycopy(_objects, 0, tmp, 0, _length);
-                _objects = tmp;
+        private RealtimeObject allocate() {            
+            _next = _activeTail;
+            ObjectPool outer = getOuter();
+            RealtimeObject obj;
+            if (outer == null) { // Heap.
+                obj = (RealtimeObject) _factory.heapPool().next();
+            } else {
+                synchronized (outer) {
+                     obj = (RealtimeObject) outer.next();
+                     obj.detach();
+                }
             }
-            rtObj._pool = this;
-            rtObj._poolIndex = _length;
-            _objects[_length++] = rtObj;
-            return rtObj;
+            obj.insertBefore(_activeTail);
+            return obj;
         }
-
-        // Implements ObjectPool abstract method.
+        
         public void recycle(Object obj) {
+            // Cleanups object.
+            if (_doCleanup) {
+                try {
+                    _factory.cleanup(obj);
+                } catch (UnsupportedOperationException ex) {
+                    _doCleanup = false;
+                }
+            }
+
             RealtimeObject rtObj = (RealtimeObject) obj;
             if (rtObj._pool == this) {
-                RealtimeObject usedObject = _objects[_index];
-                _objects[rtObj._poolIndex] = usedObject;
-                usedObject._poolIndex = rtObj._poolIndex;
-                _objects[_index] = rtObj;
-                rtObj._poolIndex = _index++;
-                if (_isCleanupEnabled) {
-                    cleanup(obj);
-                }
+                rtObj.detach();
+                rtObj.insertBefore(_next);
+                _next = _next._previous;
             } else {
-                throw new IllegalArgumentException(
-                        "obj: Object not in the pool");
+                throw new JavolutionError("Object not in the pool");
             }
         }
 
-        // Implements ObjectPool abstract method.
         protected void recycleAll() {
-            for (int i = _index; _isCleanupEnabled && (i < _length);) {
-                cleanup(_objects[i++]);
-            }
-            _index = _length;
-        }
-
-        // Implements ObjectPool abstract method.
-        protected void clearAll() {
-            for (int i = _length; i > 0;) {
-                _objects[--i]._pool = null;
-            }
-            _objects = new RealtimeObject[DEFAULT_POOL_SIZE];
-            _index = 0;
-            _length = 0;
-        }
-
-        /**
-         * Exports the specified object to the outer pool.
-         * 
-         * @param rtObj the object to export.
-         */
-        private void export(RealtimeObject rtObj) {
-            Pool outerPool = (Pool) getOuter();
-            if (outerPool == null) { // Exports to heap is equivalent to remove.
-                remove(rtObj);
-            } else if (rtObj._poolIndex < 0) { // Exports shared object.
-                unpreserve(rtObj);
-                export(rtObj);
-                preserve(rtObj);
-            } else { // Swaps with free outer object.
-                RealtimeObject outerObj;
-                synchronized (outerPool) { // Not local.
-                    outerObj = (RealtimeObject) outerPool.next();
+            // Cleanups objects.
+            if (_doCleanup) {
+                try {
+                    for (RealtimeObject rt = _activeHead._next; rt != _next;) {
+                        _factory.cleanup(rt);
+                        rt = rt._next;
+                    }
+                } catch (UnsupportedOperationException ex) {
+                    _doCleanup = false;
                 }
-                this._objects[rtObj._poolIndex] = outerObj;
-                outerPool._objects[outerObj._poolIndex] = rtObj;
-                outerObj._pool = this;
-                rtObj._pool = outerPool;
-                int tmp = rtObj._poolIndex;
-                rtObj._poolIndex = outerObj._poolIndex;
-                outerObj._poolIndex = tmp;
             }
+            _next = _activeHead._next;
         }
 
-        /**
-         * Removes the specified object to the outer pool.
-         * 
-         * @param rtObj the object to export.
-         */
-        private void remove(RealtimeObject rtObj) {
-            if (rtObj._poolIndex >= 0) { // Not currently shared.
-                _objects[rtObj._poolIndex] = _objects[--_length];
-                _objects[_length]._poolIndex = rtObj._poolIndex;
-                _objects[_length] = null;
-            }
-            rtObj._pool = null;
-            rtObj._poolIndex = 0;
+        protected void clearAll() {
+            _activeHead._next = _activeTail;
+            _activeTail._previous = _activeHead;
         }
+   }
 
-        /**
-         * Prevents the specified object from being recycled.
-         * 
-         * @param rtObj the object to preserve.
-         */
-        private void preserve(RealtimeObject rtObj) {
-            if (rtObj._poolIndex >= 0) { // Not currently shared.
-                // Removes from pool.
-                _objects[rtObj._poolIndex] = _objects[--_length];
-                _objects[_length]._poolIndex = rtObj._poolIndex;
-                _objects[_length] = null;
-                rtObj._poolIndex = -1;
-            }
-        }
-
-        /**
-         * Allows the specified object to be recycled.
-         * 
-         * @param rtObj the object to unpreserve.
-         */
-        private void unpreserve(RealtimeObject rtObj) {
-            if (rtObj._poolIndex < 0) { // Currently shared.
-                // Puts back into its pool.
-                rtObj._poolIndex = _length;
-                _objects[_length++] = rtObj;
-            }
-        }
-
-        /**
-         * Attempts to clean-up this object. If the attempt fails, 
-         * object cleaning is disabled.
-         *
-         * @param  obj the object to cleanup.
-         */
-        private void cleanup(Object obj) {
-            try {
-                _factory.cleanup(obj);
-            } catch (UnsupportedOperationException ex) {
-                _isCleanupEnabled = false;
-            }
-        }
-    }
+    /**
+     * This inner class represents internal linked list bounds
+     * (to avoid testing for null when inserting/removing). 
+     */
+    private static final class Bound extends RealtimeObject { }
 }

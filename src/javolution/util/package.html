@@ -1,3 +1,57 @@
-<body>
-<p> Provides high-performance utility classes (such as the fast collection classes).</p>
-</body>
+<BODY>
+<P> Provides high-performance collection classes and miscellaneous utilities; although 
+    this package provides very few collection classes, they are substitutes for
+    most of <code>java.util.*</code> classes (for example, <code>java.util.IdentityHashMap</code> would be 
+    a {@link javolution.util.FastMap FastMap} with an {@link javolution.util.FastComparator#IDENTITY
+    identity} key comparator). 
+    Here is a summary of this package collection classes with their defining characteristics:
+       <TABLE border="1" summary="Fast Collections Classes">
+            <CAPTION><EM><B>Javolution Collections Classes</B></EM></CAPTION>
+            <TR>
+              <TD></TD>
+              <TD><B>Ordering</B></TD>
+              <TD><B>Duplication Allowed</B></TD>
+              <TD><B>Custom Comparators</B></TD>
+              <TD><B>Intrinsic Iterators</B></TD>
+              <TD><B>Miscellaneous</B></TD>
+            </TR>
+            <TR>
+              <TD>{@link javolution.util.FastList FastList}</TD>
+              <TD>Insertion Order</TD>
+              <TD>Yes</TD>
+              <TD>{@link javolution.util.FastList#setElementComparator setElementComparator(FastComparator)}</TD>
+              <TD>{@link javolution.util.FastList#fastIterator fastIterator()}</TD>
+              <TD>Reusable linked-list (recycles nodes)</TD>
+            </TR>
+            <TR>
+              <TD>{@link javolution.util.FastSet FastSet}</TD>
+              <TD>Insertion Order</TD>
+              <TD>No</TD>
+              <TD>{@link javolution.util.FastList#setElementComparator setElementComparator(FastComparator)}</TD>
+              <TD>{@link javolution.util.FastSet#fastIterator fastIterator()}</TD>
+              <TD>Based on {@link javolution.util.FastSet FastMap} (same characteristics)</TD>
+            </TR>
+            <TR>
+              <TD><CODE>FastTree</CODE></TD>
+              <TD>Comparator</TD>
+              <TD>No</TD>
+              <TD><CODE>setComparator(FastComparator)</CODE></TD>
+              <TD><CODE>fastIterator()</CODE></TD>
+              <TD><I>(not implemented)</I></TD>
+            </TR>
+            <TR>
+              <TD>{@link javolution.util.FastMap FastMap}</TD>
+              <TD>Insertion Order</TD>
+              <TD>Key: No<BR>Value: Yes</TD>
+              <TD>{@link javolution.util.FastMap#setKeyComparator setKeyComparator(FastComparator)}<BR>
+                  {@link javolution.util.FastMap#setValueComparator setValueComparator(FastComparator)}</TD>
+              <TD>{@link javolution.util.FastMap#fastEntryIterator fastEntryIterator()}<BR>
+                  {@link javolution.util.FastMap#fastKeyIterator fastKeyIterator()}<BR>
+                  {@link javolution.util.FastMap#fastValueIterator fastValueIterator()}</TD>
+              <TD>Thread-safe read access without synchronization if keys are not removed (e.g. look-up table)<BR>
+                  Reusable hash map (recycles entries)<BR>
+                  No rehash/resize ever performed (and no capacity to specify)</TD>
+            </TR>
+         </TABLE>
+    </P>
+</BODY>

@@ -1,57 +1,50 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.lang;
 
+import java.io.IOException;
+
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 
-import java.io.IOException;
-
 import javolution.JavolutionError;
-import javolution.lang.Text.Composite;
-import javolution.lang.Text.Primitive;
+import javolution.realtime.ObjectFactory;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 import javolution.xml.XmlElement;
 import javolution.xml.XmlFormat;
 
 /**
- * <p> This class represents a mutable character sequence whose size expands 
+ * <p> This class represents an {@link Appendable} text whose size expands 
  *     gently without incurring expensive resize/copy operations ever.</p>
- * <p> Unlike <code>StringBuffer</code> or <code>StringBuilder</code> instances
- *     of this classes do not have a capacity.</p>
- * <p> Instances of this class are real-time compliant, they are  
- *     constructed on the stack when executing in a 
- *     {@link javolution.realtime.PoolContext PoolContext}.</p>
- * <p> As for any {@link Appendable}, formatting of primitive types can
- *     be achieved using the {@link javolution.lang.TypeFormat} utility class.</p>
- * <p> Instances of {@link TextBuilder} require synchronization if used 
- *     by multiple threads. Also, <code>static/shared</code> instances modified
- *     while in pool context have to be {@link #moveHeap moved to the heap} to
- *     avoid referencing local (stack) objects (see <a href=
- *     "{@docRoot}/javolution/realtime/package-summary.html#FAQ-4">
- *     Real-Time FAQ, Item 4.2</a>).</p>  
+ *     
+ * <p> This class is not intended for large documents manipulations which 
+ *     should be performed with the {@link Text} class directly 
+ *     (<code>O(Log(n))</code> {@link Text#insert insertion} and 
+ *     {@link Text#delete deletion} capabilities).</p>
+ *     
+ * <p> {@link TextBuilder} are {@link Reusable} and can be part of 
+ *     higher level {@link Reusable} components (the text maximum length 
+ *     determinates the maximum number of allocations performed).</p>
  *  
- * <p> <i>This class is public domain (not copyrighted).</i></p>
- * 
+ * <p> This implementation is not synchronized.</p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 6, 2005
  */
 public final class TextBuilder extends RealtimeObject implements Appendable,
-        CharSequence, Serializable {
+        CharSequence, Reusable, Serializable {
 
     /**
      * Holds the default XML representation for this class and its sub-classes.
      * This representation consists of a <code>"text"</code> attribute 
      * holding the character sequence.
-     * Instances are created using the {@link #newInstance}
-     * factory method during deserialization (on the stack when
-     * executing in a {@link javolution.realtime.PoolContext PoolContext}).
      */
     protected static final XmlFormat TEXT_BUILDER_XML = new XmlFormat(
             new TextBuilder().getClass()) {
@@ -67,32 +60,98 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
     };
 
     /**
-     * Holds the text head (immutable).
+     * Holds the factory for this text builder.
      */
-    private Text _head;
+    private static final Factory FACTORY = new Factory() {
+        public Object create() {
+            return new TextBuilder();
+        }
+        public void cleanup(Object obj) {
+            ((TextBuilder) obj).reset();
+        }
+    };
+    
+    //
+    // Holds the character buffers. The array sizes are adjusted to ensures that
+    // no more than 4 time the required space is ever allocated.
+    //
+    // char[1<<D3][1<<D2][1<<D1][1<<D0]
+    // with charAt(i) = char[(i>>R3)&M3][(i>>R2)&M2][(i>>R1)&M1][(i>>R0)&M0]
+    // 
+
+    private static final int D0 = 5;
+    private static final int R0 = 0;
+    private static final int M0 = (1 << D0) - 1;
+    private static final int C0 = 1 << D0; // capacity chars0
+    
+    private static final int D1 = D0 + 2;
+    private static final int R1 = D0;
+    private static final int M1 = (1 << D1) - 1;
+    private static final int C1 = 1 << (D0 + D1); // capacity chars1
+
+    private static final int D2 = D1 + 2;
+    private static final int R2 = D0 + D1;
+    private static final int M2 = (1 << D2) - 1;
+    private static final int C2 = 1 << (D0 + D1 + D2); // capacity chars2
+
+    private static final int D3 = D2 + 2;
+    private static final int R3 = D0 + D1 + D2;
+    private static final int M3 = (1 << D3) - 1;
+    
+    private final char[] _chars0 = new char[1 << D0]; // 5 bits (32).
+    private char[][] _chars1; // new char[1<<7][1<<5]; // 12 bits (4096)
+    private char[][][] _chars2; // new char[1<<9][1<<7][1<<5]; // 21 bits (2097152)
+    private char[][][][] _chars3; // new char[1<<11][1<<9][1<<7][1<<5]; 
+    
+
+    private static final ObjectFactory CHARS0_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[1 << D0];
+        }
+    };
+
+    private static final ObjectFactory CHARS1_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[1 << D1][];
+        }
+    };
+
+    private static final ObjectFactory CHARS2_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[1 << D2][][];
+        }
+    };
+
+    private static final ObjectFactory CHARS3_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[1 << D3][][][];
+        }
+    };
 
     /**
-     * Holds the text tail (mutable).
+     * Holds the current capacity. 
      */
-    private Primitive _tail;
+    private int _capacity = 1 << D0;
+
+    /**
+     * Holds the current length.
+     */
+    private int _length;
 
     /**
      *  Default constructor (heap allocated). 
      */
-    private TextBuilder() {
+    public TextBuilder() {
     }
 
     /**
      * Returns a text builder allocated from the "stack" when executing in
      * a {@link javolution.realtime.PoolContext PoolContext}).
      *
-     * @return a new or recycled text builder instance.
+     * @return a new, preallocated or recycled text builder instance.
      */
     public static TextBuilder newInstance() {
-        TextBuilder cb = (TextBuilder) FACTORY.object();
-        cb._head = Text.EMPTY;
-        cb._tail = Primitive.newInstance();
-        return cb;
+        return (TextBuilder) FACTORY.object();
     }
 
     /**
@@ -101,20 +160,71 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      * @return the number of characters (16-bits Unicode).
      */
     public int length() {
-        return _head.length() + _tail.length();
+        return _length;
     }
 
     /**
      * Returns the character at the specified index.
      *
-     * @param  index the index of the character.
+     * @param  i the index of the character.
      * @return the character at the specified index.
      * @throws IndexOutOfBoundsException if index is negative, or index 
      *         is equal or greater than <code>this.length()</code>.
      */
-    public char charAt(int index) {
-        return (index < _head._count) ? _head.charAt(index) : _tail
-                .charAt(index - _head._count);
+    public char charAt(int i) {
+        if ((i >= 0) && (i < _length)) {
+            if (i < C0) {
+                return _chars0[i];
+            } else if (i < C1) {
+                return _chars1[(i>>R1)][i&M0];
+            } else if (i < C2) {
+                return _chars2[(i>>R2)][(i>>R1)&M1][i&M0];
+            } else {
+                return _chars3[(i>>R3)][(i>>R2)&M2][(i>>R1)&M1][i&M0];
+            }
+        }
+        throw new IndexOutOfBoundsException("index: " + i);
+    }
+                                         
+    /**
+     * Sets the character at the specified position.
+     *
+     * @param i the index of the character to modify.
+     * @param c the new character. 
+     * @throws IndexOutOfBoundsException if index is negative, or index 
+     *         is equal or greater than <code>this.length()</code>.
+     */
+    public void setCharAt(int i, char c) {
+        if ((i >= 0) && (i < _length)) {
+            if (i < C0) {
+                _chars0[i] = c;
+            } else if (i < C1) {
+                _chars1[(i>>R1)][i&M0] = c;
+            } else if (i < C2) {
+                _chars2[(i>>R2)][(i>>R1)&M1][i&M0] = c;
+            } else {
+                _chars3[(i>>R3)][(i>>R2)&M2][(i>>R1)&M1][i&M0] = c;
+            }
+        }
+        throw new IndexOutOfBoundsException("index: " + i);
+    }
+
+    /**
+     * Sets the length of this character builder.
+     * If the length is greater than the current length; the 
+     * null character <code>'&#92;u0000'</code> is inserted. 
+     *
+     * @param newLength the new length of this builder.
+     * @throws IndexOutOfBoundsException if newLength is negative.
+     */
+    public void setLength(int newLength) {
+        if (newLength <= _length) {
+            _length = newLength;
+        } else {
+            for (int i = _length; i++ < newLength;) {
+                append('\u0000');
+            }
+        }
     }
 
     /**
@@ -139,81 +249,39 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      * @return <code>this</code>
      */
     public Appendable append(char c) {
-        if (_tail._count < Text.Primitive.BLOCK_SIZE) {
-            _tail._data[_tail._count++] = c;
-        } else { // tail is full.
-            flushTail();
-            _tail._data[_tail._count++] = c;
+        if (_length >= _capacity) {
+            increaseCapacity();
+        }
+        final int i = _length++;
+        if (i < C0) {
+            _chars0[i] = c;
+        } else if (i < C1) {
+            _chars1[(i>>R1)][i&M0] = c;
+        } else if (i < C2) {
+            _chars2[(i>>R2)][(i>>R1)&M1][i&M0] = c;
+        } else {
+            _chars3[(i>>R3)][(i>>R2)&M2][(i>>R1)&M1][i&M0] = c;
         }
         return this;
     }
 
-    /**
-     * Appends the textual representation of this object.
-     *
-     * @param  obj the object whose textual representation is appended.
-     * @return <code>this</code>
-     */
-    public TextBuilder append(Object obj) {
-        if (obj instanceof Realtime) {
-            return append(((Realtime) obj).toText());
-        } else if (obj != null) {
-            return append(obj.toString());
-        } else {
-            return append(Text.NULL);
-        }
-    }
-
-    /**
-     * Appends the specified {@link Text text} instance. 
-     *
-     * @param  text the text to append.
-     * @return <code>this</code>
-     */
-    public TextBuilder append(Text text) {
-        if (_tail._count + text._count <= Text.Primitive.BLOCK_SIZE) {
-            // Enough space to append.
-            for (int i=0; i < text._count;) {
-                _tail._data[_tail._count++] = text.charAt(i++);
-            }
-        } else {
-            flushTail();
-            _head = _head.plus(text);
-        }
-        return this;
-    }
-
-    /**
-     * Appends the specified {@link String} instance. 
-     *
-     * @param  str the string to append.
-     * @return <code>this</code>
-     */
-    public TextBuilder append(String str) {
-        if (_tail._count + str.length() <= Text.Primitive.BLOCK_SIZE) {
-            // Enough space to append.
-            for (int i=0; i < str.length();) {
-                _tail._data[_tail._count++] = str.charAt(i++);
-            }
-        } else {
-            flushTail();
-            _head = _head.plus(Text.valueOf(str));
-        }
-        return this;
-    }
 
     /**
      * Appends the specified character sequence.
      *
      * @param  csq the character sequence to append or <code>"null"</code>
-     *         if <code>(chars == null)</code>.
+     *         if <code>(csq == null)</code>.
      * @return <code>this</code>
      */
     public Appendable append(CharSequence csq) {
         if (csq != null) {
-            return append(csq, 0, csq.length());
+            final int length = csq.length();
+            for (int i = 0; i < length;) {
+                append(csq.charAt(i++));
+            }
+            return this;
         } else {
-            return append(Text.NULL);
+            return append("null");
         }
     }
 
@@ -227,43 +295,46 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      */
     public Appendable append(CharSequence csq, int start, int end) {
         if (csq != null) {
-            final int length = end - start;
-            if (_tail._count + length <= Text.Primitive.BLOCK_SIZE) {
-                // Enough space to append.
-                for (int i=start; i < end;) {
-                    _tail._data[_tail._count++] = csq.charAt(i++);
-                }
-            } else {
-                flushTail();
-                _head = _head.plus(Text.valueOf(csq, start, end));
+            for (int i = start; i < end;) {
+                append(csq.charAt(i++));
             }
             return this;
         } else {
-            return append(Text.NULL);
+            return append("null");
         }
     }
 
     /**
-     * Appends the specified characters from the character array.
+     * Appends the specified {@link String} instance (not a 
+     * <code>CharSequence</code> prior to JDK 1.4). 
      *
-     * @param str the characters to be appended.
-     * @param offset the index of the first character to append.
-     * @param length the number of characters to append.
+     * @param  str the string to append.
      * @return <code>this</code>
      */
-    public TextBuilder append(char str[], int offset, int length) {
-        if (_tail._count + length <= Text.Primitive.BLOCK_SIZE) { 
-            // Enough space to append.
-            for (int i=offset; i < offset+length;) {
-                _tail._data[_tail._count++] = str[i++];
-            }
+    public TextBuilder append(String str) {
+        final int length = str.length();
+        for (int i = 0; i < length;)
+            append(str.charAt(i++));
+        return this;
+    }
+
+    /**
+     * Appends the textual representation of the specified object. 
+     *
+     * @param  obj the object whose textual representatin is appended.
+     * @return <code>this</code>
+     */
+    public TextBuilder append(Object obj) {
+        if (obj instanceof Realtime) {
+            append(((Realtime)obj).toText());
+        } else if (obj != null) {
+            append(obj.toString());
         } else {
-            flushTail();
-            _head = _head.plus(Text.valueOf(str, offset, length));
+            append("null");
         }
         return this;
     }
-    
+
     /**
      * Appends the textual representation of the specified <code>boolean</code>
      * (equivalent to <code>TypeFormat.format(b, this)</code>).
@@ -387,195 +458,59 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
     }
     /**/
 
-    /**
-     * Inserts the specified character at the specified location.
-     *
-     * @param index the insertion position.
-     * @param c the character being inserted.
-     * @return <code>this</code>.
-     * @throws IndexOutOfBoundsException if index is negative or greater
-     *         than <code>this.length()</code>.
-     */
-    public TextBuilder insert(int index, char c) {
-        flushTail();
-        Text head = _head.subtext(0, index);
-        Text tail = _head.subtext(index);
-        _head = head.plus(Text.valueOf(c)).plus(tail);
-        return this;
-    }
 
     /**
-     * Inserts the specified character sequence at the specified location.
-     *
-     * @param index the insertion position.
-     * @param csq the character sequence being inserted.
-     * @return <code>this</code>.
-     * @throws IndexOutOfBoundsException if index is negative or greater
-     *         than <code>this.length()</code>.
-     */
-    public TextBuilder insert(int index, CharSequence csq) {
-        flushTail();
-        Text head = _head.subtext(0, index);
-        Text tail = _head.subtext(index);
-        _head = head.plus(Text.valueOf(csq)).plus(tail);
-        return this;
-    }
-
-    /**
-     * Inserts the specified characters from the character array.
-     *
-     * @param index the insertion position.
-     * @param str the characters to be inserted.
-     * @param offset the index of the first character to insert.
-     * @param length the number of characters to insert.
-     * @return <code>this</code>
-     */
-    public TextBuilder insert(int index, char str[], int offset, int length) {
-        flushTail();
-        Text head = _head.subtext(0, index);
-        Text tail = _head.subtext(index);
-        _head = head.plus(Text.valueOf(str, offset, length)).plus(tail);
-        return this;
-    }
-
-    /**
-     * Removes the character at the specified position.
-     *
-     * @param index the index of the character to remove.
-     * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if index is negative, or index 
-     *         is equal or greater than <code>this.length()</code>.
-     */
-    public TextBuilder deleteCharAt(int index) {
-        return delete(index, index + 1);
-    }
-
-    /**
-     * Removes the characters between the specified indexes.
-     *
-     * @param start the beginning index, inclusive.
-     * @param end the ending index, exclusive.
-     * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if start or end are negative, start 
-     *         is greater than end, or end is greater than 
-     *         <code>this.length()</code>.
-     */
-    public TextBuilder delete(int start, int end) {
-        flushTail();
-        Text head = _head.subtext(0, start);
-        Text tail = _head.subtext(end);
-        _head = head.plus(tail);
-        return this;
-    }
-
-    /**
-     * Sets the character at the specified position.
-     *
-     * @param index the index of the character to modify.
-     * @param c the new character. 
-     * @throws IndexOutOfBoundsException if index is negative, or index 
-     *         is equal or greater than <code>this.length()</code>.
-     */
-    public void setCharAt(int index, char c) {
-        flushTail();
-        Text head = _head.subtext(0, index);
-        Text tail = _head.subtext(index + 1);
-        _head = head.plus(Text.valueOf(c)).plus(tail);
-    }
-
-    /**
-     * Replaces a subsequence of characters with the specified character 
-     * sequence.
-     * 
-     * @param start the beginning index, inclusive.
-     * @param end the ending index, exclusive.
-     * @param csq the character sequence that will replace previous contents.
-     * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if start or end are negative, start 
-     *         is greater than end, or end is greater than 
-     *         <code>this.length()</code>.
-     */
-    public TextBuilder replace(int start, int end, CharSequence csq) {
-        flushTail();
-        Text head = _head.subtext(0, start);
-        Text tail = _head.subtext(end);
-        _head = head.plus(Text.valueOf(csq)).plus(tail);
-        return this;
-    }
-
-    /**
-     * Reverses this character sequence.
-     *
-     * @return <code>this</code>
-     */
-    public TextBuilder reverse() {
-        flushTail();
-        Text source = _head;
-        _head = Text.EMPTY;
-        for (int i=source._count; i > 0;) {
-            append(source.charAt(--i));
-        }
-        return this;
-    }
-
-    /**
-     * Sets the length of this character builder.
-     * If the length is greater than the current length; the 
-     * null character <code>'&#92;u0000'</code> is inserted. 
-     *
-     * @param newLength the new length of this builder.
-     * @throws IndexOutOfBoundsException if newLength is negative.
-     */
-    public void setLength(int newLength) {
-        flushTail();
-        if (newLength <= _head._count) {
-            _head = _head.subtext(0, newLength);
-        } else {
-            for (int i = _head._count; i < newLength;) {
-                append('\u0000');
-            }
-        }
-    }
-
-    /**
-     * Returns the {@link Text} representation of this character sequence
-     * (immediate).
+     * Returns the {@link Text} corresponding to this {@link TextBuilder}
+     * (allocated on the "stack" when executing in a 
+     * {@link javolution.realtime.PoolContext PoolContext}).
      *
      * @return the corresponding {@link Text} instance.
      */
     public Text toText() {
-        flushTail();
-        return _head;
+        return Text.valueOf(this);
     }
 
     /**
-     * Moves the tail to the immutable head.
+     * Resets this text builder for reuse (sets its length to <code>0</code>).
      */
-    private void flushTail() {
-        if (_tail._count > 0) {
-            if (_head != Text.EMPTY) {
-                _head = Composite.newInstance(_head, _tail);
-            } else {
-                _head = _tail;
+    public void reset() {
+        setLength(0);
+    }
+
+    /**
+     * Increases this text builder capacity.
+     */
+    private void increaseCapacity() {
+        final int c = _capacity;
+        _capacity += 1 << D0;
+        if (c < C1) {
+            if (_chars1 == null) {
+                _chars1 = (char[][]) CHARS1_FACTORY.heapPool().next();
             }
-            _tail = Primitive.newInstance();
+            _chars1[(c>>R1)] = (char[]) CHARS0_FACTORY.heapPool().next();
+            
+        } else if (c < C2) {
+            if (_chars2 == null) {
+                _chars2 = (char[][][]) CHARS2_FACTORY.heapPool().next();
+            }
+            if (_chars2[(c>>R2)] == null) {
+                _chars2[(c>>R2)] = (char[][]) CHARS1_FACTORY.heapPool().next();
+            }
+            _chars2[(c>>R2)][(c>>R1)&M1] = (char[]) CHARS0_FACTORY.heapPool().next();
+
+        } else {
+            if (_chars3 == null) {
+                _chars3 = (char[][][][]) CHARS3_FACTORY.heapPool().next();
+            }
+            if (_chars3[(c>>R3)] == null) {
+                _chars3[(c>>R3)] = (char[][][]) CHARS2_FACTORY.heapPool().next();
+            }
+            if (_chars3[(c>>R3)][(c>>R2)&M2] == null) {
+                _chars3[(c>>R3)][(c>>R2)&M2] = (char[][]) CHARS1_FACTORY.heapPool().next();
+            }
+            _chars3[(c>>R3)][(c>>R2)&M2][(c>>R1)&M1] = (char[]) CHARS0_FACTORY.heapPool().next();
         }
+        
     }
-
-    // Factory of TextBuilder instances.
-    private static final Factory FACTORY = new Factory() {
-        public Object create() {
-            return new TextBuilder();
-        }
-    };
-
-    // Overrides.
-    public void move(ContextSpace cs) {
-        super.move(cs);
-        _head.move(cs);
-        _tail.move(cs);
-    }
-
-    private static final long serialVersionUID = 3258408430636380468L;
 
 }

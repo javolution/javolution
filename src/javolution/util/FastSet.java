@@ -1,16 +1,22 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.util;
 
+import java.io.IOException;
+
+import j2me.io.ObjectInputStream;
+import j2me.io.ObjectOutputStream;
+import j2me.io.Serializable;
+import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Set;
-import javolution.xml.XmlElement;
-import javolution.xml.XmlFormat;
+import javolution.lang.Reusable;
 
 /**
  * <p> This class represents a <code>Set</code> backed by a {@link FastMap}
@@ -25,85 +31,65 @@ import javolution.xml.XmlFormat;
  *     is also real-time compliant (allocated on the stack when running 
  *     in a pool context).</p>
  * 
- * <p> This implementation is not synchronized. Multiple threads accessing or
- *     modifying the collection must be synchronized externally.</p>
+ * <p> {@link FastSet} supports concurrent read without synchronization
+ *     if the set elements are never removed. Structural modifications
+ *     (element being added/removed) should always be synchronized.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 20, 2005
  */
-public class FastSet extends FastCollection implements Set {
+public class FastSet extends FastCollection implements Set, Reusable, Serializable {
 
     /**
-     * Overrides {@link XmlFormat#COLLECTION_XML} format in order to use 
-     * the {@link #newInstance(int)} factory method instead of the default 
-     * constructor during the deserialization of {@link FastSet} instances.
+     * Holds the set factory.
      */
-    protected static final XmlFormat FAST_SET_XML = new XmlFormat(new FastSet(null).getClass()) {
-        public void format(Object obj, XmlElement xml) {
-            FastSet fs = (FastSet) obj;
-            xml.addAll(fs);
+    private static final Factory FACTORY = new Factory() {
+
+        public Object create() {
+            return new FastSet();
         }
-        public Object parse(XmlElement xml) {
-            FastSet fs = (xml.objectClass() == getMappedClass()) ?
-                FastSet.newInstance(xml.size()) : (FastSet) xml.object();
-            fs.addAll(xml);
-            return fs;
+
+        public void cleanup(Object obj) {
+            ((FastSet) obj).reset();
         }
     };
-
+    
     /**
      * Holds the backing map.
      */
-    private FastMap _map;
+    private transient FastMap _map;
 
     /**
-     * Base constructor.
-     * 
-     * @param map the backing map.
+     * Holds the capacity.
      */
-    private FastSet(FastMap map) {
-        _map = map;
-    }
+    private transient int _capacity;
 
     /**
-     * Creates a {@link FastSet} with default capacity, allocated on the heap.
+     * Default constructor (default capacity of 16 elements).
      */
     public FastSet() {
-        this(new FastMap());
+        this(16);
     }
 
     /**
-     * Creates a {@link FastSet} with the specified capacity, allocated on the
-     * heap. Unless the capacity is exceeded, operations on this set do not 
-     * allocate memory. For optimum performance, the capacity should be of 
-     * the same order of magnitude or larger than the expected set's size.
+     * Creates a fast set of specified capacity.
      * 
-     * @param  capacity the initial capacity of the backing map.
+     * @param capacity the minimum length of the internal hash table.
      */
     public FastSet(int capacity) {
-        this(new FastMap(capacity));
+        _capacity = capacity;
+        _map = new FastMap(capacity);
     }
 
     /**
-     * Returns a {@link FastSet} of specified capacity, allocated from the stack
-     * when executing in a {@link javolution.realtime.PoolContext PoolContext}).
-     * Unless the capacity is exceeded, operations on this set do not allocate
-     * new entries and even so the capacity is not increased (no re-hashing)
-     * for enhanced predictability.
+     * Returns a {@link FastSet} allocated from the stack when executing in a
+     * {@link javolution.realtime.PoolContext PoolContext}).
      *
-     * @param capacity the minimum capacity for the set to return.
-     * @return a new or recycled set instance.
+     * @return a new, pre-allocated or recycled set instance.
      */
-    public static FastSet newInstance(int capacity) {
-        FastSet fastSet = (FastSet) FACTORY.object();
-        fastSet._map = FastMap.newInstance(capacity);
-        return fastSet;
+    public static FastSet newInstance() {
+        return (FastSet) FACTORY.object();
     }
-    private static final Factory FACTORY = new Factory() {
-        public Object create() {
-            return new FastSet((FastMap) null);
-        }
-    };
 
     /**
      * Returns the number of elements in this set (its cardinality). 
@@ -147,7 +133,7 @@ public class FastSet extends FastCollection implements Set {
 
     // Implements abstract method.    
     public final Iterator fastIterator() {
-        return ((FastCollection)_map.keySet()).fastIterator();
+        return _map.fastKeyIterator();
     }
         
     // Overrides (optimization).
@@ -161,8 +147,39 @@ public class FastSet extends FastCollection implements Set {
     }
 
     // Overrides.
-    public void move(ContextSpace cs) {
-        super.move(cs);
-        _map.move(cs);
+    public Collection setElementComparator(FastComparator comparator) {
+        super.setElementComparator(comparator);
+        _map.setKeyComparator(comparator);
+        return this;
     }
+    
+    // Implements Reusable.
+    public void reset() {
+        _map.reset();
+    }
+
+    // Requires special handling during de-serialization process.
+    private void readObject(ObjectInputStream stream) throws IOException,
+            ClassNotFoundException {
+        stream.defaultReadObject();
+        final int capacity = stream.readInt();
+        _map = new FastMap(capacity);
+        _map.setKeyComparator(this.getElementComparator());
+        final int size = stream.readInt();
+        for (int i = size; i-- != 0;) {
+            add(stream.readObject());
+        }
+    }
+
+    // Requires special handling during serialization process.
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+        stream.writeInt(_capacity);
+        stream.writeInt(size());
+        Iterator i = iterator();
+        for (int j = size(); j-- != 0;) {
+            stream.writeObject(i.next());
+        }
+    }
+
 }

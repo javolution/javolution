@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -8,10 +9,7 @@
 package javolution.realtime;
 
 import j2me.util.Iterator;
-
 import java.util.EmptyStackException;
-
-import javolution.util.FastCollection;
 import javolution.util.FastMap;
 
 /**
@@ -90,24 +88,22 @@ import javolution.util.FastMap;
 public abstract class Context {
 
     /**
-     * Holds the current contexts (thread to context mapping).
-     * The whole map is replaced when structurally changed 
-     * (to avoid synchronizing).
+     * Holds the thread to current context look-up table.
+     * Because look-up tables (with no synchronized read) do not allow
+     * key removal (ref. FastMap documentation). The whole collection 
+     * is replaced when dead threads are removed.
      */
-    private static FastMap ThreadToContext = new FastMap(1);
+    private static FastMap ThreadToContext = new FastMap();
 
     /**
-     * Holds the last context set.
+     * Holds class lock (used when thread-context mapping is changed).
      */
-    private static Context Local = new HeapContext();
-    static {
-        Context.ThreadToContext.put(Context.Local._owner, Context.Local);
-    }
+    private static final Object LOCK = new Object();
 
     /**
      * Holds the thread owner of this context.
      */
-    private Thread _owner;
+    private final Thread _owner;
 
     /**
      * Holds a shortcut to the pool context for this context or 
@@ -144,28 +140,16 @@ public abstract class Context {
     public static void clear() {
         Context current = Context.currentContext();
         if (current._outer == null) { // Root context is being cleared.
-            synchronized (LOCK) { // Remove thread mapping.
-                FastMap tmp = new FastMap(Context.ThreadToContext.size());
-                for (Iterator i = ((FastCollection) Context.ThreadToContext
-                        .entrySet()).fastIterator(); i.hasNext();) {
-                    FastMap.Entry entry = (FastMap.Entry) i.next();
-                    Thread thread = (Thread) entry.getKey();
-                    if (thread.isAlive() && (thread != current._owner)) {
-                        tmp.put(thread, entry.getValue());// Do not copy if not alive.
-                    }
-                }
-                Context.ThreadToContext = tmp;
+            synchronized (Context.ThreadToContext) { // Remove mapping.
+                Context.ThreadToContext.put(current._owner, null);
             }
         } else if (current._outer._inner == current) {
             current._outer._inner = null;
         }
-
         for (Context ctx = current; ctx != null; ctx = ctx._inner) {
             ctx.dispose();
-            ctx._owner = null;
         }
     }
-    private static final Object LOCK = new Object();
 
     /**
      * Returns the context for the current thread. The default context 
@@ -175,58 +159,19 @@ public abstract class Context {
      * @return the current context (always different from <code>null</code>).
      */
     protected static Context currentContext() {
-        Context local = Context.Local;
-        return (local._owner == Thread.currentThread()) ? local : getCurrent();
+        Context ctx = (Context) Context.ThreadToContext.get(Thread
+                .currentThread());
+        return (ctx != null) ? ctx : newContext();
     }
 
-    /**
-     * Gets the current context.  
-     *
-     * @return the current context.
-     */
-    private static Context getCurrent() {
-        Thread thread = Thread.currentThread();
-        Object obj = Context.ThreadToContext.get(thread);
-        if (obj != null) {
-            return (Context) obj;
-        }
-        // First association (root context).
-        if (thread instanceof ConcurrentThread) {
-            PoolContext ctx = new PoolContext();
-            setCurrent(ctx);
-            return ctx;
-        } else {
-            HeapContext ctx = new HeapContext();
-            setCurrent(ctx);
-            return ctx;
-        }
-    }
-
-    /**
-     * Sets the current context.  
-     *
-     * @param ctx the new current context.
-     */
-    private static void setCurrent(Context ctx) {
-        if (Context.ThreadToContext.containsKey(ctx._owner)) {
+    private static Context newContext() {
+        Context ctx = (Thread.currentThread() instanceof ConcurrentThread) ? (Context) new PoolContext()
+                : new HeapContext();
+        synchronized (LOCK) {
+            cleanupDeadThreads();
             Context.ThreadToContext.put(ctx._owner, ctx);
-        } else { // Structural modification.
-            synchronized (LOCK) {
-                FastMap tmp = new FastMap(Context.ThreadToContext.size());
-                for (Iterator i = ((FastCollection) Context.ThreadToContext
-                        .entrySet()).fastIterator(); i.hasNext();) {
-                    FastMap.Entry entry = (FastMap.Entry) i.next();
-                    Thread thread = (Thread) entry.getKey();
-                    if (thread.isAlive()) { // Do not copy if not alive.
-                        tmp.put(thread, entry.getValue());
-                    }
-                }
-                // Add new mapping.
-                tmp.put(ctx._owner, ctx);
-                Context.ThreadToContext = tmp;
-            }
+            return ctx;
         }
-        Context.Local = ctx;
     }
 
     /**
@@ -275,8 +220,10 @@ public abstract class Context {
         Context ctx = current._inner;
         if (contextClass.isInstance(ctx)) {
             // All fields members are correctly set.
-            setCurrent(ctx);
-            return ctx;
+            synchronized (Context.LOCK) {
+                Context.ThreadToContext.put(ctx._owner, ctx);
+                return ctx;
+            }
         }
         // Searches inner stack.
         while (ctx != null) {
@@ -303,13 +250,16 @@ public abstract class Context {
      * @param  ctx the new current context.
      */
     protected static void push(Context ctx) {
-        ctx._outer = Context.currentContext();
+        Context current = Context.currentContext();
+        ctx._outer = current;
         ctx._inner = ctx._outer._inner;
         ctx._outer._inner = ctx;
         if (ctx._inner != null) {
             ctx._inner._outer = ctx;
         }
-        setCurrent(ctx);
+        synchronized (Context.LOCK) {
+            Context.ThreadToContext.put(ctx._owner, ctx);
+        }
         if (!(ctx instanceof PoolContext) && !(ctx instanceof HeapContext)) {
             // Inherits pool context.
             ctx._poolContext = ctx._outer._poolContext;
@@ -327,9 +277,10 @@ public abstract class Context {
      */
     protected static Context pop() {
         Context ctx = Context.currentContext();
-        if ((ctx._outer != null)
-                && (ctx._outer._owner == Thread.currentThread())) {
-            setCurrent(ctx._outer);
+        if ((ctx._outer != null) && (ctx._outer._owner == ctx._owner)) {
+            synchronized (Context.LOCK) {
+                Context.ThreadToContext.put(ctx._owner, ctx._outer);
+            }
             return ctx;
         } else {
             throw new EmptyStackException();
@@ -359,5 +310,32 @@ public abstract class Context {
      */
     final void setOuter(Context outer) {
         _outer = outer;
+    }
+
+    /**
+     * Dissociates contexts from dead threads (for GC) and removes 
+     * the threads objects themselves when more than 256 of them.
+     */
+    private static void cleanupDeadThreads() {
+        int deadThreadCount = 0;
+        for (Iterator i = Context.ThreadToContext.fastKeyIterator(); i
+                .hasNext();) {
+            Thread thread = (Thread) i.next();
+            if (!thread.isAlive()) {
+                Context.ThreadToContext.put(thread, null);
+                deadThreadCount++;
+            }
+        }
+        if (deadThreadCount > 256) {
+            FastMap tmp = new FastMap();
+            tmp.putAll(Context.ThreadToContext);
+            for (Iterator i = tmp.fastKeyIterator(); i.hasNext();) {
+                Thread thread = (Thread) i.next();
+                if (!thread.isAlive()) {
+                    i.remove();
+                }
+            }
+            Context.ThreadToContext = tmp;
+        }
     }
 }

@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -17,14 +18,23 @@ import javolution.realtime.RealtimeObject;
 
 /**
  * <p> This class represents the fast collection base class; instances of 
- *     this class embed their own {@link #fastIterator iterator} to avoid
+ *     this class embed their own {@link #fastIterator fastIterator()} to avoid
  *     dynamic object allocation.</p>
+ *     
+ * <p> {@link FastCollection} may use custom {@link #setElementComparator
+ *     elements comparators} for element equality (or ordering if the collection
+ *     is ordered, e.g. <code>FastTree</code>).</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 16, 2004
  */
-public abstract class FastCollection extends RealtimeObject implements
-        Collection {
+public abstract class FastCollection extends RealtimeObject implements Collection {
+
+    /**
+     * Holds the element comparator.  
+     */
+    private FastComparator _elementComparator = FastComparator.DEFAULT;
+    
 
     /**
      * Default constructor.  
@@ -59,6 +69,29 @@ public abstract class FastCollection extends RealtimeObject implements
     public abstract int size();
 
     /**
+     * Sets the element comparator for this collection.
+     *
+     * @param comparator the comparator to use for element equality (or 
+     *        ordering if the collection is ordered)
+     * @return <code>this</code>
+     */
+    public Collection setElementComparator(FastComparator comparator) {
+        _elementComparator = comparator;
+        return this;
+    }
+
+    /**
+     * Returns the element comparator for this collection (default 
+     * {@link FastComparator#DEFAULT}).
+     *
+     * @return the comparator to use for element equality (or ordering if 
+     *        the collection is ordered)
+     */
+    public final FastComparator getElementComparator() {
+        return _elementComparator;
+    }
+
+    /**
      * Appends the specified element to the end of this collection
      * (optional operations).
      * 
@@ -84,32 +117,17 @@ public abstract class FastCollection extends RealtimeObject implements
      * @throws UnsupportedOperationException if not supported.
      */
     public boolean remove(Object element) {
-        if (element != null) {
-            Iterator itr = iterator();
-            int pos = size();
-            while (--pos >= 0) {
-                if (element.equals(itr.next())) {
-                    itr.remove();
+       Iterator itr = iterator();
+       int pos = size();
+       while (--pos >= 0) {
+           if (_elementComparator.areEqual(element, itr.next())) {
+                itr.remove();
                     return true;
                 }
             }
             return false;
-        } else {
-            return removeNull();
-        }
     }
 
-    private boolean removeNull() {
-        Iterator itr = iterator();
-        int pos = size();
-        while (--pos >= 0) {
-            if (itr.next() == null) {
-                itr.remove();
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * Removes all of the elements from this collection (optional operation).
@@ -144,29 +162,14 @@ public abstract class FastCollection extends RealtimeObject implements
      *         element;<code>false</code> otherwise.
      */
     public boolean contains(Object element) {
-        if (element != null) {
             Iterator itr = iterator();
             int pos = size();
             while (--pos >= 0) {
-                if (element.equals(itr.next())) {
+                if (_elementComparator.areEqual(element, itr.next())) {
                     return true;
                 }
             }
             return false;
-        } else {
-            return containsNull();
-        }
-    }
-
-    private boolean containsNull() {
-        Iterator itr = iterator();
-        int pos = size();
-        while (--pos >= 0) {
-            if (itr.next() == null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -332,7 +335,7 @@ public abstract class FastCollection extends RealtimeObject implements
         int pos = size();
         while (--pos >= 0) {
             Object element = itr.next();
-            hash += element == null ? 0 : element.hashCode();
+            hash += _elementComparator.hashCodeOf(element);
         }
         return hash;
     }

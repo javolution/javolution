@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -10,14 +11,9 @@ package javolution.io;
 import j2me.lang.UnsupportedOperationException;
 import j2me.nio.ByteBuffer;
 import j2me.nio.ByteOrder;
-import j2me.util.Iterator;
 import j2me.util.List;
 import javolution.JavolutionError;
 import javolution.lang.Enum;
-import javolution.lang.TextBuilder;
-import javolution.lang.TypeFormat;
-import javolution.realtime.LocalContext;
-import javolution.util.FastList;
 import javolution.util.Reflection;
 
 import java.io.IOException;
@@ -64,8 +60,8 @@ import java.io.IOException;
  *     }
  *     public static class Student extends Struct {
  *         public final Utf8String  name   = new Utf8String(64);
- *         public final Date        birth  = (Date) new StructMember(Date.class).get();
- *         public final Float32[]   grades = (Float32[]) new ArrayMember(new Float32[10]).get();
+ *         public final Date        birth  = (Date) inner(new Date());
+ *         public final Float32[]   grades = (Float32[]) array(new Float32[10]);
  *         public final Reference32 next   =  new Reference32(Student.class);
  *     }</pre>
  *     Struct's members are directly accessible:<pre>
@@ -77,19 +73,20 @@ import java.io.IOException;
  * <p> Applications may also work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to 
  *     decode/encode UDP messages directly:<pre>
- *     class MyUdpMessage extends Struct {
- *         ... // UDP message fields.
+ *     class UdpMessage extends Struct {
+ *          Unsigned16 xxx = new Unsigned16();
+ *          ... 
  *     }
  *     public void run() {
  *         byte[] bytes = new byte[1024];
  *         DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
- *         MyUdpMessage message = new MyUdpMessage();
+ *         UdpMessage message = new UdpMessage();
  *         message.setByteBuffer(ByteBuffer.wrap(bytes), 0);
  *         // packet and message are now two different views of the same data. 
- *         while (true) {
- *             _socket.receive(packet);
+ *         while (isListening) {
+ *             multicastSocket.receive(packet);
+ *             int xxx = message.xxx.get();
  *             ... // Process message fields directly.
- *             packet.setLength(bytes.length); // Reset length to buffer's length.
  *         }
  *     }</pre></p> 
  * <p> It is relatively easy to map instances of this class to any physical
@@ -128,29 +125,25 @@ import java.io.IOException;
  *     memory mapped instances.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 20, 2004
+ * @version 2.2, February 4, 2005
  */
 public class Struct {
 
     /**
-     * Holds the outer struct during construction (if any).
+     * Holds the outer struct if any.
      */
-    private static final LocalContext.Variable OUTER = new LocalContext.Variable();
+    private Struct _outer;
 
     /**
-     * Holds the inner struct of this struct.
-     */
-    private final FastList _inners = new FastList();
-
-    /**
-     * Holds the byte buffer backing the struct.
+     * Holds the byte buffer backing the struct (top struct).
      */
     private ByteBuffer _byteBuffer;
 
     /**
-     * Holds the position of this struct within the byte buffer.
+     * Holds the offset of this struct relative to the outer struct or
+     * to the byte buffer if there is no outer.
      */
-    private int _byteBufferPosition;
+    private int _outerOffset;
 
     /**
      * Holds the number of bits currently used (for size calculation).
@@ -173,21 +166,10 @@ public class Struct {
     private boolean _resetIndex;
 
     /**
-     * Holds the outer struct if any.
-     */
-    private final Struct _outer;
-
-    /**
-     * Holds the offset of this struct in the outer struct if any.
-     */
-    private int _outerOffset;
-
-    /**
      * Default constructor.
      */
     public Struct() {
         _resetIndex = (this instanceof Union);
-        _outer = (Struct) OUTER.getValue();
     }
 
     /**
@@ -219,22 +201,20 @@ public class Struct {
      * @see #setByteBuffer
      */
     public final ByteBuffer getByteBuffer() {
+        if (_outer != null)
+            return _outer.getByteBuffer();
         return (_byteBuffer != null) ? _byteBuffer : newBuffer();
     }
 
     private ByteBuffer newBuffer() {
-        if (_outer == null) { // Top struct.
-            int size = size();
-            // Covers misaligned 64 bits access when packed.
-            int capacity = isPacked() ? (((size & 0x7) == 0) ? size : size + 8
-                    - (size & 0x7)) : size;
-            ByteBuffer bf = ByteBuffer.allocateDirect(capacity);
-            bf.order(byteOrder());
-            setByteBuffer(bf, 0);
-            return _byteBuffer;
-        } else {
-            return _outer.newBuffer();
-        }
+        int size = size();
+        // Covers misaligned 64 bits access when packed.
+        int capacity = isPacked() ? (((size & 0x7) == 0) ? size : size + 8
+                - (size & 0x7)) : size;
+        ByteBuffer bf = ByteBuffer.allocateDirect(capacity);
+        bf.order(byteOrder());
+        setByteBuffer(bf, 0);
+        return _byteBuffer;
     }
 
     /**
@@ -244,26 +224,28 @@ public class Struct {
      * (e.g. <code>DatagramPacket</code>).
      *
      * @param byteBuffer the new byte buffer.
-     * @param position the position of this struct in the specified byte buffer. 
+     * @param position the position of this struct in the specified byte buffer.
+     * @return <code>this</code>
+     * @throws UnsupportedOperationException if this struct is an inner struct. 
      */
-    public final void setByteBuffer(ByteBuffer byteBuffer, int position) {
+    public final Struct setByteBuffer(ByteBuffer byteBuffer, int position) {
+        if (_outer != null)
+            throw new UnsupportedOperationException(
+                    "Inner struct byte buffer is inherited from outer");
         _byteBuffer = byteBuffer;
-        _byteBufferPosition = position;
-        // Changes bytebuffer for inner structs.
-        for (Iterator it = _inners.fastIterator(); it.hasNext();) {
-            Struct inner = (Struct) it.next();
-            inner.setByteBuffer(byteBuffer, position + inner._outerOffset);
-        }
+        _outerOffset = position;
+        return this;
     }
 
     /**
-     * Returns the position of this struct within the 
+     * Returns the absolute position of this struct within its associated 
      * {@link #getByteBuffer byte buffer}.
      *
      * @return the absolute position of this struct in the byte buffer. 
      */
     public final int getByteBufferPosition() {
-        return _byteBufferPosition;
+        return (_outer != null) ? _outer.getByteBufferPosition() + _outerOffset
+                : _outerOffset;
     }
 
     /**
@@ -280,7 +262,7 @@ public class Struct {
         ByteBuffer thisBuffer = this.getByteBuffer();
         if (ADDRESS_METHOD != null) {
             Long start = (Long) ADDRESS_METHOD.invoke(thisBuffer);
-            return start.longValue() + _byteBufferPosition;
+            return start.longValue() + getByteBufferPosition();
         } else {
             throw new UnsupportedOperationException(
                     "Operation not supported for " + thisBuffer.getClass());
@@ -304,45 +286,37 @@ public class Struct {
      *     student.grade.set(12.5f);
      *     System.out.println(student);
      *
-     *     4a 6f 68 6e 20 44 6f 65 00 00 00 00 00 00 00 00
-     *     07 d3 00 00 41 48 00 00</pre>
+     *     4A 6F 68 6E 20 44 6F 65 00 00 00 00 00 00 00 00
+     *     07 D3 00 00 41 48 00 00</pre>
      *
      * @return a hexadecimal representation of the bytes content for this
      *         {@link Struct}.
      */
     public String toString() {
-        try {
-            TextBuilder chars = TextBuilder.newInstance();
-            final int size = size();
-            final ByteBuffer buffer = getByteBuffer();
-            for (int i = 0; i < size; i++) {
-                int b = buffer.get(i + _byteBufferPosition) & 0xFF;
-                if (b < 0x10) {
-                    // Ensures 2 digits per byte for alignment purpose.
-                    chars.append('0');
-                }
-                TypeFormat.format(b, 16, chars);
-                if ((i & 0xF) == 0xF) {
-                    // 16 bytes per line.
-                    chars.append('\n');
-                } else {
-                    chars.append(' ');
-                }
-            }
-            return chars.toString();
-        } catch (IOException e) {
-            throw new JavolutionError(e);
+        final int size = size();
+        StringBuffer sb = new StringBuffer(size * 3);
+        final ByteBuffer buffer = getByteBuffer();
+        final int start = getByteBufferPosition();
+        for (int i = 0; i < size; i++) {
+            int b = buffer.get(start + i) & 0xFF;
+            sb.append(HEXA[b >> 4]);
+            sb.append(HEXA[b & 0xF]);
+            sb.append(((i & 0xF) == 0xF) ? '\n' : ' ');
         }
+        return sb.toString();
     }
+
+    private static final char[] HEXA = { '0', '1', '2', '3', '4', '5', '6',
+            '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     ///////////////////
     // CONFIGURATION //
     ///////////////////
 
     /**
-     * Returns the byte order for this {@link Struct}. The byte order is
-     * inherited by inner structs. Sub-classes may change the byte order
-     * by overriding this method. For example:<pre>
+     * Returns the byte order for this {@link Struct} (configurable). 
+     * The byte order is inherited by inner structs. Sub-classes may change 
+     * the byte order by overriding this method. For example:<pre>
      * public class TopStruct extends Struct {
      *     ... // Members initialization.
      *     public ByteOrder byteOrder() {
@@ -355,15 +329,11 @@ public class Struct {
      *         (default: network byte order, <code>BIG_ENDIAN</code>).
      */
     public ByteOrder byteOrder() {
-        if (_outer != null) {
-            return _outer.byteOrder();
-        } else {
-            return ByteOrder.BIG_ENDIAN;
-        }
+        return (_outer != null) ? _outer.byteOrder() : ByteOrder.BIG_ENDIAN;
     }
 
     /**
-     * Indicates if this {@link Struct} is packed.
+     * Indicates if this {@link Struct} is packed (configurable).
      * By default, {@link Member} of a {@link Struct} are aligned on the
      * boundary corresponding to the member's base type; padding is performed
      * if necessary. This directive is inherited by inner structs.
@@ -381,79 +351,286 @@ public class Struct {
      *         <code>false</code> otherwise (default).
      */
     public boolean isPacked() {
-        if (_outer != null) {
-            return _outer.isPacked();
-        } else {
-            return false;
-        }
+        return (_outer != null) ? _outer.isPacked() : false;
     }
 
     /**
-     * Returns a new instance of the specified member for this {@link Struct}.
-     * Sub-classes may override this method for new members types to allow 
-     * their use with {@link ArrayMember}. For example:<pre>
-     * public class TextStruct extends Struct {
-     *     public class Line extends Utf8String { // New member type.
-     *          public Line() { 
-     *              super(80); // 80 characters line.
-     *          }
-     *     }
-     *     protected Object newInstance(Class memberClass) {
-     *         return (memberClass == Line.class) ? 
-     *             this.new Line() : super.newInstance(memberClass);
-     *     }
-     * }
-     * ...
-     * public class Page extends TextStruct { // 40 lines page.
-     *     public final Unsigned16 number = new Unsigned16();     
-     *     public final Line[] lines = (Line[]) new ArrayMember(new Line[40]).get();
-     * }</pre>
+     * Attaches the specified struct as inner of this struct.
      *
-     * @param memberClass the class identifying the new instance to create. 
-     * @return a new member instance for this struct.
-     * @throws UnsupportedOperationException if the specified class is not 
-     *         a predefined member class or it does not have a default 
-     *         constructor.
+     * @param struct the inner struct.
+     * @return the specified struct. 
+     * @throws IllegalArgumentException if the specified struct is already 
+     *         an inner struct.
      */
-    protected Object newInstance(Class memberClass) {
-        if (memberClass == BOOL) {
-            return this.new Bool();
-        } else if (memberClass == SIGNED_8) {
-            return this.new Signed8();
-        } else if (memberClass == UNSIGNED_8) {
-            return this.new Unsigned8();
-        } else if (memberClass == SIGNED_16) {
-            return this.new Signed16();
-        } else if (memberClass == UNSIGNED_16) {
-            return this.new Unsigned16();
-        } else if (memberClass == SIGNED_32) {
-            return this.new Signed32();
-        } else if (memberClass == UNSIGNED_32) {
-            return this.new Unsigned32();
-        } else if (memberClass == SIGNED_64) {
-            return this.new Signed64();
-        } else if (memberClass == FLOAT_32) {
-            return this.new Float32();
-        } else if (memberClass == FLOAT_64) {
-            return this.new Float64();
-        } else {
-            throw new UnsupportedOperationException(memberClass
-                    + " not recognized or invalid");
-        }
+    public final Struct inner(Struct struct) {
+        if (struct._outer != null)
+            throw new IllegalArgumentException(
+                    "struct: Already an inner struct");
+        struct._outer = this;
+        final int bitSize = struct.size() << 3;
+        updateIndexes(struct._alignment, bitSize, bitSize);
+        struct._outerOffset = (_bitIndex - bitSize) >> 3;
+        return struct;
     }
-    // Cannot use class literal (.class) with CLDC 1.0
-    private static final Struct STRUCT = new Struct();
-    private static final Class MEMBER = STRUCT.new Member().getClass();  
-    private static final Class BOOL = STRUCT.new Bool().getClass();  
-    private static final Class SIGNED_8 = STRUCT.new Signed8().getClass();  
-    private static final Class UNSIGNED_8 = STRUCT.new Unsigned8().getClass();  
-    private static final Class SIGNED_16 = STRUCT.new Signed16().getClass();  
-    private static final Class UNSIGNED_16 = STRUCT.new Unsigned16().getClass();  
-    private static final Class SIGNED_32 = STRUCT.new Signed32().getClass();  
-    private static final Class UNSIGNED_32 = STRUCT.new Unsigned32().getClass();  
-    private static final Class SIGNED_64 = STRUCT.new Unsigned32().getClass();  
-    private static final Class FLOAT_32 = STRUCT.new Float32().getClass();  
-    private static final Class FLOAT_64 = STRUCT.new Float64().getClass();  
+
+    /**
+     * Attaches the specified array of structs as inner structs. 
+     * The array is populated if necessary using the struct component
+     * default constructor (which must be public).
+     *
+     * @param structs the struct array.
+     * @return the specified struct array. 
+     * @throws IllegalArgumentException if the specified array contains 
+     *         inner structs.
+     */
+    public final Struct[] array(Struct[] structs) {
+        Class structClass = null;
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        for (int i = 0; i < structs.length;) {
+            Struct struct = structs[i];
+            if (struct == null) {
+                try {
+                    if (structClass == null) {
+                        String arrayName = structs.getClass().getName();
+                        String structName = arrayName.substring(2, arrayName
+                                .length() - 1);
+                        structClass = Reflection.getClass(structName);
+                    }
+                    struct = (Struct) structClass.newInstance();
+                } catch (Exception e) {
+                    throw new JavolutionError(e);
+                }
+            }
+            structs[i++] = inner(struct);
+        }
+        _resetIndex = resetIndexSaved;
+        return structs;
+    }
+
+    /**
+     * Attaches the specified two-dimensional array of structs as inner
+     * structs. The array is populated if necessary using the struct component 
+     * default constructor (which must be public).
+     *
+     * @param structs the two dimensional struct array.
+     * @return the specified struct array. 
+     * @throws IllegalArgumentException if the specified array contains 
+     *         inner structs.
+     */
+    public final Struct[][] array(Struct[][] structs) {
+        Class structClass = null;
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        for (int i = 0; i < structs.length; i++) {
+            array(structs[i]);
+        }
+        _resetIndex = resetIndexSaved;
+        return structs;
+    }
+
+    /**
+     * Attaches the specified three dimensional array of structs as inner 
+     * structs. The array is populated if necessary using the struct component 
+     * default constructor (which must be public).
+     *
+     * @param structs the three dimensional struct array.
+     * @return the specified struct array.
+     * @throws IllegalArgumentException if the specified array contains 
+     *         inner structs.
+     */
+    public final Struct[][][] array(Struct[][][] structs) {
+        Class structClass = null;
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        for (int i = 0; i < structs.length; i++) {
+            array(structs[i]);
+        }
+        _resetIndex = resetIndexSaved;
+        return structs;
+    }
+
+    /**
+     * Attaches the specified array member. For predefined members, 
+     * the array is populated when empty; custom members should use 
+     * literal (populated) arrays.
+     *
+     * @param  arrayMember the array member.
+     * @return the specified array member.
+     * @throws UnsupportedOperationException if the specified array 
+     *         is empty and the member type is unknown. 
+     */
+    public final Member[] array(Member[] arrayMember) {
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        if (BOOL.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Bool();
+        } else if (SIGNED_8.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Signed8();
+        } else if (UNSIGNED_8.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Unsigned8();
+        } else if (SIGNED_16.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Signed16();
+        } else if (UNSIGNED_16.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Unsigned16();
+        } else if (SIGNED_32.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Signed32();
+        } else if (UNSIGNED_32.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Unsigned32();
+        } else if (SIGNED_64.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Signed64();
+        } else if (FLOAT_32.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Float32();
+        } else if (FLOAT_64.isInstance(arrayMember)) {
+            for (int i = 0; i < arrayMember.length;)
+                arrayMember[i++] = this.new Float64();
+        } else {
+            throw new UnsupportedOperationException(
+                    "Unknown member, literal array should be used");
+        }
+        _resetIndex = resetIndexSaved;
+        return arrayMember;
+    }
+
+    private static final Class BOOL = new Bool[0].getClass();
+
+    private static final Class SIGNED_8 = new Signed8[0].getClass();
+
+    private static final Class UNSIGNED_8 = new Unsigned8[0].getClass();
+
+    private static final Class SIGNED_16 = new Signed16[0].getClass();
+
+    private static final Class UNSIGNED_16 = new Unsigned16[0].getClass();
+
+    private static final Class SIGNED_32 = new Signed32[0].getClass();
+
+    private static final Class UNSIGNED_32 = new Unsigned32[0].getClass();
+
+    private static final Class SIGNED_64 = new Signed64[0].getClass();
+
+    private static final Class FLOAT_32 = new Float32[0].getClass();
+
+    private static final Class FLOAT_64 = new Float64[0].getClass();
+
+    /**
+     * Attaches the specified two-dimensional array member. For predefined
+     * members, the array is populated when empty; custom members should use 
+     * literal (populated) arrays.
+     *
+     * @param  arrayMember the two-dimensional array member.
+     * @return the specified array member.
+     * @throws UnsupportedOperationException if the specified array 
+     *         is empty and the member type is unknown. 
+     */
+    public final Member[][] array(Member[][] arrayMember) {
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        for (int i = 0; i < arrayMember.length; i++) {
+            array(arrayMember[i]);
+        }
+        _resetIndex = resetIndexSaved;
+        return arrayMember;
+    }
+
+    /**
+     * Attaches the specified three-dimensional array member. For predefined
+     * members, the array is populated when empty; custom members should use 
+     * literal (populated) arrays.
+     *
+     * @param  arrayMember the three-dimensional array member.
+     * @return the specified array member.
+     * @throws UnsupportedOperationException if the specified array 
+     *         is empty and the member type is unknown. 
+     */
+    public final Member[][][] array(Member[][][] arrayMember) {
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _bitIndex = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
+        for (int i = 0; i < arrayMember.length; i++) {
+            array(arrayMember[i]);
+        }
+        _resetIndex = resetIndexSaved;
+        return arrayMember;
+    }
+
+    /**
+     * Updates this struct indexes after adding a member with the 
+     * specified constraints.
+     *
+     * @param  alignment  the desired alignment in bytes.
+     * @param  nbrOfBits  the size in bits.
+     * @param  capacity   the word size maximum capacity in bits
+     *                    (equal to nbrOfBits for non-bitfields).
+     * @return offset the offset of the member.
+     * @throws IllegalArgumentException if
+     *         <code>nbrOfBits &gt; capacity</code>
+     */
+    private int updateIndexes(int alignment, int nbrOfBits, int capacity) {
+        if (nbrOfBits > capacity) {
+            throw new IllegalArgumentException("nbrOfBits: " + nbrOfBits
+                    + " exceeds capacity: " + capacity);
+        }
+
+        // Resets index if union.
+        if (_resetIndex) {
+            _bitIndex = 0;
+        }
+
+        // Caculates offset based on alignment constraints.
+        alignment = isPacked() ? 1 : alignment;
+        int offset = (_bitIndex / (alignment << 3)) * alignment;
+
+        // Calculates bits already used from the offset position.
+        int usedBits = _bitIndex - (offset << 3);
+
+        // Checks if bits can be adjacents. 
+        // A bit size of 0 forces realignment, ref. C/C++ Standard.
+        if ((capacity < usedBits + nbrOfBits)
+                || ((nbrOfBits == 0) && (usedBits != 0))) {
+            // Padding to next alignment boundary.
+            offset += alignment;
+            _bitIndex = (offset << 3) + nbrOfBits;
+        } else { // Adjacent bits.
+            _bitIndex += nbrOfBits;
+        }
+
+        // Updates bits used (for size calculation).
+        if (_bitsUsed < _bitIndex) {
+            _bitsUsed = _bitIndex;
+        }
+
+        // Updates Struct's alignment.
+        if (_alignment < alignment) {
+            _alignment = alignment;
+        }
+        return offset;
+    }
 
     /////////////
     // MEMBERS //
@@ -480,13 +657,7 @@ public class Struct {
         /**
          * Holds the relative offset of this member within its struct.
          */
-        private int _offset;
-
-        /**
-         * Default constructor (used internally for inner struct and bit-fields).
-         */
-        Member() {
-        }
+        private final int _offset;
 
         /**
          * Base constructor for custom member types.
@@ -496,7 +667,19 @@ public class Struct {
          */
         protected Member(int alignment, int size) {
             final int nbrOfBits = size << 3;
-            updateIndexes(alignment, nbrOfBits, nbrOfBits);
+            _offset = updateIndexes(alignment, nbrOfBits, nbrOfBits);
+        }
+
+        /**
+         * Base constructor for predefined member types with bit fields.
+         *
+         * @param  alignment  the desired alignment in bytes.
+         * @param  nbrOfBits  the size in bits.
+         * @param  capacity   the word size maximum capacity in bits
+         *                    (equal to nbrOfBits for non-bitfields).
+         */
+        Member(int alignment, int nbrOfBits, int capacity) {
+            _offset = updateIndexes(alignment, nbrOfBits, capacity);
         }
 
         /**
@@ -510,290 +693,12 @@ public class Struct {
 
         /**
          * Returns the absolute position of this member in the 
-         * byte buffer or the member's {@link #offset offset} 
-         * if the struct's byte buffer is not set.
+         * byte buffer.
          *
-         * @return the absolute position in the byte buffer.
+         * @return the byte buffer position.
          */
         public final int position() {
-            return _byteBufferPosition + _offset;
-        }
-
-        /**
-         * Updates the {@link Struct}'s indexes and size during construction.
-         *
-         * @param  alignment  the desired alignment in bytes.
-         * @param  nbrOfBits  the size in bits.
-         * @param  capacity   the word size maximum capacity in bits
-         *                    (equal to nbrOfBits for non-bitfields).
-         * @throws IllegalArgumentException if
-         *         <code>nbrOfBits &gt; capacity</code>
-         */
-        void updateIndexes(int alignment, int nbrOfBits, int capacity) {
-            if (nbrOfBits > capacity) {
-                throw new IllegalArgumentException("nbrOfBits: " + nbrOfBits
-                        + " exceeds capacity: " + capacity);
-            }
-
-            // Resets index if union.
-            if (_resetIndex) {
-                _bitIndex = 0;
-            }
-
-            // Caculates offset based on alignment constraints.
-            alignment = isPacked() ? 1 : alignment;
-            _offset = (_bitIndex / (alignment << 3)) * alignment;
-
-            // Calculates bits already used from the offset position.
-            int usedBits = _bitIndex - (_offset << 3);
-
-            // Checks if bits can be adjacents. 
-            // A bit size of 0 forces realignment, ref. C/C++ Standard.
-            if ((capacity < usedBits + nbrOfBits)
-                    || ((nbrOfBits == 0) && (usedBits != 0))) {
-                // Padding to next alignment boundary.
-                _offset += alignment;
-                _bitIndex = (_offset << 3) + nbrOfBits;
-            } else { // Adjacent bits.
-                _bitIndex += nbrOfBits;
-            }
-
-            // Updates bits used (for size calculation).
-            if (_bitsUsed < _bitIndex) {
-                _bitsUsed = _bitIndex;
-            }
-
-            // Updates Struct's alignment.
-            if (Struct.this._alignment < alignment) {
-                Struct.this._alignment = alignment;
-            }
-        }
-
-        /**
-         * Creates a new instance of the specified type.
-         *
-         * @param  type the class to instantiate.
-         * @return an object of the specified type created using its
-         *         default constructor.
-         * @throws ClassCastException if classType is not derived from
-         *         {@link Struct} or {@link Member}
-         */
-        Object newInstance(Class type) {
-            if (MEMBER.isAssignableFrom(type)) {
-                // Member.
-                return Struct.this.newInstance(type);
-            } else {
-                Struct struct;
-                LocalContext.enter();
-                try {
-                    OUTER.setValue(Struct.this);
-                    struct = (Struct) type.newInstance();
-                } catch (Throwable e) {
-                    throw new JavolutionError(e);
-                } finally {
-                    LocalContext.exit();
-                }
-                final int bitSize = struct.size() << 3;
-                updateIndexes(struct._alignment, bitSize, bitSize);
-                struct._outerOffset = (_bitIndex - bitSize) >> 3;
-                _inners.add(struct);
-                return struct;
-            }
-        }
-    }
-
-    /**
-     * This class represents an inner struct member.
-     */
-    public final class StructMember extends Member {
-
-        /**
-         * Holds the inner struct.
-         */
-        private final Struct _struct;
-
-        /**
-         * Creates a {@link Struct.StructMember} having an inner struct
-         * of specified type.
-         *
-         * @param  structType the class of the inner struct.
-         * @throws ClassCastException if the specified class is not derived from
-         *         {@link Struct}.
-         */
-        public StructMember(Class structType) {
-            _struct = (Struct) newInstance(structType);
-        }
-
-        /**
-         * Returns the struct represented by this {@link Struct.StructMember}.
-         *
-         * @return the inner struct.
-         */
-        public Struct get() {
-            return _struct;
-        }
-    }
-
-    /**
-     * This class represents an array member. Array's element can be
-     * {@link Struct.Member} or {@link Struct}/{@link Union}. For example the
-     *  following C code:<pre>
-     *     struct Vertex {
-     *         float x;
-     *         float y;
-     *     };
-     *     struct Rectangle {
-     *         int    colors[4];
-     *         struct Vertex vertices[2][2];
-     *         char   text[4][20];
-     *     };</pre>
-     *     would be represented by:<pre>
-     *     public class Vertex extends Struct {
-     *         public final Float32 x = new Float32();
-     *         public final Float32 y = new Float32();
-     *     }
-     *     public class Rectangle extends Struct {
-     *         public final Signed32[] colors = (Signed32[]) new ArrayMember(new Signed32[4]).get();
-     *         public final Vertex[][] vertices = (Vertex[][]) new ArrayMember(new Vertex[2][2]).get();
-     *     }</pre>
-     *     Arrays elements are directly accessible:<pre>
-     *     float x01 = myRectangle.vertices[0][1].x.get();
-     *     myRectangle.colors[2].set(0xFF00FF);</pre>
-     */
-    public final class ArrayMember extends Member {
-
-        /**
-         * Holds the array.
-         */
-        private final Object _array;
-
-        /**
-         * Holds the component type.
-         */
-        private final Class _componentType;
-
-        /**
-         * Creates an {@link Struct.ArrayMember} for the specified single 
-         * dimensional array.
-         *
-         * @param  array the actual array.
-         * @throws ClassCastException if the componentType is not derived
-         *         from {@link Struct.Member} or {@link Struct}.
-         */
-        public ArrayMember(Object[] array) {
-            String arrayName = array.getClass().getName();
-            String compName = arrayName.substring(2, arrayName.length() - 1);
-            try {
-                _componentType = Reflection.getClass(compName);
-            } catch (ClassNotFoundException e) {
-                throw new JavolutionError(e);
-            }
-            _array = array;
-            if (_resetIndex) {
-                _bitIndex = 0;
-                _resetIndex = false; // Ensures elements are sequential.
-                for (int i = 0; i < array.length; i++) {
-                    array[i] = newInstance(_componentType);
-                }
-                _resetIndex = true;
-            } else {
-                for (int i = 0; i < array.length; i++) {
-                    array[i] = newInstance(_componentType);
-                }
-            }
-        }
-
-        /**
-         * Creates an {@link Struct.ArrayMember} for the specified 
-         * 2-dimensional array.
-         *
-         * @param  array the actual array.
-         * @throws ClassCastException if the componentType is not derived
-         *         from {@link Struct.Member} or {@link Struct}.
-         */
-        public ArrayMember(Object[][] array) {
-            String arrayName = array.getClass().getName();
-            String compName = arrayName.substring(3, arrayName.length() - 1);
-            try {
-                _componentType = Reflection.getClass(compName);
-            } catch (ClassNotFoundException e) {
-                throw new JavolutionError(e);
-            }
-            _array = array;
-            if (_resetIndex) {
-                _bitIndex = 0;
-                _resetIndex = false; // Ensures elements are sequential.
-                for (int i = 0; i < array.length; i++) {
-                    for (int j = 0; i < array[i].length; j++) {
-                        array[i][j] = newInstance(_componentType);
-                    }
-                }
-                _resetIndex = true;
-            } else {
-                for (int i = 0; i < array.length; i++) {
-                    for (int j = 0; i < array[i].length; j++) {
-                        array[i][j] = newInstance(_componentType);
-                    }
-                }
-            }
-        }
-
-        /**
-         * Creates an {@link Struct.ArrayMember} for the specified 
-         * 3-dimensional array.
-         *
-         * @param  array the actual array.
-         * @throws ClassCastException if the componentType is not derived
-         *         from {@link Struct.Member} or {@link Struct}.
-         */
-        public ArrayMember(Object[][][] array) {
-            String arrayName = array.getClass().getName();
-            String compName = arrayName.substring(4, arrayName.length() - 1);
-            try {
-                _componentType = Reflection.getClass(compName);
-            } catch (ClassNotFoundException e) {
-                throw new JavolutionError(e);
-            }
-            _array = array;
-            if (_resetIndex) {
-                _bitIndex = 0;
-                _resetIndex = false; // Ensures elements are sequential.
-                for (int i = 0; i < array.length; i++) {
-                    for (int j = 0; i < array[i].length; j++) {
-                        for (int k = 0; k < array[i][j].length; k++) {
-                            array[i][j][k] = newInstance(_componentType);
-                        }
-                    }
-                }
-                _resetIndex = true;
-            } else {
-                for (int i = 0; i < array.length; i++) {
-                    for (int j = 0; i < array[i].length; j++) {
-                        for (int k = 0; k < array[i][j].length; k++) {
-                            array[i][j][k] = newInstance(_componentType);
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * Returns the array represented by this {@link Struct.ArrayMember}.
-         *
-         * @return the array member.
-         */
-        public Object get() {
-            return _array;
-        }
-
-        /**
-         * Returns the component type of the array represented by this 
-         * {@link Struct.ArrayMember}.
-         *
-         * @return the array's component type.
-         */
-        public Class componentType() {
-            return _componentType;
+            return getByteBufferPosition() + _offset;
         }
     }
 
@@ -836,6 +741,8 @@ public class Struct {
                     }
                 } catch (IOException e) {
                     throw new JavolutionError(e);
+                } finally {
+                    _writer.reset();
                 }
             }
         }
@@ -846,8 +753,8 @@ public class Struct {
                 try {
                     buffer.position(position());
                     _reader.setByteBuffer(buffer);
-                    for (int i=0; i < _length;) {
-                        char c = (char)_reader.read();
+                    for (int i = 0; i < _length;) {
+                        char c = (char) _reader.read();
                         if (c == 0) { // Null terminator.
                             return new String(_chars, 0, i);
                         } else {
@@ -857,6 +764,8 @@ public class Struct {
                     return new String(_chars, 0, _length);
                 } catch (IOException e) {
                     throw new JavolutionError(e);
+                } finally {
+                    _reader.reset();
                 }
             }
         }
@@ -876,7 +785,7 @@ public class Struct {
         }
 
         public Bool(int nbrOfBits) {
-            updateIndexes(1, nbrOfBits, 8);
+            super(1, nbrOfBits, 8);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -917,7 +826,7 @@ public class Struct {
         }
 
         public Signed8(int nbrOfBits) {
-            updateIndexes(1, nbrOfBits, 8);
+            super(1, nbrOfBits, 8);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -962,7 +871,7 @@ public class Struct {
         }
 
         public Unsigned8(int nbrOfBits) {
-            updateIndexes(1, nbrOfBits, 8);
+            super(1, nbrOfBits, 8);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1001,7 +910,7 @@ public class Struct {
         }
 
         public Signed16(int nbrOfBits) {
-            updateIndexes(2, nbrOfBits, 16);
+            super(2, nbrOfBits, 16);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1046,7 +955,7 @@ public class Struct {
         }
 
         public Unsigned16(int nbrOfBits) {
-            updateIndexes(2, nbrOfBits, 16);
+            super(2, nbrOfBits, 16);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1085,7 +994,7 @@ public class Struct {
         }
 
         public Signed32(int nbrOfBits) {
-            updateIndexes(4, nbrOfBits, 32);
+            super(4, nbrOfBits, 32);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1131,7 +1040,7 @@ public class Struct {
         }
 
         public Unsigned32(int nbrOfBits) {
-            updateIndexes(4, nbrOfBits, 32);
+            super(4, nbrOfBits, 32);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1172,7 +1081,7 @@ public class Struct {
         }
 
         public Signed64(int nbrOfBits) {
-            updateIndexes(8, nbrOfBits, 64);
+            super(8, nbrOfBits, 64);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 64 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1213,14 +1122,14 @@ public class Struct {
             super(4, 4);
         }
         /*@FLOATING_POINT@
-        public void set(float value) {
-            getByteBuffer().putFloat(position(), value);
-        }
+         public void set(float value) {
+         getByteBuffer().putFloat(position(), value);
+         }
 
-        public float get() {
-            return getByteBuffer().getFloat(position());
-        }
-        /**/
+         public float get() {
+         return getByteBuffer().getFloat(position());
+         }
+         /**/
     }
 
     /**
@@ -1231,13 +1140,13 @@ public class Struct {
             super(8, 8);
         }
         /*@FLOATING_POINT@
-        public void set(double value) {
-            getByteBuffer().putDouble(position(), value);
-        }
-        public double get() {
-            return getByteBuffer().getDouble(position());
-        }
-        /**/
+         public void set(double value) {
+         getByteBuffer().putDouble(position(), value);
+         }
+         public double get() {
+         return getByteBuffer().getDouble(position());
+         }
+         /**/
     }
 
     /**
@@ -1358,8 +1267,8 @@ public class Struct {
         }
 
         public Enum8(List enumValues, int nbrOfBits) {
+            super(1, nbrOfBits, 8);
             _enumValues = enumValues;
-            updateIndexes(1, nbrOfBits, 8);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1416,8 +1325,8 @@ public class Struct {
         }
 
         public Enum16(List enumValues, int nbrOfBits) {
+            super(2, nbrOfBits, 16);
             _enumValues = enumValues;
-            updateIndexes(2, nbrOfBits, 16);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1475,8 +1384,8 @@ public class Struct {
         }
 
         public Enum32(List enumValues, int nbrOfBits) {
+            super(4, nbrOfBits, 32);
             _enumValues = enumValues;
-            updateIndexes(4, nbrOfBits, 32);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;
@@ -1535,8 +1444,8 @@ public class Struct {
         }
 
         public Enum64(List enumValues, int nbrOfBits) {
+            super(8, nbrOfBits, 64);
             _enumValues = enumValues;
-            updateIndexes(8, nbrOfBits, 64);
             final int startBit = offset() << 3;
             _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 64 - _bitIndex
                     + startBit : _bitIndex - startBit - nbrOfBits;

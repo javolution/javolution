@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -26,13 +27,15 @@ final class AttributesImpl implements Attributes {
     /**
      * Holds attribute URIs.
      */
-    AttributeEntry[] _entries = new AttributeEntry[0];
+    AttributeEntry[] _entries = new AttributeEntry[16];
 
     /**
      * Default constructor.
      */
     public AttributesImpl() {
-        ensureCapacity(64);
+        for (int i=_entries.length; i > 0;) {
+            _entries[--i] = new AttributeEntry();
+        }
     }
 
     /**
@@ -282,7 +285,7 @@ final class AttributesImpl implements Attributes {
      *
      * @param  capacity the list capacity.
      */
-    public void ensureCapacity(int capacity) {
+    private void ensureCapacity(int capacity) {
         AttributeEntry[] tmp = new AttributeEntry[capacity];
         System.arraycopy(_entries, 0, tmp, 0, _entries.length);
         for (int i=_entries.length; i < tmp.length; i++) {

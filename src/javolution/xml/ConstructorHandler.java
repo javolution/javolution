@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -10,8 +11,8 @@ package javolution.xml;
 import j2me.util.List;
 import j2me.lang.CharSequence;
 import javolution.lang.Reusable;
-import javolution.lang.Text;
 import javolution.lang.TextBuilder;
+import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.xml.sax.Attributes;
 import javolution.xml.sax.ContentHandler;
@@ -21,13 +22,21 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * <p> This class handles SAX2 events during the construction process.</p>
+ * <p> This class handles SAX2 events in order to build objects from 
+ *     their xml representation.</p>
+ *     
+ * <p> For example, the following formats and parses an object without 
+ *     intermediate xml document:<pre>
+ *          ConstructorHandler ch = new ConstructorHandler();
+ *          ObjectWriter.write(obj, ch); 
+ *          assert(obj.equals(ch.getRoot()));
+ *     </pre></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
- * @see     ObjectReader
+ * @version 2.2, January 8, 2005
  */
-final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable {
+public final class ConstructorHandler implements ContentHandler, ErrorHandler, 
+		Reusable {
 
     /**
      * Holds the current nesting level (0 is the document level)
@@ -40,16 +49,25 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
     private Locator _locator;
 
     /**
-     * Holds the stack of XML elements (nesting limited to 64).
+     * Holds the root object.
      */
-    private final XmlElement[] _stack = new XmlElement[64];
+    private Object _root;
 
     /**
-     * Holds the identifier value to object mapping.
+     * Holds the stack of XML elements (nesting limited to 32).
      */
-    private final FastMap _idToObject = new FastMap()
-        .setKeyComparator(FastMap.KeyComparator.CHAR_SEQUENCE);
+    private final XmlElement[] _stack = new XmlElement[32];
 
+    /**
+     * Holds the identifier value to object mapping (TextBuilder to Object).
+     */
+    private final FastMap _idToObject = new FastMap();
+
+    /**
+     * Holds a pool of TextBuilder instances (for identifiers).
+     */
+    private FastList _textBuilderPool = new FastList();
+    
     /**
      * Default constructor.
      */
@@ -72,12 +90,12 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
     }
 
     /**
-     * Returns the root objects (typically one).
+     * Returns the root object.
      * 
-     * @param  the root objects.
+     * @return the object corresponding to the root xml element.
      */
-    public List getRoots() {
-        return _stack[0];
+    public Object getRoot() {
+        return _root;
     }
 
     /**
@@ -88,7 +106,7 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
      */
     public void startDocument() throws SAXException {
         _level = 0;
-        _stack[0].reset();
+        _root = null;
     }
 
     /**
@@ -98,9 +116,13 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
      *         another exception.
      */
     public void endDocument() throws SAXException {
+        List roots = _stack[0].getContent();
+        if (roots.size() > 0) {
+            _root = roots.get(0);
+        }
         // Clean-up (e.g. if parsing failed)
-        for (int i = 1; i <= _level; i++) {
-            _stack[i].reset();
+        for (int i = 0; i <= _level;) {
+           _stack[i++].reset();
         }
     }
 
@@ -116,8 +138,10 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
      */
     public void startElement(CharSequence uri, CharSequence localName,
             CharSequence qName, Attributes attributes) throws SAXException {
+        _accessId.uri = uri;
+        _accessId.localName = localName;
         final XmlElement xml = _stack[++_level];
-        final Class objectClass = classFor(uri, localName);
+        final Class objectClass = XmlFormat.classFor(_accessId);
         final XmlFormat xmlFormat = XmlFormat.getInstance(objectClass);
         final int attLength = attributes.getLength();
 
@@ -138,9 +162,9 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
         for (int i = 0; i < attLength; i++) {
             CharSequence key = attributes.getQName(i);
             CharSequence value = attributes.getValue(i);
-            xml.setAttribute(key, value);
+            xml._attributes.add(key, value);
             if (key.equals(idName)) { // Identifier.
-                xml._id = value;
+                xml._idValue = value;
             }
         }
 
@@ -149,10 +173,11 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
         xml._object = xmlFormat.preallocate(xml);
         
         // If preallocated and identifier, then maps id to object.
-        if ((xml._object != null) && (xml._id != null)) {
-            _idToObject.put(Text.valueOf(xml._id), xml._object);
+        if ((xml._object != null) && (xml._idValue != null)) {
+            _idToObject.put(newTextBuilder(xml._idValue), xml._object);
         }
     }
+    private XmlFormat.Identifier _accessId = new XmlFormat.Identifier();
 
     /**
      * Receives notification of the end of an element.
@@ -167,16 +192,16 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
             CharSequence qName) throws SAXException {
         XmlElement xml = _stack[_level];
         if (xml._format == null) { // Reference.
-            if (xml.size() != 0) {
+            if (xml._content.size() != 0) {
                 throw new SAXException("Non-empty reference element");
             }
-            _stack[--_level].add(xml._object);
+            _stack[--_level]._content.add(xml._object);
         } else {
             Object obj = xml._format.parse(xml);
-            if (xml._id != null) {
-                _idToObject.put(Text.valueOf(xml._id), obj);
+            if (xml._idValue != null) {
+                _idToObject.put(newTextBuilder(xml._idValue), obj);
             }
-            _stack[--_level].add(obj);
+            _stack[--_level]._content.add(obj);
         }
 
         // Clears the xml element (for reuse latter).
@@ -197,7 +222,7 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
         for (int i = start + length; i > start;) {
             if (ch[--i] > ' ') {
                 CharacterData cd = CharacterData.valueOf(ch, start, length);
-                _stack[_level].add(cd);
+                _stack[_level].getContent().add(cd);
                 break;
             }
         }
@@ -261,83 +286,22 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable
         throw e;
     }
 
-    /**
-     * Returns the class for the specified Java URI and local name.
-     *
-     * @param  uri the package name.
-     * @param  localName the relative name of the class.
-     * @return the corresponding class.
-     * @throws SAXException invalid URI (must use a java scheme).
-     */
-    private Class classFor(CharSequence uri, CharSequence localName)
-            throws SAXException {
-        // Searches current mapping.
-        _accessKey._uri = uri;
-        _accessKey._localName = localName;
-        Class cl = (Class) _keyToClass.get(_accessKey);
-        if (cl != null) {
-            return cl;
-        }
-        // Adds new mapping.
-        Key key = new Key();
-        key._uri = Text.valueOf(uri).intern();
-        key._localName = Text.valueOf(localName).intern();
-
-        // Build class.
-        String className;
-        if (uri.length() == 0) {
-            className = localName.toString();
-        } else if ((uri.length() >= 5) && (uri.charAt(0) == 'j')
-                && (uri.charAt(1) == 'a') && (uri.charAt(2) == 'v')
-                && (uri.charAt(3) == 'a') && (uri.charAt(4) == ':')) {
-            TextBuilder tb = TextBuilder.newInstance();
-            if (uri.length() > 5) {
-                tb.append(uri.subSequence(5, uri.length()));
-                tb.append('.');
-            }
-            tb.append(localName);
-            className = tb.toString();
-        } else {
-            throw new SAXParseException("Invalid URI (must use a java scheme)",
-                    _locator);
-        }
-
-        // Maps uri/localName to class.
-        try {
-            cl = XmlFormat.classFor(className);
-            _keyToClass.put(key, cl);
-            return cl;
-        } catch (ClassNotFoundException e) {
-            throw new SAXParseException("Class " + className + " not found",
-                    _locator);
-        }
-    }
-
-    private static final class Key {
-        CharSequence _uri;
-
-        CharSequence _localName;
-
-        public boolean equals(Object obj) {
-            Key that = (Key) obj;
-            return (that._uri.equals(this._uri) && that._localName
-                    .equals(this._localName));
-        }
-
-        public int hashCode() {
-            return _localName.hashCode();
-        }
-    }
-
-    private final FastMap _keyToClass = new FastMap();
-
-    private final Key _accessKey = new Key();
-
     // Implements Reusable.
-    public void clear() {
-        // We do not need to clear the key to class mapping as 
-        // this mapping is assumed persistent.
+    public void reset() {
+        _textBuilderPool.addAll(_idToObject.keySet()); // Recycle ids.
         _idToObject.clear();
-        getRoots().clear();
+        _root = null;
+    }
+
+    /**
+     * Returns a new TextBuilder instance (recycled) initialized 
+     * with the specified characters.  
+     */
+    private TextBuilder newTextBuilder(CharSequence chars) {
+        TextBuilder tb = (_textBuilderPool.size() == 0) ?
+             new TextBuilder() : (TextBuilder) _textBuilderPool.removeLast();
+        tb.reset();
+        tb.append(chars);
+        return tb;
     }
 }

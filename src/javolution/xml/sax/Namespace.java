@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -23,7 +24,7 @@ final class Namespace {
      * The pair [element, null] is on top of the stack after the element
      * start tag is read.
      */
-    private CharSequenceImpl[] _stack = new CharSequenceImpl[0];
+    private CharSequenceImpl[] _stack = new CharSequenceImpl[64];
 
     /**
      * Holds the stack current length.
@@ -44,7 +45,6 @@ final class Namespace {
      * Default constructor.
      */
     public Namespace() {
-        ensureCapacity(64);
         reset();
     }
 

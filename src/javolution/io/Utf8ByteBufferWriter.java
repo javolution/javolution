@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -8,6 +9,7 @@
 package javolution.io;
 
 import j2me.lang.CharSequence;
+import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 import j2me.nio.ByteBuffer;
 
@@ -28,7 +30,7 @@ import javolution.lang.Reusable;
  * <p> Instances of this class can be reused for different output streams
  *     and can be part of a higher level component (e.g. serializer) in order
  *     to avoid dynamic buffer allocation when the destination output changes.
- *     Also wrapping using a <code>j2me.io.BufferedWriter</code> is unnescessary
+ *     Also wrapping using a <code>java.io.BufferedWriter</code> is unnescessary
  *     as instances of this class embed their own data buffers.</p>
  * 
  * <p> Note: This writer is unsynchronized and always produces well-formed
@@ -56,12 +58,12 @@ public final class Utf8ByteBufferWriter extends Writer implements Reusable {
      *
      * @param  byteBuffer the destination byte buffer.
      * @return this UTF-8 writer.
-     * @throws Error if this writer is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this writer is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public Utf8ByteBufferWriter setByteBuffer(ByteBuffer byteBuffer) {
         if (_byteBuffer != null)
-            throw new Error("This writer has not been closed or cleared");
+            throw new IllegalStateException("Writer not closed or reset");
         _byteBuffer = byteBuffer;
         return this;
     }
@@ -205,18 +207,18 @@ public final class Utf8ByteBufferWriter extends Writer implements Reusable {
     }
 
     /**
-     * Closes this writer and {@link #clear clears} it for reuse.
+     * Closes and {@link #reset resets} this writer for reuse.
      *
-     * @throws  IOException  If an I/O error occurs
+     * @throws IOException if an I/O error occurs
      */
     public void close() throws IOException {
         if (_byteBuffer != null) {
-            clear();
+            reset();
         }
     }
 
-    // Implements Reusable interface.
-    public void clear() {
+    // Implements Reusable.
+    public void reset() {
         _byteBuffer = null;
         _highSurrogate = 0;
     }

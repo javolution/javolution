@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -10,6 +11,9 @@ package javolution;
 /**
  *  Signals that a serious problem (bug ?!) has been detected 
  *  within the library.
+ *  
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 1.0, September 14, 2004
  */
 public final class JavolutionError extends Error {
 
@@ -49,4 +53,7 @@ public final class JavolutionError extends Error {
     public JavolutionError(Throwable cause) {
         cause.printStackTrace();
     }
+
+    private static final long serialVersionUID = 3618701885583144500L;
+
 }

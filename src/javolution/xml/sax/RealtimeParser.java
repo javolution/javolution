@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -36,7 +37,7 @@ import org.xml.sax.SAXParseException;
  *     an {@link #parse(InputStream) InputStream} or even a {@link 
  *     #parse(ByteBuffer) ByteBuffer} (e.g. <code>MappedByteBuffer</code>).</p>
  * <p> This parser is light (less than 15Kbytes compressed) and maintains
- *     a very small memory footprint while parsing (e.g. less than 16Kbytes
+ *     a very small memory footprint while parsing (e.g. less than 32Kbytes
  *     while parsing 32Mbytes files). Typical applications include SOAP
  *     messaging, embedded/realtime systems, web servers (possibly thousands
  *     instances running concurrently), etc.</p>
@@ -68,16 +69,16 @@ import org.xml.sax.SAXParseException;
  *     (the whole character data between markups is always being returned).
  *     During parsing, no memory allocation is ever performed unless the
  *     data buffer capacity (see {@link #RealtimeParser(int)}) is too
- *     small to hold the whole character data. In which case, the internal data
- *     buffer is automatically re-sized.</p>
+ *     small to hold the largest character data. In which case, the internal
+ *     data buffer is automatically re-sized.</p>
  *
  * <p><i> Note: This parser is a <b>SAX2-like</b> parser with the
- *        <code>j2me.lang.String</code> type replaced by the more generic 
+ *        <code>java.lang.String</code> type replaced by the more generic 
  *       <code>j2me.lang.CharSequence</code> in {@link ContentHandler},
  *       {@link Attributes} interfaces and {@link DefaultHandler} base classes.
  *       If a standard SAX2 or JAXP parser is required, you may consider using
  *       the wrapping class {@link XMLReaderImpl}. Fast but not as fast as 
- *       <code>j2me.lang.String</code> instances are dynamically allocated
+ *       <code>java.lang.String</code> instances are dynamically allocated
  *       while parsing.</i></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -109,21 +110,6 @@ public final class RealtimeParser implements Reusable {
      * Holds the column offset (column = _columnOffset + _index).
      */
     private int _columnOffset;
-
-    /**
-     * Holds the character buffer used for reading.
-     */
-    private final char[] _chars;
-
-    /**
-     * Holds the default stream reader (UTF-8).
-     */
-    private final Utf8StreamReader _inputStreamReader;
-
-    /**
-     * Holds the default ByteBuffer reader (UTF-8).
-     */
-    private final Utf8ByteBufferReader _byteBufferReader;
 
     /**
      * Holds the current index in the character buffer.
@@ -166,11 +152,27 @@ public final class RealtimeParser implements Reusable {
     private final LocatorImpl _locator = new LocatorImpl();
 
     /**
+     * Holds the character buffer used for reading.
+     */
+    private final char[] _chars;
+
+    /**
+     * Holds the default stream reader (UTF-8).
+     */
+    private final Utf8StreamReader _inputStreamReader = new Utf8StreamReader();
+
+    /**
+     * Holds the default ByteBuffer reader (UTF-8).
+     */
+    private final Utf8ByteBufferReader _byteBufferReader 
+        = new Utf8ByteBufferReader();
+
+    /**
      * Creates a real time parser with an initial data buffer capacity of
-     * <code>2048</code> characters.
+     * <code>4096</code> characters.
      */
     public RealtimeParser() {
-        this(2048);
+        this(4096);
     }
 
     /**
@@ -190,8 +192,6 @@ public final class RealtimeParser implements Reusable {
         // reader capacity to avoid overflow.
         _chars = new char[capacity];
         _data = new char[capacity + _chars.length];
-        _inputStreamReader = new Utf8StreamReader(capacity);
-        _byteBufferReader = new Utf8ByteBufferReader();
 
         // Sets default handlers.
         setContentHandler(DEFAULT_HANDLER);
@@ -275,7 +275,7 @@ public final class RealtimeParser implements Reusable {
      * @param in the input stream with UTF-8 encoding.
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *         wrapping another exception.
-     * @throws j2me.io.IOException an IO exception from the parser,
+     * @throws IOException an IO exception from the parser,
      *         possibly from a byte stream or character stream
      *         supplied by the application.
      * @see    Utf8StreamReader
@@ -292,7 +292,7 @@ public final class RealtimeParser implements Reusable {
      * @param  byteBuffer the byte buffer with UTF-8 encoding.
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *         wrapping another exception.
-     * @throws j2me.io.IOException an IO exception from the parser,
+     * @throws IOException an IO exception from the parser,
      *         possibly from a byte stream or character stream
      *         supplied by the application.
      * @see    Utf8ByteBufferReader
@@ -994,8 +994,8 @@ public final class RealtimeParser implements Reusable {
         }
     }
 
-    // Implements reusable.
-    public void clear() {
+    // Implements Reusable.
+    public void reset() {
         setContentHandler(DEFAULT_HANDLER);
         setErrorHandler(DEFAULT_HANDLER);
     }

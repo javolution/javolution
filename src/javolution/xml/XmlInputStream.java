@@ -1,12 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml;
 
+import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 import javolution.lang.Reusable;
 
@@ -19,10 +21,10 @@ import java.io.Reader;
  *     for object deserialization.</p>
  *     
  * <p> Instances of this class embed their own data buffer, wrapping using 
- *     a <code>j2me.io.BufferedInputStream</code> is therefore unnescessary.</p>
+ *     a <code>java.io.BufferedInputStream</code> is therefore unnescessary.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.0, December 5, 2004
+ * @version 2.2, January 8, 2005
  * @see     XmlOutputStream
  */
 public class XmlInputStream extends InputStream implements Reusable {
@@ -30,41 +32,30 @@ public class XmlInputStream extends InputStream implements Reusable {
     /**
      * Holds the object reader.
      */
-    private final ObjectReader _objectReader;
+    private final ObjectReader _objectReader = new ObjectReader();
 
     /**
      * Holds the xml reader used for parsing.
      */
-    private final XmlReader _xmlReader;
+    private final XmlReader _xmlReader = new XmlReader();
 
     /**
-     * Creates a xml input stream of default buffer capacity.
+     * Default constructor.
      */
     public XmlInputStream() {
-        this(2048);
     }
     
-    /**
-     * Creates a xml input stream having the specified buffer capacity.
-     * 
-     * @param capacity the buffer capacity. 
-     */
-    public XmlInputStream(int capacity) {
-        _objectReader = new ObjectReader(capacity);
-        _xmlReader = new XmlReader(capacity);
-    }
-
     /**
      * Sets the underlying input source for this stream.
      * 
      * @param in the input source.
      * @return <code>this</code> 
-     * @throws Error if this stream is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this stream is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public XmlInputStream setInputStream(InputStream in) {
         if (_xmlReader._inputStream != null)
-            throw new Error("This stream has not been closed or cleared");
+            throw new IllegalStateException("Stream not closed or reset");
         _xmlReader._inputStream = in;
         return this;
     }
@@ -84,18 +75,23 @@ public class XmlInputStream extends InputStream implements Reusable {
     }
 
     /**
-     * Closes this stream and {@link #clear clears} it for reuse.
+     * Closes and {@link #reset resets} this stream for reuse.
      *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
         if (_xmlReader._inputStream != null) {
             _xmlReader._inputStream.close();
-            clear();
+            reset();
         }
     }
     
-    // Implements abstract method.
+    /**
+     * Reads the next byte of data from the input stream.
+     * 
+     * @return the next byte of data, or -1 if the end of the stream is reached.
+     * @throws IOException if an I/O error occurs.
+     */
     public int read() throws IOException {
         if (_xmlReader._start < _xmlReader._end) {
             return _xmlReader._bytes[_xmlReader._start++];
@@ -105,7 +101,17 @@ public class XmlInputStream extends InputStream implements Reusable {
         }
     }   
     
-    // Overrides (optimization)
+    /**
+     * Reads up to len bytes of data from the input stream into an array of 
+     * bytes.
+     * 
+     * @param b the buffer into which the data is read.
+     * @param off the start offset in array b at which the data is written.
+     * @param len the maximum number of bytes to read. 
+     * @return  the total number of bytes read into the buffer, or -1 if there 
+     *          is no more data because the end of the stream has been reached.
+     * @throws IOException if an I/O error occurs.
+     */
     public int read(byte b[], int off, int len) throws IOException {
         int rem = _xmlReader._end - _xmlReader._start;
         if (rem == 0) { // Buffer empty, go straight to the source.
@@ -119,9 +125,9 @@ public class XmlInputStream extends InputStream implements Reusable {
     }
     
     // Implements Reusable interface.
-    public void clear() {
-        _objectReader.clear();
-        _xmlReader.clear();
+    public void reset() {
+        _objectReader.reset();
+        _xmlReader.reset();
     }
     
     /**
@@ -136,16 +142,8 @@ public class XmlInputStream extends InputStream implements Reusable {
         private int _moreBytes;
         private int _start;
         private int _end;
-        private final byte[] _bytes;
+        private final byte[] _bytes = new byte[4096];
         private boolean _isHalted;
-        
-        /**
-         * Creates an xml reader of specified capacity. 
-         * is encountered. 
-         */
-        public XmlReader(int capacity) {
-            _bytes = new byte[capacity];
-        }
         
 
         /**
@@ -272,7 +270,7 @@ public class XmlInputStream extends InputStream implements Reusable {
         }
 
         // Implements Reusable interface.
-        public void clear() {
+        public void reset() {
             _code = 0;
             _end = 0;
             _inputStream = null;

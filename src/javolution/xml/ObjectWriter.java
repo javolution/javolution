@@ -1,79 +1,72 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml;
 
-import j2me.lang.CharSequence;
-import j2me.lang.UnsupportedOperationException;
 import j2me.nio.ByteBuffer;
 import j2me.util.Iterator;
-import j2me.util.Map;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
+
+import org.xml.sax.SAXException;
 
 import javolution.io.Utf8ByteBufferWriter;
 import javolution.io.Utf8StreamWriter;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
+import javolution.lang.TextBuilder;
+import javolution.util.FastComparator;
 import javolution.util.FastList;
 import javolution.util.FastMap;
-import javolution.util.Reflection;
+import javolution.xml.sax.ContentHandler;
+import javolution.xml.sax.WriterHandler;
 
 /**
- * <p> This class takes an object and formats it to a stream as XML. 
+ * <p> This class takes an object and formats it to XML (SAX2 events or stream). 
  *     Objects written using this facility may be read using
  *     the {@link ObjectReader} class.</p>
+ *     
  * <p> Namespaces are supported (including default namespace).</p>
+ * 
  * <p> For example, the following code creates an <code>ObjectWriter</code>
- *     using a default namespace for all classes within the package
- *     <code>org.jscience</code>, excepts for the <code>org.jscience.math</code>
- *     classes which uses the <code>math</code> prefix.
- *    <pre>
+ *     using the default namespace for all <code>java.lang.*</code> classes and 
+ *     the <code>math</code> prefix for the <code>org.jscience.mathematics.*
+ *     </code> classes.
+ *     <pre>
  *        ObjectWriter ow = new ObjectWriter();
- *        ow.setNamespace("", "org.jscience"); // Default namespace.
- *        ow.setNamespace("math", "org.jscience.math");
+ *        ow.setNamespace("", "java.lang"); // Default namespace.
+ *        ow.setNamespace("math", "org.jscience.mathematics");
  *        ...
- *        ow.write(matrix, writer);       // Writer encoding.
- *        ow.write(matrix, outputStream); // UTF-8 stream.
- *        ow.write(matrix, byteBuffer);   // UTF-8 NIO ByteBuffer.
- *    </pre></p>
+ *        ow.write(obj, contentHandler); // SAX2 Events.
+ *     <i>or</i> ow.write(obj, writer);         // Writer encoding.
+ *     <i>or</i> ow.write(obj, outputStream);   // UTF-8 stream.
+ *     <i>or</i> ow.write(obj, byteBuffer);     // UTF-8 NIO ByteBuffer.
+ *     </pre></p>
  *
+ * <p> For more control over the xml document generated (e.g. indentation, 
+ *     prolog, etc.), applications may use the 
+ *     {@link #write(Object, ContentHandler)} method in conjonction with
+ *     a custom {@link WriterHandler}. For example:<pre>
+ *        OutputStream out = new FileOutputStream("C:/document.xml");
+ *        Writer writer = new Utf8StreamWriter().setOuptutStream(out); // UTF-8 encoding.
+ *        WriterHandler handler = new WriterHandler().setWriter(writer);
+ *        handler.setIndent("\t"); // Indents with tabs.
+ *        handler.setProlog("&lt;?xml version=\"1.0\" encoding=\"UTF-8\"?&gt;");
+ *        ...
+ *        ow.write(obj, handler);</pre>
+ *     </p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.0, December 9, 2004
+ * @version 2.2, January 8, 2005
  */
 public class ObjectWriter implements Reusable {
-
-    /**
-     * Holds the list of prefixes.
-     */
-    private final FastList _prefixes = new FastList();
-
-    /**
-     * Holds the list of packages.
-     */
-    private final FastList _packages = new FastList();
-
-    /**
-     * Holds the document indent (default two-space indent).
-     */
-    private String _indent = "  ";
-
-    /**
-     * Indicates if the prolog has to be written (default <code>false</code>).
-     */
-    private boolean _isProlog = true;
-
-    /**
-     * Indicates if the writer or output stream is kept open after writing.
-     */
-    private boolean _keepOpen = false;
 
     /**
      * The counter to use to generate id automatically.
@@ -81,142 +74,91 @@ public class ObjectWriter implements Reusable {
     private int _idCount;
 
     /**
-     * Holds the object to id (CharSequence) mapping.
+     * Holds the object to id (Text) mapping.
      */
-    private final FastMap _objectToId = new FastMap()
-            .setKeyComparator(FastMap.KeyComparator.REFERENCE);
+    private final FastMap _objectToId
+        = new FastMap().setKeyComparator(FastComparator.IDENTITY);
 
     /**
-     * Holds the stack of XML elements (nesting limited to 64).
+     * Holds namespaces association (prefix followed by package).
      */
-    private final XmlElement[] _stack = new XmlElement[64];
+    private FastList _namespaces = new FastList();
+    
+    /**
+     * Holds the class info mapping (Class to ClassInfo).
+     */
+    private final FastMap _classInfo = new FastMap();
+    
+    /**
+     * Holds the stack of XML elements (nesting limited to 32).
+     */
+    private final XmlElement[] _stack = new XmlElement[32];
 
     /**
      * Holds the stream writer.
      */
-    private final Utf8StreamWriter _utf8StreamWriter;
+    private final Utf8StreamWriter _utf8StreamWriter = new Utf8StreamWriter();
 
     /**
      * Holds the byte buffer writer.
      */
-    private final Utf8ByteBufferWriter _utf8ByteBufferWriter;
+    private final Utf8ByteBufferWriter _utf8ByteBufferWriter 
+        = new Utf8ByteBufferWriter();
 
     /**
-     * Creates an object writer with an internal buffer capacity of
-     * <code>2048</code> bytes.
+     * Holds the writer handler for stream output.
+     */
+    private final WriterHandler _writerHandler = new WriterHandler();
+
+    /**
+     * Default constructor.
      */
     public ObjectWriter() {
-        this(2048);
-    }
-
-    /**
-     * Creates an object writer with the specified internal buffer capacity.
-     * 
-     * @param capacity the internal buffer capacity (in bytes).
-     */
-    public ObjectWriter(int capacity) {
         _stack[0] = new XmlElement();
         for (int i = 1; i < _stack.length; i++) {
             _stack[i] = new XmlElement();
             _stack[i]._parent = _stack[i - 1];
         }
-        // Default namespace association.
-        _prefixes.add("");
-        _packages.add("");
-
-        _utf8StreamWriter = new Utf8StreamWriter(capacity);
-        _utf8ByteBufferWriter = new Utf8ByteBufferWriter();
     }
 
     /**
-     * Returns a new object writer.
-     * 
-     * @deprecated replaced by {@link #ObjectWriter()} or 
-     *             {@link #ObjectWriter(int)}
-     * @return <code>new ObjectWriter()</code>
-     */
-    public static ObjectWriter newInstance() {
-        return new ObjectWriter();
-    }
-
-    /**
-     * Maps a namespace to a Java package. The specified prefix is used to
+     * Maps a namespace to a Java package. The specified prefix is used to 
      * shorten the tag name of the object being serialized. For example:
      * <code>setNamespace("math", "org.jscience.mathematics")</code> associates
      * the namespace prefix <code>math</code> with the namespace name
-     * <code>java:org.jscience.mathematics</code>. Any class within the package
-     * <code>org.jscience.mathematics</code> now uses the <code>math</code> 
-     * prefix. Any previous association of the specified prefix or package is
-     * removed. Applications may set the default namespace using the prefix 
-     * <code>""</code>, in which case classes not part of any namespace 
-     * (not even the default one) use the explicit <code>"root"</code> prefix.
+     * <code>java:org.jscience.mathematics</code>. Classes within the package
+     * <code>org.jscience.mathematics.*</code> now use the <code>math</code>
+     * prefix. The default namespace (represented by the prefix <code>""</code>)
+     * can be set as well (in which cases a "root" prefix is created for 
+     * classes without namespace).
      *
      * @param  prefix the namespace prefix or <code>""</code> to set the default
      *         namespace.
      * @param  packageName of the package associated to the specified prefix.
      */
     public void setNamespace(String prefix, String packageName) {
-        // If default namespace, create a "default" prefix.
-        if (prefix.length() == 0) {
+        if (prefix.length() == 0) { // Default namespace being set.
+            // Creates a prefix for root.
             setNamespace("root", "");
         }
-
-        // Removes any previous association of the specified package.
-        for (int i = 0; i < _packages.size(); i++) {
-            if (packageName.equals(_packages.get(i))) {
-                _packages.remove(i);
-                _prefixes.remove(i);
-                break;
-            }
-        }
-
-        // Overrides prefix association (if any)
-        for (int i = 0; i < _prefixes.size(); i++) {
-            if (prefix.equals(_prefixes.get(i))) {
-                _packages.set(i, packageName);
-                return; // Done.
-            }
-        }
-
-        // New association.
-        _prefixes.add(prefix);
-        _packages.add(packageName);
+        _namespaces.add(prefix);
+        _namespaces.add(packageName);
     }
-
+    
     /**
-     * Sets the indentation <code>String</code> (default two-spaces).
-     *
-     * @param  indent the indent <code>String</code>, usually some number of
-     *         spaces.
-     */
-    public void setIndent(String indent) {
-        _indent = indent;
-    }
-
-    /**
-     * Indicates if the XML prolog has to be written
-     * (default <code>true</code>).
-     *
-     * @param  isProlog <code>true</code> if the XML prolog has to be written;
-     *         <code>false</code> otherwise.
-     */
-    public void setProlog(boolean isProlog) {
-        _isProlog = isProlog;
-    }
-
-    /**
-     * Clears all internal data maintained by this writer including any 
-     * namespace associations. Objects previously written will not be
+     * Resets all internal data maintained by this writer including any 
+     * namespace associations; objects previously written will not be
      * referred to, they will be send again.
      */
-    public void clear() {
-        _prefixes.clear();
-        _packages.clear();
+    public void reset() {
         _objectToId.clear();
-        // Default namespace association.
-        _prefixes.add("");
-        _packages.add("");
+        _namespaces.clear();
         _idCount = 0;
+        
+        // Clears class infos.
+        for (Iterator i=_classInfo.fastValueIterator(); i.hasNext();) {
+            ((ClassInfo) i.next()).reset();
+        }
     }
 
     /**
@@ -231,23 +173,16 @@ public class ObjectWriter implements Reusable {
      */
     public void write(Object obj, Writer writer) throws IOException {
         try {
-            if (_isProlog) {
-                if ((writer instanceof OutputStreamWriter)
-                        && (GET_ENCODING != null)) {
-                    String encoding = (String) GET_ENCODING.invoke(writer);
-                    writer.write("<?xml version=\"1.0\" encoding=\"" + encoding
-                            + "\"?>\n");
-                } else {
-                    writer.write("<?xml version=\"1.0\"?>\n");
-                }
-            }
-            writeElement(obj, writer, 0);
+            _writerHandler.setWriter(writer);
+            write(obj, _writerHandler);
+        } catch (SAXException e) {
+            if (e.getException() instanceof IOException) {
+                 throw (IOException)e.getException();   
+            } 
         } finally {
-            writer.close();
+           _writerHandler.reset();
         }
     }
-    private static final Reflection.Method GET_ENCODING = Reflection
-            .getMethod("j2me.io.OutputStreamWriter.getEncoding()");
 
     /**
      * Writes the specified object to the given output stream in XML format. 
@@ -263,13 +198,15 @@ public class ObjectWriter implements Reusable {
     public void write(Object obj, OutputStream out) throws IOException {
         try {
             _utf8StreamWriter.setOutputStream(out);
-            if (_isProlog) {
-                _utf8StreamWriter
-                        .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            }
-            writeElement(obj, _utf8StreamWriter, 0);
+            _writerHandler.setWriter(_utf8StreamWriter);
+            write(obj, _writerHandler);
+        } catch (SAXException e) {
+            if (e.getException() instanceof IOException) {
+                 throw (IOException)e.getException();   
+            } 
         } finally {
-            _utf8StreamWriter.close();
+           _utf8StreamWriter.reset();
+           _writerHandler.reset();
         }
     }
 
@@ -284,189 +221,149 @@ public class ObjectWriter implements Reusable {
     public void write(Object obj, ByteBuffer byteBuffer) throws IOException {
         try {
             _utf8ByteBufferWriter.setByteBuffer(byteBuffer);
-            if (_isProlog) {
-                _utf8ByteBufferWriter
-                        .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            }
-            writeElement(obj, _utf8ByteBufferWriter, 0);
+            _writerHandler.setWriter(_utf8ByteBufferWriter);
+            write(obj, _writerHandler);
+        } catch (SAXException e) {
+            if (e.getException() instanceof IOException) {
+                 throw (IOException)e.getException();   
+            } 
         } finally {
-            _utf8ByteBufferWriter.close();
+            _utf8ByteBufferWriter.reset();
+           _writerHandler.reset();
         }
     }
 
-    /*
-     * Writes the specified element.
+    /**
+     * Generates the SAX events corresponding to the serialization of the 
+     * specified object.
      *
-     * @param obj the object to serialize.
-     * @param out the writer to write to.
-     * @param level the level of nesting (0 for root).
+     * @param  obj the object to format.
+     * @param  handler the SAX event handler.
      */
-    private void writeElement(Object obj, Writer writer, int level)
-            throws IOException {
+    public void write(Object obj, ContentHandler handler) throws SAXException {
+        handler.startDocument();
+        try {
+            for (Iterator i=_namespaces.fastIterator(); i.hasNext();) {
+                TextBuilder prefix 
+                    = TextBuilder.newInstance().append(i.next());
+                TextBuilder uri 
+                    = TextBuilder.newInstance().append("java:").append(i.next());
+                handler.startPrefixMapping(prefix, uri);
+            }
+            writeElement(obj, handler, 0);
+        } finally {
+            for (Iterator i=_namespaces.fastIterator(); i.hasNext();) {
+                TextBuilder prefix 
+                   = TextBuilder.newInstance().append(i.next());
+                Object pkg = i.next();
+                handler.endPrefixMapping(prefix);
+            }
+            handler.endDocument();
+        }
+    }
+    
+    
+    private void writeElement(Object obj, ContentHandler handler, int level) throws SAXException {
+        
+        // Replaces null value with Null object.
+        if (obj == null) {
+            writeElement(XmlFormat.NULL, handler, level);
+            return;
+        }
+        
         // Checks for Character Data
         if (obj instanceof CharacterData) {
             CharacterData cd = (CharacterData) obj;
-            writer.write("<![CDATA[");
-            for (int i = 0; i < cd.length();) {
-                writer.write(cd.charAt(i++));
-            }
-            writer.write("]]>");
+            handler.characters(cd.toArray(), 0, cd.length());
             return;
         }
-        // Indentation.
-        if (level > 0) {
-            writer.write('\n');
-            for (int i = 0; i < level; i++) {
-                writer.write(_indent);
+        
+        // Retrieves info for the class.
+        Class cl = obj.getClass();
+        ClassInfo ci = (ClassInfo) _classInfo.get(cl);
+        if (ci == null) { // First occurence of this class ever.
+            ci = new ClassInfo();
+            _classInfo.put(cl, ci);
+        }
+        if (ci.format == null) { // Sets info from current namespace settings. 
+            ci.format = XmlFormat.getInstance(cl);
+            ci.formatId = ci.format.identifier(false);
+            String name = XmlFormat.nameFor(cl);
+            
+            // Search for an uri matching the package name.
+            int maxPkgLength = -1;
+            for (Iterator i= _namespaces.fastIterator(); i.hasNext();) {
+                String prefix = (String) i.next();
+                String pkg = (String) i.next();
+                final int pkgLength = pkg.length();
+                if (name.startsWith(pkg) && (pkgLength > maxPkgLength)) {
+                     ci.uri = JAVA.plus(Text.valueOf(pkg));
+                     ci.localName = (pkgLength > 0) ? 
+                             Text.valueOf(name).subtext(pkgLength + 1) :
+                             Text.valueOf(name);    
+                     ci.qName = (prefix.length() > 0) ? 
+                             Text.valueOf(prefix).plus(SEMICOLON).plus(ci.localName) :
+                             ci.localName;
+                     maxPkgLength = pkgLength;
+                }
+            }
+            if (maxPkgLength < 0) { // Default namespace "".
+                ci.uri = Text.EMPTY;
+                ci.localName = Text.valueOf(name);
+                ci.qName = ci.localName;
             }
         }
-
-        // Serializes.
-        XmlElement xml = _stack[level];
-        xml._objectClass = obj.getClass();
-        xml._format = XmlFormat.getInstance(xml._objectClass);
-
-        String idName = xml._format.identifier(false);
-        if (idName != null) { // Identifier to be used.
-            CharSequence idValue = (CharSequence) _objectToId.get(obj);
-            if (idValue != null) { // Reference.
-                String refName = xml._format.identifier(true);
-                if (refName.equals(idValue)) {
-                    throw new Error(
-                            "Identifier for reference and non-reference should"
-                                    + " be distinct (XmlFormat for "
-                                    + xml._objectClass + " )");
-                }
-                xml.setAttribute(refName, idValue);
-            } else { // New object to be identified.
-                xml._format.format(obj, xml);
-                idValue = xml.getAttribute(idName);
-                if (idValue == null) { // Automatic assignment.
-                    idValue = Text.valueOf(++_idCount);
-                }
+        
+        // Formats.
+        final XmlElement xml = _stack[level];
+        xml._objectClass = cl;
+        if (ci.formatId != null) { // Identifier attribute must be present.
+            Text idValue = (Text) _objectToId.get(obj);
+            if (idValue != null) { // Already referenced.
+                xml.setAttribute(ci.format.identifier(true), idValue);
+            } else { // First object occurence.
+                ci.format.format(obj, xml);
+                Object userId = xml.getAttribute(ci.formatId);
+                idValue = (userId == null) ? 
+                        TextBuilder.newInstance().append(++_idCount).toText() :
+                        TextBuilder.newInstance().append(userId).toText();
                 _objectToId.put(obj, idValue);
+                xml.setAttribute(ci.formatId, idValue);
             }
-        } else {
-            xml._format.format(obj, xml);
+        } else { // No object identifier.
+            ci.format.format(obj, xml);
+        }
+        handler.startElement(ci.uri, ci.localName, ci.qName, xml.getAttributes());
+
+        // Writes nested elements.
+        for (Iterator i = xml._content.fastIterator(); i.hasNext();) {
+             Object child = i.next();
+             writeElement(child, handler, level + 1);
         }
 
-        // Searches for associated prefix with longest package name.
-        String prefix = null;
-        String pkgName = "";
-        String className = XmlFormat.tagNameFor(xml._objectClass);
-
-        for (int i = 0; i < _packages.size(); i++) {
-            String pkg = (String) _packages.get(i);
-            if ((pkg.length() >= pkgName.length())
-                    && (className.startsWith(pkg))) {
-                prefix = (String) _prefixes.get(i);
-                pkgName = pkg;
-            }
-        }
-        if (prefix == null) {
-            throw new UnsupportedOperationException("Class " + className
-                    + " does not belong to any namespace (not even default)");
-        }
-
-        // Construct element's tag.
-        String tag = (pkgName.length() != 0) ? (prefix.length() != 0) ? prefix
-                + ":" + className.substring(pkgName.length() + 1) : className
-                .substring(pkgName.length() + 1)
-                : (prefix.length() != 0) ? prefix + ":" + className : className;
-
-        // Writes start tag.
-        writer.write('<');
-        writer.write(tag);
-        if (level == 0) {
-            // Writes namespace declaration (root).
-            for (int i = 0; i < _prefixes.size(); i++) {
-                String pfx = (String) _prefixes.get(i);
-                String pkg = (String) _packages.get(i);
-                if (pfx.length() == 0) { // Default namespace.
-                    if (pkg.length() != 0) {
-                        writer.write(" xmlns=\"java:");
-                        writer.write(pkg);
-                        writer.write('"');
-                    }
-                } else {
-                    writer.write(" xmlns:");
-                    writer.write(pfx);
-                    writer.write("=\"java:");
-                    writer.write(pkg);
-                    writer.write('"');
-                }
-            }
-        }
-
-        // Writes attributes
-        for (Iterator i = xml.getAttributes().entrySet().iterator(); i
-                .hasNext();) {
-            Map.Entry entry = (Map.Entry) i.next();
-            String key = (String) entry.getKey();
-            CharSequence value = (CharSequence) entry.getValue();
-
-            writer.write(' ');
-            writer.write(key);
-            writer.write("=\"");
-            ObjectWriter.write(writer, value);
-            writer.write('"');
-        }
-        // Writes content
-        if (xml.isEmpty()) {
-            writer.write("/>"); // Empty element.
-        } else {
-            writer.write(">");
-            for (Iterator i = xml.fastIterator(); i.hasNext();) {
-                Object child = i.next();
-                writeElement(child, writer, level + 1);
-            }
-            // Indentation.
-            writer.write('\n');
-            for (int i = 0; i < level; i++) {
-                writer.write(_indent);
-            }
-            writer.write("</");
-            writer.write(tag);
-            writer.write('>');
-        }
+        handler.endElement(ci.uri, ci.localName, ci.qName);
 
         // Clears XmlElement for reuse.
         xml.reset();
     }
+    private static final Text JAVA = Text.valueOf("java:").intern();
+    private static final Text SEMICOLON = Text.valueOf(":").intern();
 
-    /**
-     * Writes the specified character and replaces special characters with their
-     * appropriate entity reference suitable for XML attributes.
+    /*
+     * This class represents the current representation of a particular class.
      */
-    private static void write(Writer writer, CharSequence chars)
-            throws IOException {
-        for (int i = 0; i < chars.length(); i++) {
-            char c = chars.charAt(i);
-            switch (c) {
-            case '<':
-                writer.write("&lt;");
-                break;
-            case '>':
-                writer.write("&gt;");
-                break;
-            case '\'':
-                writer.write("&apos;");
-                break;
-            case '\"':
-                writer.write("&quot;");
-                break;
-            case '&':
-                writer.write("&amp;");
-                break;
-            default:
-                if (c >= ' ') {
-                    writer.write(c);
-                } else {
-                    writer.write("&#");
-                    writer.write(Integer.toString(c));
-                    writer.write(';');
-                }
-            }
-        }
+    private static final class ClassInfo {
+         XmlFormat format;
+         String formatId;
+         Text uri; // e.g. java:org.jscience.mathematics.numbers
+         Text qName; // e.g. num:Complex
+         Text localName; // e.g. Complex
+         void reset() {
+             format = null;
+             formatId = null;
+             uri = null;
+             qName = null;
+             localName = null;
+         }
     }
 }

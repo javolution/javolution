@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -8,36 +9,37 @@
 package javolution.lang;
 
 import j2me.io.Serializable;
-import j2me.util.Comparator;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
 
-import javolution.realtime.ArrayPool;
-import javolution.realtime.ObjectPool;
 import javolution.realtime.RealtimeObject;
+import javolution.util.FastComparator;
 import javolution.util.FastMap;
+import javolution.util.MathLib;
 import javolution.xml.XmlElement;
 import javolution.xml.XmlFormat;
 
 /**
  * <p> This class represents an immutable character sequence with extremely
- *     fast {@link #plus concatenation} speed.</p>
+ *     fast {@link #plus concatenation}, {@link #insert insertion} and 
+ *     {@link #delete deletion} capabilities (<b>O[Log(n)]</b>).</p>
  * <p> Instances of this class have the following advantages over 
  *     {@link String}</code>:<ul>
  *     <li> No need for an intermediate {@link StringBuffer} in order to 
- *          concatenate {@link String}, the {@link #plus plus} or 
- *          {@link #concat concat} methods are faster.</li>
+ *          manipulate textual document. {@link Text} methods are much 
+ *          faster (especially for large document).</li>
  *     <li> Bug free. They are not plagued by the {@link String#substring} <a
  *          href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4513622">
  *          memory leak bug</a> (when small substrings prevent memory from 
  *          larger string from being garbage collected).</li>
  *     <li> More flexible as they allows for search, concatenation and
  *          comparison with any <code>CharSequence</code> such as itself, 
- *          <code>j2me.lang.String</code>, <code>j2me.lang.StringBuffer</code>
- *          or <code>j2me.lang.StringBuilder (JDK1.5)</code>.</li>
- *     <li> Easy/fast creation using the {@link TextBuilder} class 
- *          (no need to specify the buffer capacity as it gently increases
- *          without incurring expensive resize/copy operations).</li>
+ *          <code>java.lang.String</code>, <code>java.lang.StringBuffer</code>
+ *          or <code>java.lang.StringBuilder (JDK1.5)</code>.</li>
+ *     <li> Easy {@link TextFormat formatting} using the {@link TextBuilder}
+ *          class (no need to specify the buffer capacity as
+ *          it gently increases without incurring expensive resize/copy 
+ *          operations).</li>
  *     <li> Real-time compliant (instances allocated on the "stack" when 
  *          executing in a {@link javolution.realtime.PoolContext PoolContext}).</li>
  *     </ul></p>
@@ -49,15 +51,14 @@ import javolution.xml.XmlFormat;
  *         final static Text TRUE = Text.valueOf("true").intern();
  *         final static Text FALSE = Text.valueOf("false").intern();
  *     </pre></p>
- * <p><i> Implementation Note: To avoid expensive copy operations (as in 
- *        {@link #concat concat}, {@link #subtext subtext}, 
- *        {@link #replace replace}, etc.), {@link Text} instances are broken
- *        down into smaller immutable sequences (they form a minimal-depth 
- *        binary tree). Copies are then performed in <code>O(Log(n))</code>
- *        instead of <code>O(n)</code>).</i></p>
+ * <p><i> Implementation Note: To avoid expensive copy operations , 
+ *        {@link Text} instances are broken down into smaller immutable 
+ *        sequences (they form a minimal-depth binary tree). 
+ *        Internal copies are then performed in <code>O[Log(n)]</code>
+ *        instead of <code>O[n]</code>).</i></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 2.2, January 30, 2004
  */
 public abstract class Text extends RealtimeObject implements CharSequence,
         Comparable, Serializable {
@@ -95,41 +96,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     static final Text NULL = Text.valueOf("null").intern();
 
     /**
-     * Holds a lexicographic comparator for any {@link CharSequence} 
-     * (including {@link Text} instances).
-     */
-    public static final Comparator COMPARATOR = new Comparator() {
-
-        /**
-         * Compares two character sequences lexicographically.
-         *
-         * @param left the first character sequence.
-         * @param right the second character sequence.
-         * @return the value <code>0</code> if both sequences represent the same
-         *         characters; a value less than <code>0</code> if the left 
-         *         sequence is lexicographically less than the right sequence;
-         *         and a value greater than <code>0</code> if the left sequence
-         *         is lexicographically greater than the right sequence.
-         * @throws ClassCastException if any of the specified object is not a
-         *          <code>CharSequence</code>.
-         */
-        public int compare(Object left, Object right) {
-            CharSequence seq1 = (CharSequence) left;
-            CharSequence seq2 = (CharSequence) right;
-            int i = 0;
-            int n = Math.min(seq1.length(), seq2.length());
-            while (n-- != 0) {
-                char c1 = seq1.charAt(i);
-                char c2 = seq2.charAt(i++);
-                if (c1 != c2) {
-                    return c1 - c2;
-                }
-            }
-            return seq1.length() - seq2.length();
-        }
-    };
-
-    /**
      * Holds the total number of characters.
      */
     int _count;
@@ -159,8 +125,9 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance();
             for (int i=0; i < length;) {
-                text._data[text._count++] = str.charAt(start + i++);
+                text._data[i] = str.charAt(start + i++);
             }
+            text._count = length;
             return text;
         } else {
             final int middle = start + (length >> 1);
@@ -185,8 +152,9 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance();
             for (int i=0; i < length;) {
-                text._data[text._count++] = csq.charAt(start + i++);
+                text._data[i] = csq.charAt(start + i++);
             }
+            text._count = length;
             return text;
         } else {
             final int middle = start + (length >> 1);
@@ -210,8 +178,9 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance();
             for (int i=0; i < length;) {
-                text._data[text._count++] = data[offset + i++];
+                text._data[i] = data[offset + i++];
             }
+            text._count = length;
             return text;
         } else {
             final int middle = offset + (length >> 1);
@@ -223,158 +192,22 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Returns the text representing the specified object 
-     * (allocated on the "stack" when executing in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
-     *
-     * @param  obj the object to represent as text.
-     * @return the textual representation of the specified object.
-     */
-    public static Text valueOf(Object obj) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(obj);
-        return tb.toText();
-    }
-
-    /**
-     * Returns the text representing the <code>boolean</code> argument.
-     *
-     * @param  b a <code>boolean</code>.
-     * @return if the argument is <code>true</code>, a text equals
-     *         to <code>"true"</code> is returned; otherwise, a text 
-     *         equals to <code>"false"</code> is returned.
-     * @see    TypeFormat#format(boolean, Appendable)
-     */
-    public static Text valueOf(boolean b) {
-        return b ? TRUE : FALSE;
-    }
-
-    private final static Text TRUE = Text.valueOf("true").intern();
-
-    private final static Text FALSE = Text.valueOf("false").intern();
-
-    /**
-     * Returns a text of one character.
-     *
-     * @param  c the single character.
-     * @return a text of length <code>1</code> containing
-     *         as its single character the argument <code>c</code>.
-     */
-    public static Text valueOf(char c) {
-        if (c < ASCII_CHARS.length) {
-            return ASCII_CHARS[c];
-        } else {
-            Primitive text = Primitive.newInstance();
-            text._data[text._count++] = c;
-            return text;
-        }
-    }
-    private static final Text[] ASCII_CHARS = new Text[128];
-    static {
-        for (int i=0; i < ASCII_CHARS.length; i++) {
-            Primitive text = Primitive.newInstance();
-            text._data[text._count++] = (char)i;
-            ASCII_CHARS[i] = text.intern();
-        }
-    }
-
-    /**
-     * Returns the decimal representation of the specified <code>int</code>
-     * argument.
-     *
-     * @param  i the <code>int</code> number.
-     * @return the decimal representation of the specified number.
-     * @see    TypeFormat#format(int, Appendable)
-     */
-    public static Text valueOf(int i) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(i);
-        return tb.toText();
-    }
-
-    /**
-     * Returns the radix representation of the specified <code>int</code>
-     * argument.
-     *
-     * @param  i the <code>int</code> number.
-     * @param  radix the radix (e.g. <code>16</code> for hexadecimal).
-     * @return the radix representation of the specified number.
-     * @see    TypeFormat#format(int, int, Appendable)
-     */
-    public static Text valueOf(int i, int radix) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(i, radix);
-        return tb.toText();
-    }
-
-    /**
-     * Returns the decimal representation of the specified <code>long</code>
-     * argument.
-     *
-     * @param  l the <code>long</code> number.
-     * @return the decimal representation of the specified number.
-     * @see    TypeFormat#format(long, Appendable)
-     */
-    public static Text valueOf(long l) {
-       TextBuilder tb = TextBuilder.newInstance();
-       tb.append(l);
-       return tb.toText();
-    }
-
-    /**
-     * Returns the radix representation of the specified <code>long</code>
-     * argument.
-     *
-     * @param  l the <code>long</code> number.
-     * @param  radix the radix (e.g. <code>16</code> for hexadecimal).
-     * @return the radix representation of the specified number.
-     * @see    TypeFormat#format(long, int, Appendable)
-     */
-    public static Text valueOf(long l, int radix) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(l, radix);
-        return tb.toText();
-    }
-
-    /**
-     * Returns the text representing the specified
-     * <code>float</code> argument. The error is assumed to be
-     * the intrinsic <code>float</code> error (32 bits IEEE 754 format).
-     *
-     * @param  f the <code>float</code> number.
-     * @return the floating point representation of this float.
-     * @see    TypeFormat#format(float, Appendable)
-    /*@FLOATING_POINT@
-    public static Text valueOf(float f) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(f);
-        return tb.toText();
-    }
-    /**/
-    
-    /**
-     * Returns the text representing the specified
-     * <code>double</code> argument. The error is assumed to be
-     * the intrinsic <code>double</code> error (64 bits IEEE 754 format).
-     *
-     * @param  d the <code>double</code> number.
-     * @return the floating point representation of this double.
-     * @see    TypeFormat#format(double, Appendable)
-    /*@FLOATING_POINT@
-    public static Text valueOf(double d) {
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(d);
-        return tb.toText();
-    }
-    /**/
-
-    /**
      * Returns the length of this text.
      *
      * @return the number of characters (16-bits Unicode) composing this text.
      */
     public final int length() {
         return _count;
+    }
+
+    /**
+     * Returns a copy of this text allocated on the current "stack".
+     * This method compacts this text (maximize usage of primitive text nodes). 
+     *
+     * @return a local copy of <code>this</code> text.
+     */
+    public final Text copy() {
+        return Text.valueOf(this);
     }
 
     /**
@@ -390,6 +223,53 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
+     * Returns the text with the specified character sequence inserted at 
+     * the specified location (convenience method).
+     *
+     * @param index the insertion position.
+     * @param csq the character sequence being inserted.
+     * @return <code>subtext(0, index).concat(csq).plus(subtext(index))</code>
+     * @throws IndexOutOfBoundsException if index is negative or greater
+     *         than <code>this.length()</code>.
+     */
+    public Text insert(int index, CharSequence csq) {
+        return this.subtext(0, index).concat(csq).plus(this.subtext(index));
+    }
+
+    /**
+     * Returns the text with the characters between the specified indexes 
+     * deleted (convenience method).
+     *
+     * @param start the beginning index, inclusive.
+     * @param end the ending index, exclusive.
+     * @return <code>subtext(0, start).plus(subtext(end))</code>
+     * @throws IndexOutOfBoundsException if start or end are negative, start 
+     *         is greater than end, or end is greater than 
+     *         <code>this.length()</code>.
+     */
+    public Text delete(int start, int end) {
+        return this.subtext(0, start).plus(this.subtext(end));
+    }
+
+    /**
+     * Replaces each character sequence of this text that matches the specified 
+     * target sequence with the specified replacement sequence.
+     *
+     * @param target the sequence to be replaced.
+     * @param replacement the replacement sequence of char values.
+     * @return the resulting text.
+     * @throws IndexOutOfBoundsException if index is negative or greater
+     *         than <code>this.length()</code>.
+     */
+    public Text replace(CharSequence target, CharSequence replacement) {
+        int i = indexOf(target);
+        return (i < 0) ?  
+            this : // No target sequence found.
+            this.subtext(0, i).concat(replacement).plus(
+            this.subtext(i + target.length()).replace(target, replacement));        
+    }
+    
+    /**
      * Returns a new character sequence that is a subsequence of this text.
      *
      * @param  start the index of the first character inclusive.
@@ -402,7 +282,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public CharSequence subSequence(int start, int end) {
         return this.subtext(start, end);
     }
-
+    
     /**
      * Returns the index within this text of the first occurrence
      * of the specified character sequence searching forward.
@@ -543,55 +423,34 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return an unique instance allocated on the heap and equals to this text.
      */
     public final Text intern() {
-        synchronized (INTERN_TEXT) {
-            Text text = (Text) INTERN_TEXT.get(this);
-            if (text == null) {
-                text = this;
-                text.moveHeap();
+        Text text = (Text) INTERN_TEXT.get(this);
+        if (text == null) {
+            text = this;
+            text.moveHeap();
+            synchronized (INTERN_TEXT) { // Only put need synchronizing.
                 INTERN_TEXT.put(text, text);
             }
-            return text;
         }
+        return text;
     }
 
     /**
-     * Compares this text against the specified object.
+     * Compares this text against the specified object. This method 
+     * uses a {@link FastComparator#LEXICAL lexical comparator}
+     * to make this determination.
      *
      * <p> Note: Unfortunately, due to the current (JDK 1.4+) implementation
-     *          of <code>j2me.lang.String</code> and <code>
-     *          j2me.lang.StringBuffer</code>, this method is not symmetric.</p>
+     *          of <code>java.lang.String</code> and <code>
+     *          java.lang.StringBuffer</code>, this method is not symmetric.</p>
      *
      * @param  that the object to compare with.
-     * @return <code>true</code> if that objects is a <code>CharSequence</code>
-     *         or <code>String</code> represent the same sequence as this text;
-     *         <code>false</code> otherwise.
+     * @return <code>FastComparator.LEXICAL.areEqual(this, that)</code>
      */
     public final boolean equals(Object that) {
         if (this == that) {
             return true;
-        } else if (that instanceof CharSequence) {
-            CharSequence seq = (CharSequence) that;
-            final int length = this.length();
-            if (length == seq.length()) {
-                for (int i = 0; i < length;) {
-                    if (this.charAt(i) != seq.charAt(i++)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        } else if (that instanceof String) {
-            // Prior to 1.4 String was not a CharSequence
-            String str = (String) that;
-            final int length = this.length();
-            if (length == str.length()) {
-                for (int i = 0; i < length;) {
-                    if (this.charAt(i) != str.charAt(i++)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
+        } else if ((that instanceof CharSequence) || (that instanceof String)) {
+            return FastComparator.LEXICAL.areEqual(this, that);
         }
         return false;
     }
@@ -633,7 +492,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     /**
      * Returns the hash code for this text.
      *
-     * <p> Note: Returns the same hashCode as <code>j2me.lang.String</code>
+     * <p> Note: Returns the same hashCode as <code>java.lang.String</code>
      *           (consistent with {@link #equals})</p>
      *
      * @return the hash code value.
@@ -651,15 +510,16 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Compares this text to another character sequence lexicographically.
+     * Compares this text to another character sequence or string 
+     * lexicographically.
      *
      * @param   csq the character sequence to be compared.
-     * @return  <code>{@link #COMPARATOR}.compare(this, that)</code>
+     * @return  <code>TypeFormat.LEXICAL_COMPARATOR.compare(this, csq)</code>
      * @throws  ClassCastException if the specifed object is not a
-     *          <code>CharSequence</code>.
+     *          <code>CharSequence</code> or a <code>String</code>.
      */
     public final int compareTo(Object csq) {
-        return COMPARATOR.compare(this, csq);
+        return FastComparator.LEXICAL.compare(this, csq);
     }
 
     /**
@@ -670,6 +530,15 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public final Text toText() {
         return this;
     }
+
+    /**
+     * Returns the depth of the internal tree used to represent this text.
+     * Text operations keep this depth minimal; although it is possible
+     * to slightly reduce it through {@link #copy} (compacting). 
+     *
+     * @return the maximum depth of the text internal binary tree.
+     */
+    public abstract int depth();
 
     /**
      * Returns the character at the specified index.
@@ -695,13 +564,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public abstract Text subtext(int start, int end);
 
     /**
-     * Returns a copy of this text allocated on the current "stack".
-     *
-     * @return a local copy of <code>this</code> text.
-     */
-    public abstract Text copy();
-
-    /**
      * Copies the characters from this text into the destination
      * character array.
      *
@@ -716,51 +578,62 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public abstract void getChars(int start, int end, char dest[], int destPos);
 
     /**
-     * Concatenates the specified text to the end of this text.
-     * 
-     * <p> Note: This method is extremely fast (faster even than 
-     *     <code>StringBuffer.append(String)</code>) and still returns
-     *     a text instance with an internal binary tree of minimal depth!</p>
+     * Concatenates the specified text to the end of this text. 
+     * This method is extremely fast (faster even than 
+     * <code>StringBuffer.append(String)</code>) and still returns
+     * a text instance with an internal binary tree of minimal depth!
      *
      * @param  that the character sequence that is concatenated.
      * @return <code>this + that</code>
      */
-    public abstract Text plus(Text that);
-
-    /**
-     * Returns a text where all occurrences of <code>oldChar</code> have been 
-     * replaced with <code>newChar</code>.
-     *
-     * @param  oldChar the old character.
-     * @param  newChar the new character.
-     * @return this text if it does not contain any occurence of
-     *         the specifed <code>oldChar</code> or a text derived from this
-     *         text by replacing every occurrence of <code>oldChar</code>
-     *         with <code>newChar</code>.
-     */
-    public abstract Text replace(char oldChar, char newChar);
+    public final Text plus(Text that) {
+        if (this._count == 0) {
+            return that;
+        } else if (that._count == 0) {
+            return this;
+        } else if (((that._count << 1) < this._count) &&
+                (this instanceof Composite)) { // this too large, break up?
+            Composite thisComposite = (Composite) this;
+            if (thisComposite._head._count > thisComposite._tail._count) {
+                return Composite.newInstance(thisComposite._head, thisComposite._tail.plus(that));
+            } else {
+                return Composite.newInstance(this, that);
+            } 
+        } else if (((this._count << 1) < that._count) &&
+                   (that instanceof Composite)) { // that too large, break up?
+            Composite thatComposite = (Composite) that;
+            if (thatComposite._head._count < thatComposite._tail._count) {
+                return Composite.newInstance(this.plus(thatComposite._head), thatComposite._tail);
+            } else {
+                return Composite.newInstance(this, that);
+            } 
+        } else { // 
+            return Composite.newInstance(this, that);
+        }
+    }
 
     /**
      * Returns the <code>String</code> value  corresponding to this text.
      *
-     * @return the <code>j2me.lang.String</code> for this text.
+     * @return the <code>java.lang.String</code> for this text.
      */
     public abstract String stringValue();
 
     /**
      * This class represents a text block (up to 32 characters).
      */
-   static final class Primitive extends Text {
+    private static final class Primitive extends Text {
+
 
         /**
          * Holds the default size for primitive blocks of characters.
          */
-        static final int BLOCK_SIZE = 32;
+        private static final int BLOCK_SIZE = 32;
 
         /**
          * Holds the raw data (primitive).
          */
-        final char[] _data = new char[BLOCK_SIZE];
+        private final char[] _data = new char[BLOCK_SIZE];
 
         /**
          * Default constructor.
@@ -773,7 +646,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * 
          * @return a primitive text. 
          */
-        static Primitive newInstance() {
+        private static Primitive newInstance() {
             Primitive text = (Primitive) PRIMITIVE_FACTORY.object();
             text._hashCode = 0;
             text._count = 0;
@@ -788,6 +661,11 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         };
 
         // Implements abstract method.
+        public int depth() {
+            return 0;
+        }
+
+       // Implements abstract method.
         public char charAt(int index) {
             if (index >= _count) {
                 throw new IndexOutOfBoundsException();
@@ -797,27 +675,23 @@ public abstract class Text extends RealtimeObject implements CharSequence,
 
         // Implements abstract method.
         public Text subtext(int start, int end) {
-            final int length = end - start;
-            if (length >= 0) {
-                Primitive text = Primitive.newInstance();
-                text._count = length;
-                for (int i = start, j = 0; i < end;) {
-                    text._data[j++] = _data[i++];
-                }
-                return text;
+            if ((start == 0) && (end == _count)) {
+                return this;
+            } else if ((start >= 0) && (start <= end) && (end <= _count)) {
+                if (start == end) {
+                    return Text.EMPTY;
+                } else {
+                    Primitive text = Primitive.newInstance();
+                    for (int i = start, j = 0; i < end;) {
+                        text._data[j++] = _data[i++];
+                    }
+                    text._count = end - start;
+                    return text;
+                }    
             } else {
-                throw new IndexOutOfBoundsException();
+                throw new IndexOutOfBoundsException(
+                        "start: " + start + ", end: " + end);
             }
-        }
-
-        // Implements abstract method.
-        public Text copy() {
-            Primitive text = Primitive.newInstance();
-            text._count = _count;
-            for (int i = _count; i > 0;) {
-                text._data[--i] = _data[i];
-            }
-            return text;
         }
 
         // Implements abstract method.
@@ -832,40 +706,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         }
 
         // Implements abstract method.
-        public Text plus(Text that) {
-            final int length = this._count + that._count;
-            if (length <= BLOCK_SIZE) {
-                Primitive text = Primitive.newInstance();
-                text._count = _count;
-                for (int i = _count; i > 0;) {
-                    text._data[--i] = _data[i];
-                }
-                for (int i = 0; i < that._count;) {
-                    text._data[text._count++] = that.charAt(i++);
-                }
-                return text;
-            } else {
-                return Composite.newInstance(this, that);
-            }
-        }
-
-        // Implements abstract method.
-        public Text replace(char oldChar, char newChar) {
-            for (int i = 0; i < _count;) {
-                if (_data[i++] == oldChar) { // Found at least one occurence.
-                    Primitive text = Primitive.newInstance();
-                    text._count = _count;
-                    for (int j = _count; j > 0;) {
-                        char c = _data[--j];
-                        text._data[j] = (c == oldChar) ? newChar : c;
-                    }
-                    return text;
-                }
-            }
-            return this; // No occurrence found.
-        }
-        
-        // Implements abstract method.
         public String stringValue() {
             return new String(_data, 0, _count);
         }
@@ -875,17 +715,17 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     /**
      * This class represents a text composite.
      */
-    static final class Composite extends Text {
+    private static final class Composite extends Text {
 
         /**
          * Holds the head block of character (composite).
          */
-        Text _head;
+        private Text _head;
 
         /**
          * Holds the tail block of character (composite).
          */
-        Text _tail;
+        private Text _tail;
 
         /**
          * Default constructor.
@@ -900,7 +740,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * @param tail the tail of this composite.
          * @return the corresponding composite text. 
          */
-        static Composite newInstance(Text head, Text tail) {
+        private static Composite newInstance(Text head, Text tail) {
             Composite text = (Composite) COMPOSITE_FACTORY.object();
             text._hashCode = 0;
             text._count = head._count + tail._count;
@@ -917,6 +757,11 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         };
 
         // Implements abstract method.
+        public int depth() {
+            return MathLib.max(_head.depth(), _tail.depth()) + 1;
+        }
+        
+        // Implements abstract method.
         public char charAt(int index) {
             return (index < _head._count) ? _head.charAt(index) : _tail
                     .charAt(index - _head._count);
@@ -924,28 +769,25 @@ public abstract class Text extends RealtimeObject implements CharSequence,
 
         // Implements abstract method.
         public Text subtext(int start, int end) {
-            final int cesure = _head._count;
-            if (end <= cesure) {
-                return _head.subtext(start, end);
-            } else if (start >= cesure) {
-                return _tail.subtext(start - cesure, end - cesure);
-            } else { // Overlaps head and tail.
-                return _head.subtext(start, cesure).plus(
-                        _tail.subtext(0, end - cesure));
-            }
-        }
-
-        // Implements abstract method.
-        public Text copy() {
-            if (_count <= Primitive.BLOCK_SIZE) { // Packs.
-                Primitive text = Primitive.newInstance();
-                text._count = _count;
-                for (int i = _count; i > 0;) {
-                    text._data[--i] = this.charAt(i);
-                }
-                return text;
+            if ((start == 0) && (end == _count)) {
+                return this;
+            } else if ((start >= 0) && (start <= end) && (end <= _count)) {
+                if (start == end) {
+                    return Text.EMPTY;
+                } else {
+                    final int cesure = _head._count;
+                    if (end <= cesure) {
+                        return _head.subtext(start, end);
+                    } else if (start >= cesure) {
+                        return _tail.subtext(start - cesure, end - cesure);
+                    } else { // Overlaps head and tail.
+                        return _head.subtext(start, cesure).plus(
+                                _tail.subtext(0, end - cesure));
+                    }
+                }    
             } else {
-                return Composite.newInstance(_head.copy(), _tail.copy());
+                throw new IndexOutOfBoundsException(
+                        "start: " + start + ", end: " + end);
             }
         }
 
@@ -963,54 +805,20 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         }
 
         // Implements abstract method.
-        public Text plus(Text that) {
-            if (_head._count <= _tail._count) { // this is full
-                if ((that._count <= this._count) || (that instanceof Primitive)) {
-                    return Composite.newInstance(this, that);
-                } else { // that is too big, break it down.
-                    Composite compositeThat = (Composite) that;
-                    return this.plus(compositeThat._head).plus(
-                            compositeThat._tail);
-                }
-            } else { // Some space on tail.
-                if ((that._count + _tail._count <= _head._count)
-                        || (that instanceof Primitive)) {
-                    // Enough space on tail or no choice.
-                    return Composite.newInstance(_head, _tail.plus(that));
-                } else { // that is too big, break it down.
-                    Composite compositeThat = (Composite) that;
-                    return this.plus(compositeThat._head).plus(
-                            compositeThat._tail);
-                }
-            }
-        }
-
-
-        // Implements abstract method.
-        public Text replace(char oldChar, char newChar) {
-            Text head = _head.replace(oldChar, newChar);
-            Text tail = _tail.replace(oldChar, newChar);
-            if ((head == _head) && (tail == _tail)) { // No occurence found.
-                return this;
-            } else {
-                return Composite.newInstance(head, tail);
-            }
-        }
-
-        // Implements abstract method.
         public String stringValue() {
-            ObjectPool pool = ArrayPool.charArray(_count);
-            char[] data = (char[]) pool.next();
+            char[] data = new char[_count];
             this.getChars(0, _count, data, 0);
-            pool.recycle(data); // Puts back local data buffer.
             return new String(data, 0, _count);
         }
 
         // Overrides.
-        public void move(ContextSpace cs) {
-            super.move(cs);
-            _head.move(cs);
-            _tail.move(cs);
+        public boolean move(ObjectSpace os) {
+            if (super.move(os)) {
+                _head.move(os);
+                _tail.move(os);
+                return true;
+            }
+            return false;
         }
     }
 

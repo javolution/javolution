@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -82,32 +83,14 @@ public class Javolution {
     private static void benchmark() throws Exception {
         println("Benchmark...");
         println("");
-        
-        println("////////////////////////////");
-        println("// Package: javolution.io //");
-        println("////////////////////////////");
+
         new Perf_Io().run();
-        
-        println("//////////////////////////////");
-        println("// Package: javolution.lang //");
-        println("//////////////////////////////");
         new Perf_Lang().run();
-        
-        println("//////////////////////////////////");
-        println("// Package: javolution.realtime //");
-        println("//////////////////////////////////");
         new Perf_Realtime().run();
-        
-        println("//////////////////////////////");
-        println("// Package: javolution.util //");
-        println("//////////////////////////////");
         new Perf_Util().run();
-        
-        println("/////////////////////////////");
-        println("// Package: javolution.xml //");
-        println("/////////////////////////////");
         new Perf_Xml().run();
-        
+
+        println("");
         println("More performance analysis in future versions...");
     }
 
@@ -166,6 +149,6 @@ public class Javolution {
     }
 
     private static final Reflection.Method NANO_TIME_METHOD = Reflection
-            .getMethod("j2me.lang.System.nanoTime()");
+            .getMethod("java.lang.System.nanoTime()");
 
 }

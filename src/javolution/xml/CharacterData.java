@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -8,22 +9,26 @@
 package javolution.xml;
 
 import j2me.lang.CharSequence;
-import javolution.lang.Text;
-import javolution.realtime.Realtime;
+import j2me.io.Serializable;
+import javolution.lang.TextBuilder;
 import javolution.realtime.RealtimeObject;
+import javolution.util.FastComparator;
 
 /**
  * <p> This class represents the text that is not markup and constitutes
  *     the "Character Data" of a XML document.</p>
+ *     
  * <p> During deserialization, instances of this class are generated for 
  *     character data containing at least one non-whitespace character.</p>
+ *     
  * <p> During serialization, instances of this class are written in a 
- *     "CDATA" section (<code>&gt;![CDATA[...]]&lt;</code>).</p>
+ *     "CDATA" section (<code>&lt;![CDATA[...]]&gt;</code>).</p>
  *
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>/**
- * @version 2.0, December 1, 2004
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 2.2, January 8, 2005
  */
-public final class CharacterData extends RealtimeObject implements CharSequence {
+public final class CharacterData extends RealtimeObject 
+        implements CharSequence, Serializable {
 
     /**
      * Holds the object factory.
@@ -35,9 +40,22 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
     };
     
     /**
-     * Holds the character sequence.
+     * Holds the text.
      */
-    private CharSequence _chars;
+    private TextBuilder _text = new TextBuilder();
+
+    /**
+     * Returns the character data for the specified string.
+     *
+     * @param  str the <code>String</code> source.
+     * @return the corresponding character data instance.
+     */
+    public static CharacterData valueOf(String str) {
+        CharacterData cd = (CharacterData) FACTORY.object();
+        cd._text.reset();
+        cd._text.append(str);
+        return cd;
+    }
 
     /**
      * Returns the character data for the specified character sequence.
@@ -47,7 +65,8 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      */
     public static CharacterData valueOf(CharSequence csq) {
         CharacterData cd = (CharacterData) FACTORY.object();
-        cd._chars = csq;
+        cd._text.reset();
+        cd._text.append(csq);
         return cd;
     }
 
@@ -62,9 +81,29 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      */
     public static CharacterData valueOf(char[] data, int offset, int length) {
         CharacterData cd = (CharacterData) FACTORY.object();
-        cd._chars = Text.valueOf(data, offset, length);
+        cd._text.reset();
+        for (int i=0; i < length;) {
+            cd._text.append(data[offset + i++]);
+        }
         return cd;
     }
+
+    /**
+     * Returns an intrinsic array containing the character data.
+     *
+     * @return an intrinsic array.
+     */
+    char[] toArray() {
+        final int length = _text.length();
+        if (_chars.length < length) {
+            _chars = new char[length * 2];
+        }
+        for (int i=0; i < length;) {
+            _chars[i] = _text.charAt(i++);
+        }
+        return _chars;
+    }
+    private char[] _chars = new char[0];
 
     /**
      * Default constructor.
@@ -78,7 +117,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      * @return the number of characters (16-bits Unicode).
      */
     public int length() {
-        return _chars.length();
+        return _text.length();
     }
   
     /**
@@ -90,7 +129,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      *         is equal or greater than <code>this.length()</code>.
      */
     public char charAt(int index) {
-        return _chars.charAt(index);
+        return _text.charAt(index);
     }
 
     /**
@@ -104,16 +143,39 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      *         <code>this.length()</code>.
      */
     public CharSequence subSequence(int start, int end) {
-        CharacterData cd = (CharacterData) FACTORY.object();
-        cd._chars = _chars.subSequence(start, end);
-        return cd;
+        return _text.subSequence(start, end);
+    }
+
+    /**
+     * Compares this character data against the specified object. This method 
+     * uses a {@link FastComparator#LEXICAL lexical comparator}
+     * to make this determination.
+     * 
+     * @param  that the object to compare with.
+     * @return <code>FastComparator.LEXICAL.areEqual(this, that)</code>
+     */
+    public final boolean equals(Object that) {
+        if ((that instanceof CharSequence) || (that instanceof String)) {
+            return FastComparator.LEXICAL.areEqual(this, that);
+        }
+        return false;
+    }
+
+    /**
+     * Returns the hash code for this character data.
+     *
+     * @return the hash code value.
+     */
+    public final int hashCode() {
+        return _text.hashCode();
     }
 
     // Overrides.
-    public void move(ContextSpace cs) {
-        super.move(cs);
-        if (_chars instanceof Realtime) {
-            ((Realtime)_chars).move(cs);
+    public boolean move(ObjectSpace os) {
+        if (super.move(os)) {
+            _text.move(os);
+            return true;
         }
+        return false;
     }
 }

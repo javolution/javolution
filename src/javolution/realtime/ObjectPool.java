@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -18,14 +19,22 @@ import javolution.JavolutionError;
  * has to be performed on the pool itself to guarantee thread-safety.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 16, 2005
  */
 public abstract class ObjectPool {
 
     /**
-     * Holds the default pool size (<code>32</code>).
+     * Holds a pool returning <code>null</code> values.
      */
-    protected final static int DEFAULT_POOL_SIZE = 32;
+    public static final ObjectPool NULL = new ObjectPool() {
+        public Object next() {
+            return null;
+        }
+        public void recycle(Object obj) {}
+        protected void recycleAll() {}
+        protected void clearAll() {}
+    };
+    
 
     /**
      * Holds the outer pool of this pool or <code>null</code> if none.
@@ -66,7 +75,7 @@ public abstract class ObjectPool {
      * 
      * @return <code>true</code> if this pool is local for the current thread;
      *         <code>false</code> otherwise.
-     * @throws Error if this operation is called upon a pool 
+     * @throws JavolutionError if this operation is called upon a pool 
      *         not currently {@link #inUse in use}.
      */
     public final boolean isLocal() {
@@ -110,7 +119,8 @@ public abstract class ObjectPool {
 
     /**
      * Returns the next available object from this pool. If there is none,
-     * a new object is allocated on the heap, added to the pool and returned.  
+     * a new object from the {@link #getOuter outer} pool is moved to this pool
+     * and returned.  
      * 
      * @return the next available object from this pool.
      */
@@ -122,8 +132,7 @@ public abstract class ObjectPool {
      * be garbage collected).
      * 
      * @param obj the object to recycle to this pool.
-     * @throws IllegalArgumentException if the specified object do not belong
-     *         to the pool.
+     * @throws JavolutionError if the specified object do not belong to the pool.
      */
     public abstract void recycle(Object obj);
 
@@ -132,7 +141,7 @@ public abstract class ObjectPool {
     /////////////////////
 
     /**
-     * Recycles all the objects of this pool.
+     * Recycles all the objects of this pool (all used objects become new).
      * 
      * <p> Note: This method is called upon {@link PoolContext#exit exit}
      *           of a pool context for which this pool has been used.</p>
@@ -140,7 +149,7 @@ public abstract class ObjectPool {
     protected abstract void recycleAll();
 
     /**
-     * Removes all objects from this pool.
+     * Removes all objects (used and new) from this pool.
      * 
      * <p> Note: This method is called upon {@link PoolContext#clear 
      *           clearing} of the pool context this pool belongs to.

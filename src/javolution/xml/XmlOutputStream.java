@@ -1,12 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml;
 
+import j2me.lang.IllegalStateException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -17,10 +19,10 @@ import javolution.lang.Reusable;
  *     for object serialization.</p>
  *     
  * <p> Instances of this class embed their own data buffer, wrapping using a
- *     <code>j2me.io.BufferedOutputStream</code> is therefore unnescessary.</p>
+ *     <code>java.io.BufferedOutputStream</code> is therefore unnescessary.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.0, December 5, 2004
+ * @version 2.2, January 8, 2005
  * @see     XmlInputStream
  */
 public class XmlOutputStream extends OutputStream implements Reusable {
@@ -40,43 +42,30 @@ public class XmlOutputStream extends OutputStream implements Reusable {
     /**
      * Holds the object writer.
      */
-    private final ObjectWriter _objectWriter;
+    private final ObjectWriter _objectWriter = new ObjectWriter();
 
     /**
      * Holds the object writer.
      */
-    private final OutputStreamProxy _outputStreamProxy;
+    private final OutputStreamProxy _outputStreamProxy = new OutputStreamProxy();
 
     /**
-     * Creates a xml output stream of default buffer capacity.
+     * Default constructor.
      */
     public XmlOutputStream() {
-        this(2048);
     }
     
-    /**
-     * Creates a xml output stream having the specified buffer capacity.
-     * 
-     * @param capacity the buffer capacity. 
-     */
-    public XmlOutputStream(int capacity) {
-        _objectWriter = new ObjectWriter(capacity);
-        _outputStreamProxy = new OutputStreamProxy();
-        _objectWriter.setIndent("");
-        _objectWriter.setProlog(false);
-    }
-
     /**
      * Sets the underlying output destination for this stream.
      * 
      * @param out the output destination.
      * @return <code>this</code> 
-     * @throws Error if this stream is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this stream is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public XmlOutputStream setOutputStream(OutputStream out) {
         if (_outputStream != null)
-            throw new Error("This stream has not been closed or cleared");
+            throw new IllegalStateException("Stream not closed or reset");
         _outputStream = out;
         return this;
     }
@@ -95,34 +84,58 @@ public class XmlOutputStream extends OutputStream implements Reusable {
     }
 
     // Implements abstract method.
+    
+    /**
+     * Writes the specified byte to this output stream
+     * 
+     * @param b the byte. 
+     * @throws IOException if an I/O error occurs.
+     */
     public void write(int b) throws IOException {
         if (_outputStream == null) throw new IOException("Stream closed");
         _outputStream.write(b);
     }
     
-    // Overrides.
+    /**
+     * Flushes this output stream and forces any buffered output bytes 
+     * to be written out.
+     *  
+     * @throws IOException if an I/O error occurs.
+     */
     public void flush() throws IOException {
         if (_outputStream == null) throw new IOException("Stream closed");
         _outputStream.flush();
     }
     
-    // Overrides.
+    /**
+     * Writes the specified number of bytes from the specified byte array 
+     * starting at the specified offset to this output stream. 
+     * 
+     * @param b the data.
+     * @param off the start offset in the data.
+     * @param len the number of bytes to write. 
+     * @throws IOException if an I/O error occurs.
+     */
     public void write(byte b[], int off, int len) throws IOException {
         if (_outputStream == null) throw new IOException("Stream closed");
         _outputStream.write(b, off, len);
     }
     
-    // Overrides.
+    /**
+     * Closes and {@link #reset resets} this stream for reuse.
+     *
+     * @throws IOException if an I/O error occurs.
+     */
     public void close() throws IOException {
         if (_outputStream != null) {
             _outputStream.close();
-            clear();
+            reset();
         }
     }
 
     // Implements Reusable interface.
-    public void clear() {
-        _objectWriter.clear();
+    public void reset() {
+        _objectWriter.reset();
         _outputStream = null;
     }
 

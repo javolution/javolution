@@ -1,17 +1,17 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.util;
 
-import j2me.lang.CharSequence;
-import j2me.lang.IllegalStateException;
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
 import j2me.io.Serializable;
+import j2me.lang.IllegalStateException;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Map;
@@ -21,170 +21,174 @@ import j2me.util.Set;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import javolution.Configuration;
+import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
-import javolution.realtime.ArrayPool;
+import javolution.realtime.ObjectFactory;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 
 /**
  * <p> This class represents a <code>Map</code> collection with real-time
- *     behavior. Unless the map's size exceeds its current capacity, no dynamic
- *     memory allocation is ever performed and response time is <b>extremely 
- *     fast</b> and <b>consistent</b>.</p>
- * 
+ *     behavior (smooth capacity increase with no rehashing).</p>
+ *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
- *     which keys were inserted into the map (similar to 
- *     <code>j2me.util.LinkedHashMap</code> collection class).</p>
+ *     which keys are inserted into the map (similar to 
+ *     <code>java.util.LinkedHashMap</code> collection class).</p>
  * 
  * <p> Instances of this class can be allocated from the current thread stack 
  *     using the {@link #newInstance} factory method (e.g. for throw-away maps
  *     to avoid the creation cost). Collection views (values, keys and 
- *     entries) are all instances of {@link FastCollection}.</p>
+ *     entries) are instances of {@link FastCollection} and can be iterated 
+ *     over using (non thread-safe) iterators:
+ *     {@link #fastValueIterator() fastValueIterator()}, 
+ *     {@link #fastKeyIterator() fastKeyIterator()} and  
+ *     {@link #fastEntryIterator() fastEntryIterator()}.</p>
  * 
- * <p> Instances of this class allocated using the {@link #newInstance} factory
- *     method do not resize automatically (the number of entry may increase but
- *     there is no re-hashing ever performed for enhanced predictability).
- *     Instances created from constructors may increase their capacity based 
- *     on the resizing policy. The resizing policy is customizable by overriding
- *     the {@link #sizeChanged} method. For example, to reduce memory footprint,
- *     the map's capacity could be maintained at ±50% of the current map's size.
- *     </p>
- * 
- * <p> {@link FastMap} assumes that the hashcode values are evenly distributed,
- *     if it is not the case (see {@link #printStatistics}), applications should
- *     use a {@link KeyComparator#UNEVEN_HASH UNEVEN_HASH} key comparator. 
- *     Custom {@link KeyComparator key comparators} are extremely useful for 
- *     value retrieval when map's keys and argument keys 
- *     are not of the same class (such as {@link String} and {@link 
- *     javolution.lang.Text Text}) and for identity maps. For example:<pre>
- *     FastMap identityMap = FastMap.newInstance(16).setKeyComparator(FastMap.KeyComparator.REFERENCE);
+ * <p> {@link FastMap} may use custom key comparators; the default comparator is
+ *     either {@link FastComparator#DEFAULT} or {@link FastComparator#REHASH}
+ *      based upon the current <a href=
+ *     "{@docRoot}/overview-summary.html#configuration">Javolution 
+ *     Configuration</a>.</p>
+ *     
+ * <p> Custom key comparators are extremely useful for value retrieval when
+ *     map's keys and argument keys are not of the same class, such as 
+ *     {@link String} and {@link javolution.lang.Text Text} 
+ *     ({@link FastComparator#LEXICAL} key comparator) or for identity maps 
+ *     ({@link FastComparator#IDENTITY} key comparator).
+ *     For example:<pre>
+ *     FastMap identityMap = new FastMap().setKeyComparator(FastComparator.IDENTITY);
  *     </pre></p>
  * 
- * <p> To avoid dynamic memory allocations, {@link FastMap}
- *     maintains an internal pool of <code>Map.Entry</code> objects. 
- *     The initial size of the pool is determined by the map's capacity. 
- *     When an entry is removed from the map, it is automatically restored
- *     to the pool.</p>
- *    
- * <p> This implementation is not synchronized. Multiple threads accessing or
- *     modifying the collection must be synchronized externally.</p>
- * 
+ * <p> To be fully {@link Reusable reusable}, {@link FastMap} maintains an 
+ *     internal pool of <code>Map.Entry</code> objects. When an entry is removed
+ *     from the map, it is automatically restored to the pool.</p>
+ *     
+ * <p> {@link FastMap} supports concurrent read without synchronization
+ *     if the map keys are never removed (e.g. look-up table). Structural 
+ *     modifications (entries being added/removed) should always be 
+ *     synchronized.</p>
+ *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, February 20, 2005
  */
-public class FastMap extends RealtimeObject implements Map, Serializable {
+public class FastMap extends RealtimeObject implements Map, Reusable,
+        Serializable {
 
     /**
-     * Holds the map's hash table.
+     * Holds the map factory.
      */
-    private EntryImpl[] _entries;
+    private static final Factory FACTORY = new Factory() {
+
+        public Object create() {
+            return new FastMap();
+        }
+
+        public void cleanup(Object obj) {
+            ((FastMap) obj).reset();
+        }
+    };
 
     /**
-     * Holds the map's current capacity (the number of entries available).
+     * Holds the map's hash table (volatile for unsynchronized access). 
      */
-    private int _capacity;
+    private volatile transient EntryImpl[] _entries;
 
     /**
-     * Holds the first pool entry, always different from null.
-     * (_poolFirst._before is the last map element)
+     * Holds the head entry to which the first entry attaches.
+     * The head entry never changes (entries always added last).
      */
-    private EntryImpl _poolFirst = new EntryImpl();
+    private transient EntryImpl _head = new EntryImpl();
 
     /**
-     * Holds the first map entry, always different from null.
-     * (_mapFirst == _poolFirst when map is empty)
+     * Holds the tail entry to which the last entry attaches.
+     * The tail entry changes as entries are added/removed.
      */
-    private EntryImpl _mapFirst = _poolFirst;
+    private transient EntryImpl _tail = new EntryImpl();
 
     /**
      * Holds the current size.
      */
-    private int _size;
+    private transient int _size;
 
     /**
-     * Indicates if this map has constant capacity (no automatic resizing).
+     * Holds the values view.
      */
-    private boolean _hasConstantCapacity;
+    private transient Values _values = new Values();
 
     /**
-     * Holds the key comparator (if any).
+     * Holds the key set view.
      */
-    private KeyComparator _keyComparator = KeyComparator.DEFAULT;
+    private transient KeySet _keySet = new KeySet();
 
     /**
-     * Creates a {@link FastMap} with default capacity, allocated on the heap.
+     * Holds the entry set view.
+     */
+    private transient EntrySet _entrySet = new EntrySet();
+
+    /**
+     * Holds a reference to a map having the old entries when resizing.
+     */
+    private transient FastMap _oldEntries;
+
+    /**
+     * Holds the key comparator.
+     */
+    private FastComparator _keyComparator = Configuration.isPoorSystemHash() ? FastComparator.REHASH
+            : FastComparator.DEFAULT;
+
+    /**
+     * Default constructor (default capacity of 16 entries). 
      */
     public FastMap() {
-        this(ArrayPool.MIN_LENGTH);
+        this(16);
     }
 
     /**
-     * Creates a {@link FastMap} with the specified capacity, allocated on the
-     * heap. Unless the capacity is exceeded, operations on this map do not
-     * allocate entries. For optimum performance, the capacity should be of the
-     * same order of magnitude or larger than the expected map's size.
+     * Creates a fast map of specified capacity.
      * 
-     * @param capacity the number of buckets in the hash table; it also defines
-     *        the number of pre-allocated entries.
+     * @param capacity the minimum length of the internal hash table.
      */
     public FastMap(int capacity) {
-        setCapacity(capacity);
+        int tableLength = 16;
+        while (tableLength < capacity) {
+            tableLength <<= 1;
+        }
+        _entries = new EntryImpl[tableLength];
+        _head._after = _tail;
+        _tail._before = _head;
     }
 
     /**
-     * Returns a {@link FastMap} of specified capacity, allocated from the stack
+     * Returns a {@link FastMap} pre-allocated or allocated from the stack
      * when executing in a {@link javolution.realtime.PoolContext PoolContext}).
-     * Unless the capacity is exceeded, operations on this map do not allocate
-     * new entries and even so the capacity is not increased (no re-hashing) for
-     * enhanced predictability.
      * 
-     * @param capacity the capacity of the map to return.
-     * @return a new or recycled map instance.
+     * @return a new, pre-allocated or recycled map instance.
      */
-    public static FastMap newInstance(int capacity) {
-        return (FastMap) FACTORIES[ArrayPool.indexFor(capacity)].object();
-    }
-
-    private final static class FastMapFactory extends Factory {
-
-        private final int _capacity;
-
-        private FastMapFactory(int capacity) {
-            _capacity = capacity;
-        }
-
-        public Object create() {
-            FastMap fastMap = new FastMap(_capacity);
-            fastMap._hasConstantCapacity = true;
-            return fastMap;
-        }
-
-        public void cleanup(Object obj) {
-            FastMap fastMap = (FastMap) obj;
-            fastMap._keyComparator = KeyComparator.DEFAULT;
-            fastMap.clear();
-        }
-
-    }
-
-    private static final FastMapFactory[] FACTORIES;
-    static {
-        FACTORIES = new FastMapFactory[28];
-        for (int i = FACTORIES.length; i > 0;) {
-            FACTORIES[--i] = new FastMapFactory(ArrayPool.MIN_LENGTH << i);
-        }
+    public static FastMap newInstance() {
+        return (FastMap) FACTORY.object();
     }
 
     /**
-     * Sets the {@link KeyComparator key comparator} to be used for this 
-     * fast map.
+     * Sets the key comparator for this fast map.
      * 
      * @param keyComparator the key comparator.
      * @return <code>this</code>
      */
-    public FastMap setKeyComparator(KeyComparator keyComparator) {
+    public FastMap setKeyComparator(FastComparator keyComparator) {
         _keyComparator = keyComparator;
+        return this;
+    }
+
+    /**
+     * Sets the value comparator for this fast map.
+     * 
+     * @param valueComparator the value comparator.
+     * @return <code>this</code>
+     */
+    public FastMap setValueComparator(FastComparator valueComparator) {
+        _values.setElementComparator(valueComparator);
         return this;
     }
 
@@ -195,8 +199,30 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @return the single reusable iterator of this map's {@link #entrySet}.
      * @see    FastCollection#fastIterator()
      */
-    public Iterator fastIterator() {
+    public final Iterator fastEntryIterator() {
         return _entrySet.fastIterator();
+    }
+
+    /**
+     * Returns the fast iterator instance over the key of this map
+     * (<code>keySet().fastIterator()</code>).
+     *
+     * @return the single reusable iterator of this map's {@link #keySet}.
+     * @see    FastCollection#fastIterator()
+     */
+    public final Iterator fastKeyIterator() {
+        return _keySet.fastIterator();
+    }
+
+    /**
+     * Returns the fast iterator instance over the values of this map
+     * (<code>values().fastIterator()</code>).
+     *
+     * @return the single reusable iterator of this map's {@link #values}.
+     * @see    FastCollection#fastIterator()
+     */
+    public final Iterator fastValueIterator() {
+        return _values.fastIterator();
     }
 
     /**
@@ -206,18 +232,6 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      */
     public final int size() {
         return _size;
-    }
-
-    /**
-     * Returns the number of preallocated usable entries. For resizable maps, 
-     * the capacity also defines the number of slots in the hash table.
-     * As long as the size is less than map's capacity, dynamic memory
-     * allocation are not performed.
-     * 
-     * @return this map's capacity.
-     */
-    public final int capacity() {
-        return _capacity;
     }
 
     /**
@@ -240,17 +254,17 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final boolean containsKey(Object key) {
-        final int keyHash = _keyComparator.keyHash(key);
+        final int keyHash = keyHashOf(key);
         EntryImpl entry = _entries[keyHash & (_entries.length - 1)];
         while (entry != null) {
             if ((key == entry._key)
-                    || ((entry._keyHash == keyHash) && _keyComparator
-                            .areEquals(key, entry._key))) {
+                    || ((entry._keyHash == keyHash) && areKeyEqual(key,
+                            entry._key))) {
                 return true;
             }
             entry = entry._next;
         }
-        return false;
+        return (_oldEntries != null) ? _oldEntries.containsKey(key) : false;
     }
 
     /**
@@ -263,8 +277,9 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final boolean containsValue(Object value) {
-        for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
-            if (value.equals(entry._value)) {
+        final FastComparator comp = _values.getElementComparator();
+        for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
+            if (comp.areEqual(value, entry._value)) {
                 return true;
             }
         }
@@ -280,18 +295,17 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws NullPointerException if key is <code>null</code>.
      */
     public final Object get(Object key) {
-        final int keyHash = (_keyComparator == KeyComparator.DEFAULT) ? key
-                .hashCode() : _keyComparator.keyHash(key);
+        final int keyHash = keyHashOf(key);
         EntryImpl entry = _entries[keyHash & (_entries.length - 1)];
         while (entry != null) {
             if ((key == entry._key)
-                    || ((entry._keyHash == keyHash) && _keyComparator
-                            .areEquals(key, entry._key))) {
+                    || ((entry._keyHash == keyHash) && areKeyEqual(key,
+                            entry._key))) {
                 return entry._value;
             }
             entry = entry._next;
         }
-        return null;
+        return (_oldEntries != null) ? _oldEntries.get(key) : null;
     }
 
     /**
@@ -301,16 +315,15 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @return the entry for the specified key or <code>null</code> if none.
      */
     public final Entry getEntry(Object key) {
-        final int keyHash = _keyComparator.keyHash(key);
+        final int keyHash = keyHashOf(key);
         EntryImpl entry = _entries[keyHash & (_entries.length - 1)];
         while (entry != null) {
-            if ((entry._keyHash == keyHash)
-                    && _keyComparator.areEquals(key, entry._key)) {
+            if ((entry._keyHash == keyHash) && areKeyEqual(key, entry._key)) {
                 return entry;
             }
             entry = entry._next;
         }
-        return null;
+        return (_oldEntries != null) ? _oldEntries.getEntry(key) : null;
     }
 
     /**
@@ -327,19 +340,28 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final Object put(Object key, Object value) {
-        final int keyHash = _keyComparator.keyHash(key);
+        final int keyHash = keyHashOf(key);
         EntryImpl entry = _entries[keyHash & (_entries.length - 1)];
         while (entry != null) {
             if ((key == entry._key)
-                    || ((entry._keyHash == keyHash) && _keyComparator
-                            .areEquals(key, entry._key))) {
+                    || ((entry._keyHash == keyHash) && areKeyEqual(key,
+                            entry._key))) {
                 Object prevValue = entry._value;
                 entry._value = value;
                 return prevValue;
             }
             entry = entry._next;
         }
-        // No previous mapping.
+        // No mapping in current map, checks old one.
+        if (_oldEntries != null) {
+            // For safe unsynchronized access we don't remove old key.
+            if (_oldEntries.containsKey(key)) {
+                _oldEntries._tail = _tail; // Updates tail info.
+                return _oldEntries.put(key, value);
+            }
+        }
+
+        // The key is not mapped.
         addEntry(keyHash, key, value);
         return null;
     }
@@ -352,9 +374,16 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      *         or the specified map contains <code>null</code> keys.
      */
     public final void putAll(Map map) {
-        for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-            Entry e = (Entry) i.next();
-            put(e.getKey(), e.getValue());
+        if (map instanceof FastMap) { // Optimization.
+            FastMap fm = (FastMap) map;
+            for (EntryImpl e = fm._head._after; e != fm._tail; e = e._after) {
+                put(e._key, e._value);
+            }
+        } else {
+            for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                Entry e = (Entry) i.next();
+                put(e.getKey(), e.getValue());
+            }
         }
     }
 
@@ -369,17 +398,23 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final Object remove(Object key) {
-        final int keyHash = _keyComparator.keyHash(key);
+        final int keyHash = keyHashOf(key);
         EntryImpl entry = _entries[keyHash & (_entries.length - 1)];
         while (entry != null) {
             if ((key == entry._key)
-                    || ((entry._keyHash == keyHash) && _keyComparator
-                            .areEquals(key, entry._key))) {
+                    || ((entry._keyHash == keyHash) && areKeyEqual(key,
+                            entry._key))) {
                 Object prevValue = entry._value;
                 removeEntry(entry);
                 return prevValue;
             }
             entry = entry._next;
+        }
+        // No mapping in current map.
+        if ((_oldEntries != null) &&  _oldEntries.containsKey(key)) {
+            _size--;
+            _oldEntries._tail = _tail; // Updates tail info.
+            return _oldEntries.remove(key);
         }
         return null;
     }
@@ -389,100 +424,18 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      */
     public final void clear() {
         // Clears all keys, values and buckets linked lists.
-        for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
+        for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
             entry._key = null;
             entry._value = null;
             if (entry._previous == null) { // First in bucket.
-                _entries[entry._keyHash & (_entries.length - 1)] = null;
+                entry._table[entry._index] = null;
             }
         }
-        // Recycles all entries.
-        if (_size != 0) {
-            _poolFirst = _mapFirst;
-            _size = 0;
-            if (!_hasConstantCapacity) {
-                sizeChanged();
-            }
-        }
-    }
+        _tail = _head._after;
+        _size = 0;
 
-    /**
-     * Changes the current capacity of this {@link FastMap}. If the capacity is
-     * increased, new entries are allocated and added to the pool. If the
-     * capacity is decreased, entries from the pool are deallocated (and are
-     * garbage collected eventually). The capacity also determined the number of
-     * buckets for the hash table.
-     * 
-     * @param newCapacity the new capacity of this map.
-     */
-    public final void setCapacity(int newCapacity) {
-
-        // Adjusts the number of entries based upon capacity.
-        //
-        if (newCapacity > _capacity) { // Capacity increases.
-            EntryImpl mapLast = _poolFirst._before;
-            for (int i = _capacity; i < newCapacity; i++) {
-                EntryImpl entry = new EntryImpl();
-                entry._after = _poolFirst;
-                _poolFirst._before = entry;
-                _poolFirst = entry;
-            }
-            _capacity = newCapacity;
-            if (mapLast != null) {
-                mapLast._after = _poolFirst;
-                _poolFirst._before = mapLast;
-            } else { // Empty map.
-                _mapFirst = _poolFirst;
-            }
-
-        } else if (newCapacity < _capacity) { // Capacity decreases.
-            // Clears cross-entry references (for gc).
-            for (EntryImpl entry = _poolFirst; entry != null; entry = entry._after) {
-                entry._previous = null;
-                entry._next = null;
-            }
-            EntryImpl mapLast = _poolFirst._before;
-            for (int i = newCapacity; i < _capacity; i++) {
-                EntryImpl next = _poolFirst._after;
-                if (next == null) {
-                    break;
-                } else { // Disconnects.
-                    _poolFirst._after = null;
-                    _poolFirst._before = null;
-                    _poolFirst = next;
-                    _capacity--;
-                }
-            }
-            _poolFirst._before = mapLast;
-            if (mapLast != null) {
-                mapLast._after = _poolFirst;
-            } else { // Empty map.
-                _mapFirst = _poolFirst;
-            }
-        }
-
-        // Sizes the entry table appropriatly (power of 2 >= newCapacity).
-        //
-        int tableLength = 16;
-        while (tableLength < _capacity) {
-            tableLength <<= 1;
-        }
-        // Checks if the hash table has to be re-sized.
-        if ((_entries == null) || (_entries.length != tableLength)) {
-            _entries = new EntryImpl[tableLength];
-            // Repopulates the hash table.
-            for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
-                // Connects to associated bucket.
-                final int index = entry._keyHash & (tableLength - 1);
-                final EntryImpl next = _entries[index];
-                _entries[index] = entry;
-                entry._previous = null; // Resets previous.
-                entry._next = next;
-                if (next != null) {
-                    next._previous = entry;
-                }
-            }
-        }
+        // Discards old entries.
+        _oldEntries = null;
     }
 
     /**
@@ -501,7 +454,7 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         } else if (obj instanceof Map) {
             Map that = (Map) obj;
             if (this.size() == that.size()) {
-                for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
+                for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
                     if (!that.entrySet().contains(entry)) {
                         return false;
                     }
@@ -522,7 +475,7 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      */
     public int hashCode() {
         int code = 0;
-        for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
+        for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
             code += entry.hashCode();
         }
         return code;
@@ -563,14 +516,24 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
             }
         }
         TextBuilder percentCollisions = TextBuilder.newInstance();
-        percentCollisions.append(100 * totalCollisions / size());
-        percentCollisions.append('%');
+        int size = (_oldEntries != null) ? _size - _oldEntries.size() : _size;
+        if (size() != 0) {
+            percentCollisions.append((100 * totalCollisions) / size);
+            percentCollisions.append('%');
+        } else {
+            percentCollisions.append("N/A");
+        }
         synchronized (out) {
-            out.print("SIZE: " + size());
-            out.print(", CAPACITY: " + capacity());
+            out.print("SIZE: " + size);
+            out.print(", TABLE LENGTH: " + _entries.length);
             out.print(", AVG COLLISIONS: " + percentCollisions);
             out.print(", MAX SLOT OCCUPANCY: " + maxOccupancy);
+            out.print(", KEY COMPARATOR: " + _keyComparator);
             out.println();
+            if (_oldEntries != null) {
+                out.print(" + ");
+                _oldEntries.printStatistics(out);
+            }
         }
     }
 
@@ -590,15 +553,13 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         return _values;
     }
 
-    private Values _values = new Values();
-
     private final class Values extends FastCollection {
 
         // Implements abstract method.    
         public final Iterator fastIterator() {
             _fastIterator.map = FastMap.this;
-            _fastIterator.after = _mapFirst;
-            _fastIterator.end = _poolFirst;
+            _fastIterator.after = _head._after;
+            _fastIterator.end = _tail;
             return _fastIterator;
         }
 
@@ -607,8 +568,8 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         public Iterator iterator() {
             ValueIterator i = (ValueIterator) ValueIterator.FACTORY.object();
             i.map = FastMap.this;
-            i.after = _mapFirst;
-            i.end = _poolFirst;
+            i.after = _head._after;
+            i.end = _tail;
             return i;
         }
 
@@ -685,15 +646,13 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         return _entrySet;
     }
 
-    private EntrySet _entrySet = new EntrySet();
-
     private final class EntrySet extends FastCollection implements Set {
 
         // Implements abstract method.    
         public final Iterator fastIterator() {
             _fastIterator.map = FastMap.this;
-            _fastIterator.after = _mapFirst;
-            _fastIterator.end = _poolFirst;
+            _fastIterator.after = _head._after;
+            _fastIterator.end = _tail;
             return _fastIterator;
         }
 
@@ -702,8 +661,8 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         public Iterator iterator() {
             EntryIterator i = (EntryIterator) EntryIterator.FACTORY.object();
             i.map = FastMap.this;
-            i.after = _mapFirst;
-            i.end = _poolFirst;
+            i.after = _head._after;
+            i.end = _tail;
             return i;
         }
 
@@ -730,7 +689,8 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
                 Entry entry = (Entry) obj;
                 EntryImpl mapEntry = (EntryImpl) getEntry(entry.getKey());
                 if ((mapEntry != null)
-                        && (entry.getValue()).equals(mapEntry._value)) {
+                        && (_values.getElementComparator().areEqual(entry
+                                .getValue(), mapEntry._value))) {
                     removeEntry(mapEntry);
                     return true;
                 }
@@ -813,15 +773,13 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         return _keySet;
     }
 
-    private KeySet _keySet = new KeySet();
-
     private final class KeySet extends FastCollection implements Set {
 
         // Implements abstract method.    
         public final Iterator fastIterator() {
             _fastIterator.map = FastMap.this;
-            _fastIterator.after = _mapFirst;
-            _fastIterator.end = _poolFirst;
+            _fastIterator.after = _head._after;
+            _fastIterator.end = _tail;
             return _fastIterator;
         }
 
@@ -830,8 +788,8 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         public Iterator iterator() {
             KeyIterator i = (KeyIterator) KeyIterator.FACTORY.object();
             i.map = FastMap.this;
-            i.after = _mapFirst;
-            i.end = _poolFirst;
+            i.after = _head._after;
+            i.end = _tail;
             return i;
         }
 
@@ -898,33 +856,6 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
     }
 
     /**
-     * This methods is called when the size of a {@link FastMap} changes. The
-     * default behavior is to double the map's capacity when the map's size
-     * exceeds the current map's capacity, unless the map has been created using
-     * the {@link #newInstance}factory method.
-     * 
-     * Sub-class may override this method to implement custom resizing policies
-     * or to disable automatic resizing. For example:<pre>
-     * Map lowFootprintMap = new FastMap() {
-     *     protected sizeChanged() {
-     *         // Increases/decreases capacity according to current size.
-     *          if (size() > 2 * capacity()) {
-     *              setCapacity(2 * capacity());
-     *          } else if ((capacity() >= 32) && (2 * size() < capacity()){
-     *              setCapacity(capacity() / 2)
-     *          }  
-     *     }
-     * };</pre>
-     * 
-     * @see #setCapacity
-     */
-    protected void sizeChanged() {
-        if (size() > capacity()) {
-            setCapacity(capacity() * 2);
-        }
-    }
-
-    /**
      * Adds a new entry for the specified key and value.
      * 
      * @param hash the hash of the key, generated with {@link #keyHash}.
@@ -932,13 +863,15 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @param value the entry's value.
      */
     private void addEntry(int hash, Object key, Object value) {
-        final EntryImpl entry = _poolFirst;
+        final EntryImpl entry = _tail;
 
         // Setups entry parameters.
-        entry._keyHash = hash;
+        final int index = hash & (_entries.length - 1);
         entry._key = key;
         entry._value = value;
-        final int index = hash & (_entries.length - 1);
+        entry._keyHash = hash;
+        entry._table = _entries;
+        entry._index = index;
 
         // Connects to bucket.
         EntryImpl next = _entries[index];
@@ -947,21 +880,21 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
             next._previous = entry;
         }
         entry._previous = null;
-        _entries[index] = entry;
-
-        // Moves pool index.
-        _poolFirst = _poolFirst._after;
-        if (_poolFirst == null) { // Capacity exceeded.
-            _poolFirst = new EntryImpl();
-            _poolFirst._before = entry;
-            entry._after = _poolFirst;
-            _capacity++;
-        }
+        _entries[index] = entry; // Volatile.
 
         // Updates size.
         _size++;
-        if (!_hasConstantCapacity) {
-            sizeChanged();
+        
+        // Moves tail forward.
+        _tail = entry._after;
+        
+        if (_tail == null) { // No tail entry available, creates one.
+            _tail = new EntryImpl();
+            _tail._before = entry;
+            entry._after = _tail;
+            if (_size >= _entries.length) {
+                increaseCapacity();
+            }
         }
     }
 
@@ -981,41 +914,169 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         if (previous != null) {
             previous._next = next;
         } else { // First in bucket.
-            _entries[entry._keyHash & (_entries.length - 1)] = next;
+            entry._table[entry._index] = next;
         }
         if (next != null) {
             next._previous = previous;
         } // Else do nothing, last entry in bucket.
 
-        // Removes from collection.
-        if (entry._after == _poolFirst) { // Last in collection.
-            _poolFirst = entry;
-        } else {
-            // Detaches.
-            final EntryImpl before = entry._before;
-            final EntryImpl after = entry._after;
-            if (before != null) {
-                before._after = after;
-            } else { // First in collection.
-                _mapFirst = after;
-            }
-            // after != null; cannot be last in collection.
-            after._before = before;
+        // Detaches from collection.
+        entry._before._after = entry._after;
+        entry._after._before = entry._before;
 
-            // Inserts in pool.
-            final EntryImpl last = _poolFirst._before;
-            entry._after = _poolFirst;
-            entry._before = last;
-            _poolFirst._before = entry;
-            last._after = entry;
-            _poolFirst = entry;
-        }
+        // Re-inserts before tail.
+        final EntryImpl before = entry._before = _tail._before;
+        entry._after = _tail;
+        before._after = entry;
+        _tail._before = entry;
+        
+        // Moves tail backward.
+        _tail = entry; 
 
         // Updates size.
         _size--;
-        if (!_hasConstantCapacity) {
-            sizeChanged();
+    }
+
+    private void increaseCapacity() {
+        if (_entries.length <= 32) { // For small tables, it's ok to rehash (fast).
+            _entries = (EntryImpl[]) ENTRIES_256_FACTORY.heapPool().next();
+            for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
+                final int index = entry._keyHash & 255;
+                entry._table = _entries;
+                entry._index = index;
+
+                // Connects to bucket.
+                EntryImpl next = _entries[index];
+                entry._next = next;
+                if (next != null) {
+                    next._previous = entry;
+                }
+                entry._previous = null;
+                _entries[index] = entry; 
+            }
+            return;
+        } 
+        int newCapacity = _entries.length << 4;
+        FastMap oldEntries;
+        if (newCapacity <= (1 << 10)) { //                1,024
+            oldEntries = (FastMap) FACTORY_10.heapPool().next();
+        } else if (newCapacity <= (1 << 14)) { //        16,384
+            oldEntries = (FastMap) FACTORY_14.heapPool().next();
+        } else if (newCapacity <= (1 << 18)) { //       262,144
+            oldEntries = (FastMap) FACTORY_18.heapPool().next();
+        } else if (newCapacity <= (1 << 22)) { //     4,194,304
+            oldEntries = (FastMap) FACTORY_22.heapPool().next();
+        } else if (newCapacity <= (1 << 26)) { //    67,108,864
+            oldEntries = (FastMap) FACTORY_26.heapPool().next();
+        } else { //                               1,073,741,824 
+            oldEntries = (FastMap) FACTORY_30.heapPool().next();
         }
+        // Swaps entries.
+        EntryImpl[] newEntries = oldEntries._entries;
+        oldEntries._entries = _entries;
+        _entries = newEntries;
+
+        // Setup the oldEntries map.
+        oldEntries._oldEntries = _oldEntries;
+        oldEntries._keyComparator = _keyComparator;
+        oldEntries._head = _head;
+        oldEntries._tail = _tail;
+        oldEntries._size = _size;
+
+        // Done. We have now a much larger entry table. 
+        // Still, we keep reference to the old entries through oldEntries
+        // until the map is cleared.
+        _oldEntries = oldEntries;
+    }
+
+    private static ObjectFactory ENTRIES_256_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new EntryImpl[256];
+        }
+    };
+    
+    private static ObjectFactory FACTORY_10 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 10);
+        }
+    };
+
+    private static ObjectFactory FACTORY_14 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 14);
+        }
+    };
+
+    private static ObjectFactory FACTORY_18 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 18);
+        }
+    };
+
+    private static ObjectFactory FACTORY_22 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 22);
+        }
+    };
+
+    private static ObjectFactory FACTORY_26 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 26);
+        }
+    };
+
+    private static ObjectFactory FACTORY_30 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 30);
+        }
+    };
+
+    /**
+     * Returns the hash value of the specified key.
+     * 
+     * @param key the key whose hash value is calculated.
+     * @return the key hash value.
+     */
+    private final int keyHashOf(Object key) {
+        return (_keyComparator == FastComparator.DEFAULT) ? key.hashCode()
+                : _keyComparator.hashCodeOf(key);
+    }
+
+    /**
+     * Indicates if two keys are considered equal.
+     * 
+     * @param key1 the first key.
+     * @param key2 the second key.
+     * @return <code>true</code> if both keys are considered equal;
+     *         <code>false</code> otherwise.
+     */
+    private final boolean areKeyEqual(Object key1, Object key2) {
+        return (_keyComparator == FastComparator.DEFAULT) ? key1.equals(key2)
+                : _keyComparator.areEqual(key1, key2);
+    }
+
+    // Overrides.
+    public boolean move(ObjectSpace os) {
+        if (super.move(os)) {
+            for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
+                if (entry._key instanceof Realtime) {
+                    ((Realtime) entry._key).move(os);
+                }
+                if (entry._value instanceof Realtime) {
+                    ((Realtime) entry._value).move(os);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // Implements Reusable.
+    public void reset() {
+        clear();
+        setKeyComparator(Configuration.isPoorSystemHash() ?
+                FastComparator.REHASH : FastComparator.DEFAULT);
+        setValueComparator(FastComparator.DEFAULT);
     }
 
     /**
@@ -1028,21 +1089,33 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      */
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
-        // Initializes fields.
-        _poolFirst = new EntryImpl();
-        _mapFirst = _poolFirst;
+        // Reads non-transient fields (e.g. key comparator).
+        stream.defaultReadObject();
+        final int size = stream.readInt();
+        final int entriesLength = stream.readInt();
+
+        // Do not use default key comparator with poor system hash. 
+        if (Configuration.isPoorSystemHash()) {
+            if (_keyComparator.getClass() == FastComparator.DEFAULT.getClass()) {
+                _keyComparator = FastComparator.REHASH;
+            }
+        }
+
+        // Initializes transient fields.
+        _entries = new EntryImpl[entriesLength];
+        _head = new EntryImpl();
+        _tail = new EntryImpl();
+        _head._after = _tail;
+        _tail._before = _head;
         _values = new Values();
         _entrySet = new EntrySet();
         _keySet = new KeySet();
 
         // Reads data.
-        int capacity = stream.readInt();
-        setCapacity(capacity);
-        int size = stream.readInt();
         for (int i = 0; i < size; i++) {
             Object key = stream.readObject();
             Object value = stream.readObject();
-            addEntry(_keyComparator.keyHash(key), key, value);
+            addEntry(_keyComparator.hashCodeOf(key), key, value);
         }
     }
 
@@ -1053,24 +1126,12 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
      * @throws IOException if an I/O error occurs.
      */
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeInt(_capacity);
+        stream.defaultWriteObject();
         stream.writeInt(_size);
-        for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
+        stream.writeInt(_entries.length);
+        for (EntryImpl entry = _head._after; entry != _tail; entry = entry._after) {
             stream.writeObject(entry._key);
             stream.writeObject(entry._value);
-        }
-    }
-
-    // Overrides.
-    public void move(ContextSpace cs) {
-        super.move(cs);
-        for (EntryImpl entry = _mapFirst; entry != _poolFirst; entry = entry._after) {
-            if (entry._key instanceof Realtime) {
-                ((Realtime) entry._key).move(cs);
-            }
-            if (entry._value instanceof Realtime) {
-                ((Realtime) entry._value).move(cs);
-            }
         }
     }
 
@@ -1093,6 +1154,16 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
          * Holds the key hash code.
          */
         private int _keyHash;
+
+        /**
+         * Holds the table this entry belongs to.
+         */
+        private EntryImpl[] _table;
+
+        /**
+         * Holds its index in the table.
+         */
+        private int _index;
 
         /**
          * Holds the previous entry in the same bucket (null when in pool).
@@ -1155,9 +1226,9 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         public boolean equals(Object that) {
             if (that instanceof Entry) {
                 Entry entry = (Entry) that;
-                return (_keyComparator.areEquals(_key, entry.getKey()))
-                        && ((_value != null) ? _value.equals(entry.getValue())
-                                : (entry.getValue() == null));
+                return (_keyComparator.areEqual(_key, entry.getKey()))
+                        && _values.getElementComparator().areEqual(_value,
+                                entry.getValue());
             } else {
                 return false;
             }
@@ -1169,140 +1240,7 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
          * @return this entry's hash code.
          */
         public int hashCode() {
-            return _keyHash ^ ((_value != null) ? _value.hashCode() : 0);
+            return _keyHash ^ _values.getElementComparator().hashCodeOf(_value);
         }
     }
-
-    /**
-     * This class represents a {@link FastMap} custom key comparator
-     * (such as for identity maps, value retrieval using keys of different class
-     * that the map's keys, etc).
-     */
-    public interface KeyComparator {
-
-        /**
-         * Holds the default key comparator, it assumes that key hash codes are 
-         * evenly distributed (otherwise {@link #UNEVEN_HASH} should be used
-         * instead); two keys k1 and k2 are considered equal if and only if 
-         * <code>k1.equals(k2)</code>.
-         */
-        public static final KeyComparator DEFAULT = new KeyComparator() {
-            public int keyHash(Object key) {
-                return key.hashCode();
-            }
-
-            public boolean areEquals(Object getKey, Object mapKey) {
-                return getKey.equals(mapKey);
-            }
-        };
-
-        /**
-         * Holds the key comparator for identity maps; two keys k1 and k2 are 
-         * considered equal if and only if <code>(k1 == k2)</code>.
-         */
-        public static final KeyComparator REFERENCE = new KeyComparator() {
-            public int keyHash(Object key) {
-                return System.identityHashCode(key);
-            }
-
-            public boolean areEquals(Object getKey, Object mapKey) {
-                return getKey == mapKey;
-            }
-        };
-
-        /**
-         * Holds the key comparator for object with uneven hash distribution
-         * (default comparator for non-Sun VM).
-         */
-        public static final KeyComparator UNEVEN_HASH = new KeyComparator() {
-            public int keyHash(Object key) {
-                // The formula being used is identical to the formula 
-                // used by <code>j2me.util.HashMap</code> to ensures similar
-                // behavior for ill-conditioned hashcode keys. 
-                int h = key.hashCode();
-                h += ~(h << 9);
-                h ^= (h >>> 14);
-                h += (h << 4);
-                return h ^ (h >>> 10);
-            }
-
-            public boolean areEquals(Object getKey, Object mapKey) {
-                return getKey.equals(mapKey);
-            }
-        };
-
-        /**
-         * Holds the key comparator for {@link CharSequence} keys 
-         * (two keys are considered equals if and only if they represents 
-         * the same character sequence). It is assumed that identical character 
-         * sequences have the same hash code (regardless of their actual class).
-         * 
-         * <p>Note: This comparator supports <code>String</code> even so
-         *         <code>String</code> were not a <code>CharSequence</code>
-         *         prior to JDK1.4.</p>
-         */
-        public static final KeyComparator CHAR_SEQUENCE = new KeyComparator() {
-            public int keyHash(Object key) {
-                return key.hashCode();
-            }
-
-            public boolean areEquals(Object getKey, Object mapKey) {
-                if (getKey instanceof String) {
-                    if (mapKey instanceof String) {
-                        return getKey.equals(mapKey);
-                    } else {
-                        String str = (String) getKey;
-                        CharSequence chars = (CharSequence) mapKey;
-                        final int length = str.length();
-                        if (length == chars.length()) {
-                            for (int i = 0; i < length;) {
-                                if (chars.charAt(i) != str.charAt(i++)) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        }
-                        return false;
-                    }
-                } else {
-                    if (mapKey instanceof String) {
-                        return areEquals(mapKey, getKey);
-                    } else {
-                        CharSequence getChars = (CharSequence) getKey;
-                        CharSequence mapChars = (CharSequence) mapKey;
-                        final int length = mapChars.length();
-                        if (length == getChars.length()) {
-                            for (int i = 0; i < length;) {
-                                if (mapChars.charAt(i) != getChars.charAt(i++)) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-            }
-        };
-
-        /**
-         * Returns the hash code for the specified key.
-         * 
-         * @param key the key to return the hashcode for.
-         * @return the hashcode for the specified key.
-         */
-        int keyHash(Object key);
-
-        /**
-         * Indicates if the specified keys can be considered equals.
-         * 
-         * @param getKey the accessor key.
-         * @param mapKey the map key.
-         * @return <code>true</code> if both key are considered equals;
-         *         <code>false</code> otherwise. 
-         */
-        boolean areEquals(Object getKey, Object mapKey);
-    }
-
-    private static final long serialVersionUID = 3258412815931684401L;
 }

@@ -1,228 +1,925 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE>Javolution - Java(TM) Solution for Real-Time and Embedded Systems</TITLE>
-<META content="text/html; charset=utf-8" http-equiv=Content-Type>
-<META content="Java optional library" name=description>
-<META content="java, real-time, embedded, xml, j2me, cldc" name=keywords>
-<BODY aLink=#c19d69 bgColor=#445a45 link=#c19d69 text=#aecaae
-      vLink=#c19d69>
-<FONT face=Verdana><BASEFONT size=2>
-<H1 align=center>Javolution - Java<sup>TM</sup> Solution for Real-Time and Embedded Systems</H1>
-<H4>- Because real-time programming requires a time-predictable standard library.</H4>
-<PRE>
-<I>The ability to simplify means to eliminate the unnecessary so that the necessary may speak.</I>
-<B>Hans Hofmann, Introduction to the Bootstrap, 1993</B></PRE>
-</p>
-<IMG alt=J2ME src="doc/img/j2me.png">
-<IMG alt=J2SE src="doc/img/j2se.png">
-<IMG alt=J2EE src="doc/img/j2ee.png">
-<IMG alt=Javolution src="doc/img/javo.png">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
 
-<H3> <b><i>Javolution</i></b> - A Java<sup>TM</sup> Revolution ?</H3>
-<UL>
-<LI> Transparent <A href="api/javolution/realtime/package-summary.html">object recycling</A> - No memory allocation, memory defragmentation or garbage collection ever.</LI>
-<LI> Configurable/Inheritable <A href="api/javolution/xml/package-summary.html">XML serialization/deserialization</A> integrated with NIO framework.</LI>
-<LI> Runs on <b>ALL</b> Java<sup>TM</sup> platforms from the <IMG src="doc/img/new.gif">J2ME CLDC 1.0<IMG src="doc/img/new.gif"> to the latest J2EE 1.5</LI>
-<LI> <A href="api/javolution/lang/Text.html">Text</A> manipulation several order of magnitude faster than using <code>j2me.lang.String</code>.</LI>
-<LI> Guaranteed response time. No internal table resize/copy ever performed and for threads running in <A href="api/javolution/realtime/PoolContext.html">PoolContext</A> no garbage collection either.</LI>
-<LI> Low-level <A href="api/javolution/realtime/ConcurrentContext.html">concurrency</A> support.</LI>
-<LI> The <A href="doc/benchmark.html">fastest</A> implementations of the most common interfaces (e.g. <A href="api/javolution/util/FastMap.html">FastMap</A> for <code>j2me.util.Map</code> interface).</LI>
-<LI> Free...</LI>
-</UL>
-<H3> The "Top 10" reasons why you should be using <b><i>Javolution</i></b>:</H3>
-<OL>
-<LI> Objects can be allocated on the "stack" and transparently recycled.
-     With <b><i>Javolution</i></b>, your application is busy doing the <b>real work</b>
-     not memory management (e.g. <b><i>Javolution</i></b> 
-     <A href="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A> 
-     is 3-5x faster than conventional XML parsers only because it does not waste 2/3 
-     of the CPU doing memory allocation/garbage collection).</LI>
-<LI> <b><i>Javolution</i></b> classes are simple to use, even simpler than most JDK classes. 
-     For example, you don't need to guess the capacity of a 
-     <A href="api/javolution/lang/TextBuilder.html">TextBuilder</A>
-     or a <A href="api/javolution/util/FastList.html">FastList</A>, their size 
-     expand gently without ever incurring expensive resize/copy operations (unlike 
-     standard classes such as <code>StringBuffer</code> or <code>ArrayList</code>).</LI>
-<LI> <b><i>Javolution</i></b> classes are fast, very fast...
-     <A href="api/javolution/lang/Text.html">Text</A> concatenations are several order of 
-     magnitude faster than concatenation using <code>String</code> and several times faster than 
-     concatenations using <code>StringBuffer/StringBuilder</code>
-     (See <A href="doc/benchmark.html">benchmark</A>).</LI>
-<LI> <b><i>Javolution</i></b> runs on any platform from the simplest J2ME CLDC 1.0 with no garbage collector
-     to the latest J2EE 1.5 Furthermore, with <b><i>Javolution</i></b> provides an easy way 
-     for your application to implement the latest interfaces such as <code>Serializable</code>, <code>Comparable</code>,
-     <code>Appendable</code> and still run on the J2ME CLDC 1.0 platform where these interfaces do not exist.</LI>
-<LI> All <b><i>Javolution</i></b> classes are hard real-time compliant and have highly deterministic
-     behavior (in the microsecond range). 
-     For applications based upon the Real-Time Specification for Java (<a href="http://www.rtj.org/">RTSJ</a>) 
-     all threads (including <code>NoHeapRealtimeThread</code>) can run in ImmortalMemory
-     and avoid memory clashes!</LI>
-<LI> With <b><i>Javolution</i></b>, concurrent algorithms can take advantage of multi-processors systems
-     in a transparent manner
-     (ref. <A href="api/javolution/realtime/ConcurrentContext.html">ConcurrentContext</A>).</LI>
-<LI> Any Java<sup>TM</sup> class can be serialized/deserialized in <a href="api/javolution/xml/XmlFormat.html">XML format</a>
-     in any form you may want (no need to implement <code>Serializable</code> or for the platform to support serialization)!</LI>
-<LI> Using the <b><i>Javolution</i></b> <A href="api/javolution/io/Struct.html">Struct</A>
-     and <A href="api/javolution/io/Union.html">Union</A> base classes, your code can directly
-     share information with C/C++ native applications.</LI>
-<LI> <b><i>Javolution</i></b> provides the fastest implementation of the latest interfaces
-     and gets better and faster every day.</LI>
-<LI> <b><i>Javolution</i></b> is a pure Java<sup>TM</sup> Solution (no native code), small
-      (less than 200 KBytes jar file) and <A href="doc/license.txt">free</A>; permission to use, copy, modify, and 
-      distribute this software is freely granted, provided that copyright notices are preserved.</LI>
-</OL>
-
-<CENTER>
-<H2 align=center><A name="LATEST">Javolution Version 2.1.0 </A></H2>
-<A href="api/index.html"><IMG alt=Browse src="doc/img/browse.jpg"></A> 
-<A href="javolution-2.1.0-src.zip"><IMG alt=Source src="doc/img/source.jpg"></A> 
-<A href="javolution-2.1.0-bin.zip"><IMG alt=Library src="doc/img/library.jpg"></A>  
-</CENTER>
+<!--[if gte IE 5.5000]>
+<script language="JavaScript">
+function correctPNG() // The following script correctly handles the PNG transparency in IE 5.5 or higher.
+   {
+   for(var i=0; i<document.images.length; i++)
+      {
+	  var img = document.images[i]
+	  var imgName = img.src.toUpperCase()
+	  if (imgName.substring(imgName.length-3, imgName.length) == "PNG")
+	     {
+		 var imgID = (img.id) ? "id='" + img.id + "' " : ""
+		 var imgClass = (img.className) ? "class='" + img.className + "' " : ""
+		 var imgTitle = (img.title) ? "title='" + img.title + "' " : "title='" + img.alt + "' "
+		 var imgStyle = "display:inline-block;" + img.style.cssText 
+		 if (img.align == "left") imgStyle = "float:left;" + imgStyle
+		 if (img.align == "right") imgStyle = "float:right;" + imgStyle
+		 if (img.parentElement.href) imgStyle = "cursor:hand;" + imgStyle		
+		 var strNewHTML = "<span " + imgID + imgClass + imgTitle
+		 + " style=\"" + "width:" + img.width + "px; height:" + img.height + "px;" + imgStyle + ";"
+	     + "filter:progid:DXImageTransform.Microsoft.AlphaImageLoader"
+		 + "(src=\'" + img.src + "\', sizingMethod='scale');\"></span>" 
+		 img.outerHTML = strNewHTML
+		 i = i-1
+	     }
+      }
+   }
+window.attachEvent("onload", correctPNG);
+</script>
+<![endif]-->
+<HEAD>
+   <TITLE>Javolution</TITLE>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+   <META NAME="description" CONTENT="Java library for real-Time, embedded and high-performance applications.">
+   <META NAME="keywords" CONTENT="java, real-time, embedded, safety critical, xml, sax2 parser, j2me, cldc, library, open-source, free, fast">
+   <STYLE TYPE="text/css">
+<!--
+body {
+	background-image:  url(doc/img/bg.jpg);
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+   </STYLE> 
     
-<H3> Features:</H3>
-<UL>
-  <LI> <a href="api/javolution/realtime/package-summary.html">Real-time</a> framework:<ul>
-       <li> Objects can be allocated on the "stack" to avoid garbage collection.</li>
-       <li> Faster code executions by reusing stack/pool objects instead of creating new objects.</li>
-       <li> Easier <a href="api/javolution/realtime/ConcurrentContext.html">concurrent</a>
-            programming in low level methods with no thread creation overhead.</li>
-       </ul></LI>
-  <LI> Supports for the encoding of objects into XML; and the complementary reconstruction
-       of the object graph from XML (<a href="api/javolution/xml/package-summary.html">xml</a> package).</LI>
-  <LI> XML parsing with no <code>String</code> allocation!
-       It allows our <A href="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A>
-       to run several times faster than conventional SAX2 parsers.</LI>
-  <LI> Provides all the latest (JDK1.5) interfaces and exceptions for:<ul>
-       <li> <code>java.lang (e.g CharSequence, Appendable, Cloneable, Comparable ...)</code></li>
-       <li> <code>java.io (e.g Serializable, Flushable ...)</code></li>
-       <li> <code>java.util (e.g List, Map, Set, Formattable ...)</code></li>
-       </ul>
-       This classes are in the <code>j2me</code> package (to avoid bootclasspath).
-       It allows j2me applications to implement the latest j2se interfaces and integrate
-       with a j2se framework through a simple rename (<code>j2me.</code> to <code>java.</code>).</LI>
-  <LI> Real-time implementations of 
-       <a href="api/javolution/util/FastMap.html">Map</a>,
-       <a href="api/javolution/util/FastList.html">List</a>
-       and <a href="api/javolution/util/FastSet.html">Set</a>.</LI>
-  <LI> <a href="api/javolution/io/Struct.html">Struct</a>
-       and <a href="api/javolution/io/Union.html">Union</a>  classes for
-       direct interoperability with <code>C/C++</code> applications.</LI>
-  <LI> <A href="api/javolution/util/Reflection.html">Reflection</A>
-       utility class. Any method or constructor can be dynamically invoked using its
-       signature represented as a <code>String</code>.</LI>
-  <LI> <A href="api/javolution/lang/Text.html">Text</A> class, an improved version 
-        of <code>j2me.lang.String</code> with amazingly fast concatenation speed
-       (faster than using <code>StringBuffer</code>).
-       Also, unlike <code>j2me.lang.String</code>, the <A href="api/javolution/lang/Text.html">Text</A> 
-       class in not plagued by the substring memory leak <A href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4513622">
-       bug</a>!</LI>
-   <LI> Appendable character sequence 
-       <A href="api/javolution/lang/TextBuilder.html">TextBuilder</A> same operations as 
-       <code>StringBuffer</code>/<code>StringBuilder</code>, but no capacity to specify
-       and no resize/copy operations ever.</LI> 
-   <LI> Utility class <A href="api/javolution/lang/TypeFormat.html">TypeFormat</A> 
-        to parse any <code>CharSequence</code> into primitive types, and format 
-        any primitive type into an <code>Appendable</code> (up to <code>15x</code> faster
-        than the standard parsing/formatting utilities).</LI> 
-   <LI> Miscellaneous <a href="api/javolution/io/package-summary.html">UTF-8 readers/writers</a>,
-        <a href="api/javolution/util/MathLib.html">math functions</a>, 
-       <a href="api/javolution/util/ReetrantLock.html">locks</a>, etc...</LI>
-</UL><BR>
+   <LINK HREF="doc/index.css" TYPE="text/css" REL="stylesheet">
+   <STYLE TYPE="text/css"> 
 
-<H3><A name="USAGE">Usage:</A></H3>
+<!--
+.style2 {color: #484444}
+.style3 {color: #666666}
+.style4 {font-size: 11px; color: #C7630D; text-decoration: none; font-family: Verdana;}
+.style5 {color: #FFFFFF}
+.style9 {font-size: 12px; color: #6C890C; text-decoration: none; font-family: Verdana;}
+.style10 {
+	font-size: 11px;
+	color: #455724;
+}
+.style13 {color: #C0590C; font-weight: bold; }
+.style14 {font-size: 11px}
+.style15 {font-family: "Courier New"}
+.style16 {
+	font-size: 12px;
+	color: #FFFFFF;
+}
+-->
+   </STYLE> 
+</HEAD>
+<BODY>
+<TABLE ALIGN="center" HEIGHT="1257" BORDER="0" CELLSPACING="0"
+       CELLPADDING="0" WIDTH="707">
+   <TR>
+   <TD WIDTH="26">
+   <IMG HEIGHT="100%" SRC="doc/img/bg_left.png" WIDTH="26"></TD>
+   <TD VALIGN="top" BACKGROUND="doc/img/bg_collumb.jpg" WIDTH="675">
+   <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="doc/img/header_bg.jpg"
+          CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="37">
+      <IMG HEIGHT="85" SRC="doc/img/header_leftcollumn.jpg" WIDTH="8"></TD>
+      <TD VALIGN="top" WIDTH="619">
+      <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="596">
+         <TR>
+         <TD VALIGN="top" WIDTH="19%">
+         <IMG HEIGHT="58" SRC="doc/img/javolution_log.gif" WIDTH="101"></TD>
+         <TD WIDTH="4%">
+         <IMG HEIGHT="85" SRC="doc/img/seperator.jpg" WIDTH="1"></TD>
+         <TD VALIGN="top" WIDTH="77%">
+         <IMG HEIGHT="51" SRC="doc/img/thesolution.gif" WIDTH="401"></TD>
+         </TR>
+      </TABLE></TD>
+      <TD WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="85"
+                              SRC="doc/img/header_rightcollumn.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="doc/img/detailler_bg.jpg"
+          CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="10">
+      <IMG HEIGHT="48" SRC="doc/img/detailler_leftcollumn.jpg" WIDTH="8">
+      </TD>
+      <TD VALIGN="top" WIDTH="656">
+      <DIV ALIGN="center"><SPAN CLASS="detaillerclass">Because real-time
+         programming requires a time-predictable standard library.</SPAN></DIV>
+      </TD>
+      <TD WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="48"
+                              SRC="doc/img/detailler_rightcollumn.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
+   <TABLE CLASS="quotetable" ALIGN="center" HEIGHT="43" BORDER="0"
+          CELLSPACING="1" CELLPADDING="12" WIDTH="633">
+      <TR>
+      <TD WIDTH="607">
+      <DIV CLASS="simplespacer" ALIGN="right"> 
+         <DIV ALIGN="center"><SPAN CLASS="quotetext"><I>&quot;The ability
+            to simplify means to eliminate the unnecessary so that the
+            necessary may speak.&quot;</I><B><BR> <SPAN CLASS="style2">&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;<B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B></B><B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B><B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B>Hans
+            Hofmann</SPAN><SPAN CLASS="style3">, </SPAN></B></SPAN><SPAN
+               CLASS="style4"><SPAN CLASS="style3">Introduction to the
+            Bootstrap, 1993</SPAN></SPAN> 
+         </DIV> 
+      </DIV></TD>
+      </TR>
+   </TABLE>
+   <BR> 
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_ajavarevolution.jpg" WIDTH="222">
+         </TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-<P> The library's <A href="http://ant.apache.org/">ANT</A> build file supports the following targets:
-<H4><pre>      ant 1.0 (CLDC 1.0)</pre> </H4>
-    The library is built without floating point support.<br>
-    J2SE interfaces are in the <code>j2me</code> package.<br>
-<H4><pre>      ant 1.1 (CLDC 1.1)</pre> </H4>
-    Same as CLDC 1.0 except it includes floating point methods.<br>
-<H4><pre>      ant 1.4 (J2SE 1.4+)</pre> </H4>
-    J2SE interfaces are in the regular <code>java</code> package.<br>
-<H4><pre>      ant 1.5 (J2SE 1.5+) </pre> </H4>
-    Same as J2SE 1.4+ except that 
-    <code>javolution.lang.Appendable</code> and
-    <code>javolution.lang.Enum</code> are moved to the <code>java.lang</code> package.<br>
-<H4><pre>      ant gcj (Gnu Compiler for Java) </pre> </H4>
-    Same as J2SE 1.4+ but also generates a native dynamic library (<code>javolution.so</code>).<br>
+<!-- Javolution - A Java(TM) Revolution -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="98%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">
+      <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
+     That being accomplished through:
+     <UL>
+     <LI> Safe/transparent <A HREF="api/javolution/realtime/package-summary.html#OVERVIEW">object
+         recycling</A> (including threads reuse with <A HREF="api/javolution/realtime/ConcurrentContext.html">
+         ConcurrentThread</A>).</LI>
+     <LI> Class initialization and object <A HREF="api/javolution/realtime/AllocationProfile.html">preallocation</a>
+          at start-up or at any time of your convenience.</LI>
+     <LI> <A HREF="doc/benchmark.html">Fast</A> and highly deterministic 
+          <A HREF="api/javolution/util/package-summary.html">util</A> / 
+          <A HREF="api/javolution/lang/package-summary.html">lang</A> /
+          <A HREF="api/javolution/io/package-summary.html">io</A> /
+          <A HREF="api/javolution/xml/package-summary.html">xml</A> base classes
+          (e.g. <A HREF="api/javolution/lang/Text.html">Text</A> manipulations
+          in <code>O[Log(n)]</code> instead of <code>O[n]</code> for standard <code>String/StringBuffer/StringBuilder</code>).</LI>
+     </UL></TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_topten.jpg" WIDTH="370"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
+   
+<!-- Top 10 Reasons -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="96%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">
+      <OL>
+         <LI CLASS="simplespacer_body">Objects can be preallocated or 
+         allocated on the "stack" and automatically recycled. With <B><I>Javolution</I></B>,
+         your application is busy doing the <B>real work </B> not memory
+         management (e.g. <B><I>Javolution</I></B> 
+         <A HREF="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A>
+         is 3-5x faster than conventional XML parsers only because it does
+         not waste 2/3 of the CPU doing memory allocation/garbage
+         collection). 
+         <BR> </LI>
+         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
+         are simple to use, even simpler than most JDK classes. For
+         example, you don't need to guess the capacity of a 
+         <A HREF="api/javolution/lang/TextBuilder.html">TextBuilder</A> or a 
+         <A HREF="api/javolution/util/FastMap.html">FastMap</A>, their
+         size expand gently without ever incurring expensive resize/copy or rehash
+         operations (unlike <code>StringBuffer</code> or <code>HashMap</code>). 
+         <BR> </LI>
+         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
+         are fast, very fast... As illustrated by our comparative <A HREF="doc/benchmark.html">benchmark</A>.
+         <BR> </LI>
+         <LI CLASS="simplespacer_body"<B><I>Javolution</I></B> significantly reduces 
+         <i>"worst case"</i> execution time by having your classes initialized and your objects 
+         <A HREF="api/javolution/realtime/AllocationProfile.html">automatically preallocated</A> at start-up.
+         <BR> </LI>
+         <LI CLASS="simplespacer_body">All <B><I>Javolution</I></B>
+         classes are hard real-time compliant and have highly deterministic
+         behavior (in the microsecond range). For applications based upon
+         the Real-Time Specification for Java (<A HREF="http://www.rtj.org/">RTSJ</A>)
+         normal threads and <code>NoHeapRealtimeThread</code> may share
+         objects preallocated/recycled in immortal memory.
+         <BR> </LI>
+         <LI CLASS="simplespacer_body">With <B><I>Javolution</I></B>,
+         concurrent algorithms can take advantage of multi-processors
+         systems in a transparent manner (ref. 
+         <A HREF="api/javolution/realtime/ConcurrentContext.html">ConcurrentContext</A>).
+         <BR> </LI>
+         <LI CLASS="simplespacer_body">Any Java class can be
+         serialized/deserialized in 
+         <A HREF="api/javolution/xml/package-summary.html">XML format</A> in any
+         form you may want, no need to implement Serializable or for the
+         platform to support serialization (see the
+         <A HREF="https://bindmark.dev.java.net/">bindmark</A> project for performance 
+         reports on this facility)
+         <BR> </LI>
+         <LI CLASS="simplespacer_body">Using the <B><I>Javolution</I></B> <A
+            HREF="api/javolution/io/Struct.html">Struct</A> and 
+         <A HREF="api/javolution/io/Union.html">Union</A> base classes,
+         your code can directly share information with C/C++ native
+         applications. 
+         <BR> </LI>
+         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> runs on
+         any platform from the simplest J2ME CLDC 1.0 with no garbage
+         collector to the latest J2EE 1.5 Furthermore, <B><I>Javolution</I></B>
+         provides an easy way for your application to implement the latest
+         interfaces such as Serializable , Comparable , Appendable and
+         still run on the J2ME CLDC 1.0 platform where these interfaces do
+         not exist. 
+         <BR> </LI>
+         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> is a pure
+         Java Solution (no native code), small (less than 200 KBytes jar
+         file) and <A HREF="doc/license.txt">free</A>; permission to use,
+         copy, modify, and distribute this software is freely granted,
+         provided that copyright notices are preserved. </LI>
+      </OL></TD>
+      </TR>
+   </TABLE>
+   
+<!-- Version -->
+   <TABLE CLASS="quotetable" ALIGN="center" BORDER="0" CELLSPACING="0"
+          CELLPADDING="0" WIDTH="89%">
+      <TR>
+      <TD HEIGHT="29" BACKGROUND="doc/img/getproduct_bg.jpg">
+      <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
+         CLASS="style16">Javolution Version 3.0.2 - February 20, 2005</SPAN></DIV>
+      </TD>
+      <TR>
+      <TD BGCOLOR="#F4F4F2">
+      <DIV ALIGN="center"><A HREF="api/index.html"><IMG HEIGHT="51"
+                                                        BORDER="0"
+                                                        SRC="doc/img/browseapi.jpg"
+                                                        WIDTH="198"></A> 
+         <A HREF="javolution-3.0.2-src.zip"><IMG HEIGHT="51" BORDER="0"
+                                                 SRC="doc/img/getsource.jpg"
+                                                 WIDTH="194"></A> 
+         <A HREF="javolution-3.0.2-bin.zip"><IMG HEIGHT="51" BORDER="0"
+                                                 SRC="doc/img/getlibrary.jpg"
+                                                 WIDTH="198"></A></DIV></TD>
+      </TR>
+   </TABLE>
+   <BR> 
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_features.jpg" WIDTH="97"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-<P> Once built, the library can be used as a normal library (no bootclasspath necessary).</P>
+<!-- Features -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="96%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">
+      <UL>
+         <LI><SPAN CLASS="simplespacer_body"><A
+            HREF="api/javolution/realtime/package-summary.html">Real-time</A>
+         framework: </SPAN> 
+         <UL>
+            <LI CLASS="simplespacer_body">Objects can be allocated on the
+            "stack" to avoid garbage collection. </LI>
+            <LI CLASS="simplespacer_body">Faster code executions by reusing
+            stack/pool objects instead of creating new objects. </LI>
+            <LI CLASS="simplespacer_body">Easier 
+            <A HREF="api/javolution/realtime/ConcurrentContext.html">concurrent</A>
+            programming in low level methods with no thread creation
+            overhead. </LI>
+         </UL></LI>
+         <LI CLASS="simplespacer_body">Supports for the encoding of objects
+         into XML; and the complementary reconstruction of the object graph
+         from XML (<A HREF="api/javolution/xml/package-summary.html">xml</A>
+          package). </LI>
+         <LI CLASS="simplespacer_body">XML parsing with no String
+         allocation! It allows our 
+         <A HREF="api/javolution/xml/sax/RealtimeParser.html">RealtimeParser</A>
+         to run several times faster than conventional SAX2 parsers. </LI>
+         <LI><SPAN CLASS="simplespacer_body"> Provides all the latest
+         (JDK1.5) interfaces and exceptions for: </SPAN> 
+         <UL>
+            <LI CLASS="simplespacer_body">java.lang (e.g CharSequence,
+            Appendable, Cloneable, Comparable ...) </LI>
+            <LI CLASS="simplespacer_body">java.io (e.g Serializable,
+            Flushable ...) </LI>
+            <LI CLASS="simplespacer_body">java.util (e.g List, Map, Set,
+            Formattable ...) </LI>
+         </UL><SPAN CLASS="simplespacer_body">This classes are in the j2me
+         package (to avoid bootclasspath). It allows j2me applications to
+         implement the latest j2se interfaces and integrate with a j2se
+         framework through a simple rename (j2me. to java.)</SPAN></LI>
+         <LI CLASS="simplespacer_body">Real-time implementations of 
+         <A HREF="api/javolution/util/FastMap.html">Map</A>, 
+         <A HREF="api/javolution/util/FastList.html">List</A> and 
+         <A HREF="api/javolution/util/FastSet.html">Set</A>. </LI>
+         <LI CLASS="simplespacer_body">
+         <A HREF="api/javolution/io/Struct.html">Struct</A> and 
+         <A HREF="api/javolution/io/Union.html">Union</A> classes for
+         direct interoperability with C/C++ applications. </LI>
+         <LI CLASS="simplespacer_body">
+         <A HREF="api/javolution/util/Reflection.html">Reflection</A>
+         utility class. Any method or constructor can be dynamically
+         invoked using its signature represented as a String . </LI>
+         <LI CLASS="simplespacer_body">
+         <A HREF="api/javolution/lang/Text.html">Text</A> class, an
+         improved version of java.lang.String with amazingly fast
+         concatenation speed (faster than using StringBuffer ). Also,
+         unlike java.lang.String , the 
+         <A HREF="api/javolution/lang/Text.html">Text</A> class in not
+         plagued by the substring memory leak 
+         <A
+          HREF="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4513622">bug</A>!
+         </LI>
+         <LI CLASS="simplespacer_body">Appendable character sequence 
+         <A HREF="api/javolution/lang/TextBuilder.html">TextBuilder</A>
+         same operations as StringBuffer / StringBuilder , but no capacity
+         to specify and no resize/copy operations ever. </LI>
+         <LI CLASS="simplespacer_body">Utility class 
+         <A HREF="api/javolution/lang/TypeFormat.html">TypeFormat</A> to
+         parse any CharSequence into primitive types, and format any
+         primitive type into an Appendable (up to 15x faster than the
+         standard parsing/formatting utilities). </LI>
+         <LI CLASS="simplespacer_body">Miscellaneous 
+         <A HREF="api/javolution/io/package-summary.html">UTF-8
+         readers/writers</A>, <A HREF="api/javolution/util/MathLib.html">math
+         functions</A>, <A HREF="api/javolution/util/ReetrantLock.html">locks</A>,
+         etc...</LI>
+      </UL></TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_usage.jpg" WIDTH="48"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-<P> The library is also self-executable for versioning, testing and benchmark purpose.
-    <h4><pre>      java -jar javolution.jar version (shows version information)</pre></h4>
-    <h4><pre>      java -jar javolution.jar test (performs self-tests)</pre></h4>
-    <h4><pre>      java -jar javolution.jar perf (runs benchmark)</pre></h4>
-    <i><a href="doc/benchmark.html">Here</a> are the benchmark results on a 
-     Single-CPU Intel Pentium 5 2.20GHz running Windows 2000.</i></p>
+<!-- Usage -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="89%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">The standard binary distribution (above) targets the
+      J2SE1.4+ platform. For others platforms, the library should be
+      rebuilt from the sources using the provided 
+      <A HREF="http://ant.apache.org/">Ant</A> script. Here is a summary of
+      the platforms supported: 
+      <BR> 
+      <BR></TD>
+      </TR>
+   </TABLE>
+   <TABLE CLASS="quotetable2" ALIGN="center" BORDER="0" CELLSPACING="0"
+          CELLPADDING="7" WIDTH="604">
+      <TR BACKGROUND="doc/img/detailler_bg.jpg">
+      <TD WIDTH="80">
+      <DIV CLASS="style9" ALIGN="center">Ant Target 
+      </DIV></TD>
+      <TD WIDTH="88">
+      <DIV CLASS="style9" ALIGN="center">Platform 
+      </DIV></TD>
+      <TD WIDTH="392"><SPAN CLASS="style9">Description</SPAN></TD>
+      </TR>
+      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+      <TD>
+      <DIV CLASS="style9" ALIGN="center">1.0 
+      </DIV></TD>
+      <TD CLASS="style9">CLDC 1.0+ </TD>
+      <TD CLASS="style9">The library is built without floating point support. 
+      <BR> J2SE interfaces are in the j2me.* package. </TD>
+      </TR>
+      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+      <TD>
+      <DIV CLASS="style9" ALIGN="center">1.1 
+      </DIV></TD>
+      <TD CLASS="style9">CLDC 1.1+ </TD>
+      <TD CLASS="style9">The library includes floating point support. 
+      <BR> J2SE interfaces are in the j2me.* package. </TD>
+      </TR>
+      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+      <TD>
+      <DIV CLASS="style9" ALIGN="center">1.4 
+      </DIV></TD>
+      <TD CLASS="style9">J2SE 1.4+ </TD>
+      <TD CLASS="style9">J2SE interfaces are in the regular java.* package. </TD>
+      </TR>
+      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+      <TD>
+      <DIV CLASS="style9" ALIGN="center">1.5 
+      </DIV></TD>
+      <TD CLASS="style9">J2SE 1.5+ </TD>
+      <TD CLASS="style9">J2SE interfaces are in the regular java.* package. 
+      <BR> javolution.lang.Appendable and javolution.lang.Enum are moved to
+      the java.lang.* package. </TD>
+      </TR>
+      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+      <TD>
+      <DIV CLASS="style9" ALIGN="center">gcj 
+      </DIV></TD>
+      <TD CLASS="style9"><A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for
+      Java</A></TD>
+      <TD CLASS="style9">J2SE interfaces are in the regular java.* package. 
+      <BR> Includes org.xml.sax.* classes. 
+      <BR> Generates a native dynamic library ( javolution.so ). </TD>
+      </TR>
+   </TABLE>
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="90%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">Once built, the library can be used as a normal
+      library (no bootclasspath necessary). The library is also
+      self-executable for versioning, testing and benchmark purpose. 
+      <H4 CLASS="style10">java -jar javolution.jar version (shows version
+      information) 
+      <BR> java -jar javolution.jar test (performs self-tests) 
+      <BR> java -jar javolution.jar perf (runs benchmark) </H4><I><A
+         HREF="doc/benchmark.html">Here</A> are the benchmark results on a
+      Single-CPU Intel Pentium 5 2.20GHz running Windows 2000.</I> </TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_tools.jpg" WIDTH="43"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-<H3><A name="TOOLS">Tools:</A></H3>
+<!-- Tools -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="89%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top"><SPAN CLASS="style13">Runtime
+      Environment:</SPAN> <B>Any </B> (J2ME CLDC, J2SE, J2EE, GCJ)<BR> 
+      <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including 
+      <A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</A>)<BR>
+      <SPAN CLASS="style13">Build tool: </SPAN><A
+         HREF="http://jakarta.apache.org/ant/">Apache Ant<BR> </A><SPAN
+         CLASS="style13">Collaborative Tool:</SPAN> 
+      <A HREF="http://javolution.dev.java.net/">java.net</A> (code
+      development, comments, issues, bug reporting).<BR> 
+      <SPAN CLASS="style13">Coding Standard:</SPAN> 
+      <A HREF="http://java.sun.com/docs/codeconv/index.html"> 
+      Sun Code Convention</A> with <A HREF="doc/coding_standard.txt">Addendum</A>.<BR>
+      <SPAN CLASS="style13">Preferred Environment:</SPAN> 
+      <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding). </TD>
+      </TR>
+   </TABLE>
+   <BR>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_links.jpg" WIDTH="46"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-<p><i>Runtime Environment: <b>Any</b> (J2ME CLDC, J2SE, J2EE, GCJ)</i></p>
-<p><i>Compilers: <b>All</b> (including <a href="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</a>)</i></p>
-<p><i>Build tool: <A href="http://jakarta.apache.org/ant/">Apache Ant</a></i></p>
-<p><i>Collaborative Tool: <a href="http://javolution.dev.java.net/">java.net</a> (code development, comments, issues, bug reporting).</i></p>
-<p><i>Coding Standard:  <a href="http://java.sun.com/docs/codeconv/index.html">
-        Sun<sup>TM</sup> Code Convention</a> with <a href="doc/coding_standard.txt">Addendum</a>.</i></p>
-<p><i>Preferred Environment: <A href="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding).</i></p>
-<H3><A name="LINKS">Links:</A></H3>
+<!-- Links -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="90%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">Articles related to 
+      <B><I>Javolution</I></B> (previously known as: <B>J.A.D.E. J</B>ava 
+      <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment): 
+      <UL>
+         <LI><A HREF="https://bindmark.dev.java.net/">Performance
+         comparison of XML-Java bindings</A></LI>
+         <LI><A HREF="http://www.sys-con.com/story/?storyid=45500&DE=1">
+         Turbo-Charging Java for Real-Time Applications</A><BR> (July 2004
+         issue of <B>Java Developer Journal</B>)</LI>
+         <LI>J.A.D.E. XML support, published in the 2001 February issue of 
+         <A HREF="http://www.ddj.com/">Dr Dobb's</A> Journal. </LI>
+      </UL>Known projects using <B><I>Javolution</I></B>: 
+      <UL>
+         <LI><A HREF="http://jscience.org/">
+         <FONT COLOR="#B60606" FAMILY="Verdana">J</FONT><FONT COLOR="#506474" FAMILY="Verdana">Science</FONT></A></LI>
+         <LI><A HREF="http://www.jmulti.de/">JMulTi</A> - Time Series Analysis with Java.</LI>
+         <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
+      </UL><I> (Let us know if your project uses <B>Javolution</B>
+      and you would like it to be listed here) 
+      <BR> 
+      <BR></I><B><I>Javolution</I></B>'s users can also show their
+      support with the "Powered By Javolution" button:<BR> 
+      <BR> 
+      <IMG HEIGHT="32" SRC="doc/img/javolution.png" WIDTH="144"> 
+      <BR> 
+      <BR> (e.g. <SPAN CLASS="style15">&lt;a
+      href="http://javolution.org"&gt;&lt;img
+      src="javolution.png"&gt;&lt;/a&gt;</SPAN>);<BR> this is of course
+      purely optional. </TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+      <TR>
+      <TD WIDTH="28">
+      <IMG HEIGHT="59" SRC="doc/img/infobar_left.jpg" WIDTH="28"></TD>
+      <TD WIDTH="639">
+      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+             WIDTH="100%">
+         <TR>
+         <TD HEIGHT="9">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topleft.jpg" WIDTH="97">
+            </TD>
+            <TD BACKGROUND="doc/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+            </TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="9" SRC="doc/img/infobar_sub_topright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="doc/img/infobar_bg.jpg">
+         <IMG HEIGHT="28" SRC="doc/img/a_history.jpg" WIDTH="55"></TD>
+         </TR>
+         <TR>
+         <TD VALIGN="top">
+         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                WIDTH="100%">
+            <TR>
+            <TD WIDTH="15%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomleft.jpg"
+                 WIDTH="97"></TD>
+            <TD BACKGROUND="doc/img/infobar_sub_bottommiddle.jpg"
+                WIDTH="76%">&nbsp;</TD>
+            <TD WIDTH="9%">
+            <IMG HEIGHT="15" SRC="doc/img/infobar_sub_bottomright.jpg"
+                 WIDTH="122"></TD>
+            </TR>
+         </TABLE></TD>
+         </TR>
+      </TABLE></TD>
+      <TD BACKGROUND="doc/img/infobar_right.jpg" WIDTH="10">
+      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="doc/img/infobar_right.jpg"
+                              WIDTH="8"></DIV></TD>
+      </TR>
+   </TABLE>
 
-Articles related to <b><i>Javolution</i></b> 
-(previously known as: <b>J.A.D.E.</b> <b>J</b>ava <b>A</b>ddition to <b>D</b>efault <b>E</b>nvironment):
-<UL>
-  <LI><A href="http://www.sys-con.com/story/?storyid=45500&DE=1">
-      Turbo-Charging Java for Real-Time Applications</A>
-      (July 2004 issue of <b>Java Developer Journal</b>)</LI>
-  <LI> J.A.D.E. XML support, published in the 2001 February issue of <A href="http://www.ddj.com/">Dr Dobb's</A> Journal.</LI>
-</UL>
-Known projects using <b><i>Javolution</i></b>:
-<UL>
-  <LI> <A href="http://jscience.org/">jScience</a></LI>
-</UL>
-<i> (Let us know if your project uses <b><i>Javolution</i></b> and you would like it to be listed here)</i>
-<p> <b><i>Javolution</i></b>'s users can also show their support with the
- <a href="http://javolution.org"><img src="doc/img/javolution.png"></a> button
- (e.g. <code>&lt;a href="http://javolution.org"&gt;&lt;img src="http://javolution.org/doc/img/javolution.png"&gt;&lt;/a&gt;</code>);
- this is of course purely optional.</p>
+<!-- History -->
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+          WIDTH="98%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="top">
+      <UL>
+         <LI CLASS="simplespacer_body"><B> February 20, 2005: Javolution 3.0.2</B><BR>
+         <A HREF="api/javolution/util/FastMap.html">FastMap</A> and <A HREF="api/javolution/lang/Text.html">Text</A> enhancements[3.0.2]<BR>
+         Added <A HREF="api/javolution/realtime/RealtimeReference.html">RealtimeReference</A> class [3.0.2]<BR>
+         <A HREF="api/javolution/realtime/AllocationProfile.html">Allocation profiler</A>!
+         It allows your classes to be initialized and <B>ALL</B> your objects preallocated at start-up 
+         (e.g. in immortal memory for RTSJ VM). No more dynamic object creation 
+         and garbage collection <B>EVER</B> (also several fold acceleration increase of your application)!<BR>
+         Faster <A HREF="api/javolution/util/package-summary.html">collection</A>
+         classes, especially <A HREF="api/javolution/util/FastList.html">FastList</A> 
+         (see <A HREF="doc/benchmark.html">benchmark</A>)[3.0.0]<BR>
+         </LI>
 
-<H3><A name="HISTORY">History</A></H3>
-<UL>
-  <LI><B> December 19, 2004:  Javolution 2.1.0</B><BR>
-       CLDC 1.0 support [2.1.0] <BR>
-       Removed bootclasspath limitation [2.1.0] <BR>
-  </LI>
-  <LI><B> December 12, 2004:  Javolution 2.0.4</B><BR>
-       Obfuscation support for Xml Serialization (<A href="api/javolution/xml/XmlFormat.html#setAlias(j2me.lang.Class,j2me.lang.String)">XmlFormat.setAlias</A>) [2.0.4] <BR>
-       <A href="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for communication over persistent connections  [2.0.3] <BR>
-       Added <A href="api/javolution/xml/XmlInputStream.html">XmlInputStream</A>
-       <A href="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for communication over persistent connections  [2.0.3] <BR>
-       Facilitated the use of <A href="api/javolution/util/FastMap.html">FastMap</A> as identity map (ref. javadoc example) [2.0.3]<BR>
-       Removed limitation on the number of <A href="api/javolution/realtime/Context.html">Context</A> [2.0.3]<BR>
-       Added XML Serialization/Deserialization benchmark [2.0.2]<BR>
-       The <A href="api/javolution/xml/package-summary.html">XML serialization/deserialization</A>
-       is fully integrated with the high-performance NIO facility (ref. last example) [2.0.1]<BR>
-       Added <A href="api/javolution/io/Utf8ByteBufferReader.html">Utf8ByteBufferReader</A>
-       and <A href="api/javolution/io/Utf8ByteBufferWriter.html">Utf8ByteBufferWriter</A> classes
-       for high-performance I/O [2.0.1]<BR>
-       Bootclasspath not necessary for JRE V1.4+ [2.0.0]<BR>
-       Re-packaged utility classes (moved few classes to <code>javolution.io</code> and <code>javolution.lang</code>) [2.0.0]<BR>
-       Less restrictive <a href="doc/license.txt">licensing</a> (dropped LGPL) [2.0.0]
-  </LI>
-  <LI><B> November 8, 2004:  Javolution 1.1</B><BR>
-       Cleared dangling reference in FastMap (thanks Nicolas) [1.1.2]<BR>
-       Enhanced xml serialization/deserialization <A href="api/javolution/xml/package-summary.html">framework</A> (e.g. circular references support) [1.1.1]<BR>
-       Added cross-platform <A href="api/javolution/util/MathLib.html">math library</A>. [1.1.0]<BR>
-  </LI>
-  <LI><B> October 4, 2004:  Javolution 1.0</B><BR>
-       Optimized FastMap (10% faster) [1.0.8]<BR>
-       Made all <A href="api/javolution/util/package-summary.html">utilities</A> classes <b>public domain</b> [1.0.6]<BR>
-       Added <A href="http://gcc.gnu.org/java/">gcj</A> support [1.0.5]<BR>
-       Added default XML formats for Object, String, Collection and Map [1.0.4]<BR>
-       Migration completed and tested [1.0.3]<BR>
-       Spin-off of <A href="http://jade.dautelle.com">Java(TM) Addition to Default Environment</A> [1.0.0]
-  </LI>
-</UL><BR>
+         <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2.5</B><BR>
+         Simplification of <A HREF="api/javolution/io/Struct.html">Struct</A>
+         / <A HREF="api/javolution/io/Struct.html">Union</A> with regard to 
+         inner struct/union members and array members [2.2.5] <BR>
+         <A HREF="api/javolution/lang/TextFormat.html">TextFormat</A> enhancements [2.2.4] <BR>
+         All collection classes implement Serializable [2.2.3] <BR>
+         Automatic detection of poorly distributed system hash code (see 
+         <A HREF="api/javolution/util/FastMap.html">FastMap</A>) [2.2.2]<BR>
+          Documentation update [2.2.1]<BR> Modified xml serialization to
+          generate SAX events for 
+         <A HREF="http://cocoon.apache.org/2.1/tutorial/tutorial-rmi-generator.html">cocoon</A>
+         (see <A HREF="api/javolution/xml/ObjectWriter.html">ObjectWriter</A>) [2.2.0]<BR>
+          Removed calls to <CODE>System.getProprety()</CODE>
+         (security issues with Java WebStart) [2.2.0]<BR>
+         Corrected error in <A HREF="api/javolution/io/Struct.html">Struct</A> for multi-dimensional arrays [2.2.0]<BR> </LI>
 
-<A href="http://javolution.dev.java.net/" alt="java.net"><IMG align=left hspace=4 src="doc/img/javanet.gif" vspace=4> </A>
-<ADDRESS>Comments To: <A href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</A>
-<BR>Revision: December 19, 2004
-<BR><A href="http://java.sun.com/" target=_blank>Java<SUP>TM</SUP></A> is a trademark of <A href="http://www.sun.com/" target=_blank>Sun Microsystems, Inc</A>
-</FONT></BODY></HTML>
+         <LI CLASS="simplespacer_body"><B> December 19, 2004: Javolution 2.1</B><BR>
+         CLDC 1.0 support [2.1.0]<BR>
+         Removed bootclasspath limitation [2.1.0] <BR>
+         </LI>
+         
+         <LI CLASS="simplespacer_body"><B> December 12, 2004: Javolution 2.0</B><BR>
+         Obfuscation support for Xml Serialization ( 
+         <A HREF="api/javolution/xml/XmlFormat.html#setAlias%28java.lang.Class,java.lang.String%29">XmlFormat.setAlias</A>) [2.0.4]<BR>
+         <A HREF="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for
+         communication over persistent connections [2.0.3] <BR>
+         Added <A HREF="api/javolution/xml/XmlInputStream.html">XmlInputStream</A>
+         <A HREF="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>
+         for communication over persistent connections [2.0.3] <BR>
+         Facilitated the use of <A HREF="api/javolution/util/FastMap.html">FastMap</A> as identity
+         map (ref. javadoc example) [2.0.3] <BR>
+         Removed limitation on the number of 
+         <A HREF="api/javolution/realtime/Context.html">Context</A> [2.0.3] <BR>
+         Added <A HREF="api/javolution/io/Utf8ByteBufferReader.html">Utf8ByteBufferReader</A>
+         and <A HREF="api/javolution/io/Utf8ByteBufferWriter.html">Utf8ByteBufferWriter</A>
+         classes for high-performance I/O [2.0.1] <BR>
+         Less restrictive <A HREF="doc/license.txt">licensing</A> (dropped LGPL) [2.0.0] <BR>
+         </LI>
+         
+         <LI CLASS="simplespacer_body"><B> November 8, 2004: Javolution 1.1</B><BR>
+         Cleared dangling reference in FastMap (thanks Nicolas) [1.1.2]<BR>
+         Enhanced xml serialization/deserialization 
+         <A HREF="api/javolution/xml/package-summary.html">framework</A>
+         (e.g. circular references support) [1.1.1] <BR>
+         </LI>
+         
+         <LI CLASS="simplespacer_body"><B> October 4, 2004: Javolution 1.0</B><BR>
+         Optimized FastMap (10% faster) [1.0.8] <BR>
+         Added <A HREF="http://gcc.gnu.org/java/">gcj</A> support [1.0.5] <BR>
+         Added default XML formats for Object, String, Collection and Map [1.0.4] 
+         <BR> Migration completed and tested [1.0.3] 
+         <BR> Spin-off of <A HREF="http://jade.dautelle.com">Java Addition
+         to Default Environment</A> [1.0.0] </LI>
+      </UL></TD>
+      </TR>
+   </TABLE>
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="12"
+          WIDTH="92%">
+      <TR>
+      <TD CLASS="simplespacer_body style14" VALIGN="middle" ALIGN="center" WIDTH="14%">
+      <DIV ALIGN="center"><A HREF="http://www.opensource.org/"><IMG
+         HEIGHT="60" BORDER="0" SRC="doc/img/osi-certified-72x60.gif" WIDTH="72"></A></DIV>
+      </TD>
+      <TD CLASS="simplespacer_body style14" WIDTH="31%"><A HREF="http://javolution.dev.java.net/"><IMG
+         HEIGHT="47" BORDER="0" SRC="doc/img/javanet.gif" WIDTH="170"></A> 
+      </TD>
+      <TD CLASS="simplespacer_body style14" WIDTH="55%">Comments To: <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</A><BR> 
+      Revision: February 20, 2005 
+      <BR> <A HREF="http://java.sun.com/">Java</A> is a trademark of 
+      <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A></TD>
+      </TR>
+   </TABLE>
+   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
+      <TR>
+      <TD>
+      <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
+            HEIGHT="31" BORDER="0" SRC="doc/img/ventrobanner.jpg"
+            WIDTH="590"></A></DIV></TD>
+      </TR>
+   </TABLE>
+   <BR> </TD>
+   <TD WIDTH="10">
+   <IMG HEIGHT="100%" SRC="doc/img/bg_right.png" WIDTH="15"></TD>
+   </TR>
+</TABLE>
+</BODY>
+</HTML>

@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -9,7 +10,7 @@ package javolution.xml.sax;
 
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
-import javolution.lang.Text;
+import javolution.util.FastComparator;
 
 /**
  * This class represents the <code>CharSequence</code> generated while
@@ -25,7 +26,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     /**
      * Holds the character data.
      */
-    char[] data = new char[0];
+    char[] data;
 
     /**
      * Holds the index of the first character.
@@ -40,7 +41,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     /**
      * Holds an empty character sequence.
      */
-    static final CharSequenceImpl EMPTY = new CharSequenceImpl();
+    static final CharSequenceImpl EMPTY = new CharSequenceImpl("");
 
     /**
      * Default constructor.
@@ -144,6 +145,8 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     public boolean equals(Object that) {
         if (that instanceof CharSequence) {
             return equals((CharSequence) that);
+        } else if (that instanceof String) { // String is not always a CharSequence.
+            return equals((String) that);
         } else {
             return false;
         }
@@ -152,11 +155,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     /**
      * Compares this character sequence against the specified character
      * sequence.
-     *
-     * <p> Note: Unfortunately, due to the current (JDK 1.4.1) implementation
-     *          of <code>j2me.lang.String</code> and <code>
-     *          j2me.lang.StringBuffer</code>, this method is not symmetric.</p>
-     *
+     * 
      * @param  chars the character sequence to compare with.
      * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
@@ -167,6 +166,26 @@ final class CharSequenceImpl implements CharSequence, Comparable {
         } else {
             for (int i = 0, j = first; i < length; i++) {
                 if (data[j++] != chars.charAt(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Compares this character sequence against the specified String.
+     * 
+     * @param  chars the character sequence to compare with.
+     * @return <code>true</code> if both objects represent the same sequence;
+     *         <code>false</code> otherwise.
+     */
+    public boolean equals(String str) {
+        if (length != str.length()) {
+            return false;
+        } else {
+            for (int i = 0, j = first; i < length; i++) {
+                if (data[j++] != str.charAt(i)) {
                     return false;
                 }
             }
@@ -202,11 +221,11 @@ final class CharSequenceImpl implements CharSequence, Comparable {
      * sequence lexicographically.
      *
      * @param   seq the character sequence to be compared.
-     * @return  <code>{@link Text.COMPARATOR}.compare(this, seq)</code>
+     * @return  <code>{@link FastComparator#LEXICAL}.compare(this, seq)</code>
      * @throws  ClassCastException if the specifed object is not a
      *          <code>CharSequence</code>.
      */
     public int compareTo(Object seq) {
-        return Text.COMPARATOR.compare(this, seq);
+        return FastComparator.LEXICAL.compare(this, seq);
     }
 }

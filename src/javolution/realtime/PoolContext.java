@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -16,16 +17,14 @@ package javolution.realtime;
  *     upon {@link PoolContext#exit exit}. This recycling is almost 
  *     instantaneous and has no impact on performance.</p>  
  * <p> Objects allocated within a pool context should not be directly 
- *     referenced outside of the context unless they have been 
- *     {@link RealtimeObject#export exported} first. If this simple rule is 
- *     followed, then pool context are completely safe. In fact, pool contexts
- *     promote the use of immutable objects (as their allocation cost is then
- *     negligible with no adverse effect on garbarge collection) and often lead
- *     to safer, faster and more robust applications.</p>
- * <p> Individual object recycling is supported for methods
- *     having access to the object pool (e.g. member methods on their own pool). 
- *     The {@link ArrayPool} class has its pools public and therefore allows
- *     for individual recycling of any array.</p>
+ *     referenced outside of the context unless they are  
+ *     {@link RealtimeObject#export exported} (e.g. result being returned)
+ *     or {@link RealtimeObject#preserve preserved} (e.g. shared static 
+ *     instance). If this simple rule is followed, then pool context are
+ *     completely safe. In fact, pool contexts promote the use of immutable
+ *     objects (as their allocation cost is then negligible with no adverse 
+ *     effect on garbarge collection) and often lead to safer, faster and
+ *     more robust applications.</p>
  * <p> Upon thread termination, pool objects associated to a thread are 
  *     candidate for garbage collection (the "export rule" guarantees that these
  *     objects are not referenced anymore). They will be collected after 
@@ -37,11 +36,6 @@ package javolution.realtime;
  * @version 1.0, October 4, 2004
  */
 public final class PoolContext extends Context {
-
-    /**
-     * Holds the initial pool value (to avoid testing for null).
-     */
-    private static final ObjectPool NULL_POOL = new DefaultPool(null);
 
     /**
      * Holds the pools for this context.
@@ -63,7 +57,7 @@ public final class PoolContext extends Context {
      */
     PoolContext() {
         for (int i=_pools.length; i > 0;) {
-            _pools[--i] = NULL_POOL;
+            _pools[--i] = ObjectPool.NULL;
         }
     }
 
@@ -102,7 +96,7 @@ public final class PoolContext extends Context {
     protected void dispose() {
         for (int i = ObjectFactory.Count; i > 0;) {
             ObjectPool pool = _pools[--i];
-            if (pool != NULL_POOL) {
+            if (pool != ObjectPool.NULL) {
                 pool.clearAll();
             }
         }
@@ -149,7 +143,7 @@ public final class PoolContext extends Context {
         // Synchronize. Avoid "double check locking" for lazy initialization 
         // (ref. http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html)
         ObjectPool pool = _pools[index];
-        if (pool == NULL_POOL) { // Creates pool.
+        if (pool == ObjectPool.NULL) { // Creates pool.
             pool = ObjectFactory.INSTANCES[index].newPool();
             _pools[index] = pool;
         }

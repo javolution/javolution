@@ -1,99 +1,166 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution;
 
+import java.io.IOException;
+
+import javolution.lang.Appendable;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
-import javolution.realtime.PoolContext;
+import javolution.realtime.AllocationProfile;
+import javolution.util.MathLib;
 import javolution.util.Reflection;
 
 /**
  * <p> This class holds {@link javolution.lang} benchmark.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.0, November 26, 2004
+ * @version 3.0, February 20, 2005
  */
 final class Perf_Lang extends Javolution implements Runnable {
 
+    private static final int COUNT = 1000;
+    
+    private final String PLUS_STRING = "Concatenates this line one thousand times "
+        + "(resulting in a text of about 80,000 characters).";
+    
+    private final String INSERT_STRING = "Inserts this line into itself one thousand times."
+        + " Then remove 80 characters at random location one thousand times";
+
+    private final Text PLUS_TEXT = Text.valueOf(PLUS_STRING);
+    
+    private final Text INSERT_TEXT = Text.valueOf(INSERT_STRING);
+    
+    private static final Reflection.Constructor STRING_BUILDER_CONSTRUCTOR
+    = Reflection.getConstructor("j2me.lang.StringBuilder()");
+    
     /** 
      * Executes benchmark.
      */
     public void run() {
+        println("//////////////////////////////");
+        println("// Package: javolution.lang //");
+        println("//////////////////////////////");
+        println("");
+
         println("-- String/StringBuffer/StringBuilder versus Text/TextBuilder --");
-        final String TXT_STRING = "Concatenates this line one hundred times "
-                + "(resulting in a text of about 8000 characters)";
-        final Text TXT_CHARS = Text.valueOf(TXT_STRING);
-        println("\"" + TXT_STRING + "\"");
+        println("\"" + PLUS_STRING + "\"");
         print("String \"+\" operator: ");
         startTime();
-        for (int i = 0; i < 100; i++) {
-            String str = "";
-            for (int j = 0; j < 100; j++) {
-                str += TXT_STRING;
-            }
+        String str = "";
+        for (int j = 0; j < COUNT; j++) {
+            str += PLUS_STRING;
         }
-        endTime(100);
-        print("StringBuffer \"append\": ");
+        endTime(1);
+
+        print("Text \"plus\": ");
         startTime();
-        for (int i = 0; i < 1000; i++) {
-            StringBuffer sb = new StringBuffer();
-            for (int j = 0; j < 100; j++) {
-                sb.append(TXT_STRING);
-            }
+        Text txt = Text.EMPTY;
+        for (int j = 0; j < COUNT; j++) {
+            txt = txt.plus(PLUS_TEXT);
         }
-        endTime(1000);
-        Reflection.Constructor newStringBuilder = Reflection
-                .getConstructor("j2me.lang.StringBuilder()");
-        Reflection.Method stringBuilderAppend = Reflection
-                .getMethod("j2me.lang.StringBuilder.append(j2me.lang.CharSequence)");
-        if (newStringBuilder != null) {
-            print("StringBuilder \"append\": ");
-            startTime();
-            for (int i = 0; i < 1000; i++) {
-                Object sb = newStringBuilder.newInstance();
-                for (int j = 0; j < 100; j++) {
-                    stringBuilderAppend.invoke(sb, TXT_CHARS);
-                }
-            }
-            endTime(1000);
+        endTime(1);
+
+        // StringBuffer
+        benchmarkAppendable(new StringBuffer());
+        
+        // StringBuilder (if supported)
+        if (STRING_BUILDER_CONSTRUCTOR != null) {
+            benchmarkAppendable(STRING_BUILDER_CONSTRUCTOR.newInstance());
         }
-        print("Text \"plus\" (heap): ");
+        
+        // TextBuilder
+        benchmarkAppendable(new TextBuilder());
+
+        println("");
+        
+        println("-- StringBuffer versus Text (insertion/deletion) --");
+        println("\"" + INSERT_STRING + "\"");
+
+        print("StringBuffer insert: ");
         startTime();
-        for (int i = 0; i < 1000; i++) {
-            Text chars = Text.EMPTY;
-            for (int j = 0; j < 100; j++) {
-                chars = chars.plus(TXT_CHARS);
-            }
+        StringBuffer sb = new StringBuffer(INSERT_STRING);
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % sb.length();
+            sb.insert(index, INSERT_STRING);
         }
-        endTime(1000);
-        print("Text \"plus\" (stack): ");
+        endTime(1);
+        
+        print("StringBuffer delete: ");
         startTime();
-        for (int i = 0; i < 1000; i++) {
-            PoolContext.enter();
-            Text chars = Text.EMPTY;
-            for (int j = 0; j < 100; j++) {
-                chars = chars.plus(TXT_CHARS);
-            }
-            PoolContext.exit();
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % sb.length();
+            sb.delete(index, Math.min(index + 80, sb.length()));
         }
-        endTime(1000);
-        print("TextBuilder \"append\": ");
+        endTime(1);
+
+        print("Text insert: ");
         startTime();
-        for (int i = 0; i < 1000; i++) {
-            PoolContext.enter();
-            TextBuilder cb = TextBuilder.newInstance();
-            for (int j = 0; j < 100; j++) {
-                cb.append(TXT_CHARS);
-            }
-            cb.toText();
-            PoolContext.exit();
+        txt = INSERT_TEXT;
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+            txt = txt.insert(index, INSERT_TEXT);
         }
-        endTime(1000);
+        endTime(1);
+        
+        print("Text delete: ");
+        startTime();
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+            txt = txt.delete(index, Math.min(index + 80, txt.length()));
+        }
+        endTime(1);
+        
+        println("-- Using Preallocation Facility --");
+        AllocationProfile.preallocate();
+
+        print("Text \"plus\": ");
+        startTime();
+        txt = Text.EMPTY;
+        for (int j = 0; j < COUNT; j++) {
+            txt = txt.plus(PLUS_TEXT);
+        }
+        endTime(1);
+        
+        print("Text insert: ");
+        startTime();
+        txt = INSERT_TEXT;
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+            txt = txt.insert(index, INSERT_TEXT);
+        }
+        endTime(1);
+        
+        print("Text delete: ");
+        startTime();
+        for (int j = 0; j < COUNT; j++) {
+            int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+            txt = txt.delete(index, Math.min(index + 80, txt.length()));
+        }
+        endTime(1);
+        
         println("");
     }
+    
+    private void benchmarkAppendable(Object obj) {
+        try {
+            if (!(obj instanceof Appendable)) return;
+            print(obj.getClass() + " \"append\": ");
+            Appendable a = (Appendable) obj;
+            startTime();
+            for (int i = 0; i < COUNT; i++) {
+                 a.append(PLUS_TEXT);
+            }
+            endTime(1);
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
+    
 }

@@ -1,0 +1,46 @@
+.detaillerclass {
+	font-family: Verdana;
+	font-size: 12px;
+	color: #204910;
+	text-decoration: none;
+	font-weight: normal;
+	line-height: 34px;
+}
+.quotetable {
+	border: 1px solid #E9BD95;
+}
+.quotetext {
+	font-family: Verdana;
+	font-size: 11px;
+	font-weight: normal;
+	color: #C7630D;
+	text-decoration: none;
+}
+.simplespacer {
+	line-height: 16px;
+}
+.smallguy {
+	font-size: 2px;
+}
+body {
+	font-family: Verdana;
+	font-size: 11px;
+	color: #3E3E3E;
+}
+a {
+	font-weight: bold;
+	color: #76A32C;
+	text-decoration: underline;
+}
+.simplespacer_body {
+
+	line-height: 15px;
+}
+a:hover {
+	color: #CF4705;
+	text-decoration: none;
+}
+.quotetable2 {
+
+	border: 1px solid #9DB53B;
+}

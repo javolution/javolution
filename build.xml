@@ -16,8 +16,8 @@
     <target name="init">
     	<tstamp/>
         <property name="library"   value="javolution" />
-        <property name="version"   value="2.1" />
-        <property name="release"   value="0" />
+        <property name="version"   value="3.0" />
+        <property name="release"   value="2" />
         <property name="src"       value="src" />
         <property name="bin"       value="bin" />
         <property name="tmp"       value="tmp" />
@@ -53,6 +53,8 @@
 		<copy todir="${tmp}" filtering="true">
 		    <fileset dir="${src}"/>
 		</copy>
+		<delete dir="${tmp}/j2me"/>
+		<delete dir="${tmp}/org/xml/sax"/>
 		<replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java"/>
 	</target>
 	
@@ -64,6 +66,8 @@
 		<copy todir="${tmp}" filtering="true">
 		    <fileset dir="${src}"/>
 		</copy>
+		<delete dir="${tmp}/j2me"/>
+		<delete dir="${tmp}/org/xml/sax"/>
 		<replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java"/>
 		<replace dir="${tmp}" token="javolution.lang.Appendable" value="java.lang.Appendable" includes="**/*.java"/>
 		<replace dir="${tmp}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java"/>
@@ -79,6 +83,7 @@
 		<copy todir="${tmp}" filtering="true">
 		    <fileset dir="${src}"/>
 		</copy>
+		<delete dir="${tmp}/j2me"/>
 		<replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java"/>
 	</target>
 	
@@ -97,6 +102,12 @@
 	
     <target name="doc" depends="init">
         <mkdir dir="${api}" />
+    	<!-- Overwrite doc-files with original documents  -->
+		<copy todir="${tmp}"  overwrite="true"> 
+		    <fileset dir="${src}" >
+		        <include name="**/doc-files/*" />
+		    </fileset>
+		</copy>
         <javadoc sourcepath="${tmp}"
                  destdir="${api}"
                  windowtitle="Javolution v${version} API"
@@ -107,9 +118,11 @@
                  charset="${encoding}"
                  encoding="${encoding}"
                  docencoding="${encoding}"
+       	         stylesheetfile="doc/javadoc.css"
                  splitindex="true">
             <header>
-                <![CDATA[<b><a href="http://javolution.org">Javolution v${version} (${target})</a></b>]]>
+                <![CDATA[<A HREF="http://javolution.org">
+            	<SPAN CLASS="style0">J</SPAN><SPAN CLASS="style1">avolution v${version} (${target})</SPAN></A>]]>
             </header>
             <bottom>
                <![CDATA[<i>Copyright &#169; 2005 Javolution.</i>]]>

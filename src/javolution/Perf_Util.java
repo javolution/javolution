@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -12,7 +13,6 @@ import j2me.util.List;
 import j2me.util.Map;
 import j2me.util.Set;
 
-import javolution.realtime.PoolContext;
 import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
@@ -30,178 +30,176 @@ final class Perf_Util extends Javolution implements Runnable {
 
     private final Object[] _objects = new Object[COLLECTION_SIZE];
 
+    private static final Reflection.Constructor HASH_MAP_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.HashMap()");
+
+    private static final Reflection.Constructor LINKED_HASH_MAP_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.LinkedHashMap()");
+
+    private static final Reflection.Constructor HASH_SET_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.HashSet()");
+
+    private static final Reflection.Constructor LINKED_HASH_SET_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.LinkedHashSet()");
+
+    private static final Reflection.Constructor ARRAY_LIST_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.ArrayList()");
+
+    private static final Reflection.Constructor LINKED_LIST_CONSTRUCTOR = Reflection
+            .getConstructor("j2me.util.LinkedList()");
+
     /** 
      * Executes benchmark.
      */
     public void run() throws JavolutionError {
+        println("//////////////////////////////");
+        println("// Package: javolution.util //");
+        println("//////////////////////////////");
+        println("");       
+        
         // Creates objects collection.
         for (int i = 0; i < COLLECTION_SIZE; i++) {
             _objects[i] = new Object();
         }
-        
+
         println("-- HashMap/LinkedMap versus FastMap --");
-        benchmarkMap("HashMap", Reflection
-                .getConstructor("j2me.util.HashMap(int)"));
-        benchmarkMap("LinkedHashMap", Reflection
-                .getConstructor("j2me.util.LinkedHashMap(int)"));
-        benchmarkMap("FastMap", new Reflection.Constructor() {
-            public Object allocate(Object[] args) {
-                return FastMap.newInstance(((Integer) args[0]).intValue());
-            }
-        });
+        if (HASH_MAP_CONSTRUCTOR != null) {
+            benchmarkMap((Map) HASH_MAP_CONSTRUCTOR.newInstance());
+        }
+        if (LINKED_HASH_MAP_CONSTRUCTOR != null) {
+            benchmarkMap((Map) LINKED_HASH_MAP_CONSTRUCTOR.newInstance());
+        }
+        benchmarkMap(new FastMap());
         println("");
 
         println("-- HashSet/LinkedHashSet/TreeSet versus FastSet --");
-        benchmarkSet("HashSet", Reflection
-                .getConstructor("j2me.util.HashSet(int)"));
-        benchmarkSet("LinkedHashSet", Reflection
-                .getConstructor("j2me.util.LinkedHashSet(int)"));
-        benchmarkSet("FastSet", new Reflection.Constructor() {
-            public Object allocate(Object[] args) {
-                return FastSet.newInstance(((Integer) args[0]).intValue());
-            }
-        });
+        if (HASH_SET_CONSTRUCTOR != null) {
+            benchmarkSet((Set) HASH_SET_CONSTRUCTOR.newInstance());
+        }
+        if (LINKED_HASH_SET_CONSTRUCTOR != null) {
+            benchmarkSet((Set) LINKED_HASH_SET_CONSTRUCTOR.newInstance());
+        }
+        benchmarkSet(new FastSet());
         println("");
 
         println("-- ArrayList/LinkedList versus FastList --");
-        benchmarkList("ArrayList", Reflection
-                .getConstructor("j2me.util.ArrayList()"));
-        benchmarkList("LinkedList", Reflection
-                .getConstructor("j2me.util.LinkedList()"));
-        benchmarkList("FastList", new Reflection.Constructor() {
-            public Object allocate(Object[] args) {
-                return FastList.newInstance();
-            }
-        });
+        if (ARRAY_LIST_CONSTRUCTOR != null) {
+            benchmarkList((List) ARRAY_LIST_CONSTRUCTOR.newInstance());
+        }
+        if (LINKED_LIST_CONSTRUCTOR != null) {
+            benchmarkList((List) LINKED_LIST_CONSTRUCTOR.newInstance());
+        }
+        benchmarkList(new FastList());
         println("");
     }
-    
-    private void benchmarkMap(String mapClassName,
-            Reflection.Constructor mapConstructor) {
-        Map map = null;
-        if (mapConstructor != null) {
-            println(mapClassName);
 
-            print("    Creates/populates map of " + COLLECTION_SIZE
-                    + " entries: ");
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                PoolContext.enter();
-                map = (Map) mapConstructor.newInstance(new Integer(
-                        COLLECTION_SIZE));
-                for (int j = 0; j < COLLECTION_SIZE; j++) {
-                    map.put(_objects[j], _objects[j]);
-                }
-                PoolContext.exit();
-            }
-            endTime(10000000 / COLLECTION_SIZE);
-            
-            print("    Access (get): ");
-            map = (Map) mapConstructor
-                    .newInstance(new Integer(COLLECTION_SIZE));
+    private void benchmarkMap(Map map) {
+        println(map.getClass());
+
+        print("    Populates/clears map of " + COLLECTION_SIZE + " entries: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
             for (int j = 0; j < COLLECTION_SIZE; j++) {
                 map.put(_objects[j], _objects[j]);
             }
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                for (int j = 0; j < COLLECTION_SIZE; j++) {
-                    map.get(_objects[j]);
-                }
-            }
-            endTime(10000000);
+            map.clear();
+        }
+        endTime(10000000 / COLLECTION_SIZE);
 
-            print("    Iterates through all map entries: ");
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
-                    it.next();
-                }
-            }
-            endTime(10000000 / COLLECTION_SIZE);
+        // Populates for subsequent tests.
+        for (int j = 0; j < COLLECTION_SIZE; j++) {
+            map.put(_objects[j], _objects[j]);
+        }
 
-            if (map instanceof FastMap) {
-                print("    Statistics: ");
-                ((FastMap) map).printStatistics(System.out);
+        print("    Access (get): ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
+            for (int j = 0; j < COLLECTION_SIZE; j++) {
+                map.get(_objects[j]);
             }
         }
+        endTime(10000000);
+
+        print("    Iterates through all map entries: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
+            for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
+                it.next();
+            }
+        }
+        endTime(10000000 / COLLECTION_SIZE);
+
+        if (map instanceof FastMap) {
+            print("    ");
+            ((FastMap) map).printStatistics(System.out);
+        }
+
     }
 
-    private void benchmarkSet(String setClassName,
-            Reflection.Constructor setConstructor) {
-        Set set = null;
-        if (setConstructor != null) {
-            println(setClassName);
+    private void benchmarkSet(Set set) {
+        println(set.getClass());
 
-            print("    Creates/populates set of " + COLLECTION_SIZE
-                    + " elements: ");
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                PoolContext.enter();
-                set = (Set) setConstructor.newInstance(new Integer(
-                        COLLECTION_SIZE));
-                for (int j = 0; j < COLLECTION_SIZE; j++) {
-                    set.add(_objects[j]);
-                }
-                PoolContext.exit();
-            }
-            endTime(10000000 / COLLECTION_SIZE);
-            
-            print("    Access (contains): ");
-            set = (Set) setConstructor
-                    .newInstance(new Integer(COLLECTION_SIZE));
+        print("    Populates/clears set of " + COLLECTION_SIZE + " elements: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
             for (int j = 0; j < COLLECTION_SIZE; j++) {
                 set.add(_objects[j]);
             }
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                for (int j = 0; j < COLLECTION_SIZE; j++) {
-                    set.contains(_objects[j]);
-                }
-            }
-            endTime(10000000);
-
-            print("    Iterates through all set elements: ");
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                for (Iterator it = set.iterator(); it.hasNext();) {
-                    it.next();
-                }
-            }
-            endTime(10000000 / COLLECTION_SIZE);
+            set.clear();
         }
+        endTime(10000000 / COLLECTION_SIZE);
+
+        // Populates for subsequent tests.
+        for (int j = 0; j < COLLECTION_SIZE; j++) {
+            set.add(_objects[j]);
+        }
+
+        print("    Access (contains): ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
+            for (int j = 0; j < COLLECTION_SIZE; j++) {
+                set.contains(_objects[j]);
+            }
+        }
+        endTime(10000000);
+
+        print("    Iterates through all set elements: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
+            for (Iterator it = set.iterator(); it.hasNext();) {
+                it.next();
+            }
+        }
+        endTime(10000000 / COLLECTION_SIZE);
+
     }
 
-    private void benchmarkList(String listClassName,
-            Reflection.Constructor listConstructor) {
-        List list = null;
-        if (listConstructor != null) {
-            println(listClassName);
+    private void benchmarkList(List list) {
+        println(list.getClass());
 
-            print("    Creates new list and appends " + COLLECTION_SIZE
-                    + " elements: ");
-            startTime();
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                PoolContext.enter();
-                list = (List) listConstructor.newInstance();
-                for (int j = 0; j < COLLECTION_SIZE; j++) {
-                    list.add(_objects[j]);
-                }
-                PoolContext.exit();
-            }
-            endTime(10000000 / COLLECTION_SIZE);
-
-            print("    Iterates through all list elements: ");
-            startTime();
-            list = (List) listConstructor.newInstance();
+        print("    Populates/clears list of " + COLLECTION_SIZE + " elements: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
             for (int j = 0; j < COLLECTION_SIZE; j++) {
                 list.add(_objects[j]);
             }
-            for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
-                for (Iterator it = list.iterator(); it.hasNext();) {
-                    it.next();
-                }
-            }
-            endTime(10000000 / COLLECTION_SIZE);
+            list.clear();
         }
+        endTime(10000000 / COLLECTION_SIZE);
+
+        // Populates for subsequent tests.
+        for (int j = 0; j < COLLECTION_SIZE; j++) {
+            list.add(_objects[j]);
+        }
+
+        print("    Iterates through all list elements: ");
+        startTime();
+        for (int i = 0; i < 10000000 / COLLECTION_SIZE; i++) {
+            for (Iterator it = list.iterator(); it.hasNext();) {
+                it.next();
+            }
+        }
+        endTime(10000000 / COLLECTION_SIZE);
+
     }
 }

@@ -1,13 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution;
 
-import javolution.realtime.ArrayPool;
+import javolution.realtime.ObjectFactory;
 import javolution.realtime.PoolContext;
 import javolution.realtime.RealtimeObject;
 
@@ -19,7 +20,7 @@ import javolution.realtime.RealtimeObject;
  */
 final class Perf_Realtime extends Javolution implements Runnable {
 
-    private volatile Object _object; 
+    private volatile Object _object;
 
     private volatile Object[] _objects = new Object[1000];
 
@@ -27,6 +28,11 @@ final class Perf_Realtime extends Javolution implements Runnable {
      * Executes benchmark.
      */
     public void run() {
+        println("//////////////////////////////////");
+        println("// Package: javolution.realtime //");
+        println("//////////////////////////////////");
+        println("");
+
         println("-- Heap versus Stack Allocation (Pool-Context) --");
         print("Object heap creation: ");
         startTime();
@@ -59,7 +65,7 @@ final class Perf_Realtime extends Javolution implements Runnable {
         for (int i = 0; i < 1000; i++) {
             PoolContext.enter();
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = ArrayPool.charArray(128).next();
+                _objects[j++] = CHAR128_FACTORY.object();
             }
             PoolContext.exit();
         }
@@ -77,14 +83,13 @@ final class Perf_Realtime extends Javolution implements Runnable {
         for (int i = 0; i < 1000; i++) {
             PoolContext.enter();
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = ArrayPool.charArray(256).next();
+                _objects[j++] = CHAR256_FACTORY.object();
             }
             PoolContext.exit();
         }
         endTime(1000 * _objects.length);
         println("");
     }
-    
 
     private static final class DummyObject extends RealtimeObject {
         static final Factory FACTORY = new Factory() {
@@ -100,4 +105,16 @@ final class Perf_Realtime extends Javolution implements Runnable {
             return (DummyObject) FACTORY.object();
         }
     }
+
+    private static final ObjectFactory CHAR128_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[128];
+        }
+    };
+
+    private static final ObjectFactory CHAR256_FACTORY = new ObjectFactory() {
+        public Object create() {
+            return new char[256];
+        }
+    };
 }

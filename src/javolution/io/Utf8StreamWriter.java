@@ -1,12 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
 import j2me.lang.CharSequence;
+import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,7 +27,7 @@ import javolution.lang.Reusable;
  * <p> Instances of this class can be reused for different output streams
  *     and can be part of a higher level component (e.g. serializer) in order
  *     to avoid dynamic buffer allocation when the destination output changes.
- *     Also wrapping using a <code>j2me.io.BufferedWriter</code> is unnescessary
+ *     Also wrapping using a <code>java.io.BufferedWriter</code> is unnescessary
  *     as instances of this class embed their own data buffers.</p>
  * 
  * <p> Note: This writer is unsynchronized and always produces well-formed
@@ -44,7 +46,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
     /**
      * Holds the bytes' buffer.
      */
-    private final byte[] _bytes;
+    private final byte[] _bytes = new byte[4096];
 
     /**
      * Holds the bytes buffer index.
@@ -55,16 +57,6 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      * Default constructor.
      */
     public Utf8StreamWriter() {
-        this(2048);
-    }
-
-    /**
-     * Creates a {@link Utf8StreamWriter} of specified buffer size.
-     *
-     * @param  bufferSize the buffer size in bytes.
-     */
-    public Utf8StreamWriter(int bufferSize) {
-         _bytes = new byte[bufferSize];
     }
 
     /**
@@ -77,12 +69,12 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      *
      * @param  out the output stream.
      * @return this UTF-8 writer.
-     * @throws Error if this writer is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this writer is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public Utf8StreamWriter setOutputStream(OutputStream out) {
         if (_outputStream != null)
-            throw new Error("This writer has not been closed or cleared");
+            throw new IllegalStateException("Writer not closed or reset");
         _outputStream = out;
         return this;
     }
@@ -298,15 +290,15 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
     }
 
     /**
-     * Closes this reader and {@link #clear clears} it for reuse.
+     * Closes and {@link #reset resets} this writer for reuse.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws IOException if an I/O error occurs
      */
     public void close() throws IOException {
         if (_outputStream != null) {
             flushBuffer();
             _outputStream.close();
-            clear();
+            reset();
         }
     }
 
@@ -324,8 +316,8 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
         }
     }
 
-    // Implements Reusable interface.
-    public void clear() {
+    // Implements Reusable.
+    public void reset() {
         _highSurrogate = 0;
         _index = 0;
         _outputStream = null;

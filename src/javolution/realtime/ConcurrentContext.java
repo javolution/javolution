@@ -1,6 +1,7 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
@@ -10,51 +11,58 @@ package javolution.realtime;
 import javolution.JavolutionError;
 
 /**
- * <p> This class represents a concurrent context; it is used to accelerate
+ * <p> This class represents a concurrent context; it is used to accelerate 
  *     execution of concurrent algorithms on multi-processors systems.</p>
- * <p> When a thread enters a concurrent context, it may execute a 
- *     concurrent {@link Logic logic} by calling any of the 
+ *     
+ * <p> When a thread enters a concurrent context, it may execute multiple
+ *     concurrent {@link Logic logics} by calling any of the 
  *     <code>ConcurrentContext.execute(logic, arg0, arg1, ...)</code> 
- *     static methods.</p>
+ *     static methods. Each logic is then executed by the current thread or by 
+ *     {@link ConcurrentThread concurrent threads} based upon availability.</p>
+ *     
  * <p> Only after all concurrent executions are completed, is the current 
  *     thread allowed to exit the scope of the concurrent context 
  *     (internal synchronization).</p>
- * <p> The concurrent logics are always executed within a {@link PoolContext}, 
- *     either by a {@link ConcurrentThread} (if one ready) or by the current
- *     thread within an inner pool context. Consequently, {@link Realtime} 
- *     objects made available outside of the logic scope have to be 
- *     {@link RealtimeObject#export exported}.</p>  
+ *     
+ * <p> Concurrent logics always execute within a {@link PoolContext} and 
+ *     do not generate garbage. {@link RealtimeObject Realtime objects} made
+ *     available outside of the logic scope have therefore to be either 
+ *     {@link RealtimeObject#export exported} or {@link RealtimeObject#preserve
+ *     preserved}.</p>
+ *     
  * <p> Concurrent contexts are easy to use, and provide automatic 
- *     load-balancing between processors with almost no overhead. 
- *     To avoid thread proliferation, the maximum concurrency is limited by 
- *     {@link ConcurrentThread#MAX}. Concurrency can also be locally
- *     {@link #setEnabled disabled}.</p>
- * <p> ConcurrentContext are extremely efficient in reducing garbage and 
- *     can often be used in place of pool contexts for this purpose. Here is
+ *     load-balancing between processors with almost no overhead. Here is
  *     an example of <b>concurrent/recursive/clean</b> (no garbage generated) 
  *     implementation of the Karatsuba multiplication for large integers:<pre>
+ *     
  *     public LargeInteger multiply(LargeInteger that) {
  *         if (that._size <= 1) {
  *             return multiply(that.longValue()); // Direct multiplication.
+ *             
  *         } else { // Karatsuba multiplication  in O(n<sup>Log(3)</sup>)
+ *         
  *             int bitLength = this.bitLength();
  *             int n = (bitLength >> 1) + (bitLength & 1);
- *             FastMap results = FastMap.newInstance(3);
+ *             LargeInteger b = this.shiftRight(n);
+ *             LargeInteger a = this.subtract(b.shiftLeft(n));
+ *             LargeInteger d = that.shiftRight(n);
+ *             LargeInteger c = that.subtract(d.shiftLeft(n));
+
+ *             RealtimeReference acRef = RealtimeReference.newInstance();
+ *             RealtimeReference bdRef = RealtimeReference.newInstance();
+ *             RealtimeReference abcdRef = RealtimeReference.newInstance();
  *             ConcurrentContext.enter();
  *             try { // this = a + 2^n b,   that = c + 2^n d
- *                 LargeInteger b = this.shiftRight(n);
- *                 LargeInteger a = this.subtract(b.shiftLeft(n));
- *                 LargeInteger d = that.shiftRight(n);
- *                 LargeInteger c = that.subtract(d.shiftLeft(n));
- *                 ConcurrentContext.execute(MULTIPLY, a, c, "ac", results);
- *                 ConcurrentContext.execute(MULTIPLY, b, d, "bd", results);
- *                 ConcurrentContext.execute(MULTIPLY, a.add(b), c.add(d), "abcd", results);
+ *                 ConcurrentContext.execute(MULTIPLY, a, c, acRef);
+ *                 ConcurrentContext.execute(MULTIPLY, b, d, bdRef);
+ *                 ConcurrentContext.execute(MULTIPLY, a.add(b), c.add(d), abcdRef);
  *             } finally {
  *                 ConcurrentContext.exit();
  *             }
- *             LargeInteger ac = (LargeInteger) results.get("ac");
- *             LargeInteger bd = (LargeInteger) results.get("bd");
- *             LargeInteger abcd = (LargeInteger) results.get("abcd");
+ *             
+ *             LargeInteger ac = (LargeInteger) acRef.get();
+ *             LargeInteger bd = (LargeInteger) bdRef.get();
+ *             LargeInteger abcd = (LargeInteger) abcdRef.get();
  *             return ac.add(abcd.subtract(ac).subtract(bd).shiftLeft(n)).add(bd.shiftLeft(2 * n));
  *         }
  *     }
@@ -62,17 +70,17 @@ import javolution.JavolutionError;
  *         public void run(Object[] args) {
  *             LargeInteger left = (LargeInteger) args[0];
  *             LargeInteger right = (LargeInteger) args[1];
- *             LargeInteger product = left.multiply(right); // Recursive.
- *             FastMap results = (FastMap) args[3];
- *             synchronized (results) {
- *                 results.put(args[2], product.export());
- *             }
+ *             RealtimeReference resultRef = (RealtimeReference) args[2];
+ *             resultRef.set(left.multiply(right).export()); // Recursive.
  *         }
  *    };</pre>
  * 
- * <p> Finally, it should be noted that any exceptions raised during concurrent
- *     logic executions are propagated to the current thread upon 
- *     {@link #exit} of the concurrent context.</p>
+ * <p> Finally, it should be noted that concurrent contexts ensure the same 
+ *     behavior whether or not the execution is performed by the current
+ *     thread or concurrent threads. In particular, the current {@link Context
+ *     context} is inherited by concurrent threads and any exception raised
+ *     during the concurrent logic executions is automatically propagated 
+ *     to the current thread.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004

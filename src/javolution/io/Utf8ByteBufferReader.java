@@ -1,12 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
 
+import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 import j2me.nio.BufferUnderflowException;
 import j2me.nio.ByteBuffer;
@@ -15,7 +17,6 @@ import java.io.IOException;
 import java.io.Reader;
 
 import javolution.lang.Reusable;
-import javolution.lang.Text;
 
 /**
  * <p> This class represents a UTF-8 <code>j2me.nio.ByteBuffer</code> reader.
@@ -58,12 +59,12 @@ public final class Utf8ByteBufferReader extends Reader implements Reusable {
      *
      * @param  byteBuffer the <code>ByteBuffer</code> source.
      * @return this UTF-8 reader.
-     * @throws Error if this reader is being reused and 
-     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     * @throws IllegalStateException if this reader is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public Utf8ByteBufferReader setByteBuffer(ByteBuffer byteBuffer) {
         if (_byteBuffer != null)
-            throw new Error("This reader has not been closed or cleared");
+            throw new IllegalStateException("Reader not closed or reset");
         _byteBuffer = byteBuffer;
         return this;
     }
@@ -84,13 +85,13 @@ public final class Utf8ByteBufferReader extends Reader implements Reusable {
     }
 
     /**
-     * Closes the reader and {@link #clear clears} it for reuse.
+     * Closes and {@link #reset resets} this reader for reuse.
      *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
         if (_byteBuffer != null) {
-            clear();
+            reset();
         }
     }
 
@@ -200,9 +201,9 @@ public final class Utf8ByteBufferReader extends Reader implements Reusable {
                                 cbuf[i++] = (char) (((code - 0x10000) & 0x3ff) + 0xdc00);
                             } else {
                                 throw new CharConversionException(
-                                        "Cannot convert U+"
-                                                + Text.valueOf(code, 16)
-                                                + " to char (code greater than U+10FFFF)");
+                                        "Cannot convert U+" +
+                                        Integer.toHexString(code) +
+                                        " to char (code greater than U+10FFFF)");
                             }
                         } else { // Not enough space in destination (go back).
                             _byteBuffer.position(_byteBuffer.position() - 1);
@@ -219,8 +220,8 @@ public final class Utf8ByteBufferReader extends Reader implements Reusable {
         }
     }
 
-    // Implements Reusable interface.
-    public void clear() {
+    // Implements Reusable.
+    public void reset() {
         _byteBuffer = null;
         _code = 0;
         _moreBytes = 0;

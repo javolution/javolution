@@ -1,40 +1,26 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.realtime;
+import javolution.Configuration;
 import j2me.lang.UnsupportedOperationException;
 
 /**
  * <p> This class represents a local context; it is used to define locally 
- *     scoped environment settings.</p>
- * <p> These {@link LocalContext.Variable settings} are inherited by 
- *     {@link ConcurrentContext concurrent} executions when performed
- *     within the scope of the local context. For example:<pre>
- *     LocalContext.enter(); // Enters local context scope.
- *     try {
- *         MY_VAR.setValue(myValue);
- *         ConcurrentContext.enter();
- *         try {
- *             // Concurrent executions inherit local setting of MY_VAR
- *             ConcurrentContext.execute(...);
- *             ConcurrentContext.execute(...); 
- *         } finally {
- *             ConcurrentContext.exit();
- *         }
- *     } finally {
- *         LocalContext.exit(); // End of local context scope.
- *     }
- *     static final LocalContext.Variable MY_VAR = new LocalContext.Variable();
- *     </pre></p>
- * <p> Settings outside of a {@link LocalContext} scope, affects all threads
- *     (global default value). For example:<pre>
- *     public static final LocalContext.Variable DEBUG = new LocalContext.Variable();
+ *     scoped environment {@link Variable settings}.</p>
+ * <p> Settings outside of any {@link LocalContext} scope, affects all threads
+ *     (global). For example:<pre>
+ *     public static final LocalContext.Variable DEBUG 
+ *         = new LocalContext.Variable(Boolean.FALSE); // Default value.
  *     public static void main(String[] args) {
- *          DEBUG.setValue(new Boolean(true)); // Affects all threads.
+ *          if ((args.length > 0) && (args[0].equals("debug")) {
+ *              DEBUG.setValue(Boolean.TRUE); // Affects all threads.
+ *          }
  *          ...
  *     }</pre></p>
  * <p> Locally scoped settings are typically wrapped by a static method.
@@ -42,10 +28,27 @@ import j2me.lang.UnsupportedOperationException;
  *        LargeInteger.setModulus(m); // Performs integer operations modulo m.
  *        Length.showAs(NonSI.INCH); // Shows length in inches.
  *        RelativisticModel.select(); // Uses relativistic physical model.
- *        QuantityFormat.getInstance(); // Returns current quantity format.
+ *        QuantityFormat.getInstance(); // Returns local format for quantities.
  *        XmlFormat.setInstance(f, Foo.class); // Sets XML format for Foo class.
- * </pre>
- *     </p>   
+ *     </pre></p>   
+ * <p> As for any {@link Context context}, local contexts are inherited when
+ *     performing {@link ConcurrentContext concurrent} executions.
+ *     For example:<pre>
+ *     LocalContext.enter(); // Enters local context scope.
+ *     try {
+ *         RelativisticModel.select(); // Selects relativistic model.
+ *         ConcurrentContext.enter();
+ *         try {
+ *             // Concurrent executions are also performed in a relativistic context.
+ *             ConcurrentContext.execute(...);
+ *             ConcurrentContext.execute(...); 
+ *         } finally {
+ *             ConcurrentContext.exit(); // Waits for all concurrent executions to complete.
+ *         }
+ *     } finally {
+ *         LocalContext.exit(); // Returns to previous context.
+ *     }
+ *     </pre></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004
@@ -96,7 +99,7 @@ public final class LocalContext extends Context {
     /**
      * <p> This class represents a {@link LocalContext} variable. The number of 
      *     instances of this class is voluntarely limited (see <a href=
-     *     "{@docRoot}/overview-summary.html#configuration">Javolution's 
+     *     "{@docRoot}/overview-summary.html#configuration">Javolution 
      *     Configuration</a> for details). Instances of this class should be 
      *     either <code>static</code> or member of persistent objects.</p>
      * <p> Accessing a local context variable is fast and does not necessitate
@@ -110,14 +113,9 @@ public final class LocalContext extends Context {
     public static class Variable {
 
         /**
-         * Holds the maximum number of {@link LocalContext.Variable} (system 
-         * property <code>"org.javolution.variables"</code>, default <code>1024</code>).
+         * Holds the maximum number of {@link LocalContext.Variable}.
          */
-        public static final int MAX;
-        static {
-            String str = System.getProperty("org.javolution.variables");
-            MAX = (str != null) ? Integer.parseInt(str) : 1024;
-        }
+        public static final int MAX = Configuration.variables();
 
         /**
          * Holds the current number of variables.
@@ -199,6 +197,15 @@ public final class LocalContext extends Context {
             }
             // No local context, sets default value.
             _defaultValue = value;
+        }
+
+        /**
+         * Sets the default value of this variable.
+         *
+         * @param  defaultValue the root value.
+         */
+        public void setDefault(Object defaultValue) {
+            _defaultValue = defaultValue;
         }
     }
 }

@@ -1,12 +1,14 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2004 - The Javolution Team (http://javolution.org/)
+ * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.realtime;
 
+import javolution.Configuration;
 import javolution.util.Reflection;
 
 /**
@@ -21,7 +23,7 @@ import javolution.util.Reflection;
  *     a {@link HeapContext}.</p>
  * <p> To avoid thread proliferation, the number of instance of this class 
  *     is voluntarily limited (see <a href=
- *     "{@docRoot}/overview-summary.html#configuration">Javolution's 
+ *     "{@docRoot}/overview-summary.html#configuration">Javolution 
  *     Configuration</a> for details). Using the default configuration,
  *     only systems with Hyper-Threading or multi-processors have instances 
  *     of this class.</p> 
@@ -32,28 +34,10 @@ import javolution.util.Reflection;
 public final class ConcurrentThread extends Thread {
 
     /**
-     * Holds the maximum number of {@link ConcurrentThread} (system property 
-     * <code>"org.javolution.concurrency"</code>, default 
-     * <code>Runtime.getRuntime().availableProcessors() - 1</code>).
+     * Holds the maximum number of {@link ConcurrentThread}.
      */
-    public static final int MAX;
-    static {
-        String str = System.getProperty("org.javolution.concurrency");
-        if (str != null) {
-            MAX = Integer.valueOf(str).intValue();
-        } else {
-            Reflection.Method availableProcessors = Reflection.getMethod(
-            "j2me.lang.Runtime.availableProcessors()");
-            if (availableProcessors != null) {
-                Integer processors = 
-                    (Integer) availableProcessors.invoke(Runtime.getRuntime());
-                MAX = processors.intValue() - 1;
-            } else {
-                MAX = 0;
-            }
-        }
-    }
-
+    public static final int MAX = Configuration.concurrency();
+    
     /**
      * Holds the concurrent threads instances.
      */
