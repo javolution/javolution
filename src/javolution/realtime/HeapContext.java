@@ -26,7 +26,7 @@ public final class HeapContext extends Context {
      * Enters a {@link HeapContext}.
      */
     public static void enter() {
-        HeapContext ctx = (HeapContext) push(HeapContext.class);
+        HeapContext ctx = (HeapContext) push(HEAP_CONTEXT_CLASS);
         if (ctx == null) {
             ctx = new HeapContext();
             push(ctx);
@@ -36,6 +36,7 @@ public final class HeapContext extends Context {
             outer.setInUsePoolsLocal(false);
         }
     }
+    private static final Class HEAP_CONTEXT_CLASS = new HeapContext().getClass();
 
     /**
      * Exits the current {@link HeapContext}.

@@ -7,8 +7,9 @@
  */
 package javolution.util;
 
-import java.util.Collection;
-import java.util.Iterator;
+import j2me.util.Collection;
+import j2me.util.Iterator;
+import j2me.lang.UnsupportedOperationException;
 
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
@@ -16,9 +17,8 @@ import javolution.realtime.RealtimeObject;
 
 /**
  * <p> This class represents the fast collection base class; instances of 
- *     this class embed their own {@link #fastIterator fast iterators} 
- *     over the collection elements (avoids dynamic allocation of 
- *     iterator).</p>
+ *     this class embed their own {@link #fastIterator iterator} to avoid
+ *     dynamic object allocation.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004

@@ -1,7 +1,7 @@
 // SAX Attribute List Interface.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: AttributeList.java,v 1.1 2004-12-09 12:43:18 dautelle Exp $
+// $Id: AttributeList.java,v 1.2 2004-12-19 20:44:44 dautelle Exp $
 
 package org.xml.sax;
 
@@ -125,7 +125,7 @@ public interface AttributeList {
      * @return The attribute type as a string, or
      *         null if the index is out of range.
      * @see #getLength 
-     * @see #getType(java.lang.String)
+     * @see #getType(j2me.lang.String)
      */
     public abstract String getType (int i);
     
@@ -141,7 +141,7 @@ public interface AttributeList {
      * @return The attribute value as a string, or
      *         null if the index is out of range.
      * @see #getLength
-     * @see #getValue(java.lang.String)
+     * @see #getValue(j2me.lang.String)
      */
     public abstract String getValue (int i);
 

@@ -7,8 +7,9 @@
  */
 package javolution.realtime;
 
+import j2me.util.Iterator;
+
 import java.util.EmptyStackException;
-import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastMap;
@@ -143,7 +144,7 @@ public abstract class Context {
     public static void clear() {
         Context current = Context.currentContext();
         if (current._outer == null) { // Root context is being cleared.
-            synchronized (Context.class) { // Remove thread mapping.
+            synchronized (LOCK) { // Remove thread mapping.
                 FastMap tmp = new FastMap(Context.ThreadToContext.size());
                 for (Iterator i = ((FastCollection) Context.ThreadToContext
                         .entrySet()).fastIterator(); i.hasNext();) {
@@ -164,6 +165,7 @@ public abstract class Context {
             ctx._owner = null;
         }
     }
+    private static final Object LOCK = new Object();
 
     /**
      * Returns the context for the current thread. The default context 
@@ -209,7 +211,7 @@ public abstract class Context {
         if (Context.ThreadToContext.containsKey(ctx._owner)) {
             Context.ThreadToContext.put(ctx._owner, ctx);
         } else { // Structural modification.
-            synchronized (Context.class) {
+            synchronized (LOCK) {
                 FastMap tmp = new FastMap(Context.ThreadToContext.size());
                 for (Iterator i = ((FastCollection) Context.ThreadToContext
                         .entrySet()).fastIterator(); i.hasNext();) {

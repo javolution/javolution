@@ -205,7 +205,7 @@ public final class ArrayPool {
      *
      * @param  capacity the minimum length of the array.
      * @return the current pool.
-     */
+    /*@FLOATING_POINT@
     public static ObjectPool floatArray(int capacity) {
         return FLOATS_FACTORIES[indexFor(capacity)].currentPool();
     }
@@ -230,13 +230,14 @@ public final class ArrayPool {
             FLOATS_FACTORIES[i] = new FloatsFactory(MIN_LENGTH << i);
         }
     }
+    /**/
 
     /**
      * Returns the current pool for <code>double[]</code>.
      *
      * @param  capacity the minimum length of the array.
      * @return the current pool.
-     */
+    /*@FLOATING_POINT@
     public static ObjectPool doubleArray(int capacity) {
         return DOUBLES_FACTORIES[indexFor(capacity)].currentPool();
     }
@@ -261,6 +262,7 @@ public final class ArrayPool {
             DOUBLES_FACTORIES[i] = new DoublesFactory(MIN_LENGTH << i);
         }
     }
+    /**/
 
     /**
      * Returns a factory index (0-27) for the specified capacity.

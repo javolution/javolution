@@ -11,11 +11,11 @@
     <li> Runs on any platform including J2ME CLDC 1.1 It does not require reflection or 
          or any interface (e.g. <code>Serializable</code>) to be implemented.</li>
     <li> Allows for sharing and unicity  (through the use of factory methods instead of constructors).</li>
-    <li> XML mapping is customizable and is not tight to the class internal representation 
-         (backward compatibility ensured even when implementation changes or obfuscation is used).</li>
-    <li> XML mapping can be defined for a top class (or interface) and is automatically inherited by all sub-classes
+    <li> The XML mapping is fully customizable and is not tight to the class internal representation 
+         (backward compatibility ensured even when implementation changes or after obfuscation).</li>
+    <li> The XML mapping can be defined for a top class (or interface) and is automatically inherited by all sub-classes
          (or all implementing classes).</li>
-    <li> XML mapping can be dynamically changed.</li>
+    <li> The XML mapping can be dynamically changed.</li>
     </ul>
     
 <p> The default XML mapping for a class and its sub-classes is defined using 
@@ -64,11 +64,15 @@
 
         ObjectReader or = ObjectReader.newInstance();
         Student s = (Student) or.read(new FileInputStream("C:/student.xml"));
-    </pre>    
+    </pre> 
+    
+    <p><i> Note: For multiple objects transmissions over open I/O streams, 
+          {@link javolution.xml.XmlInputStream} and {@link javolution.xml.XmlOutputStream} are recommended.</i></p>
+                   
         
     XML formats can be dynamically created or modified. The following creates a 
     {@link javolution.realtime.LocalContext local} XML mapping for all classes 
-    implementing the <code>java.util.Collection</code> interface (lists, sets, etc.):<pre>
+    implementing the <code>j2me.util.Collection</code> interface (lists, sets, etc.):<pre>
         XmlFormat collectionXml = new XmlFormat() {
             public void format(Object obj, XmlElement xml) {
                 Collection c = (Collection) obj;
@@ -80,16 +84,16 @@
                 return c;
             }
         };
-        XmlFormat.setInstance(collectionXml, java.util.Collection.class); // Local setting.
+        XmlFormat.setInstance(collectionXml, j2me.util.Collection.class); // Local setting.
         </pre>
     Here is an example of valid XML representation for a list of persons:<pre>
-      &lt;java.util.ArrayList&gt;
+      &lt;j2me.util.ArrayList&gt;
          &lt;Student name="John Doe" birth="January 1, 1977" school="Princeton"/&gt;
          &lt;javolution.util.FastList&gt;
            &lt;Student name="Jean Emar" birth="October 23, 1975" school="MIT"/&gt;
            &lt;Employee name="Oscar Thon" birth="August 7, 1976"/&gt;
          &lt;/javolution.util.FastList&gt;
-      &lt;/java.util.ArrayList&gt;</pre>
+      &lt;/j2me.util.ArrayList&gt;</pre>
     <i>Note: XML serialization/deserialization is a recursive process, e.g.
         <code>List</code> instances may contain other <code>List</code> instances.</i>
    
@@ -155,7 +159,7 @@
     method implemented.</p>
 
 <p> Finally, here is a code excerpt illustrating how objects can be 
-    efficiently transmitted over the network using the <code>java.nio</code> facility
+    efficiently transmitted over the network using the <code>j2me.nio</code> facility
     instead of classic I/O (slower):
     <pre>
         // Client thread.
@@ -189,7 +193,7 @@
             if (sc != null) sc.close();
         }
      </pre>
-     <i>Note: The <code>java.nio.ByteBuffer</code> capacity has to be large enough to hold 
+     <i>Note: When using NIO, the <code>j2me.nio.ByteBuffer</code> capacity has to be large enough to hold 
               the largest XML representation of the objects being transmitted.</i>
      </p>
 

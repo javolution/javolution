@@ -1,7 +1,7 @@
 // SAX parser interface.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: Parser.java,v 1.1 2004-12-09 12:43:16 dautelle Exp $
+// $Id: Parser.java,v 1.2 2004-12-19 20:44:43 dautelle Exp $
 
 package org.xml.sax;
 
@@ -145,11 +145,11 @@ public interface Parser
      *        XML document.
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception java.io.IOException An IO exception from the parser,
+     * @exception j2me.io.IOException An IO exception from the parser,
      *            possibly from a byte stream or character stream
      *            supplied by the application.
      * @see org.xml.sax.InputSource
-     * @see #parse(java.lang.String)
+     * @see #parse(j2me.lang.String)
      * @see #setEntityResolver
      * @see #setDTDHandler
      * @see #setDocumentHandler
@@ -176,7 +176,7 @@ public interface Parser
      * @param systemId The system identifier (URI).
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception java.io.IOException An IO exception from the parser,
+     * @exception j2me.io.IOException An IO exception from the parser,
      *            possibly from a byte stream or character stream
      *            supplied by the application.
      * @see #parse(org.xml.sax.InputSource)

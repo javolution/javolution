@@ -7,10 +7,10 @@
  */
 package javolution.realtime;
 
-
+import j2me.lang.UnsupportedOperationException;
 import java.io.IOException;
 
-import javolution.Javolution;
+import javolution.JavolutionError;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
 import javolution.lang.TypeFormat;
@@ -84,7 +84,7 @@ public abstract class RealtimeObject implements Realtime {
             TypeFormat.format(this.hashCode(), 16, tb);
             return tb.toText();
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -184,20 +184,6 @@ public abstract class RealtimeObject implements Realtime {
         if (((_pool != null) && _pool.isLocal())) {
             _pool.recycle(this);
         }
-    }
-
-    /**
-     * Throws CloneNotSupportedException (prevents sub-classes from implementing
-     * the Cloneable interface).
-     * 
-     * Note: As per "Effective Java" by Joshua Blosh p.51, the use of a copy 
-     *       constructor or its static factory variant instead of clone() 
-     *       is highly recommended.  
-     *
-     * @return N/A
-     */
-    protected final Object clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
     }
 
     /**

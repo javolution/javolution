@@ -6,6 +6,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
+
 import org.xml.sax.SAXException;
 
 /**

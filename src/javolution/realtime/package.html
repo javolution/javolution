@@ -108,7 +108,7 @@
   Time = 94</pre>
   <i>Note: Real-time threads may perform a first iteration at initialization. 
     This also ensures that all necessary classes are initialized and the critical
-    loop can execute in a very predictable time.</i></p>
+    loop can execute in a very predictable manner.</i></p>
     
   <p> The same program allocating directly on the heap (e.g. <code>new Coordinates(i, j)</code>)
      produces the following result:<pre>
@@ -310,8 +310,8 @@
 
          <p> Finally, some JDK library classes may create temporary objects on the heap and 
          therefore should be avoided or replaced by "cleaner" classes 
-         (e.g. {@link javolution.util.FastMap FastMap} instead of <code>java.lang.HashMap</code>,
-         {@link javolution.lang.TextBuilder TextBuilder} instead of <code>java.lang.StringBuffer</code> 
+         (e.g. {@link javolution.util.FastMap FastMap} instead of <code>j2me.lang.HashMap</code>,
+         {@link javolution.lang.TextBuilder TextBuilder} instead of <code>j2me.lang.StringBuffer</code> 
          (<code>setLength(0)</code> allocates a new internal array) and
          {@link javolution.lang.TypeFormat TypeFormat} for parsing/formatting of primitive types).</p>
     </li><p></p>
@@ -359,8 +359,8 @@
         benefit the most.</b> For example, adding <code>org.jscience.math.numbers.LargeInteger</code>
         in a pool context is at least <b>5x</b> faster than adding 
         <code>java.math.BigInteger</code>, our public domain {@link javolution.lang.Text Text}
-        can be <b>several orders of magnitude faster</b> than <code>java.lang.String</code>
-       (see <a href="http://org/javolution.org/doc/benchmark.html">benchmark</a>).
+        can be <b>several orders of magnitude faster</b> than <code>j2me.lang.String</code>
+       (see <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).
         Not surprising when you know that even "empty" <code>Strings</code> 
         take 40 bytes of memory which have to be initialized and garbage collected!</p>
     <p> Recycling objects is way more powerful than just recycling memory (aka GC).

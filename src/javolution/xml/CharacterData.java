@@ -7,7 +7,9 @@
  */
 package javolution.xml;
 
+import j2me.lang.CharSequence;
 import javolution.lang.Text;
+import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 
 /**
@@ -33,9 +35,9 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
     };
     
     /**
-     * Holds the text.
+     * Holds the character sequence.
      */
-    private Text _text;
+    private CharSequence _chars;
 
     /**
      * Returns the character data for the specified character sequence.
@@ -45,7 +47,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      */
     public static CharacterData valueOf(CharSequence csq) {
         CharacterData cd = (CharacterData) FACTORY.object();
-        cd._text = (csq instanceof Text) ? (Text)csq : Text.valueOf(csq);
+        cd._chars = csq;
         return cd;
     }
 
@@ -60,7 +62,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      */
     public static CharacterData valueOf(char[] data, int offset, int length) {
         CharacterData cd = (CharacterData) FACTORY.object();
-        cd._text = Text.valueOf(data, offset, length);
+        cd._chars = Text.valueOf(data, offset, length);
         return cd;
     }
 
@@ -76,7 +78,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      * @return the number of characters (16-bits Unicode).
      */
     public int length() {
-        return _text.length();
+        return _chars.length();
     }
   
     /**
@@ -88,7 +90,7 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      *         is equal or greater than <code>this.length()</code>.
      */
     public char charAt(int index) {
-        return _text.charAt(index);
+        return _chars.charAt(index);
     }
 
     /**
@@ -103,13 +105,15 @@ public final class CharacterData extends RealtimeObject implements CharSequence 
      */
     public CharSequence subSequence(int start, int end) {
         CharacterData cd = (CharacterData) FACTORY.object();
-        cd._text = _text.subtext(start, end);
+        cd._chars = _chars.subSequence(start, end);
         return cd;
     }
 
     // Overrides.
     public void move(ContextSpace cs) {
         super.move(cs);
-        _text.move(cs);
+        if (_chars instanceof Realtime) {
+            ((Realtime)_chars).move(cs);
+        }
     }
 }

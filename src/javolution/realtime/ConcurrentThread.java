@@ -43,7 +43,7 @@ public final class ConcurrentThread extends Thread {
             MAX = Integer.valueOf(str).intValue();
         } else {
             Reflection.Method availableProcessors = Reflection.getMethod(
-            "java.lang.Runtime.availableProcessors()");
+            "j2me.lang.Runtime.availableProcessors()");
             if (availableProcessors != null) {
                 Integer processors = 
                     (Integer) availableProcessors.invoke(Runtime.getRuntime());
@@ -93,7 +93,7 @@ public final class ConcurrentThread extends Thread {
         }
     }
     private static final Reflection.Method SET_DAEMON 
-        = Reflection.getMethod("java.lang.Thread.setDaemon(bool)");
+        = Reflection.getMethod("j2me.lang.Thread.setDaemon(bool)");
     
 
     /**

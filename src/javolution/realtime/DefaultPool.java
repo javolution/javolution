@@ -6,6 +6,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.realtime;
+import j2me.lang.UnsupportedOperationException;
 
 /**
  * This class provides a default implementation for {@link ObjectPool}.

@@ -6,6 +6,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.realtime;
+import j2me.lang.UnsupportedOperationException;
 
 /**
  * <p> This class represents a local context; it is used to define locally 
@@ -66,12 +67,13 @@ public final class LocalContext extends Context {
      * Enters a {@link LocalContext}.
      */
     public static void enter() {
-        LocalContext ctx = (LocalContext) push(LocalContext.class);
+        LocalContext ctx = (LocalContext) push(LOCAL_CONTEXT_CLASS);
         if (ctx == null) {
             ctx = new LocalContext();
             push(ctx);
         }
     }
+    private static final Class LOCAL_CONTEXT_CLASS = new LocalContext().getClass();
 
     /**
      * Exits the current {@link LocalContext}.

@@ -7,6 +7,8 @@
  */
 package javolution.xml.sax;
 
+import j2me.lang.CharSequence;
+import j2me.lang.Comparable;
 import javolution.lang.Text;
 
 /**
@@ -109,7 +111,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
      * sequence. The <code>String</code> returned is always allocated on the
      * heap and can safely be referenced elsewhere.
      *
-     * @return the <code>java.lang.String</code> for this character sequence.
+     * @return the <code>j2me.lang.String</code> for this character sequence.
      */
     public String toString() {
         return new String(data, first, length);
@@ -118,7 +120,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     /**
      * Returns the hash code for this {@link CharSequenceImpl}.
      *
-     * <p> Note: Returns the same hashCode as <code>java.lang.String</code>
+     * <p> Note: Returns the same hashCode as <code>j2me.lang.String</code>
      *           (consistent with {@link #equals})</p>
      *
      * @return the hash code value.
@@ -152,8 +154,8 @@ final class CharSequenceImpl implements CharSequence, Comparable {
      * sequence.
      *
      * <p> Note: Unfortunately, due to the current (JDK 1.4.1) implementation
-     *          of <code>java.lang.String</code> and <code>
-     *          java.lang.StringBuffer</code>, this method is not symmetric.</p>
+     *          of <code>j2me.lang.String</code> and <code>
+     *          j2me.lang.StringBuffer</code>, this method is not symmetric.</p>
      *
      * @param  chars the character sequence to compare with.
      * @return <code>true</code> if both objects represent the same sequence;

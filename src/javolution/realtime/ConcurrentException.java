@@ -38,7 +38,7 @@ public class ConcurrentException extends RuntimeException {
      * Returns the original cause of the exception or error.
      *
      * @return the exception or error as it has been raised by the
-     *         <code>java.lang.Runnable</code>.
+     *         <code>j2me.lang.Runnable</code>.
      */
     public Throwable getCause() {
         return _cause;

@@ -143,14 +143,14 @@ public class Javolution {
      *        {@link #startTime}.
      */
     public static void endTime(int iterations) {
-        long milliSeconds = ((nanoTime() - _time) + 500000) / 1000000;
-        double duration = ((double) milliSeconds) / iterations;
-        if (duration < 1e-3) {
-            System.out.println(((float) (duration * 1e6)) + "ns");
-        } else if (duration < 1) {
-            System.out.println(((float) (duration * 1e3)) + "µs");
+        long nanoSeconds = nanoTime() - _time;
+        long nanoDuration = nanoSeconds / iterations;
+        if (nanoDuration > 10000000) { // 10 ms
+            System.out.println(nanoDuration / 1000000 + "ms");
+        } else if (nanoDuration > 10000) { // 10 µs
+            System.out.println(nanoDuration / 1000 + "µs");
         } else {
-            System.out.println(((float) duration) + "ms");
+            System.out.println(nanoDuration + "ns");
         }
     }
 
@@ -166,52 +166,6 @@ public class Javolution {
     }
 
     private static final Reflection.Method NANO_TIME_METHOD = Reflection
-            .getMethod("java.lang.System.nanoTime()");
-
-    /**
-     *  Signals that a serious problem (bug ?!) has been detected 
-     *  within the library.
-     */
-    public static final class InternalError extends Error {
-
-        /**
-         * Creates an error message with the specified message 
-         * and cause.
-         * 
-         * @param  message the detail message.
-         * @param  cause the cause or <code>null</code> if the cause 
-         *         is nonexistent or unknown.
-         * @throws Error (always) 
-         */
-        public InternalError(String message) {
-            super(message);
-        }
-
-        /**
-         * Creates an error message with the specified message 
-         * and cause. The cause stack trace is printed to the
-         * current error stream (System.err).
-         * 
-         * @param  message the detailed message.
-         * @param  cause the cause of this error.
-         */
-        public InternalError(String message, Throwable cause) {
-            super(message);
-            cause.printStackTrace();
-        }
-
-        /**
-         * Creates an error message with the specified cause 
-         * The cause stack trace is printed to the current error
-         * stream (System.err).
-         * 
-         * @param  cause the cause of this error.
-         */
-        public InternalError(Throwable cause) {
-            cause.printStackTrace();
-        }
-
-        private static final long serialVersionUID = 3257291335412299833L;
-    }
+            .getMethod("j2me.lang.System.nanoTime()");
 
 }

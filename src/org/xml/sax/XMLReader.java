@@ -2,7 +2,7 @@
 // http://www.saxproject.org
 // Written by David Megginson
 // NO WARRANTY!  This class is in the Public Domain.
-// $Id: XMLReader.java,v 1.1 2004-12-09 12:43:19 dautelle Exp $
+// $Id: XMLReader.java,v 1.2 2004-12-19 20:44:44 dautelle Exp $
 
 package org.xml.sax;
 
@@ -20,7 +20,7 @@ import java.io.IOException;
  * </blockquote>
  *
  * <p><strong>Note:</strong> despite its name, this interface does 
- * <em>not</em> extend the standard Java {@link java.io.Reader Reader} 
+ * <em>not</em> extend the standard Java {@link j2me.io.Reader Reader} 
  * interface, because reading XML is a fundamentally different activity 
  * than reading character data.</p>
  *
@@ -60,7 +60,6 @@ import java.io.IOException;
 public interface XMLReader
 {
 
-
     ////////////////////////////////////////////////////////////////////
     // Configuration.
     ////////////////////////////////////////////////////////////////////
@@ -362,11 +361,10 @@ public interface XMLReader
      *        XML document.
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception java.io.IOException An IO exception from the parser,
+     * @exception j2me.io.IOException An IO exception from the parser,
      *            possibly from a byte stream or character stream
      *            supplied by the application.
      * @see org.xml.sax.InputSource
-     * @see #parse(java.lang.String)
      * @see #setEntityResolver
      * @see #setDTDHandler
      * @see #setContentHandler
@@ -393,7 +391,7 @@ public interface XMLReader
      * @param systemId The system identifier (URI).
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception java.io.IOException An IO exception from the parser,
+     * @exception j2me.io.IOException An IO exception from the parser,
      *            possibly from a byte stream or character stream
      *            supplied by the application.
      * @see #parse(org.xml.sax.InputSource)

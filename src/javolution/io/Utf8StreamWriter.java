@@ -6,13 +6,16 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
-import java.io.CharConversionException;
+import j2me.lang.CharSequence;
+import j2me.io.CharConversionException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 
+import javolution.lang.Reusable;
+
 /**
- * <p> This class represents an UTF-8 stream writer.</p>
+ * <p> This class represents a UTF-8 stream writer.</p>
  *
  * <p> This writer supports surrogate <code>char</code> pairs (representing
  *     characters in the range [U+10000 .. U+10FFFF]). It can also be used
@@ -22,22 +25,21 @@ import java.io.Writer;
  * <p> Instances of this class can be reused for different output streams
  *     and can be part of a higher level component (e.g. serializer) in order
  *     to avoid dynamic buffer allocation when the destination output changes.
- *     Also wrapping using a <code>java.io.BufferedWriter</code> is unnescessary
+ *     Also wrapping using a <code>j2me.io.BufferedWriter</code> is unnescessary
  *     as instances of this class embed their own data buffers.</p>
  * 
  * <p> Note: This writer is unsynchronized and always produces well-formed
  *           UTF-8 sequences.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
- * @see     Utf8StreamReader
+ * @version 2.0, December 9, 2004
  */
-public final class Utf8StreamWriter extends Writer {
+public final class Utf8StreamWriter extends Writer implements Reusable {
 
     /**
      * Holds the current output stream or <code>null</code> if closed.
      */
-    private OutputStream _outStream;
+    private OutputStream _outputStream;
 
     /**
      * Holds the bytes' buffer.
@@ -68,17 +70,20 @@ public final class Utf8StreamWriter extends Writer {
     /**
      * Sets the output stream to use for writing until this writer is closed.
      * For example:<pre>
-     *     Writer writer = new Utf8StreamWriter().setOutputStream(outStream);
+     *     Writer writer = new Utf8StreamWriter().setOutputStream(out);
      * </pre> is equivalent but writes faster than <pre>
-     *     Writer writer = new java.io.OutputStreamWriter(outStream, "UTF-8");
+     *     Writer writer = new j2me.io.OutputStreamWriter(out, "UTF-8");
      * </pre>
      *
-     * @param  outStream the output stream.
+     * @param  out the output stream.
      * @return this UTF-8 writer.
-     * @see    #close
+     * @throws Error if this writer is being reused and 
+     *         it has not been {@link #close closed} or {@link #clear cleared}.
      */
-    public Utf8StreamWriter setOutputStream(OutputStream outStream) {
-        _outStream = outStream;
+    public Utf8StreamWriter setOutputStream(OutputStream out) {
+        if (_outputStream != null)
+            throw new Error("This writer has not been closed or cleared");
+        _outputStream = out;
         return this;
     }
 
@@ -289,21 +294,19 @@ public final class Utf8StreamWriter extends Writer {
      */
     public void flush() throws IOException {
         flushBuffer();
-        _outStream.flush();
+        _outputStream.flush();
     }
 
     /**
-     * Closes the stream, flushing it first.  Once a stream has been closed,
-     * further write() or flush() invocations will cause an IOException to be
-     * thrown.  Closing a previously-closed stream, however, has no effect.
+     * Closes this reader and {@link #clear clears} it for reuse.
      *
      * @exception  IOException  If an I/O error occurs
      */
     public void close() throws IOException {
-        if (_outStream != null) {
+        if (_outputStream != null) {
             flushBuffer();
-            _outStream.close();
-            _outStream = null;
+            _outputStream.close();
+            clear();
         }
     }
 
@@ -313,12 +316,19 @@ public final class Utf8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     private void flushBuffer() throws IOException {
-        if (_outStream != null) {
-            _outStream.write(_bytes, 0, _index);
+        if (_outputStream != null) {
+            _outputStream.write(_bytes, 0, _index);
             _index = 0;
         } else {
             throw new IOException("Stream closed");
         }
+    }
+
+    // Implements Reusable interface.
+    public void clear() {
+        _highSurrogate = 0;
+        _index = 0;
+        _outputStream = null;
     }
 
 }

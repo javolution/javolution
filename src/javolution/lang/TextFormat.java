@@ -6,8 +6,8 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.lang;
-
-import javolution.Javolution;
+import j2me.lang.CharSequence;
+import javolution.JavolutionError;
 import javolution.realtime.RealtimeObject;
 
 import java.io.IOException;
@@ -94,7 +94,7 @@ public abstract class TextFormat {
             format(obj, tb);
             return tb.toText();
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 

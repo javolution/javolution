@@ -7,7 +7,7 @@
  */
 package javolution.realtime;
 
-import javolution.Javolution;
+import javolution.JavolutionError;
 
 /**
  * This abstract class represents an object pool managed by a 
@@ -77,12 +77,12 @@ public abstract class ObjectPool {
                 if (user == Thread.currentThread()) {
                     return true; // Local pool.
                 } else {
-                    throw new Javolution.InternalError(
+                    throw new JavolutionError(
                             "Concurrent access to local pool detected");
                 }
             }
         } else {
-            throw new Javolution.InternalError(
+            throw new JavolutionError(
                     "Access to inner pool or unused pool detected");
         }
     }

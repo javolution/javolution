@@ -7,7 +7,12 @@
  */
 package javolution.io;
 
-import javolution.Javolution;
+import j2me.lang.UnsupportedOperationException;
+import j2me.nio.ByteBuffer;
+import j2me.nio.ByteOrder;
+import j2me.util.Iterator;
+import j2me.util.List;
+import javolution.JavolutionError;
 import javolution.lang.Enum;
 import javolution.lang.TextBuilder;
 import javolution.lang.TypeFormat;
@@ -16,10 +21,6 @@ import javolution.util.FastList;
 import javolution.util.Reflection;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * <p> This class represents a <code>C/C++ struct</code>; it confers
@@ -129,7 +130,7 @@ import java.util.List;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 20, 2004
  */
-public abstract class Struct {
+public class Struct {
 
     /**
      * Holds the outer struct during construction (if any).
@@ -249,7 +250,7 @@ public abstract class Struct {
         _byteBuffer = byteBuffer;
         _byteBufferPosition = position;
         // Changes bytebuffer for inner structs.
-        for (Iterator it = _inners.iterator(); it.hasNext();) {
+        for (Iterator it = _inners.fastIterator(); it.hasNext();) {
             Struct inner = (Struct) it.next();
             inner.setByteBuffer(byteBuffer, position + inner._outerOffset);
         }
@@ -330,7 +331,7 @@ public abstract class Struct {
             }
             return chars.toString();
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -415,31 +416,44 @@ public abstract class Struct {
      *         constructor.
      */
     protected Object newInstance(Class memberClass) {
-        if (memberClass == Bool.class) {
+        if (memberClass == BOOL) {
             return this.new Bool();
-        } else if (memberClass == Signed8.class) {
+        } else if (memberClass == SIGNED_8) {
             return this.new Signed8();
-        } else if (memberClass == Unsigned8.class) {
+        } else if (memberClass == UNSIGNED_8) {
             return this.new Unsigned8();
-        } else if (memberClass == Signed16.class) {
+        } else if (memberClass == SIGNED_16) {
             return this.new Signed16();
-        } else if (memberClass == Unsigned16.class) {
+        } else if (memberClass == UNSIGNED_16) {
             return this.new Unsigned16();
-        } else if (memberClass == Signed32.class) {
+        } else if (memberClass == SIGNED_32) {
             return this.new Signed32();
-        } else if (memberClass == Unsigned32.class) {
+        } else if (memberClass == UNSIGNED_32) {
             return this.new Unsigned32();
-        } else if (memberClass == Signed64.class) {
+        } else if (memberClass == SIGNED_64) {
             return this.new Signed64();
-        } else if (memberClass == Float32.class) {
+        } else if (memberClass == FLOAT_32) {
             return this.new Float32();
-        } else if (memberClass == Float64.class) {
+        } else if (memberClass == FLOAT_64) {
             return this.new Float64();
         } else {
             throw new UnsupportedOperationException(memberClass
                     + " not recognized or invalid");
         }
     }
+    // Cannot use class literal (.class) with CLDC 1.0
+    private static final Struct STRUCT = new Struct();
+    private static final Class MEMBER = STRUCT.new Member().getClass();  
+    private static final Class BOOL = STRUCT.new Bool().getClass();  
+    private static final Class SIGNED_8 = STRUCT.new Signed8().getClass();  
+    private static final Class UNSIGNED_8 = STRUCT.new Unsigned8().getClass();  
+    private static final Class SIGNED_16 = STRUCT.new Signed16().getClass();  
+    private static final Class UNSIGNED_16 = STRUCT.new Unsigned16().getClass();  
+    private static final Class SIGNED_32 = STRUCT.new Signed32().getClass();  
+    private static final Class UNSIGNED_32 = STRUCT.new Unsigned32().getClass();  
+    private static final Class SIGNED_64 = STRUCT.new Unsigned32().getClass();  
+    private static final Class FLOAT_32 = STRUCT.new Float32().getClass();  
+    private static final Class FLOAT_64 = STRUCT.new Float64().getClass();  
 
     /////////////
     // MEMBERS //
@@ -461,7 +475,7 @@ public abstract class Struct {
      *        }
      *    }</pre>
      */
-    protected abstract class Member {
+    protected class Member {
 
         /**
          * Holds the relative offset of this member within its struct.
@@ -565,7 +579,7 @@ public abstract class Struct {
          *         {@link Struct} or {@link Member}
          */
         Object newInstance(Class type) {
-            if (Member.class.isAssignableFrom(type)) {
+            if (MEMBER.isAssignableFrom(type)) {
                 // Member.
                 return Struct.this.newInstance(type);
             } else {
@@ -575,7 +589,7 @@ public abstract class Struct {
                     OUTER.setValue(Struct.this);
                     struct = (Struct) type.newInstance();
                 } catch (Throwable e) {
-                    throw new Javolution.InternalError(e);
+                    throw new JavolutionError(e);
                 } finally {
                     LocalContext.exit();
                 }
@@ -672,7 +686,7 @@ public abstract class Struct {
             try {
                 _componentType = Reflection.getClass(compName);
             } catch (ClassNotFoundException e) {
-                throw new Javolution.InternalError(e);
+                throw new JavolutionError(e);
             }
             _array = array;
             if (_resetIndex) {
@@ -703,7 +717,7 @@ public abstract class Struct {
             try {
                 _componentType = Reflection.getClass(compName);
             } catch (ClassNotFoundException e) {
-                throw new Javolution.InternalError(e);
+                throw new JavolutionError(e);
             }
             _array = array;
             if (_resetIndex) {
@@ -738,7 +752,7 @@ public abstract class Struct {
             try {
                 _componentType = Reflection.getClass(compName);
             } catch (ClassNotFoundException e) {
-                throw new Javolution.InternalError(e);
+                throw new JavolutionError(e);
             }
             _array = array;
             if (_resetIndex) {
@@ -821,7 +835,7 @@ public abstract class Struct {
                         _writer.write(string);
                     }
                 } catch (IOException e) {
-                    throw new Javolution.InternalError(e);
+                    throw new JavolutionError(e);
                 }
             }
         }
@@ -842,7 +856,7 @@ public abstract class Struct {
                     }
                     return new String(_chars, 0, _length);
                 } catch (IOException e) {
-                    throw new Javolution.InternalError(e);
+                    throw new JavolutionError(e);
                 }
             }
         }
@@ -1198,7 +1212,7 @@ public abstract class Struct {
         public Float32() {
             super(4, 4);
         }
-
+        /*@FLOATING_POINT@
         public void set(float value) {
             getByteBuffer().putFloat(position(), value);
         }
@@ -1206,6 +1220,7 @@ public abstract class Struct {
         public float get() {
             return getByteBuffer().getFloat(position());
         }
+        /**/
     }
 
     /**
@@ -1215,14 +1230,14 @@ public abstract class Struct {
         public Float64() {
             super(8, 8);
         }
-
+        /*@FLOATING_POINT@
         public void set(double value) {
             getByteBuffer().putDouble(position(), value);
         }
-
         public double get() {
             return getByteBuffer().getDouble(position());
         }
+        /**/
     }
 
     /**
@@ -1242,12 +1257,7 @@ public abstract class Struct {
 
         public Reference32(Class structClass) {
             super(4, 4);
-            if (Struct.class.isAssignableFrom(structClass)) {
-                _structClass = structClass;
-            } else {
-                throw new IllegalArgumentException(structClass
-                        + " is not a Struct/Union");
-            }
+            _structClass = structClass;
         }
 
         public void set(Struct struct) {
@@ -1298,12 +1308,7 @@ public abstract class Struct {
 
         public Reference64(Class structClass) {
             super(8, 8);
-            if (Struct.class.isAssignableFrom(structClass)) {
-                _structClass = structClass;
-            } else {
-                throw new IllegalArgumentException(structClass
-                        + " is not a Struct/Union");
-            }
+            _structClass = structClass;
         }
 
         public void set(Struct struct) {

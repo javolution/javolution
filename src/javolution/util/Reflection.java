@@ -7,9 +7,7 @@
  */
 package javolution.util;
 
-import javolution.Javolution;
-
-import java.lang.reflect.InvocationTargetException;
+import javolution.JavolutionError;
 
 /**
  * <p> This utility class greatly facilitates the use of reflection to invoke 
@@ -30,13 +28,13 @@ import java.lang.reflect.InvocationTargetException;
  *         }
  *     }
  *     private static final Reflection.Method NANO_TIME_METHOD 
- *         = Reflection.getMethod(<b>"java.lang.System.nanoTime()"</b>);</pre></p>
+ *         = Reflection.getMethod(<b>"j2me.lang.System.nanoTime()"</b>);</pre></p>
  *   
  * <p> Arrays and primitive types are supported. For example:<pre>
- *     Reflection.Constructor sbc = Reflection.getConstructor(<b>"java.lang.StringBuilder(int)"</b>);
+ *     Reflection.Constructor sbc = Reflection.getConstructor(<b>"j2me.lang.StringBuilder(int)"</b>);
  *     if (sbc != null) { // JDK 1.5+
  *        Object sb = sbc.newInstance(new Integer(32));
- *        Reflection.Method append = Reflection.getMethod(<b>"java.lang.StringBuilder.append(char[], int, int)"</b>);
+ *        Reflection.Method append = Reflection.getMethod(<b>"j2me.lang.StringBuilder.append(char[], int, int)"</b>);
  *        append.invoke(sb, new char[] { 'h', 'i' }, new Integer(0), new Integer(2));
  *        System.out.println(sb);
  *    }
@@ -53,7 +51,7 @@ public final class Reflection {
      */
     private Reflection() {
     }
-
+    
     /**
      * Returns and initializes the class having the specified name. 
      * This method searches the <code>Reflection.class</code> class loader 
@@ -63,43 +61,26 @@ public final class Reflection {
      * @param name the name of the class to search for. 
      * @return the corresponding class.
      * @throws ClassNotFoundException
-     * @see java.lang.Thread#getContextClassLoader()
-     * @see java.lang.ClassLoader#getSystemClassLoader()
      */
     public static Class getClass(String name) throws ClassNotFoundException {
         try {
             return Class.forName(name); // Try Reflection.class class loader.
         } catch (ClassNotFoundException e0) { // Try context class loader.
-            if ((GET_CONTEXT_CLASS_LOADER != null) && (FOR_NAME != null)) {
-                Object contextClassLoader = GET_CONTEXT_CLASS_LOADER
-                        .invoke(Thread.currentThread());
+            /*@REFLECTION@
+            try {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                return Class.forName(name, true, cl);
+            } catch (ClassNotFoundException e1) { // Try system class loader.
                 try {
-                    return (Class) FOR_NAME.invoke(null, name,
-                            new Boolean(true), contextClassLoader);
-                } catch (Throwable e1) { // Try system class loader.
-                    if ((GET_SYSTEM_CLASS_LOADER != null) && (FOR_NAME != null)) {
-                        Object systemClassLoader = GET_SYSTEM_CLASS_LOADER
-                                .invoke(null);
-                        try {
-                            return (Class) FOR_NAME.invoke(null, name,
-                                    new Boolean(true), systemClassLoader);
-                        } catch (Throwable e2) {
-                            throw new ClassNotFoundException("Class " + name
-                                    + " cannot be loaded");
-                        }
-                    }
+                    ClassLoader cl = ClassLoader.getSystemClassLoader();
+                    return Class.forName(name, true, cl);
+                } catch (ClassNotFoundException e2) {
                 }
             }
+            /**/
+            throw e0;
         }
-        throw new ClassNotFoundException("Class " + name + " cannot be loaded");
-
     }
-
-    private static final Method GET_CONTEXT_CLASS_LOADER = getMethod("java.lang.Thread.getContextClassLoader()");
-
-    private static final Method GET_SYSTEM_CLASS_LOADER = getMethod("java.lang.ClassLoader.getSystemClassLoader()");
-
-    private static final Method FOR_NAME = getMethod("java.lang.Class.forName(java.lang.String, boolean, java.lang.ClassLoader)");
 
     /**
      * Returns the constructor having the specified signature. 
@@ -117,26 +98,21 @@ public final class Reflection {
         if (argEnd < 0) {
             throw new IllegalArgumentException("Parenthesis ')' not found");
         }
-        String className = signature.substring(0, argStart - 1);
-        Class theClass = simpleClassFor(className);
-        if (theClass == null) {
-            return null;
-        }
-        String args = signature.substring(argStart, argEnd);
-        Class[] argsTypes = classesFor(args);
-        if (argsTypes == null) {
-            return null;
-        }
-        if (argsTypes.length == 0) {
-            return new DefaultConstructor(theClass);
-        } else {
-            try {
-                return new ReflectConstructor(ReflectionProxy.getConstructor(
-                        theClass, argsTypes), signature);
-            } catch (Throwable t) {
-                return null;
+        try {
+            String className = signature.substring(0, argStart - 1);
+            Class theClass = Reflection.getClass(className);
+            String args = signature.substring(argStart, argEnd);
+            if (args.length() == 0) {
+                return new DefaultConstructor(theClass);
             }
+            /*@REFLECTION@
+            Class[] argsTypes = classesFor(args);
+            return new ReflectConstructor(theClass.getConstructor(argsTypes),
+                    signature);
+            /**/        
+        } catch (Throwable e) {
         }
+        return null;
     }
 
     private static class DefaultConstructor extends Constructor {
@@ -150,10 +126,10 @@ public final class Reflection {
             try {
                 return _class.newInstance();
             } catch (InstantiationException e) {
-                throw new Javolution.InternalError("Instantiation error for "
+                throw new JavolutionError("Instantiation error for "
                         + _class.getName() + " default constructor", e);
             } catch (IllegalAccessException e) {
-                throw new Javolution.InternalError("Illegal access error for "
+                throw new JavolutionError("Illegal access error for "
                         + _class.getName() + " constructor", e);
             }
         }
@@ -163,6 +139,7 @@ public final class Reflection {
         }
     }
 
+    /*@REFLECTION@
     private static final class ReflectConstructor extends Constructor {
         private final java.lang.reflect.Constructor _value;
 
@@ -178,18 +155,18 @@ public final class Reflection {
             try {
                 return _value.newInstance(args);
             } catch (IllegalArgumentException e) {
-                throw new Javolution.InternalError("Illegal argument for "
-                        + _signature + " constructor", e);
+                throw new JavolutionError("Illegal argument for " + _signature
+                        + " constructor", e);
             } catch (InstantiationException e) {
-                throw new Javolution.InternalError("Instantiation error for "
+                throw new JavolutionError("Instantiation error for "
                         + _signature + " constructor", e);
             } catch (IllegalAccessException e) {
-                throw new Javolution.InternalError("Illegal access error for "
+                throw new JavolutionError("Illegal access error for "
                         + _signature + " constructor", e);
-            } catch (InvocationTargetException e) {
-                throw new Javolution.InternalError("Invocation exception  for "
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                throw new JavolutionError("Invocation exception  for "
                         + _signature + " constructor",
-                        (InvocationTargetException) e.getTargetException());
+                        (java.lang.reflect.InvocationTargetException) e.getTargetException());
             }
         }
 
@@ -197,7 +174,8 @@ public final class Reflection {
             return _signature + " constructor";
         }
     }
-
+    /**/
+    
     /**
      * Returns the method having the specified signature.
      * 
@@ -206,6 +184,7 @@ public final class Reflection {
      *         found. 
      */
     public static Method getMethod(String signature) {
+        /*@REFLECTION@
         int argStart = signature.indexOf('(') + 1;
         if (argStart < 0) {
             throw new IllegalArgumentException("Parenthesis '(' not found");
@@ -215,27 +194,22 @@ public final class Reflection {
             throw new IllegalArgumentException("Parenthesis ')' not found");
         }
         int nameStart = signature.substring(0, argStart).lastIndexOf('.') + 1;
-
-        String className = signature.substring(0, nameStart - 1);
-        Class theClass = simpleClassFor(className);
-        if (theClass == null) {
-            return null;
-        }
-        String methodName = signature.substring(nameStart, argStart - 1);
-        String args = signature.substring(argStart, argEnd);
-        Class[] argsTypes = classesFor(args);
-        if (argsTypes == null) {
-            return null;
-        }
         try {
-            // This code has to be compiled using JDK1.1+
-            return new ReflectMethod(ReflectionProxy.getMethod(theClass,
-                    methodName, argsTypes), signature);
+
+            String className = signature.substring(0, nameStart - 1);
+            Class theClass = Reflection.getClass(className);
+            String methodName = signature.substring(nameStart, argStart - 1);
+            String args = signature.substring(argStart, argEnd);
+            Class[] argsTypes = classesFor(args);
+            return new ReflectMethod(theClass.getMethod(methodName, argsTypes),
+                    signature);
         } catch (Throwable t) {
-            return null;
         }
+        /**/
+        return null;
     }
 
+    /*@REFLECTION@
     private static final class ReflectMethod extends Method {
         private final java.lang.reflect.Method _value;
 
@@ -250,14 +224,14 @@ public final class Reflection {
             try {
                 return _value.invoke(that, args);
             } catch (IllegalArgumentException e) {
-                throw new Javolution.InternalError("Illegal argument for "
-                        + _signature + " method", e);
+                throw new JavolutionError("Illegal argument for " + _signature
+                        + " method", e);
             } catch (IllegalAccessException e) {
-                throw new Javolution.InternalError("Illegal access error for "
+                throw new JavolutionError("Illegal access error for "
                         + _signature + " method", e);
-            } catch (InvocationTargetException e) {
-                throw new Javolution.InternalError("Invocation exception for "
-                        + _signature + " method", (InvocationTargetException) e
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                throw new JavolutionError("Invocation exception for "
+                        + _signature + " method", (java.lang.reflect.InvocationTargetException) e
                         .getTargetException());
             }
         }
@@ -266,15 +240,15 @@ public final class Reflection {
             return _signature + " method";
         }
     }
+    /**/
 
     /**
      * Returns the classes for the specified argument.
      * 
      * @param args the comma separated arguments.
      * @return the classes or <code>null</code> if one of the class is not found.
-     */
-    private static Class[] classesFor(String args) {
-        try {
+     @REFLECTION@
+    private static Class[] classesFor(String args) throws ClassNotFoundException {
             args = args.trim();
             if (args.length() == 0) {
                 return new Class[0];
@@ -296,9 +270,6 @@ public final class Reflection {
             }
             classes[semiColons] = classFor(args.substring(index).trim());
             return classes;
-        } catch (ClassNotFoundException ex) {
-            return null;
-        }
     }
 
     private static Class classFor(String className)
@@ -311,16 +282,16 @@ public final class Reflection {
                         throw new UnsupportedOperationException(
                                 "The maximum array dimension is 3");
                     } else { // Dimension three.
-                        return getClass("[[["
+                        return Reflection.getClass("[[["
                                 + descriptorFor(className.substring(0,
                                         arrayIndex)));
                     }
                 } else { // Dimension two.
-                    return getClass("[["
+                    return Reflection.getClass("[["
                             + descriptorFor(className.substring(0, arrayIndex)));
                 }
             } else { // Dimension one.
-                return getClass("["
+                return Reflection.getClass("["
                         + descriptorFor(className.substring(0, arrayIndex)));
             }
         }
@@ -341,7 +312,7 @@ public final class Reflection {
         } else if (className.equals("double")) {
             return double.class;
         } else {
-            return Class.forName(className);
+            return Reflection.getClass(className);
         }
     }
 
@@ -366,21 +337,8 @@ public final class Reflection {
             return "L" + className.replace('.', '/') + ";";
         }
     }
-
-    /**
-     * Returns the class with the specified name.
-     * 
-     * @param className the full path name of the class.
-     * @return the corresponding class or <code>null</code> not found.
-     */
-    private static Class simpleClassFor(String className) {
-        try {
-            return getClass(className);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-    }
-
+    /**/
+    
     /**
      * This class represents a run-time constructor obtained through reflection.
      * 
@@ -507,12 +465,12 @@ public final class Reflection {
      * // Non-static method: fastMap.put(myKey, myValue)
      * Reflection.Method putKeyValue  
      *     = Reflection.getMethod(
-     *         "javolution.util.FastMap.put(java.lang.Object, java.lang.Object)");
+     *         "javolution.util.FastMap.put(j2me.lang.Object, j2me.lang.Object)");
      * Object previous = putKeyValue.invoke(fastMap, myKey, myValue); 
      * 
      * // Static method: System.nanoTime()  (JRE1.5+) 
      * Reflection.Method nanoTime 
-     *     = Reflection.getMethod("java.lang.System.nanoTime()");
+     *     = Reflection.getMethod("j2me.lang.System.nanoTime()");
      * long time = ((Long)nanoTime.invoke(null)).longValue();
      * </pre>
      */

@@ -6,6 +6,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.realtime;
+import j2me.lang.UnsupportedOperationException;
 
 /**
  * <p> This class represents an object factory. How and when a factory allocates

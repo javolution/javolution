@@ -7,8 +7,8 @@
  */
 package javolution.util;
 
-import java.util.Iterator;
-import java.util.Set;
+import j2me.util.Iterator;
+import j2me.util.Set;
 import javolution.xml.XmlElement;
 import javolution.xml.XmlFormat;
 
@@ -38,13 +38,13 @@ public class FastSet extends FastCollection implements Set {
      * the {@link #newInstance(int)} factory method instead of the default 
      * constructor during the deserialization of {@link FastSet} instances.
      */
-    protected static final XmlFormat FAST_SET_XML = new XmlFormat(FastSet.class) {
+    protected static final XmlFormat FAST_SET_XML = new XmlFormat(new FastSet(null).getClass()) {
         public void format(Object obj, XmlElement xml) {
             FastSet fs = (FastSet) obj;
             xml.addAll(fs);
         }
         public Object parse(XmlElement xml) {
-            FastSet fs = (xml.objectClass() == FastSet.class) ?
+            FastSet fs = (xml.objectClass() == getMappedClass()) ?
                 FastSet.newInstance(xml.size()) : (FastSet) xml.object();
             fs.addAll(xml);
             return fs;

@@ -7,15 +7,16 @@
  */
 package javolution.xml.sax;
 
+import j2me.nio.ByteBuffer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.ByteBuffer;
 
-import javolution.Javolution;
+import javolution.JavolutionError;
 import javolution.io.Utf8ByteBufferReader;
 import javolution.io.Utf8StreamReader;
+import javolution.lang.Reusable;
 import javolution.lang.TypeFormat;
 
 import org.xml.sax.DTDHandler;
@@ -66,24 +67,23 @@ import org.xml.sax.SAXParseException;
  * <p> Finally, this parser does not break up character data during call back
  *     (the whole character data between markups is always being returned).
  *     During parsing, no memory allocation is ever performed unless the
- *     data buffer capacity (see {@link #getProperty property} <code>
- *     "http://javolution/sax/properties/capacity"</code>) is too
+ *     data buffer capacity (see {@link #RealtimeParser(int)}) is too
  *     small to hold the whole character data. In which case, the internal data
  *     buffer is automatically re-sized.</p>
  *
  * <p><i> Note: This parser is a <b>SAX2-like</b> parser with the
- *        <code>java.lang.String</code> type replaced by the more generic 
- *       <code>java.lang.CharSequence</code> in {@link ContentHandler},
+ *        <code>j2me.lang.String</code> type replaced by the more generic 
+ *       <code>j2me.lang.CharSequence</code> in {@link ContentHandler},
  *       {@link Attributes} interfaces and {@link DefaultHandler} base classes.
  *       If a standard SAX2 or JAXP parser is required, you may consider using
  *       the wrapping class {@link XMLReaderImpl}. Fast but not as fast as 
- *       <code>java.lang.String</code> instances are dynamically allocated
+ *       <code>j2me.lang.String</code> instances are dynamically allocated
  *       while parsing.</i></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.6, June 11, 2003
  */
-public final class RealtimeParser {
+public final class RealtimeParser implements Reusable {
 
     /**
      * Holds the default handler instance.
@@ -113,19 +113,17 @@ public final class RealtimeParser {
     /**
      * Holds the character buffer used for reading.
      */
-    private final char[] _chars = new char[2048];;
+    private final char[] _chars;
 
     /**
      * Holds the default stream reader (UTF-8).
      */
-    private final Utf8StreamReader _inputStreamReader 
-        = new Utf8StreamReader(_chars.length);
+    private final Utf8StreamReader _inputStreamReader;
 
     /**
      * Holds the default ByteBuffer reader (UTF-8).
      */
-    private final Utf8ByteBufferReader _byteBufferReader 
-        = new Utf8ByteBufferReader();
+    private final Utf8ByteBufferReader _byteBufferReader;
 
     /**
      * Holds the current index in the character buffer.
@@ -153,12 +151,6 @@ public final class RealtimeParser {
     private int _poolIndex;
 
     /**
-     * Holds the initial capacity of the data buffer (can be set through
-     * the property "http://javolution/sax/properties/capacity").
-     */
-    private Integer _capacityPropertyValue;
-
-    /**
      * Holds the current attributes.
      */
     final AttributesImpl _attributes = new AttributesImpl();
@@ -174,9 +166,19 @@ public final class RealtimeParser {
     private final LocatorImpl _locator = new LocatorImpl();
 
     /**
-     * Default constructor.
+     * Creates a real time parser with an initial data buffer capacity of
+     * <code>2048</code> characters.
      */
     public RealtimeParser() {
+        this(2048);
+    }
+
+    /**
+     * Creates a real-time parser of specified initial data buffer capacity.
+     * 
+     * @param capacity the data buffer initial capacity (in characters).
+     */
+    public RealtimeParser(int capacity) {
 
         // Sets CharSequence pool.
         _pool = new CharSequenceImpl[256];
@@ -184,9 +186,12 @@ public final class RealtimeParser {
             _pool[i] = new CharSequenceImpl();
         }
 
-        // Allocates data buffer.
-        _capacityPropertyValue = new Integer(2048);
-        allocateDataBuffer();
+        // Sizes buffers, data buffer length must be greater or equal to
+        // reader capacity to avoid overflow.
+        _chars = new char[capacity];
+        _data = new char[capacity + _chars.length];
+        _inputStreamReader = new Utf8StreamReader(capacity);
+        _byteBufferReader = new Utf8ByteBufferReader();
 
         // Sets default handlers.
         setContentHandler(DEFAULT_HANDLER);
@@ -270,7 +275,7 @@ public final class RealtimeParser {
      * @param in the input stream with UTF-8 encoding.
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *         wrapping another exception.
-     * @throws java.io.IOException an IO exception from the parser,
+     * @throws j2me.io.IOException an IO exception from the parser,
      *         possibly from a byte stream or character stream
      *         supplied by the application.
      * @see    Utf8StreamReader
@@ -287,7 +292,7 @@ public final class RealtimeParser {
      * @param  byteBuffer the byte buffer with UTF-8 encoding.
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *         wrapping another exception.
-     * @throws java.io.IOException an IO exception from the parser,
+     * @throws j2me.io.IOException an IO exception from the parser,
      *         possibly from a byte stream or character stream
      *         supplied by the application.
      * @see    Utf8ByteBufferReader
@@ -310,7 +315,7 @@ public final class RealtimeParser {
 
         // Checks that this parser is not currently parsing.
         if (_isParsing) {
-            throw new IllegalStateException("Currently parsing");
+            throw new SAXException("Currently parsing");
         }
 
         // Sets locator.
@@ -665,7 +670,7 @@ public final class RealtimeParser {
                 break;
 
             default:
-                throw new Javolution.InternalError("State unknown: " + state);
+                throw new JavolutionError("State unknown: " + state);
             }
         }
     }
@@ -779,7 +784,7 @@ public final class RealtimeParser {
                     uri, localName, _elemQName, _attributes);
                _attributes.clear();
             } else {
-                throw new Javolution.InternalError("Unexpected state: " + state);
+                throw new JavolutionError("Unexpected state: " + state);
             }
             _contentHandler.endElement(uri, localName, _elemQName);
 
@@ -845,11 +850,7 @@ public final class RealtimeParser {
     }
 
     /**
-     * Looks up the value of a property.  This parser (and its SAX2 wrapper
-     * {@link XMLReaderImpl}) supports the property:
-     * <code>"http://javolution/sax/properties/capacity"</code>, which holds
-     * the initial data buffer capacity (instance of
-     * <code>java.lang.Integer</code>, default <code>2048</code>).
+     * Looks up the value of a property.  
      *
      * @param  name the property name, which is a fully-qualified URI.
      * @return the current value of the property.
@@ -862,26 +863,13 @@ public final class RealtimeParser {
      */
     public Object getProperty(String name)
             throws SAXNotRecognizedException, SAXNotSupportedException {
-        if (name.equals(CAPACITY_PROPERTY_KEY)) {
-            return _capacityPropertyValue;
-        } else {
-            throw new SAXNotRecognizedException(
-                "Property " + name + " not recognized");
-        }
+        throw new SAXNotRecognizedException(
+             "Property " + name + " not recognized");
     }
 
     /**
-     * Sets the value of a property. This parser (and its SAX2 wrapper
-     * {@link XMLReaderImpl}) supports the property:
-     * <code>"http://javolution/sax/properties/capacity"</code>, which holds
-     * the initial data buffer capacity (instance of
-     * <code>java.lang.Integer</code>, default <code>2048</code>).
-     * For example:<pre>
-     * sax2Parser.setProperty(
-     *     "http://javolution/sax/properties/capacity",
-     *     new Integer(2*1024*1024)); // Capable of holding character data (e.g. CDATA)
-     *                                // of up to 2 MegaBytes without resizing.</pre>
-     *
+     * Sets the value of a property. 
+     * 
      * @param  name the property name, which is a fully-qualified URI.
      * @param  value the requested value for the property.
      * @throws org.xml.sax.SAXNotRecognizedException when the
@@ -892,16 +880,9 @@ public final class RealtimeParser {
      */
     public void setProperty(String name, Object value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
-        if (name.equals(CAPACITY_PROPERTY_KEY)) {
-            _capacityPropertyValue = (Integer) value;
-            allocateDataBuffer();
-        } else {
             throw new SAXNotRecognizedException(
                 "Property " + name + " not recognized");
-        }
     }
-    private static final String CAPACITY_PROPERTY_KEY
-        = "http://javolution/sax/properties/capacity";
 
     /**
      * Allows an application to register an entity resolver (ignored by this
@@ -944,21 +925,6 @@ public final class RealtimeParser {
      */
     public DTDHandler getDTDHandler() {
         return _dtdHandler;
-    }
-
-    /**
-     * Allocates buffers.
-     */
-    private void allocateDataBuffer() {
-        if (!_isParsing) { // Checks if parser is not currently parsing.
-            // Data buffer length must be greater or equal to
-            // reader capacity to avoid overflow.
-            int capacity = _capacityPropertyValue.intValue();
-            _data = new char[capacity + _chars.length];
-
-        } else {
-            throw new IllegalStateException("Currently parsing");
-        }
     }
 
     /**
@@ -1026,5 +992,11 @@ public final class RealtimeParser {
             // Column zero indicates line-break, readjusts.
             return (column != 0) ? column : _lineLength;
         }
+    }
+
+    // Implements reusable.
+    public void clear() {
+        setContentHandler(DEFAULT_HANDLER);
+        setErrorHandler(DEFAULT_HANDLER);
     }
 }

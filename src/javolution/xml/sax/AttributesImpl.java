@@ -6,6 +6,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
+import j2me.lang.CharSequence;
 
 /**
  * This class represents a list of XML attributes. It implements the real-time

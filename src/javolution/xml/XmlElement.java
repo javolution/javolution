@@ -7,6 +7,7 @@
  */
 package javolution.xml;
 
+import j2me.lang.CharSequence;
 import javolution.lang.Enum;
 import javolution.lang.Text;
 import javolution.lang.TypeFormat;
@@ -166,10 +167,11 @@ public final class XmlElement extends FastList {
      * @param  name the name of the attribute.
      * @param  value the <code>float</code> value for the specified attribute.
      * @see    #getAttribute(String, float)
-     */
+    /*@FLOATING_POINT@
     public void setAttribute(String name, float value) {
         _attributes.put(name, Text.valueOf(value));
     }
+    /**/
 
     /**
      * Sets the specified <code>double</code> attribute.
@@ -177,10 +179,11 @@ public final class XmlElement extends FastList {
      * @param  name the name of the attribute.
      * @param  value the <code>double</code> value for the specified attribute.
      * @see    #getAttribute(String, double)
-     */
+    /*@FLOATING_POINT@
     public void setAttribute(String name, double value) {
         _attributes.put(name, Text.valueOf(value));
     }
+    /**/
 
     /**
      * Sets the specified <code>Enum</code> attribute.
@@ -309,12 +312,13 @@ public final class XmlElement extends FastList {
      * @param  defaultValue the value returned if the attribute is not found.
      * @return the <code>float</code> value for the specified attribute or
      *         the default value if the attribute is not found.
-     */
+    /*@FLOATING_POINT@
     public float getAttribute(String name, float defaultValue) {
         CharSequence chars = getAttribute(name);
         return (chars != null) ? (float) TypeFormat.parseDouble(chars)
                 : defaultValue;
     }
+    /**/
 
     /**
      * Returns the specified <code>double</code> attribute.
@@ -323,11 +327,12 @@ public final class XmlElement extends FastList {
      * @param  defaultValue the value returned if the attribute is not found.
      * @return the <code>double</code> value for the specified attribute or
      *         the default value if the attribute is not found.
-     */
+    /*@FLOATING_POINT@
     public double getAttribute(String name, double defaultValue) {
         CharSequence chars = getAttribute(name);
         return (chars != null) ? TypeFormat.parseDouble(chars) : defaultValue;
     }
+    /**/
 
     /**
      * Returns the specified <code>Enum</code> attribute.
@@ -354,6 +359,4 @@ public final class XmlElement extends FastList {
         _attributes.clear();
         this.clear(); // Content.
     }
-
-    private static final long serialVersionUID = 3690755098653832752L;
 }

@@ -7,7 +7,7 @@
  */
 package javolution.lang;
 
-import javolution.util.MathLib;
+import j2me.lang.CharSequence;
 
 import java.io.IOException;
 
@@ -17,8 +17,8 @@ import java.io.IOException;
  *     <code>Appendable</code>.</p>
  *
  * <p> Methods from this utility class <b>do not create temporary objects</b>
- *     and are typically faster than standard library methods (e.g {@link
- *     #parseDouble TypeFormat.parseDouble} is up to 15x faster than 
+ *     and are typically faster than standard library methods (e.g
+ *     <code>TypeFormat.parseDouble</code>} is up to 15x faster than 
  *     <code>Double.parseDouble</code>).</p>
  *
  * <p> For non-primitive objects, formatting is typically performed using 
@@ -61,7 +61,7 @@ public final class TypeFormat {
     public static int indexOf(CharSequence pattern, CharSequence chars,
             int fromIndex) {
         int patternLength = pattern.length();
-        fromIndex = MathLib.max(0, fromIndex);
+        fromIndex = Math.max(0, fromIndex);
         if (patternLength != 0) { // At least one character to search for.
             char firstChar = pattern.charAt(0);
             int last = chars.length() - patternLength;
@@ -81,7 +81,7 @@ public final class TypeFormat {
             }
             return -1;
         } else {
-            return MathLib.min(0, fromIndex);
+            return Math.min(0, fromIndex);
         }
     }
 
@@ -101,7 +101,7 @@ public final class TypeFormat {
     public static int lastIndexOf(CharSequence pattern, CharSequence chars,
             int fromIndex) {
         int patternLength = pattern.length();
-        fromIndex = MathLib.min(chars.length() - pattern.length(), fromIndex);
+        fromIndex = Math.min(chars.length() - pattern.length(), fromIndex);
         if (patternLength != 0) { // At least one character to search for.
             char firstChar = pattern.charAt(0);
             for (int i = fromIndex; i >= 0; i--) {
@@ -120,7 +120,7 @@ public final class TypeFormat {
             }
             return -1;
         } else {
-            return MathLib.max(-1, fromIndex);
+            return Math.max(-1, fromIndex);
         }
     }
 
@@ -310,7 +310,7 @@ public final class TypeFormat {
      * @return the float number represented by the specified character sequence.
      * @throws NumberFormatException if the character sequence does not contain
      *         a parsable <code>float</code>.
-     */
+    /*@FLOATING_POINT@
     public static float parseFloat(CharSequence chars) {
         double d = parseDouble(chars);
         if ((d >= -3.4028235e+38f) && (d <= 3.4028235e+38f)) {
@@ -321,6 +321,7 @@ public final class TypeFormat {
                             + chars.toString() + "\"");
         }
     }
+    /**/
 
     /**
      * Parses this <code>CharSequence</code> as a <code>double</code>.
@@ -329,7 +330,7 @@ public final class TypeFormat {
      * @return the double number represented by this character sequence.
      * @throws NumberFormatException if the character sequence does not contain
      *         a parsable <code>double</code>.
-     */
+    /*@FLOATING_POINT@
     public static double parseDouble(CharSequence chars)
             throws NumberFormatException {
         try {
@@ -406,6 +407,7 @@ public final class TypeFormat {
                     + chars.toString() + "\"");
         }
     }
+    /**/
 
     /**
      * Formats the specified <code>boolean</code> and appends the resulting
@@ -635,11 +637,12 @@ public final class TypeFormat {
      * @return <code>format(f, 0.0f, sb)</code>
      * @throws IOException if an I/O exception occurs.
      * @see    #format(float, float, Appendable)
-     */
+    /*@FLOATING_POINT@
     public static Appendable format(float f, Appendable chars)
             throws IOException {
         return format(f, 0.0f, chars);
     }
+    /**/
 
     /**
      * Formats the specified <code>float</code> and appends the resulting text
@@ -663,7 +666,7 @@ public final class TypeFormat {
      * @throws IllegalArgumentException if the specified precision is negative
      *         or would result in too many digits (19+).
      * @throws IOException if an I/O exception occurs.
-     */
+    /*@FLOATING_POINT@
     public static Appendable format(float f, float precision, Appendable chars)
             throws IOException {
         // Adjusts precision.
@@ -673,7 +676,7 @@ public final class TypeFormat {
         } else if (precision == 0.0f) {
             if (f != 0.0f) {
                 precisionOnLastDigit = false;
-                precision = MathLib.max(MathLib.abs(f) * FLOAT_RELATIVE_ERROR,
+                precision = Math.max(Math.abs(f) * FLOAT_RELATIVE_ERROR,
                         1.4e-45f);
             } else {
                 return append(chars, "0.0"); // Exact zero.
@@ -684,6 +687,7 @@ public final class TypeFormat {
         }
         return format(f, precision, precisionOnLastDigit, chars);
     }
+    /**/
 
     /**
      * Formats the specified <code>double</code> and appends the resulting
@@ -700,11 +704,12 @@ public final class TypeFormat {
      * @return <code>format(d, 0.0, sb)</code>
      * @throws IOException if an I/O exception occurs.
      * @see    #format(double, double, Appendable)
-     */
+    /*@FLOATING_POINT@
     public static Appendable format(double d, Appendable chars)
             throws IOException {
         return format(d, 0.0, chars);
     }
+    /**/
 
     /**
      * Formats the specified <code>double</code> and appends the resulting text
@@ -727,14 +732,14 @@ public final class TypeFormat {
      * @throws IllegalArgumentException if the specified accuracy is negative
      *         or would result in too many digits (19+).
      * @throws IOException if an I/O exception occurs.
-     */
+    /*@FLOATING_POINT@
     public static Appendable format(double d, double accuracy, Appendable chars)
             throws IOException {
         if (accuracy > 0.0) { // Accuracy on last digit.
             return format(d, accuracy, false, chars);
         } else if (accuracy == 0.0) { //Default format.
             if (d != 0.0) {
-                accuracy = MathLib.max(MathLib.abs(d) * DOUBLE_RELATIVE_ERROR,
+                accuracy = Math.max(Math.abs(d) * DOUBLE_RELATIVE_ERROR,
                         4.9e-324);
                 return format(d, accuracy, true, chars);
             } else {
@@ -745,6 +750,7 @@ public final class TypeFormat {
                     "precision: Negative values not allowed");
         }
     }
+    /**/
 
     /**
      * Formats the specified <code>double</code> and appends the resulting text
@@ -759,7 +765,7 @@ public final class TypeFormat {
      * @throws IllegalArgumentException if the specified accuracy would result 
      *         in too many digits (19+).
      * @throws IOException if an I/O exception occurs.
-     */
+    /*@FLOATING_POINT@
     private static Appendable format(double d, double accuracy,
             boolean defaultFormat, Appendable chars) throws IOException {
         if (d != d) { // NaN
@@ -851,6 +857,8 @@ public final class TypeFormat {
 
     private static String[] LEADING_ZEROS = { "0.", "0.0", "0.00" };
 
+    /**/
+
     /**
      * Appends the specified string argument to the specified appendable
      * for backward compatibility when {@link String} was not a 
@@ -876,7 +884,7 @@ public final class TypeFormat {
      * @param  value the value.
      * @param  E the exponent.
      * @return <code>value * 10^E</code>
-     */
+    /*@FLOATING_POINT@
     private static double multE(double value, int E) {
         if (E >= 0) {
             if (E <= 308) {
@@ -884,7 +892,7 @@ public final class TypeFormat {
                 return value * DOUBLE_POW_10[E];
             } else {
                 value *= 1E21; // Exact multiplicand.
-                E = MathLib.min(308, E - 21);
+                E = Math.min(308, E - 21);
                 return value * DOUBLE_POW_10[E];
             }
         } else {
@@ -893,7 +901,7 @@ public final class TypeFormat {
             } else {
                 // Min: 4.9E-324
                 value /= 1E21; // Exact divisor.
-                E = MathLib.max(-308, E + 21);
+                E = Math.max(-308, E + 21);
                 return value / DOUBLE_POW_10[-E];
             }
         }
@@ -941,4 +949,5 @@ public final class TypeFormat {
             1E299,
 
             1E300, 1E301, 1E302, 1E303, 1E304, 1E305, 1E306, 1E307, 1E308 };
+     /**/
 }

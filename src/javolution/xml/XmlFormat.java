@@ -7,10 +7,11 @@
  */
 package javolution.xml;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import j2me.util.Collection;
+import j2me.util.Iterator;
+import j2me.util.Map;
 
+import javolution.JavolutionError;
 import javolution.util.FastMap;
 import javolution.util.Reflection;
 import javolution.realtime.LocalContext.Variable;
@@ -37,10 +38,10 @@ import javolution.realtime.LocalContext.Variable;
  *             }
  *         };
  *  }</pre>
- * <p> Default formats for: {@link #OBJECT_XML java.lang.Object}, 
- *     {@link #STRING_XML java.lang.String},
- *     {@link #COLLECTION_XML java.util.Collection} and 
- *     {@link #MAP_XML java.util.Map} are also provided.
+ * <p> Default formats for: {@link #OBJECT_XML j2me.lang.Object}, 
+ *     {@link #STRING_XML j2me.lang.String},
+ *     {@link #COLLECTION_XML j2me.util.Collection} and 
+ *     {@link #MAP_XML j2me.util.Map} are also provided.
  *     Here is an example of serialization/deserialization using these
  *     predefined formats:<pre>
  *     ArrayList names = new ArrayList();
@@ -48,21 +49,21 @@ import javolution.realtime.LocalContext.Variable;
  *     names.add("Oscar Thon");
  *     names.add("Jean Bon");
  *     ObjectWriter ow = new ObjectWriter();
- *     ow.setNamespace("", "java.lang"); // Default namespace for java.lang classes
+ *     ow.setNamespace("", "j2me.lang"); // Default namespace for j2me.lang classes
  *     ow.write(names, new FileOutputStream("C:/names.xml"));</pre>
  *     Here is the <code>names.xml</code> document produced:<pre>
  *     &lt;?xml version="1.0" encoding="UTF-8"?&gt;
- *     &lt;root:java.util.ArrayList xmlns:root="java:" xmlns="java:java.lang"&gt;
+ *     &lt;root:j2me.util.ArrayList xmlns:root="java:" xmlns="java:j2me.lang"&gt;
  *       &lt;String value="John Doe"/&gt;
  *       &lt;String value="Oscar Thon"/&gt;
  *       &lt;String value="Jean Bon"/&gt;
- *     &lt;/root:java.util.ArrayList&gt;</pre>
+ *     &lt;/root:j2me.util.ArrayList&gt;</pre>
  *     The list can be read back with the following code:<pre>
  *     ObjectReader or = new ObjectReader();
  *     ArrayList names = (ArrayList) or.read(new FileInputStream("C:/names.xml"));
  *     </pre></p>
  * <p> Formats can also be dynamically modified. For example:<pre>
- *     // Changes XML mapping for java.util.ArrayList 
+ *     // Changes XML mapping for j2me.util.ArrayList 
  *     XmlFormat listXml = new XmlFormat() {
  *          public void format(Object obj, XmlElement xml) {
  *              ArrayList arraylist = (List) obj;
@@ -76,8 +77,12 @@ import javolution.realtime.LocalContext.Variable;
  *              return list;
  *          }
  *     };
- *     XmlFormat.setInstance(listXml, java.util.ArrayList.class); // Local setting.
+ *     XmlFormat.setInstance(listXml, j2me.util.ArrayList.class); // Local setting.
  *     </pre></p>   
+ * <p> Finally, xml formats can be made impervious to obfuscation by setting 
+ *     the {@link #setAlias alias} of the obfuscated classes. 
+ *     Aliases can also be used to customize the tag name of the object being
+ *     serialized (by default the full class name including package prefix).</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004
@@ -100,6 +105,21 @@ public abstract class XmlFormat {
     private static final FastMap CLASS_TO_FORMAT = new FastMap();
 
     /**
+     * Caches the class to alias mapping.
+     */
+    private static final FastMap CLASS_TO_ALIAS = new FastMap();
+
+    /**
+     * Caches the alias to class mapping.
+     */
+    private static final FastMap ALIAS_TO_CLASS = new FastMap();
+
+    /**
+     * Class lock.
+     */
+    private static final Object LOCK = new Object();
+
+    /**
      * Holds the default XML representation when a more specific format 
      * cannot be found. This representation consists of an empty XML element
      * with no attribute. Objects are deserialized using the class default 
@@ -117,14 +137,13 @@ public abstract class XmlFormat {
 
     /**
      * Holds the default XML representation for classes implementing 
-     * the <code>java.util.Collection</code> interface.
+     * the <code>j2me.util.Collection</code> interface.
      * This representation consists of nested XML elements one for each 
      * element of the collection. The elements' order is defined by
      * the collection iterator order. Collections are deserialized using their
      * default constructor. 
      */
-    public static final XmlFormat COLLECTION_XML = new XmlFormat(
-            Collection.class) {
+    public static final XmlFormat COLLECTION_XML = new XmlFormat("j2me.util.Collection") {
         public void format(Object obj, XmlElement xml) {
             xml.addAll((Collection) obj);
         }
@@ -138,12 +157,12 @@ public abstract class XmlFormat {
 
     /**
      * Holds the default XML representation for classes implementing 
-     * the <code>java.util.Map</code> interface.
+     * the <code>j2me.util.Map</code> interface.
      * This representation consists of key/value pair as nested XML elements.
      * The elements' order is defined by the map 's entries iterator order. 
      * Maps are deserialized using their default constructor.
      */
-    public static final XmlFormat MAP_XML = new XmlFormat(Map.class) {
+    public static final XmlFormat MAP_XML = new XmlFormat("j2me.util.Map") {
 
         public void format(Object obj, XmlElement xml) {
             Map map = (Map) obj;
@@ -156,7 +175,7 @@ public abstract class XmlFormat {
 
         public Object parse(XmlElement xml) {
             Map map = (Map) xml.object();
-            for (Iterator it = xml.iterator(); it.hasNext();) {
+            for (Iterator it = xml.fastIterator(); it.hasNext();) {
                 Object key = it.next();
                 Object value = it.next();
                 map.put(key, value);
@@ -166,11 +185,11 @@ public abstract class XmlFormat {
     };
 
     /**
-     * Holds the default XML representation for <code>java.lang.String</code>
+     * Holds the default XML representation for <code>j2me.lang.String</code>
      * classes. This representation consists of a <code>"value"</code> attribute 
      * holding the character sequence.
      */
-    public static final XmlFormat STRING_XML = new XmlFormat(String.class) {
+    public static final XmlFormat STRING_XML = new XmlFormat("".getClass()) {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", (String) obj);
         }
@@ -178,6 +197,11 @@ public abstract class XmlFormat {
             return xml.getAttribute("value", "");
         }
     };
+
+    /**
+     * The class/interface mapped to this format.
+     */
+    private Class _mappedClass;
 
     /**
      * Default constructor (used for local mapping).
@@ -195,7 +219,8 @@ public abstract class XmlFormat {
      *        for the specified class.
      */
     protected XmlFormat(Class mappedClass) {
-        synchronized (XmlFormat.class) {
+        synchronized (LOCK) {
+            _mappedClass = mappedClass;
             if (DEFAULTS.containsKey(mappedClass)) {
                 throw new IllegalArgumentException(
                         "Default mapping already exists for " + mappedClass);
@@ -206,6 +231,39 @@ public abstract class XmlFormat {
     }
 
     /**
+     * Creates a default XML mapping for the class having the specified name
+     * 
+     * @param className the name class or interface for which this 
+     *        XML format can be used.
+     * @throws IllegalArgumentException if a default mapping already exists 
+     *        for the specified class.
+     */
+    protected XmlFormat(String className) {
+		try {
+			_mappedClass = Reflection.getClass(className);
+		} catch (ClassNotFoundException e) {
+			throw new JavolutionError(e);
+		}
+        synchronized (LOCK) {
+            if (DEFAULTS.containsKey(_mappedClass)) {
+                throw new IllegalArgumentException(
+                        "Default mapping already exists for " + _mappedClass);
+            }
+            DEFAULTS.put(_mappedClass, this);
+            CLASS_TO_FORMAT.clear(); // Clears cache.
+        }
+    }
+
+    /**
+     * Returns the class or interface mapped to this xml format.
+     * 
+     * @return the base class/interface for this format.
+     */
+    public Class getMappedClass() {
+        return _mappedClass;
+    }
+
+    /**
      * Sets a {@link javolution.realtime.LocalContext local} format for the 
      * specified class/interface.
      * 
@@ -213,7 +271,8 @@ public abstract class XmlFormat {
      * @param mappedClass the associated class/interface.
      */
     public static void setInstance(XmlFormat xmlFormat, Class mappedClass) {
-        synchronized (XmlFormat.class) {
+        synchronized (LOCK) {
+            xmlFormat._mappedClass = mappedClass;
             Variable classFormat = (Variable) LOCALS.get(mappedClass);
             if (classFormat == null) { // No local mapping for this class.
                 classFormat = new Variable();
@@ -224,6 +283,54 @@ public abstract class XmlFormat {
         }
     }
 
+    /**
+     * Returns the tag name to be used for the serialization of the specified 
+     * class. If no alias has been set this method returns the full class name.
+     * 
+     * @param forClass the class for which the name to use is returned.
+     * @return the name of the tag element identifying instances of the 
+     *        specified class during serialization.
+     */
+    static String tagNameFor(Class forClass) {
+        synchronized (LOCK) {
+    	Object alias = CLASS_TO_ALIAS.get(forClass);
+    	return (alias != null) ? (String)alias : forClass.getName();
+        }}
+
+    /**
+     * Returns the class corresponding to the specified tag name.
+     * 
+     * @param tagName the full name or alias of the class to search for.
+     * @return the corresponding class.
+     * @throws ClassNotFoundException
+     */
+    static Class classFor(String tagName) throws ClassNotFoundException {
+        synchronized (LOCK) {
+    	Object obj  = ALIAS_TO_CLASS.get(tagName);
+    	if (obj != null) return (Class) obj;
+    	Class cl = Reflection.getClass(tagName);
+    	CLASS_TO_ALIAS.put(cl, tagName);
+    	ALIAS_TO_CLASS.put(tagName, cl);
+  	    return cl;
+        }    }
+
+    /**
+     * Sets the alias to use for tag name when serializing direct instances of  
+     * specified class. This method is particularly useful
+     * in case of obfuscation to ensure proper/invariant xml formatting 
+     * (you don't want to use the obfuscated class name in such case). 
+     * Aliases can also be used to customize the tag names in the xml document
+     * (e.g. to use different/shorter names than the full class name).
+     * 
+     * @param forClass the class for which the specified alias should be used.
+     * @param alias the tag name to use for the specified class.
+     */
+    public static void setAlias(Class forClass, String alias) {
+        synchronized (LOCK) {
+    	CLASS_TO_ALIAS.put(forClass, alias);
+    	ALIAS_TO_CLASS.put(alias, forClass);
+        }    }
+    	
     /**
      * Returns the format for the specified class. This method looks for
      * a compatible format from the local formats first; if none is found 
@@ -240,7 +347,7 @@ public abstract class XmlFormat {
      * @return the format to use for the specified class.
      */
     public static XmlFormat getInstance(Class mappedClass) {
-        synchronized (XmlFormat.class) {
+        synchronized (LOCK) {
 
             // Checks cache first.
             Object obj = CLASS_TO_FORMAT.get(mappedClass);

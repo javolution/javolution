@@ -21,11 +21,11 @@
 <UL>
 <LI> Transparent <A href="api/javolution/realtime/package-summary.html">object recycling</A> - No memory allocation, memory defragmentation or garbage collection ever.</LI>
 <LI> Configurable/Inheritable <A href="api/javolution/xml/package-summary.html">XML serialization/deserialization</A> integrated with NIO framework.</LI>
-<LI> Allow your application/library to run on any platform from the J2ME CLDC 1.1 to the latest J2EE 1.5</LI>
-<LI> <A href="api/javolution/lang/Text.html">Text</A> manipulation several order of magnitude faster than using <code>java.lang.String</code>.</LI>
+<LI> Runs on <b>ALL</b> Java<sup>TM</sup> platforms from the <IMG src="doc/img/new.gif">J2ME CLDC 1.0<IMG src="doc/img/new.gif"> to the latest J2EE 1.5</LI>
+<LI> <A href="api/javolution/lang/Text.html">Text</A> manipulation several order of magnitude faster than using <code>j2me.lang.String</code>.</LI>
 <LI> Guaranteed response time. No internal table resize/copy ever performed and for threads running in <A href="api/javolution/realtime/PoolContext.html">PoolContext</A> no garbage collection either.</LI>
 <LI> Low-level <A href="api/javolution/realtime/ConcurrentContext.html">concurrency</A> support.</LI>
-<LI> The <A href="doc/benchmark.html">fastest</A> implementations of the most common interfaces (e.g. <A href="api/javolution/util/FastMap.html">FastMap</A> for <code>java.util.Map</code> interface).</LI>
+<LI> The <A href="doc/benchmark.html">fastest</A> implementations of the most common interfaces (e.g. <A href="api/javolution/util/FastMap.html">FastMap</A> for <code>j2me.util.Map</code> interface).</LI>
 <LI> Free...</LI>
 </UL>
 <H3> The "Top 10" reasons why you should be using <b><i>Javolution</i></b>:</H3>
@@ -47,10 +47,10 @@
      magnitude faster than concatenation using <code>String</code> and several times faster than 
      concatenations using <code>StringBuffer/StringBuilder</code>
      (See <A href="doc/benchmark.html">benchmark</A>).</LI>
-<LI> <b><i>Javolution</i></b> runs on any platform from the simplest J2ME CLDC with no garbage collector
-     to the latest J2EE 1.5 Furthermore, with <b><i>Javolution</i></b> your class may implement the 
-     latest interfaces such as <code>Serializable</code>, <code>Comparable</code>,
-     <code>Appendable</code> and still run on the J2ME CLDC platform where these interfaces do not exist.</LI>
+<LI> <b><i>Javolution</i></b> runs on any platform from the simplest J2ME CLDC 1.0 with no garbage collector
+     to the latest J2EE 1.5 Furthermore, with <b><i>Javolution</i></b> provides an easy way 
+     for your application to implement the latest interfaces such as <code>Serializable</code>, <code>Comparable</code>,
+     <code>Appendable</code> and still run on the J2ME CLDC 1.0 platform where these interfaces do not exist.</LI>
 <LI> All <b><i>Javolution</i></b> classes are hard real-time compliant and have highly deterministic
      behavior (in the microsecond range). 
      For applications based upon the Real-Time Specification for Java (<a href="http://www.rtj.org/">RTSJ</a>) 
@@ -72,10 +72,10 @@
 </OL>
 
 <CENTER>
-<H2 align=center><A name="LATEST">Javolution Version 2.0.3</A></H2>
+<H2 align=center><A name="LATEST">Javolution Version 2.1.0 </A></H2>
 <A href="api/index.html"><IMG alt=Browse src="doc/img/browse.jpg"></A> 
-<A href="javolution-2.0.3-src.zip"><IMG alt=Source src="doc/img/source.jpg"></A> 
-<A href="javolution-2.0.3-bin.zip"><IMG alt=Library src="doc/img/library.jpg"></A>  
+<A href="javolution-2.1.0-src.zip"><IMG alt=Source src="doc/img/source.jpg"></A> 
+<A href="javolution-2.1.0-bin.zip"><IMG alt=Library src="doc/img/library.jpg"></A>  
 </CENTER>
     
 <H3> Features:</H3>
@@ -96,8 +96,9 @@
        <li> <code>java.io (e.g Serializable, Flushable ...)</code></li>
        <li> <code>java.util (e.g List, Map, Set, Formattable ...)</code></li>
        </ul>
-       It allows your classes to implement the latest interfaces and still run
-       in the embedded world!</LI>
+       This classes are in the <code>j2me</code> package (to avoid bootclasspath).
+       It allows j2me applications to implement the latest j2se interfaces and integrate
+       with a j2se framework through a simple rename (<code>j2me.</code> to <code>java.</code>).</LI>
   <LI> Real-time implementations of 
        <a href="api/javolution/util/FastMap.html">Map</a>,
        <a href="api/javolution/util/FastList.html">List</a>
@@ -109,9 +110,9 @@
        utility class. Any method or constructor can be dynamically invoked using its
        signature represented as a <code>String</code>.</LI>
   <LI> <A href="api/javolution/lang/Text.html">Text</A> class, an improved version 
-        of <code>java.lang.String</code> with amazingly fast concatenation speed
+        of <code>j2me.lang.String</code> with amazingly fast concatenation speed
        (faster than using <code>StringBuffer</code>).
-       Also, unlike <code>java.lang.String</code>, the <A href="api/javolution/lang/Text.html">Text</A> 
+       Also, unlike <code>j2me.lang.String</code>, the <A href="api/javolution/lang/Text.html">Text</A> 
        class in not plagued by the substring memory leak <A href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4513622">
        bug</a>!</LI>
    <LI> Appendable character sequence 
@@ -129,12 +130,29 @@
 
 <H3><A name="USAGE">Usage:</A></H3>
 
-<H4><pre>      java -cp javolution.jar ... (JRE1.4, JRE1.5+)</pre></H4>
-<H4><pre>      java -Xbootclasspath/a:javolution.jar ... (J2ME, JRE1.1 .. JRE1.3)</pre></H4>
+<P> The library's <A href="http://ant.apache.org/">ANT</A> build file supports the following targets:
+<H4><pre>      ant 1.0 (CLDC 1.0)</pre> </H4>
+    The library is built without floating point support.<br>
+    J2SE interfaces are in the <code>j2me</code> package.<br>
+<H4><pre>      ant 1.1 (CLDC 1.1)</pre> </H4>
+    Same as CLDC 1.0 except it includes floating point methods.<br>
+<H4><pre>      ant 1.4 (J2SE 1.4+)</pre> </H4>
+    J2SE interfaces are in the regular <code>java</code> package.<br>
+<H4><pre>      ant 1.5 (J2SE 1.5+) </pre> </H4>
+    Same as J2SE 1.4+ except that 
+    <code>javolution.lang.Appendable</code> and
+    <code>javolution.lang.Enum</code> are moved to the <code>java.lang</code> package.<br>
+<H4><pre>      ant gcj (Gnu Compiler for Java) </pre> </H4>
+    Same as J2SE 1.4+ but also generates a native dynamic library (<code>javolution.so</code>).<br>
 
-<P><B>Important:</B> Do not deploy applications using the <code>-Xbootclasspath:</code> or
-                     <code>-Xbootclasspath/p:</code> option to override core Java<sup>TM</sup> classes,
-                     because such a deployment would contravene the Java 2 Runtime Environment binary code license.</P>
+<P> Once built, the library can be used as a normal library (no bootclasspath necessary).</P>
+
+<P> The library is also self-executable for versioning, testing and benchmark purpose.
+    <h4><pre>      java -jar javolution.jar version (shows version information)</pre></h4>
+    <h4><pre>      java -jar javolution.jar test (performs self-tests)</pre></h4>
+    <h4><pre>      java -jar javolution.jar perf (runs benchmark)</pre></h4>
+    <i><a href="doc/benchmark.html">Here</a> are the benchmark results on a 
+     Single-CPU Intel Pentium 5 2.20GHz running Windows 2000.</i></p>
 
 <H3><A name="TOOLS">Tools:</A></H3>
 
@@ -145,13 +163,6 @@
 <p><i>Coding Standard:  <a href="http://java.sun.com/docs/codeconv/index.html">
         Sun<sup>TM</sup> Code Convention</a> with <a href="doc/coding_standard.txt">Addendum</a>.</i></p>
 <p><i>Preferred Environment: <A href="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding).</i></p>
-<p><i>Self-executable command line arguments:</i>
-    <h4><pre>      java [options] -jar javolution.jar version (shows version information)</pre></h4>
-    <h4><pre>      java [options] -jar javolution.jar test (performs self-tests)</pre></h4>
-    <h4><pre>      java [options] -jar javolution.jar perf (runs benchmark)</pre></h4>
-     <a href="doc/benchmark.html">Here</a> are the benchmark results on a 
-     Single-CPU Intel Pentium 5 2.20GHz running Windows 2000.</i></p>
-
 <H3><A name="LINKS">Links:</A></H3>
 
 Articles related to <b><i>Javolution</i></b> 
@@ -174,7 +185,13 @@ Known projects using <b><i>Javolution</i></b>:
 
 <H3><A name="HISTORY">History</A></H3>
 <UL>
-  <LI><B> November 30, 2004:  Javolution 2.0.3</B><BR>
+  <LI><B> December 19, 2004:  Javolution 2.1.0</B><BR>
+       CLDC 1.0 support [2.1.0] <BR>
+       Removed bootclasspath limitation [2.1.0] <BR>
+  </LI>
+  <LI><B> December 12, 2004:  Javolution 2.0.4</B><BR>
+       Obfuscation support for Xml Serialization (<A href="api/javolution/xml/XmlFormat.html#setAlias(j2me.lang.Class,j2me.lang.String)">XmlFormat.setAlias</A>) [2.0.4] <BR>
+       <A href="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for communication over persistent connections  [2.0.3] <BR>
        Added <A href="api/javolution/xml/XmlInputStream.html">XmlInputStream</A>
        <A href="api/javolution/xml/XmlOutputStream.html">XmlOutputStream</A>for communication over persistent connections  [2.0.3] <BR>
        Facilitated the use of <A href="api/javolution/util/FastMap.html">FastMap</A> as identity map (ref. javadoc example) [2.0.3]<BR>
@@ -185,7 +202,7 @@ Known projects using <b><i>Javolution</i></b>:
        Added <A href="api/javolution/io/Utf8ByteBufferReader.html">Utf8ByteBufferReader</A>
        and <A href="api/javolution/io/Utf8ByteBufferWriter.html">Utf8ByteBufferWriter</A> classes
        for high-performance I/O [2.0.1]<BR>
-       Bootclasspath not necessary only for JRE V1.4+ [2.0.0]<BR>
+       Bootclasspath not necessary for JRE V1.4+ [2.0.0]<BR>
        Re-packaged utility classes (moved few classes to <code>javolution.io</code> and <code>javolution.lang</code>) [2.0.0]<BR>
        Less restrictive <a href="doc/license.txt">licensing</a> (dropped LGPL) [2.0.0]
   </LI>
@@ -206,6 +223,6 @@ Known projects using <b><i>Javolution</i></b>:
 
 <A href="http://javolution.dev.java.net/" alt="java.net"><IMG align=left hspace=4 src="doc/img/javanet.gif" vspace=4> </A>
 <ADDRESS>Comments To: <A href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</A>
-<BR>Revision: November 30, 2004
+<BR>Revision: December 19, 2004
 <BR><A href="http://java.sun.com/" target=_blank>Java<SUP>TM</SUP></A> is a trademark of <A href="http://www.sun.com/" target=_blank>Sun Microsystems, Inc</A>
 </FONT></BODY></HTML>

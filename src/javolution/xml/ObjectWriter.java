@@ -7,18 +7,21 @@
  */
 package javolution.xml;
 
+import j2me.lang.CharSequence;
+import j2me.lang.UnsupportedOperationException;
+import j2me.nio.ByteBuffer;
+import j2me.util.Iterator;
+import j2me.util.Map;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.Map;
 
 import javolution.io.Utf8ByteBufferWriter;
 import javolution.io.Utf8StreamWriter;
+import javolution.lang.Reusable;
 import javolution.lang.Text;
-import javolution.realtime.RealtimeObject;
 import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.Reflection;
@@ -33,20 +36,19 @@ import javolution.util.Reflection;
  *     <code>org.jscience</code>, excepts for the <code>org.jscience.math</code>
  *     classes which uses the <code>math</code> prefix.
  *    <pre>
- *        ObjectWriter ow = ObjectWriter.newInstance();
+ *        ObjectWriter ow = new ObjectWriter();
  *        ow.setNamespace("", "org.jscience"); // Default namespace.
  *        ow.setNamespace("math", "org.jscience.math");
  *        ...
  *        ow.write(matrix, writer);       // Writer encoding.
- *        ow.write(matrix, outputStream); // UTF-8 stream encoding.
- *        ow.write(matrix, byteBuffer);   // UTF-8 NIO ByteBuffer encoding.
- * 
+ *        ow.write(matrix, outputStream); // UTF-8 stream.
+ *        ow.write(matrix, byteBuffer);   // UTF-8 NIO ByteBuffer.
  *    </pre></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.1, November 7, 2004
+ * @version 2.0, December 9, 2004
  */
-public class ObjectWriter extends RealtimeObject {
+public class ObjectWriter implements Reusable {
 
     /**
      * Holds the list of prefixes.
@@ -69,6 +71,11 @@ public class ObjectWriter extends RealtimeObject {
     private boolean _isProlog = true;
 
     /**
+     * Indicates if the writer or output stream is kept open after writing.
+     */
+    private boolean _keepOpen = false;
+
+    /**
      * The counter to use to generate id automatically.
      */
     private int _idCount;
@@ -76,8 +83,8 @@ public class ObjectWriter extends RealtimeObject {
     /**
      * Holds the object to id (CharSequence) mapping.
      */
-    private final FastMap _objectToId
-        = new FastMap().setKeyComparator(FastMap.KeyComparator.REFERENCE);
+    private final FastMap _objectToId = new FastMap()
+            .setKeyComparator(FastMap.KeyComparator.REFERENCE);
 
     /**
      * Holds the stack of XML elements (nesting limited to 64).
@@ -87,45 +94,27 @@ public class ObjectWriter extends RealtimeObject {
     /**
      * Holds the stream writer.
      */
-    private final Utf8StreamWriter _utf8StreamWriter = new Utf8StreamWriter(
-            2048);
+    private final Utf8StreamWriter _utf8StreamWriter;
 
     /**
      * Holds the byte buffer writer.
      */
-    private final Utf8ByteBufferWriter _utf8ByteBufferWriter
-         = new Utf8ByteBufferWriter();
-    
+    private final Utf8ByteBufferWriter _utf8ByteBufferWriter;
+
     /**
-     * Returns a new object writer (potentially allocated on the stack).
-     * 
-     * @return a new or recycled object writer.
+     * Creates an object writer with an internal buffer capacity of
+     * <code>2048</code> bytes.
      */
-    public static ObjectWriter newInstance() {
-        return (ObjectWriter) FACTORY.object();
+    public ObjectWriter() {
+        this(2048);
     }
 
-    private static final Factory FACTORY = new Factory() {
-        public Object create() {
-            return new ObjectWriter();
-        }
-
-        public void cleanup(Object obj) {
-            ObjectWriter ow = (ObjectWriter) obj;
-            ow._prefixes.clear();
-            ow._packages.clear();
-            ow._objectToId.clear();
-            // Default namespace association.
-            ow._prefixes.add("");
-            ow._packages.add("");
-            ow._idCount = 0;
-        }
-    };
-
     /**
-     * Default constructor.
+     * Creates an object writer with the specified internal buffer capacity.
+     * 
+     * @param capacity the internal buffer capacity (in bytes).
      */
-    ObjectWriter() {
+    public ObjectWriter(int capacity) {
         _stack[0] = new XmlElement();
         for (int i = 1; i < _stack.length; i++) {
             _stack[i] = new XmlElement();
@@ -134,6 +123,20 @@ public class ObjectWriter extends RealtimeObject {
         // Default namespace association.
         _prefixes.add("");
         _packages.add("");
+
+        _utf8StreamWriter = new Utf8StreamWriter(capacity);
+        _utf8ByteBufferWriter = new Utf8ByteBufferWriter();
+    }
+
+    /**
+     * Returns a new object writer.
+     * 
+     * @deprecated replaced by {@link #ObjectWriter()} or 
+     *             {@link #ObjectWriter(int)}
+     * @return <code>new ObjectWriter()</code>
+     */
+    public static ObjectWriter newInstance() {
+        return new ObjectWriter();
     }
 
     /**
@@ -202,93 +205,72 @@ public class ObjectWriter extends RealtimeObject {
     }
 
     /**
-     * Clears the internal object references maintained by this writer.
-     * Objects previously written will not be refered to, they will be
-     * send again.
+     * Clears all internal data maintained by this writer including any 
+     * namespace associations. Objects previously written will not be
+     * referred to, they will be send again.
      */
-    public void reset() {
+    public void clear() {
+        _prefixes.clear();
+        _packages.clear();
         _objectToId.clear();
+        // Default namespace association.
+        _prefixes.add("");
+        _packages.add("");
         _idCount = 0;
     }
 
     /**
      * Writes the specified object to the given writer in XML format.
-     * The writer is closed once serialization is complete.
-     * 
-     * <p> Note: For instances of <code>java.io.OutputStreamWriter</code>,
-     *     the stream encoding is specified in the prolog (if any).</p> 
+     * The writer is closed after serialization. To serialize multiple 
+     * objects over a persistent connection {@link XmlOutputStream}
+     * should be used instead.
      *
      * @param  obj the object to format.
      * @param  writer the writer to write to.
      * @throws IOException if there's any problem writing.
      */
     public void write(Object obj, Writer writer) throws IOException {
-    	write(obj, writer, false);
-    }
-
-    /**
-     * Writes the specified object to the given writer in XML format.
-     * 
-     * <p> Note: For instances of <code>java.io.OutputStreamWriter</code>,
-     *     the stream encoding is specified in the prolog (if any).</p> 
-     *
-     * @param  obj the object to format.
-     * @param  writer the writer to write to.
-     * @param  keepOpen indicates if the writer is kept open once serialization
-     *         is complete.
-     * @throws IOException if there's any problem writing.
-     */
-    public void write(Object obj, Writer writer, boolean keepOpen) throws IOException {
-        if (_isProlog) {
-            if ((writer instanceof OutputStreamWriter)
-                    && (GET_ENCODING != null)) {
-                String encoding = (String) GET_ENCODING.invoke(writer);
-                writer.write("<?xml version=\"1.0\" encoding=\"" + encoding
-                        + "\"?>\n");
-            } else {
-                writer.write("<?xml version=\"1.0\"?>\n");
+        try {
+            if (_isProlog) {
+                if ((writer instanceof OutputStreamWriter)
+                        && (GET_ENCODING != null)) {
+                    String encoding = (String) GET_ENCODING.invoke(writer);
+                    writer.write("<?xml version=\"1.0\" encoding=\"" + encoding
+                            + "\"?>\n");
+                } else {
+                    writer.write("<?xml version=\"1.0\"?>\n");
+                }
             }
+            writeElement(obj, writer, 0);
+        } finally {
+            writer.close();
         }
-        writeElement(obj, writer, 0);
-        writer.flush();
-        if (!keepOpen) writer.close();
     }
-
     private static final Reflection.Method GET_ENCODING = Reflection
-            .getMethod("java.io.OutputStreamWriter.getEncoding()");
+            .getMethod("j2me.io.OutputStreamWriter.getEncoding()");
 
     /**
      * Writes the specified object to the given output stream in XML format. 
-     * The characters are written using UTF-8 encoding. The stream is 
-     * closed once serialization is complete.
+     * The characters are written using UTF-8 encoding. 
+     * The output streamwriter is closed after serialization. To serialize 
+     * multiple objects over a persistent connection {@link XmlOutputStream}
+     * should be used instead.
      *
      * @param  obj the object to format.
      * @param  out the output stream to write to.
      * @throws IOException if there's any problem writing.
      */
     public void write(Object obj, OutputStream out) throws IOException {
-        write(obj, out, false);
-    }
-
-    /**
-     * Writes the specified object to the given output stream in XML format. 
-     * The characters are written using UTF-8 encoding.
-     *
-     * @param  obj the object to format.
-     * @param  out the output stream to write to.
-     * @param  keepOpen indicates if the stream is kept open once serialization
-     *         is complete.
-     * @throws IOException if there's any problem writing.
-     */
-    public void write(Object obj, OutputStream out, boolean keepOpen) throws IOException {
-        _utf8StreamWriter.setOutputStream(out);
-        if (_isProlog) {
-            _utf8StreamWriter
-                    .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        try {
+            _utf8StreamWriter.setOutputStream(out);
+            if (_isProlog) {
+                _utf8StreamWriter
+                        .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            }
+            writeElement(obj, _utf8StreamWriter, 0);
+        } finally {
+            _utf8StreamWriter.close();
         }
-        writeElement(obj, _utf8StreamWriter, 0);
-        _utf8StreamWriter.flush();
-        if (!keepOpen) _utf8StreamWriter.close();
     }
 
     /**
@@ -300,13 +282,16 @@ public class ObjectWriter extends RealtimeObject {
      * @throws IOException if there's any problem writing.
      */
     public void write(Object obj, ByteBuffer byteBuffer) throws IOException {
-        _utf8ByteBufferWriter.setByteBuffer(byteBuffer);
-        if (_isProlog) {
-            _utf8ByteBufferWriter
-                    .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        try {
+            _utf8ByteBufferWriter.setByteBuffer(byteBuffer);
+            if (_isProlog) {
+                _utf8ByteBufferWriter
+                        .write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            }
+            writeElement(obj, _utf8ByteBufferWriter, 0);
+        } finally {
+            _utf8ByteBufferWriter.close();
         }
-        writeElement(obj, _utf8ByteBufferWriter, 0);
-        _utf8ByteBufferWriter.close();
     }
 
     /*
@@ -320,9 +305,9 @@ public class ObjectWriter extends RealtimeObject {
             throws IOException {
         // Checks for Character Data
         if (obj instanceof CharacterData) {
-            CharacterData cd = (CharacterData) obj; 
+            CharacterData cd = (CharacterData) obj;
             writer.write("<![CDATA[");
-            for (int i=0; i < cd.length();) {
+            for (int i = 0; i < cd.length();) {
                 writer.write(cd.charAt(i++));
             }
             writer.write("]]>");
@@ -343,13 +328,14 @@ public class ObjectWriter extends RealtimeObject {
 
         String idName = xml._format.identifier(false);
         if (idName != null) { // Identifier to be used.
-            CharSequence idValue = (CharSequence)_objectToId.get(obj);
+            CharSequence idValue = (CharSequence) _objectToId.get(obj);
             if (idValue != null) { // Reference.
                 String refName = xml._format.identifier(true);
                 if (refName.equals(idValue)) {
-                    throw new Error("Identifier for reference and non-reference should" +
-                            " be distinct (XmlFormat for " + xml._objectClass +
-                    " )");
+                    throw new Error(
+                            "Identifier for reference and non-reference should"
+                                    + " be distinct (XmlFormat for "
+                                    + xml._objectClass + " )");
                 }
                 xml.setAttribute(refName, idValue);
             } else { // New object to be identified.
@@ -358,16 +344,16 @@ public class ObjectWriter extends RealtimeObject {
                 if (idValue == null) { // Automatic assignment.
                     idValue = Text.valueOf(++_idCount);
                 }
-                _objectToId.put(obj, idValue);    
+                _objectToId.put(obj, idValue);
             }
         } else {
             xml._format.format(obj, xml);
-        }        
+        }
 
         // Searches for associated prefix with longest package name.
         String prefix = null;
         String pkgName = "";
-        String className = xml._objectClass.getName();
+        String className = XmlFormat.tagNameFor(xml._objectClass);
 
         for (int i = 0; i < _packages.size(); i++) {
             String pkg = (String) _packages.get(i);
@@ -430,7 +416,7 @@ public class ObjectWriter extends RealtimeObject {
             writer.write("/>"); // Empty element.
         } else {
             writer.write(">");
-            for (Iterator i = xml.iterator(); i.hasNext();) {
+            for (Iterator i = xml.fastIterator(); i.hasNext();) {
                 Object child = i.next();
                 writeElement(child, writer, level + 1);
             }

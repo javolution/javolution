@@ -7,21 +7,30 @@
  */
 package javolution.xml;
 
-import javolution.Javolution;
-
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
+import javolution.lang.Reusable;
+
 /**
- * <p> This class represents a stream serializer using {@link XmlFormat} 
- *     for the serialization of Java(tm) objects over open connection.</p>
+ * <p> This class represents an object output stream using {@link ObjectWriter}
+ *     for object serialization.</p>
+ *     
+ * <p> Instances of this class embed their own data buffer, wrapping using a
+ *     <code>j2me.io.BufferedOutputStream</code> is therefore unnescessary.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 2.0, December 5, 2004
  * @see     XmlInputStream
  */
-public class XmlOutputStream extends ObjectOutputStream {
+public class XmlOutputStream extends OutputStream implements Reusable {
+
+    /**
+     * Holds the byte indicating the end of a XML document transmission,
+     * acceptable values are <code>0xFE</code> and <code>0xFF</code>
+     * as they do not occur in a UTF-8 encoded text.
+     */
+    static final byte END_XML  = (byte) 0xFE;
 
     /**
      * Holds the output stream.
@@ -31,84 +40,108 @@ public class XmlOutputStream extends ObjectOutputStream {
     /**
      * Holds the object writer.
      */
-    private ObjectWriter _objectWriter = new ObjectWriter();
+    private final ObjectWriter _objectWriter;
 
     /**
-     * Holds the minimum number of separator bytes between two xml objects.
-     * This allows the reader to work using block read without missing
-     * objects.
+     * Holds the object writer.
      */
-    static final int SEPARATOR_SIZE  = 256;
+    private final OutputStreamProxy _outputStreamProxy;
 
     /**
-     * Holds the separator bytes (UTF-8 spaces).
+     * Creates a xml output stream of default buffer capacity.
      */
-    static final byte[] SEPARATOR  = new byte[SEPARATOR_SIZE];
-    static {
-    	for (int i=0; i < SEPARATOR_SIZE;) {
-    		SEPARATOR[i++] = (byte) ' ';
-    	}
-    }
-
-    /**
-     * Default constructor.
-     */
-    private XmlOutputStream() throws IOException, SecurityException {
-    	_objectWriter.setIndent("");
-    	_objectWriter.setProlog(false);
+    public XmlOutputStream() {
+        this(2048);
     }
     
     /**
-     * Returns an XmlOutputStream writing to the specified output stream.
-     *
-     * @param out the output stream to write to.
-     */
-    public static XmlOutputStream newInstance(OutputStream out)  {
-    	try {
-    		XmlOutputStream xos = new XmlOutputStream();
-    	    xos._outputStream = out;
-    	    return xos;
-    	} catch (Throwable e) {
-    		throw new Javolution.InternalError(e);
-    	}
-    }
-
-    /**
-     * Overrides the default (@link #writeObject} method.
-     *
-     * @param  obj the object to serialize using its xml format.
-     * @throws IOException propagates error from underlying stream
-     */
-    protected void writeObjectOverride(Object obj) throws IOException {
-         _objectWriter.write(obj, _outputStream, true); // Keep open.
-         _outputStream.write(SEPARATOR);
-    }
-
-    /**
-     * Flushes the underlying stream.
+     * Creates a xml output stream having the specified buffer capacity.
      * 
-     * @throws IOException propagates error from underlying stream.
+     * @param capacity the buffer capacity. 
      */
+    public XmlOutputStream(int capacity) {
+        _objectWriter = new ObjectWriter(capacity);
+        _outputStreamProxy = new OutputStreamProxy();
+        _objectWriter.setIndent("");
+        _objectWriter.setProlog(false);
+    }
+
+    /**
+     * Sets the underlying output destination for this stream.
+     * 
+     * @param out the output destination.
+     * @return <code>this</code> 
+     * @throws Error if this stream is being reused and 
+     *         it has not been {@link #close closed} or {@link #clear cleared}.
+     */
+    public XmlOutputStream setOutputStream(OutputStream out) {
+        if (_outputStream != null)
+            throw new Error("This stream has not been closed or cleared");
+        _outputStream = out;
+        return this;
+    }
+
+    /**
+     * Writes an object to the underlying stream using an {@link ObjectWriter}.
+     * 
+     * @param obj the object writen using its xml representation. 
+     * @throws IOException if an I/O error occurs.
+     */
+    public void writeObject(Object obj) throws IOException {
+        if (_outputStream == null) throw new IOException("Stream closed");
+        _objectWriter.write(obj, _outputStreamProxy);
+        _outputStream.write(END_XML);
+        _outputStream.flush();
+    }
+
+    // Implements abstract method.
+    public void write(int b) throws IOException {
+        if (_outputStream == null) throw new IOException("Stream closed");
+        _outputStream.write(b);
+    }
+    
+    // Overrides.
     public void flush() throws IOException {
-         _outputStream.flush();
+        if (_outputStream == null) throw new IOException("Stream closed");
+        _outputStream.flush();
     }
-
-    /**
-     * Closes this stream and the underlaying stream.
-     * 
-     * @throws IOException propagates error from underlying stream.
-     */
+    
+    // Overrides.
+    public void write(byte b[], int off, int len) throws IOException {
+        if (_outputStream == null) throw new IOException("Stream closed");
+        _outputStream.write(b, off, len);
+    }
+    
+    // Overrides.
     public void close() throws IOException {
-         _outputStream.flush();
-         _outputStream.close();
-    }
-    /**
-     * Resets the object writer for this stream.
-     * 
-     * @see ObjectWriter#reset
-     */
-    public void reset() {
-        _objectWriter.reset();
+        if (_outputStream != null) {
+            _outputStream.close();
+            clear();
+        }
     }
 
+    // Implements Reusable interface.
+    public void clear() {
+        _objectWriter.clear();
+        _outputStream = null;
+    }
+
+    /**
+     * This inner class represents an output stream proxy for which the 
+     * {@link #close()} command has no effect.
+     */
+    private final class OutputStreamProxy extends OutputStream {
+        public void flush() throws IOException {
+            _outputStream.flush();
+        }
+        public void write(byte b[], int off, int len) throws IOException {
+            _outputStream.write(b, off, len);
+        }
+        public void write(int b) throws IOException {
+            _outputStream.write(b);
+        }
+        public void close() throws IOException {
+            // Do nothing.
+        }
+    }
 }

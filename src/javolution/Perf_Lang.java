@@ -48,9 +48,9 @@ final class Perf_Lang extends Javolution implements Runnable {
         }
         endTime(1000);
         Reflection.Constructor newStringBuilder = Reflection
-                .getConstructor("java.lang.StringBuilder()");
+                .getConstructor("j2me.lang.StringBuilder()");
         Reflection.Method stringBuilderAppend = Reflection
-                .getMethod("java.lang.StringBuilder.append(java.lang.CharSequence)");
+                .getMethod("j2me.lang.StringBuilder.append(j2me.lang.CharSequence)");
         if (newStringBuilder != null) {
             print("StringBuilder \"append\": ");
             startTime();

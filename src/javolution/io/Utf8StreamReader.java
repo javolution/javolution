@@ -6,13 +6,16 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
-import java.io.CharConversionException;
+import j2me.io.CharConversionException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
+import javolution.lang.Reusable;
+
 /**
- * <p> This class represents an UTF-8 stream reader.</p>
+ * <p> This class represents a UTF-8 stream reader.</p>
  *
  * <p> This reader supports surrogate <code>char</code> pairs (representing
  *     characters in the range [U+10000 .. U+10FFFF]). It can also be used
@@ -25,15 +28,10 @@ import java.io.Reader;
  *     be read ahead from the underlying stream than are necessary to satisfy
  *     the current read operation.</p>
  *
- * <p> Unlike <code>java.io.InputStreamReader</code> this class does not
- *     allocate new buffers (e.g. <code>java.nio.HeapCharBuffer</code>) each
- *     time a {@link #read} is performed and its execution speed is therefore
- *     greatly improved (twice as fast).</p>
- *
  * <p> Instances of this class can be reused for different input streams
  *     and can be part of a higher level component (e.g. parser) in order
  *     to avoid dynamic buffer allocation when the input source changes.
- *     Also wrapping using a <code>java.io.BufferedReader</code> is unnescessary
+ *     Also wrapping using a <code>j2me.io.BufferedReader</code> is unnescessary
  *     as instances of this class embed their own data buffers.</p>
  *
  * <p> Note: This reader is unsynchronized and does not test if the UTF-8
@@ -41,15 +39,15 @@ import java.io.Reader;
  *           necessary to encode a character).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 2.0, December 9, 2004
  * @see     Utf8StreamWriter
  */
-public final class Utf8StreamReader extends Reader {
+public final class Utf8StreamReader extends Reader implements Reusable {
 
     /**
      * Holds the current input stream or <code>null</code> if closed.
      */
-    private InputStream _inStream;
+    private InputStream _inputStream;
 
     /**
      * Holds the start index.
@@ -87,15 +85,18 @@ public final class Utf8StreamReader extends Reader {
      * For example:<pre>
      *     Reader reader = new Utf8StreamReader().setInputStream(inStream);
      * </pre> is equivalent but reads twice as fast as <pre>
-     *     Reader reader = new java.io.InputStreamReader(inStream, "UTF-8");
+     *     Reader reader = new j2me.io.InputStreamReader(inStream, "UTF-8");
      * </pre>
      *
      * @param  inStream the input stream.
      * @return this UTF-8 reader.
-     * @see    #close
+     * @throws Error if this reader is being reused and 
+     *         it has not been {@link #close closed} or {@link #clear cleared}.
      */
     public Utf8StreamReader setInputStream(InputStream inStream) {
-        _inStream = inStream;
+        if (_inputStream != null)
+            throw new Error("This reader has not been closed or cleared");
+        _inputStream = inStream;
         return this;
     }
 
@@ -107,34 +108,29 @@ public final class Utf8StreamReader extends Reader {
      * @throws  IOException if an I/O error occurs.
      */
     public boolean ready() throws IOException {
-        if (_inStream != null) {
-            return ((_end - _start) > 0) || (_inStream.available() != 0);
+        if (_inputStream != null) {
+            return ((_end - _start) > 0) || (_inputStream.available() != 0);
         } else {
             throw new IOException("Stream closed");
         }
     }
 
     /**
-     * Closes the stream. Once a stream has been closed, further read(),
-     * ready(), mark(), or reset() invocations will throw an IOException.
-     * Closing a previously-closed stream, however, has no effect.
+     * Closes this reader and {@link #clear clears} it for reuse.
+     * This method has no effect if the stream is halted.
      *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
-        if (_inStream != null) {
-            _inStream.close();
-            _start = 0;
-            _end = 0;
-            _code = 0;
-            _moreBytes = 0;
-            _inStream = null;
+        if (_inputStream != null) {
+            _inputStream.close();
+            clear();
         }
     }
 
     /**
      * Reads a single character.  This method will block until a character is
-     * available, an I/O error occurs, or the end of the stream is reached.
+     * available, an I/O error occurs or the end of the stream is reached.
      *
      * @return the 31-bits Unicode of the character read, or -1 if the end of
      *         the stream has been reached.
@@ -190,9 +186,9 @@ public final class Utf8StreamReader extends Reader {
                 throw new CharConversionException("Invalid UTF-8 Encoding");
             }
         } else { // No more bytes in buffer.
-            if (_inStream != null) {
+            if (_inputStream != null) {
                 _start = 0;
-                _end = _inStream.read(_bytes, 0, _bytes.length);
+                _end = _inputStream.read(_bytes, 0, _bytes.length);
                 if (_end > 0) {
                     return read2(); // Continues.
                 } else { // Done.
@@ -213,8 +209,8 @@ public final class Utf8StreamReader extends Reader {
 
     /**
      * Reads characters into a portion of an array.  This method will block
-     * until some input is available, an I/O error occurs, or the end of the
-     * stream is reached.
+     * until some input is available, an I/O error occurs or the end of 
+     * the stream is reached.
      *
      * <p> Note: Characters between U+10000 and U+10FFFF are represented
      *     by surrogate pairs (two <code>char</code>).</p>
@@ -227,10 +223,10 @@ public final class Utf8StreamReader extends Reader {
      * @throws IOException if an I/O error occurs.
      */
     public int read(char cbuf[], int off, int len) throws IOException {
-        if (_inStream != null) {
+        if (_inputStream != null) {
             if (_start >= _end) { // Fills buffer.
                 _start = 0;
-                _end = _inStream.read(_bytes, 0, _bytes.length);
+                _end = _inputStream.read(_bytes, 0, _bytes.length);
                 if (_end <= 0) { // Done.
                     return _end;
                 }
@@ -272,4 +268,14 @@ public final class Utf8StreamReader extends Reader {
             throw new IOException("Stream closed");
         }
     }
+
+    // Implements Reusable interface.
+    public void clear() {
+        _code = 0;
+        _end = 0;
+        _inputStream = null;
+        _moreBytes = 0;
+        _start = 0;
+    }
+    
 }

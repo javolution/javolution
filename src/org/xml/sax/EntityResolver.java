@@ -1,7 +1,7 @@
 // SAX entity resolver.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: EntityResolver.java,v 1.1 2004-12-09 12:43:19 dautelle Exp $
+// $Id: EntityResolver.java,v 1.2 2004-12-19 20:44:45 dautelle Exp $
 
 package org.xml.sax;
 
@@ -105,7 +105,7 @@ public interface EntityResolver {
      *         URI connection to the system identifier.
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception java.io.IOException A Java-specific IO exception,
+     * @exception j2me.io.IOException A Java-specific IO exception,
      *            possibly the result of creating a new InputStream
      *            or Reader for the InputSource.
      * @see org.xml.sax.InputSource

@@ -71,7 +71,7 @@ public final class PoolContext extends Context {
      * Enters a {@link PoolContext}.
      */
     public static void enter() {
-        PoolContext ctx = (PoolContext) push(PoolContext.class);
+        PoolContext ctx = (PoolContext) push(POOL_CONTEXT_CLASS);
         if (ctx == null) {
             ctx = new PoolContext();
             push(ctx);
@@ -81,6 +81,7 @@ public final class PoolContext extends Context {
             outer.setInUsePoolsLocal(false);
         }
     }
+    private static final Class POOL_CONTEXT_CLASS = new PoolContext().getClass();
 
     /**
      * Exits the current {@link PoolContext}.

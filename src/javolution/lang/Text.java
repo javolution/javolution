@@ -7,14 +7,15 @@
  */
 package javolution.lang;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import j2me.io.Serializable;
+import j2me.util.Comparator;
+import j2me.lang.CharSequence;
+import j2me.lang.Comparable;
 
 import javolution.realtime.ArrayPool;
 import javolution.realtime.ObjectPool;
 import javolution.realtime.RealtimeObject;
 import javolution.util.FastMap;
-import javolution.util.MathLib;
 import javolution.xml.XmlElement;
 import javolution.xml.XmlFormat;
 
@@ -32,8 +33,8 @@ import javolution.xml.XmlFormat;
  *          larger string from being garbage collected).</li>
  *     <li> More flexible as they allows for search, concatenation and
  *          comparison with any <code>CharSequence</code> such as itself, 
- *          <code>java.lang.String</code>, <code>java.lang.StringBuffer</code>
- *          or <code>java.lang.StringBuilder (JDK1.5)</code>.</li>
+ *          <code>j2me.lang.String</code>, <code>j2me.lang.StringBuffer</code>
+ *          or <code>j2me.lang.StringBuilder (JDK1.5)</code>.</li>
  *     <li> Easy/fast creation using the {@link TextBuilder} class 
  *          (no need to specify the buffer capacity as it gently increases
  *          without incurring expensive resize/copy operations).</li>
@@ -62,23 +63,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         Comparable, Serializable {
 
     /**
-     * Holds the default XML representation for this class and its sub-classes.
-     * This representation consists of a <code>"value"</code> attribute 
-     * holding the character sequence.
-     * Instances are created using the {@link #valueOf(CharSequence)}
-     * factory method during deserialization (on the stack when
-     * executing in a {@link javolution.realtime.PoolContext PoolContext}).
-     */
-    protected static final XmlFormat TEXT_XML = new XmlFormat(Text.class) {
-        public void format(Object obj, XmlElement xml) {
-            xml.setAttribute("value", (Text)obj);
-        }
-        public Object parse(XmlElement xml) {
-            return Text.valueOf(xml.getAttribute("value"));
-        }
-    };
-
-    /**
      * Holds the text interned.
      */
     private static final FastMap INTERN_TEXT = new FastMap();
@@ -87,6 +71,23 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * Holds an empty character sequence.
      */
     public static final Text EMPTY = Text.valueOf("").intern();
+
+    /**
+     * Holds the default XML representation for this class and its sub-classes.
+     * This representation consists of a <code>"value"</code> attribute 
+     * holding the character sequence.
+     * Instances are created using the {@link #valueOf(CharSequence)}
+     * factory method during deserialization (on the stack when
+     * executing in a {@link javolution.realtime.PoolContext PoolContext}).
+     */
+    protected static final XmlFormat TEXT_XML = new XmlFormat(EMPTY.getClass()) {
+        public void format(Object obj, XmlElement xml) {
+            xml.setAttribute("value", (Text)obj);
+        }
+        public Object parse(XmlElement xml) {
+            return Text.valueOf(xml.getAttribute("value"));
+        }
+    };
 
     /**
      * Holds the <code>"null"</code> character sequence.
@@ -116,7 +117,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             CharSequence seq1 = (CharSequence) left;
             CharSequence seq2 = (CharSequence) right;
             int i = 0;
-            int n = MathLib.min(seq1.length(), seq2.length());
+            int n = Math.min(seq1.length(), seq2.length());
             while (n-- != 0) {
                 char c1 = seq1.charAt(i);
                 char c2 = seq2.charAt(i++);
@@ -343,12 +344,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @param  f the <code>float</code> number.
      * @return the floating point representation of this float.
      * @see    TypeFormat#format(float, Appendable)
-     */
+    /*@FLOATING_POINT@
     public static Text valueOf(float f) {
         TextBuilder tb = TextBuilder.newInstance();
         tb.append(f);
         return tb.toText();
     }
+    /**/
     
     /**
      * Returns the text representing the specified
@@ -358,12 +360,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @param  d the <code>double</code> number.
      * @return the floating point representation of this double.
      * @see    TypeFormat#format(double, Appendable)
-     */
+    /*@FLOATING_POINT@
     public static Text valueOf(double d) {
         TextBuilder tb = TextBuilder.newInstance();
         tb.append(d);
         return tb.toText();
     }
+    /**/
 
     /**
      * Returns the length of this text.
@@ -555,8 +558,8 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * Compares this text against the specified object.
      *
      * <p> Note: Unfortunately, due to the current (JDK 1.4+) implementation
-     *          of <code>java.lang.String</code> and <code>
-     *          java.lang.StringBuffer</code>, this method is not symmetric.</p>
+     *          of <code>j2me.lang.String</code> and <code>
+     *          j2me.lang.StringBuffer</code>, this method is not symmetric.</p>
      *
      * @param  that the object to compare with.
      * @return <code>true</code> if that objects is a <code>CharSequence</code>
@@ -630,7 +633,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     /**
      * Returns the hash code for this text.
      *
-     * <p> Note: Returns the same hashCode as <code>java.lang.String</code>
+     * <p> Note: Returns the same hashCode as <code>j2me.lang.String</code>
      *           (consistent with {@link #equals})</p>
      *
      * @return the hash code value.
@@ -740,7 +743,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     /**
      * Returns the <code>String</code> value  corresponding to this text.
      *
-     * @return the <code>java.lang.String</code> for this text.
+     * @return the <code>j2me.lang.String</code> for this text.
      */
     public abstract String stringValue();
 

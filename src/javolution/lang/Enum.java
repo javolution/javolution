@@ -7,14 +7,14 @@
  */
 package javolution.lang;
 
-import java.io.Serializable;
-import java.lang.CloneNotSupportedException;
-import java.lang.Comparable;
+import j2me.io.Serializable;
+import j2me.lang.Comparable;
+
 import javolution.util.FastMap;
 
 /**
- * <p> This class is equivalent to <code>java.lang.Enum</code> 
- *     and can be moved (refactored) to the <code>java.lang</code> system 
+ * <p> This class is equivalent to <code>j2me.lang.Enum</code> 
+ *     and can be moved (refactored) to the <code>j2me.lang</code> system 
  *     package for applications targetting the J2SE 5.0+ run-time.</p>
  *    
  * <p> This is a clean-room implementation of the Enum base class.</p>
@@ -106,15 +106,6 @@ public abstract class Enum implements Comparable, Serializable {
      */
     public final int hashCode() {
         return System.identityHashCode(this);
-    }
-
-    /**
-     * Throws {@link CloneNotSupportedException}. 
-     * 
-     * @return N/A
-     */
-    protected final Object clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
     }
 
     /**

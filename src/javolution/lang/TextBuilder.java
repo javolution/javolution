@@ -7,10 +7,12 @@
  */
 package javolution.lang;
 
-import java.io.IOException;
-import java.io.Serializable;
+import j2me.io.Serializable;
+import j2me.lang.CharSequence;
 
-import javolution.Javolution;
+import java.io.IOException;
+
+import javolution.JavolutionError;
 import javolution.lang.Text.Composite;
 import javolution.lang.Text.Primitive;
 import javolution.realtime.Realtime;
@@ -52,7 +54,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      * executing in a {@link javolution.realtime.PoolContext PoolContext}).
      */
     protected static final XmlFormat TEXT_BUILDER_XML = new XmlFormat(
-            TextBuilder.class) {
+            new TextBuilder().getClass()) {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("text", (TextBuilder) obj);
         }
@@ -275,7 +277,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
             TypeFormat.format(b, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -292,7 +294,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
             TypeFormat.format(i, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -310,7 +312,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
             TypeFormat.format(i, radix, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
     
@@ -327,7 +329,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
             TypeFormat.format(l, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -345,7 +347,7 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
             TypeFormat.format(l, radix, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
 
@@ -356,15 +358,16 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      * @param  f the <code>float</code> to format.
      * @return <code>this</code>
      * @see    TypeFormat
-     */
+    /*@FLOATING_POINT@
     public TextBuilder append(float f) {
         try {
             TypeFormat.format(f, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
+    /**/
 
     /**
      * Appends the textual representation of the specified <code>double</code>
@@ -373,15 +376,16 @@ public final class TextBuilder extends RealtimeObject implements Appendable,
      * @param  d the <code>double</code> to format.
      * @return <code>this</code>
      * @see    TypeFormat
-     */
+    /*@FLOATING_POINT@
     public TextBuilder append(double d) {
         try {
             TypeFormat.format(d, this);
             return this;
         } catch (IOException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         }
     }
+    /**/
 
     /**
      * Inserts the specified character at the specified location.

@@ -7,12 +7,12 @@
  */
 package javolution.xml;
 
-import java.util.List;
-
+import j2me.util.List;
+import j2me.lang.CharSequence;
+import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
 import javolution.util.FastMap;
-import javolution.util.Reflection;
 import javolution.xml.sax.Attributes;
 import javolution.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
@@ -27,7 +27,7 @@ import org.xml.sax.SAXParseException;
  * @version 1.0, October 4, 2004
  * @see     ObjectReader
  */
-final class ConstructorHandler implements ContentHandler, ErrorHandler {
+final class ConstructorHandler implements ContentHandler, ErrorHandler, Reusable {
 
     /**
      * Holds the current nesting level (0 is the document level)
@@ -42,12 +42,12 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler {
     /**
      * Holds the stack of XML elements (nesting limited to 64).
      */
-    final XmlElement[] _stack = new XmlElement[64];
+    private final XmlElement[] _stack = new XmlElement[64];
 
     /**
      * Holds the identifier value to object mapping.
      */
-    final FastMap _idToObject = new FastMap()
+    private final FastMap _idToObject = new FastMap()
         .setKeyComparator(FastMap.KeyComparator.CHAR_SEQUENCE);
 
     /**
@@ -304,7 +304,7 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler {
 
         // Maps uri/localName to class.
         try {
-            cl = Reflection.getClass(className);
+            cl = XmlFormat.classFor(className);
             _keyToClass.put(key, cl);
             return cl;
         } catch (ClassNotFoundException e) {
@@ -332,4 +332,12 @@ final class ConstructorHandler implements ContentHandler, ErrorHandler {
     private final FastMap _keyToClass = new FastMap();
 
     private final Key _accessKey = new Key();
+
+    // Implements Reusable.
+    public void clear() {
+        // We do not need to clear the key to class mapping as 
+        // this mapping is assumed persistent.
+        _idToObject.clear();
+        getRoots().clear();
+    }
 }

@@ -7,8 +7,9 @@
  */
 package javolution.lang;
 
+import j2me.lang.CharSequence;
+
 import java.io.IOException;
-import java.lang.CharSequence;
 
 /**
  * <p> This class is equivalent to <code>java.lang.Appendable</code> 

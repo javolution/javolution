@@ -7,7 +7,7 @@
  */
 package javolution.realtime;
 
-import javolution.Javolution;
+import javolution.JavolutionError;
 
 /**
  * <p> This class represents a concurrent context; it is used to accelerate
@@ -163,12 +163,13 @@ public final class ConcurrentContext extends Context {
      * Enters a {@link ConcurrentContext}.
      */
     public static void enter() {
-        ConcurrentContext ctx = (ConcurrentContext) push(ConcurrentContext.class);
+        ConcurrentContext ctx = (ConcurrentContext) push(CONCURRENT_CONTEXT_CLASS);
         if (ctx == null) {
             ctx = new ConcurrentContext();
             push(ctx);
         }
     }
+    private static final Class CONCURRENT_CONTEXT_CLASS = new ConcurrentContext().getClass();
 
     /**
      * Executes the specified logic by a {@link ConcurrentThread} when possible.
@@ -421,7 +422,7 @@ public final class ConcurrentContext extends Context {
                 } // Exit when _threadsDone = _concurrency + 1 (current thread)
             }
         } catch (InterruptedException e) {
-            throw new Javolution.InternalError(e);
+            throw new JavolutionError(e);
         } finally {
             _threadsDone = 0;
             PoolContext.exit();

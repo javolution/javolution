@@ -7,6 +7,8 @@
  */
 package javolution.xml.sax;
 
+import j2me.lang.CharSequence;
+import j2me.lang.UnsupportedOperationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,10 +32,10 @@ import org.xml.sax.XMLReader;
 /**
  * <p> This class provides a SAX2-compliant parser wrapping a
  *     {@link RealtimeParser}. This parser allocates 
- *     <code>java.lang.String</code> instances while parsing in accordance 
+ *     <code>j2me.lang.String</code> instances while parsing in accordance 
  *     with the SAX2 specification. For faster performance (2-3x), the use of 
- *     the SAX2-like {@link RealtimeParser} (with <code>java.lang.String</code>
- *     replaced by <code>java.lang.CharSequence</code>) is recommended.</p>
+ *     the SAX2-like {@link RealtimeParser} (with <code>j2me.lang.String</code>
+ *     replaced by <code>j2me.lang.CharSequence</code>) is recommended.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.5, May 26, 2003
@@ -172,13 +174,13 @@ public final class XMLReaderImpl implements XMLReader {
     }
 
     private static final Reflection.Constructor NEW_URL = Reflection
-            .getConstructor("java.net.URL(java.lang.String)");
+            .getConstructor("java.net.URL(j2me.lang.String)");
 
     private static final Reflection.Method OPEN_STREAM = Reflection
             .getMethod("java.net.URL.openStream()");
 
     private static final Reflection.Constructor NEW_FILE_INPUT_STREAM = Reflection
-            .getConstructor("java.io.FileInputStream(java.lang.String)");
+            .getConstructor("j2me.io.FileInputStream(j2me.lang.String)");
 
     /**
      * This class defines the proxy for content handler and attributes.

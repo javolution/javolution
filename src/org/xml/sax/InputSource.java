@@ -1,7 +1,7 @@
 // SAX input source.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: InputSource.java,v 1.1 2004-12-09 12:43:18 dautelle Exp $
+// $Id: InputSource.java,v 1.2 2004-12-19 20:44:45 dautelle Exp $
 
 package org.xml.sax;
 
@@ -54,8 +54,8 @@ import java.io.InputStream;
  * @version 2.0.1 (sax2r2)
  * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
  * @see org.xml.sax.EntityResolver#resolveEntity
- * @see java.io.InputStream
- * @see java.io.Reader
+ * @see j2me.io.InputStream
+ * @see j2me.io.Reader
  */
 public class InputSource {
     
@@ -229,7 +229,7 @@ public class InputSource {
      * @see #setEncoding
      * @see #getByteStream
      * @see #getEncoding
-     * @see java.io.InputStream
+     * @see j2me.io.InputStream
      */
     public void setByteStream (InputStream byteStream)
     {
@@ -300,7 +300,7 @@ public class InputSource {
      * @param characterStream The character stream containing the
      *        XML document or other entity.
      * @see #getCharacterStream
-     * @see java.io.Reader
+     * @see j2me.io.Reader
      */
     public void setCharacterStream (Reader characterStream)
     {

@@ -1,7 +1,7 @@
 // SAX DTD handler.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: DTDHandler.java,v 1.1 2004-12-09 12:43:19 dautelle Exp $
+// $Id: DTDHandler.java,v 1.2 2004-12-19 20:44:45 dautelle Exp $
 
 package org.xml.sax;
 

@@ -7,12 +7,14 @@
  */
 package javolution.util;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
+import j2me.io.Serializable;
+import j2me.lang.IllegalStateException;
+import j2me.util.Collection;
+import j2me.util.Iterator;
+import j2me.util.List;
+import j2me.util.ListIterator;
+import j2me.util.NoSuchElementException;
+
 
 import javolution.realtime.ObjectPool;
 import javolution.realtime.Realtime;
@@ -55,15 +57,14 @@ public class FastList extends FastCollection implements List, Serializable {
      * the {@link #newInstance} factory method instead of the default 
      * constructor during the deserialization of {@link FastList} instances.
      */
-    protected static final XmlFormat FAST_LIST_XML = new XmlFormat(
-            FastList.class) {
+    protected static final XmlFormat FAST_LIST_XML = new XmlFormat(new FastList().getClass()) {
         
         public void format(Object obj, XmlElement xml) {
             xml.addAll((FastList) obj);
         }
 
         public Object parse(XmlElement xml) {
-            FastList fl = (xml.objectClass() == FastList.class) ?
+            FastList fl = (xml.objectClass() == this.getMappedClass()) ?
                     FastList.newInstance() : (FastList) xml.object();
             fl.addAll(xml);
             return fl;

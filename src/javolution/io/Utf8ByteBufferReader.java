@@ -7,17 +7,19 @@
  */
 package javolution.io;
 
-import java.io.CharConversionException;
+import j2me.io.CharConversionException;
+import j2me.nio.BufferUnderflowException;
+import j2me.nio.ByteBuffer;
+
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 
+import javolution.lang.Reusable;
 import javolution.lang.Text;
 
 /**
- * <p> This class represents a non-blocking <code>java.nio.ByteBuffer</code> 
- *     reader (UTF-8 encoding).</p>
+ * <p> This class represents a UTF-8 <code>j2me.nio.ByteBuffer</code> reader.
+ *     </p>
  *
  * <p> This reader can be used for efficient decoding of native byte 
  *     buffers (e.g. <code>MappedByteBuffer</code>), high-performance 
@@ -33,12 +35,11 @@ import javolution.lang.Text;
  *     The end of stream is reached when the byte buffer position and limit
  *     coincide.</p>
  *
- *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.0, November 26, 2004
+ * @version 2.0, December 9, 2004
  * @see     Utf8ByteBufferWriter
  */
-public final class Utf8ByteBufferReader extends Reader {
+public final class Utf8ByteBufferReader extends Reader implements Reusable {
 
     /**
      * Holds the byte buffer source.
@@ -57,8 +58,12 @@ public final class Utf8ByteBufferReader extends Reader {
      *
      * @param  byteBuffer the <code>ByteBuffer</code> source.
      * @return this UTF-8 reader.
+     * @throws Error if this reader is being reused and 
+     *         it has not been {@link #close closed} or {@link #clear cleared}.
      */
     public Utf8ByteBufferReader setByteBuffer(ByteBuffer byteBuffer) {
+        if (_byteBuffer != null)
+            throw new Error("This reader has not been closed or cleared");
         _byteBuffer = byteBuffer;
         return this;
     }
@@ -79,14 +84,14 @@ public final class Utf8ByteBufferReader extends Reader {
     }
 
     /**
-     * Closes the stream. Once a stream has been closed, further read(),
-     * ready(), mark(), or reset() invocations will throw an IOException.
-     * Closing a previously-closed stream, however, has no effect.
+     * Closes the reader and {@link #clear clears} it for reuse.
      *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
-        _byteBuffer = null;
+        if (_byteBuffer != null) {
+            clear();
+        }
     }
 
     /**
@@ -212,5 +217,12 @@ public final class Utf8ByteBufferReader extends Reader {
         } else {
             throw new IOException("Reader closed");
         }
+    }
+
+    // Implements Reusable interface.
+    public void clear() {
+        _byteBuffer = null;
+        _code = 0;
+        _moreBytes = 0;
     }
 }

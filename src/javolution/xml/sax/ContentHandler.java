@@ -6,6 +6,8 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
+
+import j2me.lang.CharSequence;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 

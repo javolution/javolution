@@ -7,21 +7,22 @@
  */
 package javolution.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import j2me.lang.CharSequence;
+import j2me.lang.IllegalStateException;
+import j2me.io.ObjectInputStream;
+import j2me.io.ObjectOutputStream;
+import j2me.io.Serializable;
+import j2me.util.Collection;
+import j2me.util.Iterator;
+import j2me.util.Map;
+import j2me.util.NoSuchElementException;
+import j2me.util.Set;
 
-import javolution.Javolution;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
-import javolution.lang.TypeFormat;
 import javolution.realtime.ArrayPool;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
@@ -34,7 +35,7 @@ import javolution.realtime.RealtimeObject;
  * 
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys were inserted into the map (similar to 
- *     <code>java.util.LinkedHashMap</code> collection class).</p>
+ *     <code>j2me.util.LinkedHashMap</code> collection class).</p>
  * 
  * <p> Instances of this class can be allocated from the current thread stack 
  *     using the {@link #newInstance} factory method (e.g. for throw-away maps
@@ -50,11 +51,13 @@ import javolution.realtime.RealtimeObject;
  *     the map's capacity could be maintained at ±50% of the current map's size.
  *     </p>
  * 
- * <p> This class allows for custom {@link KeyComparator key comparators}.
- *     Typical usage includes value retrieval when map's keys and argument keys 
+ * <p> {@link FastMap} assumes that the hashcode values are evenly distributed,
+ *     if it is not the case (see {@link #printStatistics}), applications should
+ *     use a {@link KeyComparator#UNEVEN_HASH UNEVEN_HASH} key comparator. 
+ *     Custom {@link KeyComparator key comparators} are extremely useful for 
+ *     value retrieval when map's keys and argument keys 
  *     are not of the same class (such as {@link String} and {@link 
- *     javolution.lang.Text Text}), better hashcode implementation for 
- *     ill-conditioned keys, identity maps, etc. For example:<pre>
+ *     javolution.lang.Text Text}) and for identity maps. For example:<pre>
  *     FastMap identityMap = FastMap.newInstance(16).setKeyComparator(FastMap.KeyComparator.REFERENCE);
  *     </pre></p>
  * 
@@ -183,6 +186,17 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
     public FastMap setKeyComparator(KeyComparator keyComparator) {
         _keyComparator = keyComparator;
         return this;
+    }
+
+    /**
+     * Returns the fast iterator instance over the entries of this map
+     * (<code>entrySet().fastIterator()</code>).
+     *
+     * @return the single reusable iterator of this map's {@link #entrySet}.
+     * @see    FastCollection#fastIterator()
+     */
+    public Iterator fastIterator() {
+        return _entrySet.fastIterator();
     }
 
     /**
@@ -549,12 +563,7 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
             }
         }
         TextBuilder percentCollisions = TextBuilder.newInstance();
-        try {
-            TypeFormat.format(100.0 * totalCollisions / size(), 1,
-                    percentCollisions);
-        } catch (IOException e) {
-            throw new Javolution.InternalError(e);
-        }
+        percentCollisions.append(100 * totalCollisions / size());
         percentCollisions.append('%');
         synchronized (out) {
             out.print("SIZE: " + size());
@@ -1208,7 +1217,7 @@ public class FastMap extends RealtimeObject implements Map, Serializable {
         public static final KeyComparator UNEVEN_HASH = new KeyComparator() {
             public int keyHash(Object key) {
                 // The formula being used is identical to the formula 
-                // used by <code>java.util.HashMap</code> to ensures similar
+                // used by <code>j2me.util.HashMap</code> to ensures similar
                 // behavior for ill-conditioned hashcode keys. 
                 int h = key.hashCode();
                 h += ~(h << 9);

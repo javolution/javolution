@@ -8,6 +8,8 @@
 package javolution.io;
 
 
+
+
 /**
  * <p> This class represents a <code>C/C++ union</code>; it works in the same
  *     way as {@link Struct} (sub-class) except that all members are mapped

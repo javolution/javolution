@@ -7,10 +7,10 @@
  */
 package javolution;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import j2me.util.Iterator;
+import j2me.util.List;
+import j2me.util.Map;
+import j2me.util.Set;
 
 import javolution.realtime.PoolContext;
 import javolution.util.FastList;
@@ -33,7 +33,7 @@ final class Perf_Util extends Javolution implements Runnable {
     /** 
      * Executes benchmark.
      */
-    public void run() throws Javolution.InternalError {
+    public void run() throws JavolutionError {
         // Creates objects collection.
         for (int i = 0; i < COLLECTION_SIZE; i++) {
             _objects[i] = new Object();
@@ -41,9 +41,9 @@ final class Perf_Util extends Javolution implements Runnable {
         
         println("-- HashMap/LinkedMap versus FastMap --");
         benchmarkMap("HashMap", Reflection
-                .getConstructor("java.util.HashMap(int)"));
+                .getConstructor("j2me.util.HashMap(int)"));
         benchmarkMap("LinkedHashMap", Reflection
-                .getConstructor("java.util.LinkedHashMap(int)"));
+                .getConstructor("j2me.util.LinkedHashMap(int)"));
         benchmarkMap("FastMap", new Reflection.Constructor() {
             public Object allocate(Object[] args) {
                 return FastMap.newInstance(((Integer) args[0]).intValue());
@@ -53,9 +53,9 @@ final class Perf_Util extends Javolution implements Runnable {
 
         println("-- HashSet/LinkedHashSet/TreeSet versus FastSet --");
         benchmarkSet("HashSet", Reflection
-                .getConstructor("java.util.HashSet(int)"));
+                .getConstructor("j2me.util.HashSet(int)"));
         benchmarkSet("LinkedHashSet", Reflection
-                .getConstructor("java.util.LinkedHashSet(int)"));
+                .getConstructor("j2me.util.LinkedHashSet(int)"));
         benchmarkSet("FastSet", new Reflection.Constructor() {
             public Object allocate(Object[] args) {
                 return FastSet.newInstance(((Integer) args[0]).intValue());
@@ -65,9 +65,9 @@ final class Perf_Util extends Javolution implements Runnable {
 
         println("-- ArrayList/LinkedList versus FastList --");
         benchmarkList("ArrayList", Reflection
-                .getConstructor("java.util.ArrayList()"));
+                .getConstructor("j2me.util.ArrayList()"));
         benchmarkList("LinkedList", Reflection
-                .getConstructor("java.util.LinkedList()"));
+                .getConstructor("j2me.util.LinkedList()"));
         benchmarkList("FastList", new Reflection.Constructor() {
             public Object allocate(Object[] args) {
                 return FastList.newInstance();
