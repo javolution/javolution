@@ -10,11 +10,12 @@ package javolution.lang;
 
 /**
  * <p> This interfaces identifies mutable objects capable of being used again
- *     or repeatedly without incurring dynamic memory allocation. 
- *     Reusable instances may <b>still</b> resize after creation as long as the
- *     "extension parts" are "factory produced" and moved to the heap space
- *     (to allow for dynamic {@link javolution.realtime.AllocationProfile 
- *     profiling} and eventually pre-allocations of these parts).</p>
+ *     or repeatedly without incurring dynamic memory allocation.</p>
+ *      
+ * <p> Reusable instances may <b>still</b> resize after creation as long as the
+ *     "extension parts" can be pre-allocated (in other words, produced using 
+ *     the {@link javolution.realtime.ObjectFactory#newObject 
+ *     ObjectFactory.newObject()} method).</p>
  *     
  * <p> Instances of this class can safely reside in permanent memory (e.g.<code>
  *     static</code>) or be an integral part of a higher level component.
@@ -25,7 +26,7 @@ package javolution.lang;
  *     their {@link javolution.realtime.ObjectFactory factory} cleanup 
  *     method calls the {@link #reset reset} method. For example:<pre>
  *     public class Foo extends RealtimeObject implements Reusable {
- *         static final Factory FACTORY = new Factory(Foo.class) {
+ *         private static final Factory FACTORY = new Factory() {
  *             public Object create() {
  *                 return new Foo();
  *             }

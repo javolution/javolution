@@ -8,8 +8,8 @@
  */
 package javolution.xml;
 
+import j2me.lang.CharSequence;
 import j2me.nio.ByteBuffer;
-import j2me.util.Iterator;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,6 +22,8 @@ import javolution.io.Utf8StreamWriter;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
+import javolution.realtime.ArrayFactory;
+import javolution.realtime.ObjectFactory;
 import javolution.util.FastComparator;
 import javolution.util.FastList;
 import javolution.util.FastMap;
@@ -64,33 +66,52 @@ import javolution.xml.sax.WriterHandler;
  *     </p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.2, January 8, 2005
+ * @version 3.2, March 18, 2005
  */
 public class ObjectWriter implements Reusable {
 
     /**
-     * The counter to use to generate id automatically.
+     * Holds Javolution prefix ("j").
      */
-    private int _idCount;
+    private static final Text JAVOLUTION_PREFIX = Text.valueOf("j").intern();
 
     /**
-     * Holds the object to id (Text) mapping.
+     * Holds Javolution uri.
      */
-    private final FastMap _objectToId
-        = new FastMap().setKeyComparator(FastComparator.IDENTITY);
+    private static final Text JAVOLUTION_URI = Text.valueOf(
+            "http://javolution.org").intern();
 
     /**
-     * Holds namespaces association (prefix followed by package).
+     * Holds the Java scheme for package identification.
+     */
+    private static final Text JAVA_SCHEME = Text.valueOf("java:").intern();
+
+    /**
+     * Holds the factory for the internal chars array.
+     */
+    private static final ArrayFactory CHARS_FACTORY = new ArrayFactory(64) {
+        protected Object create(int length) {
+            return new char[length];
+        }
+    };
+
+    /**
+     * Holds prefix-package pairs (String).
      */
     private FastList _namespaces = new FastList();
-    
+
+    /**
+     * Holds the package associated to default namespace.
+     */
+    private String _defaultPkg = "";
+
     /**
      * Holds the class info mapping (Class to ClassInfo).
      */
     private final FastMap _classInfo = new FastMap();
-    
+
     /**
-     * Holds the stack of XML elements (nesting limited to 32).
+     * Holds the stack of XML elements (nesting limited to 32 levels).
      */
     private final XmlElement[] _stack = new XmlElement[32];
 
@@ -102,8 +123,7 @@ public class ObjectWriter implements Reusable {
     /**
      * Holds the byte buffer writer.
      */
-    private final Utf8ByteBufferWriter _utf8ByteBufferWriter 
-        = new Utf8ByteBufferWriter();
+    private final Utf8ByteBufferWriter _utf8ByteBufferWriter = new Utf8ByteBufferWriter();
 
     /**
      * Holds the writer handler for stream output.
@@ -111,14 +131,26 @@ public class ObjectWriter implements Reusable {
     private final WriterHandler _writerHandler = new WriterHandler();
 
     /**
+     * Holds the object to id mapping (persistent).
+     */
+    private final FastMap _objectToId = new FastMap()
+            .setKeyComparator(FastComparator.IDENTITY);
+
+    /**
+     * The counter to use to generate id automatically.
+     */
+    private int _idCount;
+
+    /**
+     * Holds the character array for writing CharacterData occurences.
+     */
+    private char[] _chars = (char[]) CHARS_FACTORY.newObject();
+
+    /**
      * Default constructor.
      */
     public ObjectWriter() {
         _stack[0] = new XmlElement();
-        for (int i = 1; i < _stack.length; i++) {
-            _stack[i] = new XmlElement();
-            _stack[i]._parent = _stack[i - 1];
-        }
     }
 
     /**
@@ -129,36 +161,22 @@ public class ObjectWriter implements Reusable {
      * <code>java:org.jscience.mathematics</code>. Classes within the package
      * <code>org.jscience.mathematics.*</code> now use the <code>math</code>
      * prefix. The default namespace (represented by the prefix <code>""</code>)
-     * can be set as well (in which cases a "root" prefix is created for 
-     * classes without namespace).
+     * can be set as well.
      *
-     * @param  prefix the namespace prefix or <code>""</code> to set the default
-     *         namespace.
+     * @param  prefix the namespace prefix or empty sequence to set 
+     *         the default namespace.
      * @param  packageName of the package associated to the specified prefix.
+     * @throws IllegalArgumentException if the prefix is "j" (reserved for 
+     *         the "http://javolution.org" uri).
      */
     public void setNamespace(String prefix, String packageName) {
-        if (prefix.length() == 0) { // Default namespace being set.
-            // Creates a prefix for root.
-            setNamespace("root", "");
+        if (prefix.equals("j"))
+            throw new IllegalArgumentException("Prefix: \"j\" is reserved.");
+        if (prefix.length() == 0) { // Default namespace.
+            _defaultPkg = packageName;
         }
         _namespaces.add(prefix);
         _namespaces.add(packageName);
-    }
-    
-    /**
-     * Resets all internal data maintained by this writer including any 
-     * namespace associations; objects previously written will not be
-     * referred to, they will be send again.
-     */
-    public void reset() {
-        _objectToId.clear();
-        _namespaces.clear();
-        _idCount = 0;
-        
-        // Clears class infos.
-        for (Iterator i=_classInfo.fastValueIterator(); i.hasNext();) {
-            ((ClassInfo) i.next()).reset();
-        }
     }
 
     /**
@@ -177,10 +195,10 @@ public class ObjectWriter implements Reusable {
             write(obj, _writerHandler);
         } catch (SAXException e) {
             if (e.getException() instanceof IOException) {
-                 throw (IOException)e.getException();   
-            } 
+                throw (IOException) e.getException();
+            }
         } finally {
-           _writerHandler.reset();
+            _writerHandler.reset();
         }
     }
 
@@ -202,11 +220,11 @@ public class ObjectWriter implements Reusable {
             write(obj, _writerHandler);
         } catch (SAXException e) {
             if (e.getException() instanceof IOException) {
-                 throw (IOException)e.getException();   
-            } 
+                throw (IOException) e.getException();
+            }
         } finally {
-           _utf8StreamWriter.reset();
-           _writerHandler.reset();
+            _utf8StreamWriter.reset();
+            _writerHandler.reset();
         }
     }
 
@@ -225,11 +243,11 @@ public class ObjectWriter implements Reusable {
             write(obj, _writerHandler);
         } catch (SAXException e) {
             if (e.getException() instanceof IOException) {
-                 throw (IOException)e.getException();   
-            } 
+                throw (IOException) e.getException();
+            }
         } finally {
             _utf8ByteBufferWriter.reset();
-           _writerHandler.reset();
+            _writerHandler.reset();
         }
     }
 
@@ -243,127 +261,232 @@ public class ObjectWriter implements Reusable {
     public void write(Object obj, ContentHandler handler) throws SAXException {
         handler.startDocument();
         try {
-            for (Iterator i=_namespaces.fastIterator(); i.hasNext();) {
-                TextBuilder prefix 
-                    = TextBuilder.newInstance().append(i.next());
-                TextBuilder uri 
-                    = TextBuilder.newInstance().append("java:").append(i.next());
-                handler.startPrefixMapping(prefix, uri);
+            handler.startPrefixMapping(JAVOLUTION_PREFIX, JAVOLUTION_URI);
+            for (FastList.Node n = _namespaces.headNode(), end = _namespaces
+                    .tailNode(); (n = n.getNextNode()) != end;) {
+                Object prefix = n.getValue();
+                String pkg = (String) (n = n.getNextNode()).getValue();
+                Text uri = JAVA_SCHEME.concat(Text.valueOf(pkg));
+                handler.startPrefixMapping(toCharSeq(prefix), uri);
             }
-            writeElement(obj, handler, 0);
+            writeElement(obj, handler, 0, null);
         } finally {
-            for (Iterator i=_namespaces.fastIterator(); i.hasNext();) {
-                TextBuilder prefix 
-                   = TextBuilder.newInstance().append(i.next());
-                Object pkg = i.next();
-                handler.endPrefixMapping(prefix);
+            handler.endPrefixMapping(JAVOLUTION_PREFIX);
+            for (FastList.Node n = _namespaces.headNode(), end = _namespaces
+                    .tailNode(); (n = n.getNextNode()) != end;) {
+                Object prefix = n.getValue();
+                n = n.getNextNode(); // Ignores package.
+                handler.endPrefixMapping(toCharSeq(prefix));
             }
             handler.endDocument();
         }
     }
-    
-    
-    private void writeElement(Object obj, ContentHandler handler, int level) throws SAXException {
-        
+
+    private void writeElement(Object obj, ContentHandler handler, int level,
+            CharSequence tagName) throws SAXException {
+
         // Replaces null value with Null object.
         if (obj == null) {
-            writeElement(XmlFormat.NULL, handler, level);
+            writeElement(XmlFormat.NULL, handler, level, null);
             return;
         }
-        
+
         // Checks for Character Data
         if (obj instanceof CharacterData) {
-            CharacterData cd = (CharacterData) obj;
-            handler.characters(cd.toArray(), 0, cd.length());
+            CharacterData charData = (CharacterData) obj;
+            while (_chars.length < charData.length()) {
+                _chars = CHARS_FACTORY.resize(_chars);
+            }
+            charData.getChars(0, charData.length(), _chars, 0);
+            handler.characters(_chars, 0, charData.length());
             return;
         }
-        
-        // Retrieves info for the class.
-        Class cl = obj.getClass();
-        ClassInfo ci = (ClassInfo) _classInfo.get(cl);
+
+        // Retrieves info for the class (info changes when namespace changes).
+        Class clazz = obj.getClass();
+        ClassInfo ci = (ClassInfo) _classInfo.get(clazz);
         if (ci == null) { // First occurence of this class ever.
-            ci = new ClassInfo();
-            _classInfo.put(cl, ci);
+            ci = (ClassInfo) ClassInfo.FACTORY.object();
+            _classInfo.put(clazz, ci);
         }
-        if (ci.format == null) { // Sets info from current namespace settings. 
-            ci.format = XmlFormat.getInstance(cl);
-            ci.formatId = ci.format.identifier(false);
-            String name = XmlFormat.nameFor(cl);
-            
-            // Search for an uri matching the package name.
-            int maxPkgLength = -1;
-            for (Iterator i= _namespaces.fastIterator(); i.hasNext();) {
-                String prefix = (String) i.next();
-                String pkg = (String) i.next();
-                final int pkgLength = pkg.length();
-                if (name.startsWith(pkg) && (pkgLength > maxPkgLength)) {
-                     ci.uri = JAVA.plus(Text.valueOf(pkg));
-                     ci.localName = (pkgLength > 0) ? 
-                             Text.valueOf(name).subtext(pkgLength + 1) :
-                             Text.valueOf(name);    
-                     ci.qName = (prefix.length() > 0) ? 
-                             Text.valueOf(prefix).plus(SEMICOLON).plus(ci.localName) :
-                             ci.localName;
-                     maxPkgLength = pkgLength;
+        if (ci.className == null) { // Sets info from current namespace settings. 
+            ci.className = XmlFormat.nameFor(clazz);
+            ci.format = XmlFormat.getInstance(clazz);
+
+            // Search for an package for the className (or alias).
+            String prefix = null;
+            String pkg = "";
+            for (FastList.Node n = _namespaces.headNode(), end = _namespaces
+                    .tailNode(); (n = n.getNextNode()) != end;) {
+                String pkgStr = (String) (n = n.getNextNode()).getValue();
+                if (ci.className.startsWith(pkgStr)
+                        && (pkgStr.length() > pkg.length())) {
+                    prefix = (String) n.getPreviousNode().getValue();
+                    pkg = pkgStr;
                 }
             }
-            if (maxPkgLength < 0) { // Default namespace "".
-                ci.uri = Text.EMPTY;
-                ci.localName = Text.valueOf(name);
-                ci.qName = ci.localName;
+
+            // URI is one of:
+            // - "" (default namespace)
+            // - "http://javolution.org" 
+            // - "java:xxx.yyy.zzz" (xxx.yyy.zzz package name) 
+            if (prefix == null) { // Not found.
+                if (_defaultPkg.length() == 0) { // Use default namespace.
+                    prefix = "";
+                } else {
+                    prefix = "j";
+                    ci.uri.append(JAVOLUTION_URI);
+                }
+            } else {
+                ci.uri.append(JAVA_SCHEME).append(pkg);
+            }
+
+            // Sets local name.
+            if (pkg.length() == 0) {
+                ci.localName.append(ci.className);
+            } else { // Remove package prefix from class name.
+                ci.localName.append(ci.className, pkg.length() + 1,
+                        ci.className.length());
+            }
+
+            // Sets qualified name.
+            if (prefix.length() == 0) { // Default namespace.
+                ci.qName.append(ci.localName);
+            } else {
+                ci.qName.append(prefix).append(":").append(ci.localName);
             }
         }
-        
+
         // Formats.
-        final XmlElement xml = _stack[level];
-        xml._objectClass = cl;
-        if (ci.formatId != null) { // Identifier attribute must be present.
-            Text idValue = (Text) _objectToId.get(obj);
-            if (idValue != null) { // Already referenced.
+        XmlElement xml = _stack[level];
+        if (xml == null) {
+            xml = _stack[level] = (XmlElement) XmlElement.FACTORY.newObject();
+            xml._parent = _stack[level - 1];
+        }
+        xml._objectClass = clazz;
+        if (ci.format._idName != null) { // Identifier attribute must be present.
+            CharSequence idValue = (CharSequence) _objectToId.get(obj);
+            if (idValue != null) { // Already formatted, write the reference.
                 xml.setAttribute(ci.format.identifier(true), idValue);
             } else { // First object occurence.
                 ci.format.format(obj, xml);
-                Object userId = xml.getAttribute(ci.formatId);
-                idValue = (userId == null) ? 
-                        TextBuilder.newInstance().append(++_idCount).toText() :
-                        TextBuilder.newInstance().append(userId).toText();
+
+                // Sets idValue if not set already
+                idValue = xml.getAttribute(ci.format.identifier(false));
+                if (idValue == null) { // Generates idValue.
+                    idValue = newTextBuilder().append(++_idCount);
+                    xml.setAttribute(ci.format.identifier(false), idValue);
+                }    
                 _objectToId.put(obj, idValue);
-                xml.setAttribute(ci.formatId, idValue);
             }
         } else { // No object identifier.
             ci.format.format(obj, xml);
         }
-        handler.startElement(ci.uri, ci.localName, ci.qName, xml.getAttributes());
 
-        // Writes nested elements.
-        for (Iterator i = xml._content.fastIterator(); i.hasNext();) {
-             Object child = i.next();
-             writeElement(child, handler, level + 1);
+        // Writes start tag.
+        if (tagName != null) { // Custom name
+            xml.setAttribute("j:class", ci.className);
+            handler.startElement(Text.EMPTY, tagName, tagName, xml
+                    .getAttributes());
+        } else {
+            handler.startElement(ci.uri, ci.localName, ci.qName, xml
+                    .getAttributes());
         }
 
-        handler.endElement(ci.uri, ci.localName, ci.qName);
+        // Writes named elements first.
+        for (FastMap.Entry e = xml._nameToChild.headEntry(), end = xml._nameToChild
+                .tailEntry(); (e = e.getNextEntry()) != end;) {
+            writeElement(e.getValue(), handler, level + 1,
+                    toCharSeq(e.getKey()));
+        }
+        //Writes anonymous content.
+        for (FastList.Node n = xml._content.headNode(), end = xml._content
+                .tailNode(); (n = n.getNextNode()) != end;) {
+            writeElement(n.getValue(), handler, level + 1, null);
+        }
 
-        // Clears XmlElement for reuse.
+        // Writes end tag.
+        if (tagName != null) {
+            handler.endElement(Text.EMPTY, tagName, tagName);
+        } else {
+            handler.endElement(ci.uri, ci.localName, ci.qName);
+        }
         xml.reset();
     }
-    private static final Text JAVA = Text.valueOf("java:").intern();
-    private static final Text SEMICOLON = Text.valueOf(":").intern();
 
-    /*
-     * This class represents the current representation of a particular class.
+    /**
+     * Resets all internal data maintained by this writer including any 
+     * namespace associations; objects previously written will not be
+     * referred to, they will be send again.
+     */
+    public void reset() {
+        for (FastMap.Entry e = _classInfo.headEntry(), end = _classInfo
+                .tailEntry(); (e = e.getNextEntry()) != end;) {
+            ((ClassInfo) e.getValue()).reset(); // Clears class info.
+        }
+        for (int i = 0; (i < _stack.length) && (_stack[i] != null); i++) {
+            _stack[i].reset(); // Ensures that all xml element are reset.
+        }
+        _textBuilderPool.addAll(_objectToId.values());
+        _objectToId.clear();
+        _namespaces.clear();
+        _defaultPkg = "";
+        _idCount = 0;
+    }
+
+    /**
+     * Holds custom entries.
      */
     private static final class ClassInfo {
-         XmlFormat format;
-         String formatId;
-         Text uri; // e.g. java:org.jscience.mathematics.numbers
-         Text qName; // e.g. num:Complex
-         Text localName; // e.g. Complex
-         void reset() {
-             format = null;
-             formatId = null;
-             uri = null;
-             qName = null;
-             localName = null;
-         }
+        private static ObjectFactory FACTORY = new ObjectFactory() {
+            protected Object create() {
+                return new ClassInfo();
+            }
+        };
+
+        String className; // The class name, possibly an alias (when obfuscating).
+
+        XmlFormat format;
+
+        TextBuilder uri = new TextBuilder(); // e.g. java:org.jscience.mathematics.numbers
+
+        TextBuilder qName = new TextBuilder(); // e.g. num:Complex
+
+        TextBuilder localName = new TextBuilder(); // e.g. Complex
+
+        void reset() {
+            format = null;
+            uri.reset();
+            qName.reset();
+            localName.reset();
+        }
     }
+
+    /**
+     * Returns a persistent mutable character sequence from a local pool.
+     * 
+     * @return a new or recycled text builder instance.
+     */
+    private TextBuilder newTextBuilder() {
+        if (_textBuilderPool.isEmpty())
+            return (TextBuilder) TextBuilder.newInstance().moveHeap();
+        TextBuilder tb = (TextBuilder) _textBuilderPool.removeLast();
+        tb.reset();
+        return tb;
+    }
+
+    private FastList _textBuilderPool = new FastList();
+
+    
+    /**
+     * Converts a String to CharSequence (for J2ME compatibility)
+     * 
+     * @param str the String to convert.
+     * @return the corresponding CharSequence instance.
+     */
+    private static CharSequence toCharSeq(Object str) {
+        return (str instanceof CharSequence) ? (CharSequence) str : Text
+                .valueOf((String) str);
+    }
+
 }

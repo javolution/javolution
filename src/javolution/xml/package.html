@@ -30,22 +30,22 @@
           private Stroke _stroke; // null if none.
           private Transform _transform; // null if none.
            
-          // XML format with positional associations for child elements 
-          // (see {@link javolution.xml.XmlFormat XmlFormat} for examples of type-based associations).
+          // XML format with name association (members identified by a unique name).
+          // (see {@link javolution.xml.XmlFormat XmlFormat} for examples of positional association.
           protected static final XmlFormat GRAPHIC_XML = new XmlFormat(Graphic.class) {
                public void format(Object obj, XmlElement xml) {
                    Graphic g = (Graphic) obj;
                    xml.setAttribute("isVisible", g._isVisible); 
-                   xml.getContent().addLast(g._paint);
-                   xml.getContent().addLast(g._stroke);
-                   xml.getContent().addLast(g._transform);
+                   xml.add("Paint", g._paint);
+                   xml.add("Stroke", g._stroke,);
+                   xml.add("Transform", g._transform);
                }
                public Object parse(XmlElement xml) {
                    Graphic g = (Graphic) xml.object();
                    g._isVisible = xml.getAttribute("isVisible", true);
-                   g._paint = (Paint) xml.getContent().removeFirst();
-                   g._stroke = (Stroke) xml.getContent().removeFirst();
-                   g._transform = (Transform) xml.getContent().removeFirst();
+                   g._paint = (Paint) xml.get("Paint");
+                   g._stroke = (Stroke) xml.get("Stroke");
+                   g._transform = (Transform) xml.get("Transform");
                    return g;
               }
           };
@@ -59,11 +59,11 @@
               public void format(Object obj, XmlElement xml) {
                   Area area = (Area) obj;
                   GRAPHIC_XML.format(area, xml); // Calls parent format.
-                  xml.getContent().addLast(area._geometry);
+                  xml.add("Geometry", area._geometry);
               }
               public Object parse(XmlElement xml) {
                   Area area = (Area) GRAPHIC_XML.parse(xml); // Calls parent parse.
-                  area._geometry = (Surface) xml.getContent().removeFirst();
+                  area._geometry = (Surface) xml.get("Geometry");
                   return area;
               }
           };
@@ -77,60 +77,17 @@
     {@link javolution.xml.XmlInputStream} and {@link javolution.xml.XmlOutputStream} are recommended.</i></p>
 
     Here is an example of valid XML representation for an area:<pre>
-      &lt;graphics:Area xmlns:graphics="java:org.jscience.graphics" isVisible="true"&gt;
-          &lt;graphics:Color rgb="#F3EBC6"/&gt;
-          &lt;Null/&gt;
-          &lt;Null/&gt;
-          &lt;graphics:geom2d.Polygon id="1"&gt;
+      &lt;graphics:Area  xmlns:j="http://javolution.org" xmlns:graphics="java:org.jscience.graphics" isVisible="true"&gt;
+          &lt;Paint j:class="java.awt.Color" rgb="#F3EBC6"/&gt;
+          &lt;Geometry j:class="org.jscience.graphics.geom2d.Polygon" id="1"&gt;
               &lt;graphics:geom2d.Point x="123" y="-34"/&gt;
               &lt;graphics:geom2d.Point x="-43" y="-34"/&gt;
               &lt;graphics:geom2d.Point x="-12" y="123"/&gt;
-          &lt;/graphics:geom2d.Polygon&gt;
+          &lt;/Geometry&gt;
       &lt;/graphics:Area&gt;</pre>
    
 </p>
-                          
-<p> XML formats can be dynamically created or modified. The following illustrates
-    the creation of a xml format for <code>double[]</code> instances using 
-    <code>java.lang.Double</code> objects.<pre>
-       // XML format for java.lang.Double 
-       XmlFormat doubleXml = new XmlFormat() { 
-           public void format(Object obj, XmlElement xml) {
-               xml.setAttribute("value", ((Double)obj).doubleValue());
-           }
-           public Object parse(XmlElement xml) {
-               return new Double(xml.getAttribute("value", 0.0));
-           }
-       };
-       XmlFormat.setInstance(doubleXml, java.lang.Double.class); // {@link javolution.realtime.LocalContext Local} setting.
-       
-       // XML format for double[] 
-       XmlFormat doubleArrayXml = new XmlFormat() {
-           public void format(Object obj, XmlElement xml) {
-               double[] values = (double[])obj;
-               xml.setAttribute("length", values.length);
-               for (int i=0; i < values.length;) 
-                   xml.getContent().add(new Double(values[i++]));
-           }
-           public Object parse(XmlElement xml) {
-               int length = xml.getAttribute("length", 0);
-               double[] values = new double[length];
-               Iterator i=xml.getContent().fastIterator();
-               for (int j=0; j < length;) 
-                   values[j++] = ((Double)i.next()).doubleValue();
-               return values;
-            }
-       };
-       XmlFormat.setInstance(doubleArrayXml, new double[0].getClass()); // {@link javolution.realtime.LocalContext Local} setting.
-       
-       // Replaces default "[D" tag with "double[]" (easier to read) 
-       XmlFormat.setAlias(doubleArrayXml.getMappedClass(), "double[]");</pre>
 
-    <p><i> An alternative implementation could utilize {@link javolution.realtime.Realtime real-time} numbers
-     instead of <code>java.lang.Double</code> (faster and no garbage generated when
-     marshalling/unmarshalling is performed in a {@link javolution.realtime.PoolContext PoolContext}).</i></p>
-</p>    
-   
 <p> The {@link javolution.xml.XmlFormat XmlFormat} does not have to use the class
     public default constructor ({@link javolution.xml.XmlElement#object xml.object()}),
     instances can be created using factory methods, private constructors (with constructor parameters
@@ -160,7 +117,7 @@
     }</pre>
     Here the XML representation of a list of three polygons, 
     the first and the last one being shared:<pre>
-      &lt;root:java.util.ArrayList xmlns:root="java:" xmlns="java:org.jscience.graphics.geom2d">
+      &lt;j:java.util.ArrayList xmlns:j="http://javolution.org" xmlns="java:org.jscience.graphics.geom2d">
           &lt;Polygon id="1"&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-43" y="-34"/&gt;
@@ -172,7 +129,7 @@
               &lt;Point x="-12" y="123"/&gt;
           &lt;/Polygon&gt;
           &lt;Polygon ref="1"/&gt;
-      &lt;/root:java.util.ArrayList&gt;</pre>
+      &lt;/j:java.util.ArrayList&gt;</pre>
 
     The value of the identifier attribute can be set explicitly. For example:<pre>
       public abstract class Person {

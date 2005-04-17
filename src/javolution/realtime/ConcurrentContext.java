@@ -453,8 +453,16 @@ public final class ConcurrentContext extends Context {
         return args;
     }
 
+    // Implements abstract method.
+    protected void dispose() {
+        _logics = null;
+        _args = null;
+        _argsPool = null;
+    }
+
     /**
-     * <p> This abstract class represents a concurrent logic.</p>
+     * <p> This abstract class represents some parameterized code which may be
+     *     executed concurrently.</p>
      */
     public static abstract class Logic implements Runnable {
 
@@ -477,13 +485,6 @@ public final class ConcurrentContext extends Context {
          *        has been called, then <code>(args.length == 2)</code>).
          */
         public abstract void run(Object[] args);
-    }
-
-    // Implements abstract method.
-    protected void dispose() {
-        _logics = null;
-        _args = null;
-        _argsPool = null;
     }
 
 }

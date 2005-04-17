@@ -633,66 +633,65 @@ public final class TypeFormat {
      *
      * @param  f the <code>float</code> number.
      * @param  chars the <code>Appendable</code> to append.
-     * @return <code>format(f, 0.0f, sb)</code>
+     * @return <code>format(f, 0.0, sb)</code>
      * @throws IOException if an I/O exception occurs.
-     * @see    #format(float, float, Appendable)
+     * @see    #format(float, double, Appendable)
      /*@FLOATING_POINT@
      public static Appendable format(float f, Appendable chars)
      throws IOException {
-     return format(f, 0.0f, chars);
+     return format(f, 0.0, chars);
      }
      /**/
 
     /**
      * Formats the specified <code>float</code> and appends the resulting text
      * to the <code>Appendable</code> argument; the number of significative
-     * digits is deduced from the specifed precision. All digits at least as
-     * significant as the specified precision are represented. For example:
+     * digits is deduced from the specifed accuracy. All digits at least as
+     * significant as the specified accuracy are represented. For example:
      * <ul>
-     * <li><code>format(5.6f, 0.01f, sb)</code> appends <code>"5.60"</code></li>
-     * <li><code>format(5.6f, 0.1f, sb)</code> appends <code>"5.6"</code></li>
-     * <li><code>format(5.6f, 1f, sb)</code> appends <code>"6"</code></li>
+     * <li><code>format(5.6f, 0.01, sb)</code> appends <code>"5.60"</code></li>
+     * <li><code>format(5.6f, 0.1, sb)</code> appends <code>"5.6"</code></li>
+     * <li><code>format(5.6f, 1, sb)</code> appends <code>"6"</code></li>
      * </ul>
-     * If the precision is <code>0.0f</code>, the precision is assumed to be
-     * the intrinsic <code>float</code> precision (64 bits IEEE 754 format);
+     * If the accuracy is <code>0.0</code>, the accuracy is assumed to be
+     * the intrinsic <code>float</code> precision (32 bits IEEE 754 format);
      * no formatting is performed, all significant digits are displayed and
      * trailing zeros are removed.
      *
      * @param  f the <code>float</code> number.
-     * @param  precision the maximum weight of the last digit represented.
+     * @param  accuracy the maximum weight of the last digit represented.
      * @param  chars the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
      * @throws IllegalArgumentException if the specified precision is negative
      *         or would result in too many digits (19+).
      * @throws IOException if an I/O exception occurs.
      /*@FLOATING_POINT@
-     public static Appendable format(float f, float precision, Appendable chars)
+     public static Appendable format(float f, double accuracy, Appendable chars)
      throws IOException {
-     // Adjusts precision.
-     boolean precisionOnLastDigit;
-     if (precision > 0.0f) {
-     precisionOnLastDigit = true;
-     } else if (precision == 0.0f) {
+     boolean fixedFormat;
+     if (accuracy > 0.0) {
+     fixedFormat = true;
+     } else if (accuracy == 0.0) {
      if (f != 0.0f) {
-     precisionOnLastDigit = false;
-     precision = Math.max(Math.abs(f) * FLOAT_RELATIVE_ERROR,
-     1.4e-45f);
+     fixedFormat = false;
+     accuracy = Math.max(Math.abs(f) * FLOAT_RELATIVE_ERROR,
+     1.4e-45);
      } else {
      return append(chars, "0.0"); // Exact zero.
      }
      } else {
      throw new IllegalArgumentException(
-     "precision: Negative values not allowed");
+     "accuracy: Negative values not allowed");
      }
-     return format(f, precision, precisionOnLastDigit, chars);
+     return format(f, accuracy, fixedFormat, chars);
      }
      /**/
-
+   
     /**
      * Formats the specified <code>double</code> and appends the resulting
      * text to the <code>Appendable</code> argument.
      *
-     * <p> Note : This method is preferred to <code>Appendable.append(double)
+     * <p> Note : This method is preferred to <code>Double.toString(double)
      *            </code> or even <code>String.valueOf(double)</code> as it
      *            does not create temporary <code>String</code> or <code>
      *            FloatingDecimal</code> objects (several times faster,
@@ -713,7 +712,7 @@ public final class TypeFormat {
     /**
      * Formats the specified <code>double</code> and appends the resulting text
      * to the <code>Appendable</code> argument; the number of significative
-     * digits is deduced from the specifed precision. All digits at least as
+     * digits is deduced from the specifed accuracy. All digits at least as
      * significant as the specified accuracy are represented. For example:
      * <ul>
      * <li><code>format(5.6, 0.01, sb)</code> appends <code>"5.60"</code></li>
@@ -735,18 +734,18 @@ public final class TypeFormat {
      public static Appendable format(double d, double accuracy, Appendable chars)
      throws IOException {
      if (accuracy > 0.0) { // Accuracy on last digit.
-     return format(d, accuracy, false, chars);
-     } else if (accuracy == 0.0) { //Default format.
+     return format(d, accuracy, true, chars);
+     } else if (accuracy == 0.0) { // Floating format.
      if (d != 0.0) {
      accuracy = Math.max(Math.abs(d) * DOUBLE_RELATIVE_ERROR,
      4.9e-324);
-     return format(d, accuracy, true, chars);
+     return format(d, accuracy, false, chars);
      } else {
      return append(chars, "0.0"); // Exact zero.
      }
-     } else { // precision < 0.0) 
+     } else { // accuracy < 0.0) 
      throw new IllegalArgumentException(
-     "precision: Negative values not allowed");
+     "accuracy: Negative values not allowed");
      }
      }
      /**/
@@ -758,7 +757,8 @@ public final class TypeFormat {
      *
      * @param  d the <code>double</code> number.
      * @param  accuracy the maximum weight of the last digit represented.
-     * @param  defaultFormat indicates if default double format is used.
+     * @param  fixedFormat indicates if the number of digits is 
+     *         characteristic of the accuracy.
      * @param  chars the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
      * @throws IllegalArgumentException if the specified accuracy would result 
@@ -766,7 +766,7 @@ public final class TypeFormat {
      * @throws IOException if an I/O exception occurs.
      /*@FLOATING_POINT@
      private static Appendable format(double d, double accuracy,
-     boolean defaultFormat, Appendable chars) throws IOException {
+     boolean fixedFormat, Appendable chars) throws IOException {
      if (d != d) { // NaN
      return append(chars, "NaN");
      } else if (d == POSITIVE_INFINITY) {
@@ -796,23 +796,23 @@ public final class TypeFormat {
      if (digits > 1) {
      chars.append('.');
      formatFraction(mantissa % LONG_POW_10[digits - 1], digits - 1,
-     defaultFormat, chars);
+     fixedFormat, chars);
      }
      chars.append('E');
      format(dotPos - 1, chars);
      } else if (dotPos <= 0) { // Leading zeros ("0.xxxxx").
      append(chars, LEADING_ZEROS[-dotPos]);
-     formatFraction(mantissa, digits, defaultFormat, chars);
+     formatFraction(mantissa, digits, fixedFormat, chars);
      } else if (dotPos == digits) { // Dot at last position ("xxxxx.").
      format(mantissa, chars);
-     if (defaultFormat) { // Adds trailing zero ("xxx.0")
+     if (!fixedFormat) { // Adds trailing zero ("xxx.0")
      append(chars, ".0");
      }
      } else { // Dot within the string ("xxxx.xxxxx").
      format(mantissa / LONG_POW_10[digits - dotPos], chars);
      chars.append('.');
      formatFraction(mantissa % LONG_POW_10[digits - dotPos], digits
-     - dotPos, defaultFormat, chars);
+     - dotPos, fixedFormat, chars);
      }
      return chars;
      }
@@ -822,13 +822,13 @@ public final class TypeFormat {
      private static final double NEGATIVE_INFINITY = -1.0 / 0.0;
 
      private static void formatFraction(long fraction, int digits,
-     boolean defaultFormat, Appendable chars) throws IOException {
+     boolean fixedFormat, Appendable chars) throws IOException {
      for (int i = digits; i > 0;) {
      long pow10 = LONG_POW_10[--i];
      int digit = (int) (fraction / pow10);
      fraction -= digit * pow10;
      chars.append(DIGITS[digit]);
-     if ((fraction == 0) && defaultFormat) {
+     if ((fraction == 0) && !fixedFormat) {
      return; // No more than one trailing zero.
      }
      }
@@ -850,7 +850,7 @@ public final class TypeFormat {
      return rank;
      }
 
-     private static final float FLOAT_RELATIVE_ERROR = 0.000000059604644775390625f;
+     private static final double FLOAT_RELATIVE_ERROR = 0.000000059604644775390625;
 
      private static final double DOUBLE_RELATIVE_ERROR = 1.1102230246251565404236316680908e-16;
 

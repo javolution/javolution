@@ -142,7 +142,7 @@ public class XmlInputStream extends InputStream implements Reusable {
         private int _moreBytes;
         private int _start;
         private int _end;
-        private final byte[] _bytes = new byte[4096];
+        private final byte[] _bytes = new byte[2048];
         private boolean _isHalted;
         
 

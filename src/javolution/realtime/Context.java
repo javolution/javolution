@@ -8,7 +8,6 @@
  */
 package javolution.realtime;
 
-import j2me.util.Iterator;
 import java.util.EmptyStackException;
 import javolution.util.FastMap;
 
@@ -93,7 +92,7 @@ public abstract class Context {
      * key removal (ref. FastMap documentation). The whole collection 
      * is replaced when dead threads are removed.
      */
-    private static FastMap ThreadToContext = new FastMap();
+    private static FastMap ThreadToContext = new FastMap(1024);
 
     /**
      * Holds class lock (used when thread-context mapping is changed).
@@ -140,7 +139,7 @@ public abstract class Context {
     public static void clear() {
         Context current = Context.currentContext();
         if (current._outer == null) { // Root context is being cleared.
-            synchronized (Context.ThreadToContext) { // Remove mapping.
+            synchronized (Context.LOCK) { // Remove mapping.
                 Context.ThreadToContext.put(current._owner, null);
             }
         } else if (current._outer._inner == current) {
@@ -167,7 +166,7 @@ public abstract class Context {
     private static Context newContext() {
         Context ctx = (Thread.currentThread() instanceof ConcurrentThread) ? (Context) new PoolContext()
                 : new HeapContext();
-        synchronized (LOCK) {
+        synchronized (Context.LOCK) {
             cleanupDeadThreads();
             Context.ThreadToContext.put(ctx._owner, ctx);
             return ctx;
@@ -318,21 +317,22 @@ public abstract class Context {
      */
     private static void cleanupDeadThreads() {
         int deadThreadCount = 0;
-        for (Iterator i = Context.ThreadToContext.fastKeyIterator(); i
-                .hasNext();) {
-            Thread thread = (Thread) i.next();
+        for (FastMap.Entry e = Context.ThreadToContext.headEntry(), end = Context.ThreadToContext
+                .tailEntry(); (e = e.getNextEntry()) != end;) {
+            Thread thread = (Thread) e.getKey();
             if (!thread.isAlive()) {
                 Context.ThreadToContext.put(thread, null);
                 deadThreadCount++;
             }
         }
-        if (deadThreadCount > 256) {
-            FastMap tmp = new FastMap();
-            tmp.putAll(Context.ThreadToContext);
-            for (Iterator i = tmp.fastKeyIterator(); i.hasNext();) {
-                Thread thread = (Thread) i.next();
-                if (!thread.isAlive()) {
-                    i.remove();
+        if (deadThreadCount > 256) { // Remove thread objects themselves.
+            // Replaces the whole map to keep read access unsynchronized.
+            FastMap tmp = new FastMap(1024);
+            for (FastMap.Entry e = Context.ThreadToContext.headEntry(), end = Context.ThreadToContext
+                    .tailEntry(); (e = e.getNextEntry()) != end;) {
+                Thread thread = (Thread) e.getKey();
+                if (thread.isAlive()) {
+                    tmp.put(thread, e.getValue());
                 }
             }
             Context.ThreadToContext = tmp;

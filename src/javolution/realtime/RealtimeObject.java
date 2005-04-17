@@ -20,30 +20,21 @@ import javolution.lang.TypeFormat;
 /**
  * <p> This class provides a default implementation of the {@link Realtime} 
  *     interface.</p>
- * <p> Instances of this class should be created using a {@link Factory}.
- *     For example:<pre>
+ * <p> Instances of this class should be created using the inner 
+ *     {@link Factory Factory} class. For example:<pre>
  *     public class Foo extends RealtimeObject {
  *         static final Factory FACTORY = new Factory() {
  *             public Object create() {
  *                 return new Foo();
  *             }
  *         };
- *         private Realtime externalReference = ...;
  *         protected Foo() {} // Default constructor for sub-classes. 
  *         public static Foo newInstance() { // Static factory method.
  *             return (Foo) FACTORY.object();
  *         }
  *         
- *         // Optional, only if Foo has direct or indirect references to external
- *         // {@link Realtime} objects (intrinsic heap-allocated members
- *         // themselves are moved implicitly with Foo). 
- *         public boolean move(ObjectSpace os) { 
- *             if (super.move(os)) {
- *                 externalReference.move(os);
- *                 return true;
- *             }
- *             return false;
- *         }
+ *         // Optional (see {@link Realtime} interface). 
+ *         public boolean move(ObjectSpace os) { ... }
  *     }</pre></p>
  * <p> Instances of this class can be immutable. Instances allocated in a
  *     pool context must be {@link #export exported} (return value) 
@@ -60,7 +51,6 @@ public abstract class RealtimeObject implements Realtime {
      * is on the heap (e.g. created using a class constructor).  
      */
     private transient Pool _pool;
-
 
     /**
      * Holds the next object in the pool.  
@@ -148,7 +138,7 @@ public abstract class RealtimeObject implements Realtime {
      * @see    #unpreserve
      */
     public final Object preserve() {
-        move(ObjectSpace.LOCAL);
+        move(ObjectSpace.HOLD);
         return this;
     }
 
@@ -168,9 +158,9 @@ public abstract class RealtimeObject implements Realtime {
 
     // Implements Realtime interface.
     public boolean move(ObjectSpace os) {
-        
+
         // export()
-        if (os == ObjectSpace.OUTER) { 
+        if (os == ObjectSpace.OUTER) {
             if ((_pool == null) || (!_pool.isLocal())) {
                 return false; // Not on the stack.
             }
@@ -182,16 +172,17 @@ public abstract class RealtimeObject implements Realtime {
                 _pool = null;
             } else {
                 synchronized (outer) {
-                    insertBefore(((Pool)outer)._next);
+                    _pool = (Pool) outer;
+                    insertBefore(_pool._next);
                 }
             }
             return true;
 
-        // moveHeap()    
+            // moveHeap()    
         } else if (os == ObjectSpace.HEAP) {
             if (_pool == null) {
                 return false; // Already on the heap.
-            } 
+            }
             synchronized (_pool) { // Might not be local.
                 detach();
             }
@@ -200,37 +191,39 @@ public abstract class RealtimeObject implements Realtime {
             _pool = null;
             return true;
 
-        // preserve()    
+            // preserve()    
         } else if (os == ObjectSpace.HOLD) {
-            if (_pool == null) {
-                return false; // On the heap.
-            }
-            synchronized (_pool) { // Might not be local.
+            synchronized (this) {
                 if (_preserved++ == 0) {
-                    detach();
-                    insertBefore(_pool._holdTail);
+                    if (_pool != null) {
+                        synchronized (_pool) { // Might not be local.
+                            detach();
+                            insertBefore(_pool._holdTail);
+                        }
+                    }
                     return true;
                 } else {
                     return false;
                 }
             }
 
-        // unpreserve()    
+            // unpreserve()    
         } else if (os == ObjectSpace.LOCAL) {
-            if ((_pool == null) || (_preserved == 0)) {
-                return false; // On the heap or already local.
-            }
-            synchronized (_pool) { // Might not be local.
-                if (--_preserved == 0) {
-                    detach();
-                    insertBefore(_pool._next);
+            synchronized (this) {
+                if ((_preserved != 0) && (--_preserved == 0)) {
+                    if (_pool != null) {
+                        synchronized (_pool) { // Might not be local
+                            detach();
+                            insertBefore(_pool._next);
+                        }
+                    }
                     return true;
                 } else {
                     return false;
                 }
             }
 
-        // Ignores others context space (possible extensions).            
+            // Ignores others context space (possible extensions).            
         } else {
             return true; // Propagates by default. 
         }
@@ -256,26 +249,23 @@ public abstract class RealtimeObject implements Realtime {
      * Inserts this object before the one specified.
      * 
      * @param the next object after insertion.
-     */ 
+     */
     final void insertBefore(RealtimeObject next) {
-        final RealtimeObject previous = next._previous;
-        _previous = previous;
+        _previous = next._previous;
         _next = next;
-        _pool = next._pool;
-        next._previous = this;
-        previous._next = this;
+        _next._previous = this;
+        _previous._next = this;
     }
 
     /**
      * Detaches this object from its linked list (but does not reset the
      * objects variable members).
-     */ 
+     */
     final void detach() {
         _next._previous = _previous;
         _previous._next = _next;
     }
-    
-    
+
     /**
      * This abstract class represents the factory responsible for the 
      * creation of {@link RealtimeObject} instances.
@@ -300,7 +290,7 @@ public abstract class RealtimeObject implements Realtime {
          *         executing in a pool context.
          */
         public final Object object() {
-            final Pool pool = _cachedPool;
+            Pool pool = _cachedPool;
             if (pool.getUser() == Thread.currentThread()) {
                 // Inline next()
                 final RealtimeObject next = pool._next;
@@ -308,10 +298,12 @@ public abstract class RealtimeObject implements Realtime {
                 return (tmp != null) ? next : pool.allocate();
             } else {
                 final ObjectPool currentPool = currentPool();
-                if (currentPool != heapPool()) {
-                    _cachedPool = (Pool) currentPool;
-                }
-                return currentPool.next();
+                if (currentPool == heapPool()) {
+                    return newObject();
+                } else {
+                    _cachedPool = pool = (Pool) currentPool;
+                    return pool.next();
+                } 
             }
         }
 
@@ -320,7 +312,7 @@ public abstract class RealtimeObject implements Realtime {
             return new Pool(this);
         }
     }
-    
+
     /**
      * This inner class represents a pool of {@link RealtimeObject}.
      */
@@ -340,27 +332,27 @@ public abstract class RealtimeObject implements Realtime {
         /**
          * Holds the head object.
          */
-        private final RealtimeObject _activeHead = new Bound();
+        private final RealtimeObject _activeHead;
 
         /**
          * Holds the tail object.
          */
-        private final RealtimeObject _activeTail = new Bound();
-        
-        /**
-         * Holds the objects on hold
-         */
-        private final RealtimeObject _holdHead = new Bound();
+        private final RealtimeObject _activeTail;
 
         /**
          * Holds the objects on hold
          */
-        private final RealtimeObject _holdTail = new Bound();
-        
+        private final RealtimeObject _holdHead;
+
+        /**
+         * Holds the objects on hold
+         */
+        private final RealtimeObject _holdTail;
+
         /**
          * Holds the next object to return.
          */
-        private RealtimeObject _next = _activeTail;
+        private RealtimeObject _next;
 
         /**
          * Creates a pool having the specified heap pool.
@@ -369,34 +361,43 @@ public abstract class RealtimeObject implements Realtime {
          */
         private Pool(Factory factory) {
             _factory = factory;
+
+            _activeHead = new Bound();
+            _activeTail = new Bound();
             _activeHead._next = _activeTail;
             _activeTail._previous = _activeHead;
+
+            _holdHead = new Bound();
+            _holdTail = new Bound();
             _holdHead._next = _holdTail;
             _holdTail._previous = _holdHead;
+
+            _next = _activeTail;
         }
 
         public Object next() {
             final RealtimeObject next = _next;
             _next = next._next;
             return (_next != null) ? next : allocate();
-        }    
+        }
 
-        private RealtimeObject allocate() {            
+        private RealtimeObject allocate() {
             _next = _activeTail;
             ObjectPool outer = getOuter();
             RealtimeObject obj;
             if (outer == null) { // Heap.
-                obj = (RealtimeObject) _factory.heapPool().next();
+                obj = (RealtimeObject) _factory.newObject();
             } else {
                 synchronized (outer) {
-                     obj = (RealtimeObject) outer.next();
-                     obj.detach();
+                    obj = (RealtimeObject) outer.next();
+                    obj.detach();
                 }
             }
             obj.insertBefore(_activeTail);
+            obj._pool = this;
             return obj;
         }
-        
+
         public void recycle(Object obj) {
             // Cleanups object.
             if (_doCleanup) {
@@ -436,11 +437,12 @@ public abstract class RealtimeObject implements Realtime {
             _activeHead._next = _activeTail;
             _activeTail._previous = _activeHead;
         }
-   }
+    }
 
     /**
      * This inner class represents internal linked list bounds
      * (to avoid testing for null when inserting/removing). 
      */
-    private static final class Bound extends RealtimeObject { }
+    private static final class Bound extends RealtimeObject {
+    }
 }

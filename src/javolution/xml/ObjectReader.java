@@ -15,9 +15,9 @@ import java.io.InputStream;
 import java.io.Reader;
 
 import javolution.lang.Reusable;
-import javolution.xml.sax.RealtimeParser;
+import javolution.xml.sax.XmlSaxParserImpl;
+
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 /**
  * <p> This class restores objects which have been serialized in XML
@@ -37,7 +37,7 @@ import org.xml.sax.SAXParseException;
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 2.2, January 8, 2005
- * @see     RealtimeParser
+ * @see     XmlSaxParserImpl
  * @see     ConstructorHandler
  */
 public class ObjectReader implements Reusable {
@@ -45,7 +45,7 @@ public class ObjectReader implements Reusable {
     /**
      * Holds the real-time parser used.
      */
-    private final RealtimeParser _parser = new RealtimeParser();
+    private final XmlSaxParserImpl _parser = new XmlSaxParserImpl();
 
     /**
      * Holds the constructor handler.
@@ -84,15 +84,10 @@ public class ObjectReader implements Reusable {
         try {
             _parser.parse(reader);
             return _handler.getRoot();
-        } catch (SAXParseException e1) {
-            String message;
-            message = e1.getMessage() + " (" + "line " + e1.getLineNumber()
-                    + ", column " + e1.getColumnNumber() + ")";
-            throw new XmlException(message);
-        } catch (SAXException e2) {
+        } catch (SAXException e1) {
+            throw new XmlException(e1);
+        } catch (IOException e2) {
             throw new XmlException(e2);
-        } catch (IOException e3) {
-            throw new XmlException(e3);
         }
     }
 
@@ -111,15 +106,10 @@ public class ObjectReader implements Reusable {
         try {
             _parser.parse(in);
             return _handler.getRoot();
-        } catch (SAXParseException e1) {
-            String message;
-            message = e1.getMessage() + " (" + "line " + e1.getLineNumber()
-                    + ", column " + e1.getColumnNumber() + ")";
-            throw new XmlException(message);
-        } catch (SAXException e2) {
+        } catch (SAXException e1) {
+            throw new XmlException(e1);
+        } catch (IOException e2) {
             throw new XmlException(e2);
-        } catch (IOException e3) {
-            throw new XmlException(e3);
         }
     }
 
@@ -137,15 +127,10 @@ public class ObjectReader implements Reusable {
         try {
             _parser.parse(byteBuffer);
             return _handler.getRoot();
-        } catch (SAXParseException e1) {
-            String message;
-            message = e1.getMessage() + " (" + "line " + e1.getLineNumber()
-                    + ", column " + e1.getColumnNumber() + ")";
-            throw new XmlException(message);
-        } catch (SAXException e2) {
+        } catch (SAXException e1) {
+            throw new XmlException(e1);
+        } catch (IOException e2) {
             throw new XmlException(e2);
-        } catch (IOException e3) {
-            throw new XmlException(e3);
         }
     }
 

@@ -13,32 +13,32 @@ import java.io.IOException;
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
 import j2me.io.Serializable;
-import j2me.util.Collection;
-import j2me.util.Iterator;
 import j2me.util.Set;
 import javolution.lang.Reusable;
 
 /**
- * <p> This class represents a <code>Set</code> backed by a {@link FastMap}
- *     instance.</p>
+ * <p> This class represents a set collection backed by a {@link FastMap}.</p>
  * 
  * <p> Instances of this class can directly be allocated from the current
  *     thread stack using the {@link #newInstance} factory method
  *     (e.g. for throw-away set to avoid the creation cost).</p>  
  * 
- * <p> {@link FastSet} has a predictable iteration order, which is the order
- *     in which the element were added to the set. The set iterator
- *     is also real-time compliant (allocated on the stack when running 
- *     in a pool context).</p>
- * 
+ * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
+ *     thread-safe fast iterations without using iterators. For example:<pre>
+ *     for (FastSet.Record r = set.headRecord(), end = set.tailRecord(); (r = r.getNextRecord()) != end;) {
+ *         Object value = set.valueOf(r);    
+ *     }</pre></p>
+ *     
  * <p> {@link FastSet} supports concurrent read without synchronization
- *     if the set elements are never removed. Structural modifications
- *     (element being added/removed) should always be synchronized.</p>
+ *     if the set elements are never removed. The structural modifications
+ *     themselves (value being added/removed) should always be synchronized.
+ *     </p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 20, 2005
+ * @version 3.2, April 2, 2005
  */
-public class FastSet extends FastCollection implements Set, Reusable, Serializable {
+public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/, Reusable,
+        Serializable {
 
     /**
      * Holds the set factory.
@@ -53,32 +53,48 @@ public class FastSet extends FastCollection implements Set, Reusable, Serializab
             ((FastSet) obj).reset();
         }
     };
-    
+
     /**
      * Holds the backing map.
      */
-    private transient FastMap _map;
+    private transient FastMap/*<E,E>*/ _map;
 
     /**
-     * Holds the capacity.
-     */
-    private transient int _capacity;
-
-    /**
-     * Default constructor (default capacity of 16 elements).
+     * Creates a fast set of small initial capacity.
      */
     public FastSet() {
-        this(16);
+        this(new FastMap/*<E,E>*/());
     }
 
     /**
-     * Creates a fast set of specified capacity.
+     * Creates a fast set of specified initial capacity.
+     * Unless the set size exceeds the specified capacity no memory 
+     * allocation is ever performed.
      * 
-     * @param capacity the minimum length of the internal hash table.
+     * @param capacity the initial capacity.
      */
     public FastSet(int capacity) {
-        _capacity = capacity;
-        _map = new FastMap(capacity);
+        this(new FastMap/*<E,E>*/(capacity));
+    }
+
+    /**
+     * Creates a fast set containing the specified elements, in the order they
+     * are returned by the set's iterator.
+     *
+     * @param elements the elements to be placed into this fast set.
+     */
+    public FastSet(Set/*<? extends E>*/ elements) {
+        this(new FastMap/*<E,E>*/(elements.size()));
+        addAll(elements);
+    }
+
+    /**
+     * Creates a fast set implemented using the specified map.
+     * 
+     * @param map the backing map.
+     */
+    private FastSet(FastMap/*<E,E>*/ map) {
+        _map = map;
     }
 
     /**
@@ -96,63 +112,43 @@ public class FastSet extends FastCollection implements Set, Reusable, Serializab
      *
      * @return the number of elements in this set (its cardinality).
      */
-    public int size() {
+    public final int size() {
         return _map.size();
     }
 
     /**
-     * Returns an iterator over the elements in this set
-     * (allocated from the "stack" when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
-     * The elements are returned in is the order in which they were inserted 
-     * into the map.
+     * Adds the specified value to this set if it is not already present.
      *
-     * @return an iterator over the elements in this set.
-     */
-    public Iterator iterator() {
-        return _map.keySet().iterator();
-    }
-
-    /**
-     * Adds the specified element to this set if it is not already present.
-     *
-     * @param o element to be added to this set.
+     * @param value the value to be added to this set.
      * @return <code>true</code> if this set did not already contain the 
      *         specified element.
      */
-    public boolean add(Object o) {
-        return _map.put(o, o) == null;
+    public final boolean add(Object/*E*/ value) {
+        return _map.put(value, value) == null;
     }
 
-    /**
-     * Removes all of the elements from this set.
-     */
-    public void clear() {
+    // Overrides (optimization).
+    public final void clear() {
         _map.clear();
     }
 
-    // Implements abstract method.    
-    public final Iterator fastIterator() {
-        return _map.fastKeyIterator();
-    }
-        
     // Overrides (optimization).
-    public boolean contains(Object o) {
+    public final boolean contains(Object o) {
         return _map.containsKey(o);
     }
 
     // Overrides (optimization).
-    public boolean remove(Object o) {
+    public final boolean remove(Object o) {
         return _map.remove(o) == o;
     }
 
     // Overrides.
-    public Collection setElementComparator(FastComparator comparator) {
-        super.setElementComparator(comparator);
+    public final FastCollection/*<E>*/ setValueComparator(FastComparator comparator) {
+        super.setValueComparator(comparator);
         _map.setKeyComparator(comparator);
         return this;
     }
-    
+
     // Implements Reusable.
     public void reset() {
         _map.reset();
@@ -161,25 +157,43 @@ public class FastSet extends FastCollection implements Set, Reusable, Serializab
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
-        stream.defaultReadObject();
-        final int capacity = stream.readInt();
-        _map = new FastMap(capacity);
-        _map.setKeyComparator(this.getElementComparator());
         final int size = stream.readInt();
+        _map = new FastMap/*<E,E>*/(size);
+        setValueComparator((FastComparator) stream.readObject());
         for (int i = size; i-- != 0;) {
-            add(stream.readObject());
+            add((Object/*E*/)stream.readObject());
         }
     }
 
     // Requires special handling during serialization process.
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.defaultWriteObject();
-        stream.writeInt(_capacity);
         stream.writeInt(size());
-        Iterator i = iterator();
-        for (int j = size(); j-- != 0;) {
-            stream.writeObject(i.next());
+        stream.writeObject(getValueComparator());
+        for (FastMap.Entry/*<E,E>*/ e = _map.headEntry(), end = _map.tailEntry(); 
+              (e = e.getNextEntry()) != end;) {
+            stream.writeObject(e.getKey());
         }
     }
 
+    // Implements FastCollection abstract method.
+    public final Record/*<FastMap.Entry<E,E>>*/ headRecord() {
+        return _map.headEntry();
+    }
+
+    // Implements FastCollection abstract method.
+    public final Record/*<FastMap.Entry<E,E>>*/ tailRecord() {
+        return _map.tailEntry();
+    }
+
+    // Implements FastCollection abstract method.
+    public final Object/*E*/ valueOf(Record record) {
+        return ((FastMap.Entry/*<E,E>*/) record).getKey();
+    }
+
+    // Implements FastCollection abstract method.
+    public final void delete(Record record) {
+        _map.removeEntry((FastMap.Entry/*<E,E>*/) record);
+    }
+
+    private static final long serialVersionUID = 3257563997099275574L;
 }

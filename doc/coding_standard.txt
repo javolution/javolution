@@ -3,10 +3,28 @@
 Addendum to Sun(tm) Coding Standard (http://java.sun.com/docs/codeconv/)
 
 9. Naming Convention:
+
    - Private variables members start with underscore (e.g. _value).
-   - Static variables name start with uppercase (e.g. jScience.IsInitialized, Duration.ZERO).
+   
+   - Static variables name start with uppercase (e.g. JScience.IsInitialized, Duration.ZERO).
+   
    - Variable name for arrays are plurial (e.g. Stack[] _stacks, Matrix.FACTORIES).
    
 10. Programming Practices:
+
    - Class prefixes for all static method invocations and static members (e.g. Factory.newId(), Factory.Id).
+   
    - Consistent naming for factory methods: "valueOf", "newInstance" or "getInstance".
+   
+   - null arguments are disallowed unless explicitly mentioned as possible values:
+   
+      * 
+      * @param obj the object to search for or <code>null</code> 
+      *
+   
+   - If/else block statements enclosed with braces except for escape statements:
+     
+         if (!precondition)                if (obj == null) 
+             throw new Exception();            return null;
+         doSomething();                    doSomething();
+         

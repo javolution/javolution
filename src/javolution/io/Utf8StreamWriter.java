@@ -7,6 +7,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
+
 import j2me.lang.CharSequence;
 import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
@@ -46,7 +47,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
     /**
      * Holds the bytes' buffer.
      */
-    private final byte[] _bytes = new byte[4096];
+    private final byte[] _bytes;
 
     /**
      * Holds the bytes buffer index.
@@ -54,9 +55,19 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
     private int _index;
 
     /**
-     * Default constructor.
+     * Creates a UTF-8 writer having a byte buffer of moderate capacity (2048).
      */
     public Utf8StreamWriter() {
+        _bytes = new byte[2048];
+    }
+
+    /**
+     * Creates a UTF-8 writer having a byte buffer of specified capacity.
+     * 
+     * @param capacity the capacity of the byte buffer.
+     */
+    public Utf8StreamWriter(int capacity) {
+        _bytes = new byte[capacity];
     }
 
     /**
@@ -89,15 +100,16 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      */
     public void write(char c) throws IOException {
         if ((c < 0xd800) || (c > 0xdfff)) {
-            write((int)c);
+            write((int) c);
         } else if (c < 0xdc00) { // High surrogate.
             _highSurrogate = c;
         } else { // Low surrogate.
-            int code = ((_highSurrogate - 0xd800) << 10) +
-                (c - 0xdc00) + 0x10000;
+            int code = ((_highSurrogate - 0xd800) << 10) + (c - 0xdc00)
+                    + 0x10000;
             write(code);
         }
     }
+
     private char _highSurrogate;
 
     /**
@@ -116,6 +128,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
             write2(code);
         }
     }
+
     private void write2(int c) throws IOException {
         if ((c & 0xfffff800) == 0) { // 2 bytes.
             _bytes[_index] = (byte) (0xc0 | (c >> 6));
@@ -203,8 +216,8 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
                 flushBuffer();
             }
         } else {
-            throw new CharConversionException(
-                "Illegal character U+" + Integer.toHexString(c));
+            throw new CharConversionException("Illegal character U+"
+                    + Integer.toHexString(c));
         }
     }
 
@@ -218,7 +231,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      */
     public void write(char cbuf[], int off, int len) throws IOException {
         final int off_plus_len = off + len;
-        for (int i=off; i < off_plus_len;) {
+        for (int i = off; i < off_plus_len;) {
             char c = cbuf[i++];
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -241,7 +254,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      */
     public void write(String str, int off, int len) throws IOException {
         final int off_plus_len = off + len;
-        for (int i=off; i < off_plus_len;) {
+        for (int i = off; i < off_plus_len;) {
             char c = str.charAt(i++);
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -262,7 +275,7 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      */
     public void write(CharSequence csq) throws IOException {
         final int length = csq.length();
-        for (int i=0; i < length; ) {
+        for (int i = 0; i < length;) {
             char c = csq.charAt(i++);
             if (c < 0x80) {
                 _bytes[_index] = (byte) c;
@@ -308,12 +321,10 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
      * @throws IOException if an I/O error occurs
      */
     private void flushBuffer() throws IOException {
-        if (_outputStream != null) {
-            _outputStream.write(_bytes, 0, _index);
-            _index = 0;
-        } else {
+        if (_outputStream == null)
             throw new IOException("Stream closed");
-        }
+        _outputStream.write(_bytes, 0, _index);
+        _index = 0;
     }
 
     // Implements Reusable.

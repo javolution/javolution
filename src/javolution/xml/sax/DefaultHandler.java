@@ -19,7 +19,7 @@ import org.xml.sax.SAXParseException;
  *
  * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.5, May 26, 2003
+ * @version 3.1, March 11, 2005
  */
 public class DefaultHandler implements ContentHandler, ErrorHandler {
 

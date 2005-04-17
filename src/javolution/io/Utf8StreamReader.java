@@ -64,12 +64,22 @@ public final class Utf8StreamReader extends Reader implements Reusable {
     /**
      * Holds the bytes buffer.
      */
-    private final byte[] _bytes = new byte[4096];
+    private final byte[] _bytes;
 
     /**
-     * Default constructor.
+     * Creates a UTF-8 reader having a byte buffer of moderate capacity (2048).
      */
     public Utf8StreamReader() {
+        _bytes = new byte[2048];
+    }
+
+    /**
+     * Creates a UTF-8 reader having a byte buffer of specified capacity.
+     * 
+     * @param capacity the capacity of the byte buffer.
+     */
+    public Utf8StreamReader(int capacity) {
+        _bytes = new byte[capacity];
     }
 
     /**
@@ -100,11 +110,9 @@ public final class Utf8StreamReader extends Reader implements Reusable {
      * @throws  IOException if an I/O error occurs.
      */
     public boolean ready() throws IOException {
-        if (_inputStream != null) {
-            return ((_end - _start) > 0) || (_inputStream.available() != 0);
-        } else {
+        if (_inputStream == null)
             throw new IOException("Stream closed");
-        }
+        return ((_end - _start) > 0) || (_inputStream.available() != 0);
     }
 
     /**

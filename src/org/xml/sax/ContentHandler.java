@@ -2,7 +2,7 @@
 // http://www.saxproject.org
 // Written by David Megginson
 // NO WARRANTY!  This class is in the public domain.
-// $Id: ContentHandler.java,v 1.3 2005-02-22 12:45:13 dautelle Exp $
+// $Id: ContentHandler.java,v 1.4 2005-04-17 05:18:06 dautelle Exp $
 
 package org.xml.sax;
 
@@ -252,7 +252,7 @@ public interface ContentHandler
      *            wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
-     * @see org.xml.sax.helpers.AttributesImpl
+     * @see org.xml.sax.helpers.SaxAttributes
      */
     public void startElement (String uri, String localName,
 			      String qName, Attributes atts)

@@ -34,24 +34,26 @@ final class Perf_Realtime extends Javolution implements Runnable {
         println("");
 
         println("-- Heap versus Stack Allocation (Pool-Context) --");
-        print("Object heap creation: ");
+        print("Small standard object heap creation: ");
         startTime();
         for (int i = 0; i < 10000; i++) {
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = new DummyObject();
+                _objects[j++] = new ComplexStandard(i, j);
             }
         }
-        endTime(10000 * _objects.length);
-        print("Object stack creation: ");
+        println(endTime(10000 * _objects.length));
+        
+        print("Small real-time object stack creation: ");
         startTime();
         for (int i = 0; i < 10000; i++) {
             PoolContext.enter();
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = DummyObject.newInstance();
+                _objects[j++] = ComplexRealtime.valueOf(i, j);
             }
             PoolContext.exit();
         }
-        endTime(10000 * _objects.length);
+        println(endTime(10000 * _objects.length));
+        
         print("char[128] heap creation: ");
         startTime();
         for (int i = 0; i < 1000; i++) {
@@ -59,7 +61,8 @@ final class Perf_Realtime extends Javolution implements Runnable {
                 _objects[j++] = new char[128];
             }
         }
-        endTime(1000 * _objects.length);
+        println(endTime(1000 * _objects.length));
+        
         print("char[128] stack creation: ");
         startTime();
         for (int i = 0; i < 1000; i++) {
@@ -69,7 +72,8 @@ final class Perf_Realtime extends Javolution implements Runnable {
             }
             PoolContext.exit();
         }
-        endTime(1000 * _objects.length);
+        println(endTime(1000 * _objects.length));
+        
         print("char[256] heap creation: ");
         startTime();
         for (int i = 0; i < 1000; i++) {
@@ -77,7 +81,8 @@ final class Perf_Realtime extends Javolution implements Runnable {
                 _objects[j++] = new char[256];
             }
         }
-        endTime(1000 * _objects.length);
+        println(endTime(1000 * _objects.length));
+        
         print("char[256] stack creation: ");
         startTime();
         for (int i = 0; i < 1000; i++) {
@@ -87,22 +92,31 @@ final class Perf_Realtime extends Javolution implements Runnable {
             }
             PoolContext.exit();
         }
-        endTime(1000 * _objects.length);
+        println(endTime(1000 * _objects.length));
         println("");
     }
 
-    private static final class DummyObject extends RealtimeObject {
+    private static final class ComplexStandard  {
+    	double _real;
+    	double _imag;
+    	public ComplexStandard(double real, double imag) {
+    		_real = real;
+    		_imag = imag;
+    	}
+    }
+   private static final class ComplexRealtime extends RealtimeObject {
+    	double _real;
+    	double _imag;
         static final Factory FACTORY = new Factory() {
             public Object create() {
-                return new DummyObject();
+                return new ComplexRealtime();
             }
         };
-
-        public DummyObject() { // Heap.
-        }
-
-        public static DummyObject newInstance() { // Stack.
-            return (DummyObject) FACTORY.object();
+        public static ComplexRealtime valueOf(double real, double imag) { 
+        	ComplexRealtime cr = (ComplexRealtime) FACTORY.object();
+        	cr._real = real;
+        	cr._imag = imag;
+        	return cr;
         }
     }
 

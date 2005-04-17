@@ -18,15 +18,15 @@ import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.List;
 import j2me.util.ListIterator;
-import j2me.util.NoSuchElementException;
-
+import java.util.NoSuchElementException;
 import javolution.lang.Reusable;
 import javolution.realtime.ObjectFactory;
 import javolution.realtime.Realtime;
 
 /**
- * <p> This class represents a linked-list with real-time behavior
- *     (no copy/resize ever performed).</p>
+ * <p> This class represents a linked list with real-time behavior; 
+ *     smooth capacity increase and no memory allocation as long as the
+ *     list size does not exceed its capacity.</p>
  * 
  * <p> All of the operations perform as could be expected for a doubly-linked
  *     list ({@link #addLast insertion}/{@link #removeLast() deletion}
@@ -36,29 +36,25 @@ import javolution.realtime.Realtime;
  *     Random access operations can be significantly accelerated by 
  *     {@link #subList splitting} the list into smaller ones.</p> 
  * 
- * <p> {@link FastList} instances have (non thread-safe) {@link #fastIterator}
- *     and support custom {@link #setElementComparator element comparators}.
- *     </p>
+ * <p> {@link FastList} (as for any {@link FastCollection} sub-class) supports
+ *     thread-safe, fast iterations without using iterators.<pre>
+ *     FastList&lt;String&gt; list = new FastList&lt;String&gt;();
+ *     for (FastList.Node&lt;String&gt; n = list.headNode(), end = list.tailNode(); (n = n.getNextNode()) != end;) {
+ *         String value = n.getValue(); // No typecast necessary.    
+ *     }</pre></p>
  *     
- * <p> To be fully {@link Reusable reusable}, {@link FastList} maintains an 
- *     internal pool of <code>Node</code> objects. When a node is removed
- *     from the list, it is automatically restored to the pool.</p>
- *     
- * <p> {@link FastList} are fully {@link Reusable} and can also be part of 
- *     higher level {@link Reusable} components (the list maximum size 
- *     determinates the maximum number of node allocations performed).</p>
- * 
- * <p> This implementation is not synchronized. Multiple threads accessing
- *     or modifying the collection must be synchronized externally.</p>
+ * <p> {@link FastList} are fully {@link Reusable reusable}, they maintain 
+ *     internal pools of {@link Node nodes} objects. When a node is removed
+ *     from its list, it is automatically restored to its pool.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.2, April 2, 2005
  */
-public class FastList extends FastCollection implements Reusable, List,
-        Serializable {
+public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
+        List/*<E>*/, Serializable {
 
     /**
-     * Holds the list factory.
+     * Holds the main list factory.
      */
     private static final Factory LIST_FACTORY = new Factory() {
 
@@ -72,32 +68,19 @@ public class FastList extends FastCollection implements Reusable, List,
     };
 
     /**
-     * Holds the sub-list factory.
-     */
-    private static final Factory SUBLIST_FACTORY = new Factory() {
-
-        public Object create() {
-            return new FastList(null);
-        }
-
-        // No need to cleanup, 
-        // external objects references cleared by parent list.
-    };
-
-    /**
      * Holds the parent list (if any).
      */
-    private transient FastList _parent;
+    private transient FastList/*<E>*/_parent;
 
     /**
      * Holds the node marking the beginning of the list (not included).
      */
-    private transient Node _head;
+    private transient Node/*<E>*/_head = new Node();
 
     /**
      * Holds the node marking the end of the list (not included).
      */
-    private transient Node _tail;
+    private transient Node/*<E>*/_tail = new Node();
 
     /**
      * Holds the current size.
@@ -105,27 +88,52 @@ public class FastList extends FastCollection implements Reusable, List,
     private transient int _size;
 
     /**
-     * Creates a {@link FastList} on the heap.
+     * Creates a fast list of small initial capacity.
      */
     public FastList() {
-        _head = new Node();
-        _tail = new Node();
+        this(0);
+    }
+
+    /**
+     * Creates a fast list of specified initial capacity.
+     * Unless the list size exceeds the specified capacity no memory 
+     * allocation is ever performed.
+     * 
+     * @param capacity the initial capacity.
+     */
+    public FastList(int capacity) {
         _head._next = _tail;
         _tail._previous = _head;
-        _fastIterator = new FastListIterator();
+        Node/*<E>*/previous = _tail;
+        for (int i = 0; i < capacity; i += 4) { //Four nodes at a time.
+            Node/*<E>*/newNode = (Node/*<E>*/) Node.FACTORY.newObject();
+            newNode._previous = previous;
+            previous._next = newNode;
+            previous = newNode._next._next._next;
+        }
+    }
+
+    /**
+     * Creates a fast list containing the specified values, in the order they
+     * are returned by the collection's iterator.
+     *
+     * @param values the values to be placed into this fast list.
+     */
+    public FastList(Collection/*<? extends E>*/values) {
+        this(values.size());
+        addAll(values);
     }
 
     /**
      * Constructor for sub-lists.
      * 
-     * @param parent list.
+     * @param isSublist indicates if sub-list (must be true).
      */
-    private FastList(FastList parent) {
-        _fastIterator = new FastListIterator();
+    private FastList(boolean isSublist) {
     }
 
     /**
-     * Returns a {@link FastList} allocated from the stack when executing in a
+     * Returns a fast list allocated from the stack when executing in a
      * {@link javolution.realtime.PoolContext PoolContext}).
      *
      * @return a new, preallocated or recycled list instance.
@@ -135,21 +143,21 @@ public class FastList extends FastCollection implements Reusable, List,
     }
 
     /**
-     * Appends the specified element to the end of this list
+     * Appends the specified value to the end of this list
      * (equivalent to {@link #addLast}).
      *
-     * @param element the element to be appended to this list.
+     * @param value the value to be appended to this list.
      * @return <code>true</code> (as per the general contract of the
      *         <code>Collection.add</code> method).
      */
-    public boolean add(Object element) {
-        addLast(element);
+    public final boolean add(Object/*E*/value) {
+        addLast(value);
         return true;
     }
 
     /**
      * Compares the specified object with this list for equality.  Returns
-     * <code>true</code> if and only if both lists contain the same elements
+     * <code>true</code> if and only if both lists contain the same values
      * in the same order.
      *
      * @param obj the object to be compared for equality with this list.
@@ -157,47 +165,40 @@ public class FastList extends FastCollection implements Reusable, List,
      *         <code>false</code> otherwise.
      */
     public boolean equals(Object obj) {
-        final FastComparator comp = this.getElementComparator();
-        if (obj == this) {
+        final FastComparator comp = this.getValueComparator();
+        if (obj == this)
             return true;
-        } else if (obj instanceof FastList) {
-            FastList list = (FastList) obj;
-            if (this._size == list._size) {
-                Node n1 = this._head;
-                Node n2 = list._head;
-                for (int i = _size; i-- != 0;) {
-                    n1 = n1._next;
-                    Object o1 = n1._element;
-                    n2 = n2._next;
-                    Object o2 = n2._element;
-                    if (!comp.areEqual(o1, o2)) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
+        if (obj instanceof FastList)
+            return equals((FastList) obj);
+        if (obj instanceof List) {
+            List/*<?>*/list = (List) obj;
+            if (_size != list.size())
                 return false;
+            Node n1 = this._head;
+            Iterator/*<?>*/i2 = list.iterator();
+            for (int i = _size; i-- != 0;) {
+                n1 = n1._next;
+                Object o1 = n1._value;
+                Object o2 = i2.next();
+                if (!comp.areEqual(o1, o2))
+                    return false;
             }
-        } else if (obj instanceof List) {
-            List list = (List) obj;
-            if (this._size == list.size()) {
-                Node n1 = this._head;
-                Iterator i2 = list.iterator();
-                for (int i = _size; i-- != 0;) {
-                    n1 = n1._next;
-                    Object o1 = n1._element;
-                    Object o2 = i2.next();
-                    if (!comp.areEqual(o1, o2)) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
-                return false;
-            }
-        } else { // Not a List.
-            return false;
+            return true;
         }
+        return false;
+    }
+
+    private boolean equals(FastList that) {
+        if (this._size != that._size)
+            return false;
+        final FastComparator comp = this.getValueComparator();
+        for (Node n1 = _head._next, n2 = that._head._next, end = _tail; n1 != end;) {
+            if (!comp.areEqual(n1._value, n2._value))
+                return false;
+            n1 = n1._next;
+            n2 = n2._next;
+        }
+        return true;
     }
 
     /**
@@ -208,210 +209,193 @@ public class FastList extends FastCollection implements Reusable, List,
      *  Iterator i = list.iterator();
      *  while (i.hasNext()) {
      *      Object obj = i.next();
-     *      h = 31 * h +  this.getElementComparator().hashCodeOf(obj);
+     *      h = 31 * h +  this.getValueComparator().hashCodeOf(obj);
      *  }
      * </pre>
      *
      * @return the hash code value for this list.
      */
     public int hashCode() {
-        final FastComparator comp = this.getElementComparator();
+        final FastComparator comp = this.getValueComparator();
         int h = 1;
-        Node node = _head;
-        for (int i = _size; i-- != 0;) {
-            node = node._next;
-            Object element = node._element;
-            h = 31 * h + comp.hashCodeOf(element);
+        for (Node n = _head, end = _tail; (n = n._next) != end;) {
+            h = 31 * h + comp.hashCodeOf(n._value);
         }
         return h;
     }
 
     /**
-     * Returns the element at the specified position in this list.
+     * Returns the value at the specified position in this list.
      *
-     * @param index index of element to return.
-     * @return the element at the specified position in this list.
-     * @throws IndexOutOfBoundsException if the index is out of range (index
-     *        &lt; 0 || index &gt;= size()).
+     * @param index index of value to return.
+     * @return the value at the specified position in this list.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index >= size())</code>
      */
-    public Object get(int index) {
-        if ((index >= 0) && (index < _size)) {
-            return nodeAt(index)._element;
-        } else {
-            throw new IndexOutOfBoundsException("index: " + index
-                    + " for list of size: " + _size);
-        }
+    public final Object/*E*/get(int index) {
+        if ((index < 0) || (index >= _size))
+            throw new IndexOutOfBoundsException("index: " + index);
+        return nodeAt(index)._value;
     }
 
     /**
-     * Replaces the element at the specified position in this list with the
-     * specified element.
+     * Replaces the value at the specified position in this list with the
+     * specified value.
      *
-     * @param index index of element to replace.
-     * @param element element to be stored at the specified position.
-     * @return the element previously at the specified position.
-     * @throws IndexOutOfBoundsException if the index is out of range
-     *        (index &lt; 0 || index &gt;= size()).
+     * @param index index of value to replace.
+     * @param value value to be stored at the specified position.
+     * @return the value previously at the specified position.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index >= size())</code>
      */
-    public Object set(int index, Object element) {
-        if ((index >= 0) && (index < _size)) {
-            Node node = nodeAt(index);
-            Object previousElement = node._element;
-            node._element = element;
-            return previousElement;
-        } else {
-            throw new IndexOutOfBoundsException("index: " + index
-                    + " for list of size: " + _size);
-        }
+    public final Object/*E*/set(int index, Object/*E*/value) {
+        if ((index < 0) || (index >= _size))
+            throw new IndexOutOfBoundsException("index: " + index);
+        final Node/*<E>*/node = nodeAt(index);
+        Object/*E*/previousValue = node._value;
+        node._value = value;
+        return previousValue;
     }
 
     /**
-     * Inserts the specified element at the specified position in this list.
-     * Shifts the element currently at that position
-     * (if any) and any subsequent elements to the right (adds one to their
+     * Inserts the specified value at the specified position in this list.
+     * Shifts the value currently at that position
+     * (if any) and any subsequent values to the right (adds one to their
      * indices).
      *
-     * @param index index at which the specified element is to be inserted.
-     * @param element element to be inserted.
-     * @throws IndexOutOfBoundsException if the index is out of range
-     *        (index &lt; 0 || index &gt; size()).
+     * @param index index at which the specified value is to be inserted.
+     * @param value value to be inserted.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index > size())</code>
      */
-    public void add(int index, Object element) {
-        if ((index >= 0) && (index <= _size)) {
-            addBefore(nodeAt(index), element);
-        } else {
-            throw new IndexOutOfBoundsException("index: " + index
-                    + " for list of size: " + _size);
-        }
+    public final void add(int index, Object/*E*/value) {
+        if ((index < 0) || (index > _size))
+            throw new IndexOutOfBoundsException("index: " + index);
+        addBefore(nodeAt(index), value);
     }
 
     /**
-     * Inserts all of the elements in the specified collection into this
-     * list at the specified position. Shifts the element currently at that
-     * position (if any) and any subsequent elements to the right 
+     * Inserts all of the values in the specified collection into this
+     * list at the specified position. Shifts the value currently at that
+     * position (if any) and any subsequent values to the right 
      * (increases their indices). 
      *
-     * @param index index at which to insert first element from the specified
+     * @param index index at which to insert first value from the specified
      *        collection.
-     * @param c elements to be inserted into this list.
+     * @param values the values to be inserted into this list.
      * @return <code>true</code> if this list changed as a result of the call;
      *         <code>false</code> otherwise.
-     * @throws IndexOutOfBoundsException if the index is out of range (index
-     *        &lt; 0 || index &gt; size()).
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index > size())</code>
      */
-    public boolean addAll(int index, Collection c) {
-        List subList = this.subList(0, index);
-        boolean modified = false;
-        Iterator i = c.iterator();
-        while (i.hasNext()) {
-            subList.add(i.next());
-            modified = true;
+    public final boolean addAll(int index, Collection/*<? extends E>*/values) {
+        if ((index < 0) || (index > _size))
+            throw new IndexOutOfBoundsException("index: " + index);
+        final Node indexNode = nodeAt(index);
+        if (values instanceof FastList/*<?>*/) {
+            FastList/*<? extends E>*/list = (FastList/*<? extends E>*/) values;
+            for (Node/*<? extends E>*/n = list._head, end = list._tail; (n = n._next) != end;) {
+                addBefore(indexNode, n._value);
+            }
+        } else {
+            Iterator/*<? extends E>*/i = values.iterator();
+            while (i.hasNext()) {
+                addBefore(indexNode, i.next());
+            }
         }
-        return modified;
+        return values.size() != 0;
     }
 
     /**
-     * Removes the element at the specified position in this list.
-     * Shifts any subsequent elements to the left (subtracts one
-     * from their indices). Returns the element that was removed from the
+     * Removes the value at the specified position in this list.
+     * Shifts any subsequent values to the left (subtracts one
+     * from their indices). Returns the value that was removed from the
      * list.
      *
-     * @param index the index of the element to removed.
-     * @return the element previously at the specified position.
-     * @throws IndexOutOfBoundsException if the index is out of range (index
-     *            &lt; 0 || index &gt;= size()).
+     * @param index the index of the value to removed.
+     * @return the value previously at the specified position.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index >= size())</code>
      */
-    public Object remove(int index) {
-        if ((index >= 0) && (index < _size)) {
-            Node node = nodeAt(index);
-            Object previousElement = node._element;
-            removeNode(node);
-            return previousElement;
-        } else {
-            throw new IndexOutOfBoundsException("index: " + index
-                    + " for list of size: " + _size);
-        }
+    public final Object/*E*/remove(int index) {
+        if ((index < 0) || (index >= _size))
+            throw new IndexOutOfBoundsException("index: " + index);
+        final Node/*<E>*/node = nodeAt(index);
+        Object/*E*/previousValue = node._value;
+        delete(node);
+        return previousValue;
     }
 
     /**
      * Returns the index in this list of the first occurrence of the specified
-     * element, or -1 if this list does not contain this element.
+     * value, or -1 if this list does not contain this value.
      *
-     * @param element the element to search for.
+     * @param value the value to search for.
      * @return the index in this list of the first occurrence of the specified
-     *         element, or -1 if this list does not contain this element.
+     *         value, or -1 if this list does not contain this value.
      */
-    public int indexOf(Object element) {
-        final FastComparator comp = this.getElementComparator();
-        Node node = _head;
-        for (int i = _size; i-- != 0;) {
-            node = node._next;
-            if (comp.areEqual(element, node._element)) {
-                return i;
-            }
+    public final int indexOf(Object value) {
+        final FastComparator comp = this.getValueComparator();
+        int index = 0;
+        for (Node n = _head, end = _tail; (n = n._next) != end; index++) {
+            if (comp.areEqual(value, n._value))
+                return index;
         }
         return -1;
     }
 
     /**
      * Returns the index in this list of the last occurrence of the specified
-     * element, or -1 if this list does not contain this element.
+     * value, or -1 if this list does not contain this value.
      *
-     * @param element the element to search for.
+     * @param value the value to search for.
      * @return the index in this list of the last occurrence of the specified
-     *         element, or -1 if this list does not contain this element.
+     *         value, or -1 if this list does not contain this value.
      */
-    public int lastIndexOf(Object element) {
-        final FastComparator comp = this.getElementComparator();
-        Node node = _tail;
-        for (int i = _size; i-- != 0;) {
-            node = node._previous;
-            if (comp.areEqual(element, node._element)) {
-                return i;
+    public final int lastIndexOf(Object value) {
+        final FastComparator comp = this.getValueComparator();
+        int index = size() - 1;
+        for (Node n = _tail, end = _head; (n = n._previous) != end; index--) {
+            if (comp.areEqual(value, n._value)) {
+                return index;
             }
         }
         return -1;
     }
 
     /**
-     * Returns a list iterator over the elements in this list in proper 
-     * sequence (allocated from the "stack" when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * Returns a list iterator over the values in this list in proper 
+     * sequence.
      *
-     * @return a list iterator of the elements in this list (in proper
+     * @return a list iterator of the values in this list (in proper
      *         sequence).
+     * @deprecated Applications should use direct {@link Node} iterations
+     *             (faster, thread-safe and no object creation).
      */
-    public ListIterator listIterator() {
-        FastListIterator i = (FastListIterator) FastListIterator.FACTORY
-                .object();
-        i._list = this;
-        i._nextNode = _head._next;
-        i._currentNode = null;
-        i._nextIndex = 0;
-        i._length = this._size;
-        return i;
+    public final ListIterator/*<E>*/listIterator() {
+        return listIterator(0);
     }
 
     /**
-     * Returns a list iterator of the elements in this list (in proper
-     * sequence), starting at the specified position in this list
-     * (allocated from the "stack" when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
-     * The specified index indicates the first element that would be returned by
+     * Returns a list iterator of the values in this list (in proper sequence).
+     * The specified index indicates the first value that would be returned by
      * an initial call to the <code>next</code> method.  An initial call to
-     * the <code>previous</code> method would return the element with the
+     * the <code>previous</code> method would return the value with the
      * specified index minus one.
      *
-     * @param index index of first element to be returned from the
+     * @param index index of first value to be returned from the
      *        list iterator (by a call to the <code>next</code> method).
-     * @return a list iterator of the elements in this list
+     * @return a list iterator of the values in this list
      *         starting at the specified position in this list.
      * @throws IndexOutOfBoundsException if the index is out of range (index
      *         &lt; 0 || index &gt; size()).
+     * @deprecated Applications should use direct {@link Node} iterations
+     *             (faster, thread-safe and no object creation).
      */
-    public ListIterator listIterator(int index) {
-        if ((index >= 0) && (index < _size)) {
-            FastListIterator i = (FastListIterator) listIterator();
+    public final ListIterator/*<E>*/listIterator(int index) {
+        if ((index >= 0) && (index <= _size)) {
+            FastListIterator i = new FastListIterator();
+            i._length = this._size;
             i._nextNode = nodeAt(index);
             i._nextIndex = index;
             return i;
@@ -433,7 +417,7 @@ public class FastList extends FastCollection implements Reusable, List,
      * the sort that commonly exist for arrays). Any operation that expects
      * a list can be used as a range operation by passing a subList view
      * instead of a whole list.  For example, the following idiom
-     * removes a range of elements from a list:
+     * removes a range of values from a list:
      * <pre>
      *      list.subList(from, to).clear();
      * </pre>
@@ -454,109 +438,222 @@ public class FastList extends FastCollection implements Reusable, List,
      * @throws IndexOutOfBoundsException if <code>(fromIndex &lt; 0 ||
      *          toIndex &gt; size || fromIndex &gt; toIndex)</code>
      */
-    public List subList(int fromIndex, int toIndex) {
-        if ((fromIndex >= 0) && (toIndex <= _size) && (fromIndex <= toIndex)) {
-            FastList subList = (FastList) SUBLIST_FACTORY.object();
-            subList._parent = this;
-            subList._head = nodeAt(fromIndex)._previous;
-            subList._tail = nodeAt(toIndex);
-            subList._size = toIndex - fromIndex;
-            return subList;
-        } else {
+    public final List/*<E>*/subList(int fromIndex, int toIndex) {
+        if ((fromIndex < 0) || (toIndex > _size) || (fromIndex > toIndex))
             throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
                     + ", toIndex: " + toIndex + " for list of size: " + _size);
-        }
+        FastList/*<E>*/subList = new FastList/*<E>*/(true);
+        subList._parent = this;
+        subList._head = nodeAt(fromIndex)._previous;
+        subList._tail = nodeAt(toIndex);
+        subList._size = toIndex - fromIndex;
+        return subList;
     }
 
     /**
-     * Returns the first element of this list.
+     * Returns the first value of this list.
      *
-     * @return this list's first element.
+     * @return this list's first value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public Object getFirst() {
-        if (_size != 0) {
-            return _head._next._element;
-        } else {
+    public final Object/*E*/getFirst() {
+        final Node/*<E>*/ node = _head._next;
+        if (node == _tail)
             throw new NoSuchElementException();
-        }
+        return node._value;
     }
 
     /**
-     * Returns the last element of this list.
+     * Returns the last value of this list.
      *
-     * @return this list's last element.
+     * @return this list's last value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public Object getLast() {
-        if (_size != 0) {
-            return _tail._previous._element;
-        } else {
+    public final Object/*E*/getLast() {
+        final Node/*<E>*/ node = _tail._previous;
+        if (node == _head)
             throw new NoSuchElementException();
-        }
+        return node._value;
     }
 
     /**
-     * Inserts the specified element at the beginning of this list.
+     * Inserts the specified value at the beginning of this list.
      * 
-     * @param element the element to be inserted.
+     * @param value the value to be inserted.
      */
-    public void addFirst(Object element) {
-        addBefore(_head._next, element);
+    public final void addFirst(Object/*E*/value) {
+        addBefore(_head._next, value);
     }
 
     /**
-     * Appends the specified element to the end of this list.
+     * Appends the specified value to the end of this list <i>(fast)</i>.
      * 
-     * @param element the element to be inserted.
+     * @param value the value to be inserted.
      */
-    public void addLast(Object element) {
+    public final void addLast(Object/*E*/value) { // Optimized.
+        _size++;
         if (_parent == null) { // Main list.
-            final Node newTail = _tail._next;
-            if (newTail != null) { // Enough capacity. 
-                _size++;
-                _tail._element = element;
-                _tail = newTail;
-            } else {
-                addBefore(_tail, element);
+            Node newTail = _tail._next;
+            if (newTail == null) {
+                newTail = _tail._next = (Node) Node.FACTORY.newObject();
+                newTail._previous = _tail;
+            }
+            _tail._value = value;
+            _tail = newTail;
+        } else {
+            _parent.addBefore(_tail, value);
+        }
+    }
+
+    /**
+     * Removes and returns the first value of this list.
+     *
+     * @return this list's first value before this call.
+     * @throws NoSuchElementException if this list is empty.
+     */
+    public final Object/*E*/removeFirst() {
+        final Node/*<E>*/ first = _head._next;
+        if (first == _tail)
+            throw new NoSuchElementException();
+		Object/*E*/ previousValue = first._value;
+        delete(first);
+        return previousValue;
+    }
+
+    /**
+     * Removes and returns the last value of this list <i>(fast)</i>.
+     *
+     * @return this list's last value before this call.
+     * @throws NoSuchElementException if this list is empty.
+     */
+    public final Object/*E*/removeLast() {
+        if (_size == 0)
+            throw new NoSuchElementException();
+        _size--;
+        final Node/*<E>*/ last = _tail._previous;
+		final Object/*E*/ previousValue = last._value;
+        if (_parent == null) {
+            _tail = last;
+            last._value = null;
+        } else {
+            _parent.delete(last);
+        }
+        return previousValue;
+    }
+
+    ///////////////////////
+    // Nodes operations. //
+    ///////////////////////
+
+    /**
+     * Returns the head node of this list; it is the node such as 
+     * <code>headNode().getNextNode()</code> holds the first list value.
+     * 
+     * @return the head node.
+     */
+    public final Node/*<E>*/headNode() {
+        return _head;
+    }
+
+    /**
+     * Returns the tail node of this list; it is the node such as
+     * <code>tailNode().getPreviousNode()</code> holds the last list value.
+     * 
+     * @return the tail record.
+     */
+    public final Node/*<E>*/tailNode() {
+        return _tail;
+    }
+
+    /**
+     * Inserts the specified value before the specified Node.
+     * 
+     * @param next the Node before which this value is inserted.
+     * @param value the value to be inserted.   
+     */
+    public final void addBefore(Node/*<E>*/ next, Object/*E*/value) {
+        _size++;
+        if (_parent == null) { // Main list.
+            Node newNode = _tail._next;
+            if (newNode == null) { // Increases capacity.
+                newNode = _tail._next = (Node) Node.FACTORY.newObject();
+                newNode._previous = _tail;
+            }
+            // Detaches newNode.
+            final Node tailNext = _tail._next = newNode._next;
+            if (tailNext != null) {
+                tailNext._previous = _tail;
+            }
+            // Inserts before next.
+            final Node previous = next._previous;
+            previous._next = newNode;
+            next._previous = newNode;
+            newNode._next = next;
+            newNode._previous = previous;
+
+            newNode._value = value;
+        } else {
+            _parent.addBefore(next, value);
+        }
+    }
+
+    /**
+     * Returns the node at the specified index. This method returns
+     * the {@link #headNode} node when <code>index &lt; 0</code> or 
+     * the {@link #tailNode} node when <code>index &gt;= size()</code>.
+     * 
+     * @param index the index of the Node to return.
+     */
+    private final Node/*<E>*/nodeAt(int index) {
+        if (index <= (_size >> 1)) { // Forward search.
+            Node/*<E>*/node = _head;
+            for (int i = index; i-- >= 0;) {
+                node = node._next;
+            }
+            return node;
+        } else { // Backward search.
+            Node/*<E>*/node = _tail;
+            for (int i = _size - index; i-- > 0;) {
+                node = node._previous;
+            }
+            return node;
+        }
+    }
+
+    // Implements FastCollection abstract method.
+    public final Record headRecord() {
+        return _head;
+    }
+
+    // Implements FastCollection abstract method.
+    public final Record tailRecord() {
+        return _tail;
+    }
+
+    // Implements FastCollection abstract method.
+    public final Object/*E*/valueOf(Record record) {
+        return ((Node/*<E>*/) record)._value;
+    }
+
+    // Implements FastCollection abstract method.
+    public final void delete(Record record) {
+        Node/*<E>*/node = (Node/*<E>*/) record;
+        _size--;
+        if (_parent == null) { // Main list.
+            node._value = null;
+            // Detaches.
+            node._previous._next = node._next;
+            node._next._previous = node._previous;
+            // Inserts after _tail.
+            final Node/*<E>*/next = _tail._next;
+            node._previous = _tail;
+            node._next = next;
+            _tail._next = node;
+            if (next != null) {
+                next._previous = node;
             }
         } else {
-            _size++;
-            _parent.addBefore(_tail, element);
-        }
-    }
-
-    /**
-     * Removes and returns the first element of this list.
-     *
-     * @return this list's first element before this call.
-     * @throws NoSuchElementException if this list is empty.
-     */
-    public Object removeFirst() {
-        if (_size != 0) {
-            Object previousElement = _head._next._element;
-            removeNode(_head._next);
-            return previousElement;
-        } else {
-            throw new NoSuchElementException();
-        }
-    }
-
-    /**
-     * Removes and returns the last element of this list.
-     *
-     * @return this list's last element before this call.
-     * @throws NoSuchElementException if this list is empty.
-     */
-    public Object removeLast() {
-        if (_size != 0) {
-            _size--;
-            _tail = _tail._previous;
-            Object previousElement = _tail._element;
-            _tail._element = null;
-            return previousElement;
-        } else {
-            throw new NoSuchElementException();
+            _parent.delete(node);
         }
     }
 
@@ -564,88 +661,40 @@ public class FastList extends FastCollection implements Reusable, List,
     // Contract Methods. //
     ///////////////////////
 
-    // Implements abstract method.    
-    public final Iterator fastIterator() {
-        _fastIterator._list = this;
-        _fastIterator._nextNode = _head._next;
-        _fastIterator._currentNode = null;
-        _fastIterator._nextIndex = 0;
-        _fastIterator._length = this._size;
-        return _fastIterator;
-    }
-
-    private transient FastListIterator _fastIterator;
-
     // Implements abstract method.
-    public int size() {
+    public final int size() {
         return _size;
     }
 
-    // Implements abstract method.
-    public Iterator iterator() {
-        return listIterator();
-    }
-
     // Overrides (optimization).
-    public void clear() {
-        Node node = _head;
-        for (int i = _size; i-- != 0;) {
-            node = node._next;
-            node._element = null;
-        }
-        _tail = _head._next;
-        _size = 0;
-    }
-
-    // Overrides (optimization).
-    public boolean contains(Object element) {
-        return indexOf(element) >= 0;
-    }
-
-    // Overrides (optimization).
-    public boolean remove(Object element) {
-        final FastComparator comp = this.getElementComparator();
-        Node node = _head;
-        for (int i = _size; i-- != 0;) {
-            node = node._next;
-            if (comp.areEqual(element, node._element)) {
-                removeNode(node);
-                return true;
+    public final void clear() {
+        if (_parent == null) {
+            for (Node/*<E>*/n = _head, end = _tail; (n = n._next) != end;) {
+                n._value = null;
             }
-        }
-        return false;
-    }
-
-    // Overrides (optimization).
-    public boolean addAll(Collection c) {
-        if (c instanceof FastList) {
-            FastList list = (FastList) c;
-            Node node = list._head;
-            for (int i = list._size; i-- != 0;) {
-                node = node._next;
-                add(node._element);
-            }
-            return list._size != 0 ? true : false;
+            _tail = _head._next;
+            _size = 0;
         } else {
-            return super.addAll(c);
+            while (_head._next != _tail) {
+                _parent.delete(_head._next);
+            }
+            _size = 0;
         }
     }
 
     // Implements Reusable.
     public void reset() {
         this.clear();
-        this.setElementComparator(FastComparator.DEFAULT);
+        this.setValueComparator(FastComparator.DEFAULT);
     }
 
     // Overrides (external references which might not be on the heap).
     public boolean move(ObjectSpace os) {
         if (super.move(os)) {
             if (_parent == null) { // Main List
-                Node node = _head;
-                for (int i = _size; i-- != 0;) {
-                    node = node._next;
-                    if (node._element instanceof Realtime) {
-                        ((Realtime) node._element).move(os);
+                for (Node n = _head, end = _tail; (n = n._next) != end;) {
+                    if (n._value instanceof Realtime) {
+                        ((Realtime) n._value).move(os);
                     }
                 }
             } else {
@@ -659,136 +708,125 @@ public class FastList extends FastCollection implements Reusable, List,
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
-        stream.defaultReadObject();
         _head = new Node();
         _tail = new Node();
         _head._next = _tail;
         _tail._previous = _head;
-        _fastIterator = new FastListIterator();
         final int size = stream.readInt();
+        setValueComparator((FastComparator) stream.readObject());
         for (int i = size; i-- != 0;) {
-            addLast(stream.readObject());
+            addLast((Object/*E*/) stream.readObject());
         }
     }
 
     // Requires special handling during serialization process.
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.defaultWriteObject();
         stream.writeInt(_size);
+        stream.writeObject(getValueComparator());
         Node node = _head;
         for (int i = _size; i-- != 0;) {
             node = node._next;
-            stream.writeObject(node._element);
-        }
-    }
-
-    ////////////////////////
-    // Utilities Methods. //
-    ////////////////////////
-
-    /**
-     * Returns the node at the specified index.
-     * 
-     * @param index the index in the range [-1 .. size()]
-     */
-    private Node nodeAt(int index) {
-        if (index <= (_size >> 1)) { // Forward search.
-            Node node = _head;
-            for (int i = index; i-- >= 0;) {
-                node = node._next;
-            }
-            return node;
-        } else { // Backward search.
-            Node node = _tail;
-            for (int i = _size - index; i-- > 0;) {
-                node = node._previous;
-            }
-            return node;
+            stream.writeObject(node._value);
         }
     }
 
     /**
-     * Inserts the specified element before the specified node.
-     * 
-     * @param next the node before which this element is inserted.
-     * @param element the element to insert.   
+     * This class represents a {@link FastList} node; it allows for direct 
+     * iteration over the list {@link #getValue values}.
      */
-    private void addBefore(Node next, Object element) {
-        _size++;
-        Node newNode;
-        final Node newTail = _tail._next;
-        if (newTail != null) { // Detaches tail.
-            Node previous = newTail._previous = _tail._previous;
-            previous._next = newTail;
-            newNode = _tail;
-            _tail = newTail;
-        } else { // No node after tail allocates one from heap.
-            newNode = (Node) Node.FACTORY.heapPool().next();
-        }
-        final Node previous = next._previous;
-        newNode._element = element;
-        newNode._previous = previous;
-        newNode._next = next;
-        next._previous = newNode;
-        previous._next = newNode;
-    }
+    public static final class Node/*<E>*/implements Record/*<E>*/ {
 
-    /**
-     * Removes the specified node from this list (and inserts it before tail).
-     * 
-     * @param the node to remove.
-     */
-    private void removeNode(Node node) {
-        _size--;
-
-        // Detaches.
-        node._next._previous = node._previous;
-        node._previous._next = node._next;
-
-        // Attaches before tail.
-        node._previous = _tail._previous;
-        node._next = _tail;
-        node._previous._next = node;
-        _tail._previous = node; // node._next._previous = node;
-
-        _tail = node;
-    }
-
-    /**
-     * This inner class represents a list node.
-     */
-    private static final class Node {
-
-        private static final ObjectFactory FACTORY = new ObjectFactory() {
+        /**
+         * Holds the node factory (to allow for pre-allocation).
+         */
+        private static ObjectFactory FACTORY = new ObjectFactory() {
+            // Creates 4 nodes at a time.
             public Object create() {
-                return new Node();
+                Node n0 = new Node();
+
+                Node n1 = new Node();
+                n1._previous = n0;
+                n0._next = n1;
+
+                Node n2 = new Node();
+                n2._previous = n1;
+                n1._next = n2;
+
+                Node n3 = new Node();
+                n3._previous = n2;
+                n2._next = n3;
+
+                return n0;
             }
         };
 
-        private Node _previous;
+        /**
+         * Holds the next node.
+         */
+        private Node/*<E>*/_next;
 
-        private Node _next;
+        /**
+         * Holds the previous node.
+         */
+        private Node/*<E>*/_previous;
 
-        private Object _element;
+        /**
+         * Holds the node value.
+         */
+        private Object/*E*/_value;
 
+        /**
+         * Default constructor (allows sub-classing).
+         */
+        private Node() {
+        }
+
+        /**
+         * Returns the value for this node.
+         * 
+         * @return the node value.
+         */
+        public final Object/*E*/getValue() {
+            return _value;
+        }
+
+        /**
+         * Returns the node after this one.
+         * 
+         * @return the next node.
+         */
+        public final Node/*<E>*/getNextNode() {
+            return _next;
+        }
+
+        /**
+         * Returns the node before this one.
+         * 
+         * @return the previous node.
+         */
+        public final Node/*<E>*/getPreviousNode() {
+            return _previous;
+        }
+
+        // Implements Record interface.
+        public final Record/*<E>*/getNextRecord() {
+            return _next;
+        }
+
+        // Implements Record interface.
+        public final Record/*<E>*/getPreviousRecord() {
+            return _previous;
+        }
     }
 
     /**
      * This inner class implements a fast list iterator.
      */
-    private static final class FastListIterator implements ListIterator {
+    private final class FastListIterator implements ListIterator/*<E>*/{
 
-        private static final ObjectFactory FACTORY = new ObjectFactory() {
-            public Object create() {
-                return new FastListIterator();
-            }
-        };
+        private Node/*<E>*/_nextNode;
 
-        private FastList _list;
-
-        private Node _nextNode;
-
-        private Node _currentNode;
+        private Node/*<E>*/_currentNode;
 
         private int _length;
 
@@ -798,15 +836,13 @@ public class FastList extends FastCollection implements Reusable, List,
             return (_nextIndex != _length);
         }
 
-        public Object next() {
-            if (_nextIndex++ != _length) {
-                _currentNode = _nextNode;
-                _nextNode = _nextNode._next;
-                return _currentNode._element;
-            } else {
-                _nextIndex--;
+        public Object/*E*/next() {
+            if (_nextIndex == _length)
                 throw new NoSuchElementException();
-            }
+            _nextIndex++;
+            _currentNode = _nextNode;
+            _nextNode = _nextNode._next;
+            return _currentNode._value;
         }
 
         public int nextIndex() {
@@ -817,31 +853,28 @@ public class FastList extends FastCollection implements Reusable, List,
             return _nextIndex != 0;
         }
 
-        public Object previous() {
-            if (_nextIndex-- != 0) {
-                _currentNode = _nextNode._previous;
-                _nextNode = _currentNode;
-                return _currentNode._element;
-            } else {
-                _nextIndex++;
+        public Object/*E*/previous() {
+            if (_nextIndex == 0)
                 throw new NoSuchElementException();
-            }
+            _nextIndex--;
+            _currentNode = _nextNode = _nextNode._previous;
+            return _currentNode._value;
         }
 
         public int previousIndex() {
             return _nextIndex - 1;
         }
 
-        public void add(Object o) {
-            _list.addBefore(_nextNode, o);
-            _length++;
+        public void add(Object/*E*/o) {
+            FastList.this.addBefore(_nextNode, o);
             _currentNode = null;
+            _length++;
             _nextIndex++;
         }
 
-        public void set(Object o) {
+        public void set(Object/*E*/o) {
             if (_currentNode != null) {
-                _currentNode._element = o;
+                _currentNode._value = o;
             } else {
                 throw new IllegalStateException();
             }
@@ -854,7 +887,7 @@ public class FastList extends FastCollection implements Reusable, List,
                 } else {
                     _nextIndex--;
                 }
-                _list.removeNode(_currentNode);
+                FastList.this.delete(_currentNode);
                 _currentNode = null;
                 _length--;
             } else {
@@ -862,4 +895,5 @@ public class FastList extends FastCollection implements Reusable, List,
             }
         }
     }
+
 }

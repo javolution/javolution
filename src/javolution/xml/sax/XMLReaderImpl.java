@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import javolution.lang.Text;
 import javolution.util.Reflection;
 
 import org.xml.sax.Attributes;
@@ -32,14 +33,16 @@ import org.xml.sax.XMLReader;
 
 /**
  * <p> This class provides a SAX2-compliant parser wrapping a
- *     {@link RealtimeParser}. This parser allocates 
- *     <code>j2me.lang.String</code> instances while parsing in accordance 
- *     with the SAX2 specification. For faster performance (2-3x), the use of 
- *     the SAX2-like {@link RealtimeParser} (with <code>j2me.lang.String</code>
+ *     {@link javolution.xml.sax.XmlSaxParserImpl}. This parser allocates 
+ *     <code>java.lang.String</code> instances while parsing in accordance 
+ *     with the SAX2 specification. For faster performance (2-5x), the use of 
+ *     the SAX2-like {@link javolution.xml.sax.XmlSaxParserImpl 
+ *     XmlSaxParserImpl} or {@link javolution.xml.pull.XmlPullParserImpl
+ *     XmlPullParserImpl} (with <code>java.lang.String</code>
  *     replaced by <code>j2me.lang.CharSequence</code>) is recommended.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.5, May 26, 2003
+ * @version 3.2, April 2, 2005
  * @see <a href="http://www.saxproject.org"> SAX -- Simple API for XML</a> 
  */
 public final class XMLReaderImpl implements XMLReader {
@@ -53,14 +56,13 @@ public final class XMLReaderImpl implements XMLReader {
     /**
      * Holds the real-time parser instance associated to this SAX2 parser.
      */
-    private final RealtimeParser _parser;
+    private final XmlSaxParserImpl _parser = new XmlSaxParserImpl();
 
     /**
      * Default constructor.
      */
     public XMLReaderImpl() {
-        _parser = new RealtimeParser();
-        Proxy proxy = new Proxy(_parser);
+        Proxy proxy = new Proxy();
         _parser.setContentHandler(proxy);
     }
 
@@ -198,15 +200,12 @@ public final class XMLReaderImpl implements XMLReader {
          * Holds the real-time attributes implementation from which attributes
          * values are read.
          */
-        private final AttributesImpl _attributes;
+        private javolution.xml.sax.Attributes _attributes;
 
         /**
-         * Creates a proxy for the specified {@link RealtimeParser}.
-         *
-         * @param parser the real-time parser.
+         * Default constructor.
          */
-        public Proxy(RealtimeParser parser) {
-            _attributes = parser._attributes;
+        public Proxy() {
         }
 
         // Implements ContentHandler
@@ -239,6 +238,7 @@ public final class XMLReaderImpl implements XMLReader {
         public void startElement(CharSequence namespaceURI,
                 CharSequence localName, CharSequence qName,
                 javolution.xml.sax.Attributes atts) throws SAXException {
+            _attributes = atts;
             _sax2Handler.startElement(namespaceURI.toString(), localName
                     .toString(), qName.toString(), this);
         }
@@ -310,35 +310,41 @@ public final class XMLReaderImpl implements XMLReader {
 
         // Implements Attributes
         public int getIndex(String uri, String localName) {
-            return _attributes.getIndex(uri, localName);
+            return _attributes.getIndex(toCharSequence(uri), toCharSequence(localName));
         }
 
         // Implements Attributes
         public int getIndex(String qName) {
-            return _attributes.getIndex(qName);
+            return _attributes.getIndex(toCharSequence(qName));
         }
 
         // Implements Attributes
         public String getType(String uri, String localName) {
-            return _attributes.getType(uri, localName);
+            return _attributes.getType(toCharSequence(uri), toCharSequence(localName));
         }
 
         // Implements Attributes
         public String getType(String qName) {
-            return _attributes.getType(qName);
+            return _attributes.getType(toCharSequence(qName));
         }
 
         // Implements Attributes
         public String getValue(String uri, String localName) {
-            return _attributes.getValue(uri, localName);
+            return _attributes.getValue(toCharSequence(uri), toCharSequence(localName)).toString();
         }
 
         // Implements Attributes
         public String getValue(String qName) {
-            return _attributes.getValue(qName);
+            return _attributes.getValue(toCharSequence(qName)).toString();
         }
     }
 
+    // Wrap strings if there are not CharSequence (e.g. J2ME).
+    private static CharSequence toCharSequence(Object obj) {
+        return (obj instanceof CharSequence) ? (CharSequence) obj :
+            Text.valueOf(obj);
+    }
+    
     private static final class Sax2DefaultHandler implements EntityResolver,
             DTDHandler, ContentHandler, ErrorHandler {
 

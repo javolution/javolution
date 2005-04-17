@@ -11,11 +11,13 @@ package javolution.realtime;
 /**
  * <p> This class represents a pool context; it is used to recycle objects 
  *     transparently, reduce memory allocation and avoid garbage collection.</p>
+ *     
  * <p> Threads executing in a pool context may allocate objects from 
  *     the context's pools (also called "stack") through an 
  *     {@link ObjectFactory}. Allocated objects are recycled automatically 
  *     upon {@link PoolContext#exit exit}. This recycling is almost 
  *     instantaneous and has no impact on performance.</p>  
+ *     
  * <p> Objects allocated within a pool context should not be directly 
  *     referenced outside of the context unless they are  
  *     {@link RealtimeObject#export exported} (e.g. result being returned)
@@ -25,6 +27,7 @@ package javolution.realtime;
  *     objects (as their allocation cost is then negligible with no adverse 
  *     effect on garbarge collection) and often lead to safer, faster and
  *     more robust applications.</p>
+ *     
  * <p> Upon thread termination, pool objects associated to a thread are 
  *     candidate for garbage collection (the "export rule" guarantees that these
  *     objects are not referenced anymore). They will be collected after 
@@ -33,7 +36,7 @@ package javolution.realtime;
  *     {@link PoolContext#clear} static method.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.0, March 5, 2005
  */
 public final class PoolContext extends Context {
 
@@ -139,9 +142,7 @@ public final class PoolContext extends Context {
      * @param index the factory index of the pool to return.
      * @return the corresponding pool. 
      */
-    private synchronized ObjectPool getPool(int index) {
-        // Synchronize. Avoid "double check locking" for lazy initialization 
-        // (ref. http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html)
+    private ObjectPool getPool(int index) {
         ObjectPool pool = _pools[index];
         if (pool == ObjectPool.NULL) { // Creates pool.
             pool = ObjectFactory.INSTANCES[index].newPool();
@@ -151,8 +152,13 @@ public final class PoolContext extends Context {
             pool.inUse = true;
             _inUsePools[_inUsePoolsLength++] = pool;
             PoolContext outerPoolContext = this.getOuter().poolContext();
-            pool.outer = (outerPoolContext != null) ?
-                    outerPoolContext.getPool(index) : null;
+            if (outerPoolContext != null) {
+                synchronized (outerPoolContext) { // Not local.
+                    pool.outer = outerPoolContext.getPool(index);
+                }
+            } else {
+                pool.outer = null;
+            }
         }
         return pool;
     }

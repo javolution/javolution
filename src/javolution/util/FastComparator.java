@@ -1,6 +1,7 @@
 package javolution.util;
 
 import javolution.Configuration;
+import javolution.lang.Text;
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
@@ -133,8 +134,9 @@ public abstract class FastComparator implements Comparator, Serializable {
     public static final FastComparator LEXICAL = new Lexical();
 
     private static class Lexical extends FastComparator {
+        
         public int hashCodeOf(Object obj) {
-            if (obj instanceof String) {
+            if ((obj instanceof String) || (obj instanceof Text)) {
                 return obj.hashCode();
             } else if (obj instanceof CharSequence){
                 CharSequence chars = (CharSequence) obj;
@@ -150,9 +152,61 @@ public abstract class FastComparator implements Comparator, Serializable {
         }
 
         public boolean areEqual(Object o1, Object o2) {
-            return (o1 == null) ? (o2 == null) : this.compare(o1, o2) == 0;
-        }
+            if ((o1 instanceof String) && (o2 instanceof String)) {
+                return o1.equals(o2);
 
+            } else if ((o1 instanceof CharSequence) && (o2 instanceof String)) {
+                final CharSequence csq = (CharSequence) o1;
+                final String str = (String) o2;
+                final int length = str.length();
+                if (csq.length() == length) {
+                    for (int i=0; i < length;) {
+                        if (str.charAt(i) != csq.charAt(i++)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+                
+                
+            } else if ((o1 instanceof String) && (o2 instanceof CharSequence)) {
+                final CharSequence csq = (CharSequence) o2;
+                final String str = (String) o1;
+                final int length = str.length();
+                if (csq.length() == length) {
+                    for (int i=0; i < length;) {
+                        if (str.charAt(i) != csq.charAt(i++)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+                
+
+            } else if ((o1 instanceof CharSequence) && (o2 instanceof CharSequence)) {
+                final CharSequence csq1 = (CharSequence)o1;
+                final CharSequence csq2 = (CharSequence)o2;
+                final int length = csq1.length();
+                if (csq2.length() == length) {
+                    for (int i=0; i < length;) {
+                        if (csq1.charAt(i) != csq2.charAt(i++)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+                
+            } else {  
+                return (o1 == null) ? (o2 == null) : o1.equals(o2);
+            }
+        }
+        
         public int compare(Object left, Object right) {
             if (left instanceof String) {
                 if (right instanceof String) {

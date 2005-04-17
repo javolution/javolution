@@ -12,7 +12,7 @@ import j2me.lang.CharSequence;
 /**
  * This interface represents a list of XML attributes.
  * It is a more generic version of <code>org.xml.sax.Attributes</code> with
- * the <code>String</code> type replaced by <code>CharSequence</code>.
+ * the non-constant <code>String</code> replaced by <code>CharSequence</code>.
  *
  * <p> Note: To parse primitive types attributes (e.g. int, long, double), the
  *           use of the {@link javolution.lang.TypeFormat} class is
@@ -20,7 +20,7 @@ import j2me.lang.CharSequence;
  *
  * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.5, May 26, 2003
+ * @version 3.1, March 11, 2005
  */
 public interface Attributes {
 

@@ -24,7 +24,7 @@ import j2me.lang.UnsupportedOperationException;
  *         return board;
  *     }
  *     private static final ObjectFactory BOARD_FACTORY = new ObjectFactory() {
- *         public Object create() {
+ *         protected Object create() {
  *              return new Piece[8][8];
  *         }
  *     };</pre>
@@ -34,7 +34,7 @@ import j2me.lang.UnsupportedOperationException;
  *     Javolution Configuration</a> for details).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.1, March 12, 2005
  */
 public abstract class ObjectFactory {
 
@@ -54,6 +54,11 @@ public abstract class ObjectFactory {
     static volatile int Count;
 
     /**
+     * Indicates if allocation profiling has been enabled.
+     */
+    static volatile boolean IsAllocationProfileEnabled;
+
+    /**
      * Holds the number of object allocated since last preallocation.
      */
     volatile int _allocatedCount;
@@ -62,6 +67,16 @@ public abstract class ObjectFactory {
      * Holds the total number of preallocated object at last preallocation.
      */
     volatile int _preallocatedCount;
+
+    /**
+     * Holds the class product of this factory (for logging only)
+     */
+    volatile Class _productClass;
+
+    /**
+     * Holds pre-allocated objects.
+     */
+    Node _preallocated;
 
     /**
      * Holds the factory index (range [0..MAX[).
@@ -76,8 +91,9 @@ public abstract class ObjectFactory {
     /**
      * Default constructor.
      * 
-     * @throws JavolutionError if more than one instance per factory sub-class
-     *         or if the {@link #MAX} number of factories has been reached. 
+     * @throws UnsupportedOperationException if more than one instance per
+     *         factory sub-class or if the {@link #MAX} number of factories
+     *         has been reached. 
      */
     protected ObjectFactory() {
         _index = ObjectFactory.add(this);
@@ -86,7 +102,7 @@ public abstract class ObjectFactory {
     private static synchronized int add(ObjectFactory factory) {
         final int count = ObjectFactory.Count;
         if (count >= MAX) {
-            throw new JavolutionError(
+            throw new UnsupportedOperationException(
                     "Maximum number of factories (system property "
                             + "\"javolution.factories\", value " + MAX
                             + ") has been reached");
@@ -94,7 +110,7 @@ public abstract class ObjectFactory {
         Class factoryClass = factory.getClass();
         for (int i = 0; i < count; i++) {
             if (factoryClass.equals(INSTANCES[i].getClass())) {
-                throw new JavolutionError(
+                throw new UnsupportedOperationException(
                         "No more than one instance per factory sub-class allowed");
             }
         }
@@ -103,38 +119,38 @@ public abstract class ObjectFactory {
     }
 
     /**
-     * Creates a new object product of this factory.
+     * Creates a new factory object on the heap (using the <code>new</code> 
+     * keyword).
      *
      * @return a new factory object.
      */
     protected abstract Object create();
 
     /**
-     * Returns an factory object allocated from the {@link #currentPool 
-     * current pool}.
-     * 
-     * @return a recycled or pre-allocated or new factory object.
+     * Returns a {@link #create new}, potentially pre-allocated factory object.
+     *
+     * @return a pre-allocated or new factory object.
      */
-    public Object object() {
-        return currentPool().next();
+    public final Object newObject() {
+        if (!IsAllocationProfileEnabled) return create();
+        Node node = preallocatedNode();
+        Object obj = (node != null) ? node._object : create();
+        if (_productClass == null) {
+            _productClass = obj.getClass();
+        }
+        return obj;
     }
 
     /**
-     * Pre-allocates (replenish the pool).
+     * Returns a factory object allocated on the stack when executing in a 
+     * {@link PoolContext}.
+     * 
+     * @return a recycled, pre-allocated or new factory object.
      */
-    final void preallocate() {
-        synchronized (_heapPool) {
-            for (int i = 0; i < _allocatedCount; i++) {
-                Node node = new Node();
-                node._object = this.create();
-                node._next = _heapPool._preallocated;
-                _heapPool._preallocated = node;
-            }
-            if (_allocatedCount > _preallocatedCount) {
-                _preallocatedCount = _allocatedCount;
-            }
-            _allocatedCount = 0;
-        }
+    public Object object() {
+        PoolContext poolContext = Context.currentContext().poolContext();
+        return (poolContext != null) ? poolContext.getLocalPool(_index).next()
+                : newObject();
     }
 
     /**
@@ -150,12 +166,10 @@ public abstract class ObjectFactory {
     }
 
     /**
-     * Returns the pool representing the heap; although recycling is 
-     * always done through garbage collection, this pool can be 
-     * {@link #preallocate preallocated} at start-up.
+     * Returns the pool representing the heap; this pool always returns 
+     * {@link #newObject} (potentially pre-allocated).
      * 
      * @return the heap pool for this factory. 
-     * @see     AllocationProfile
      */
     public final ObjectPool heapPool() {
         return _heapPool;
@@ -188,29 +202,56 @@ public abstract class ObjectFactory {
     }
 
     /**
+     * Pre-allocates (replenish the pool).
+     */
+    synchronized void preallocate() {
+        for (int i = 0; i < _allocatedCount; i++) {
+            Node node = new Node();
+            node._object = this.create();
+            node._next = _preallocated;
+            _preallocated = node;
+        }
+        if (_allocatedCount > _preallocatedCount) {
+            _preallocatedCount = _allocatedCount;
+        }
+        _allocatedCount = 0;
+    }
+
+    /**
+     * Clears preallocated pool and resets counters.
+     */
+    final synchronized void reset() {
+        _allocatedCount = 0;
+        _preallocatedCount = 0;
+        _preallocated = null;
+    }
+
+    /**
+     * Returns a preallocated node or <code>null</code> if none.
+     * Should only be called when (IsAllocationProfileEnabled == true)
+     */
+    private synchronized Node preallocatedNode() {
+        if ((_allocatedCount++ == _preallocatedCount)
+                && AllocationProfile.OverflowHandler != null) { // Notifies.
+            AllocationProfile.OverflowHandler.run();
+        }
+        if (_preallocated != null) {
+            Node node = _preallocated;
+            _preallocated = _preallocated._next;
+            return node;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * This class represents the heap pool. 
      */
-    final class HeapPool extends ObjectPool {
-
-        /**
-         * Holds the heap pool factory pre-allocated objects.
-         */
-        private Node _preallocated;
+    private final class HeapPool extends ObjectPool {
 
         // Implements ObjectPool abstract method.
         public Object next() {
-            synchronized (this) {
-                if ((_allocatedCount++ == _preallocatedCount) && 
-                        AllocationProfile.OverflowHandler != null) { // Notifies.
-                    AllocationProfile.OverflowHandler.run();
-                }
-                if (_preallocated != null) {
-                    Object obj = _preallocated._object;
-                    _preallocated = _preallocated._next;
-                    return obj;
-                }
-            }
-            return create();
+            return newObject();
         }
 
         // Implements ObjectPool abstract method.
@@ -226,24 +267,6 @@ public abstract class ObjectFactory {
         // Implements ObjectPool abstract method.
         protected void clearAll() {
             // No effect for heap pool.
-        }
-
-        // Creates a new node holding a new factory object.
-        private Node newNode() {
-            synchronized (this) {
-                if ((_allocatedCount++ == _preallocatedCount) && 
-                        AllocationProfile.OverflowHandler != null) { // Notifies.
-                    AllocationProfile.OverflowHandler.run();
-                }
-                if (_preallocated != null) {
-                    Node node = _preallocated;
-                    _preallocated = _preallocated._next;
-                    return node;
-                }
-            }
-            Node node = new Node();
-            node._object = create();
-            return node;
         }
     }
 
@@ -279,8 +302,17 @@ public abstract class ObjectFactory {
             if (_availNodes != null) { // Gets node from recycled.
                 node = _availNodes;
                 _availNodes = node._next;
-            } else { // Gets node from heapPool. 
-                node = _heapPool.newNode();
+            } else { // Gets preallocated node or create a new node.
+                if (IsAllocationProfileEnabled) {
+                    node = preallocatedNode();
+                    if (node == null) {
+                        node = new Node();
+                        node._object = create();
+                    }
+                } else {
+                    node = new Node();
+                    node._object = create();
+                }
             }
             if (_usedNodes == null) { // Marks tail node.
                 _usedNodesTail = node;
@@ -343,16 +375,20 @@ public abstract class ObjectFactory {
                     _doCleanup = false;
                 }
             }
-
-            _usedNodesTail._next = _availNodes;
-            _availNodes = _usedNodes;
-            _usedNodes = null;
+           
+            if (_usedNodes != null) {
+                _usedNodesTail._next = _availNodes;
+                _availNodes = _usedNodes;
+                _usedNodes = null;
+                _usedNodesTail = null;
+            }
         }
 
         // Implements ObjectPool abstract method.
         protected void clearAll() {
             _availNodes = null;
             _usedNodes = null;
+            _usedNodesTail = null;
         }
 
     }
@@ -361,6 +397,7 @@ public abstract class ObjectFactory {
      * This inner class represents a simple pool node.
      */
     static final class Node {
+        
         Object _object;
 
         Node _next;

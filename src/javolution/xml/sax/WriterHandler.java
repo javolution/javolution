@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.Writer;
 
 import j2me.lang.CharSequence;
-import j2me.util.Iterator;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.util.FastList;
@@ -24,7 +23,7 @@ import org.xml.sax.SAXException;
  * <p> This class generates xml documents from SAX2 events.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.2, January 8, 2005
+ * @version 3.1, March 11, 2005
  */
 public class WriterHandler implements ContentHandler, Reusable {
 
@@ -136,8 +135,8 @@ public class WriterHandler implements ContentHandler, Reusable {
     // Implements ContentHandler
     public void startPrefixMapping(CharSequence prefix, CharSequence uri)
             throws SAXException {
-        _prefixMappings.add(prefix);
-        _prefixMappings.add(uri);
+        _prefixMappings.addLast(prefix);
+        _prefixMappings.addLast(uri);
     }
 
     // Implements ContentHandler
@@ -163,9 +162,11 @@ public class WriterHandler implements ContentHandler, Reusable {
             write(qName);
 
             // Writes namespace declaration.
-            for (Iterator i = _prefixMappings.fastIterator(); i.hasNext();) {
-                CharSequence prefix = (CharSequence) i.next();
-                CharSequence prefixUri = (CharSequence) i.next();
+            for (FastList.Node n = _prefixMappings.headNode(), end = _prefixMappings
+                    .tailNode(); (n = n.getNextNode()) != end;) {
+                CharSequence prefix = (CharSequence) n.getValue();
+                CharSequence prefixUri = (CharSequence) (n = n.getNextNode())
+                        .getValue();
                 if (prefix.length() == 0) { // Default namespace.
                     _writer.write(" xmlns=\"");
                     write(prefixUri);
@@ -196,6 +197,7 @@ public class WriterHandler implements ContentHandler, Reusable {
             throw new SAXException(e);
         }
     }
+
     private void indent() throws IOException {
         final int length = _indent.length();
         if (length > 0) {
@@ -269,7 +271,7 @@ public class WriterHandler implements ContentHandler, Reusable {
         for (int i = 0; i < length;) {
             char c = csq.charAt(i++);
             if ((c >= '@') || (c == ' ')) { // Most common case.
-                _writer.write(c); 
+                _writer.write(c);
             } else { // Potential escape sequence.
                 switch (c) {
                 case '<':

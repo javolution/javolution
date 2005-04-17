@@ -10,48 +10,30 @@ package javolution.realtime;
 import javolution.lang.Text;
 
 /**
- * <p> This interface identifies classes whose instances can be allocated from
- *     and moved to different {@link ObjectSpace ObjectSpace} for higher
+ * <p> This interface identifies classes whose instances can be moved to 
+ *     different {@link ObjectSpace ObjectSpace} for higher
  *     performance and higher predictability.</p>
- * <p> For example, classes implementing this interface can be allocated 
- *     on the local "stack" to avoid generating garbage.</p>
- * <p> {@link Realtime} objects follow specific rules with regard to external
- *     references. These rules can be summarize by the following table:
- *     <TABLE border="1" summary="Real-Time Accessibility Rules.">
- *          <CAPTION><EM>Real-Time Accessibility Rules</EM></CAPTION>
- *          <TR>
- *            <TD>Reference\Object</TD>
- *            <TD>{@link ObjectSpace#HEAP Heap}</TD>
- *            <TD>{@link ObjectSpace#LOCAL Local}</TD>
- *            <TD>{@link ObjectSpace#OUTER Outer}</TD>
- *            <TD>{@link ObjectSpace#HOLD Hold}</TD>
- *          </TR>
- *          <TR>
- *            <TD>{@link ObjectSpace#HEAP Heap}</TD>
- *            <TD>Y</TD><TD>Y</TD><TD>Y</TD><TD>Y</TD>
- *          </TR>
- *          <TR>
- *            <TD>{@link ObjectSpace#LOCAL Local}</TD>
- *            <TD>N</TD><TD>Y</TD><TD>N</TD><TD>Y</TD>
- *          </TR>
- *          <TR>
- *            <TD>{@link ObjectSpace#OUTER Outer}</TD>
- *            <TD>N</TD><TD>Y</TD><TD>Y</TD><TD>Y</TD>
- *          </TR>
- *          <TR>
- *            <TD>{@link ObjectSpace#HOLD Hold}</TD>
- *            <TD>N</TD><TD>Y</TD><TD>N</TD><TD>Y</TD>
- *          </TR>
- *       </TABLE>
- *     To ensure that these rules are respected, {@link Realtime real-time} 
- *     objects may have to override the {@link #move} method when referring 
- *     to non-heap objects. For example:<pre>
- *     public class Foo implements Realtime {
- *         private Realtime externalReference; // Might not be on the heap.
- *         public boolean move(ObjectSpace space) {
- *             if (super.move(space)) { // Propagates.
- *                 externalReference.move(os);
+ *     
+ * <p> Real-time objects may contain references (direct or indirect) to
+ *     other real-time objects. Whether these objects being referenced 
+ *     have to be moved along when a real-time object is moved to a different 
+ *     object space depends whether or not the referenced objects are heap 
+ *     allocated. Heap allocated objects (such as intrinsic data structures) are
+ *     moved implicitly with the object; but non-heap objects (external objects)
+ *     might have to be moved explicitly. For example:<pre>
+ *     public class Person extends RealtimeObject  { // Implements Realtime.
+ *         private FastList children = new FastList(); // Also Realtime.
+ *         ...
+ *         public boolean move(ObjectSpace os) { 
+ *             if (super.move(os)) { // Propagates to external references.
+ *                 // The children list is intrinsic (heap allocated) but 
+ *                 // it contains references to external persons (the children).
+ *                 for (Iterator i=children.fastIterator(); i.hasNext();) {
+ *                      ((Person)i.next()).move(os);
+ *                 }
+ *                 return true;
  *             }
+ *             return false;
  *         }
  *     }</pre></p> 
  *
@@ -81,42 +63,46 @@ public interface Realtime {
     /**
      * This inner class represents an object space destination.
      * Applications may create their own object space. Here are few examples
-     * of possible {@link ObjectSpace} with their defining characteristics.<UL>
-     * <LI><CODE>SHARED:</CODE> Objects are accessible by all; recycling 
-     *     is done when the internal sharing counters drop to zero
-     *     (Constraint: Circular references are not allowed).</LI>
-     * <LI><CODE>AGING:</CODE> Objects are accessible by all; recycling is 
-     *     done when the objects is old enough (Constraint: It assumes that
-     *     old objects become obsolete and are not referenced anymore).
+     * of possible spaces with their defining characteristics.<UL>
+     * <LI><B>AGING:</B> Objects are accessible by all; recycling is 
+     *     done when the objects are old enough.<BR>Constraint: 
+     *     It assumes that old objects become obsolete and are not referenced 
+     *     anymore.
+     * <LI><B>FLIP:</B> Objects are accessible by all; recycling 
+     *     is done when the object space is flipped.<BR>Constraint:
+     *     Objects from previous period (before flip) are discarded.</LI>
      * </UL> 
      */
     public static class ObjectSpace {
         
         /**
          * Identifies the {@link HeapContext heap} space;
-         * objects are recycled through garbage collection.
+         * objects are accessible by all; they are indirectly recycled 
+         * through garbage collection (default space).
          */
         public static final ObjectSpace HEAP = new ObjectSpace();
     
         /**
          * Identifies the {@link PoolContext stack} space;
-         * objects are recycled when the current thread 
-         * {@link PoolContext#exit exits} its current {@link PoolContext}.
+         * objects are accessible by the current thread only; 
+         * they are recycled when the current thread 
+         * {@link PoolContext#exit exits} the {@link PoolContext} scope
+         * where the object has been {@link ObjectFactory factory} produced.
          */
         public static final ObjectSpace LOCAL = new ObjectSpace();
     
         /**
          * Identifies the {@link Context#getOuter() outer} object space; 
          * it is the object space after {@link PoolContext#exit exiting} 
-         * the current {@link PoolContext}.
+         * the current {@link PoolContext} (typically the {@link #HEAP}
+         * or another {@link #LOCAL} space).
          */
         public static final ObjectSpace OUTER = new ObjectSpace();
     
         /**
-         * Identifies the {@link PoolContext hold} space; similar to the 
-         * {@link #LOCAL} space except that objects are not recycled upon
-         * the next {@link PoolContext#exit} but moved back to the 
-         * {@link #LOCAL} space instead.
+         * Identifies the hold space; objects are accessible by all; 
+         * they are moved back to their original space when not held
+         * anymore (internal counter). 
          */
         public static final ObjectSpace HOLD = new ObjectSpace();
     

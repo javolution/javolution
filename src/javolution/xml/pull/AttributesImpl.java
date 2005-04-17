@@ -6,36 +6,64 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.sax;
+package javolution.xml.pull;
+
+import javolution.lang.Reusable;
+import javolution.realtime.ArrayFactory;
+import javolution.realtime.ObjectFactory;
+import javolution.xml.sax.Attributes;
 import j2me.lang.CharSequence;
 
 /**
- * This class represents a list of XML attributes. It implements the real-time
- * version of <code>org.xml.sax.Attributes</code> (<code>String</code>
- * replaced by <code>CharSequence</code>).
+ * <p> This class represents a list of XML attributes. It implements the 
+ *     real-time version of Sax2 {@link Attributes} interface with 
+ *     <code>String</code> replaced by <code>CharSequence</code>.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.5, May 26, 2003
+ * @version 3.2, April 2, 2005
  */
-final class AttributesImpl implements Attributes {
+final class AttributesImpl implements Attributes, Reusable {
 
+    /**
+     * Holds the factory for this class.
+     */
+    static final ObjectFactory FACTORY = new ObjectFactory() {
+        protected Object create() {
+            return new AttributesImpl();
+        }
+    };
+    /**
+     * Holds the factory for single entries.
+     */
+    private static final ObjectFactory ENTRY_FACTORY = new ObjectFactory() {
+        protected Object create() {
+            return new Entry();
+        }
+    };
+    
+    /**
+     * Holds the factory for the internal entries array.
+     */
+    private static final ArrayFactory ENTRIES_FACTORY = new ArrayFactory(32) {
+        protected Object create(int length) {
+            return new Entry[length];
+        }
+    };
+    
     /**
      * Holds number of attributes.
      */
-    int _length;
+    private int _length;
 
     /**
-     * Holds attribute URIs.
+     * Holds the attributes entries.
      */
-    AttributeEntry[] _entries = new AttributeEntry[16];
+    private Entry[] _entries = (Entry[]) ENTRIES_FACTORY.newObject();
 
     /**
      * Default constructor.
      */
     public AttributesImpl() {
-        for (int i=_entries.length; i > 0;) {
-            _entries[--i] = new AttributeEntry();
-        }
     }
 
     /**
@@ -43,7 +71,7 @@ final class AttributesImpl implements Attributes {
      *
      * @return the number of attributes in the list.
      */
-    public int getLength () {
+    public int getLength() {
         return _length;
     }
 
@@ -57,6 +85,21 @@ final class AttributesImpl implements Attributes {
     public CharSequence getURI(int index) {
         if (index >= 0 && index < _length) {
             return _entries[index].uri;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the attribute's prefix.
+     *
+     * @param  index the attribute's index (zero-based).
+     * @return the attribute's prefix, the empty string if
+     *         none is available, or null if the index if out of range.
+     */
+    public CharSequence getPrefix(int index) {
+        if (index >= 0 && index < _length) {
+            return _entries[index].prefix;
         } else {
             return null;
         }
@@ -135,21 +178,20 @@ final class AttributesImpl implements Attributes {
      * @return the attribute's index, or -1 if none matches.
      */
     public int getIndex(CharSequence uri, CharSequence localName) {
-        for (int i=0; i < _length; i++) {
-            AttributeEntry attribute = _entries[i];
-            if (    attribute.localName.equals(localName) &&
-                    attribute.uri.equals(uri)    ) {
+        for (int i = 0; i < _length; i++) {
+            Entry entry = _entries[i];
+            if (entry.localName.equals(localName) && entry.uri.equals(uri)) {
                 return i;
             }
         }
         return -1;
     }
+
     // String version for XMLReaderImpl 
     int getIndex(String uri, String localName) {
-        for (int i=0; i < _length; i++) {
-            AttributeEntry attribute = _entries[i];
-            if (    attribute.localName.equals(localName) &&
-                    attribute.uri.equals(uri)    ) {
+        for (int i = 0; i < _length; i++) {
+            Entry entry = _entries[i];
+            if (entry.localName.equals(localName) && entry.uri.equals(uri)) {
                 return i;
             }
         }
@@ -163,16 +205,7 @@ final class AttributesImpl implements Attributes {
      * @return the attribute's index, or -1 if none matches.
      */
     public int getIndex(CharSequence qName) {
-        for (int i=0; i < _length; i++) {
-            if (_entries[i].qName.equals(qName)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    // String version for XMLReaderImpl 
-    int getIndex(String qName) {
-        for (int i=0; i < _length; i++) {
+        for (int i = 0; i < _length; i++) {
             if (_entries[i].qName.equals(qName)) {
                 return i;
             }
@@ -192,10 +225,6 @@ final class AttributesImpl implements Attributes {
     public String getType(CharSequence uri, CharSequence localName) {
         return (getIndex(uri, localName) >= 0) ? "CDATA" : null;
     }
-    // String version for XMLReaderImpl 
-    String getType(String uri, String localName) {
-        return (getIndex(uri, localName) >= 0) ? "CDATA" : null;
-    }
 
     /**
      * Looks up an attribute's type by qualified (prefixed) name.
@@ -204,10 +233,6 @@ final class AttributesImpl implements Attributes {
      * @return the attribute's type, or null if there is no matching attribute.
      */
     public String getType(CharSequence qName) {
-        return (getIndex(qName) >= 0) ? "CDATA" : null;
-    }
-    // String version for XMLReaderImpl 
-    String getType(String qName) {
         return (getIndex(qName) >= 0) ? "CDATA" : null;
     }
 
@@ -223,11 +248,6 @@ final class AttributesImpl implements Attributes {
         int index = getIndex(uri, localName);
         return (index >= 0) ? _entries[index].value : null;
     }
-    // String version for XMLReaderImpl 
-    String getValue(String uri, String localName) {
-        int index = getIndex(uri, localName);
-        return (index >= 0) ? _entries[index].value.toString() : null;
-    }
 
     /**
      * Looks up an attribute's value by qualified (prefixed) name.
@@ -239,11 +259,6 @@ final class AttributesImpl implements Attributes {
         int index = getIndex(qName);
         return (index >= 0) ? _entries[index].value : null;
     }
-    // String version for XMLReaderImpl 
-    String getValue(String qName) {
-        int index = getIndex(qName);
-        return (index >= 0) ? _entries[index].value.toString() : null;
-    }
 
     /**
      * Add an attribute to the end of the list.
@@ -252,45 +267,67 @@ final class AttributesImpl implements Attributes {
      * to see if the attribute is already in the list: that is
      * the responsibility of the application.</p>
      *
-     * @param  uri The namespace URI, or the empty string if
+     * @param uri The namespace URI, or the empty string if
      *         none is available or namespace processing is not
      *         being performed.
-     * @param  localName the local name, or the empty string if
+     * @param prefix the name prefix.
+     * @param localName the local name, or the empty string if
      *         namespace processing is not being performed.
-     * @param  qName the qualified (prefixed) name, or the empty string
+     * @param qName the qualified (prefixed) name, or the empty string
      *        if qualified names are not available.
-     * @param value The attribute value.
+     * @param value the attribute value.
      */
-    public void add(CharSequenceImpl uri, CharSequenceImpl localName,
-                    CharSequenceImpl qName, CharSequenceImpl value) {
+    public void add(CharSequenceImpl uri, CharSequenceImpl prefix, 
+            CharSequenceImpl localName, CharSequenceImpl qName, 
+            CharSequenceImpl value) {
         if (_length >= _entries.length) {
-            ensureCapacity(_entries.length * 2);
+            _entries = (Entry[]) ENTRIES_FACTORY.resize(_entries);
         }
-        AttributeEntry entry = _entries[_length++];
+        Entry entry = _entries[_length++];
+        if (entry == null) {
+            entry = _entries[_length - 1] = (Entry) ENTRY_FACTORY.newObject();
+        }
         entry.uri = uri;
+        entry.prefix = prefix;
         entry.localName = localName;
         entry.qName = qName;
         entry.value = value;
     }
 
-    /**
-     * Clears the attribute list for reuse.
-     */
-    void clear() {
+    // Implements Reusable interface.
+    public void reset() {
         _length = 0;
     }
 
     /**
-     * Ensures the specified capacity.
-     *
-     * @param  capacity the list capacity.
+     * This inner class represents a single attribute entry.
      */
-    private void ensureCapacity(int capacity) {
-        AttributeEntry[] tmp = new AttributeEntry[capacity];
-        System.arraycopy(_entries, 0, tmp, 0, _entries.length);
-        for (int i=_entries.length; i < tmp.length; i++) {
-            tmp[i] = new AttributeEntry();
-        }
-        _entries = tmp;
+    private static final class Entry {
+
+        /**
+         * Holds the attribute's URI.
+         */
+        private CharSequenceImpl uri;
+
+        /**
+         * Holds the attribute's prefix.
+         */
+        private CharSequenceImpl prefix;
+
+        /**
+         * Holds the attribute's local name.
+         */
+        private CharSequenceImpl localName;
+
+        /**
+         * Holds the attribute's qualified name (qName = prefix + ":" + localName).
+         */
+        private CharSequenceImpl qName;
+
+        /**
+         * Holds the attribute's value.
+         */
+        private CharSequenceImpl value;
+
     }
 }

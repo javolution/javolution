@@ -56,7 +56,7 @@ public class RealtimeReference {
 
     /**
      * Returns a reference allocated from the stack when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.realtime.PoolContext PoolContext}.
      *
      * @return a new, preallocated or recycled reference instance.
      */

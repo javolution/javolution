@@ -8,6 +8,7 @@
  */
 package javolution;
 
+import javolution.lang.TextBuilder;
 import javolution.util.Reflection;
 
 /**
@@ -76,15 +77,16 @@ public class Javolution {
         println("");
         println("Success");
     }
-
+    
     /**
      * Measures performance.
      */
     private static void benchmark() throws Exception {
         println("Benchmark...");
         println("");
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
-        new Perf_Io().run();
+       // new Perf_Io().run();
         new Perf_Lang().run();
         new Perf_Realtime().run();
         new Perf_Util().run();
@@ -113,9 +115,15 @@ public class Javolution {
     }
 
     /**
-     * Starts measuring time.
+     * Runs garbage collector then starts measuring time.
      */
     public static void startTime() {
+        System.gc();
+        try {
+            Thread.sleep(500); // Allows gc to do its work.
+        } catch (InterruptedException e) {
+            throw new JavolutionError(e);
+        }
         _time = nanoTime();
     }
 
@@ -125,16 +133,32 @@ public class Javolution {
      * @param iterations the number iterations performed since 
      *        {@link #startTime}.
      */
-    public static void endTime(int iterations) {
+    public static String endTime(int iterations) {
         long nanoSeconds = nanoTime() - _time;
-        long nanoDuration = nanoSeconds / iterations;
-        if (nanoDuration > 10000000) { // 10 ms
-            System.out.println(nanoDuration / 1000000 + "ms");
-        } else if (nanoDuration > 10000) { // 10 µs
-            System.out.println(nanoDuration / 1000 + "µs");
+        long picoDuration = nanoSeconds * 1000 / iterations;
+        long divisor;
+        String unit;
+        if (picoDuration > 1000 * 1000 * 1000 * 1000L) { // 1 s
+            unit = " s";
+            divisor = 1000 * 1000 * 1000 * 1000L;
+        } else if (picoDuration > 1000 * 1000 * 1000L) {
+            unit = " ms";
+            divisor = 1000 * 1000 * 1000L;
+        } else if (picoDuration > 1000 * 1000L) {
+            unit = " µs";
+            divisor = 1000 * 1000L;
         } else {
-            System.out.println(nanoDuration + "ns");
+            unit = " ns";
+            divisor = 1000L;
         }
+        TextBuilder tb = TextBuilder.newInstance();
+        tb.append(picoDuration / divisor);
+        int fracDigits = 4 - tb.length(); // 4 digits precision.
+        tb.append(".");
+        for (int i=0, j=10; i < fracDigits; i++, j *= 10) {
+            tb.append((picoDuration * j / divisor) % 10);
+        }
+        return tb.append(unit).toString();
     }
 
     private static long _time;

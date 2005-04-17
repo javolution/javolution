@@ -8,16 +8,15 @@
  */
 package javolution.xml;
 
-import j2me.lang.CharSequence;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Map;
 
 import javolution.JavolutionError;
+import javolution.lang.Text;
+import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.Reflection;
-import javolution.lang.Text;
-import javolution.realtime.ObjectFactory;
 
 /**
  * <p> This class represents the format base class for XML serialization and
@@ -30,29 +29,23 @@ import javolution.realtime.ObjectFactory;
  *         private Stroke _stroke; // null if none.
  *         private Transform _transform; // null if none.
  *          
- *         // XML format with type-based associations for child elements 
- *         // (see {@link javolution.xml} for examples of positional associations).
+ *         // XML format with positional association (members identified by their position),
+ *         // see {@link javolution.xml} for examples of name association.
  *         protected static final XmlFormat GRAPHIC_XML = new XmlFormat(Graphic.class) {
  *              public void format(Object obj, XmlElement xml) {
  *                  Graphic g = (Graphic) obj;
  *                  xml.setAttribute("isVisible", g._isVisible); 
- *                  if (g._paint != null) xml.getContent().add(g._paint);
- *                  if (g._stroke != null) xml.getContent().add(g._stroke);
- *                  if (g._transform != null) xml.getContent().add(g._transform);
+ *                  xml.getContent().add(g._paint); // First.
+ *                  xml.getContent().add(g._stroke); // Second.
+ *                  xml.getContent().add(g._transform); // Third.
  *              }
  *              public Object parse(XmlElement xml) {
  *                  Graphic g = (Graphic) xml.object();
  *                  g._isVisible = xml.getAttribute("isVisible", true);
- *                  for (Iterator i=xml.getContent().fastIterator(); i.hasNext();) {
- *                      Object obj = i.next();
- *                      if (obj instanceof Paint) {
- *                          g._paint = (Paint) obj;
- *                      } else if (obj instanceof Stroke) {
- *                          g._stroke = (Stroke) obj;
- *                      } else if (obj instanceof Transform) {
- *                          g._transform = (Transform) obj;
- *                      }
- *                  }
+ *                  FastNode n = xml.getContent().headNode();
+ *                  g._paint = (Paint) (n = n.getNextNode()).getValue(); // First.
+ *                  g._stroke = (Stroke) (n = n.getNextNode()).getValue(); // Second.
+ *                  g._transform = (Transform) (n = n.getNextNode()).getValue(); // Third.
  *                  return g;
  *             }
  *         };
@@ -101,7 +94,7 @@ import javolution.realtime.ObjectFactory;
  *     full class name of the object serialized).</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.2, March 18, 2005
  */
 public abstract class XmlFormat {
 
@@ -116,19 +109,21 @@ public abstract class XmlFormat {
     private static final FastMap CLASS_TO_FORMAT = new FastMap();
 
     /**
-     * Holds class to tag name (string) look-up table (no removal allowed).
+     * Holds class to tag name (CharSequence) look-up table 
+     * (no removal allowed).
      */
     private static final FastMap CLASS_TO_NAME = new FastMap();
 
     /**
-     * Holds the tag name (string) to class look-up table (no removal allowed).
+     * Holds the tag name (CharSequence) to class look-up table 
+     * (no removal allowed).
      */
     private static final FastMap NAME_TO_CLASS = new FastMap();
 
     /**
-     * Holds uri-name to class look-up table (no removal allowed) 
+     * Holds (uri, local name) to class look-up table (no removal allowed) 
      */
-    private static final FastMap ID_TO_CLASS = new FastMap();
+    private static final FastMap URI_LOCAL_NAME_TO_CLASS = new FastMap();
 
     /**
      * Holds the object representing <code>null</code> values.
@@ -212,9 +207,11 @@ public abstract class XmlFormat {
 
         public Object parse(XmlElement xml) {
             Map map = (Map) xml.object();
-            for (Iterator it = xml.getContent().fastIterator(); it.hasNext();) {
-                Object key = it.next();
-                Object value = it.next();
+            for (FastList.Node n =  xml.getContent().headNode(), 
+                    end = xml.getContent().tailNode();
+                    (n = n.getNextNode()) != end;) {
+                Object key = n.getValue();
+                Object value = (n = n.getNextNode()).getValue();
                 map.put(key, value);
             }
             return map;
@@ -242,9 +239,23 @@ public abstract class XmlFormat {
     private Class _mappedClass;
 
     /**
+     * Holds the name identifier.
+     */
+    final Text _idName;
+
+    /**
+     * Holds the reference identifier.
+     */
+    final Text _idRef;
+
+    /**
      * Default constructor (used for local mapping).
      */
     protected XmlFormat() {
+        String idName = identifier(false);
+        _idName = (idName != null) ? Text.valueOf(idName).intern() : null;
+        String idRef = identifier(true);
+        _idRef = (idRef != null) ? Text.valueOf(idRef).intern() : null;
     }
 
     /**
@@ -257,6 +268,7 @@ public abstract class XmlFormat {
      *        for the specified class.
      */
     protected XmlFormat(Class mappedClass) {
+        this();
         _mappedClass = mappedClass;
         synchronized (BASE_CLASS_TO_FORMAT) {
             if (BASE_CLASS_TO_FORMAT.containsKey(_mappedClass)) {
@@ -278,6 +290,7 @@ public abstract class XmlFormat {
      *        for the specified class.
      */
     protected XmlFormat(String className) {
+        this();
         try {
             _mappedClass = Reflection.getClass(className);
         } catch (ClassNotFoundException e) {
@@ -291,15 +304,6 @@ public abstract class XmlFormat {
             BASE_CLASS_TO_FORMAT.put(_mappedClass, this);
             invalidateClassToFormatMapping();
         }
-    }
-
-    /**
-     * Returns the class or interface associated to this xml format.
-     * 
-     * @return the class/interface for this format.
-     */
-    public Class getMappedClass() {
-        return _mappedClass;
     }
 
     /**
@@ -346,35 +350,34 @@ public abstract class XmlFormat {
         }
         Class bestMatchClass = null;
         XmlFormat bestMatchFormat = null;
-        synchronized (BASE_CLASS_TO_FORMAT) {
-            // Searches best match.
-            for (Iterator i = BASE_CLASS_TO_FORMAT.fastKeyIterator(); i
-                    .hasNext();) {
-                Class clazz = (Class) i.next();
-                if (clazz.isAssignableFrom(mappedClass)) { // Compatible.
-                    if ((bestMatchClass == null)
-                            || (bestMatchClass.isAssignableFrom(clazz))) {
-                        // clazz more specialized that bestMatchClass.
-                        XmlFormat xmlFormat = (XmlFormat) BASE_CLASS_TO_FORMAT
-                                .get(clazz);
-                        if (xmlFormat != null) {
-                            bestMatchClass = clazz;
-                            bestMatchFormat = xmlFormat;
-                        }
+        // Searches best match.
+        for (FastMap.Entry e = BASE_CLASS_TO_FORMAT.headEntry(), end = BASE_CLASS_TO_FORMAT
+                .tailEntry(); (e = e.getNextEntry()) != end;) {
+            Class clazz = (Class) e.getKey();
+            if (clazz.isAssignableFrom(mappedClass)) { // Compatible.
+                if ((bestMatchClass == null)
+                        || (bestMatchClass.isAssignableFrom(clazz))) {
+                    // clazz more specialized that bestMatchClass.
+                    XmlFormat xmlFormat = (XmlFormat) BASE_CLASS_TO_FORMAT
+                            .get(clazz);
+                    if (xmlFormat != null) {
+                        bestMatchClass = clazz;
+                        bestMatchFormat = xmlFormat;
                     }
                 }
             }
-
-            // If none found, use default object format.
-            if (bestMatchFormat == null) {
-                bestMatchFormat = OBJECT_XML;
-            }
-            // Updates look-up.
-            synchronized (CLASS_TO_FORMAT) {
-                CLASS_TO_FORMAT.put(mappedClass, bestMatchFormat);
-            }
-            return bestMatchFormat;
         }
+
+        // If none found, use default object format.
+        if (bestMatchFormat == null) {
+            bestMatchFormat = OBJECT_XML;
+        }
+        // Updates look-up.
+        synchronized (CLASS_TO_FORMAT) {
+            CLASS_TO_FORMAT.put(mappedClass, bestMatchFormat);
+        }
+        return bestMatchFormat;
+
     }
 
     /**
@@ -416,84 +419,55 @@ public abstract class XmlFormat {
     }
 
     /**
-     * Returns the class for the specified identifier (URI and local name).
+     * Returns the class for the specified identifier.
      *
-     * @param  id the identifier.
-     * @return the corresponding class.
-     * @throws XmlException if there is no class matching the specified id.
+     * @param  classId the class uri namespace and local name.
+     * @throws XmlException if there is no class matching the specified classId.
      */
-    static Class classFor(Identifier id) {
+    static Class classFor(UriLocalName classId) {
         // Searches current mapping.
-        Class clazz = (Class) ID_TO_CLASS.get(id);
+        Class clazz = (Class) URI_LOCAL_NAME_TO_CLASS.get(classId);
         if (clazz != null) {
             return clazz;
         }
 
         // Extracts the class name (or alias).
-        String name;
-        Text uri = Text.valueOf(id.uri).intern();
-        Text localName = Text.valueOf(id.localName).intern();
-        if (uri.length() == 0) {
-            name = localName.toString();
-        } else if ((uri.length() >= 5) && (uri.charAt(0) == 'j')
-                && (uri.charAt(1) == 'a') && (uri.charAt(2) == 'v')
-                && (uri.charAt(3) == 'a') && (uri.charAt(4) == ':')) {
-            if (uri.length() > 5) {
-                name = uri.subtext(5, uri.length()) + "." + localName;
-            } else { // "java:" 
-                name = localName.toString();
-            }
-        } else {
-            throw new XmlException("Invalid URI (must use a java scheme)");
+        String uri = classId.uri.toString();
+        String localName = classId.localName.toString();
+        String className;
+        if ((uri.length() == 0) || uri.equals("http://javolution.org")) {
+            className = localName; // Class name is the local name.
+        } else { // Use package prefix.   
+            if (uri.startsWith("java:")) {
+                className = (uri.length() > 5) ? uri.substring(5) + "." + localName
+                    : localName;
+            } else {
+                throw new XmlException("Invalid URI (must use a java scheme)");
+           }
         }
 
         // Finds the class object.
-        clazz = (Class) NAME_TO_CLASS.get(name);
+        clazz = (Class) NAME_TO_CLASS.get(className);
         if (clazz == null) {
             try {
-                clazz = Reflection.getClass(name);
+                clazz = Reflection.getClass(className);
             } catch (ClassNotFoundException e) {
                 throw new XmlException(e);
             }
             synchronized (CLASS_TO_NAME) {
-                CLASS_TO_NAME.put(clazz, name);
-                NAME_TO_CLASS.put(name, clazz);
+                CLASS_TO_NAME.put(clazz, className);
+                NAME_TO_CLASS.put(className, clazz);
             }
         }
 
         // Adds new id-class mapping.
-        Identifier newId = (Identifier) Identifier.FACTORY.heapPool().next();
-        newId.uri = uri;
-        newId.localName = localName;
-        synchronized (ID_TO_CLASS) {
-            ID_TO_CLASS.put(newId, clazz);
+        UriLocalName mapKey = new UriLocalName();
+        mapKey.uri = uri;
+        mapKey.localName = localName;
+        synchronized (URI_LOCAL_NAME_TO_CLASS) {
+            URI_LOCAL_NAME_TO_CLASS.put(mapKey, clazz);
         }
         return clazz;
-
-    }
-
-    static final class Identifier {
-
-        // Use factory to allow for pre-allocation.
-        static final ObjectFactory FACTORY = new ObjectFactory() {
-            protected Object create() {
-                return new Identifier();
-            }
-        };
-
-        CharSequence uri;
-
-        CharSequence localName;
-
-        public boolean equals(Object obj) {
-            Identifier that = (Identifier) obj;
-            return (that.uri.equals(this.uri) && that.localName
-                    .equals(this.localName));
-        }
-
-        public int hashCode() {
-            return localName.hashCode();
-        }
     }
 
     /**
@@ -503,8 +477,9 @@ public abstract class XmlFormat {
      */
     private static void invalidateClassToFormatMapping() {
         synchronized (CLASS_TO_FORMAT) {
-            for (Iterator i = CLASS_TO_FORMAT.fastKeyIterator(); i.hasNext();) {
-                CLASS_TO_FORMAT.put(i.next(), null);
+            for (FastMap.Entry e = CLASS_TO_FORMAT.headEntry(), end = CLASS_TO_FORMAT
+                    .tailEntry(); (e = e.getNextEntry()) != end;) {
+                e.setValue(null);
             }
         }
     }
@@ -557,5 +532,29 @@ public abstract class XmlFormat {
      *         an illegal syntax.
      */
     public abstract Object parse(XmlElement xml);
+
+    /**
+     * This class represents a URI / LocalName class identifier.
+     */
+    static final class UriLocalName {
+
+        Object uri; // String when stored in map.
+
+        Object localName; // String when stored in map.
+
+        public boolean equals(Object obj) {
+            UriLocalName that = (UriLocalName) obj;
+            return that.localName.equals(this.localName)
+                    && that.uri.equals(this.uri);
+        }
+
+        public int hashCode() {
+            return localName.hashCode();
+        }
+
+        public String toString() {
+            return "(" + uri.toString() + "," + localName.toString() + ")";
+        }
+    }
 
 }

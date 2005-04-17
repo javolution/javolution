@@ -16,11 +16,14 @@ import javolution.util.Reflection;
  *     {@link ConcurrentContext} to perform concurrent 
  *     {@link ConcurrentContext#execute executions} on multi-processors
  *     systems.</p>
+ *     
  * <p> Instances of this class are created at start-up and maintained
  *     on-standby in order to execute quickly.</p>
+ *     
  * <p> The default context for instances of this class is a {@link PoolContext},
  *     unlike normal threads for which the default context is
  *     a {@link HeapContext}.</p>
+ *     
  * <p> To avoid thread proliferation, the number of instance of this class 
  *     is voluntarily limited (see <a href=
  *     "{@docRoot}/overview-summary.html#configuration">Javolution 
@@ -77,7 +80,7 @@ public final class ConcurrentThread extends Thread {
         }
     }
     private static final Reflection.Method SET_DAEMON 
-        = Reflection.getMethod("j2me.lang.Thread.setDaemon(bool)");
+        = Reflection.getMethod("java.lang.Thread.setDaemon(bool)");
     
 
     /**
