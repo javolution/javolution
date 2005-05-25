@@ -19,13 +19,12 @@ import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
-import javolution.xml.XmlElement;
-import javolution.xml.XmlFormat;
 
 /**
  * <p> This class represents an immutable character sequence with extremely
  *     fast {@link #concat concatenation}, {@link #insert insertion} and 
- *     {@link #delete deletion} capabilities (<b>O[Log(n)]</b>).</p>
+ *     {@link #delete deletion} capabilities (O[Log(n)]) instead of 
+ *     O[n] for StringBuffer/StringBuilder).</p>
  * <p> Instances of this class have the following advantages over 
  *     {@link String}</code>:<ul>
  *     <li> No need for an intermediate {@link StringBuffer} in order to 
@@ -73,24 +72,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * Holds an empty character sequence.
      */
     public static final Text EMPTY = Text.valueOf("").intern();
-
-    /**
-     * Holds the default XML representation for this class and its sub-classes.
-     * This representation consists of a <code>"value"</code> attribute 
-     * holding the character sequence.
-     * Instances are created using the {@link #valueOf(Object)}
-     * factory method during deserialization (on the stack when
-     * executing in a {@link javolution.realtime.PoolContext PoolContext}).
-     */
-    protected static final XmlFormat TEXT_XML = new XmlFormat(EMPTY.getClass()) {
-        public void format(Object obj, XmlElement xml) {
-            xml.setAttribute("value", (Text) obj);
-        }
-
-        public Object parse(XmlElement xml) {
-            return Text.valueOf(xml.getAttribute("value"));
-        }
-    };
 
     /**
      * Holds the <code>"null"</code> character sequence.
@@ -222,22 +203,31 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     private static final Text FALSE = Text.valueOf("false").intern();
 
     /**
-     * Returns the text representation of the <code>char</code> argument.
+     * Returns the {@link #intern unique} text instance corresponding to the 
+     * specified character. 
      *
      * @param c a character.
      * @return a text of length <code>1</code> containing <code>'c'</code>.
      */
     public static Text valueOf(char c) {
+        if ((c < 128) && (ASCII[c] != null))
+            return ASCII[c];
         Primitive text = Primitive.newInstance(1);
         text._data[0] = c;
-        return text;
+        Text textIntern = text.intern();
+        if (c < 128) {
+            ASCII[c] = textIntern;
+        }
+        return textIntern;
     }
+    private static final Text[] ASCII = new Text[128];
 
     /**
-     * Returns the text representation of the <code>int</code> argument.
+     * Returns the decimal representation of the specified <code>int</code>
+     * argument.
      *
-     * @param i a 32 bits integer.
-     * @return the text representation of the <code>int</code> argument.
+     * @param  i the <code>int</code> to format.
+     * @return the corresponding text instance.
      */
     public static Text valueOf(int i) {
         try {
@@ -250,10 +240,29 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Returns the text representation of the <code>long</code> argument.
+     * Returns the radix representation of the specified <code>int</code>
+     * argument.
      *
-     * @param l a 64 bits integer.
-     * @return the text representation of the <code>long</code> argument.
+     * @param  i the <code>int</code> to format.
+     * @param  radix the radix (e.g. <code>16</code> for hexadecimal).
+     * @return the corresponding text instance.
+     */
+    public static Text valueOf(int i, int radix) {
+        try {
+            Primitive text = Primitive.newInstance(0);
+            TypeFormat.format(i, radix, text);
+            return text;
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
+
+    /**
+     * Returns the decimal representation of the specified <code>long</code>
+     * argument.
+     *
+     * @param  l the <code>long</code> to format.
+     * @return the corresponding text instance.
      */
     public static Text valueOf(long l) {
         try {
@@ -266,38 +275,85 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Returns the text representation of the <code>float</code> argument.
+     * Returns the radix representation of the specified <code>long</code>
+     * argument.
      *
-     * @param f a 32 bits floati.
-     * @return the text representation of the <code>float</code> argument.
+     * @param  l the <code>long</code> to format.
+     * @param  radix the radix (e.g. <code>16</code> for hexadecimal).
+     * @return the corresponding text instance.
+     */
+    public static Text valueOf(long l, int radix) {
+        try {
+            Primitive text = Primitive.newInstance(0);
+            TypeFormat.format(l, radix, text);
+            return text;
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
+
+    /**
+     * Returns the textual representation of the specified <code>float</code>
+     * instance.
+     *
+     * @param  f the <code>float</code> to format.
+     * @return the corresponding text instance.
      /*@FLOATING_POINT@
-     public static Text valueOf(float f) {
-     try {
-     Primitive text = Primitive.newInstance(0);
-     TypeFormat.format(f, text);
-     return text;
-     } catch (IOException e) {
-     throw new JavolutionError(e);
-     }
-     }
+    public static Text valueOf(float f) {
+        try {
+            Primitive text = Primitive.newInstance(0);
+            TypeFormat.format(f, text);
+            return text;
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
      /**/
 
     /**
-     * Returns the text representation of the <code>double</code> argument.
+     * Returns the textual representation of the specified <code>double</code>
+     * argument.
      *
-     * @param d a 64 bits float.
-     * @return the text representation of the <code>float</code> argument.
+     * @param  d the <code>double</code> to format.
+     * @return the corresponding text instance.
      /*@FLOATING_POINT@
-     public static Text valueOf(double d) {
-     try {
-     Primitive text = Primitive.newInstance(0);
-     TypeFormat.format(d, text);
-     return text;
-     } catch (IOException e) {
-     throw new JavolutionError(e);
-     }
-     }
+    public static Text valueOf(double d) {
+        try {
+            Primitive text = Primitive.newInstance(0);
+            TypeFormat.format(d, text);
+            return text;
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
      /**/
+
+    /**
+     * Returns the textual representation of the specified <code>double</code>
+     * value according to the specified formatting arguments.
+     *
+     * @param  value the <code>double</code> value.
+     * @param  digits the number of significative digits (excludes exponent).
+     * @param  scientific <code>true</code> to forces the use of the scientific 
+     *         notation (e.g. <code>1.23E3</code>); <code>false</code> 
+     *         otherwise. 
+     * @param  showZero <code>true</code> if trailing fractional zeros are 
+     *         represented; <code>false</code> otherwise.
+     * @return the corresponding text instance.
+     * @throws IllegalArgumentException if <code>((digits > 19) || 
+     *         (digits <= 0))</code>)
+     /*@FLOATING_POINT@
+    public static Text valueOf(double value, int digits,
+            boolean scientific, boolean showZero) {
+        try {
+            Primitive text = Primitive.newInstance(0);
+            TypeFormat.format(value, digits, scientific, showZero, text);
+            return text;
+        } catch (IOException e) {
+            throw new JavolutionError(e);
+        }
+    }
+    /**/
 
     /**
      * Returns the length of this text.

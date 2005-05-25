@@ -15,7 +15,7 @@ import javolution.util.FastMap;
 
 /**
  * <p> This class is equivalent to <code>j2me.lang.Enum</code> 
- *     and can be moved (refactored) to the <code>j2me.lang</code> system 
+ *     and is moved (refactored) to the <code>j2me.lang</code> system 
  *     package for applications targetting the J2SE 5.0+ run-time.</p>
  *    
  * <p> This is a clean-room implementation of the Enum base class.</p>

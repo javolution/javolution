@@ -38,7 +38,7 @@ final class Perf_Realtime extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 10000; i++) {
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = new ComplexStandard(i, j);
+                _objects[j++] = new SmallObjectStandard();
             }
         }
         println(endTime(10000 * _objects.length));
@@ -48,7 +48,7 @@ final class Perf_Realtime extends Javolution implements Runnable {
         for (int i = 0; i < 10000; i++) {
             PoolContext.enter();
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = ComplexRealtime.valueOf(i, j);
+                _objects[j++] = SmallObjectRealtime.FACTORY.object(); 
             }
             PoolContext.exit();
         }
@@ -96,28 +96,20 @@ final class Perf_Realtime extends Javolution implements Runnable {
         println("");
     }
 
-    private static final class ComplexStandard  {
-    	double _real;
-    	double _imag;
-    	public ComplexStandard(double real, double imag) {
-    		_real = real;
-    		_imag = imag;
-    	}
+    private static final class SmallObjectStandard  {
+        long longValue;
+        int intValue;
+        SmallObjectStandard refValue;
     }
-   private static final class ComplexRealtime extends RealtimeObject {
-    	double _real;
-    	double _imag;
-        static final Factory FACTORY = new Factory() {
+   private static final class SmallObjectRealtime extends RealtimeObject {
+       long longValue;
+       int intValue;
+       SmallObjectRealtime refValue;
+       static final Factory FACTORY = new Factory() {
             public Object create() {
-                return new ComplexRealtime();
+                return new SmallObjectRealtime();
             }
         };
-        public static ComplexRealtime valueOf(double real, double imag) { 
-        	ComplexRealtime cr = (ComplexRealtime) FACTORY.object();
-        	cr._real = real;
-        	cr._imag = imag;
-        	return cr;
-        }
     }
 
     private static final ObjectFactory CHAR128_FACTORY = new ObjectFactory() {

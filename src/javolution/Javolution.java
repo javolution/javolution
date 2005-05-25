@@ -8,8 +8,10 @@
  */
 package javolution;
 
+import java.io.PrintStream;
+
+import javolution.lang.Reflection;
 import javolution.lang.TextBuilder;
-import javolution.util.Reflection;
 
 /**
  * <p> This class contains the library {@link #main} method for
@@ -26,6 +28,11 @@ public class Javolution {
      * Holds the version information.
      */
     public final static String VERSION = "@VERSION@";
+
+    /**
+     * Holds the current output stream (default System.out).
+     */
+    private static PrintStream Out = System.out;
 
     /**
      * Default constructor.
@@ -75,7 +82,7 @@ public class Javolution {
     private static void testing() throws Exception {
         print("Testing...");
         println("");
-        println("Success");
+		println("Success");
     }
     
     /**
@@ -86,7 +93,7 @@ public class Javolution {
         println("");
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
-       // new Perf_Io().run();
+        // new Perf_Io().run();
         new Perf_Lang().run();
         new Perf_Realtime().run();
         new Perf_Util().run();
@@ -102,7 +109,8 @@ public class Javolution {
      * @param obj the object to be displayed.
      */
     public static void println(Object obj) {
-        System.out.println(obj);
+        if (Javolution.Out == null) return;
+        Javolution.Out.println(obj);
     }
 
     /**
@@ -111,7 +119,8 @@ public class Javolution {
      * @param obj the object to be displayed.
      */
     public static void print(Object obj) {
-        System.out.print(obj);
+        if (Javolution.Out == null) return;
+        Javolution.Out.print(obj);
     }
 
     /**
@@ -125,6 +134,15 @@ public class Javolution {
             throw new JavolutionError(e);
         }
         _time = nanoTime();
+    }
+
+    /**
+     * Sets the output stream. 
+     * 
+     * @param out the print stream or <code>null</code> to disable output.
+     */
+    public static void setOutputStream(PrintStream out) {
+        Javolution.Out = out;
     }
 
     /**

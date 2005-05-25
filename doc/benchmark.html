@@ -1,19 +1,24 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE>Javolution - Benchmark Results (Microsoft Windows 2000 - Intel Pentium 4 - 2.26 GHz)</TITLE>
+<HTML><HEAD><TITLE>Javolution - Benchmark Results (Microsoft Windows XP - Intel Pentium 4 - 2.26 GHz)</TITLE>
 <META content="text/html; charset=utf-8" http-equiv=Content-Type>
 <META NAME="keywords" CONTENT="Javolution, benchmark">
-<LINK REL ="stylesheet" TYPE="text/css" HREF="javadoc.css" TITLE="Style">
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../css/javadoc.css" TITLE="Style">
 </HEAD>
-<BODY><PRE>
-<B>D:\javolution-3.2>java -jar javolution.jar perf</B>
+<BODY>
+<H3>Performance graphs for <code>javolution.util</code> package 
+    <I>(Javolution Collections versus Standard Collections Classes)</I> are
+    shown in Annex of the presentation: 
+    <P ALIGN="CENTER">
+    <A HREF="Javolution-Collections.pdf">Collection Classes for Real-Time and High-Performance Applications (pdf)</A>
+    </P>
+</H3>
+<BR>
+<PRE>
+<B>D:\javolution-3.3>java -Xms256M -Xmx256M -jar javolution.jar perf</B>
 Javolution - Java(TM) Solution for Real-Time and Embedded Systems
-Version 3.2.0 (J2SE 1.5+) April 5 2005 (http://javolution.org)
+Version 3.3.1 (J2SE 1.5+) May 16 2005 (http://javolution.org)
 
 Benchmark...
-
-////////////////////////////
-// Package: javolution.io //
-////////////////////////////
 
 //////////////////////////////
 // Package: javolution.lang //
@@ -22,32 +27,32 @@ Benchmark...
 -- String/StringBuffer versus Text --
 
 "Concatenates this line 1000 times (resulting in a text of about 80,000 characters)"
-String "+" operator: 4.100 s
-StringBuffer "append" : 1.701 ms
-Text "concat" (heap): 1.606 ms
-Text "concat" (stack): 456.9 µs
+String "+" operator: 1.085 s
+StringBuffer "append" : 1.222 ms
+Text "concat" (heap): 856.6 µs
+Text "concat" (stack): 483.0 µs
 
 Inserts one character at random locations 1,000 times to the 80,000 characters text.
-StringBuffer insert: 54.18 ms
-Text insert (heap): 6.711 ms
-Text insert (stack): 4.497 ms
+StringBuffer insert: 53.97 ms
+Text insert (heap): 4.425 ms
+Text insert (stack): 3.460 ms
 
 Delete 1,000 times one character at random location from the 80,000 characters text.
-StringBuffer delete: 44.54 ms
-Text delete (heap): 4.616 ms
-Text delete (stack): 3.536 ms
+StringBuffer delete: 43.71 ms
+Text delete (heap): 3.239 ms
+Text delete (stack): 2.699 ms
 
 //////////////////////////////////
 // Package: javolution.realtime //
 //////////////////////////////////
 
 -- Heap versus Stack Allocation (Pool-Context) --
-Small standard object heap creation: 75.22 ns
-Small real-time object stack creation: 89.39 ns
-char[128] heap creation: 3.040 µs
-char[128] stack creation: 237.4 ns
-char[256] heap creation: 9.297 µs
-char[256] stack creation: 168.2 ns
+Small standard object heap creation: 60.03 ns
+Small real-time object stack creation: 79.05 ns
+char[128] heap creation: 695.5 ns
+char[128] stack creation: 144.8 ns
+char[256] heap creation: 1.336 µs
+char[256] stack creation: 138.6 ns
 
 //////////////////////////////
 // Package: javolution.util //
@@ -55,76 +60,72 @@ char[256] stack creation: 168.2 ns
 
 (new)      : The collection is created (using the new keyword), populated, then discarded (throw-away collections).
 (recycled) : The collection is cleared, populated, then reused (static collections or throw-away collections in PoolContext).
-(indirect) : Iteration through iterators.
-(direct)   : Explicit iteration when applicable (e.g. ArrayList.get(i++) or Record.getNext() for FastCollection).
 
--- FastList versus ArrayList/LinkedList --
-javolution.util.FastList
-    Size: 10, add (new): 192.4 ns, add (recycled): 132.3 ns, iteration (indirect): 87.56 ns, iteration (direct): 4.630 ns
-    Size: 100, add (new): 209.0 ns, add (recycled): 92.16 ns, iteration (indirect): 70.78 ns, iteration (direct): 2.900 ns
-    Size: 1000, add (new): 218.8 ns, add (recycled): 98.88 ns, iteration (indirect): 71.42 ns, iteration (direct): 3.430 ns
-    Size: 10000, add (new): 403.5 ns, add (recycled): 95.53 ns, iteration (indirect): 66.85 ns, iteration (direct): 5.438 ns
-    Size: 100000, add (new): 657.4 ns, add (recycled): 175.4 ns, iteration (indirect): 71.58 ns, iteration (direct): 21.37 ns
+-- FastTable versus ArrayList -- 
+class javolution.util.FastTable
+    Size: 10, add (new): 59.94 ns, add (recycled): 41.70 ns, iteration (iterator): 62.22 ns, get(int): 19.38 ns
+    Size: 100, add (new): 54.69 ns, add (recycled): 38.45 ns, iteration (iterator): 46.15 ns, get(int): 19.73 ns
+    Size: 1000, add (new): 34.34 ns, add (recycled): 38.68 ns, iteration (iterator): 44.20 ns, get(int): 20.10 ns
+    Size: 10000, add (new): 36.31 ns, add (recycled): 40.04 ns, iteration (iterator): 45.59 ns, get(int): 20.03 ns
 
-java.util.ArrayList
-    Size: 10, add (new): 143.9 ns, add (recycled): 66.41 ns, iteration (indirect): 71.52 ns, iteration (direct): 34.43 ns
-    Size: 100, add (new): 115.1 ns, add (recycled): 112.4 ns, iteration (indirect): 62.63 ns, iteration (direct): 31.43 ns
-    Size: 1000, add (new): 79.90 ns, add (recycled): 128.2 ns, iteration (indirect): 61.74 ns, iteration (direct): 34.01 ns
-    Size: 10000, add (new): 86.42 ns, add (recycled): 115.4 ns, iteration (indirect): 61.31 ns, iteration (direct): 32.25 ns
-    Size: 100000, add (new): 222.0 ns, add (recycled): 63.14 ns, iteration (indirect): 67.33 ns, iteration (direct): 34.25 ns
+class java.util.ArrayList
+    Size: 10, add (new): 41.49 ns, add (recycled): 47.78 ns, iteration (iterator): 62.01 ns, get(int): 21.39 ns
+    Size: 100, add (new): 57.21 ns, add (recycled): 39.54 ns, iteration (iterator): 52.72 ns, get(int): 20.56 ns
+    Size: 1000, add (new): 61.23 ns, add (recycled): 38.92 ns, iteration (iterator): 51.56 ns, get(int): 21.49 ns
+    Size: 10000, add (new): 65.36 ns, add (recycled): 39.96 ns, iteration (iterator): 52.75 ns, get(int): 21.20 ns
 
-java.util.LinkedList
-    Size: 10, add (new): 200.2 ns, add (recycled): 107.6 ns, iteration (indirect): 67.38 ns
-    Size: 100, add (new): 129.1 ns, add (recycled): 100.7 ns, iteration (indirect): 55.45 ns
-    Size: 1000, add (new): 129.3 ns, add (recycled): 104.3 ns, iteration (indirect): 46.64 ns
-    Size: 10000, add (new): 258.5 ns, add (recycled): 182.0 ns, iteration (indirect): 48.11 ns
-    Size: 100000, add (new): 587.1 ns, add (recycled): 667.7 ns, iteration (indirect): 53.75 ns
+-- FastList versus LinkedList -- 
+class javolution.util.FastList
+    Size: 10, add (new): 110.2 ns, add (recycled): 35.92 ns, iteration (iterator): 53.62 ns, iteration (node): 4.607 ns
+    Size: 100, add (new): 71.17 ns, add (recycled): 30.14 ns, iteration (iterator): 40.36 ns, iteration (node): 2.934 ns
+    Size: 1000, add (new): 76.91 ns, add (recycled): 47.71 ns, iteration (iterator): 38.76 ns, iteration (node): 3.565 ns
+    Size: 10000, add (new): 88.79 ns, add (recycled): 57.53 ns, iteration (iterator): 39.29 ns, iteration (node): 3.645 ns
 
-
--- FasMap versus HashMap/LinkedMap  --
-javolution.util.FastMap
-    Size: 10, put (new): 372.9 ns, put (recycled): 165.1 ns, get: 31.40 ns, iteration (indirect): 91.54 ns, iteration (direct): 4.623 ns
-    Size: 100, put (new): 668.1 ns, put (recycled): 114.8 ns, get: 52.84 ns, iteration (indirect): 76.33 ns, iteration (direct): 4.536 ns
-    Size: 1000, put (new): 530.2 ns, put (recycled): 126.2 ns, get: 69.74 ns, iteration (indirect): 75.76 ns, iteration (direct): 5.365 ns
-    Size: 10000, put (new): 2.242 µs, put (recycled): 230.6 ns, get: 58.03 ns, iteration (indirect): 71.38 ns, iteration (direct): 9.857 ns
-    Size: 100000, put (new): 3.544 µs, put (recycled): 716.4 ns, get: 299.9 ns, iteration (indirect): 178.7 ns, iteration (direct): 106.5 ns
-
-java.util.HashMap
-    Size: 10, put (new): 218.8 ns, put (recycled): 157.8 ns, get: 93.74 ns, iteration (indirect): 94.69 ns
-    Size: 100, put (new): 361.5 ns, put (recycled): 256.8 ns, get: 90.25 ns, iteration (indirect): 84.25 ns
-    Size: 1000, put (new): 337.1 ns, put (recycled): 244.1 ns, get: 60.29 ns, iteration (indirect): 99.71 ns
-    Size: 10000, put (new): 438.3 ns, put (recycled): 266.6 ns, get: 97.45 ns, iteration (indirect): 94.69 ns
-    Size: 100000, put (new): 2.381 µs, put (recycled): 1.022 µs, get: 422.4 ns, iteration (indirect): 113.2 ns
-
-java.util.LinkedHashMap
-    Size: 10, put (new): 374.7 ns, put (recycled): 323.9 ns, get: 75.76 ns, iteration (indirect): 76.83 ns
-    Size: 100, put (new): 415.5 ns, put (recycled): 353.8 ns, get: 77.69 ns, iteration (indirect): 59.27 ns
-    Size: 1000, put (new): 417.2 ns, put (recycled): 323.5 ns, get: 82.31 ns, iteration (indirect): 58.58 ns
-    Size: 10000, put (new): 724.1 ns, put (recycled): 530.3 ns, get: 162.6 ns, iteration (indirect): 53.40 ns
-    Size: 100000, put (new): 3.001 µs, put (recycled): 1.566 µs, get: 409.1 ns, iteration (indirect): 106.1 ns
+class java.util.LinkedList
+    Size: 10, add (new): 82.19 ns, add (recycled): 96.28 ns, iteration (iterator): 50.46 ns
+    Size: 100, add (new): 75.23 ns, add (recycled): 88.79 ns, iteration (iterator): 41.49 ns
+    Size: 1000, add (new): 75.99 ns, add (recycled): 85.12 ns, iteration (iterator): 39.51 ns
+    Size: 10000, add (new): 82.78 ns, add (recycled): 94.04 ns, iteration (iterator): 41.07 ns
 
 
--- FastSet versus HashSet/LinkedHashSet --
-javolution.util.FastSet
-    Size: 10, add (new): 366.2 ns, add (recycled): 133.3 ns, contain: 65.88 ns, iteration (indirect): 87.29 ns, iteration (direct): 21.67 ns
-    Size: 100, add (new): 714.0 ns, add (recycled): 125.0 ns, contain: 65.08 ns, iteration (indirect): 70.66 ns, iteration (direct): 27.01 ns
-    Size: 1000, add (new): 550.4 ns, add (recycled): 159.9 ns, contain: 80.02 ns, iteration (indirect): 72.64 ns, iteration (direct): 24.97 ns
-    Size: 10000, add (new): 2.257 µs, add (recycled): 205.2 ns, contain: 66.02 ns, iteration (indirect): 74.79 ns, iteration (direct): 27.47 ns
-    Size: 100000, add (new): 3.695 µs, add (recycled): 777.4 ns, contain: 391.7 ns, iteration (indirect): 207.8 ns, iteration (direct): 140.9 ns
+-- FastMap versus HashMap  --
+class javolution.util.FastMap
+    Size: 10, put (new): 248.3 ns, put (recycled): 122.6 ns, get: 29.78 ns, iteration (iterator): 80.30 ns, iteration (entry): 4.672 ns
+    Size: 100, put (new): 555.1 ns, put (recycled): 119.1 ns, get: 26.62 ns, iteration (iterator): 62.68 ns, iteration (entry): 2.976 ns
+    Size: 1000, put (new): 397.1 ns, put (recycled): 131.1 ns, get: 37.05 ns, iteration (iterator): 57.66 ns, iteration (entry): 5.627 ns
+    Size: 10000, put (new): 634.6 ns, put (recycled): 181.5 ns, get: 67.93 ns, iteration (iterator): 60.62 ns, iteration (entry): 6.526 ns
 
-java.util.HashSet
-    Size: 10, add (new): 281.7 ns, add (recycled): 253.8 ns, contain: 95.81 ns, iteration (indirect): 87.31 ns
-    Size: 100, add (new): 345.5 ns, add (recycled): 239.0 ns, contain: 54.17 ns, iteration (indirect): 86.56 ns
-    Size: 1000, add (new): 346.8 ns, add (recycled): 260.3 ns, contain: 119.3 ns, iteration (indirect): 82.44 ns
-    Size: 10000, add (new): 438.2 ns, add (recycled): 253.1 ns, contain: 74.44 ns, iteration (indirect): 85.62 ns
-    Size: 100000, add (new): 2.384 µs, add (recycled): 943.3 ns, contain: 408.8 ns, iteration (indirect): 101.3 ns
+class java.util.HashMap
+    Size: 10, put (new): 147.3 ns, put (recycled): 155.0 ns, get: 54.66 ns, iteration (iterator): 80.90 ns
+    Size: 100, put (new): 249.3 ns, put (recycled): 153.2 ns, get: 48.99 ns, iteration (iterator): 76.80 ns
+    Size: 1000, put (new): 251.1 ns, put (recycled): 151.5 ns, get: 59.06 ns, iteration (iterator): 72.23 ns
+    Size: 10000, put (new): 248.6 ns, put (recycled): 159.5 ns, get: 76.44 ns, iteration (iterator): 73.55 ns
 
-java.util.LinkedHashSet
-    Size: 10, add (new): 384.5 ns, add (recycled): 335.1 ns, contain: 71.09 ns, iteration (indirect): 79.69 ns
-    Size: 100, add (new): 399.8 ns, add (recycled): 325.6 ns, contain: 66.81 ns, iteration (indirect): 62.92 ns
-    Size: 1000, add (new): 403.9 ns, add (recycled): 340.8 ns, contain: 74.64 ns, iteration (indirect): 61.02 ns
-    Size: 10000, add (new): 721.3 ns, add (recycled): 540.1 ns, contain: 89.32 ns, iteration (indirect): 61.60 ns
-    Size: 100000, add (new): 3.735 µs, add (recycled): 1.590 µs, contain: 407.5 ns, iteration (indirect): 129.5 ns
+class java.util.LinkedHashMap
+    Size: 10, put (new): 227.9 ns, put (recycled): 227.4 ns, get: 73.14 ns, iteration (iterator): 59.89 ns
+    Size: 100, put (new): 284.5 ns, put (recycled): 235.8 ns, get: 66.23 ns, iteration (iterator): 46.63 ns
+    Size: 1000, put (new): 296.6 ns, put (recycled): 226.6 ns, get: 79.56 ns, iteration (iterator): 43.61 ns
+    Size: 10000, put (new): 310.6 ns, put (recycled): 247.6 ns, get: 106.9 ns, iteration (iterator): 44.82 ns
+
+
+-- FastSet versus HashSet --
+class javolution.util.FastSet
+    Size: 10, add (new): 272.1 ns, add (recycled): 127.9 ns, contain: 30.94 ns, iteration (iterator): 78.35 ns, iteration (record): 20.74 ns
+    Size: 100, add (new): 542.6 ns, add (recycled): 125.5 ns, contain: 26.10 ns, iteration (iterator): 58.03 ns, iteration (record): 17.06 ns
+    Size: 1000, add (new): 401.2 ns, add (recycled): 142.9 ns, contain: 35.78 ns, iteration (iterator): 53.45 ns, iteration (record): 17.49 ns
+    Size: 10000, add (new): 631.8 ns, add (recycled): 191.0 ns, contain: 63.32 ns, iteration (iterator): 56.45 ns, iteration (record): 19.34 ns
+
+class java.util.HashSet
+    Size: 10, add (new): 158.4 ns, add (recycled): 161.3 ns, contain: 52.45 ns, iteration (iterator): 78.65 ns
+    Size: 100, add (new): 250.2 ns, add (recycled): 157.7 ns, contain: 51.01 ns, iteration (iterator): 74.43 ns
+    Size: 1000, add (new): 248.1 ns, add (recycled): 155.7 ns, contain: 61.60 ns, iteration (iterator): 70.51 ns
+    Size: 10000, add (new): 249.2 ns, add (recycled): 167.0 ns, contain: 77.27 ns, iteration (iterator): 72.60 ns
+
+class java.util.LinkedHashSet
+    Size: 10, add (new): 237.0 ns, add (recycled): 237.3 ns, contain: 52.52 ns, iteration (iterator): 61.64 ns
+    Size: 100, add (new): 283.8 ns, add (recycled): 231.0 ns, contain: 52.21 ns, iteration (iterator): 46.11 ns
+    Size: 1000, add (new): 292.5 ns, add (recycled): 231.1 ns, contain: 61.56 ns, iteration (iterator): 46.27 ns
+    Size: 10000, add (new): 309.1 ns, add (recycled): 248.9 ns, contain: 83.37 ns, iteration (iterator): 47.26 ns
 
 
 /////////////////////////////
@@ -132,16 +133,16 @@ java.util.LinkedHashSet
 /////////////////////////////
 
 -- Java(TM) Serialization --
-Write Time: 64.12 ms
-Read Time: 49.35 ms
+Write Time: 166.1 ms
+Read Time: 31.90 ms
 
 -- XML Serialization (I/O Stream) --
-Write Time: 40.10 ms
-Read Time: 82.43 ms
+Write Time: 36.90 ms
+Read Time: 53.93 ms
 
 -- XML Serialization (NIO ByteBuffer) --
-Write Time: 27.14 ms
-Read Time: 64.53 ms
+Write Time: 27.16 ms
+Read Time: 44.43 ms
 
 
 More performance analysis in future versions...

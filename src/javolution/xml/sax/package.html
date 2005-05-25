@@ -6,7 +6,7 @@
     {@link javolution.xml.sax.ContentHandler ContentHandler} interface 
     had to be slightly modified with the <code>String</code> replaced by
     the more generic <code>CharSequence</code></p>
-<p> Because of these changes {@link javolution.xml.sax.RealtimeParser}
+<p> Because of these changes {@link javolution.xml.sax.XmlSaxParserImpl}
     is not strictly SAX2 compliant. If a SAX2 or a JAXP parser is required,
     you may consider using the wrapping class {@link javolution.xml.sax.XMLReaderImpl}
     (fast but allocates temporary <code>String</code> objects).</p>

@@ -19,14 +19,15 @@ import org.xml.sax.SAXException;
 
 import javolution.io.Utf8ByteBufferWriter;
 import javolution.io.Utf8StreamWriter;
+import javolution.lang.PersistentReference;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
-import javolution.realtime.ArrayFactory;
 import javolution.realtime.ObjectFactory;
 import javolution.util.FastComparator;
 import javolution.util.FastList;
 import javolution.util.FastMap;
+import javolution.util.FastTable;
 import javolution.xml.sax.ContentHandler;
 import javolution.xml.sax.WriterHandler;
 
@@ -66,39 +67,106 @@ import javolution.xml.sax.WriterHandler;
  *     </p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, March 18, 2005
+ * @version 3.3, May 13, 2005
  */
-public class ObjectWriter implements Reusable {
+public class ObjectWriter/*<T>*/ implements Reusable {
+
+    /**
+     * Holds the configurable nominal length for the CDATA buffer.
+     */
+    private static final PersistentReference CDATA_SIZE = new PersistentReference(
+            "javolution.xml.ObjectWriter#CDATA_SIZE", new Integer(256));
 
     /**
      * Holds Javolution prefix ("j").
      */
-    private static final Text JAVOLUTION_PREFIX = Text.valueOf("j").intern();
+    private static final Text J = Text.valueOf("j").intern();
+
+    /**
+     * Holds Javolution prefix declaration ("xmlns:j").
+     */
+    private static final Text XMLNS_J = Text.valueOf("xmlns:j").intern();
+
+    /**
+     * The "xmlns" prefix is reserved, and is used to declare other prefixes.
+     */
+    private static final Text XMLNS = Text.valueOf("xmlns").intern();
+
+    /**
+     * Holds the namespace that the "xmlns" prefix refers to.
+     */
+    private static final Text XMLNS_URI = Text.valueOf(
+            "http://www.w3.org/2000/xmlns/").intern();
 
     /**
      * Holds Javolution uri.
      */
-    private static final Text JAVOLUTION_URI = Text.valueOf(
+    public static final Text JAVOLUTION_URI = Text.valueOf(
             "http://javolution.org").intern();
 
     /**
      * Holds the Java scheme for package identification.
      */
-    private static final Text JAVA_SCHEME = Text.valueOf("java:").intern();
+    private static final Text JAVA_ = Text.valueOf("java:").intern();
 
     /**
-     * Holds the factory for the internal chars array.
+     * Holds the class identifier local name.
      */
-    private static final ArrayFactory CHARS_FACTORY = new ArrayFactory(64) {
-        protected Object create(int length) {
-            return new char[length];
-        }
-    };
+    private static final Text CLASS = Text.valueOf("class").intern();
+
+    /**
+     * Holds the class identifier prefix.
+     */
+    private static final Text J_CLASS = Text.valueOf("j:class").intern();
+
+    /**
+     * Defines bit flag that causes the "j:class" attribute to always be included
+     * every element; ordinarily, this attribute would not be output as a SAX
+     * event if an alias was defined.
+     */
+    public static int OUTPUT_CLASS_NAME = 0x01;
+
+    /**
+     * Defines bit flag that causes "xmlns:<prefix>" attributes to be output
+     * with every element; sometimes this is required for SAX sources that
+     * are used for transformations.
+     */
+    public static int OUTPUT_XMLNS_ATTRIBUTES = 0x02;
+
+    /**
+     * Defines bit flag the prevents ID and IDREF attributes from being output,
+     * even if they are defined by an <code>XmlFormat</code> instance.
+     */
+    public static int OUTPUT_IDENTIFIERS = 0x04;
+
+    /**
+     * Defines bit flag that causes the IDREF attribute to be output only if
+     * infinite recursion would occur. This feature is very useful if you would like
+     * to process the serialization object using XSLT, and would like all IDREF
+     * objects to be expanded in the SAX stream.  This flag has no effect if 
+     * OUTPUT_IDENTIFIERS is not set.
+     */
+    public static int AVOID_OUTPUT_IDREF = 0x08;
+
+    /**
+     * Holds bit flag that defines default output features
+     */
+    public static int DEFAULT_FEATURES = OUTPUT_IDENTIFIERS;
 
     /**
      * Holds prefix-package pairs (String).
      */
     private FastList _namespaces = new FastList();
+
+    /**
+     * Holds the current features.
+     */
+    private int _features = DEFAULT_FEATURES;
+
+    /**
+     * Holds the root name.
+     */
+    private CharSequence _rootName;
 
     /**
      * Holds the package associated to default namespace.
@@ -111,9 +179,9 @@ public class ObjectWriter implements Reusable {
     private final FastMap _classInfo = new FastMap();
 
     /**
-     * Holds the stack of XML elements (nesting limited to 32 levels).
+     * Holds the stack of XML elements.
      */
-    private final XmlElement[] _stack = new XmlElement[32];
+    private final FastTable _stack = new FastTable();
 
     /**
      * Holds the stream writer.
@@ -131,6 +199,12 @@ public class ObjectWriter implements Reusable {
     private final WriterHandler _writerHandler = new WriterHandler();
 
     /**
+     * Holds the cdata buffer for characters notification.
+     */
+    private char[] _cdata = (char[]) new char[((Integer) CDATA_SIZE.get())
+            .intValue()];
+
+    /**
      * Holds the object to id mapping (persistent).
      */
     private final FastMap _objectToId = new FastMap()
@@ -142,15 +216,10 @@ public class ObjectWriter implements Reusable {
     private int _idCount;
 
     /**
-     * Holds the character array for writing CharacterData occurences.
-     */
-    private char[] _chars = (char[]) CHARS_FACTORY.newObject();
-
-    /**
      * Default constructor.
      */
     public ObjectWriter() {
-        _stack[0] = new XmlElement();
+        _stack.add(new XmlElement());
     }
 
     /**
@@ -180,6 +249,25 @@ public class ObjectWriter implements Reusable {
     }
 
     /**
+     * Sets the features bit flags that controls output.
+     *
+     * @param features a combination of bit flags.
+     */
+    public void setFeature(int features) {
+        _features = features;
+    }
+
+    /**
+     * Sets the element name for the root element (default <code>null</code>
+     * the element name is the class name).
+     *
+     * @param rootName the name of the root element.
+     */
+    public void setRootName(CharSequence rootName) {
+        _rootName = rootName;
+    }
+
+    /**
      * Writes the specified object to the given writer in XML format.
      * The writer is closed after serialization. To serialize multiple 
      * objects over a persistent connection {@link XmlOutputStream}
@@ -189,7 +277,7 @@ public class ObjectWriter implements Reusable {
      * @param  writer the writer to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object obj, Writer writer) throws IOException {
+    public void write(Object/*T*/obj, Writer writer) throws IOException {
         try {
             _writerHandler.setWriter(writer);
             write(obj, _writerHandler);
@@ -213,7 +301,7 @@ public class ObjectWriter implements Reusable {
      * @param  out the output stream to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object obj, OutputStream out) throws IOException {
+    public void write(Object/*T*/obj, OutputStream out) throws IOException {
         try {
             _utf8StreamWriter.setOutputStream(out);
             _writerHandler.setWriter(_utf8StreamWriter);
@@ -236,7 +324,8 @@ public class ObjectWriter implements Reusable {
      * @param  byteBuffer the byte buffer to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object obj, ByteBuffer byteBuffer) throws IOException {
+    public void write(Object/*T*/obj, ByteBuffer byteBuffer)
+            throws IOException {
         try {
             _utf8ByteBufferWriter.setByteBuffer(byteBuffer);
             _writerHandler.setWriter(_utf8ByteBufferWriter);
@@ -258,20 +347,21 @@ public class ObjectWriter implements Reusable {
      * @param  obj the object to format.
      * @param  handler the SAX event handler.
      */
-    public void write(Object obj, ContentHandler handler) throws SAXException {
+    public void write(Object/*T*/obj, ContentHandler handler)
+            throws SAXException {
         handler.startDocument();
         try {
-            handler.startPrefixMapping(JAVOLUTION_PREFIX, JAVOLUTION_URI);
+            handler.startPrefixMapping(J, JAVOLUTION_URI);
             for (FastList.Node n = _namespaces.headNode(), end = _namespaces
                     .tailNode(); (n = n.getNextNode()) != end;) {
                 Object prefix = n.getValue();
                 String pkg = (String) (n = n.getNextNode()).getValue();
-                Text uri = JAVA_SCHEME.concat(Text.valueOf(pkg));
+                Text uri = JAVA_.concat(Text.valueOf(pkg));
                 handler.startPrefixMapping(toCharSeq(prefix), uri);
             }
-            writeElement(obj, handler, 0, null);
+            writeElement(obj, handler, 0, _rootName);
         } finally {
-            handler.endPrefixMapping(JAVOLUTION_PREFIX);
+            handler.endPrefixMapping(J);
             for (FastList.Node n = _namespaces.headNode(), end = _namespaces
                     .tailNode(); (n = n.getNextNode()) != end;) {
                 Object prefix = n.getValue();
@@ -294,11 +384,15 @@ public class ObjectWriter implements Reusable {
         // Checks for Character Data
         if (obj instanceof CharacterData) {
             CharacterData charData = (CharacterData) obj;
-            while (_chars.length < charData.length()) {
-                _chars = CHARS_FACTORY.resize(_chars);
+            final int length = charData.length();
+            if (length > _cdata.length) { // Resizes.
+                char[] tmp = new char[_cdata.length * 2];
+                System.arraycopy(_cdata, 0, tmp, 0, _cdata.length);
+                _cdata = tmp;
+                CDATA_SIZE.set(new Integer(_cdata.length));
             }
-            charData.getChars(0, charData.length(), _chars, 0);
-            handler.characters(_chars, 0, charData.length());
+            charData.getChars(0, length, _cdata, 0);
+            handler.characters(_cdata, 0, length);
             return;
         }
 
@@ -306,20 +400,21 @@ public class ObjectWriter implements Reusable {
         Class clazz = obj.getClass();
         ClassInfo ci = (ClassInfo) _classInfo.get(clazz);
         if (ci == null) { // First occurence of this class ever.
-            ci = (ClassInfo) ClassInfo.FACTORY.object();
+            ci = (ClassInfo) ClassInfo.FACTORY.newObject();
             _classInfo.put(clazz, ci);
         }
-        if (ci.className == null) { // Sets info from current namespace settings. 
-            ci.className = XmlFormat.nameFor(clazz);
+        if (ci.format == null) {
+            ci.className = clazz.getName();
+            ci.alias = XmlFormat.nameFor(clazz);
             ci.format = XmlFormat.getInstance(clazz);
 
-            // Search for an package for the className (or alias).
+            // Search for a package for the className (or alias).
             String prefix = null;
             String pkg = "";
             for (FastList.Node n = _namespaces.headNode(), end = _namespaces
                     .tailNode(); (n = n.getNextNode()) != end;) {
                 String pkgStr = (String) (n = n.getNextNode()).getValue();
-                if (ci.className.startsWith(pkgStr)
+                if (ci.alias.startsWith(pkgStr)
                         && (pkgStr.length() > pkg.length())) {
                     prefix = (String) n.getPreviousNode().getValue();
                     pkg = pkgStr;
@@ -338,15 +433,15 @@ public class ObjectWriter implements Reusable {
                     ci.uri.append(JAVOLUTION_URI);
                 }
             } else {
-                ci.uri.append(JAVA_SCHEME).append(pkg);
+                ci.uri.append(JAVA_).append(pkg);
             }
 
             // Sets local name.
             if (pkg.length() == 0) {
-                ci.localName.append(ci.className);
+                ci.localName.append(ci.alias);
             } else { // Remove package prefix from class name.
-                ci.localName.append(ci.className, pkg.length() + 1,
-                        ci.className.length());
+                ci.localName.append(ci.alias, pkg.length() + 1, ci.alias
+                        .length());
             }
 
             // Sets qualified name.
@@ -358,39 +453,68 @@ public class ObjectWriter implements Reusable {
         }
 
         // Formats.
-        XmlElement xml = _stack[level];
-        if (xml == null) {
-            xml = _stack[level] = (XmlElement) XmlElement.FACTORY.newObject();
-            xml._parent = _stack[level - 1];
+        if (level >= _stack.size()) {
+            XmlElement tmp = (XmlElement) XmlElement.FACTORY.newObject();
+            tmp._parent = (XmlElement) _stack.get(level - 1);
+            _stack.add(tmp);
         }
+        XmlElement xml = (XmlElement) _stack.get(level);
+        xml._object = obj;
         xml._objectClass = clazz;
-        if (ci.format._idName != null) { // Identifier attribute must be present.
+        if ((_features & OUTPUT_IDENTIFIERS) != 0 && ci.format._idName != null) { // Identifier attribute must be present.
             CharSequence idValue = (CharSequence) _objectToId.get(obj);
-            if (idValue != null) { // Already formatted, write the reference.
-                xml.setAttribute(ci.format.identifier(true), idValue);
+            if (idValue != null) { // Already formatted
+                if (((_features & AVOID_OUTPUT_IDREF) == 0) || xml.isRecursion()) { // Write the reference.
+                    xml.setAttribute(ci.format._idRef.toString(), idValue);
+                } else { // Reoutput
+                    ci.format.format(obj, xml);
+                }
             } else { // First object occurence.
                 ci.format.format(obj, xml);
 
                 // Sets idValue if not set already
-                idValue = xml.getAttribute(ci.format.identifier(false));
+                idValue = xml.getAttribute(ci.format._idName.toString());
                 if (idValue == null) { // Generates idValue.
                     idValue = newTextBuilder().append(++_idCount);
-                    xml.setAttribute(ci.format.identifier(false), idValue);
-                }    
+                    xml.setAttribute(ci.format._idName.toString(), idValue);
+                }
                 _objectToId.put(obj, idValue);
             }
         } else { // No object identifier.
+            // The following test is commented out (to expensive).
+            // if (visited(obj))
+            //    throw new SAXException("Circular reference to object " + obj);
             ci.format.format(obj, xml);
+        }
+
+        boolean jPrefix = false;
+        if ((_features & OUTPUT_CLASS_NAME) != 0) { // Always output class name
+            xml._attributes.addAttribute(JAVOLUTION_URI, CLASS, J, J_CLASS,
+                    "CDATA", toCharSeq(ci.className));
+            jPrefix = true;
+        } else if (tagName != null) { // Output alias or class name
+            xml._attributes.addAttribute(JAVOLUTION_URI, CLASS, J, J_CLASS,
+                    "CDATA", toCharSeq(ci.alias));
+            jPrefix = true;
+        }
+
+        if ((_features & OUTPUT_XMLNS_ATTRIBUTES) != 0) {
+            // TODO: should check if any of the attributes already added (such as j:id or 
+            // j:idref) has been used.
+            if (jPrefix) {
+                xml._attributes.addAttribute(XMLNS_URI, J, XMLNS, XMLNS_J,
+                        "CDATA", JAVOLUTION_URI);
+            }
+            // TODO: should build list of arbitrary prefixes used by user, and
+            // output XMLNS attributes if requested
         }
 
         // Writes start tag.
         if (tagName != null) { // Custom name
-            xml.setAttribute("j:class", ci.className);
-            handler.startElement(Text.EMPTY, tagName, tagName, xml
-                    .getAttributes());
+            handler.startElement(Text.EMPTY, tagName, tagName, xml._attributes);
         } else {
-            handler.startElement(ci.uri, ci.localName, ci.qName, xml
-                    .getAttributes());
+            handler.startElement(ci.uri, ci.localName, ci.qName,
+                    xml._attributes);
         }
 
         // Writes named elements first.
@@ -411,6 +535,7 @@ public class ObjectWriter implements Reusable {
         } else {
             handler.endElement(ci.uri, ci.localName, ci.qName);
         }
+
         xml.reset();
     }
 
@@ -424,14 +549,13 @@ public class ObjectWriter implements Reusable {
                 .tailEntry(); (e = e.getNextEntry()) != end;) {
             ((ClassInfo) e.getValue()).reset(); // Clears class info.
         }
-        for (int i = 0; (i < _stack.length) && (_stack[i] != null); i++) {
-            _stack[i].reset(); // Ensures that all xml element are reset.
-        }
         _textBuilderPool.addAll(_objectToId.values());
         _objectToId.clear();
         _namespaces.clear();
         _defaultPkg = "";
         _idCount = 0;
+        _features = DEFAULT_FEATURES;
+        _rootName = null;
     }
 
     /**
@@ -444,7 +568,9 @@ public class ObjectWriter implements Reusable {
             }
         };
 
-        String className; // The class name, possibly an alias (when obfuscating).
+        String className; // The class name.
+
+        String alias; // The class name, possibly an alias (when obfuscating).
 
         XmlFormat format;
 
@@ -477,7 +603,6 @@ public class ObjectWriter implements Reusable {
 
     private FastList _textBuilderPool = new FastList();
 
-    
     /**
      * Converts a String to CharSequence (for J2ME compatibility)
      * 
@@ -488,5 +613,4 @@ public class ObjectWriter implements Reusable {
         return (str instanceof CharSequence) ? (CharSequence) str : Text
                 .valueOf((String) str);
     }
-
 }

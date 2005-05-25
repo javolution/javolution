@@ -8,15 +8,19 @@
  */
 package javolution.xml;
 
+import java.io.IOException;
+
+import j2me.lang.CharSequence;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Map;
 
 import javolution.JavolutionError;
+import javolution.lang.Appendable;
+import javolution.lang.Reflection;
 import javolution.lang.Text;
 import javolution.util.FastList;
 import javolution.util.FastMap;
-import javolution.util.Reflection;
 
 /**
  * <p> This class represents the format base class for XML serialization and
@@ -51,9 +55,10 @@ import javolution.util.Reflection;
  *         };
  *    }</pre>
  * <p> Default formats for: <code>null, java.lang.Object, java.lang.String,
- *     j2me.util.Collection</code> and <code>j2me.util.Map</code> are also
- *     provided. Here is an example of serialization/deserialization using these
- *     predefined formats:<pre>
+ *     javolution.lang.Text, javolution.lang.Appendable, j2me.util.Collection
+ *     </code> and <code>j2me.util.Map</code> are also provided.
+ *     Here is an example of serialization/deserialization using
+ *     these predefined formats:<pre>
  *     ArrayList names = new ArrayList();
  *     names.add("John Doe");
  *     names.add("Oscar Thon");
@@ -96,7 +101,7 @@ import javolution.util.Reflection;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.2, March 18, 2005
  */
-public abstract class XmlFormat {
+public abstract class XmlFormat/*<T>*/ {
 
     /**
      * Holds the base class to format look-up table (no removal allowed)
@@ -221,15 +226,52 @@ public abstract class XmlFormat {
     /**
      * Holds the default XML representation for <code>java.lang.String</code>
      * classes. This representation consists of a <code>"value"</code> attribute 
-     * holding the character sequence.
+     * holding the string.
      */
-    public static final XmlFormat STRING_XML = new XmlFormat("".getClass()) {
+    public static final XmlFormat STRING_XML = new XmlFormat("java.lang.String") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", (String) obj);
         }
 
         public Object parse(XmlElement xml) {
             return xml.getAttribute("value", "");
+        }
+    };
+
+    /**
+     * Holds the default XML representation for <code>javolution.lang.Text</code>
+     * classes. This representation consists of a <code>"value"</code> attribute 
+     * holding the characters.
+     */
+    public static final XmlFormat TEXT_XML = new XmlFormat("javolution.lang.Text") {
+        public void format(Object obj, XmlElement xml) {
+            xml.setAttribute("value", (Text) obj);
+        }
+
+        public Object parse(XmlElement xml) {
+            CharSequence csq = xml.getAttribute("value");
+            return csq != null ? Text.valueOf(csq) : Text.EMPTY;
+        }
+    };
+
+    /**
+     * Holds the default XML representation for <code>javolution.lang.Appendable</code>
+     * classes. This representation consists of a <code>"value"</code> attribute 
+     * holding the characters.
+     */
+    public static final XmlFormat APPENDABLE_XML = new XmlFormat("javolution.lang.Appendable") {
+        public void format(Object obj, XmlElement xml) {
+            xml.setAttribute("value", Text.valueOf(obj));
+        }
+
+        public Object parse(XmlElement xml) {
+            Appendable appendable = (Appendable) xml.object();
+            CharSequence csq = xml.getAttribute("value");
+            try {
+                return csq != null ? appendable.append(csq) : appendable;
+            } catch (IOException e) {
+                throw new XmlException(e);
+            }
         }
     };
 
@@ -252,10 +294,8 @@ public abstract class XmlFormat {
      * Default constructor (used for local mapping).
      */
     protected XmlFormat() {
-        String idName = identifier(false);
-        _idName = (idName != null) ? Text.valueOf(idName).intern() : null;
-        String idRef = identifier(true);
-        _idRef = (idRef != null) ? Text.valueOf(idRef).intern() : null;
+        _idName = null;
+        _idRef = null;
     }
 
     /**
@@ -270,13 +310,26 @@ public abstract class XmlFormat {
     protected XmlFormat(Class mappedClass) {
         this();
         _mappedClass = mappedClass;
-        synchronized (BASE_CLASS_TO_FORMAT) {
-            if (BASE_CLASS_TO_FORMAT.containsKey(_mappedClass)) {
-                throw new IllegalArgumentException(
-                        "Mapping already exists for " + _mappedClass);
-            }
-            BASE_CLASS_TO_FORMAT.put(_mappedClass, this);
-            invalidateClassToFormatMapping();
+        setInstance();
+    }
+    
+    /**
+     * Creates a default XML mapping for the specified class/interface; 
+     * this mapping is inherited by sub-classes or implementing classes.
+     * 
+     * @param mappedClass the class or interface for which this 
+     *        XML format can be used.
+     * @param idName the qualified attribute identifier for non-references. 
+     * @param idRef the qualified attribute identifier for references.
+     * @throws IllegalArgumentException if a default mapping already exists 
+     *        for the specified class.
+     */
+    protected XmlFormat(Class mappedClass, String idName, String idRef) {
+        _idName = (idName != null) ? Text.valueOf(idName) : null;
+        _idRef = (idRef != null) ? Text.valueOf(idRef) : null;
+        if( mappedClass != null ) {
+            _mappedClass = mappedClass;
+            setInstance();
         }
     }
 
@@ -296,6 +349,10 @@ public abstract class XmlFormat {
         } catch (ClassNotFoundException e) {
             throw new JavolutionError(e);
         }
+        setInstance();
+    }
+
+    private void setInstance() {
         synchronized (BASE_CLASS_TO_FORMAT) {
             if (BASE_CLASS_TO_FORMAT.containsKey(_mappedClass)) {
                 throw new IllegalArgumentException(
@@ -338,9 +395,9 @@ public abstract class XmlFormat {
 
         // Checks look-up.
         Object obj = CLASS_TO_FORMAT.get(mappedClass);
-        if (obj != null) {
+        if (obj != null) 
             return (XmlFormat) obj;
-        }
+        
 
         // Ensures that the class is initialized.
         try {
@@ -427,9 +484,8 @@ public abstract class XmlFormat {
     static Class classFor(UriLocalName classId) {
         // Searches current mapping.
         Class clazz = (Class) URI_LOCAL_NAME_TO_CLASS.get(classId);
-        if (clazz != null) {
+        if (clazz != null) 
             return clazz;
-        }
 
         // Extracts the class name (or alias).
         String uri = classId.uri.toString();
@@ -494,23 +550,7 @@ public abstract class XmlFormat {
      * @return a new instance for the specified xml element.
      * @see    XmlElement#object()
      */
-    public Object preallocate(XmlElement xml) {
-        return null;
-    }
-
-    /**
-     * Returns the name of the identifier attribute (default <code>null</code>,
-     * no identifer). When overriden, this method should return two distinct
-     * identifier for reference and non-reference. 
-     * The value of the non-reference identifier if not set by  
-     * {@link #format} is generated automatically (counter).
-     * 
-     * @param isReference <code>true</code> to return the identifier for 
-     *        an object reference; <code>false</code> to return the 
-     *        identifier for the current object.
-     * @return the identifier (object or reference) or <code>null</code>.
-     */
-    public String identifier(boolean isReference) {
+    public Object/*T*/ preallocate(XmlElement xml) {
         return null;
     }
 
@@ -520,7 +560,7 @@ public abstract class XmlFormat {
      * @param obj the object to format.
      * @param xml the <code>XmlElement</code> destination.
      */
-    public abstract void format(Object obj, XmlElement xml);
+    public abstract void format(Object/*T*/ obj, XmlElement xml);
 
     /**
      * Parses the specified {@link XmlElement} to produce an object. 
@@ -531,7 +571,7 @@ public abstract class XmlFormat {
      * @throws IllegalArgumentException if the character sequence contains
      *         an illegal syntax.
      */
-    public abstract Object parse(XmlElement xml);
+    public abstract Object/*T*/ parse(XmlElement xml);
 
     /**
      * This class represents a URI / LocalName class identifier.

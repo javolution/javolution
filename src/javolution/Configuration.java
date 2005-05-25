@@ -8,7 +8,7 @@
  */
 package javolution;
 
-import javolution.util.Reflection;
+import javolution.lang.Reflection;
 
 /**
  *  This class centralizes <i><b>J</b>avolution</i> configuration parameters.
@@ -52,16 +52,6 @@ public final class Configuration {
      * @see javolution.realtime.ObjectFactory
      */
     public static int factories() {
-        return 1024;
-    }
-
-    /**
-     * Returns the maximum number of local context variables.
-     * 
-     * @return <code>1024</code>
-     * @see javolution.realtime.LocalContext.Variable
-     */
-    public static int variables() {
         return 1024;
     }
 

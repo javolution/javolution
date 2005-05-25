@@ -26,7 +26,7 @@ import java.io.IOException;
  *     specialized {@link TextFormat} instances.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.2, May 8, 2005
  */
 public final class TypeFormat {
 
@@ -135,6 +135,61 @@ public final class TypeFormat {
                 && (chars.charAt(1) == 'r' || chars.charAt(1) == 'R')
                 && (chars.charAt(2) == 'u' || chars.charAt(2) == 'U')
                 && (chars.charAt(3) == 'e' || chars.charAt(3) == 'E');
+    }
+
+    /**
+     * Parses the specified <code>CharSequence</code> as a signed decimal
+     * <code>byte</code>.
+     *
+     * @param  chars the character sequence to parse.
+     * @return <code>parseByte(chars, 10)</code>
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>byte</code>.
+     * @see    #parseByte(CharSequence, int)
+     */
+    public static byte parseByte(CharSequence chars) {
+        return parseByte(chars, 10);
+    }
+
+    /**
+     * Parses the specified <code>CharSequence</code> as a signed
+     * <code>byte</code> in the specified radix. The characters in the string
+     * must all be digits of the specified radix, except the first character
+     * which may be a plus sign <code>'+'</code> or a minus sign
+     * <code>'-'</code>.
+     *
+     * @param  chars the character sequence to parse.
+     * @param  radix the radix to be used while parsing.
+     * @return the corresponding <code>byte</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>short</code>.
+     */
+    public static byte parseByte(CharSequence chars, int radix) {
+        try {
+            boolean isNegative = (chars.charAt(0) == '-') ? true : false;
+            int result = 0;
+            int limit = (isNegative) ? Byte.MIN_VALUE : -Byte.MAX_VALUE;
+            int multmin = limit / radix;
+            int length = chars.length();
+            int i = (isNegative || (chars.charAt(0) == '+')) ? 1 : 0;
+            while (true) {
+                int digit = Character.digit(chars.charAt(i), radix);
+                int tmp = result * radix;
+                if ((digit < 0) || (result < multmin) || (tmp < limit + digit)) { // Overflow.
+                    throw new NumberFormatException("For input characters: \""
+                            + chars.toString() + "\"");
+                }
+                // Accumulates negatively.
+                result = tmp - digit;
+                if (++i >= length) {
+                    break;
+                }
+            }
+            return (byte) (isNegative ? result : -result);
+        } catch (IndexOutOfBoundsException e) {
+            throw new NumberFormatException("For input characters: \""
+                    + chars.toString() + "\"");
+        }
     }
 
     /**
@@ -334,7 +389,7 @@ public final class TypeFormat {
      throws NumberFormatException {
      try {
      int length = chars.length();
-     double result = 0.0;
+     long result = 0;
      int exp = 0;
 
      boolean isNegative = (chars.charAt(0) == '-') ? true : false;
@@ -421,41 +476,6 @@ public final class TypeFormat {
     public static Appendable format(boolean b, Appendable chars)
             throws IOException {
         return b ? append(chars, "true") : append(chars, "false");
-    }
-
-    /**
-     * Formats the specified <code>short</code> and appends the resulting
-     * text (decimal representation) to the <code>Appendable</code> argument.
-     *
-     * <p> Note: This method is preferred to <code>Appendable.append(short)
-     *           </code> as it does not create temporary <code>String</code>
-     *           objects (several times faster for small numbers).</p>
-     *
-     * @param  s the <code>short</code> number.
-     * @param  sb the <code>StrinBuffer</code> to append.
-     * @return the specified <code>Appendable</code> object.
-     * @throws IOException if an I/O exception occurs.
-     * @see    #parseShort
-     */
-    public static Appendable format(short s, Appendable sb) throws IOException {
-        return format((int) s, sb); // Forwards to int formatting (fast).
-    }
-
-    /**
-     * Formats the specified <code>short</code> in the specified radix and
-     * appends the resulting text to the <code>Appendable</code> argument.
-     *
-     * @param  s the <code>short</code> number.
-     * @param  radix the radix.
-     * @param  chars the <code>Appendable</code> to append.
-     * @return the specified <code>Appendable</code> object.
-     * @throws  IllegalArgumentException if radix is not in [2 .. 36] range.
-     * @throws IOException if an I/O exception occurs.
-     * @see    #parseShort(CharSequence, int)
-     */
-    public static Appendable format(short s, int radix, Appendable chars)
-            throws IOException {
-        return format((int) s, radix, chars); // Forwards to int formatting (fast).
     }
 
     /**
@@ -628,68 +648,22 @@ public final class TypeFormat {
     }
 
     /**
-     * Formats the specified <code>float</code> and appends the resulting
-     * text to the <code>Appendable</code> argument.
+     * Formats the specified <code>float</code> value.
      *
-     * @param  f the <code>float</code> number.
+     * @param  value the <code>float</code> value.
      * @param  chars the <code>Appendable</code> to append.
-     * @return <code>format(f, 0.0, sb)</code>
+     * @return <code>format(value, 10, Math.abs(value) > 1E7, false, sb)</code>
      * @throws IOException if an I/O exception occurs.
-     * @see    #format(float, double, Appendable)
+     * @see    #format(double, int , boolean, boolean, Appendable)
      /*@FLOATING_POINT@
-     public static Appendable format(float f, Appendable chars)
-     throws IOException {
-     return format(f, 0.0, chars);
-     }
-     /**/
+    public static Appendable format(float value, Appendable chars)
+            throws IOException {
+        return format(value, 10, MathLib.abs(value) > 1E7, false, chars);
+    }
+    /**/
 
     /**
-     * Formats the specified <code>float</code> and appends the resulting text
-     * to the <code>Appendable</code> argument; the number of significative
-     * digits is deduced from the specifed accuracy. All digits at least as
-     * significant as the specified accuracy are represented. For example:
-     * <ul>
-     * <li><code>format(5.6f, 0.01, sb)</code> appends <code>"5.60"</code></li>
-     * <li><code>format(5.6f, 0.1, sb)</code> appends <code>"5.6"</code></li>
-     * <li><code>format(5.6f, 1, sb)</code> appends <code>"6"</code></li>
-     * </ul>
-     * If the accuracy is <code>0.0</code>, the accuracy is assumed to be
-     * the intrinsic <code>float</code> precision (32 bits IEEE 754 format);
-     * no formatting is performed, all significant digits are displayed and
-     * trailing zeros are removed.
-     *
-     * @param  f the <code>float</code> number.
-     * @param  accuracy the maximum weight of the last digit represented.
-     * @param  chars the <code>Appendable</code> to append.
-     * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if the specified precision is negative
-     *         or would result in too many digits (19+).
-     * @throws IOException if an I/O exception occurs.
-     /*@FLOATING_POINT@
-     public static Appendable format(float f, double accuracy, Appendable chars)
-     throws IOException {
-     boolean fixedFormat;
-     if (accuracy > 0.0) {
-     fixedFormat = true;
-     } else if (accuracy == 0.0) {
-     if (f != 0.0f) {
-     fixedFormat = false;
-     accuracy = Math.max(Math.abs(f) * FLOAT_RELATIVE_ERROR,
-     1.4e-45);
-     } else {
-     return append(chars, "0.0"); // Exact zero.
-     }
-     } else {
-     throw new IllegalArgumentException(
-     "accuracy: Negative values not allowed");
-     }
-     return format(f, accuracy, fixedFormat, chars);
-     }
-     /**/
-   
-    /**
-     * Formats the specified <code>double</code> and appends the resulting
-     * text to the <code>Appendable</code> argument.
+     * Formats the specified <code>double</code> value.
      *
      * <p> Note : This method is preferred to <code>Double.toString(double)
      *            </code> or even <code>String.valueOf(double)</code> as it
@@ -697,166 +671,116 @@ public final class TypeFormat {
      *            FloatingDecimal</code> objects (several times faster,
      *            e.g. 15x faster for <code>Double.MAX_VALUE</code>).</p>
      *
-     * @param  d the <code>double</code> number.
+     * @param  value the <code>double</code> value.
      * @param  chars the <code>Appendable</code> to append.
-     * @return <code>format(d, 0.0, sb)</code>
+     * @return <code>format(value, 17, Math.abs(value) > 1E7, false, sb)</code>
      * @throws IOException if an I/O exception occurs.
-     * @see    #format(double, double, Appendable)
+     * @see    #format(double, int , boolean, boolean, Appendable)
      /*@FLOATING_POINT@
-     public static Appendable format(double d, Appendable chars)
-     throws IOException {
-     return format(d, 0.0, chars);
-     }
-     /**/
+    public static Appendable format(double value, Appendable chars)
+            throws IOException {
+        return format(value, 17, MathLib.abs(value) > 1E7, false, chars);
+    }
+    /**/
 
     /**
-     * Formats the specified <code>double</code> and appends the resulting text
-     * to the <code>Appendable</code> argument; the number of significative
-     * digits is deduced from the specifed accuracy. All digits at least as
-     * significant as the specified accuracy are represented. For example:
-     * <ul>
-     * <li><code>format(5.6, 0.01, sb)</code> appends <code>"5.60"</code></li>
-     * <li><code>format(5.6, 0.1, sb)</code> appends <code>"5.6"</code></li>
-     * <li><code>format(5.6, 1, sb)</code> appends <code>"6"</code></li>
-     * </ul>
-     * If the accuracy is <code>0.0</code>, the accuracy is derived from 
-     * the intrinsic <code>double</code> precision (64 bits IEEE 754 format)
-     * and no more than one trailing zero is allowed.
+     * Formats the specified <code>double</code> value according to the 
+     * specified formatting arguments.
      *
-     * @param  d the <code>double</code> number.
-     * @param  accuracy the maximum weight of the last digit represented.
+     * @param  value the <code>double</code> value.
+     * @param  digits the number of significative digits (excludes exponent).
+     * @param  scientific <code>true</code> to forces the use of the scientific 
+     *         notation (e.g. <code>1.23E3</code>); <code>false</code> 
+     *         otherwise. 
+     * @param  showZero <code>true</code> if trailing fractional zeros are 
+     *         represented; <code>false</code> otherwise.
      * @param  chars the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if the specified accuracy is negative
-     *         or would result in too many digits (19+).
+     * @throws IllegalArgumentException if <code>((digits > 19) || 
+     *         (digits <= 0))</code>)
      * @throws IOException if an I/O exception occurs.
      /*@FLOATING_POINT@
-     public static Appendable format(double d, double accuracy, Appendable chars)
-     throws IOException {
-     if (accuracy > 0.0) { // Accuracy on last digit.
-     return format(d, accuracy, true, chars);
-     } else if (accuracy == 0.0) { // Floating format.
-     if (d != 0.0) {
-     accuracy = Math.max(Math.abs(d) * DOUBLE_RELATIVE_ERROR,
-     4.9e-324);
-     return format(d, accuracy, false, chars);
-     } else {
-     return append(chars, "0.0"); // Exact zero.
-     }
-     } else { // accuracy < 0.0) 
-     throw new IllegalArgumentException(
-     "accuracy: Negative values not allowed");
-     }
-     }
-     /**/
+    public static Appendable format(double value, int digits, 
+            boolean scientific, boolean showZero, Appendable chars) throws IOException {
+        if ((digits > 19) || (digits <= 0))
+            throw new IllegalArgumentException("digits: " + digits);
+        if (value != value) { // NaN
+            return append(chars, "NaN");
+        } else if (value == POSITIVE_INFINITY) {
+            return append(chars, "Infinity");
+        } else if (value == NEGATIVE_INFINITY) {
+            return append(chars, "-Infinity");
+        } else if (value == 0.0) {
+            if (digits == 1)
+                return append(chars, "0");
+            if (!showZero)
+                return append(chars, "0.0");
+            chars.append("0.0");
+            for (int i = 2; i < digits; i++) {
+                chars.append('0');
+            }
+            return chars;
+        }
+        if (value < 0) {
+            value = -value;
+            chars.append('-');
+        }
+        // Find the exponent e such as: value == 0.xxx * 10^e
+        int e = (value >= 1.0) ? 1 + minPow10(value) : - minPow10(1.0 / value);
+        double digitValue = multE(value, digits - e);
+        long mantissa = (long) (digitValue + 0.5);
+        if (scientific || (e <= 0) || (e > digits)) {
+            // Scientific notation has to be used ("x.xxxEyy").
+            format(mantissa / LONG_POW_10[digits - 1], chars);
+            formatFraction(mantissa % LONG_POW_10[digits - 1], digits - 1,
+                    showZero, chars);
+            chars.append('E');
+            format(e - 1, chars);
+        } else if (e == digits) { // Dot at last position ("xxxxx").
+            format(mantissa, chars);
+        } else { // Dot within the string ("xxxx.xxxxx").
+            format(mantissa / LONG_POW_10[digits - e], chars);
+            formatFraction(mantissa % LONG_POW_10[digits - e], digits
+                    - e, showZero, chars);
+        }
+        return chars;
+    }
 
-    /**
-     * Formats the specified <code>double</code> and appends the resulting text
-     * to the <code>Appendable</code> argument; the number of significative
-     * digits is deduced from the specifed accuracy.
-     *
-     * @param  d the <code>double</code> number.
-     * @param  accuracy the maximum weight of the last digit represented.
-     * @param  fixedFormat indicates if the number of digits is 
-     *         characteristic of the accuracy.
-     * @param  chars the <code>Appendable</code> to append.
-     * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if the specified accuracy would result 
-     *         in too many digits (19+).
-     * @throws IOException if an I/O exception occurs.
-     /*@FLOATING_POINT@
-     private static Appendable format(double d, double accuracy,
-     boolean fixedFormat, Appendable chars) throws IOException {
-     if (d != d) { // NaN
-     return append(chars, "NaN");
-     } else if (d == POSITIVE_INFINITY) {
-     return append(chars, "Infinity");
-     } else if (d == NEGATIVE_INFINITY) {
-     return append(chars, "-Infinity");
-     }
-     if (d < 0) {
-     d = -d;
-     chars.append('-');
-     }
-     int rank = rankFor(accuracy);
-     double digitValue = multE(d, -rank);
-     if (digitValue >= Long.MAX_VALUE) {
-     throw new IllegalArgumentException(
-     "Specified accuracy would result in too many digits");
-     }
-     long mantissa = (long) (digitValue + 0.5);
-     int digits = 1;
-     while ((mantissa >= LONG_POW_10[digits])
-     && (++digits != LONG_POW_10.length)) {
-     }
-     int dotPos = digits + rank;
-     if ((dotPos <= -LEADING_ZEROS.length) || (dotPos > digits)) {
-     // Scientific notation has to be used ("x.xxxEyy").
-     format(mantissa / LONG_POW_10[digits - 1], chars);
-     if (digits > 1) {
-     chars.append('.');
-     formatFraction(mantissa % LONG_POW_10[digits - 1], digits - 1,
-     fixedFormat, chars);
-     }
-     chars.append('E');
-     format(dotPos - 1, chars);
-     } else if (dotPos <= 0) { // Leading zeros ("0.xxxxx").
-     append(chars, LEADING_ZEROS[-dotPos]);
-     formatFraction(mantissa, digits, fixedFormat, chars);
-     } else if (dotPos == digits) { // Dot at last position ("xxxxx.").
-     format(mantissa, chars);
-     if (!fixedFormat) { // Adds trailing zero ("xxx.0")
-     append(chars, ".0");
-     }
-     } else { // Dot within the string ("xxxx.xxxxx").
-     format(mantissa / LONG_POW_10[digits - dotPos], chars);
-     chars.append('.');
-     formatFraction(mantissa % LONG_POW_10[digits - dotPos], digits
-     - dotPos, fixedFormat, chars);
-     }
-     return chars;
-     }
 
-     private static final double POSITIVE_INFINITY = 1.0 / 0.0;
+    private static final double POSITIVE_INFINITY = 1.0 / 0.0;
 
-     private static final double NEGATIVE_INFINITY = -1.0 / 0.0;
+    private static final double NEGATIVE_INFINITY = -1.0 / 0.0;
 
-     private static void formatFraction(long fraction, int digits,
-     boolean fixedFormat, Appendable chars) throws IOException {
-     for (int i = digits; i > 0;) {
-     long pow10 = LONG_POW_10[--i];
-     int digit = (int) (fraction / pow10);
-     fraction -= digit * pow10;
-     chars.append(DIGITS[digit]);
-     if ((fraction == 0) && !fixedFormat) {
-     return; // No more than one trailing zero.
-     }
-     }
-     }
-
-     private static int rankFor(double accuracy) {
-     int rank = 0;
-     if (accuracy > 1.0) {
-     while (accuracy > 1.0) {
-     rank++;
-     accuracy /= 10.0;
-     }
-     } else if (accuracy < 1.0) {
-     while (accuracy < 1.0) {
-     rank--;
-     accuracy *= 10.0;
-     }
-     }
-     return rank;
-     }
-
-     private static final double FLOAT_RELATIVE_ERROR = 0.000000059604644775390625;
-
-     private static final double DOUBLE_RELATIVE_ERROR = 1.1102230246251565404236316680908e-16;
-
-     private static String[] LEADING_ZEROS = { "0.", "0.0", "0.00" };
-
-     /**/
+    private static void formatFraction(long fraction, int digits,
+            boolean showZero, Appendable chars) throws IOException {
+        if (digits == 0)
+            return;
+        chars.append('.');
+        for (int i = digits; i > 0;) {
+            long pow10 = LONG_POW_10[--i];
+            int digit = (int) (fraction / pow10);
+            fraction -= digit * pow10;
+            chars.append(DIGITS[digit]);
+            if ((fraction == 0) && !showZero) {
+                return; // No more than one trailing zero.
+            }
+        }
+    }
+    // Returns e such as 10^e <= value < 10^(e+1), value >= 1.0
+    private static int minPow10(double value) {
+        int minE = 0;
+        int maxE = DOUBLE_POW_10.length;
+        while (maxE - minE > 1) {
+            final int exp = (minE + maxE) >> 1;
+            if (value >= DOUBLE_POW_10[exp]) {
+                minE = exp;
+            } else {
+                maxE = exp;
+            }
+        }
+        return minE;
+    }
+    /**/
 
     /**
      * Appends the specified string argument to the specified appendable

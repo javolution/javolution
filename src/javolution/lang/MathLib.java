@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util;
+package javolution.lang;
 
 
 /**
@@ -26,17 +26,20 @@ public final class MathLib {
     private MathLib() {}
 
     /**
-     * Returns a pseudo random <code>int</code> value (negative or positive).
-     *  
-     * @return  a pseudo random number.
+     * Returns a pseudo random <code>int</code> value in the range
+     * <code>[min, max]</code>.
+     * @param min the minimum value inclusive.
+     * @param max the maximum value inclusive.
+     * @return a pseudo random number in the range <code>[min, max]</code>.
      */
-    public synchronized static int randomInt() {
+    public synchronized static int randomInt(int min, int max) {
         // This is a linear congruential pseudorandom number generator, as 
         // defined by D. H. Lehmer and described by Donald E. Knuth in <i>The 
         // Art of Computer Programming,</i> Volume 2: <i>Seminumerical 
         // Algorithms</i>, section 3.2.1.
         MathLib.Seed = (MathLib.Seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
-        return (int)(MathLib.Seed >>> (48 - 32));   // 48 - bits
+        int i = (int)(MathLib.Seed >>> (48 - 32));   // 48 - bits
+        return (i < 0) ? min - i % (max - min + 1) : min + i % (max - min + 1);
     }
     private static long Seed = System.currentTimeMillis() +  8682522807148012L;
 
@@ -363,9 +366,9 @@ public final class MathLib {
      *          to <code>0.0</code> and less than <code>1.0</code>.
      @FLOATING_POINT@
     public static double random() {
-        return RANDOM.nextDouble();
+        return randomInt(0, Integer.MAX_VALUE) * INV_MAX_VALUE;
     }
-    private static final java.util.Random RANDOM = new java.util.Random();
+    private static final double INV_MAX_VALUE = 1.0 / Integer.MAX_VALUE;
     /**/
 
     /**

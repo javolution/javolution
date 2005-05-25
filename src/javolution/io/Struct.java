@@ -14,7 +14,7 @@ import j2me.nio.ByteOrder;
 import j2me.util.List;
 import javolution.JavolutionError;
 import javolution.lang.Enum;
-import javolution.util.Reflection;
+import javolution.lang.Reflection;
 
 import java.io.IOException;
 

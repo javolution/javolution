@@ -16,8 +16,8 @@
     <target name="init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="3.2" />
-        <property name="release" value="5" />
+        <property name="version" value="3.3" />
+        <property name="release" value="3" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />
@@ -82,79 +82,91 @@
         <delete file="${tmp}/javolution/lang/Appendable.java" />
         <delete file="${tmp}/javolution/lang/Enum.java" />
         <!-- Generic Collections -->
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object[]/*<T> T[]*/]]></replacetoken>
             <replacevalue><![CDATA[<T> T[]]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object[]/*T[]*/]]></replacetoken>
             <replacevalue><![CDATA[T[]]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[/*<javolution.lang.Reference<T>>*/]]></replacetoken>
+            <replacevalue><![CDATA[<javolution.lang.Reference<T>>]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object/*Map.Entry<K,V>*/]]></replacetoken>
             <replacevalue><![CDATA[Map.Entry<K,V>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object/*E*/]]></replacetoken>
             <replacevalue><![CDATA[ E ]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[Object/*T*/]]></replacetoken>
+            <replacevalue><![CDATA[ T ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object/*K*/]]></replacetoken>
             <replacevalue><![CDATA[ K ]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object/*V*/]]></replacetoken>
             <replacevalue><![CDATA[ V ]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<? extends Map.Entry<? extends K, ? extends V>>*/]]></replacetoken>
             <replacevalue><![CDATA[<? extends Map.Entry<? extends K, ? extends V>>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<? extends K, ? extends V>*/]]></replacetoken>
             <replacevalue><![CDATA[<? extends K, ? extends V>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<? extends E>*/]]></replacetoken>
             <replacevalue><![CDATA[<? extends E>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<FastMap.Entry<K,V>>*/]]></replacetoken>
             <replacevalue><![CDATA[<FastMap.Entry<K,V>>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<FastMap.Entry<E,E>>*/]]></replacetoken>
             <replacevalue><![CDATA[<FastMap.Entry<E,E>>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<Map.Entry<K,V>>*/]]></replacetoken>
             <replacevalue><![CDATA[<Map.Entry<K,V>>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<?,?>*/]]></replacetoken>
             <replacevalue><![CDATA[<?,?>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<K,V>*/]]></replacetoken>
             <replacevalue><![CDATA[<K,V>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<E,E>*/]]></replacetoken>
             <replacevalue><![CDATA[<E,E>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<E>*/]]></replacetoken>
             <replacevalue><![CDATA[<E>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[/*<T>*/]]></replacetoken>
+            <replacevalue><![CDATA[<T>]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<K>*/]]></replacetoken>
             <replacevalue><![CDATA[<K>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<V>*/]]></replacetoken>
             <replacevalue><![CDATA[<V>]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution/util" includes="**/*.java">
+        <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<?>*/]]></replacetoken>
             <replacevalue><![CDATA[<?>]]></replacevalue>
         </replace>
@@ -194,7 +206,7 @@
                 <include name="**/doc-files/*" />
             </fileset>
         </copy>
-        <javadoc sourcepath="${tmp}" destdir="${api}" windowtitle="Javolution v${version} API" overview="src/overview.html" author="true" version="true" classpath="${bin}" charset="${encoding}" encoding="${encoding}" docencoding="${encoding}" stylesheetfile="doc/javadoc.css" splitindex="true">
+        <javadoc sourcepath="${tmp}" destdir="${api}" windowtitle="Javolution v${version} API" overview="src/overview.html" author="true" version="true" classpath="${bin}" charset="${encoding}" encoding="${encoding}" docencoding="${encoding}" stylesheetfile="css/javadoc.css" splitindex="true">
             <header>
                 <![CDATA[<A HREF="http://javolution.org">
                 <SPAN CLASS="style0">J</SPAN>
@@ -229,13 +241,22 @@
 
 <target name="zip" depends="init">
 <zip destfile="${library}-${version}.${release}-src.zip" update="false">
-    <zipfileset dir="." prefix="${library}-${version}" includes="src/**/*, doc/**/*,
-                                  index.html, build.xml" />
+    <zipfileset dir="." prefix="${library}-${version}" includes=
+        "src/**/*, doc/license.txt, css/**/*, index.html, build.xml" />
 </zip>
 <zip destfile="${library}-${version}.${release}-bin.zip" update="false">
-    <zipfileset dir="." prefix="${library}-${version}" includes="doc/**/*, ${api}/**/*,
-                                  index.html, ${library}.jar" />
+    <zipfileset dir="." prefix="${library}-${version}" includes=
+        "doc/license.txt, css/**/*, ${api}/**/*, index.html, ${library}.jar" />
 </zip>
+</target>
+
+<target name="web" depends="clean, init_1.5, compile, doc, jar, zip">
+    <zip destfile="${library}-${version}.${release}-web.zip" update="false">
+        <zipfileset dir="." prefix="${library}-${version}" includes=
+            "doc/**/*, css/**/* ,${api}/**/*, index.html,
+            ${library}-${version}.${release}-src.zip, 
+            ${library}-${version}.${release}-bin.zip" />
+    </zip>
 </target>
 
 <target name="1.0" depends="clean, init_1.0, compile, doc, jar, zip" />

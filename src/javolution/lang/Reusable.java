@@ -26,16 +26,16 @@ package javolution.lang;
  *     their {@link javolution.realtime.ObjectFactory factory} cleanup 
  *     method calls the {@link #reset reset} method. For example:<pre>
  *     public class Foo extends RealtimeObject implements Reusable {
- *         private static final Factory FACTORY = new Factory() {
- *             public Object create() {
+ *         private static final Factory&lt;Foo&gt; FACTORY = new Factory&lt;Foo&gt;() {
+ *             public Foo create() {
  *                 return new Foo();
  *             }
- *             public void cleanup(Object obj) {
- *                 ((Foo)obj).reset();
+ *             public void cleanup(Foo obj) {
+ *                 obj.reset();
  *             }
  *         };
  *         public static Foo newInstance() {
- *             return (Foo) FACTORY.object();
+ *             return FACTORY.object();
  *         } 
  *         ...
  *     }</pre></p>

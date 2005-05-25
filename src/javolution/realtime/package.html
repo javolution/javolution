@@ -18,7 +18,7 @@
     be pre-allocated (at any appropriate time) and/or stack allocated.</P>
 
 <P> This facility works with any VM or even native executable (GCJ). 
-    It is also well suited for <a href="http://www.rtj.org/">RTSJ</a> VMs
+    It is also well suited for <a href="https://rtsj.dev.java.net/">RTSJ</a> VMs
     <UL> 
     <LI> To avoid IllegalAssignmentError: Objects can be preallocated in immortal memory during class initialization and 
          can be referenced by any other object (e.g. scoped objects).</LI>
@@ -28,19 +28,35 @@
     
 <P> <i><b>J</b>avolution</i> allows your application to control when the object creation 
     does occur! In other words, even when using the default heap space, you can move object 
-    allocation and garbage collection out of your high-performance code. For example:<pre>
-      void main(String[]) {
-          AllocationProfile.load(); // Loads allocation profile from previous executions.
-          for (Music music = getMusicToPlay(); music != null; music = music.getNext()) {
-              AllocationProfile.preallocate(); // Delay ok, not started yet.
-              play(music); // Real-time and fast (no object creation and no gc).
-          }
-          AllocationProfile.save(); // Saves allocation profile (optional).
-     }</pre>
-     </P>
+    allocation and garbage collection out of your high-performance code 
+    (see {@link javolution.realtime.AllocationProfile AllocationProfile}).</P>
 
 <h2><a name="FAQ">FAQ:</a></h2>
 <ol>
+    <a name="FAQ-0"></a>
+    <li><b>I am writing an application using third party libraries. 
+          I cannot avoid GC unless I get the source and patch it to Javolution.
+          Can I still make my application real-time ?</b>
+    <p> 
+    If the third party library performs dynamic memory allocations in normal methods (not constructors),
+    you might not be able to avoid garbage collection. But you cannot get determinism using 
+    "any" third party library anyway, regardless of the garbage collector issue. 
+    Array resizing, lazy initialization, map rehashing (...) would all introduce unexpected 
+    delays (this is why Javolution comes with its own real-time collection implementation). 
+    Still, you have several options:
+    <ol>
+    <li> Run GC at an appropriate time (<code>System.gc()</code>).</li>
+    <li> Use incremental/concurrent collectors.</li>
+    <li> Run non-allocating real-time threads or Javolution-Using threads at higher 
+         priority than the garbage collector.</li>
+    </ol>
+    <p></p>
+    <p><i> The latest solution works only with non-moving garbage collectors such as the Boehm-Weiser collector
+    employed by the <a href="http://www.gnu.org/software/gcc/java/">Gnu Compiler for Java</a>.
+    Native compilers (such as the <a href="http://www.gnu.org/software/gcc/java/">GCJ</a>) or 
+    Ahead-of-Time compilers are also recommended to avoid JIT compilation interruptions (common with the HotSpot VM).</i></p>
+    </li><p></p>
+
     <a name="FAQ-1"></a>
     <li><b>Can you explain a little how the PoolContext works? 
     I looked at the example code in the Javadoc, and I'm still a little fuzzy on where and what 
@@ -57,7 +73,7 @@
     on the stack of locally declared primitive variables, but now extended to
     non-primitive objects.
     </p> 
-    <p><i> Note: Classes encapsulating calls to object factories within
+    <p><i> Classes encapsulating calls to object factories within
                 factory methods (e.g. <code>valueOf(...)</code>) and 
                 whose methods do not create temporary objects using the "new" keyword
                 are known as <b>"real-time compliant"</b>.</i></p>
@@ -67,21 +83,21 @@
     <li><b>How do I make my own classes real-time compliant?</b>
     <p> The simplest way is to extend {@link javolution.realtime.RealtimeObject RealtimeObject}
         and use a factory to create new instances. For example:<pre>
-    public final class Coordinates extends RealtimeObject {
-        private double latitude;
-        private double longitude;        
-        private static final Factory FACTORY = new Factory() {
-              public Object create() {
+    public static final class Coordinates extends RealtimeObject {
+        private double _latitude;
+        private double _longitude;        
+        private static final Factory&lt;Coordinates&gt; FACTORY = new Factory&lt;Coordinates&gt;() {
+              public Coordinates create() {
                   return new Coordinates();
               }
         };
-       private Coordinates() {} 
-       public static Coordinates valueOf(double latitude, double longitude) {
-           Coordinates c = (Coordinates) FACTORY.object();
-           c.latitude = latitude;
-           c.longitude = longitude;
-           return c;
-       }
+        private Coordinates() {} 
+        public static Coordinates valueOf(double latitude, double longitude) {
+            Coordinates c = FACTORY.object();
+            c._latitude = latitude;
+            c._longitude = longitude;
+            return c;
+        }
     }</pre>
     Et voila! Your class is now real-time compliant!
     <p> The following code shows the accelerating effect of stack allocations.<pre>
@@ -93,6 +109,7 @@
              try {
                  for (int j = 0; j < vertices.length; j++) {
                      vertices[j] = Coordinates.valueOf(i, j);
+                     // vertices[j] = new Coordinates(i, j); 
                  }
              }finally {
                  PoolContext.exit();
@@ -106,30 +123,30 @@
         Subsequent iterations are not only faster but 
         very consistent in time as no memory allocation/garbage collection 
         will ever occur.<pre> 
-  Time = 1547
-  Time = 93
-  Time = 94
-  Time = 94
-  Time = 94
-  Time = 93
-  Time = 94
-  Time = 94
-  Time = 93
-  Time = 94</pre>
+   Time = 1359
+   Time = 110
+   Time = 110
+   Time = 110
+   Time = 109
+   Time = 109
+   Time = 110
+   Time = 110
+   Time = 110
+   Time = 110</pre>
     
   <p> The same program allocating directly on the heap (e.g. <code>new Coordinates(i, j)</code>)
      produces the following result:<pre>
-  Time = 937
-  Time = 703
-  Time = 1078
-  Time = 641
-  Time = 656
-  Time = 656
-  Time = 641
-  Time = 671
-  Time = 641
-  Time = 656</pre> 
-  Not only code execution is <b>6x</b> time slower but there is much 
+   Time = 1140
+   Time = 1344
+   Time = 1296
+   Time = 1282
+   Time = 1312
+   Time = 1266
+   Time = 1312
+   Time = 828
+   Time = 1313
+   Time = 1266</pre> 
+  Not only code execution is <b>10x</b> time slower but there is much 
   more fluctuation in the execution time due to GC.</p>
     </li><p></p>
     
@@ -184,18 +201,17 @@
        
     // Use of factory pool access to recycle immediately.
     //
-    ObjectPool charsPool = CHAR_1024_FACTORY.currentPool();
-    char[] buffer = (char[]) charsPool.next(); // Next object from pool.
+    ObjectPool&gt;char[]&lt; charsPool = CHAR_1024_FACTORY.currentPool();
+    char[] buffer = charsPool.next(); // Next object from pool.
     for (int i = reader.read(buffer, 0, buffer.length); i > 0;) {
         ...
     } 
     charsPool.recycle(buffer); // Puts object back into its pool immediatly (optional).
     ...
-    private static final ObjectFactory CHAR_1024_FACTORY = new ObjectFactory() { 
-        public Object create() { return new char[1024]; }
+    private static final ObjectFactory&gt;char[]&lt; CHAR_1024_FACTORY = new ObjectFactory&gt;char[]&lt;() { 
+        public char[] create() { return new char[1024]; }
     };
-    
-    
+        
     // Use of protected recycle method to recycle immediately.
     //
     public LargeInteger gcd(LargeInteger that) {
@@ -292,7 +308,7 @@
     <a name="FAQ-6"></a>
     <li><b>What performance gain can I expect by using a pool context?</b>
     <p> Classes avoiding dynamic memory allocation are significantly faster.
-        For example, our XML {@link javolution.xml.sax.XmlSaxParserImpl XmlSaxParserImpl} and 
+        For example, our {@link javolution.xml.sax.XmlSaxParserImpl XmlSaxParserImpl} and 
         {@link javolution.xml.pull.XmlPullParserImpl XmlPullParserImpl} 
         are <b>3-5x</b> faster than any conventional xml parsers. To avoid synchronization 
         issues, it is often easier to allocate new objects. Other techniques such 
@@ -346,29 +362,35 @@
     </li><p></p>
     <a name="FAQ-8"></a>
     <li><b>Could you show us practical examples?</b>
-    <p> Sure, here is a code excerpt from a user working on genetic algorithms:
+    <p> Sure, here is a code excerpt from a developer working on genetic algorithms:
     <pre>
     public static void main(String[] args) {
-        FastList population = FastList.newInstance();
+        FastList&lt;Amoeba&gt; population = new FastList&lt;Amoeba&gt;();
+        FastList&lt;Amoeba&gt; nursery = new FastList&lt;Amoeba&gt;();
+        Amoeba[] amoebas = new Amoeba[COLLECTION_SIZE];
         for (int i = 0; i < POPULATION_SIZE; i++) {
             population.add(Amoeba.newInstance());
         }
         while (...) {
             PoolContext.enter();
             try {
-                for (Iterator i = population.fastIterator(); i.hasNext();) {
-                    Amoeba a = (Amoeba) i.next();
+        for (Record head = headRecord(), r = tailRecord().getPreviousRecord(); r != head;) {
+                // Removes starting from the tail (the same code would work with any FastCollection, e.g. FastTable).
+                for (FastList.Node&lt;Amoeba&gt; head = population.headNode(), n = population.tailNode().getPreviousNode(), previous; n != head; n = previous) {
+                    previous = n.getPreviousNode();
+                    Amoeba a = n.getValue();
                     if (a.getSurvivalLevel() < average) {
-                        i.remove();
+                        population.delete(n);
                     }
                 }
-                FastList new_population = FastList.newInstance();
+                population.toArray(amoebas); // Use array to accelerate random access.
                 for (int i = population.size(); i < POPULATION_SIZE; i++) {
-                    Amoeba male = (Amoeba) population.get(rand.nextInt(population.size()));
-                    Amoeba female = (Amoeba) population.get(rand.nextInt(population.size()));
-                    new_population.add(PairingUtil.pair(male, female));
+                    Amoeba male = amobeas[random.nextInt(population.size())];
+                    Amoeba female = amobeas[random.nextInt(population.size())];
+                    nursery.add(PairingUtil.pair(male, female));
                 }
-                population.addAll(new_population);
+                population.addAll(nursery);
+                nursery.clear();
                 generation++;
             } finally { // Recycles all except the current population.
                 population.preserve(); 
@@ -379,8 +401,8 @@
     }
     ...
     public int getSurvivalLevel() {
-        ObjectPool boardPool = BOARD_FACTORY.currentPool();  
-        int[][] board = (int[][]) boardPool.next();
+        ObjectPool&lt;int[][]&gt; boardPool = BOARD_FACTORY.currentPool();  
+        int[][] board = boardPool.next(); // Returns thread-local board.
         
         ... // Do some complicate stuff with the board (board game ?)
         
@@ -393,11 +415,11 @@
         boardPool.recycle(board); // Immediate recycling.
         return level;
     }
-    private static ObjectFactory BOARD_FACTORY = new ObjectFactory() { 
-        protected Object create() {
+    private static ObjectFactory&lt;int[][]&gt; BOARD_FACTORY = new ObjectFactory&lt;int[][]&gt;() { 
+        protected int[][] create() {
             return new int[8][8];
         }
-    }</pre>
+    };</pre>
     <em><b>The same code without using pool context is several times slower!</b></em></p>
 
 </ol>

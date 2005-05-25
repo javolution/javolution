@@ -9,13 +9,16 @@
 package javolution.xml;
 
 import j2me.lang.CharSequence;
+import javolution.lang.Text;
 import javolution.lang.TextBuilder;
 import javolution.lang.TypeFormat;
 import javolution.realtime.ObjectFactory;
 import javolution.util.FastComparator;
 import javolution.util.FastList;
 import javolution.util.FastMap;
+import javolution.util.FastTable;
 import javolution.xml.sax.Attributes;
+import javolution.xml.sax.AttributesImpl;
 
 /**
  * <p> This class represents a XML element. Instances of this class are made
@@ -69,9 +72,9 @@ public final class XmlElement {
     CharSequence _idValue;
 
     /**
-     * Holds this element attributes when parsing. 
+     * Holds this element attributes when parsing/formatting. 
      */
-    Attributes _parseAttributes;
+    AttributesImpl _attributes = new AttributesImpl();
 
     /**
      * Holds the name for this xml element if any.
@@ -79,7 +82,7 @@ public final class XmlElement {
     CharSequence _name;
 
     /**
-     * Holds the anoymous elements content.
+     * Holds the anonymous elements content.
      */
     final FastList _content = new FastList();
 
@@ -90,20 +93,15 @@ public final class XmlElement {
         = new FastMap().setKeyComparator(FastComparator.LEXICAL); 
 
     /**
-     * Holds the pool of element names (TextBuilder) available.
+     * Holds a pool of text builder instances.
      */
-    private final FastList _namesAvail = new FastList(); 
-
+    private FastTable _pool = new FastTable();
+    
     /**
-     * Holds the pool of element names (TextBuilder) currently used.
+     * Holds the index of the first free instance in the pool.
      */
-    private final FastList _namesUsed = new FastList(); 
-
-    /**
-     * Holds this element attributes when formatting. 
-     */
-    private final FormatAttributes _formatAttributes = new FormatAttributes();
-
+    private int _poolIndex;
+    
     /**
      * Default constructor.
      */
@@ -164,6 +162,24 @@ public final class XmlElement {
     }
 
     /**
+     * Returns a new text builder to hold the specified attribute.
+     * This method allows for custom attribute formatting. For example:<pre>
+     *     // Formats the color RGB value in hexadecimal.
+     *     xml.newAttribute("color").append(_color.getRGB(), 16);
+     *     
+     *     // Formats the error using 4 digits.
+     *     xml.newAttribute("error").append(error, 4, false, false);</pre>
+     *
+     * @param  name the attribute name.
+     * @return the text builder to hold the attribute value.
+     */
+    public TextBuilder newAttribute(String name) {
+        TextBuilder value = newTextBuilder();
+        setAttribute(name, value);
+        return value;
+    }
+    
+    /**
      * Sets the specified <code>CharSequence</code> attribute
      * (<code>null</code> values are ignored).
      *
@@ -173,8 +189,10 @@ public final class XmlElement {
     public void setAttribute(String name, CharSequence value) {
         if (value == null)
             return;
-        _formatAttributes.add(name, value);
+        CharSequence csqName = toCharSeq(name);
+        _attributes.addAttribute(Text.EMPTY, csqName, Text.EMPTY, csqName, "CDATA", value);
     }
+    
 
     /**
      * Sets the specified <code>String</code> attribute
@@ -186,67 +204,148 @@ public final class XmlElement {
     public void setAttribute(String name, String value) {
         if (value == null)
             return;
-        _formatAttributes.add(name, value);
+        CharSequence csqName = toCharSeq(name);
+        CharSequence csqValue = toCharSeq(value);
+        _attributes.addAttribute(Text.EMPTY, csqName, Text.EMPTY, csqName, "CDATA", csqValue);
     }
-    
 
     /**
      * Sets the specified <code>boolean</code> attribute.
-     *
+     * 
      * @param  name the name of the attribute.
      * @param  value the <code>boolean</code> value for the specified attribute.
      * @see    #getAttribute(String, boolean)
      */
     public void setAttribute(String name, boolean value) {
-        _formatAttributes.newAttribute(name).append(value);
+        newAttribute(name).append(value);
     }
 
     /**
      * Sets the specified <code>int</code> attribute.
-     *
+     * 
      * @param  name the name of the attribute.
      * @param  value the <code>int</code> value for the specified attribute.
      * @see    #getAttribute(String, int)
      */
     public void setAttribute(String name, int value) {
-        _formatAttributes.newAttribute(name).append(value);
+        newAttribute(name).append(value);
     }
 
     /**
      * Sets the specified <code>long</code> attribute.
-     *
+     * 
      * @param  name the name of the attribute.
      * @param  value the <code>long</code> value for the specified attribute.
      * @see    #getAttribute(String, long)
      */
     public void setAttribute(String name, long value) {
-        _formatAttributes.newAttribute(name).append(value);
+        newAttribute(name).append(value);
     }
 
     /**
      * Sets the specified <code>float</code> attribute.
-     *
+     * 
      * @param  name the name of the attribute.
      * @param  value the <code>float</code> value for the specified attribute.
      * @see    #getAttribute(String, float)
      /*@FLOATING_POINT@
      public void setAttribute(String name, float value) {
-     _formatAttributes.newAttribute(name).append(value);
+        newAttribute(name).append(value);
      }
      /**/
 
     /**
      * Sets the specified <code>double</code> attribute.
-     *
+     * 
      * @param  name the name of the attribute.
      * @param  value the <code>double</code> value for the specified attribute.
      * @see    #getAttribute(String, double)
      /*@FLOATING_POINT@
      public void setAttribute(String name, double value) {
-     _formatAttributes.newAttribute(name).append(value);
+        newAttribute(name).append(value);
      }
      /**/
 
+     /**
+      * Sets the specified <code>Byte</code> attribute.
+      * 
+      * @param  name the name of the attribute.
+      * @param  value the <code>Byte</code> value for the specified attribute.
+      * @see    #getAttribute(String, Byte)
+      */
+     public void setAttribute(String name, Byte value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.byteValue());
+     }
+     
+     /**
+      * Sets the specified <code>Short</code> attribute.
+      *
+      * @param  name the name of the attribute.
+      * @param  value the <code>Short</code> value for the specified attribute.
+      * @see    #getAttribute(String, Short)
+      */
+     public void setAttribute(String name, Short value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.shortValue());
+     }
+     
+     /**
+      * Sets the specified <code>Integer</code> attribute.
+      * 
+      * @param  name the name of the attribute.
+      * @param  value the <code>Integer</code> value for the specified attribute.
+      * @see    #getAttribute(String, Integer)
+      */
+     public void setAttribute(String name, Integer value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.intValue());
+     }
+     
+     /**
+      * Sets the specified <code>Long</code> attribute.
+      *
+      * @param  name the name of the attribute.
+      * @param  value the <code>Long</code> value for the specified attribute.
+      * @see    #getAttribute(String, Long)
+      */
+     public void setAttribute(String name, Long value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.longValue());
+     }
+     
+     /**
+      * Sets the specified <code>Float</code> attribute.
+      *
+      * @param  name the name of the attribute.
+      * @param  value the <code>Float</code> value for the specified attribute.
+      * @see    #getAttribute(String, Float)
+     /*@FLOATING_POINT@
+     public void setAttribute(String name, Float value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.floatValue());
+     }
+     /**/
+
+     /**
+      * Sets the specified <code>Double</code> attribute.
+      *
+      * @param  name the name of the attribute.
+      * @param  value the <code>Double</code> value for the specified attribute.
+      * @see    #getAttribute(String, Double)
+     /*@FLOATING_POINT@
+     public void setAttribute(String name, Double value) {
+         if (value == null)
+             return;
+         newAttribute(name).append(value.doubleValue());
+     }
+     /**/
+     
     /////////////////////
     // Deserialization //
     /////////////////////
@@ -258,11 +357,7 @@ public final class XmlElement {
      * @param  obj the object added as child element.
      */
     void add(CharSequence name, Object obj) {
-        TextBuilder tb = _namesAvail.size() > 0 ? 
-                (TextBuilder) _namesAvail.removeLast() : 
-                    (TextBuilder)TextBuilder.newInstance().moveHeap();
-        _namesUsed.addLast(tb);
-        tb.reset();
+        TextBuilder tb = newTextBuilder();
         tb.append(name);
         _nameToChild.put(tb, obj);
     }
@@ -304,39 +399,29 @@ public final class XmlElement {
      * @return the attributes mapping.
      */
     public Attributes getAttributes() {
-        // When parsing, returns the parsing attributes; 
-        // otherwise returns formatting attributes.
-        return (_parseAttributes != null) ? _parseAttributes : 
-            _formatAttributes;
+        return _attributes;
     }
 
     /**
      * Searches for the attribute having the specified name.
      *
-     * @param  name the name of the attribute.
+     * @param  name the qualified name of the attribute (qName).
      * @return the value for the specified attribute or <code>null</code>
      *         if the attribute is not found.
      */
     public CharSequence getAttribute(String name) {
-        final Attributes attributes = getAttributes();
-        final int length = attributes.getLength();
-        for (int i=0; i < length; i++) {
-            CharSequence attName = attributes.getQName(i);
-            if (attName.equals(name)) 
-                return attributes.getValue(i);
-        }
-        return null;
+        return _attributes.getValue(name);
     }
 
     /**
      * Indicates if the specified attribute is present.
      *
-     * @param  name the name of the attribute.
+     * @param  name the qualified name of the attribute (qName).
      * @return <code>true</code> if this xml element contains the specified
      *         attribute; <code>false</code> otherwise.
      */
     public boolean isAttribute(String name) {
-        return getAttribute(name) != null;
+        return _attributes.getIndex(name) >= 0;
     }
 
     /**
@@ -348,7 +433,7 @@ public final class XmlElement {
      *         the <code>defaultValue</code> if the attribute is not found.
      */
     public String getAttribute(String name, String defaultValue) {
-        CharSequence value = getAttribute(name);
+        CharSequence value = _attributes.getValue(name);
         return (value != null) ? value.toString() : defaultValue;
     }
 
@@ -361,8 +446,8 @@ public final class XmlElement {
      *         the default value if the attribute is not found.
      */
     public boolean getAttribute(String name, boolean defaultValue) {
-        CharSequence chars = getAttribute(name);
-        return (chars != null) ? TypeFormat.parseBoolean(chars) : defaultValue;
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? TypeFormat.parseBoolean(value) : defaultValue;
     }
 
     /**
@@ -375,8 +460,8 @@ public final class XmlElement {
      *         the default value if the attribute is not found.
      */
     public int getAttribute(String name, int defaultValue) {
-        CharSequence chars = getAttribute(name);
-        return (chars != null) ? TypeFormat.parseInt(chars) : defaultValue;
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? TypeFormat.parseInt(value) : defaultValue;
     }
 
     /**
@@ -389,8 +474,8 @@ public final class XmlElement {
      *         the default value if the attribute is not found.
      */
     public long getAttribute(String name, long defaultValue) {
-        CharSequence chars = getAttribute(name);
-        return (chars != null) ? TypeFormat.parseLong(chars) : defaultValue;
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? TypeFormat.parseLong(value) : defaultValue;
     }
 
     /**
@@ -402,8 +487,8 @@ public final class XmlElement {
      *         the default value if the attribute is not found.
      /*@FLOATING_POINT@
      public float getAttribute(String name, float defaultValue) {
-     CharSequence chars = getAttribute(name);
-     return (chars != null) ? (float) TypeFormat.parseDouble(chars)
+        CharSequence value = _attributes.getValue(name);
+     return (value != null) ? (float) TypeFormat.parseDouble(value)
      : defaultValue;
      }
      /**/
@@ -416,10 +501,90 @@ public final class XmlElement {
      * @return the <code>double</code> value for the specified attribute or
      *         the default value if the attribute is not found.
      /*@FLOATING_POINT@
-     public double getAttribute(String name, double defaultValue) {
-     CharSequence chars = getAttribute(name);
-     return (chars != null) ? TypeFormat.parseDouble(chars) : defaultValue;
-     }
+    public double getAttribute(String name, double defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? TypeFormat.parseDouble(value) : defaultValue;
+    }
+     /**/
+     
+    /**
+     * Searches for the specified <code>Byte</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Byte</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Byte getAttribute(String name, Byte defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Byte(TypeFormat.parseByte(value)) : defaultValue;
+    }
+     
+    /**
+     * Searches for the specified <code>Short</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Short</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Short getAttribute(String name, Short defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Short( TypeFormat.parseShort(value) ) : defaultValue;
+    }
+     
+    /**
+     * Searches for the specified <code>Integer</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Integer</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Integer getAttribute(String name, Integer defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Integer( TypeFormat.parseInt(value) ) : defaultValue;
+    }
+     
+    /**
+     * Searches for the specified <code>Long</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Long</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Long getAttribute(String name, Long defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Long( TypeFormat.parseLong(value) ) : defaultValue;
+    }
+     
+    /**
+     * Searches for the specified <code>Float</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Float</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+    /*@FLOATING_POINT@
+    public Float getAttribute(String name, Float defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Float( TypeFormat.parseFloat(value) ) : defaultValue;
+    }
+     /**/
+     
+    /**
+     * Searches for the specified <code>Double</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Double</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+    /*@FLOATING_POINT@
+    public Double getAttribute(String name, Double defaultValue) {
+        CharSequence value = _attributes.getValue(name);
+        return (value != null) ? new Double( TypeFormat.parseDouble(value) ) : defaultValue;
+    }
      /**/
 
     /**
@@ -431,11 +596,51 @@ public final class XmlElement {
         _objectClass = null;
         _idValue = null;
         _name = null;
-        _parseAttributes = null;
         _content.clear();
         _nameToChild.clear();
-        _namesAvail.addAll(_namesUsed);
-        _namesUsed.clear();
-        _formatAttributes.reset();
+        _attributes.reset();
+        _poolIndex = 0;
+    }
+
+    /**
+     * Converts a String to CharSequence (for J2ME compatibility)
+     * 
+     * @param str the String to convert.
+     * @return the corresponding CharSequence instance.
+     */
+    private CharSequence toCharSeq(Object str) {
+        if (str instanceof CharSequence) 
+            return (CharSequence) str;
+        // Copies the string to a TextBuilder from the pool (J2ME).
+        if (_poolIndex >= _pool.size()) {
+            _pool.addLast(TextBuilder.newInstance());
+        }
+        TextBuilder tb = (TextBuilder) _pool.get(_poolIndex++);
+        tb.reset();
+        tb.append(str);
+        return tb;
+    }
+
+    /**
+     * Returns a text builder instance from the internal pool.
+     */
+    private TextBuilder newTextBuilder() {
+        if (_poolIndex >= _pool.size()) {
+            _pool.addLast(TextBuilder.newInstance().moveHeap());
+        }
+        TextBuilder tb = (TextBuilder) _pool.get(_poolIndex++);
+        tb.reset();
+        return tb;
+    }
+
+    /**
+     * Indicates if the current object is already referenced in the 
+     * element hierarchy (parents).
+     */
+    boolean isRecursion() {
+        for (XmlElement xml = _parent; xml != null; xml = xml._parent) {
+            if (xml._object == _object) return true;
+        }
+        return false;
     }
 }

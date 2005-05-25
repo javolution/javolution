@@ -17,8 +17,6 @@ import javolution.JavolutionError;
 import javolution.realtime.ObjectFactory;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
-import javolution.xml.XmlElement;
-import javolution.xml.XmlFormat;
 
 /**
  * <p> This class represents an {@link Appendable} text whose capacity expands 
@@ -36,24 +34,6 @@ import javolution.xml.XmlFormat;
  */
 public class TextBuilder extends RealtimeObject implements Appendable,
         CharSequence, Reusable, Serializable {
-
-    /**
-     * Holds the default XML representation for this class and its sub-classes.
-     * This representation consists of a <code>"text"</code> attribute 
-     * holding the character sequence.
-     */
-    protected static final XmlFormat TEXT_BUILDER_XML = new XmlFormat(
-            new TextBuilder().getClass()) {
-        public void format(Object obj, XmlElement xml) {
-            xml.setAttribute("text", (TextBuilder) obj);
-        }
-
-        public Object parse(XmlElement xml) {
-            TextBuilder tb = TextBuilder.newInstance();
-            tb.append(xml.getAttribute("text"));
-            return tb;
-        }
-    };
 
     /**
      * Holds the factory for this text builder.
@@ -250,7 +230,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      *          (index >= this.length())</code>
      */
     public final void setCharAt(int index, char c) {
-        if ((index < 0) && (index >= _length))
+        if ((index < 0) || (index >= _length))
             throw new IndexOutOfBoundsException("index: " + index);
         if (index < C0) {
             _chars0[index] = c;
@@ -591,6 +571,32 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      }
      /**/
 
+    /**
+     * Appends the specified <code>double</code> value according to the 
+     * specified formatting arguments.
+     *
+     * @param  value the <code>double</code> value.
+     * @param  digits the number of significative digits (excludes exponent).
+     * @param  scientific <code>true</code> to forces the use of the scientific 
+     *         notation (e.g. <code>1.23E3</code>); <code>false</code> 
+     *         otherwise. 
+     * @param  showZero <code>true</code> if trailing fractional zeros are 
+     *         represented; <code>false</code> otherwise.
+     * @return <code>this</code>
+     * @throws IllegalArgumentException if <code>((digits > 19) || 
+     *         (digits <= 0))</code>)
+     /*@FLOATING_POINT@
+    public final TextBuilder append(double value, int digits, 
+            boolean scientific, boolean showZero) {
+     try {
+     TypeFormat.format(value, digits, scientific, showZero, this);
+     return this;
+     } catch (IOException e) {
+     throw new JavolutionError(e);
+     }
+     }
+     /**/
+    
     /**
      * Inserts the specified character sequence at the specified location.
      *

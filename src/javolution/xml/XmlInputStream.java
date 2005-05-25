@@ -27,12 +27,12 @@ import java.io.Reader;
  * @version 2.2, January 8, 2005
  * @see     XmlOutputStream
  */
-public class XmlInputStream extends InputStream implements Reusable {
+public class XmlInputStream/*<T>*/ extends InputStream implements Reusable {
 
     /**
      * Holds the object reader.
      */
-    private final ObjectReader _objectReader = new ObjectReader();
+    private final ObjectReader/*<T>*/ _objectReader = new ObjectReader/*<T>*/();
 
     /**
      * Holds the xml reader used for parsing.
@@ -66,7 +66,7 @@ public class XmlInputStream extends InputStream implements Reusable {
      * @return the object read from its xml representation. 
      * @throws IOException if an I/O error occurs.
      */
-    public Object readObject() throws IOException {
+    public Object/*T*/ readObject() throws IOException {
         try {
             return _objectReader.read(_xmlReader);
         } finally {

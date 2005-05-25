@@ -43,8 +43,8 @@ import org.xml.sax.SAXParseException;
  *
  * <p><i> Note: This parser is a <b>SAX2-like</b> parser with the
  *        <code>java.lang.String</code> type replaced by the more generic 
- *       <code>j2me.lang.CharSequence</code> in {@link ContentHandler},
- *       {@link Attributes} interfaces and {@link DefaultHandler} base classes.
+ *       <code>j2me.lang.CharSequence</code> in the {@link ContentHandler},
+ *       {@link Attributes} interfaces and {@link DefaultHandler} base class.
  *       If a standard SAX2 or JAXP parser is required, you may consider using
  *       the wrapping class {@link XMLReaderImpl}. Fast but not as fast as 
  *       <code>java.lang.String</code> instances are dynamically allocated
@@ -386,15 +386,6 @@ public class XmlSaxParserImpl implements Reusable {
                     CharSequence qName = _pullParser.getQName();
                     Attributes atts = _pullParser.getSaxAttributes();
                     _contentHandler.startElement(uri, localName, qName, atts);
-
-                    if (_pullParser.isEmptyElementTag()) { // Empty tag.
-                        _contentHandler.endElement(uri, localName, qName);
-                        for (int i = nsStart; i < nsEnd; i++) {
-                            CharSequence prefix = _pullParser
-                                    .getNamespacePrefix(i);
-                            _contentHandler.endPrefixMapping(prefix);
-                        }
-                    }
 
                 } else if (eventType == XmlPullParser.END_TAG) {
 

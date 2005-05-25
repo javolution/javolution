@@ -25,7 +25,7 @@ import j2me.lang.CharSequence;
  *     "CDATA" section (<code>&lt;![CDATA[...]]&gt;</code>).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, March 20, 2005
+ * @version 3.3, May 13, 2005
  */
 public final class CharacterData extends RealtimeObject implements
         Serializable, CharSequence {
@@ -39,30 +39,14 @@ public final class CharacterData extends RealtimeObject implements
         }
         protected void cleanup(Object obj) {
             CharacterData charData = (CharacterData) obj;
-            charData._text = null;
-            charData._chars = null;
+            charData._csq = null;
         }
     };
 
     /**
-     * Holds the text (or <code>null</code> to use the buffer view).
+     * Holds the character sequence being wrapped.
      */
-    private Text _text;
-
-    /**
-     * Holds a view on character buffer.
-     */
-    private char[] _chars;
-
-    /**
-     * Holds the character buffer offset.
-     */
-    private int _offset;
-
-    /**
-     * Holds the length in character buffer.
-     */
-    private int _length;
+    private CharSequence _csq;
 
     /**
      * Default constructor.
@@ -71,44 +55,14 @@ public final class CharacterData extends RealtimeObject implements
     }
 
     /**
-     * Returns the character data corresponding to the specified character 
-     * sequence.
+     * Returns the character data wrapping the specified character sequence.
      * 
-     * @param seq the character sequence.
+     * @param csq the character sequence being wrapped.
      * @return a new, preallocated or recycled instance.
      */
-    public static CharacterData valueOf(CharSequence seq) {
+    public static CharacterData valueOf(CharSequence csq) {
         CharacterData charData = (CharacterData) FACTORY.object();
-        charData._text = Text.valueOf(seq);
-        return charData;
-    }
-
-    /**
-     * Returns the character data corresponding to the specified string.
-     * 
-     * @param str the string.
-     * @return a new, preallocated or recycled instance.
-     */
-    public static CharacterData valueOf(String str) {
-        CharacterData charData = (CharacterData) FACTORY.object();
-        charData._text = Text.valueOf(str);
-        return charData;
-    }
-
-    /**
-     * Returns the character data corresponding to the specified character 
-     * sequence (used by {@link ObjectReader}).
-     * 
-     * @param chars the character buffer.
-     * @param offset the character buffer offset.
-     * @param length the length in character buffer.
-     * @return a new, preallocated or recycled instance.
-     */
-    static CharacterData valueOf(char[] chars, int offset, int length) {
-        CharacterData charData = (CharacterData) FACTORY.object();
-        charData._chars = chars;
-        charData._offset = offset;
-        charData._length = length;
+        charData._csq = csq;
         return charData;
     }
 
@@ -118,7 +72,7 @@ public final class CharacterData extends RealtimeObject implements
      * @return the number of characters.
      */
     public int length() {
-        return (_text != null) ? _text.length() : _length;
+        return _csq.length();
     }
 
     /**
@@ -130,7 +84,7 @@ public final class CharacterData extends RealtimeObject implements
      *         is equal or greater than <code>this.length()</code>.
      */
     public char charAt(int index) {
-        return (_text != null) ? _text.charAt(index) : _chars[_offset + index];
+        return _csq.charAt(index);
     }
 
     /**
@@ -143,11 +97,34 @@ public final class CharacterData extends RealtimeObject implements
      *         (start > end) || (end > this.length())</code>
      */
     public CharSequence subSequence(int start, int end) {
-        if (_text != null) {
-            return CharacterData.valueOf(_text.subtext(start, end));
-        } else {
-            return CharacterData.valueOf(_chars, _offset + start, end - start);
-        }
+        return CharacterData.valueOf(_csq.subSequence(start, end));
+    }
+
+    /**
+     * Compares this character data against the specified object for equality.
+     * Returns <code>true</code> if the specified object are both character 
+     * data having the same character content. 
+     * 
+     * @param  obj the object to compare with or <code>null</code>.
+     * @return <code>true</code> if that is a character data with the same 
+     *         character content as this one; <code>false</code> otherwise.
+     */
+    public final boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof CharacterData))
+            return false;
+        final CharacterData that = (CharacterData) obj;
+        return FastComparator.LEXICAL.areEqual(this._csq, that._csq);
+    }
+
+    /**
+     * Returns the hash code for this character data.
+     *
+     * @return the hash code value.
+     */
+    public final int hashCode() {
+        return FastComparator.LEXICAL.hashCodeOf(this._csq);
     }
 
     /**
@@ -162,61 +139,16 @@ public final class CharacterData extends RealtimeObject implements
      *         (start > end) || (end > this.length())</code>
      */
     public void getChars(int start, int end, char dest[], int destPos) {
-        if (_text != null) {
-            _text.getChars(start, end, dest, destPos);
-        } else {
-            System.arraycopy(_chars, _offset + start, dest, destPos, end - start);
+        if ((end > _csq.length()) || (end < start))
+            throw new IndexOutOfBoundsException();
+        for (int i = start, j = destPos; i < end;) {
+            dest[j++] = _csq.charAt(i++);
         }
-    }
-
-
-    /**
-     * Compares this character data against the specified object for equality.
-     * Returns <code>true</code> if the specified object is a character 
-     * data having the same character sequence as this text. 
-     * 
-     * @param  obj the object to compare with or <code>null</code>.
-     * @return <code>true</code> if that is a character data with the same 
-     *         character sequence as this one; <code>false</code> otherwise.
-     */
-    public final boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!(obj instanceof CharacterData))
-            return false;
-        final CharacterData that = (CharacterData) obj;
-        if (this._text != null) return this._text.contentEquals(that);
-        if (that._text != null) return that._text.contentEquals(this);
-        if (this._length != that._length) return false;
-        for (int i = 0; i < _length; i++) {
-            if (this._chars[this._offset + i] != that._chars[that._offset + i]) 
-                return false;
-        }
-        return true;
-    }
-
-    /**
-     * Returns the hash code for this character data.
-     *
-     * @return the hash code value.
-     */
-    public final int hashCode() {
-        if (_text != null) return _text.hashCode();
-        return FastComparator.LEXICAL.hashCodeOf(this);
     }
 
     // Overrides.
     public Text toText() {
-        return (_text != null) ? _text : Text.valueOf(this, 0, _length);
-    }
-
-    // Overrides.
-    public boolean move(ObjectSpace os) {
-        if (super.move(os)) {
-            if (_text != null) _text.move(os);
-            return true;
-        }
-        return false;
+        return Text.valueOf(_csq);
     }
 
 }

@@ -5,17 +5,32 @@
     a {@link javolution.util.FastMap FastMap} with an {@link javolution.util.FastComparator#IDENTITY
     identity} key comparator).</P>
 
-<P> Javolution collections are generics when built with the ant target <code>1.5</code>.
-    They all support direct iterations with the following advantages:
+<P> Javolution collections are compliant with standard collections (generic when built with the ant target <code>1.5</code>).</P>
+
+<P> They support direct iterations with the following advantages:
     <UL>
-    <LI>Fully compliant with standard collections interfaces (Map, List, Set, etc).</LI>
     <LI>Faster than iterators, see <A href="http://javolution.org/doc/benchmark.html">benchmark</A>.</LI>
-    <LI>No object creation (such as the iterator object itself)</LI>
-    <LI>Run on all platforms from J2ME to J2EE 1.5 (generic when built with ant target 1.5).</LI>
+    <LI>No object creation not even the iterator object itself. For example, visiting a tree structure using
+        iterators creates as many iterators as they are nodes in the tree:<pre>
+        public static void visit(Collection&lt;Collection&gt; node) {
+            for (Collection&lt;Collection&gt; i : node) { // Creates iterator.
+                visit(i);
+            }
+        }</pre>
+        Not so with direct iterations:<pre>
+        public static void visit(FastCollection&lt;FastCollection&gt; node) {
+            for (FastCollection.Record r = node.headRecord(), end = node.tailRecord();
+                    (r = r.getNextRecord()) != end;) {
+                visit(node.valueOf(r));
+            }
+        }</pre></LI>
+    <LI>Used to implement most of {@link javolution.util.FastCollection FastCollection} base class methods 
+        (including {@link javolution.util.FastCollection#iterator iterator()}.</LI>
     <LI>Support forward/backward iterations from the start (head) or from the end (tail)</LI>
     <LI>Thread-Safe as long as the record sequence iterated over is not modified by another thread
        (objects can safely be append/prepend by other threads during iteration but not inserted/removed).</LI>
-    <LI>Fully integrated with the generic framework (strong typing).</LI>
+    <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible 
+        with other platforms (J2ME, 1.4, GCJ).</LI>
     </UL>
     Here are few examples of direct iterations:<pre>
         FastList&lt;String&gt; list = new FastList&lt;String&gt;();
@@ -29,11 +44,13 @@
              Thread value = e.getValue(); // No typecast necessary.
         }
         ...
-        static boolean contains(Object obj, FastCollection c) { // General collection iterations.
-            for (FastCollection.Record r = c.headRecord(), end = c.tailRecord(); (r = r.getNextRecord()) != end;) {
-                 if (obj.equals(c.valueOf(r))) return true;
-            }
-            return false;
+        FastCollection&lt;Thread&gt; threads ...
+        // Removes all dead threads (always iterate from the tail when removing record from an unknown FastCollection, see {@link javolution.util.FastCollection#delete delete}).
+        for (FastCollection.Record&lt;Thread&gt; head = threads.headRecord(), r = tailRecord().getPreviousRecord(), previous; r != head; r = previous) {
+             previous = r.getPreviousRecord(); // Saves previous.
+             if (!threads.valueOf(r).isAlive()) { // No typecast necessary.
+                 threads.delete(r);
+             }    
         }</pre></P>
 
 <P> Users may provide a read-only view of any {@link javolution.util.FastCollection FastCollection} 
@@ -42,26 +59,32 @@
     (or {@link javolution.util.FastMap#unmodifiable FastMap.unmodifiable()}) method.
      For example:<pre>
        public class Unit { // Immutable and unique.
-          private final FastSet&lt;Unit&gt; _units = new FastSet&lt;Unit&gt;();
+       
+          private static final FastSet&lt;Unit&gt; UNITS = new FastSet&lt;Unit&gt;();
+
           // Read-only view (also thread-safe as units are never "deleted")
-          public FastCollection&lt;Unit&gt; getInstances() { 
-              return _units.unmodifiable();
+          public static FastCollection&lt;Unit&gt; getInstances() { 
+              return UNITS.unmodifiable();
           }
       }</pre></P>
 
 <P> Javolution collection classes support concurrent access without synchronization as long as the
-    records are not removed (e.g. {@link javolution.util.FastMap FastMap} look-up table).
+    records are not removed (e.g. {@link javolution.util.FastMap FastMap} look-up table) and not
+    inserted at arbitrary position (appending to the end of the collection is fine).
     To keep read access unsynchronized when records are deleted, applications may either replace 
     the whole collection/map or better set the record value to <code>null</code> instead of removing it.
-    Structural modifications themselves should always be synchronized. For example:<pre>
-        class XmlFormat {
-             static FastMap&lt;Class, XmlFormat&gt; classToFormat = new FastMap&lt;Class, XmlFormat&gt;();
-             static XmlFormat getInstance(Class forClass) {
-                 return classToFormat.get(forClass); // Unsynchronized read.
+    Structural modifications (including appending) should always be synchronized. For example:<pre>
+        public class XmlFormat {
+             
+             static final FastMap&lt;Class, XmlFormat&gt; CLASS_TO_FORMAT = new FastMap&lt;Class, XmlFormat&gt;();
+             
+             public static XmlFormat getInstance(Class forClass) {
+                 return CLASS_TO_FORMAT.get(forClass); // Unsynchronized read.
              }
-             void setClass(Class clazz) {
-                 synchronized (classToFormat) {      // Synchronized update.
-                     classToFormat.put(clazz, this);
+             
+             public void setClass(Class clazz) {
+                 synchronized (CLASS_TO_FORMAT) {      // Synchronized update.
+                     CLASS_TO_FORMAT.put(clazz, this);
                  }
              } 
         }</pre></P>
@@ -84,10 +107,19 @@
               <TD><B>Miscellaneous</B></TD>
             </TR>
             <TR>
+              <TD>{@link javolution.util.FastTable FastTable}</TD>
+              <TD>Insertion Order</TD>
+              <TD>Yes</TD>
+              <TD>{@link javolution.util.FastCollection#setValueComparator setValueComparator(FastComparator)}</TD>
+              <TD>{@link javolution.util.FastTable.Index Index}</TD>
+              <TD>Thread-safe random access collection<BR>
+                  No array resize/copy ever performed</TD>
+            </TR>
+            <TR>
               <TD>{@link javolution.util.FastList FastList}</TD>
               <TD>Insertion Order</TD>
               <TD>Yes</TD>
-              <TD>{@link javolution.util.FastList#setValueComparator setValueComparator(FastComparator)}</TD>
+              <TD>{@link javolution.util.FastCollection#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastList.Node Node}</TD>
               <TD>Reusable linked-list (recycles its nodes)</TD>
             </TR>
@@ -115,7 +147,7 @@
                   {@link javolution.util.FastMap#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastMap.Entry Entry}</TD>
               <TD>Thread-safe access without synchronization if the keys are not removed (e.g. look-up table)<BR>
-                  No rehash/resize ever performed (and no capacity to specify)<BR>
+                  No rehash/resize ever performed <BR>
                   Reusable hash map (recycles its entries)</TD>
             </TR>
          </TABLE>

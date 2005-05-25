@@ -9,7 +9,7 @@
 package javolution.util;
 
 /**
- * <p> This class represents a reentranl lock with the same semantics as
+ * <p> This class represents a reentrant lock with the same semantics as
  *     built-in Java synchronized locks: Once a thread has a lock, it can
  *     re-obtain it any number of times without blocking. </p>
  *

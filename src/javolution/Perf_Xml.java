@@ -19,9 +19,12 @@ import j2me.io.ObjectInput;
 import j2me.io.ObjectOutput;
 import j2me.lang.UnsupportedOperationException;
 import j2me.nio.ByteBuffer;
+import javolution.lang.Text;
+import javolution.lang.TextBuilder;
 import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
+import javolution.util.FastTable;
 import javolution.xml.CharacterData;
 import javolution.xml.ObjectReader;
 import javolution.xml.ObjectWriter;
@@ -48,15 +51,17 @@ final class Perf_Xml extends Javolution implements Runnable {
         println("// Package: javolution.xml //");
         println("/////////////////////////////");
 
-        // Create a dummy object (vector holding strings).
+        // Create a dummy object (vector).
         Vector v = new Vector(OBJECT_SIZE);
         for (int i = 0; i < OBJECT_SIZE; i++) {
             v.addElement("This is the string #" + i);
         }
         // Adds miscellaneous data.
         v.addElement(null);
-        CharacterData charData = CharacterData
-                .valueOf("<<< Some character data >>>");
+        v.addElement(TextBuilder.newInstance().append(Long.MAX_VALUE));
+        v.addElement(Text.valueOf(Long.MAX_VALUE, 16));
+        String str = "<<< Some character data >>>";
+        CharacterData charData = CharacterData.valueOf(Text.valueOf(str));
         v.addElement(charData);
         FastMap fm = new FastMap();
         fm.put("ONE", "1");
@@ -73,15 +78,16 @@ final class Perf_Xml extends Javolution implements Runnable {
         fs.add("BETA");
         fs.add("ALPHA");
         v.addElement(fs);
+        FastTable ft = new FastTable();
+        ft.add("UN");
+        ft.add("DEUX");
+        ft.add("TROIS");
+        v.addElement(ft);
 
         // Example of xml format for Vector with circular reference support.
         XmlFormat vectorXml = new XmlFormat() {
             public Object preallocate(XmlElement xml) {
                 return new Vector(xml.getAttribute("size", 0));
-            }
-
-            public String identifier(boolean isReference) {
-                return isReference ? "ref" : "id";
             }
 
             public void format(Object obj, XmlElement xml) {
@@ -143,8 +149,7 @@ final class Perf_Xml extends Javolution implements Runnable {
             startTime();
             ow.write(v, out);
             println(endTime(1));
-
-//             System.out.println(out); 
+            // System.out.println(out); 
  
             ObjectReader or = new ObjectReader();
             ByteArrayInputStream in = new ByteArrayInputStream(out
@@ -153,6 +158,7 @@ final class Perf_Xml extends Javolution implements Runnable {
             startTime();
             Object readObject = or.read(in);
             println(endTime(1));
+            // System.out.println(readObject); 
             if (!v.equals(readObject)) {
                 throw new Error("SERIALIZATION ERROR");
             }

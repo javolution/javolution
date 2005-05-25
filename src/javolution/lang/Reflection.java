@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util;
+package javolution.lang;
 
 import javolution.JavolutionError;
 

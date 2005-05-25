@@ -15,9 +15,9 @@ import java.io.PrintStream;
 import javolution.JavolutionError;
 import javolution.io.Utf8StreamReader;
 import javolution.io.Utf8StreamWriter;
+import javolution.lang.Reflection;
 import javolution.lang.TextBuilder;
 import javolution.lang.TypeFormat;
-import javolution.util.Reflection;
 
 import j2me.io.File;
 import j2me.io.FileInputStream;
@@ -46,8 +46,8 @@ import j2me.lang.IllegalStateException;
  * <p> Once loaded, the allocation profile is updated automatically during 
  *     program execution. Allocation profiles are typically generated from
  *     test runs (from an initially empty profile) and contain the maximum 
- *     number of allocations and for {@link ArrayFactory array factories}
- *     the appropriate array length to avoid dynamic resizing.
+ *     number of allocations between preallocations or before recycling 
+ *     for threads executing within a {@link PoolContext}.
  *     Here is an example of profile data (which can be manually edited):<pre>
  *     javolution.util.FastSet$1 20
  *     javolution.util.FastList$1 120
@@ -56,10 +56,11 @@ import j2me.lang.IllegalStateException;
  *     javolution.util.FastList$FastListIterator$1 10002
  *     javolution.xml.CharacterData$1 3</pre></p> 
  *          
- * <p> <b>Note:</b> Threads executing in a {@link PoolContext} need only 
- *     to preallocate at start-up as their objects are automatically recycled
- *     with no delay induced.</p>
- *
+ * <p> To further decrease "first use" execution time, application might 
+ *     also consider using {@link javolution.lang.PersistentReference 
+ *     PersistentReference} to hold complex data structures to setup at
+ *     start-up.</p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.1, March 12, 2005
  */
@@ -74,6 +75,16 @@ public final class AllocationProfile {
      * Holds UTF8 writer.
      */
     private static final Utf8StreamWriter WRITER = new Utf8StreamWriter();
+
+    /**
+     * Holds class name read/written.
+     */
+    private static final TextBuilder ClassName = new TextBuilder();
+
+    /**
+     * Holds counter read/written.
+     */
+    private static final TextBuilder Counter = new TextBuilder();
 
     /**
      * Holds the overflow handler.
@@ -149,25 +160,14 @@ public final class AllocationProfile {
                     ClassName.append((char) c);
                 }
 
-                // Reads first counter on the same line (if any).
+                // Reads counter on the same line (if any).
                 while ((c >= 0) && (c != '\n') && (c <= ' ')) {
                     c = READER.read();
                 }
                 if (c > ' ') { // Find one. 
-                    FirstCounter.append((char) c);
+                    Counter.append((char) c);
                     for (c = READER.read(); c > ' '; c = READER.read()) {
-                        FirstCounter.append((char) c);
-                    }
-
-                    // Reads second counter on the same line (if any).
-                    while ((c >= 0) && (c != '\n') && (c <= ' ')) {
-                        c = READER.read();
-                    }
-                    if (c > ' ') { // Find one.
-                        SecondCounter.append((char) c);
-                        for (c = READER.read(); c > ' '; c = READER.read()) {
-                            SecondCounter.append((char) c);
-                        }
+                        Counter.append((char) c);
                     }
                 }
 
@@ -191,18 +191,10 @@ public final class AllocationProfile {
 
                 // Setup factory.
                 if (factory != null) {
-                    if (FirstCounter.length() > 0) {
+                    if (Counter.length() > 0) {
                         factory._preallocatedCount = TypeFormat
-                                .parseInt(FirstCounter);
-                        FirstCounter.reset();
-                    }
-                    if (SecondCounter.length() > 0) { // Array Factory.
-                        ArrayFactory arrayFactory = (ArrayFactory) factory;
-                        int length = TypeFormat.parseInt(SecondCounter);
-                        if (length > arrayFactory._maximumLength) {
-                            arrayFactory._maximumLength = length;
-                        }
-                        SecondCounter.reset();
+                                .parseInt(Counter);
+                        Counter.reset();
                     }
                 } else {
                     throw new Error("Factory class: " + factoryClass
@@ -214,17 +206,10 @@ public final class AllocationProfile {
         } finally {
             READER.reset();
             ClassName.reset();
-            FirstCounter.reset();
-            SecondCounter.reset();
+            Counter.reset();
             ObjectFactory.IsAllocationProfileEnabled = true;
         }
     }
-
-    private static final TextBuilder ClassName = new TextBuilder();
-
-    private static final TextBuilder FirstCounter = new TextBuilder();
-
-    private static final TextBuilder SecondCounter = new TextBuilder();
 
     /**
      * Saves the current  allocation profile (equivalent to 
@@ -264,15 +249,6 @@ public final class AllocationProfile {
                 Counter.append(maxCount);
                 WRITER.write(Counter);
                 Counter.reset();
-                if (factory instanceof ArrayFactory) { // Checks if resizing occured.
-                    ArrayFactory arrayFactory = (ArrayFactory) factory;
-                    if (arrayFactory._minimumLength != arrayFactory._maximumLength) {
-                        WRITER.write(' ');
-                        Counter.append(arrayFactory._maximumLength);
-                        WRITER.write(Counter);
-                        Counter.reset();
-                    }
-                }
                 WRITER.write('\n');
             }
             WRITER.close();
@@ -283,8 +259,6 @@ public final class AllocationProfile {
             Counter.reset();
         }
     }
-
-    private static final TextBuilder Counter = new TextBuilder();
 
     /**
      * Preallocates object based upon the current allocation profile.
@@ -341,21 +315,11 @@ public final class AllocationProfile {
                     ObjectFactory factory = ObjectFactory.INSTANCES[i++];
                     if (factory._allocatedCount == 0)
                         continue;
-                    if (factory instanceof ArrayFactory) {
-                        ArrayFactory arrayFactory = (ArrayFactory) factory;
-                        out.println(factory.getClass().getName()
-                                + " has allocated " + factory._allocatedCount
-                                + " " + factory._productClass.getName() + " ["
-                                + arrayFactory._minimumLength + " .. "
-                                + arrayFactory._maximumLength + "]"
-                                + " out of " + factory._preallocatedCount);
+                    out.println(factory.getClass().getName()
+                            + " has allocated " + factory._allocatedCount + " "
+                            + factory._productClass.getName() + " out of "
+                            + factory._preallocatedCount);
 
-                    } else {
-                        out.println(factory.getClass().getName()
-                                + " has allocated " + factory._allocatedCount
-                                + " " + factory._productClass.getName() + " out of "
-                                + factory._preallocatedCount);
-                    }
                 }
             } else {
                 out.print("Allocation profiling disabled");

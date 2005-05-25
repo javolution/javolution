@@ -103,6 +103,9 @@ public interface Attributes {
 
     /**
      * Looks up the index of an attribute by Namespace name.
+     * This method returns the index of the attribute whose uri/localName 
+     * (String or CharSequence) have the same character content as the 
+     * specified uri/localName.
      *
      * @param  uri the Namespace URI, or an empty character sequence if
      *         the name has no Namespace URI.
@@ -114,6 +117,9 @@ public interface Attributes {
 
     /**
      * Looks up the index of an attribute by XML 1.0 qualified name.
+     * This method returns the index of the attribute whose name 
+     * (String or CharSequence) has the same character content as the 
+     * specified qName.
      *
      * @param  qName the qualified (prefixed) name.
      * @return the index of the attribute, or <code>-1</code> if it does not
@@ -123,9 +129,9 @@ public interface Attributes {
 
     /**
      * Looks up an attribute's type by Namespace name.
-     *
-     * <p> See {@link #getType(int) getType(int)} for a description
-     *     of the possible types.</p>
+     * This method returns the type of the attribute whose uri/localName 
+     * (String or CharSequence) have the same character content as the 
+     * specified uri/localName.
      *
      * @param  uri the Namespace URI, or an empty character sequence if the
      *         name has no Namespace URI.
@@ -137,9 +143,9 @@ public interface Attributes {
 
     /**
      * Looks up an attribute's type by XML 1.0 qualified name.
-     *
-     * <p> See {@link #getType(int) getType(int)} for a description
-     *     of the possible types.</p>
+     * This method returns the type of the attribute whose qName 
+     * (String or CharSequence) has the same character content as the 
+     * specified qName.
      *
      * @param  qName The XML 1.0 qualified name.
      * @return the attribute type as a string, or null if the attribute is not
@@ -149,9 +155,9 @@ public interface Attributes {
 
     /**
      * Looks up an attribute's value by Namespace name.
-     *
-     * <p> See {@link #getValue(int) getValue(int)} for a description
-     *     of the possible values.</p>
+     * This method returns the value of the attribute whose uri/localName 
+     * (String or CharSequence) have the same character content as the 
+     * specified uri/localName.
      *
      * @param  uri the Namespace URI, or the empty character sequence if the
      *         name has no Namespace URI.
@@ -163,9 +169,9 @@ public interface Attributes {
 
     /**
      * Looks up an attribute's value by XML 1.0 qualified name.
-     *
-     * <p> See {@link #getValue(int) getValue(int)} for a description
-     *     of the possible values.</p>
+     * This method returns the value of the attribute whose qName 
+     * (String or CharSequence) has the same character content as the 
+     * specified qName.
      *
      * @param  qName The XML 1.0 qualified name.
      * @return the attribute value as a character sequence, or <code>null</code>

@@ -9,7 +9,7 @@
 package javolution.realtime;
 
 import javolution.Configuration;
-import javolution.util.Reflection;
+import javolution.lang.Reflection;
 
 /**
  * <p> This class represents "worker" threads employed by 

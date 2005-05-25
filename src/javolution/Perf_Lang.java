@@ -8,9 +8,9 @@
  */
 package javolution;
 
+import javolution.lang.MathLib;
 import javolution.lang.Text;
 import javolution.realtime.PoolContext;
-import javolution.util.MathLib;
 
 /**
  * <p> This class holds {@link javolution.lang} benchmark.</p>
@@ -90,7 +90,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             StringBuffer sb = new StringBuffer(str);
             for (int j = 1; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % sb.length();
+                int index = MathLib.randomInt(0, sb.length());
                 sb.insert(index, 'X');
             }
         }
@@ -101,7 +101,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             Text txt = Text.valueOf(str);
             for (int j = 1; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+                int index = MathLib.randomInt(0, txt.length());
                 txt = txt.insert(index, ONE_CHAR);
             }
         }
@@ -113,7 +113,7 @@ final class Perf_Lang extends Javolution implements Runnable {
             PoolContext.enter();
             Text txt = Text.valueOf(str);
             for (int j = 1; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+                int index = MathLib.randomInt(0, txt.length());
                 txt = txt.insert(index, ONE_CHAR);
             }
             PoolContext.exit();
@@ -129,7 +129,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             StringBuffer sb = new StringBuffer(str); 
             for (int j = 0; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % sb.length();
+                int index = MathLib.randomInt(0, sb.length() - 1);
                 sb.deleteCharAt(index);
             }
         }
@@ -140,7 +140,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             Text txt = Text.valueOf(str);
             for (int j = 0; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+                int index = MathLib.randomInt(0, txt.length() - 1);
                 txt = txt.delete(index, index + 1);
             }
         }
@@ -152,7 +152,7 @@ final class Perf_Lang extends Javolution implements Runnable {
             PoolContext.enter();
             Text txt = Text.valueOf(str);
             for (int j = 0; j < COUNT; j++) {
-                int index = MathLib.abs(MathLib.randomInt()) % txt.length();
+                int index = MathLib.randomInt(0, txt.length() - 1);
                 txt = txt.delete(index, index + 1);
             }
             PoolContext.exit();

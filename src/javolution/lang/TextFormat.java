@@ -9,29 +9,26 @@
 package javolution.lang;
 
 import j2me.lang.CharSequence;
-import javolution.JavolutionError;
 import javolution.realtime.RealtimeObject;
 import java.io.IOException;
 
 /**
  * <p> This class represents the base format for text parsing and formatting; 
- *     it uses <code>CharSequence</code> and <code>Appendable</code> interfaces
- *     for greater flexibility.</p>
+ *     it supports {@link CharSequence} and {@link javolution.lang.Appendable} 
+ *     interfaces for greater flexibility.</p>
  * 
  * <p> Changes to the current format (used by <code>valueOf(CharSequence)</code>,
  *     <code>toString()</code> or <code>toText()</code>) 
  *     can be {@link javolution.realtime.LocalContext locally scoped}.
  *     For example: <pre>
- *     public class FooFormat extends Format {
- *         static final FooFormat DEFAULT = ...; // Global default.
- *         static final LocalContext.Variable CURRENT  = new LocalContext.Variable(DEFAULT);
- *          
+ *     class FooFormat extends Format&lt;Foo&gt; {
+ *         static final FooFormat DEFAULT = ...; 
+ *         static final LocalReference&lt;FooFormat&gt; CURRENT_REF = new LocalReference&lt;FooFormat&gt;(DEFAULT);
  *         public static FooFormat getInstance() {  
- *             return (FooFormat) CURRENT.getValue();
+ *             return CURRENT_REF.get();
  *         }
- *          
  *         public static void setInstance(FooFormat format) {
- *             CURRENT.setValue(format);
+ *             CURRENT_REF.set(format);
  *         }
  *     }
  *     ...
@@ -48,9 +45,9 @@ import java.io.IOException;
  *     object creation).</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 2.2, January 24, 2005
+ * @version 3.3, May 10, 2005
  */
-public abstract class TextFormat {
+public abstract class TextFormat/*<T>*/ {
 
     /**
      * Default constructor.
@@ -59,15 +56,12 @@ public abstract class TextFormat {
     }
 
     /**
-     * Formats an object into the specified <code>Appendable</code>.
+     * Formats the specified object to a {@link Text} instance.
      * 
-     * @param obj the object to format.
-     * @param dest the <code>Appendable</code> destination.
-     * @return the specified <code>Appendable</code>.
-     * @throws IOException if an I/O exception occurs.
+     * @param obj the object being formated.
+     * @return the text representing the specified object.
      */
-    public abstract Appendable format(Object obj, Appendable dest)
-            throws IOException;
+    public abstract Text format(Object/*T*/ obj);
 
     /**
      * Parses a portion of the specified <code>CharSequence</code> from the
@@ -81,24 +75,7 @@ public abstract class TextFormat {
      * @throws IllegalArgumentException if the character sequence contains 
      *         an illegal syntax.
      */
-    public abstract Object parse(CharSequence csq, Cursor pos);
-
-    /**
-     * Returns the textual representation of the specified object (convenience
-     * method).
-     * 
-     * @param obj the object being formated.
-     * @return <code>format(obj, TextBuilder.newInstance()).toText()</code>
-     */
-    public final Text format(Object obj) {
-        try {
-            TextBuilder tb = TextBuilder.newInstance();
-            format(obj, tb);
-            return tb.toText();
-        } catch (IOException e) {
-            throw new JavolutionError(e);
-        }
-    }
+    public abstract Object/*T*/ parse(CharSequence csq, Cursor pos);
 
     /**
      * Parses a whole character sequence from the beginning to produce an object
@@ -112,10 +89,10 @@ public abstract class TextFormat {
      *         illegal syntax or if the whole sequence has not been completely
      *         parsed.
      */
-    public final Object parse(CharSequence csq) {
+    public final Object/*T*/ parse(CharSequence csq) {
         Cursor cursor = Cursor.newInstance();
         try {
-            Object obj = parse(csq, cursor);
+            Object/*T*/ obj = parse(csq, cursor);
             if (cursor.getIndex() == csq.length()) {
                 return obj;
             } else {
@@ -128,6 +105,20 @@ public abstract class TextFormat {
         }
     }
 
+    /**
+     * Formats an object into the specified <code>Appendable</code> 
+     * (convenience method).
+     * 
+     * @param obj the object to format.
+     * @param dest the <code>Appendable</code> destination.
+     * @return the specified <code>Appendable</code>.
+     * @throws IOException if an I/O exception occurs.
+     */
+    public final Appendable format(Object/*T*/ obj, Appendable dest) throws IOException {
+        Text txt = format(obj);
+        return dest.append(txt);
+    }
+    
     /**
      * This class represents the parsing cursor. In case of parsing error, 
      * the cursor should be set to the location where the error occured.

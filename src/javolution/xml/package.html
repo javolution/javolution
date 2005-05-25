@@ -30,8 +30,8 @@
           private Stroke _stroke; // null if none.
           private Transform _transform; // null if none.
            
-          // XML format with name association (members identified by a unique name).
-          // (see {@link javolution.xml.XmlFormat XmlFormat} for examples of positional association.
+          // XML format with name associations (members identified by an unique name).
+          // See {@link javolution.xml.XmlFormat XmlFormat} for examples of positional associations.
           protected static final XmlFormat GRAPHIC_XML = new XmlFormat(Graphic.class) {
                public void format(Object obj, XmlElement xml) {
                    Graphic g = (Graphic) obj;
@@ -95,15 +95,11 @@
     or unique).
 </p>
 
-<p> Cross-references are supported for formats having an 
-    {@link javolution.xml.XmlFormat#identifier identifier} attribute. For example:<pre>
+<p> Cross-references are supported for formats using identifiers. For example:<pre>
     public class Polygon extends Surface { 
         FastList _vertices = new FastList(); 
         
-        protected static final XmlFormat POLYGON_XML = new XmlFormat(Polygon.class) {
-            public String identifier(boolean isReference) { 
-                return isReference ? "ref" : "id";          
-            }                              
+        protected static final XmlFormat POLYGON_XML = new XmlFormat(Polygon.class, "id", "ref") {
             public void format(Object obj, XmlElement xml) {
                 Polygon polygon = (Polygon) obj;
                 xml.getContent().addAll(polygon._vertices); 
@@ -134,10 +130,7 @@
     The value of the identifier attribute can be set explicitly. For example:<pre>
       public abstract class Person {
           private String _name;
-          protected static final XmlFormat PERSON_XML = new XmlFormat(Person.class) {
-              public String identifier(boolean isReference) {
-                  return isReference ? "ref" : "name";
-              }
+          protected static final XmlFormat PERSON_XML = new XmlFormat(Person.class, "name", "name") { // Use the same attribute ("name") as identifier and reference.
               public void format(Object obj, XmlElement xml) {
                   Person person = (Person) obj;
                   xml.setAttribute("name", person._name); // Sets identifier value explicitly.

@@ -8,8 +8,8 @@
  */
 package javolution.xml.pull;
 
+import javolution.lang.PersistentReference;
 import j2me.lang.CharSequence;
-import javolution.realtime.ArrayFactory;
 
 /**
  * This class represents the namespaces stack when parsing.
@@ -20,27 +20,15 @@ import javolution.realtime.ArrayFactory;
 final class Namespaces {
 
     /**
-     * Holds the internal namespace count array factory (for resizing).
+     * Holds the configurable nominal size to avoid resizing. 
      */
-    private static final ArrayFactory NSP_COUNTS = new ArrayFactory(32) {
-        protected Object create(int length) {
-            return new int[length];
-        }
-    };
-
-    /**
-     * Holds the internal namespace array factory (for resizing).
-     */
-    private static final ArrayFactory NAMESPACES = new ArrayFactory(32) {
-        protected Object create(int length) {
-            return new CharSequenceImpl[length];
-        }
-    };
+    private static final PersistentReference SIZE = new PersistentReference(
+            "javolution.xml.pull.Namespaces#SIZE", new Integer(64));
 
     /**
      * Holds the number of namespace per depth level.
      */
-    private int[] _nspCounts = (int[]) NSP_COUNTS.newObject();
+    private int[] _nspCounts = new int[((Integer) SIZE.get()).intValue()];
 
     /**
      * Holds the current number being mapped.
@@ -50,8 +38,8 @@ final class Namespaces {
     /**
      * Holds the namespace mapping [uri, prefix] pairs.
      */
-    private CharSequenceImpl[] _namespaces 
-        = (CharSequenceImpl[]) NAMESPACES.newObject();
+    private CharSequenceImpl[] _namespaces = new CharSequenceImpl[((Integer) SIZE
+            .get()).intValue()];
 
     /**
      * Holds the current depth.
@@ -76,6 +64,8 @@ final class Namespaces {
      * @param depth the element depth.
      */
     public int getNamespaceCount(int depth) {
+        if (depth > _depth)
+            return _nspCounts[_depth];
         return _nspCounts[depth];
     }
 
@@ -132,7 +122,7 @@ final class Namespaces {
 
     private static final CharSequenceImpl XMLNS_URI = new CharSequenceImpl(
             "http://www.w3.org/2000/xmlns/");
-    
+
     /**
      * Adds the specified mapping to the current mapping buffer.
      *
@@ -144,9 +134,7 @@ final class Namespaces {
      */
     public void map(CharSequenceImpl prefix, CharSequenceImpl uri) {
         final int i = (_nspCounts[_depth] + _mapCount++) << 1;
-        if (i + 1 >= _namespaces.length) {
-            _namespaces = (CharSequenceImpl[]) NAMESPACES.resize(_namespaces);
-        }
+        if (i + 1 >= _namespaces.length) resize();
         _namespaces[i] = prefix;
         _namespaces[i + 1] = uri;
         if (prefix == null) { // Maps default namespace.
@@ -168,9 +156,7 @@ final class Namespaces {
      * Pushes the current namespaces.
      */
     public void push() {
-        if (++_depth >= _nspCounts.length) { // Resize.
-            _nspCounts = NSP_COUNTS.resize(_nspCounts);
-        }
+        if (++_depth >= _nspCounts.length) resize();
         _nspCounts[_depth] = _nspCounts[_depth - 1] + _mapCount;
         _mapCount = 0;
     }
@@ -204,4 +190,17 @@ final class Namespaces {
         _default = CharSequenceImpl.EMPTY;
     }
 
+    /**
+     * Resizes internal arrays.
+     */
+    private void resize() {
+        final int size = _nspCounts.length; // = _namepaces.length;
+        int[] tmp0 = new int[size * 2];
+        System.arraycopy(_nspCounts, 0, tmp0, 0, size);
+        _nspCounts = tmp0;
+        CharSequenceImpl[] tmp1 = new CharSequenceImpl[size * 2];
+        System.arraycopy(_namespaces, 0, tmp1, 0, size);
+        _namespaces = tmp1;
+        SIZE.set(new Integer(size * 2));
+    }
 }

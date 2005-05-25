@@ -15,8 +15,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import javolution.lang.Reflection;
 import javolution.lang.Text;
-import javolution.util.Reflection;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;

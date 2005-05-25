@@ -31,8 +31,7 @@ import javolution.util.FastCollection.Record;
 
 /**
  * <p> This class represents a hash map with real-time behavior; 
- *     smooth capacity increase with no rehashing and no memory 
- *     allocation as long as the map size does not exceed its capacity.</p>
+ *     smooth capacity increase and no rehashing ever performed.</p>
  *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys are inserted into the map (similar to 
@@ -78,7 +77,7 @@ import javolution.util.FastCollection.Record;
  *                  access unsynchronized!</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 3.2, April 2, 2005
+ * @version 3.3, May 10, 2005
  */
 public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Reusable,
         Serializable {
@@ -158,8 +157,9 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Creates a fast map of specified initial capacity. Unless the map size 
-     * exceeds the specified capacity no memory allocation is ever performed.
+     * Creates a map of specified initial capacity. Unless the map size 
+     * reaches the specified capacity, operations on this map will not allocate
+     * memory (e.g. no lazy initialization).
      * 
      * @param capacity the initial capacity.
      */
@@ -181,8 +181,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Creates a fast map containing the specified entries, in the order they
-     * are returned by the map's iterator.
+     * Creates a map containing the specified entries, in the order they
+     * are returned by the map iterator.
      *
      * @param map the map whose entries are to be placed into this map.
      */
@@ -192,8 +192,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Returns a fast map  pre-allocated or allocated from the stack
-     * when executing in a {@link javolution.realtime.PoolContext PoolContext}).
+     * Returns a map allocated from the stack when executing in a 
+     * {@link javolution.realtime.PoolContext PoolContext}).
      * 
      * @return a new, pre-allocated or recycled map instance.
      */
@@ -231,7 +231,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Indicates if this {@link FastMap} contains no key-value mappings.
+     * Indicates if this map contains no key-value mappings.
      * 
      * @return <code>true</code> if this map contains no key-value mappings;
      *         <code>false</code> otherwise.
@@ -241,8 +241,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Indicates if this {@link FastMap} contains a mapping for the specified
-     * key.
+     * Indicates if this map contains a mapping for the specified key.
      * 
      * @param key the key whose presence in this map is to be tested.
      * @return <code>true</code> if this map contains a mapping for the
@@ -266,8 +265,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Indicates if this {@link FastMap} maps one or more keys to the specified
-     * value.
+     * Indicates if this map associates one or more keys to the specified value.
      * 
      * @param value the value whose presence in this map is to be tested.
      * @return <code>true</code> if this map maps one or more keys to the
@@ -279,7 +277,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Returns the value to which this {@link FastMap} maps the specified key.
+     * Returns the value to which this map associates the specified key.
      * 
      * @param key the key whose associated value is to be returned.
      * @return the value to which this map maps the specified key, or
@@ -325,9 +323,9 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Associates the specified value with the specified key in this
-     * {@link FastMap}. If the {@link FastMap} previously contained a mapping
-     * for this key, the old value is replaced.
+     * Associates the specified value with the specified key in this map.
+     * If this ma previously contained a mapping for this key, the old value
+     * is replaced.
      * 
      * @param key the key with which the specified value is to be associated.
      * @param value the value to be associated with the specified key.
@@ -366,7 +364,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Copies all of the mappings from the specified map to this {@link FastMap}.
+     * Copies all of the mappings from the specified map to this map.
      * 
      * @param map the mappings to be stored in this map.
      * @throws NullPointerException the specified map is <code>null</code>,
@@ -387,7 +385,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Removes the mapping for this key from this {@link FastMap} if present.
+     * Removes the mapping for this key from this map if present.
      * 
      * @param key the key whose mapping is to be removed from the map.
      * @return previous value associated with specified key, or
@@ -433,7 +431,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Sets the value comparator for this fast map.
+     * Sets the value comparator for this map.
      * 
      * @param valueComparator the value comparator.
      * @return <code>this</code>
@@ -470,7 +468,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Removes all mappings from this {@link FastMap}.
+     * Removes all mappings from this map.
      */
     public final void clear() {
         // Clears all keys, values and buckets linked lists.
@@ -488,7 +486,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Compares the specified object with this {@link FastMap} for equality.
+     * Compares the specified object with this map for equality.
      * Returns <code>true</code> if the given object is also a map and the two
      * maps represent the same mappings (regardless of collection iteration
      * order).
@@ -519,7 +517,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Returns the hash code value for this {@link FastMap}.
+     * Returns the hash code value for this map.
      * 
      * @return the hash code value for this map.
      */
@@ -532,7 +530,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Returns the textual representation of this {@link FastMap}.
+     * Returns the textual representation of this map.
      * 
      * @return the textual representation of the entry set.
      */
@@ -541,7 +539,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     /**
-     * Prints the current statistics on this {@link FastMap}.
+     * Prints the current statistics on this map.
      * This method may help identify poorly defined hash functions.
      * An average collision of less than <code>50%</code> is typically 
      * acceptable.
@@ -591,8 +589,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
 
     /**
      * Returns a {@link FastCollection} view of the values contained in this
-     * {@link FastMap}. The collection is backed by the map, so changes to the
-     *  map are reflected in the collection, and vice-versa. The collection 
+     * map. The collection is backed by the map, so changes to the
+     * map are reflected in the collection, and vice-versa. The collection 
      * supports element removal, which removes the corresponding mapping from
      * this map, via the <code>Iterator.remove</code>, 
      * <code>Collection.remove</code>, <code>removeAll</code>,
@@ -600,7 +598,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * It does not support the <code>add</code> or <code>addAll</code> 
      * operations.
      * 
-     * @return a fast collection view of the values contained in this map.
+     * @return a collection view of the values contained in this map 
+     *         (instance of {@link FastCollection}).
      */
     public final Collection/*<V>*/ values() {
         return _values;
@@ -644,7 +643,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * <code>retainAll</code>, and <code>clear</code> operations. It does
      * not support the <code>add</code> or <code>addAll</code> operations.
      * 
-     * @return a fast collection view of the mappings contained in this map.
+     * @return a collection view of the mappings contained in this map
+     *         (instance of {@link FastCollection}).
      */
     public final Set/*<Map.Entry<K,V>>*/ entrySet() {
         return _entrySet;
@@ -710,7 +710,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * <code>retainAll</code>, and <code>clear</code> operations. It does
      * not support the <code>add</code> or <code>addAll</code> operations.
      * 
-     * @return a set view of the keys contained in this map.
+     * @return a set view of the keys contained in this map
+     *         (instance of {@link FastCollection}).
      */
     public final Set/*<K>*/ keySet() {
         return _keySet;
@@ -801,23 +802,33 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     }
 
     private void increaseEntryTable() {
-        int minLength = _entries.length << 1;
+        final int length = _entries.length;
         FastMap/*<K,V>*/ oldEntries;
-        if (minLength <= (1 << 6)) { //                    64
+        if (length <= (1 << 4)) { //                
             oldEntries = (FastMap/*<K,V>*/) FACTORY_6.newObject();
-        } else if (minLength <= (1 << 8)) { //            256
+        } else if (length <= (1 << 6)) { //         
             oldEntries = (FastMap/*<K,V>*/) FACTORY_8.newObject();
-        } else if (minLength <= (1 << 10)) { //         1,024
+        } else if (length <= (1 << 8)) { //         
             oldEntries = (FastMap/*<K,V>*/) FACTORY_10.newObject();
-        } else if (minLength <= (1 << 14)) { //        16,384
+        } else if (length <= (1 << 10)) { //        
+            oldEntries = (FastMap/*<K,V>*/) FACTORY_12.newObject();
+        } else if (length <= (1 << 12)) { //        
             oldEntries = (FastMap/*<K,V>*/) FACTORY_14.newObject();
-        } else if (minLength <= (1 << 18)) { //       262,144
+        } else if (length <= (1 << 14)) { //        
+            oldEntries = (FastMap/*<K,V>*/) FACTORY_16.newObject();
+        } else if (length <= (1 << 16)) { //        
             oldEntries = (FastMap/*<K,V>*/) FACTORY_18.newObject();
-        } else if (minLength <= (1 << 22)) { //     4,194,304
+        } else if (length <= (1 << 18)) { //        
+            oldEntries = (FastMap/*<K,V>*/) FACTORY_20.newObject();
+        } else if (length <= (1 << 20)) { //        
             oldEntries = (FastMap/*<K,V>*/) FACTORY_22.newObject();
-        } else if (minLength <= (1 << 26)) { //    67,108,864
+        } else if (length <= (1 << 22)) { //        
+            oldEntries = (FastMap/*<K,V>*/) FACTORY_24.newObject();
+        } else if (length <= (1 << 24)) { //        
             oldEntries = (FastMap/*<K,V>*/) FACTORY_26.newObject();
-        } else { //                             1,073,741,824 
+        } else if (length <= (1 << 26)) { //        
+            oldEntries = (FastMap/*<K,V>*/) FACTORY_28.newObject();
+        } else {                                  
             oldEntries = (FastMap/*<K,V>*/) FACTORY_30.newObject();
         }
         // Swaps entries.
@@ -856,15 +867,33 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         }
     };
 
+    private static ObjectFactory FACTORY_12 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 12);
+        }
+    };
+
     private static ObjectFactory FACTORY_14 = new ObjectFactory() {
         public Object create() {
             return new FastMap(1 << 14);
         }
     };
 
+    private static ObjectFactory FACTORY_16 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 16);
+        }
+    };
+    
     private static ObjectFactory FACTORY_18 = new ObjectFactory() {
         public Object create() {
             return new FastMap(1 << 18);
+        }
+    };
+
+    private static ObjectFactory FACTORY_20 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 20);
         }
     };
 
@@ -874,12 +903,23 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         }
     };
 
+    private static ObjectFactory FACTORY_24 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 24);
+        }
+    };
+
     private static ObjectFactory FACTORY_26 = new ObjectFactory() {
         public Object create() {
             return new FastMap(1 << 26);
         }
     };
 
+    private static ObjectFactory FACTORY_28 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(1 << 28);
+        }
+    };
     private static ObjectFactory FACTORY_30 = new ObjectFactory() {
         public Object create() {
             return new FastMap(1 << 30);
@@ -1087,7 +1127,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
 
         /**
          * Indicates if this entry is considered equals to the specified entry
-         * (default object equality to ensure symetry)
+         * (using default value and key equality comparator to ensure symetry).
          * 
          * @param that the object to test for equality.
          * @return <code>true<code> if both entry have equal keys and values.
@@ -1150,8 +1190,19 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     /**
      * This class represents an read-only view over a {@link FastMap}.
      */
-    private final class Unmodifiable implements Map/*<K,V>*/, Serializable {
+    private final class Unmodifiable extends RealtimeObject implements Map/*<K,V>*/, Serializable {
         
+        public boolean equals(Object obj) {
+            return FastMap.this.equals(obj);
+        }
+        public int hashCode() {
+            return FastMap.this.hashCode();
+        }
+
+        public Text toText() {
+            return FastMap.this.toText();
+        }
+
         public int size() {
             return FastMap.this.size();
         }
@@ -1198,8 +1249,12 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
 
         public Set/*<Map.Entry<K,V>>*/ entrySet() {
             throw new UnsupportedOperationException(
-                    "Direct entry view over unmodifiable map not supported" + 
-                    " (keys and values views in conjonction recommended)");
-        }
+                    "Direct view over unmodifiable map entries is not supported " +
+                    " (to prevent access to Entry.setValue(Object) method). " +
+                    "To iterate over unmodifiable map entries, applications may " +
+                    "use the keySet() and values() fast collection views " +
+                    "in conjonction.");
+        }        
+        
     }
 }

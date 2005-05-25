@@ -36,11 +36,11 @@ import org.xml.sax.SAXException;
  *     by {@link CharacterData} instances.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.2, January 8, 2005
+ * @version 3.3, May 13, 2005
  * @see     XmlSaxParserImpl
  * @see     ConstructorHandler
  */
-public class ObjectReader implements Reusable {
+public class ObjectReader/*<T>*/ implements Reusable {
 
     /**
      * Holds the real-time parser used.
@@ -56,7 +56,6 @@ public class ObjectReader implements Reusable {
      * Default constructor.
      */
     public ObjectReader() {
-        _parser.setContentHandler(_handler);
     }
     
     /**
@@ -66,7 +65,6 @@ public class ObjectReader implements Reusable {
     public void reset() {
         _handler.reset();
         _parser.reset();
-        _parser.setContentHandler(_handler);
     }
 
     /**
@@ -80,10 +78,11 @@ public class ObjectReader implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object read(Reader reader) throws XmlException {
+    public Object/*T*/ read(Reader reader) throws XmlException {
         try {
+			_parser.setContentHandler(_handler);
             _parser.parse(reader);
-            return _handler.getRoot();
+            return (Object/*T*/) _handler.getRoot();
         } catch (SAXException e1) {
             throw new XmlException(e1);
         } catch (IOException e2) {
@@ -102,10 +101,11 @@ public class ObjectReader implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object read(InputStream in) throws XmlException {
+    public Object/*T*/ read(InputStream in) throws XmlException {
         try {
+			_parser.setContentHandler(_handler);
             _parser.parse(in);
-            return _handler.getRoot();
+            return (Object/*T*/) _handler.getRoot();
         } catch (SAXException e1) {
             throw new XmlException(e1);
         } catch (IOException e2) {
@@ -123,10 +123,11 @@ public class ObjectReader implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object read(ByteBuffer byteBuffer) throws XmlException {
+    public Object/*T*/ read(ByteBuffer byteBuffer) throws XmlException {
         try {
+			_parser.setContentHandler(_handler);
             _parser.parse(byteBuffer);
-            return _handler.getRoot();
+            return (Object/*T*/) _handler.getRoot();
         } catch (SAXException e1) {
             throw new XmlException(e1);
         } catch (IOException e2) {

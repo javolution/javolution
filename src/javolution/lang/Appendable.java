@@ -14,7 +14,7 @@ import java.io.IOException;
 
 /**
  * <p> This class is equivalent to <code>java.lang.Appendable</code> 
- *     and can be moved (refactored) to the <code>java.lang</code> system
+ *     and is moved (refactored) to the <code>java.lang</code> system
  *     package for applications targetting the J2SE 5.0+ run-time.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>

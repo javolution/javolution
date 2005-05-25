@@ -84,15 +84,13 @@ final class CharSequenceImpl implements CharSequence, Comparable {
      *
      * @param  index the index of the character starting at <code>0</code>.
      * @return the character at the specified index of this character sequence.
-     * @throws IndexOutOfBoundsException  if the <code>index</code> is not
-     *         in the <code>[0, length() - 1]</code> range.
+     * @throws IndexOutOfBoundsException  if <code>((index < 0) || 
+     *         (index >= length))</code>
      */
     public char charAt(int index) {
-        if ((index >= 0) && (index < length)) {
-            return data[offset + index];
-        } else {
+        if ((index < 0) || (index >= length))
             throw new IndexOutOfBoundsException("index: " + index);
-        }
+        return data[offset + index];
     }
 
     /**
@@ -103,12 +101,13 @@ final class CharSequenceImpl implements CharSequence, Comparable {
      * @return the character sequence starting at the specified
      *         <code>start</code> position and ending just before the specified
      *         <code>end</code> position.
-     * @throws IndexOutOfBoundsException  if the <code>start</code> index
-     *         is not in the <code>[0, length()]</code> range.
-     * @throws IndexOutOfBoundsException  if the <code>end</code> index
-     *         is not in the <code>[start, length()]</code> range.
+     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
+     *         (start > end) || (end > this.length())</code>
      */
     public CharSequence subSequence(int start, int end) {
+        if ((start < 0) || (end < 0) ||
+                 (start > end) || (end > this.length())) 
+            throw new IndexOutOfBoundsException();
         CharSequenceImpl chars = (CharSequenceImpl) FACTORY.object();
         chars.data = data;
         chars.offset = offset + start;
@@ -130,7 +129,7 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     /**
      * Returns the hash code for this {@link CharSequenceImpl}.
      *
-     * <p> Note: Returns the same hashCode as <code>j2me.lang.String</code>
+     * <p> Note: Returns the same hashCode as <code>java.lang.String</code>
      *           (consistent with {@link #equals})</p>
      *
      * @return the hash code value.
@@ -144,11 +143,11 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     }
 
     /**
-     * Compares this character sequence against the specified object.
+     * Compares this character sequence against the specified object
+     * (<code>String</code> or <code>CharSequence</code>).
      *
      * @param  that the object to compare with.
-     * @return <code>true</code> if both objects are <code>CharSequence</code>
-     *         and they represent the same sequence;
+     * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
      */
     public boolean equals(Object that) {
@@ -164,22 +163,23 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     }
 
     /**
-     * Compares this character sequence against the specified character
-     * sequence.
-     * 
-     * @param  chars the character sequence to compare with.
+     * Compares this character sequence against the specified
+     * {@link CharSequenceImpl}.
+     *
+     * @param  that the character sequence to compare with.
      * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
      */
-    public boolean equals(CharSequence chars) {
-        if (chars == null)
+    public boolean equals(CharSequenceImpl that) {
+        if (that == null)
             return false;
-        if (this.length != chars.length())
+        if (this.length != that.length)
             return false;
-        for (int i = 0, j = offset; i < length;) {
-            if (data[j++] != chars.charAt(i++))
+        final char[] thatData = that.data;
+        final int end = offset + length;
+        for (int i = offset, j = that.offset; i < end;) {
+            if (data[i++] != thatData[j++])
                 return false;
-
         }
         return true;
     }
@@ -205,23 +205,22 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     }
 
     /**
-     * Compares this character sequence against the specified
-     * {@link CharSequenceImpl}.
-     *
-     * @param  that the character sequence to compare with.
+     * Compares this character sequence against the specified character
+     * sequence.
+     * 
+     * @param  chars the character sequence to compare with.
      * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
      */
-    public boolean equals(CharSequenceImpl that) {
-        if (that == null)
+    public boolean equals(CharSequence chars) {
+        if (chars == null)
             return false;
-        if (this.length != that.length)
+        if (this.length != chars.length())
             return false;
-        final char[] thatData = that.data;
-        final int end = offset + length;
-        for (int i = offset, j = that.offset; i < end;) {
-            if (data[i++] != thatData[j++])
+        for (int i = 0, j = offset; i < length;) {
+            if (data[j++] != chars.charAt(i++))
                 return false;
+
         }
         return true;
     }

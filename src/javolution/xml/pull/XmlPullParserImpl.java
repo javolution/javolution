@@ -20,11 +20,15 @@ import j2me.nio.ByteBuffer;
 
 import javolution.io.Utf8ByteBufferReader;
 import javolution.io.Utf8StreamReader;
+import javolution.lang.PersistentReference;
 import javolution.lang.Reusable;
-import javolution.lang.TextBuilder;
+import javolution.lang.Text;
 import javolution.lang.TypeFormat;
-import javolution.realtime.ArrayFactory;
+import javolution.realtime.ObjectFactory;
+import javolution.util.FastComparator;
+import javolution.util.FastTable;
 import javolution.xml.sax.Attributes;
+import javolution.xml.sax.AttributesImpl;
 
 /**
  * <p> This class provides a real-time XPP-like XML parser; this parser is
@@ -53,7 +57,7 @@ import javolution.xml.sax.Attributes;
  *         <li> They are immutable within their definition scope. The <code>
  *              CharSequence</code> created while parsing an XML element are
  *              reused only after the element is out-of-scope (idem for the 
- *              {@link #getSaxAttributes attribute list} itself).</li>
+ *              {@link #getSaxAttributes attributes lists}).</li>
  *         <li> They support equality or lexical comparison with any
  *              <code>CharSequence</code> (e.g. <code>String</code>).</li>
  *         <li> They have the same hashcode than <code>String</code> and can be
@@ -70,14 +74,18 @@ import javolution.xml.sax.Attributes;
  *
  * @author  <a href="mailto:javolution@arakelian.com">Gregory Arakelian</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, April 2, 2005
+ * @version 3.3, May 10, 2005
  */
 public final class XmlPullParserImpl implements XmlPullParser, Reusable {
 
     /**
-     * Holds the maximum depth.
+     * Holds a factory producing AttributesImpl instances.
      */
-    private static final int MAX_DEPTH = 32;
+    private static final ObjectFactory ATTRIBUTES_IMPL_FACTORY = new ObjectFactory() {
+        protected Object create() {
+            return new AttributesImpl();
+        }
+    };
 
     /**
      * Holds the reader buffer capacity.
@@ -85,15 +93,18 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     private static final int READER_BUFFER_CAPACITY = 2048;
 
     /**
-     * Holds the factory for the internal data buffer (arrays must be 
-     * always larger than the reader buffer capacity to avoid overflow).
+     * Holds the configurable nominal length for the data array length (must be 
+     * larger than the reader buffer capacity to avoid overflow).
      */
-    private static final ArrayFactory DATA_FACTORY = new ArrayFactory(
-            READER_BUFFER_CAPACITY * 2) {
-        protected Object create(int length) {
-            return new char[length];
-        }
-    };
+    private static final PersistentReference DATA_SIZE = new PersistentReference(
+            "javolution.xml.pull.XmlPullParserImpl#DATA_SIZE", new Integer(
+                    READER_BUFFER_CAPACITY * 2));
+
+    /**
+     * Holds the configurable nominal length for the CharSequenceImpl stack.
+     */
+    private static final PersistentReference SEQ_SIZE = new PersistentReference(
+            "javolution.xml.pull.XmlPullParserImpl#SEQ_SIZE", new Integer(256));
 
     /**
      * Holds the parsing line.
@@ -118,7 +129,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds the data buffer for CharSequence produced by this parser.
      */
-    private char[] _data = (char[]) DATA_FACTORY.newObject();
+    private char[] _data = (char[]) new char[((Integer) DATA_SIZE.get())
+            .intValue()];
 
     /**
      * Holds the current length of the data buffer (_data).
@@ -136,14 +148,19 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     private final Namespaces _namespaces = new Namespaces();
 
     /**
-     * Holds the current attributes.
+     * Holds the current attributes (view over _attrStack.get(_depth)).
      */
     private AttributesImpl _attributes;
 
     /**
-     * Holds the attributes stack.
+     * Holds a pool of AttributesImpl to avoid overwritting the current one.
      */
-    private final AttributesImpl[] _attributesStack = new AttributesImpl[MAX_DEPTH];
+    private final FastTable _attrPool = new FastTable();
+
+    /**
+     * Holds working stack.
+     */
+    private final FastTable _elemStack = new FastTable();
 
     /**
      * Holds the character buffer used for reading.
@@ -204,12 +221,12 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds character sequence when parsing numeric literal.
      */
-    private CharSequenceImpl _num = new CharSequenceImpl();
+    private final CharSequenceImpl _num = new CharSequenceImpl();
 
     /**
      * Holds current event type
      */
-    private int _eventType = START_DOCUMENT;
+    private int _eventType = END_DOCUMENT;
 
     /**
      * Input encoding, if known
@@ -249,7 +266,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds the parser state.
      */
-    private int _state;
+    private int _state = CHAR_DATA;
 
     /**
      * Holds the text associated with current event.
@@ -257,16 +274,33 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     private CharSequenceImpl _text;
 
     /**
-     * Indicates if text contains whitespace characters only 
-     * (space, cr, lf, tab).
+     * Indicates if text contains non whitespace characters (characters 
+     * others than space, cr, lf, tab).
      */
-    private boolean _isWhitespace;
+    private boolean _hasNonWhitespace;
+
+    /**
+     * Holds character sequences instances.
+     */
+    private CharSequenceImpl[] _seqs = new CharSequenceImpl[((Integer) SEQ_SIZE
+            .get()).intValue()];
+
+    /**
+     * Holds character sequence index. 
+     */
+    private int _seqsIndex;
+
+    /**
+     * Holds number of character sequence instances allocated. 
+     */
+    private int _seqsCapacity;
 
     /**
      * Default constructor.
      */
     public XmlPullParserImpl() {
-        _attributes = _attributesStack[0] = new AttributesImpl();
+        _attributes = new AttributesImpl();
+        _attrPool.add(_attributes);
     }
 
     /**
@@ -280,7 +314,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
         if (_reader != null)
             throw new IllegalStateException("Parser not reset.");
         _byteBufferReader.setByteBuffer(byteBuffer);
-        _reader = _byteBufferReader;
+        _inputEncoding = "UTF-8";
+        setInput(_byteBufferReader);
     }
 
     /**
@@ -294,7 +329,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
         if (_reader != null)
             throw new IllegalStateException("Parser not reset.");
         _inputStreamReader.setInputStream(in);
-        _reader = _inputStreamReader;
+        _inputEncoding = "UTF-8";
+        setInput(_inputStreamReader);
     }
 
     // Implements XmlPullParser interface.
@@ -306,8 +342,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             return;
         }
         try {
-            setInput(new InputStreamReader(inputStream, inputEncoding));
             _inputEncoding = inputEncoding;
+            setInput(new InputStreamReader(inputStream, inputEncoding));
         } catch (UnsupportedEncodingException e) {
             throw new XmlPullParserException(e.getMessage());
         }
@@ -318,6 +354,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
         if (_reader != null)
             throw new IllegalStateException("Parser not reset.");
         _reader = in;
+		_eventType = START_DOCUMENT;
     }
 
     // Implements XmlPullParser interface.
@@ -326,7 +363,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     }
 
     /**
-     * Returns the SAX-2 like attributes.
+     * Returns SAX-2 like attributes for the current element.
      * 
      * @return the attributes of the current element.
      */
@@ -364,8 +401,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     // Implements XmlPullParser interface.
     public CharSequence getAttributeValue(CharSequence namespace,
             CharSequence name) {
-        final int index = _attributes.getIndex(namespace, name);
-        return (index >= 0) ? _attributes.getValue(index) : null;
+        return _attributes.getValue(namespace, name);
     }
 
     // Implements XmlPullParser interface.
@@ -451,8 +487,9 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
 
     // Implements XmlPullParser interface.
     public CharSequence getPositionDescription() {
-        return TextBuilder.newInstance().append("line ").append(
-                getLineNumber()).append(", column ").append(getColumnNumber());
+        return Text.valueOf("line ").concat(Text.valueOf(getLineNumber()))
+                .concat(Text.valueOf(", column ")).concat(
+                        Text.valueOf(getColumnNumber()));
     }
 
     // Implements XmlPullParser interface.
@@ -504,7 +541,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     // Implements XmlPullParser interface.
     public boolean isWhitespace() throws XmlPullParserException {
         if (_eventType == TEXT || _eventType == CDSECT)
-            return _isWhitespace;
+            return !_hasNonWhitespace;
         throw new IllegalStateException();
     }
 
@@ -534,7 +571,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             CharSequence result = getText();
             eventType = next();
             if (eventType != END_TAG)
-                throw error("event TEXT it must be immediately followed by END_TAG");
+                throw error("event TEXT must be immediately followed by END_TAG");
 
             return result;
         } else if (eventType == END_TAG) {
@@ -573,9 +610,11 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     public void require(int type, CharSequence namespace, CharSequence name)
             throws XmlPullParserException, IOException {
         if (type != getEventType()
-                || (namespace != null && !namespace.equals(getNamespace()))
-                || (name != null && !name.equals(getName())))
-            throw error("expected " + TYPES[type]);
+                || (namespace != null && !FastComparator.LEXICAL.areEqual(
+                        namespace, getNamespace()))
+                || (name != null && !FastComparator.LEXICAL.areEqual(name,
+                        getName())))
+            throw error("Require " + TYPES[type] + " failed");
     }
 
     /**
@@ -586,42 +625,45 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
      */
     private int parse(boolean tokenize) throws XmlPullParserException,
             IOException {
-        // Previous empty tag is equivalent to previous end tag.
-        int previousEvent = ((_eventType == START_TAG) && _isEmpty) ? END_TAG
-                : _eventType;
-        switch (previousEvent) {
+        switch (_eventType) { // Previous event.
         case START_DOCUMENT:
             _charsRead = _reader.read(_chars, 0, _chars.length);
-            _state = CHAR_DATA;
             break;
         case END_DOCUMENT:
             throw error("End of document reached.");
         case START_TAG:
+            if (_isEmpty) { // Previous empty tag, generates END_TAG automatically.
+                _isEmpty = false;
+                return END_TAG;
+            }
             _elemPrefix = null;
             _elemLocalName = null;
             _elemNamespace = null;
             _elemQName = null;
-            _attributes = _attributesStack[_depth]; // Get attributes from pool.
-            if (_attributes == null) {
-                _attributes = _attributesStack[_depth] = (AttributesImpl) AttributesImpl.FACTORY
-                        .newObject();
+            // Retrieves a new AttributesImpl instance from the stack
+            // to avoid overriding the current one.
+            if (_depth >= _attrPool.size()) {
+                _attrPool.add(ATTRIBUTES_IMPL_FACTORY.newObject());
             }
+            _attributes = (AttributesImpl) _attrPool.get(_depth);
             _attributes.reset();
             break;
         case END_TAG:
+            _attributes.reset();
             _depth--;
             _length = _elemQName.offset;
-            while (_seqs[--_seqsIndex] != _elemQName)
-                ;
+            _start = _length;
+            while (_seqs[--_seqsIndex] != _elemQName) {
+            }
             _elemPrefix = null;
             _elemLocalName = null;
             _elemNamespace = null;
             _elemQName = null;
-            _attributes.reset();
             break;
+        default:
+            _text = null;
+            _hasNonWhitespace = false;
         }
-        _text = null;
-        _isWhitespace = true;
 
         while (_index < _charsRead) {
 
@@ -634,7 +676,10 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                 _charsRead = _reader.read(_chars, 0, _chars.length);
                 while ((_length + _charsRead) >= _data.length) {
                     // Potential overflow, resizes.
-                    _data = DATA_FACTORY.resize(_data);
+                    char[] tmp = new char[_data.length * 2];
+                    System.arraycopy(_data, 0, tmp, 0, _data.length);
+                    _data = tmp;
+                    DATA_SIZE.set(new Integer(_data.length));
                 }
             }
             // Replaces #xD and #xD#xA with #xA as per XML 1.0
@@ -673,16 +718,15 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             case CHAR_DATA:
                 if (c == '<') {
                     _state = MARKUP;
-                    if (!_isWhitespace) {
+                    if (_hasNonWhitespace) {
                         int nbrChar = _length - _start - 1;
                         setText(_start, nbrChar);
-                        _start = _length; // Keep character data.
+                        _length = _start; // Do not keep character data.
                         return TEXT;
-                    } else { // Ignores whitespaces.
-                        _length = _start;
                     }
-                } else if (_isWhitespace && c > ' ') {
-                    _isWhitespace = false;
+                    _length = _start; // Do not keep character data.
+                } else if (!_hasNonWhitespace && c > ' ') {
+                    _hasNonWhitespace = true;
                 }
                 break;
 
@@ -729,12 +773,10 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         && (_data[_length - 3] == '-')) {
                     _state = CHAR_DATA;
                     int nbrChar = _length - _start - 3;
+                    _length = _start; // Do not keep comment.
                     if (tokenize && nbrChar > 0) {
                         setText(_start, nbrChar);
-                        _start = _length; // Keep comment.
                         return COMMENT;
-                    } else {
-                        _length = _start;
                     }
                 }
                 break;
@@ -744,12 +786,10 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         && (_data[_length - 2] == '?')) {
                     _state = CHAR_DATA;
                     int nbrChar = _length - _start - 2;
+                    _length = _start; // Do not keep Processing Instructions.
                     if (tokenize && nbrChar > 0) {
                         setText(_start, nbrChar);
-                        _start = _length; // Keep processing instruction.
                         return PROCESSING_INSTRUCTION;
-                    } else {
-                        _length = _start;
                     }
                 }
                 break;
@@ -760,9 +800,10 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         && (_data[_length - 3] == ']')) {
                     _state = CHAR_DATA;
                     int nbrChar = _length - _start - 3;
-                    _isWhitespace = (_nonwhitespace == _start + nbrChar + 1);
+                    _hasNonWhitespace = !(_nonwhitespace == _start + nbrChar
+                            + 1);
                     setText(_start, nbrChar);
-                   _start = _length; // Keep character data.
+                    _length = _start; // Do not keep CDATA
                     return CDSECT;
                 }
                 if ((_nonwhitespace == -1) && (c > ' '))
@@ -1009,8 +1050,10 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             if (isXmlns(_attrQName)) { // Sets default namespace.
                 _namespaces.map(null, _attrValue);
             } else {
-                _attributes.add(CharSequenceImpl.EMPTY, CharSequenceImpl.EMPTY,
-                        _attrQName, _attrQName, _attrValue);
+                _attributes
+                        .addAttribute(CharSequenceImpl.EMPTY, _attrQName,
+                                CharSequenceImpl.EMPTY, _attrQName, "CDATA",
+                                _attrValue);
             }
         } else { // Prefix.
             CharSequenceImpl localName = newSeq();
@@ -1023,8 +1066,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             } else { // Searches URI
                 CharSequenceImpl uri = _namespaces.getNamespaceUri(_attrPrefix);
                 if (uri != null) {
-                    _attributes.add(uri, _attrPrefix, localName, _attrQName,
-                            _attrValue);
+                    _attributes.addAttribute(uri, localName, _attrPrefix,
+                            _attrQName, "CDATA", _attrValue);
                 } else {
                     error("Namespace " + _attrPrefix + " undefined");
                 }
@@ -1053,71 +1096,80 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             _elemLocalName = _elemQName;
             _elemNamespace = _namespaces.getNamespaceUri(null); // Default namespace.
         }
-        if (state == OPEN_TAG + EMPTY_TAG ) {
+        if (state == OPEN_TAG + EMPTY_TAG) {
             _isEmpty = true;
             _depth++;
             _namespaces.flush();
-            return (_eventType = START_TAG);
+            return START_TAG;
 
         } else if (state == OPEN_TAG) {
-            _isEmpty = false;
             _depth++;
-            final int startIndex = _depth << 2;
-            _elemStack[startIndex] = _elemQName;
-            _elemStack[startIndex + 1] = _elemNamespace;
-            _elemStack[startIndex + 2] = _elemLocalName;
-            _elemStack[startIndex + 3] = _elemPrefix;
+            _elemStack.addLast(_elemQName);
+            _elemStack.addLast(_elemNamespace);
+            _elemStack.addLast(_elemLocalName);
+            _elemStack.addLast(_elemPrefix);
             _namespaces.push();
-            return (_eventType = START_TAG);
+            return START_TAG;
 
         } else if (state == CLOSE_TAG) {
-            final int startIndex = _depth << 2;
-            CharSequenceImpl startQName = _elemStack[startIndex];
-            _elemNamespace = _elemStack[startIndex + 1];
-            _elemLocalName = _elemStack[startIndex + 2];
-            _elemPrefix = _elemStack[startIndex + 3];
-            if (!_elemQName.equals(startQName))
+            _elemPrefix = (CharSequenceImpl) _elemStack.removeLast();
+            _elemLocalName = (CharSequenceImpl) _elemStack.removeLast();
+            _elemNamespace = (CharSequenceImpl) _elemStack.removeLast();
+            CharSequenceImpl qName = _elemQName; // Current.
+            _elemQName = (CharSequenceImpl) _elemStack.removeLast();
+            if (!_elemQName.equals(qName))
                 throw error("Unexpected end tag for " + _elemQName);
-            _elemQName = startQName;
             _namespaces.pop();
-            return (_eventType = END_TAG);
+            return END_TAG;
 
         } else {
             throw error("Unexpected state: " + state);
         }
     }
 
-    private final CharSequenceImpl[] _elemStack = new CharSequenceImpl[MAX_DEPTH * 4];
-
     // Implements Reusable.
     public void reset() {
         try {
             if (_reader != null)
                 _reader.close();
-            _reader = null;
         } catch (IOException e) {
-            // ignore exception
+            // Ignores exceptions.
         }
 
-        // Resets local variable.
-        _index = 0;
-        _length = 0;
-        _attributes = _attributesStack[0];
-        _attributes.reset();
-        _namespaces.reset();
-        _seqsIndex = 0;
-        _elemPrefix = null;
+        // Resets all members (alphabetically ordered).
+        _attributes = (AttributesImpl) _attrPool.get(0);
+        for (int i = 0, n = _attrPool.size(); i < n;) {
+            ((AttributesImpl) _attrPool.get(i++)).reset();
+        }
         _attrPrefix = null;
-
-        // Resets parser state
+        _attrQName = null;
+        _attrValue = null;
+        _attrQName = null;
+        _charsRead = 0;
+        _columnOffset = 0;
+        _depth = 0;
+        _elemLocalName = null;
+        _elemNamespace = null;
+        _elemPrefix = null;
+        _elemQName = null;
+        _elemStack.reset();
+        _escStart = 0;
+        _eventType = END_DOCUMENT;
+        _hasNonWhitespace = false;
+        _index = 0;
+        _inputEncoding = null;
+        _isEmpty = false;
+        _length = 0;
+        _lineLength = 0;
+        _lineNumber = 0;
+        _namespaces.reset();
+        _nonwhitespace = 0;
+        _reader = null;
+        _savedState = 0;
+        _seqsIndex = 0;
         _start = 0;
         _state = CHAR_DATA;
-        _savedState = 0;
-        _escStart = 0;
-        _charsRead = 0;
-
-        // reset event type
-        _eventType = START_DOCUMENT;
+        _text = null;
     }
 
     /**
@@ -1148,8 +1200,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     }
 
     private XmlPullParserException error(String message) {
-        XmlPullParserException e
-           = new XmlPullParserException(message, this, null);
+        XmlPullParserException e = new XmlPullParserException(message, this,
+                null);
         return e;
     }
 
@@ -1160,23 +1212,13 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
 
     private CharSequenceImpl newSeq2() {
         if (_seqsCapacity++ >= _seqs.length) { // Resizes. 
-            _seqs = (CharSequenceImpl[]) SEQS_FACTORY.resize(_seqs);
+            CharSequenceImpl[] tmp = new CharSequenceImpl[_seqs.length * 2];
+            System.arraycopy(_seqs, 0, tmp, 0, _seqs.length);
+            _seqs = tmp;
+            SEQ_SIZE.set(new Integer(_seqs.length));
         }
         return _seqs[_seqsIndex++] = (CharSequenceImpl) CharSequenceImpl.FACTORY
                 .newObject();
     }
-
-    private static final ArrayFactory SEQS_FACTORY = new ArrayFactory(256) {
-        protected Object create(int length) {
-            return new CharSequenceImpl[length];
-        }
-    };
-
-    private CharSequenceImpl[] _seqs = (CharSequenceImpl[]) SEQS_FACTORY
-            .newObject();
-
-    private int _seqsIndex;
-
-    private int _seqsCapacity;
 
 }

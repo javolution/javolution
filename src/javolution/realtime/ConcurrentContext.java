@@ -47,10 +47,9 @@ import javolution.JavolutionError;
  *             LargeInteger a = this.subtract(b.shiftLeft(n));
  *             LargeInteger d = that.shiftRight(n);
  *             LargeInteger c = that.subtract(d.shiftLeft(n));
-
- *             RealtimeReference acRef = RealtimeReference.newInstance();
- *             RealtimeReference bdRef = RealtimeReference.newInstance();
- *             RealtimeReference abcdRef = RealtimeReference.newInstance();
+ *             Reference<LargeInteger> acRef = FACTORY.reference();
+ *             Reference<LargeInteger> bdRef = FACTORY.reference();
+ *             Reference<LargeInteger> abcdRef = FACTORY.reference();
  *             ConcurrentContext.enter();
  *             try { // this = a + 2^n b,   that = c + 2^n d
  *                 ConcurrentContext.execute(MULTIPLY, a, c, acRef);
@@ -60,9 +59,9 @@ import javolution.JavolutionError;
  *                 ConcurrentContext.exit();
  *             }
  *             
- *             LargeInteger ac = (LargeInteger) acRef.get();
- *             LargeInteger bd = (LargeInteger) bdRef.get();
- *             LargeInteger abcd = (LargeInteger) abcdRef.get();
+ *             LargeInteger ac = acRef.get();
+ *             LargeInteger bd = bdRef.get();
+ *             LargeInteger abcd = abcdRef.get();
  *             return ac.add(abcd.subtract(ac).subtract(bd).shiftLeft(n)).add(bd.shiftLeft(2 * n));
  *         }
  *     }
@@ -70,10 +69,11 @@ import javolution.JavolutionError;
  *         public void run(Object[] args) {
  *             LargeInteger left = (LargeInteger) args[0];
  *             LargeInteger right = (LargeInteger) args[1];
- *             RealtimeReference resultRef = (RealtimeReference) args[2];
- *             resultRef.set(left.multiply(right).export()); // Recursive.
+ *             Reference<LargeInteger> result = (Reference<LargeInteger>) args[2];
+ *             result.set(left.multiply(right).export()); // Recursive.
  *         }
- *    };</pre>
+ *    };
+ *    private static final Factory&lt;LargeInteger&gt; FACTORY = ... // LargeInteger factory.</pre>
  * 
  * <p> Finally, it should be noted that concurrent contexts ensure the same 
  *     behavior whether or not the execution is performed by the current
@@ -120,8 +120,8 @@ public final class ConcurrentContext extends Context {
     /**
      * Indicates if local concurrency is enabled.
      */
-    private static final LocalContext.Variable ENABLED 
-        = new LocalContext.Variable(new Boolean(true));
+    private static final LocalReference ENABLED 
+        = new LocalReference(new Boolean(true));
 
     /**
      * Holds the concurrency of this context (number of concurrent thread
@@ -153,7 +153,7 @@ public final class ConcurrentContext extends Context {
      *        <code>false</code> otherwise.
      */
     public static void setEnabled(boolean enabled) {
-        ENABLED.setValue(new Boolean(enabled));
+        ENABLED.set(new Boolean(enabled));
     }
 
     /**
@@ -164,7 +164,7 @@ public final class ConcurrentContext extends Context {
      *         <code>false</code> otherwise.
      */
     public static boolean isEnabled() {
-        return ((Boolean) ENABLED.getValue()).booleanValue();
+        return ((Boolean) ENABLED.get()).booleanValue();
     }
 
     /**

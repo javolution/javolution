@@ -17,7 +17,8 @@ import j2me.util.Set;
 import javolution.lang.Reusable;
 
 /**
- * <p> This class represents a set collection backed by a {@link FastMap}.</p>
+ * <p> This class represents a set collection backed by a {@link FastMap};
+ *     smooth capacity increase and no rehashing ever performed.</p>
  * 
  * <p> Instances of this class can directly be allocated from the current
  *     thread stack using the {@link #newInstance} factory method
@@ -60,16 +61,16 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     private transient FastMap/*<E,E>*/ _map;
 
     /**
-     * Creates a fast set of small initial capacity.
+     * Creates a set of small initial capacity.
      */
     public FastSet() {
         this(new FastMap/*<E,E>*/());
     }
 
     /**
-     * Creates a fast set of specified initial capacity.
-     * Unless the set size exceeds the specified capacity no memory 
-     * allocation is ever performed.
+     * Creates a set of specified initial capacity. Unless the set size 
+     * reaches the specified capacity, operations on this set will not allocate
+     * memory (e.g. no lazy initialization).
      * 
      * @param capacity the initial capacity.
      */
@@ -78,8 +79,8 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     /**
-     * Creates a fast set containing the specified elements, in the order they
-     * are returned by the set's iterator.
+     * Creates a set containing the specified elements, in the order they
+     * are returned by the set iterator.
      *
      * @param elements the elements to be placed into this fast set.
      */
@@ -89,7 +90,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     /**
-     * Creates a fast set implemented using the specified map.
+     * Creates a set implemented using the specified map.
      * 
      * @param map the backing map.
      */
@@ -98,7 +99,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     /**
-     * Returns a {@link FastSet} allocated from the stack when executing in a
+     * Returns a set allocated from the stack when executing in a
      * {@link javolution.realtime.PoolContext PoolContext}).
      *
      * @return a new, pre-allocated or recycled set instance.
@@ -151,6 +152,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Implements Reusable.
     public void reset() {
+        super.setValueComparator(FastComparator.DEFAULT);
         _map.reset();
     }
 

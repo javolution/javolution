@@ -21,7 +21,7 @@ import javolution.JavolutionError;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.0, February 16, 2005
  */
-public abstract class ObjectPool {
+public abstract class ObjectPool/*<T>*/ {
 
     /**
      * Holds a pool returning <code>null</code> values.
@@ -39,7 +39,7 @@ public abstract class ObjectPool {
     /**
      * Holds the outer pool of this pool or <code>null</code> if none.
      */
-    ObjectPool outer;
+    ObjectPool/*<T>*/ outer;
 
     /**
      * Holds the current user of this pool.  
@@ -113,7 +113,7 @@ public abstract class ObjectPool {
      * 
      * @return the outer pool or <code>null</code> if the outer is the heap.
      */
-    public final ObjectPool getOuter() {
+    public final ObjectPool/*<T>*/ getOuter() {
         return outer;
     }
 
@@ -124,7 +124,7 @@ public abstract class ObjectPool {
      * 
      * @return the next available object from this pool.
      */
-    public abstract Object next();
+    public abstract Object/*T*/ next();
 
     /**
      * Recycles the specified object. Callers should make sure that the recycled
@@ -134,7 +134,7 @@ public abstract class ObjectPool {
      * @param obj the object to recycle to this pool.
      * @throws JavolutionError if the specified object do not belong to the pool.
      */
-    public abstract void recycle(Object obj);
+    public abstract void recycle(Object/*T*/ obj);
 
     /////////////////////
     // Control Methods //

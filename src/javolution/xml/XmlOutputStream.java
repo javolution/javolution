@@ -25,7 +25,7 @@ import javolution.lang.Reusable;
  * @version 2.2, January 8, 2005
  * @see     XmlInputStream
  */
-public class XmlOutputStream extends OutputStream implements Reusable {
+public class XmlOutputStream/*<T>*/ extends OutputStream implements Reusable {
 
     /**
      * Holds the byte indicating the end of a XML document transmission,
@@ -42,7 +42,7 @@ public class XmlOutputStream extends OutputStream implements Reusable {
     /**
      * Holds the object writer.
      */
-    private final ObjectWriter _objectWriter = new ObjectWriter();
+    private final ObjectWriter/*<T>*/ _objectWriter = new ObjectWriter/*<T>*/();
 
     /**
      * Holds the object writer.
@@ -76,7 +76,7 @@ public class XmlOutputStream extends OutputStream implements Reusable {
      * @param obj the object writen using its xml representation. 
      * @throws IOException if an I/O error occurs.
      */
-    public void writeObject(Object obj) throws IOException {
+    public void writeObject(Object/*T*/ obj) throws IOException {
         if (_outputStream == null) throw new IOException("Stream closed");
         _objectWriter.write(obj, _outputStreamProxy);
         _outputStream.write(END_XML);

@@ -6,10 +6,6 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.sax;
-
-/**
- * @deprecated replaced by {@link XmlSaxParserImpl}.
- */
-public final class RealtimeParser extends XmlSaxParserImpl {
-}
+package j2me.util;
+import javolution.util.FastTable;
+public class ArrayList extends FastTable {}
