@@ -92,9 +92,9 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     }
 
     /**
-     * Creates a list of specified initial capacity. Unless the list size 
+     * Creates a list of specified initial capacity; unless the list size 
      * reaches the specified capacity, operations on this list will not allocate
-     * memory (e.g. no lazy initialization).
+     * memory (no lazy object creation).
      * 
      * @param capacity the initial capacity.
      */
@@ -127,8 +127,8 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      *
      * @return a new, preallocated or recycled list instance.
      */
-    public static FastList newInstance() {
-        return (FastList) FACTORY.object();
+    public static/*<E>*/FastList/*<E>*/newInstance() {
+        return (FastList/*<E>*/) FACTORY.object();
     }
 
     /**
@@ -458,7 +458,6 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @param value the value to be inserted.
      */
     public final void addLast(Object/*E*/value) { // Optimized.
-        _size++;
         Node newTail = _tail._next;
         if (newTail == null) {
             newTail = _tail._next = (Node) Node.FACTORY.newObject();
@@ -466,6 +465,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         }
         _tail._value = value;
         _tail = newTail;
+        _size++;
     }
 
     /**
@@ -560,7 +560,8 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @param index the index of the Node to return.
      */
     private final Node/*<E>*/nodeAt(int index) {
-        if (index <= (_size >> 1)) { // Forward search.
+        final int size = _size;
+        if (index <= (size >> 1)) { // Forward search.
             Node/*<E>*/node = _head;
             for (int i = index; i-- >= 0;) {
                 node = node._next;
@@ -568,7 +569,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
             return node;
         } else { // Backward search.
             Node/*<E>*/node = _tail;
-            for (int i = _size - index; i-- > 0;) {
+            for (int i = size - index; i-- > 0;) {
                 node = node._previous;
             }
             return node;
@@ -628,7 +629,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
 
     // Implements Reusable.
     public void reset() {
-        super.setValueComparator(FastComparator.DEFAULT);
+        super.setValueComparator(FastComparator.DIRECT);
         this.clear();
     }
 

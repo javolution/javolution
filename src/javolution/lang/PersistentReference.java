@@ -8,6 +8,7 @@
  */
 package javolution.lang;
 
+import j2me.io.Serializable;
 import j2me.util.Iterator;
 import j2me.util.Map;
 import javolution.util.FastMap;
@@ -19,8 +20,8 @@ import javolution.util.FastMap;
  *     appropriate array size to avoid resizing. For example:<pre>
  *     public class Foo {
  *        // Holds the configurable nominal size to avoid resizing.
- *        private static final PersistentReference&lt;Integer&gt; SIZE
- *            = new PersistentReference&lt;Integer&gt;("Foo#SIZE", new Integer(100));
+ *        private static final PersistentReference&lt;Integer> SIZE
+ *            = new PersistentReference&lt;Integer>("Foo#SIZE", new Integer(100));
  *        private Entry[] _entries = new Entry[SIZE.get().intValue()];
  *        private int _count; 
  *        
@@ -38,21 +39,19 @@ import javolution.util.FastMap;
  * <p> Real-time application may use persistent references for pre-built data 
  *     structure to avoid delaying time critical code. For example:<pre>
  *     public class Unit {
- *         FastMap&lt;Unit, Unit&gt; _multiply = new FastMap&lt;Unit, Unit&gt;();
- *         
- *         // Allows units collection to be persistent (very expensive to build).
- *         private static final PersistentReference&lt;FastSet&lt;Unit&lt;&gt;&gt; UNITS 
- *              = new PersistentReference("org.jscience.physics.units.Unit#UNITS", new FastSet&lt;Unit&gt;);
+ *         // Holds the unit multiplication table. Allows for persistency.
+ *         private static final PersistentReference&lt;FastMap&lt;Unit, FastMap&lt;Unit, Unit>>>
+ *             MULT_TABLE = new PersistentReference&lt;FastMap&lt;Unit, FastMap&lt;Unit, Unit>>>(
+ *                 "org.jscience.physics.units.Unit#MULT_TABLE",
+ *                 new FastMap&lt;Unit, FastMap&lt;Unit, Unit>>());
  *
- *         public Unit multiply(Unit that) {
- *             Unit result = _multiply.get(that); // Checks internal table (saved with units).
- *             if (result == null) {
- *                 result = this.multiplyImpl(that); // Long operation.
- *                 _multiply.put(that, result);
- *             }
- *             return result;
- *         }    
- *     }</pre></p>
+ *         public final Unit times(Unit that) {
+ *             // Checks the multiplication table first, 
+ *             // if not present calculates (slow).            
+ *             FastMap&lt;Unit, Unit> thisMult = MULT_TABLE.get().get(this);
+ *             ...
+ *         }
+ *    }</pre></p>
  * 
  *  <p> How persistent references are loaded/saved is application specific. 
  *      Although, the simplest way is to use Javolution xml serialization 
@@ -69,7 +68,7 @@ import javolution.util.FastMap;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.3, May 10, 2005
  */
-public final class PersistentReference /*<T>*/implements Reference/*<T>*/{
+public final class PersistentReference /*<T>*/implements Reference/*<T>*/, Serializable {
 
     /**
      * Holds the reference collection (id to reference).

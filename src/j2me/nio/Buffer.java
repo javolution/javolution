@@ -48,7 +48,7 @@ public abstract class Buffer {
     }
 
     public final boolean hasRemaining() {
-        return remaining() > 0;
+        return _limit - _position > 0;
     }
 
     public boolean isReadOnly() {

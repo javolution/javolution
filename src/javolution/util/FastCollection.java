@@ -12,6 +12,7 @@ import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.List;
 import j2me.util.NoSuchElementException;
+import j2me.util.Set;
 import j2me.io.Serializable;
 import j2me.lang.IllegalStateException;
 import j2me.lang.UnsupportedOperationException;
@@ -58,7 +59,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     /**
      * Holds the value comparator.  
      */
-    private FastComparator _valueComp = FastComparator.DEFAULT;
+    private FastComparator _valueComp = FastComparator.DIRECT;
 
     /**
      * Holds the value comparator.  
@@ -166,7 +167,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     /**
      * Returns the value comparator for this collection (default 
-     * {@link FastComparator#DEFAULT}).
+     * {@link FastComparator#DIRECT}).
      *
      * @return the comparator to use for value equality (or ordering if 
      *        the collection is ordered)
@@ -575,7 +576,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * This inner class represents an unmodifiable view over the collection.
      */
     private final class Unmodifiable extends FastCollection/*<E>*/implements
-            Serializable {
+            Serializable, Set/*<E>*/ { // Allows to be used for unmodifiable set view.
 
         public Unmodifiable() {
             super(null);

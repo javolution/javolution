@@ -14,52 +14,50 @@ import javolution.lang.Reference;
  * <p> This class encapsulates a reference allocated on the current stack
  *     when executing in {@link PoolContext}. The reachability level of a
  *     stack reference is the scope of the {@link PoolContext} in which it
- *     has been {@link #set set}. Instances of this class can only be created 
- *     using {@link ObjectFactory#reference factories}.</p>
+ *     has been {@link #newInstance created}.</p>
  *     
  * <p> Stack references are automatically cleared based upon their 
  *     reachability level like any <code>java.lang.ref.Reference</code>.
  *     In other words, stack references are automatically cleared when exiting
  *     the {@link PoolContext} where they have been factory produced.</p>
  *     
- * <p> Stack references are typically used by methods returning more 
- *     than one result. For example:<pre>
- *         // Calculates time/position pair on the stack (thread-local).
- *         StackReference&lt;Time&gt; timeRef = TIME_FACTORY.reference();
- *         StackReference&lt;Position&gt; posRef = POS_FACTORY.reference();
- *         getTimeAndPosition(timeRef, posRef);
- *         Time time = TIME_REF.get(); 
- *         Position pos = POS_REF.get(); 
+ * <p> Stack references are typically used by functions having more than one
+ *     return value to avoid creating new objects on the heap. For example:<pre>
+ *     // Returns both the position and its status.
+ *     public Coordinates getPosition(Reference&lt;Status&gt; status) {
  *         ...
- *         public void getTimeAndPosition(Reference&lt;Time&gt; timeRef, Reference&lt;Position&gt; posRef) {
- *             Time time = Time.current();
- *             Position pos = positionAt(time);
- *             timeRef.set(time);
- *             posRef.set(pos);
- *         }
- *         private static final ObjectFactory&lt;Time&gt; TIME_FACTORY = new ObjectFactory&lt;Time&gt;;
- *         private static final ObjectFactory&lt;Position&gt; POS_FACTORY = new ObjectFactory&lt;Position&gt;;
- *     </pre>
+ *     }
+ *     ...
+ *     StackReference&lt;Status&gt; status = StackReference.newInstance(); // On the stack.
+ *     Coordinates position = getPosition(status);
+ *     if (status.get() == ACCURATE) ...</pre> 
+ *     See also {@link ConcurrentContext} for examples of 
+ *     {@link StackReference} usage.</p>
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.3, February 20, 2004
+ * @version 3.4, July 3, 2005
  */
-public final class StackReference/*<T>*/ extends RealtimeObject implements Reference/*<T>*/ {
+public final class StackReference/*<T>*/extends RealtimeObject implements
+        Reference/*<T>*/{
 
     /**
      * Holds the factory.
      */
-    static final Factory FACTORY = new Factory() {
+    private static final Factory FACTORY = new Factory() {
         protected Object create() {
             return new StackReference();
+        }
+
+        protected void cleanup(Object obj) {
+            ((StackReference) obj)._value = null;
         }
     };
 
     /**
      * Holds the reference value.
      */
-    private Object/*T*/ _value;
-    
+    private Object/*T*/_value;
+
     /**
      * Default constructor (private, instances should be created using 
      * factories).
@@ -67,13 +65,23 @@ public final class StackReference/*<T>*/ extends RealtimeObject implements Refer
     private StackReference() {
     }
 
+    /**
+     * Returns a new stack reference instance allocated on the current stack
+     * when executing in {@link PoolContext}.
+     * 
+     * @return a local reference object.
+     */
+    public static/*<T>*/StackReference /*<T>*/newInstance() {
+        return (StackReference) FACTORY.object();
+    }
+
     // Implements Reference interface.
-    public Object/*T*/ get() {
+    public Object/*T*/get() {
         return _value;
     }
 
     // Implements Reference interface.
-    public void set(Object/*T*/ value) {
-        _value = value;    
-     }
+    public void set(Object/*T*/value) {
+        _value = value;
+    }
 }

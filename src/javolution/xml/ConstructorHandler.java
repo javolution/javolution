@@ -47,11 +47,6 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
     private int _level;
 
     /**
-     * Holds the document locator.
-     */
-    private Locator _locator;
-
-    /**
      * Holds the root object.
      */
     private Object _root;
@@ -71,17 +66,7 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
      * Default constructor.
      */
     ConstructorHandler() {
-        _stack.add(new XmlElement());
-    }
-
-    /**
-     * Receive an object for locating the origin of SAX document events.
-     *
-     * @param  locator an object that can return the location of any SAX
-     *         document event.
-     */
-    public void setDocumentLocator(Locator locator) {
-        _locator = locator;
+        _stack.addLast(new XmlElement());
     }
 
     /**
@@ -111,13 +96,13 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
      *         another exception.
      */
     public void endDocument() throws SAXException {
-        List roots = ((XmlElement)_stack.get(0)).getContent();
+        List roots = ((XmlElement) _stack.get(0)).getContent();
         if (roots.size() > 0) {
             _root = roots.get(0);
         }
         // Clean-up (e.g. if parsing failed)
         for (int i = 0; i <= _level;) {
-			((XmlElement)_stack.get(i++)).reset();
+            ((XmlElement) _stack.get(i++)).reset();
         }
     }
 
@@ -134,27 +119,26 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
     public void startElement(CharSequence uri, CharSequence localName,
             CharSequence qName, Attributes attrs) throws SAXException {
 
-		if (++_level >= _stack.size()) {
+        if (++_level >= _stack.size()) {
             XmlElement tmp = (XmlElement) XmlElement.FACTORY.newObject();
             tmp._parent = (XmlElement) _stack.get(_level - 1);
-            _stack.add(tmp);
+            _stack.addLast(tmp);
         }
         XmlElement xml = (XmlElement) _stack.get(_level);
-  
-        // Searches if attribute "j:class" is specified.
+        xml._name = localName;
+
         final AttributesImpl attributes = (AttributesImpl) attrs;
-        int i = attributes.getIndex("j:class");
-        if (i >= 0) { // Class name from attribute.
-            _uriLocalName.uri = "http://javolution.org";
-            _uriLocalName.localName = attributes.getValue(i);
-            xml._name = localName;
-        } else { // Class name from element tag.
-            _uriLocalName.uri = uri;
-            _uriLocalName.localName = localName;
-        }
-        
-        // Retrieves class and associated xml format. 
-        final Class objectClass = XmlFormat.classFor(_uriLocalName);
+        Class objectClass = xml.classFor(localName);
+        if (objectClass == null) {
+            // Searches if attribute "j:class" is specified.
+            int i = attributes.getIndex("j:class");
+            if (i >= 0) { // Class name from attribute.
+                objectClass = XmlFormat.classFor("", attributes.getValue(i));
+            } else { // Class name from element tag.
+                objectClass = XmlFormat.classFor(uri, localName); 
+                xml._name = null;
+            }
+        } 
         final XmlFormat xmlFormat = XmlFormat.getInstance(objectClass);
         final int attLength = attributes.getLength();
 
@@ -164,8 +148,9 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
             if (j >= 0) { // Holds id reference.
                 final CharSequence idValue = attributes.getValue(j);
                 xml._object = _idToObject.get(idValue);
-                if (xml._object != null) return; // Reference found.
-                if (!xmlFormat._idRef.equals(xmlFormat._idName))  
+                if (xml._object != null)
+                    return; // Reference found.
+                if (!xmlFormat._idRef.equals(xmlFormat._idName))
                     throw new SAXException("Referenced object (" + idValue
                             + ") not found");
                 // Use the same attribute for identifiers and references.
@@ -187,8 +172,7 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
         }
     }
 
-    private XmlFormat.UriLocalName _uriLocalName = new XmlFormat.UriLocalName();
-
+    
     /**
      * Receives notification of the end of an element.
      *
@@ -200,19 +184,19 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
      */
     public void endElement(CharSequence uri, CharSequence localName,
             CharSequence qName) throws SAXException {
-        XmlElement xml = ((XmlElement)_stack.get(_level));
+        XmlElement xml = ((XmlElement) _stack.get(_level));
         if (xml._format != null) { // Not a reference.
             xml._object = xml._format.parse(xml);
             if (xml._idValue != null) {
                 _idToObject.put(newId().append(xml._idValue), xml._object);
             }
         }
-        
+
         // Adds to parent.
         if (xml._name == null) { // Anonymous.
-			((XmlElement)_stack.get(--_level))._content.add(xml._object);
+            ((XmlElement) _stack.get(--_level))._content.addLast(xml._object);
         } else { // Named child element.
-			((XmlElement)_stack.get(--_level)).add(xml._name, xml._object);
+            ((XmlElement) _stack.get(--_level)).add(xml._name, xml._object);
         }
 
         // Clears the xml element (for reuse latter).
@@ -230,9 +214,13 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
      */
     public void characters(char ch[], int start, int length)
             throws SAXException {
-        CharacterData charData = CharacterData.valueOf(
-                Text.valueOf(ch, start, length));
-        ((XmlElement)_stack.get(_level)).getContent().add(charData);
+        CharacterData charData = CharacterData.valueOf(Text.valueOf(ch, start,
+                length));
+        ((XmlElement) _stack.get(_level))._content.addLast(charData);
+    }
+
+    // Implements ContentHandler
+    public void setDocumentLocator(Locator locator) {
     }
 
     // Implements ContentHandler
@@ -307,11 +295,12 @@ public final class ConstructorHandler implements ContentHandler, ErrorHandler,
      * @return a new or recycled text builder instance.
      */
     private TextBuilder newId() {
-        if (_idPool.isEmpty()) 
+        if (_idPool.isEmpty())
             return (TextBuilder) TextBuilder.newInstance().moveHeap();
         TextBuilder tb = (TextBuilder) _idPool.removeLast();
         tb.reset();
         return tb;
     }
+
     private FastTable _idPool = new FastTable(); // Persistent pool.
 }

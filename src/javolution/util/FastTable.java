@@ -61,7 +61,7 @@ import javolution.realtime.RealtimeObject;
  *        </i></p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, May 4, 2005
+ * @version 3.4, July 4, 2005
  */
 public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         List/*<E>*/, Reusable, RandomAccess, Serializable {
@@ -117,13 +117,14 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     private static final int M3 = (1 << D3) - 1;
 
-    private final Object/*E*/[] _elems0 = (Object/*E*/[]) new Object[C0]; // 5 bits (32).
+    // new Object[1<<7][1<<5], 12 bits (4096)
+    private Object/*E*/[][] _elems1;
 
-    private Object/*E*/[][] _elems1; // new Object[1<<7][1<<5]; // 12 bits (4096)
+    // new Object[1<<9][1<<7][1<<5], 21 bits (2097152)
+    private Object/*E*/[][][] _elems2;
 
-    private Object/*E*/[][][] _elems2; // new Object[1<<9][1<<7][1<<5]; // 21 bits (2097152)
-
-    private Object/*E*/[][][][] _elems3; // new Object[1<<11][1<<9][1<<7][1<<5]; 
+    // new Object[1<<11][1<<9][1<<7][1<<5], 32 bits
+    private Object/*E*/[][][][] _elems3;
 
     private static final ObjectFactory OBJS0_FACTORY = new ObjectFactory() {
         public Object create() {
@@ -157,22 +158,25 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Holds the current size.
      */
-    private volatile int _size;
+    private int _size;
 
     /**
      * Creates a table of small initial capacity.
      */
     public FastTable() {
+        _elems1 = (Object/*E*/[][]) new Object[1][];
+        _elems1[0] =(Object/*E*/[]) new Object[C0];
     }
 
     /**
-     * Creates a table of specified initial capacity. Unless the table size 
+     * Creates a table of specified initial capacity; unless the table size 
      * reaches the specified capacity, operations on this table will not 
-     * allocate memory (e.g. no lazy initialization).
+     * allocate memory (no lazy object creation).
      * 
      * @param capacity the initial capacity.
      */
     public FastTable(int capacity) {
+        this();
         while (capacity > _capacity) {
             increaseCapacity();
         }
@@ -195,8 +199,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      *
      * @return a new, preallocated or recycled text builder instance.
      */
-    public static FastTable newInstance() {
-        return (FastTable) FACTORY.object();
+    public static/*<E>*/FastTable/*<E>*/newInstance() {
+        return (FastTable/*<E>*/) FACTORY.object();
     }
 
     /**
@@ -207,32 +211,19 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final Object/*E*/get(int index) {
+    public final Object/*E*/get(int index) { // Short to be inlined.
+        if (((index >> R2) == 0) && (index < _size))
+            return _elems1[(index >> R1)][index & M0];
+        return get2(index);
+    }
+
+    private final Object/*E*/get2(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        if (index < C0) {
-            return _elems0[index];
-        } else if (index < C1) {
-            return _elems1[(index >> R1)][index & M0];
-        } else if (index < C2) {
+        if (index < C2)
             return _elems2[(index >> R2)][(index >> R1) & M1][index & M0];
-        } else {
-            return _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1)
-                    & M1][index & M0];
-        }
-    }
-    
-    private Object/*E*/getNoCheck(int index) {
-        if (index < C0) {
-            return _elems0[index];
-        } else if (index < C1) {
-            return _elems1[(index >> R1)][index & M0];
-        } else if (index < C2) {
-            return _elems2[(index >> R2)][(index >> R1) & M1][index & M0];
-        } else {
-            return _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1)
-                    & M1][index & M0];
-        }
+        return _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index
+                & M0];
     }
 
     /**
@@ -247,15 +238,10 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     public final Object/*E*/set(int index, Object/*E*/value) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        return setNoCheck(index, value);
-    }
-
-    private Object/*E*/setNoCheck(int index, Object/*E*/value) {
-        final Object/*E*/[] elems = (index < C0) ? _elems0
-                : (index < C1) ? _elems1[(index >> R1)]
-                        : (index < C2) ? _elems2[(index >> R2)][(index >> R1)
-                                & M1] : _elems3[(index >> R3)][(index >> R2)
-                                & M2][(index >> R1) & M1];
+        final Object/*E*/[] elems = (index < C1) ? _elems1[(index >> R1)]
+                : (index < C2) ? _elems2[(index >> R2)][(index >> R1) & M1]
+                        : _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1)
+                                & M1];
         final Object/*E*/oldValue = elems[index & M0];
         elems[index & M0] = value;
         return oldValue;
@@ -280,10 +266,9 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @throws NoSuchElementException if this table is empty.
      */
     public final Object/*E*/getLast() {
-        final int index = _size - 1;
-        if (index < 0)
+        if (_size == 0)
             throw new NoSuchElementException();
-        return getNoCheck(index);
+        return get(_size - 1);
     }
 
     /**
@@ -296,16 +281,15 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         if (i >= _capacity) {
             increaseCapacity();
         }
-        if (i < C0) {
-            _elems0[i] = value;
-        } else if (i < C1) {
+        if (i < C1) {
             _elems1[(i >> R1)][i & M0] = value;
         } else if (i < C2) {
             _elems2[(i >> R2)][(i >> R1) & M1][i & M0] = value;
         } else {
             _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1][i & M0] = value;
         }
-        _size++; // Must be last (volatile).
+        checkpoint(); // Ensures that size is incremented last.
+        _size++;
     }
 
     /**
@@ -316,13 +300,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      */
     public final Object/*E*/removeLast() {
         if (_size == 0)
-            throw new NoSuchElementException("Table is empty");
+            throw new NoSuchElementException();
         final int index = --_size;
-        final Object/*E*/[] elems = (index < C0) ? _elems0
-                : (index < C1) ? _elems1[(index >> R1)]
-                        : (index < C2) ? _elems2[(index >> R2)][(index >> R1)
-                                & M1] : _elems3[(index >> R3)][(index >> R2)
-                                & M2][(index >> R1) & M1];
+        final Object/*E*/[] elems = (index < C1) ? _elems1[(index >> R1)]
+                : (index < C2) ? _elems2[(index >> R2)][(index >> R1) & M1]
+                        : _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1)
+                                & M1];
         final Object/*E*/oldValue = elems[index & M0];
         elems[index & M0] = null;
         return oldValue;
@@ -330,15 +313,13 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     // Overrides.
     public final void clear() {
-        for (int index = 0, end = _size; index < end; index++) {
-            if (index < C0) {
-                _elems0[index] = null;
-            } else if (index < C1) {
-                _elems1[(index >> R1)][index & M0] = null;
+        for (int index = 0, end = _size; index < end;) {
+            if (index < C1) {
+                _elems1[(index >> R1)][index++ & M0] = null;
             } else if (index < C2) {
-                _elems2[(index >> R2)][(index >> R1) & M1][index & M0] = null;
+                _elems2[(index >> R2)][(index >> R1) & M1][index++ & M0] = null;
             } else {
-                _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index
+                _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index++
                         & M0] = null;
             }
         }
@@ -363,18 +344,20 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
         final int shift = values.size();
-        while (_size + shift >= _capacity) {
+        final int prevSize = _size;
+        final int newSize = prevSize + shift;
+        while (newSize >= _capacity) {
             increaseCapacity();
         }
+        _size = newSize; // Set here to avoid index error.
         // Shift values after index (TBD: Optimize).
-        for (int i = _size; --i >= index;) {
-            this.setNoCheck(i + shift, this.getNoCheck(i));
+        for (int i = prevSize; --i >= index;) {
+            this.set(i + shift, this.get(i));
         }
         Iterator/*<? extends E>*/valuesIterator = values.iterator();
         for (int i = index, n = index + shift; i < n; i++) {
-            this.setNoCheck(i, valuesIterator.next());
+            this.set(i, valuesIterator.next());
         }
-        _size += shift; // Must be last (volatile).
         return shift != 0;
     }
 
@@ -392,14 +375,15 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     public final void add(int index, Object/*E*/value) {
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        final int newSize = _size + 1;
+        final int prevSize = _size;
+        final int newSize = prevSize + 1;
         if (newSize >= _capacity) {
             increaseCapacity();
         }
+        _size = newSize;
         for (int i = index, n = newSize; i < n;) {
-            value = this.setNoCheck(i++, value);
+            value = this.set(i++, value);
         }
-        _size = newSize; // Must be last (volatile).
     }
 
     /**
@@ -419,9 +403,9 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         final int lastIndex = _size - 1;
         Object/*E*/obj = this.get(lastIndex);
         for (int i = lastIndex; --i >= index;) {
-            obj = this.setNoCheck(i, obj);
+            obj = this.set(i, obj);
         }
-        this.setNoCheck(lastIndex, null); // For GC to do its work.
+        this.set(lastIndex, null); // For GC to do its work.
         _size = lastIndex;
         return obj;
     }
@@ -436,16 +420,16 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      *         || (fromIndex > toIndex) || (toIndex > this.size())</code>
      */
     public final void removeRange(int fromIndex, int toIndex) {
-        final int oldSize = _size;
+        final int prevSize = _size;
         if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex)
-                || (toIndex > oldSize))
+                || (toIndex > prevSize))
             throw new IndexOutOfBoundsException();
-        for (int i = toIndex, j = fromIndex; i < oldSize;) {
-            this.setNoCheck(j++, this.getNoCheck(i++));
+        for (int i = toIndex, j = fromIndex; i < prevSize;) {
+            this.set(j++, this.get(i++));
         }
-        final int newSize = oldSize - toIndex + fromIndex;
-        for (int i = newSize; i < oldSize;) {
-            this.setNoCheck(i++, null); // For GC to do its work.
+        final int newSize = prevSize - toIndex + fromIndex;
+        for (int i = newSize; i < prevSize;) {
+            this.set(i++, null); // For GC to do its work.
         }
         _size = newSize;
     }
@@ -630,7 +614,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     // Implements abstract method.
     public void reset() {
-        super.setValueComparator(FastComparator.DEFAULT);
+        super.setValueComparator(FastComparator.DIRECT);
         clear();
     }
 
@@ -641,8 +625,11 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         final int c = _capacity;
         _capacity += C0;
         if (c < C1) {
-            if (_elems1 == null) {
-                _elems1 = (Object/*E*/[][]) OBJS1_FACTORY.newObject();
+            if (_elems1.length == 1) { // Replaces the original table.
+                Object/*E*/[][] tmp = (Object/*E*/[][]) OBJS1_FACTORY
+                        .newObject();
+                tmp[0] = _elems1[0];
+                _elems1 = tmp;
             }
             _elems1[(c >> R1)] = (Object/*E*/[]) OBJS0_FACTORY.newObject();
 
@@ -701,6 +688,17 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = null;
         }
     }
+
+    /**
+     * Ensures that the compiler will not reorder previous instructions below
+     * this point.
+     */
+    private static void checkpoint() {
+        if (CHECK_POINT)
+            throw new Error(); // Reads volatile.
+    }
+
+    static volatile boolean CHECK_POINT;
 
     /**
      * This class represents a {@link FastTable} index; it allows for direct 
@@ -785,7 +783,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
                 index._position = COLLECTION._size;
                 Index.CollectionLast._next = index;
                 index._previous = Index.CollectionLast;
-                COLLECTION.add(index);
+                COLLECTION.addLast(index);
                 Index.CollectionLast = index;
             }
         }

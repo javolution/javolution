@@ -35,30 +35,33 @@ import javolution.util.FastCollection.Record;
  *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys are inserted into the map (similar to 
- *     <code>java.util.LinkedHashMap</code> collection class).
- *     Like {@link Record}, {@link FastMap.Entry} can quickly be 
- *     iterated over (forward or backward) without using iterators.
- *     For example:<pre>
+ *     <code>java.util.LinkedHashMap</code> collection class).</p>
+ *     
+ * <p> {@link FastMap.Entry} can quickly be iterated over (forward or backward)
+ *     without using iterators. For example:<pre>
  *     FastMap map = new FastMap&lt;String, Thread&gt;();
  *     for (FastMap.Entry&lt;String, Thread&gt; e = map.headEntry(), end = map.tailEntry(); (e = e.getNextEntry()) != end;) {
  *          String key = e.getKey(); // No typecast necessary.
- *          Thread value = e.getValue(); // No typecase necessary.
+ *          Thread value = e.getValue(); // No typecast necessary.
  *     }</pre>
- *     Collection views ({@link #values values}, {@link #keySet() keys}
+ *     Collection views {@link #values values}, {@link #keySet() keys}
  *      and {@link #entrySet() entries} are all instances of 
  *     {@link FastCollection} and also support direct iterations.</p>
  * 
  * <p> {@link FastMap} may use custom key comparators; the default comparator is
- *     either {@link FastComparator#DEFAULT} or {@link FastComparator#REHASH}
- *      based upon the current <a href=
+ *     either {@link FastComparator#DIRECT DIRECT} or 
+ *     {@link FastComparator#REHASH REHASH} based upon the current <a href=
  *     "{@docRoot}/overview-summary.html#configuration">Javolution 
- *     Configuration</a>.</p>
+ *     Configuration</a>. Users may explicitly set the key comparator to 
+ *     {@link FastComparator#DIRECT DIRECT} for optimum performance
+ *     when the hash codes are well distributed for all run-time platforms
+ *     (e.g. calculated hash codes).</p>
  *     
  * <p> Custom key comparators are extremely useful for value retrieval when
  *     map's keys and argument keys are not of the same class, such as 
  *     {@link String} and {@link javolution.lang.Text Text} 
- *     ({@link FastComparator#LEXICAL} key comparator) or for identity maps 
- *     ({@link FastComparator#IDENTITY} key comparator).
+ *     ({@link FastComparator#LEXICAL LEXICAL}) or for identity maps 
+ *     ({@link FastComparator#IDENTITY IDENTITY}).
  *     For example:<pre>
  *     FastMap identityMap = new FastMap().setKeyComparator(FastComparator.IDENTITY);
  *     </pre></p>
@@ -77,10 +80,20 @@ import javolution.util.FastCollection.Record;
  *                  access unsynchronized!</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 3.3, May 10, 2005
+ * @version 3.3, June 24, 2005
  */
-public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Reusable,
-        Serializable {
+public class FastMap/*<K,V>*/extends RealtimeObject implements Map/*<K,V>*/,
+        Reusable, Serializable {
+
+    /**
+     * Holds table higher index rotation. 
+     */
+    private static final int R0 = 5;
+
+    /**
+     * Holds the table lower index mask. 
+     */
+    private static final int M0 = (1 << R0) - 1;
 
     /**
      * Holds the map factory.
@@ -97,21 +110,22 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     };
 
     /**
-     * Holds the map's hash table (volatile for unsynchronized access). 
+     * Holds the map's hash table (volatile for unsynchronized access).
+     * Use double array to avoid large arrays allocation. 
      */
-    private volatile transient Entry/*<K,V>*/[] _entries;
+    private volatile transient Entry/*<K,V>*/[][] _entries;
 
     /**
      * Holds the head entry to which the first entry attaches.
      * The head entry never changes (entries always added last).
      */
-    private transient Entry/*<K,V>*/ _head = new Entry();
+    private transient Entry/*<K,V>*/_head = new Entry();
 
     /**
      * Holds the tail entry to which the last entry attaches.
      * The tail entry changes as entries are added/removed.
      */
-    private transient Entry/*<K,V>*/ _tail = new Entry();
+    private transient Entry/*<K,V>*/_tail = new Entry();
 
     /**
      * Holds the current size.
@@ -136,12 +150,12 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     /**
      * Holds the unmodifiable view.
      */
-    private transient Map/*<K,V>*/ _unmodifiable = new Unmodifiable();
-    
+    private transient Map/*<K,V>*/_unmodifiable = new Unmodifiable();
+
     /**
      * Holds a reference to a map having the old entries when resizing.
      */
-    private transient FastMap/*<K,V>*/ _oldEntries;
+    private transient FastMap/*<K,V>*/_oldEntries;
 
     /**
      * Holds the key comparator.
@@ -153,27 +167,31 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * Creates a fast map of small initial capacity.
      */
     public FastMap() {
-        this(0);
+        this(new Entry[1][1 << R0]);
     }
 
     /**
-     * Creates a map of specified initial capacity. Unless the map size 
+     * Creates a map of specified initial capacity; unless the map size 
      * reaches the specified capacity, operations on this map will not allocate
-     * memory (e.g. no lazy initialization).
+     * memory (no lazy object creation).
      * 
      * @param capacity the initial capacity.
      */
     public FastMap(int capacity) {
-        int tableLength = 16;
+        int tableLength = 1 << R0;
         while (tableLength < capacity) {
             tableLength <<= 1;
         }
-        _entries = (Entry/*<K,V>*/[]) new FastMap.Entry[tableLength];
+        _entries = (Entry/*<K,V>*/[][]) new FastMap.Entry[tableLength >> R0][];
+        for (int i = 0; i < _entries.length;) {
+            _entries[i++] = (Entry/*<K,V>*/[]) new FastMap.Entry[1 << R0];
+        }
         _head._next = _tail;
         _tail._previous = _head;
-        Entry/*<K,V>*/ previous = _tail;
+        Entry/*<K,V>*/previous = _tail;
         for (int i = 0; i < capacity; i += 4) { // Four entries at a time.
-            Entry/*<K,V>*/newEntry= (Entry/*<K,V>*/) Entry.FACTORY.newObject();
+            Entry/*<K,V>*/newEntry = (Entry/*<K,V>*/) Entry.FACTORY
+                    .newObject();
             newEntry._previous = previous;
             previous._next = newEntry;
             previous = newEntry._next._next._next;
@@ -186,9 +204,20 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      *
      * @param map the map whose entries are to be placed into this map.
      */
-    public FastMap(Map/*<? extends K, ? extends V>*/ map) {
+    public FastMap(Map/*<? extends K, ? extends V>*/map) {
         this(map.size());
         putAll(map);
+    }
+
+    /**
+     * Creates a fast map having the specified entry table.
+     * 
+     * @param entries the entry table.
+     */
+    private FastMap(Entry/*<K,V>*/[][] entries) {
+        _entries = entries;
+        _head._next = _tail;
+        _tail._previous = _head;
     }
 
     /**
@@ -197,8 +226,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * 
      * @return a new, pre-allocated or recycled map instance.
      */
-    public static FastMap newInstance() {
-        return (FastMap) FACTORY.object();
+    public static/*<K,V>*/FastMap/*<K,V>*/newInstance() {
+        return (FastMap/*<K,V>*/) FACTORY.object();
     }
 
     /**
@@ -207,7 +236,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @return the entry such as <code>headEntry().getNextEntry()</code> holds 
      *         the first map entry.
      */
-    public final Entry/*<K,V>*/ headEntry() {
+    public final Entry/*<K,V>*/headEntry() {
         return _head;
     }
 
@@ -217,7 +246,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @return the entry such as <code>tailEntry().getPreviousEntry()</code>
      *         holds the last map entry.
      */
-    public final Entry/*<K,V>*/ tailEntry() {
+    public final Entry/*<K,V>*/tailEntry() {
         return _tail;
     }
 
@@ -251,7 +280,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     public final boolean containsKey(Object key) {
         final int keyHash = (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key);
-        Entry/*<K,V>*/ entry = _entries[keyHash & (_entries.length - 1)];
+        Entry/*<K,V>*/entry = _entries[(keyHash >> R0) & (_entries.length - 1)][keyHash
+                & M0];
         while (entry != null) {
             if ((key == entry._key)
                     || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
@@ -284,10 +314,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      *         <code>null</code> if there is no mapping for the key.
      * @throws NullPointerException if key is <code>null</code>.
      */
-    public final Object/*V*/ get(Object key) {
+    public final Object/*V*/get(Object key) {
         final int keyHash = (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key);
-        Entry/*<K,V>*/ entry = _entries[keyHash & (_entries.length - 1)];
+        Entry/*<K,V>*/entry = _entries[(keyHash >> R0) & (_entries.length - 1)][keyHash
+                & M0];
         while (entry != null) {
             if ((key == entry._key)
                     || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
@@ -306,10 +337,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @param key the key whose associated entry is to be returned.
      * @return the entry for the specified key or <code>null</code> if none.
      */
-    public final Entry/*<K,V>*/ getEntry(Object key) {
+    public final Entry/*<K,V>*/getEntry(Object key) {
         final int keyHash = (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key);
-        Entry/*<K,V>*/ entry = _entries[keyHash & (_entries.length - 1)];
+        Entry/*<K,V>*/entry = _entries[(keyHash >> R0) & (_entries.length - 1)][keyHash
+                & M0];
         while (entry != null) {
             if ((key == entry._key)
                     || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
@@ -335,16 +367,17 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      *         previously associated <code>null</code> with the specified key.
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public final Object/*V*/ put(Object/*K*/ key, Object/*V*/ value) {
+    public final Object/*V*/put(Object/*K*/key, Object/*V*/value) {
         final int keyHash = (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key);
-        Entry/*<K,V>*/ entry = _entries[keyHash & (_entries.length - 1)];
+        Entry/*<K,V>*/entry = _entries[(keyHash >> R0) & (_entries.length - 1)][keyHash
+                & M0];
         while (entry != null) {
             if ((key == entry._key)
                     || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
                             .equals(entry._key)
                             : _keyComp.areEqual(key, entry._key)))) {
-                Object/*V*/ prevValue = entry._value;
+                Object/*V*/prevValue = entry._value;
                 entry._value = value;
                 return prevValue;
             }
@@ -370,15 +403,16 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @throws NullPointerException the specified map is <code>null</code>,
      *         or the specified map contains <code>null</code> keys.
      */
-    public final void putAll(Map/*<? extends K, ? extends V>*/ map) {
+    public final void putAll(Map/*<? extends K, ? extends V>*/map) {
         if (map instanceof FastMap) { // Optimization.
-            FastMap/*<? extends K, ? extends V>*/ fm = (FastMap/*<? extends K, ? extends V>*/) map;
-            for (Entry/*<? extends K, ? extends V>*/ e = fm._head, end = fm._tail; (e = e._next) != end;) {
+            FastMap/*<? extends K, ? extends V>*/fm = (FastMap/*<? extends K, ? extends V>*/) map;
+            for (Entry/*<? extends K, ? extends V>*/e = fm._head, end = fm._tail; (e = e._next) != end;) {
                 put(e._key, e._value);
             }
         } else {
-            for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
-                Map.Entry/*<? extends K, ? extends V>*/ e = (Map.Entry/*<? extends K, ? extends V>*/) i.next();
+            for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                Map.Entry/*<? extends K, ? extends V>*/e = (Map.Entry/*<? extends K, ? extends V>*/) i
+                        .next();
                 put(e.getKey(), e.getValue());
             }
         }
@@ -394,16 +428,17 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      *         previously associated <code>null</code> with the specified key.
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public final Object/*V*/ remove(Object key) {
+    public final Object/*V*/remove(Object key) {
         final int keyHash = (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key);
-        Entry/*<K,V>*/ entry = _entries[keyHash & (_entries.length - 1)];
+        Entry/*<K,V>*/entry = _entries[(keyHash >> R0) & (_entries.length - 1)][keyHash
+                & M0];
         while (entry != null) {
             if ((key == entry._key)
                     || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
                             .equals(entry._key)
                             : _keyComp.areEqual(key, entry._key)))) {
-                Object/*V*/ prevValue = entry._value;
+                Object/*V*/prevValue = entry._value;
                 removeEntry(entry);
                 return prevValue;
             }
@@ -424,8 +459,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @param keyComparator the key comparator.
      * @return <code>this</code>
      */
-    public FastMap setKeyComparator(FastComparator keyComparator) {
-        _keyComp = (keyComparator == FastComparator.DEFAULT) ? null
+    public FastMap/*<K,V>*/setKeyComparator(FastComparator keyComparator) {
+        _keyComp = (keyComparator == FastComparator.DIRECT) ? null
                 : keyComparator;
         return this;
     }
@@ -436,7 +471,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @param valueComparator the value comparator.
      * @return <code>this</code>
      */
-    public FastMap setValueComparator(FastComparator valueComparator) {
+    public FastMap/*<K,V>*/setValueComparator(FastComparator valueComparator) {
         _values.setValueComparator(valueComparator);
         return this;
     }
@@ -446,7 +481,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * 
      * @param entry the entry to be removed.
      */
-    public final void removeEntry(Entry/*<K,V>*/ entry) {
+    public final void removeEntry(Entry/*<K,V>*/entry) {
         // Updates size.
         _size--;
 
@@ -472,11 +507,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      */
     public final void clear() {
         // Clears all keys, values and buckets linked lists.
-        for (Entry/*<K,V>*/ e = _head, end = _tail; (e = e._next) != end;) {
+        for (Entry/*<K,V>*/e = _head, end = _tail; (e = e._next) != end;) {
             e._key = null;
             e._value = null;
-            final Entry/*<K,V>*/[] table = e._table;
-            table[e._keyHash & (table.length - 1)] = null;
+            final Entry/*<K,V>*/[][] table = e._table;
+            table[(e._keyHash >> R0) & (table.length - 1)][e._keyHash & M0] = null;
         }
         _tail = _head._next;
         _size = 0;
@@ -499,7 +534,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         if (obj == this) {
             return true;
         } else if (obj instanceof Map) {
-            Map/*<?,?>*/ that = (Map) obj;
+            Map/*<?,?>*/that = (Map) obj;
             if (this.size() == that.size()) {
                 final Set thatEntrySet = that.entrySet();
                 for (Entry e = _head, end = _tail; (e = e._next) != end;) {
@@ -551,18 +586,20 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         int totalCollisions = 0;
         int size = 0;
         for (int i = 0; i < _entries.length; i++) {
-            Entry entry = _entries[i];
-            int occupancy = 0;
-            while (entry != null) {
-                occupancy++;
-                if (occupancy > maxOccupancy) {
-                    maxOccupancy = occupancy;
+            for (int j = 0; j < _entries[i].length; j++) {
+                Entry entry = _entries[i][j];
+                int occupancy = 0;
+                while (entry != null) {
+                    occupancy++;
+                    if (occupancy > maxOccupancy) {
+                        maxOccupancy = occupancy;
+                    }
+                    if (occupancy > 1) {
+                        totalCollisions++;
+                    }
+                    entry = entry._beside;
+                    size++;
                 }
-                if (occupancy > 1) {
-                    totalCollisions++;
-                }
-                entry = entry._beside;
-                size++;
             }
         }
         TextBuilder percentCollisions = TextBuilder.newInstance();
@@ -574,11 +611,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         }
         synchronized (out) {
             out.print("SIZE: " + size);
-            out.print(", TABLE LENGTH: " + _entries.length);
+            out.print(", TABLE LENGTH: " + _entries.length * _entries[0].length);
             out.print(", AVG COLLISIONS: " + percentCollisions);
             out.print(", MAX SLOT OCCUPANCY: " + maxOccupancy);
-            out.print(", KEY COMPARATOR: " + 
-                    ((_keyComp == null) ? FastComparator.DEFAULT : _keyComp));
+            out.print(", KEY COMPARATOR: "
+                    + ((_keyComp == null) ? FastComparator.DIRECT : _keyComp));
             out.println();
             if (_oldEntries != null) {
                 out.print(" + ");
@@ -601,11 +638,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @return a collection view of the values contained in this map 
      *         (instance of {@link FastCollection}).
      */
-    public final Collection/*<V>*/ values() {
+    public final Collection/*<V>*/values() {
         return _values;
     }
 
-    private final class Values extends FastCollection/*<V>*/ {
+    private final class Values extends FastCollection/*<V>*/{
 
         public int size() {
             return _size;
@@ -615,15 +652,15 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             FastMap.this.clear();
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ headRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/headRecord() {
             return FastMap.this._head;
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ tailRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/tailRecord() {
             return FastMap.this._tail;
         }
 
-        public Object/*V*/ valueOf(Record record) {
+        public Object/*V*/valueOf(Record record) {
             return ((Entry/*<K,V>*/) record)._value;
         }
 
@@ -646,11 +683,12 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @return a collection view of the mappings contained in this map
      *         (instance of {@link FastCollection}).
      */
-    public final Set/*<Map.Entry<K,V>>*/ entrySet() {
+    public final Set/*<Map.Entry<K,V>>*/entrySet() {
         return _entrySet;
     }
 
-    private final class EntrySet extends FastCollection/*<Map.Entry<K,V>>*/ implements Set/*<Map.Entry<K,V>>*/ {
+    private final class EntrySet extends FastCollection
+    /*<Map.Entry<K,V>>*/implements Set/*<Map.Entry<K,V>>*/{
 
         public int size() {
             return _size;
@@ -662,8 +700,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
 
         public boolean contains(Object obj) { // Optimization.
             if (obj instanceof Map.Entry) {
-                Map.Entry/*<?,?>*/ entry = (Entry) obj;
-                Entry/*<K,V>*/ mapEntry = getEntry(entry.getKey());
+                Map.Entry/*<?,?>*/entry = (Entry) obj;
+                Entry/*<K,V>*/mapEntry = getEntry(entry.getKey());
                 return entry.equals(mapEntry);
             } else {
                 return false;
@@ -674,9 +712,9 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             Text text = Text.valueOf('[');
             final Text equ = Text.valueOf('=');
             final Text sep = Text.valueOf(", ");
-            for (Entry/*<K,V>*/ e = _head, end = _tail; (e = e._next) != end;) {
-                text = text.concat(Text.valueOf(e._key)).concat(equ).
-                   concat(Text.valueOf(e._value));
+            for (Entry/*<K,V>*/e = _head, end = _tail; (e = e._next) != end;) {
+                text = text.concat(Text.valueOf(e._key)).concat(equ).concat(
+                        Text.valueOf(e._value));
                 if (e._next != end) {
                     text = text.concat(sep);
                 }
@@ -684,16 +722,16 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             return text.concat(Text.valueOf(']'));
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ headRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/headRecord() {
             return _head;
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ tailRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/tailRecord() {
             return _tail;
         }
 
-        public Object/*Map.Entry<K,V>*/ valueOf(Record record) {
-            return (Map.Entry/*<K,V>*/)record;
+        public Object/*Map.Entry<K,V>*/valueOf(Record record) {
+            return (Map.Entry/*<K,V>*/) record;
         }
 
         public void delete(Record record) {
@@ -713,11 +751,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @return a set view of the keys contained in this map
      *         (instance of {@link FastCollection}).
      */
-    public final Set/*<K>*/ keySet() {
+    public final Set/*<K>*/keySet() {
         return _keySet;
     }
 
-    private final class KeySet extends FastCollection/*<K>*/ implements Set/*<K>*/ {
+    private final class KeySet extends FastCollection/*<K>*/implements Set/*<K>*/{
 
         public int size() {
             return _size;
@@ -735,15 +773,15 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             return FastMap.this.remove(obj) != null;
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ headRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/headRecord() {
             return FastMap.this._head;
         }
 
-        public Record/*<FastMap.Entry<K,V>>*/ tailRecord() {
+        public Record/*<FastMap.Entry<K,V>>*/tailRecord() {
             return FastMap.this._tail;
         }
 
-        public Object/*K*/ valueOf(Record record) {
+        public Object/*K*/valueOf(Record record) {
             return ((Entry/*<K,V>*/) record)._key;
         }
 
@@ -763,7 +801,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      *  
      * @return an unmodifiable view of this map.
      */
-    public final Map/*<K,V>*/ unmodifiable() {
+    public final Map/*<K,V>*/unmodifiable() {
         return _unmodifiable;
     }
 
@@ -774,9 +812,9 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
      * @param key the entry's key.
      * @param value the entry's value.
      */
-    private void addEntry(int hash, Object/*K*/ key, Object/*V*/ value) {
+    private void addEntry(int hash, Object/*K*/key, Object/*V*/value) {
         // Updates size.
-        if (_size++ > _entries.length) { // Check if entry table too small. 
+        if ((_size++ >> R0) >= _entries.length) { // Check if entry table too small. 
             increaseEntryTable();
         }
 
@@ -792,137 +830,126 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         _tail._table = _entries;
 
         // Connects to bucket.
-        final int index = hash & (_entries.length - 1);
-        Entry beside = _entries[index];
+        Entry[] tmp = _entries[(hash >> R0) & (_entries.length - 1)];
+        if (tmp == NULL_BLOCK) {
+            _entries[(hash >> R0) & (_entries.length - 1)] = tmp = (Entry[]) ENTRY_BLOCK
+                    .newObject();
+        }
+        Entry beside = tmp[hash & M0];
         _tail._beside = beside;
-        _entries[index] = _tail; // Volatile.
+        tmp[hash & M0] = _tail; // Volatile.
 
         // Moves tail forward.
         _tail = newTail;
     }
 
+    // Increases the table size, the table length is multiplied by 8.
+    // It still ensures that no more half memory space is unused 
+    // (most space is being taken by the entries objects themselves).
     private void increaseEntryTable() {
-        final int length = _entries.length;
-        FastMap/*<K,V>*/ oldEntries;
-        if (length <= (1 << 4)) { //                
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_6.newObject();
-        } else if (length <= (1 << 6)) { //         
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_8.newObject();
-        } else if (length <= (1 << 8)) { //         
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_10.newObject();
-        } else if (length <= (1 << 10)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_12.newObject();
-        } else if (length <= (1 << 12)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_14.newObject();
-        } else if (length <= (1 << 14)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_16.newObject();
-        } else if (length <= (1 << 16)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_18.newObject();
-        } else if (length <= (1 << 18)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_20.newObject();
-        } else if (length <= (1 << 20)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_22.newObject();
-        } else if (length <= (1 << 22)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_24.newObject();
-        } else if (length <= (1 << 24)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_26.newObject();
-        } else if (length <= (1 << 26)) { //        
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_28.newObject();
-        } else {                                  
-            oldEntries = (FastMap/*<K,V>*/) FACTORY_30.newObject();
+        if (_entries.length >= (1 << 27))
+            return; // Cannot increase.
+        final int newLength = _entries.length << 3;
+        FastMap/*<K,V>*/tmp;
+        if (newLength <= (1 << 3)) { //                
+            tmp = (FastMap/*<K,V>*/) FACTORY_3.newObject(); // 256
+        } else if (newLength <= (1 << 6)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_6.newObject(); // 2048
+        } else if (newLength <= (1 << 9)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_9.newObject(); // 16,384
+        } else if (newLength <= (1 << 12)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_12.newObject(); // 131,072
+        } else if (newLength <= (1 << 15)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_15.newObject(); // 1,048,576
+        } else if (newLength <= (1 << 18)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_18.newObject();
+        } else if (newLength <= (1 << 21)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_21.newObject();
+        } else if (newLength <= (1 << 24)) {
+            tmp = (FastMap/*<K,V>*/) FACTORY_24.newObject();
+        } else {
+            tmp = (FastMap/*<K,V>*/) FACTORY_27.newObject();
+        }
+        for (int i = 0; i < tmp._entries.length;) {
+            tmp._entries[i++] = NULL_BLOCK;
         }
         // Swaps entries.
-        Entry[] newEntries = oldEntries._entries;
-        oldEntries._entries = _entries;
+        Entry[][] newEntries = tmp._entries;
+        tmp._entries = _entries;
         _entries = newEntries;
 
         // Setup the oldEntries map (used only for hash access).
-        oldEntries._oldEntries = _oldEntries;
-        oldEntries._keyComp = _keyComp;
-        oldEntries._head = null;
-        oldEntries._tail = null;
-        oldEntries._size = -1;
+        tmp._oldEntries = _oldEntries;
+        tmp._keyComp = _keyComp;
+        tmp._head = null;
+        tmp._tail = null;
+        tmp._size = -1;
 
         // Done. We have now a much larger entry table. 
         // Still, we keep reference to the old entries through oldEntries
         // until the map is cleared.
-        _oldEntries = oldEntries;
+        _oldEntries = tmp;
     }
+
+    private static final Entry[] NULL_BLOCK = new Entry[1 << R0];
+
+    private static ObjectFactory ENTRY_BLOCK = new ObjectFactory() {
+        public Object create() {
+            return new Entry[1 << R0];
+        }
+    };
+
+    private static ObjectFactory FACTORY_3 = new ObjectFactory() {
+        public Object create() {
+            return new FastMap(new Entry[1 << 3][]);
+        }
+    };
 
     private static ObjectFactory FACTORY_6 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 6);
+            return new FastMap(new Entry[1 << 6][]);
         }
     };
 
-    private static ObjectFactory FACTORY_8 = new ObjectFactory() {
+    private static ObjectFactory FACTORY_9 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 8);
-        }
-    };
-
-    private static ObjectFactory FACTORY_10 = new ObjectFactory() {
-        public Object create() {
-            return new FastMap(1 << 10);
+            return new FastMap(new Entry[1 << 9][]);
         }
     };
 
     private static ObjectFactory FACTORY_12 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 12);
+            return new FastMap(new Entry[1 << 12][]);
         }
     };
 
-    private static ObjectFactory FACTORY_14 = new ObjectFactory() {
+    private static ObjectFactory FACTORY_15 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 14);
+            return new FastMap(new Entry[1 << 15][]);
         }
     };
 
-    private static ObjectFactory FACTORY_16 = new ObjectFactory() {
-        public Object create() {
-            return new FastMap(1 << 16);
-        }
-    };
-    
     private static ObjectFactory FACTORY_18 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 18);
+            return new FastMap(new Entry[1 << 18][]);
         }
     };
 
-    private static ObjectFactory FACTORY_20 = new ObjectFactory() {
+    private static ObjectFactory FACTORY_21 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 20);
-        }
-    };
-
-    private static ObjectFactory FACTORY_22 = new ObjectFactory() {
-        public Object create() {
-            return new FastMap(1 << 22);
+            return new FastMap(new Entry[1 << 21][]);
         }
     };
 
     private static ObjectFactory FACTORY_24 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 24);
+            return new FastMap(new Entry[1 << 24][]);
         }
     };
 
-    private static ObjectFactory FACTORY_26 = new ObjectFactory() {
+    private static ObjectFactory FACTORY_27 = new ObjectFactory() {
         public Object create() {
-            return new FastMap(1 << 26);
-        }
-    };
-
-    private static ObjectFactory FACTORY_28 = new ObjectFactory() {
-        public Object create() {
-            return new FastMap(1 << 28);
-        }
-    };
-    private static ObjectFactory FACTORY_30 = new ObjectFactory() {
-        public Object create() {
-            return new FastMap(1 << 30);
+            return new FastMap(new Entry[1 << 27][]);
         }
     };
 
@@ -945,9 +972,9 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     // Implements Reusable.
     public void reset() {
         clear();
-        _keyComp = Configuration.isPoorSystemHash() ? 
-                FastComparator.REHASH : null;
-        setValueComparator(FastComparator.DEFAULT);
+        _keyComp = Configuration.isPoorSystemHash() ? FastComparator.REHASH
+                : null;
+        setValueComparator(FastComparator.DIRECT);
     }
 
     /**
@@ -965,7 +992,10 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         final int entriesLength = stream.readInt();
 
         // Initializes transient fields.
-        _entries = (Entry/*<K,V>*/[]) new FastMap.Entry[entriesLength];
+        _entries = (Entry/*<K,V>*/[][]) new FastMap.Entry[entriesLength][];
+        for (int i = 0; i < _entries.length;) {
+            _entries[i++] = (Entry/*<K,V>*/[]) new FastMap.Entry[1 << R0];
+        }
         _head = new Entry();
         _tail = new Entry();
         _head._next = _tail;
@@ -984,9 +1014,10 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
 
         // Reads data.
         for (int i = 0; i < size; i++) {
-            Object/*K*/ key = (Object/*K*/) stream.readObject();
-            Object/*V*/ value = (Object/*V*/) stream.readObject();
-            addEntry((_keyComp == null) ? key.hashCode() : _keyComp.hashCodeOf(key), key, value);
+            Object/*K*/key = (Object/*K*/) stream.readObject();
+            Object/*V*/value = (Object/*V*/) stream.readObject();
+            addEntry((_keyComp == null) ? key.hashCode() : _keyComp
+                    .hashCodeOf(key), key, value);
         }
     }
 
@@ -1010,14 +1041,15 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     /**
      * This class represents a {@link FastMap} entry.
      */
-    public static final class Entry/*<K,V>*/ implements Map.Entry/*<K,V>*/, Record/*<FastMap.Entry<K,V>>*/ {
+    public static final class Entry/*<K,V>*/implements Map.Entry/*<K,V>*/,
+            Record/*<FastMap.Entry<K,V>>*/{
 
         /**
          * Holds the entry factory (to allow for pre-allocation).
          */
         private static ObjectFactory FACTORY = new ObjectFactory() {
             // Creates 4 entries at a time.
-            protected Object create() { 
+            protected Object create() {
                 Entry e0 = new Entry();
 
                 Entry e1 = new Entry();
@@ -1035,36 +1067,36 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
                 return e0;
             }
         };
-        
+
         /**
          * Holds the next node.
          */
-        private Entry/*<K,V>*/ _next;
+        private Entry/*<K,V>*/_next;
 
         /**
          * Holds the previous node.
          */
-        private Entry/*<K,V>*/ _previous;
+        private Entry/*<K,V>*/_previous;
 
         /**
          * Holds the entry key.
          */
-        private Object/*K*/ _key;
+        private Object/*K*/_key;
 
         /**
          * Holds the entry value.
          */
-        private Object/*V*/ _value;
+        private Object/*V*/_value;
 
         /**
          * Holds the next entry in the same bucket.
          */
-        private Entry/*<K,V>*/ _beside;
+        private Entry/*<K,V>*/_beside;
 
         /**
          * Holds the hash table this entry belongs to.
          */
-        private Entry/*<K,V>*/[] _table;
+        private Entry/*<K,V>*/[][] _table;
 
         /**
          * Holds the key hash code.
@@ -1082,7 +1114,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
          * 
          * @return the next entry.
          */
-        public final Entry/*<K,V>*/ getNextEntry() {
+        public final Entry/*<K,V>*/getNextEntry() {
             return _next;
         }
 
@@ -1091,7 +1123,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
          * 
          * @return the previous entry.
          */
-        public final Entry/*<K,V>*/ getPreviousEntry() {
+        public final Entry/*<K,V>*/getPreviousEntry() {
             return _previous;
         }
 
@@ -1100,7 +1132,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
          * 
          * @return the entry key.
          */
-        public final Object/*K*/ getKey() {
+        public final Object/*K*/getKey() {
             return _key;
         }
 
@@ -1109,7 +1141,7 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
          * 
          * @return the entry value.
          */
-        public final Object/*V*/ getValue() {
+        public final Object/*V*/getValue() {
             return _value;
         }
 
@@ -1119,8 +1151,8 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
          * @param value the new value.
          * @return the previous value.
          */
-        public final Object/*V*/ setValue(Object/*V*/ value) {
-            Object/*V*/ old = _value;
+        public final Object/*V*/setValue(Object/*V*/value) {
+            Object/*V*/old = _value;
             _value = value;
             return old;
         }
@@ -1154,12 +1186,12 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
         }
 
         // Implements Record interface.
-        public final Record/*<FastMap.Entry<K,V>>*/ getPreviousRecord() {
+        public final Record/*<FastMap.Entry<K,V>>*/getPreviousRecord() {
             return _previous;
         }
 
         // Implements Record interface.
-        public final Record/*<FastMap.Entry<K,V>>*/ getNextRecord() {
+        public final Record/*<FastMap.Entry<K,V>>*/getNextRecord() {
             return _next;
         }
 
@@ -1172,11 +1204,11 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             _next._previous = _previous;
 
             // Removes from bucket.
-            final int index = _keyHash & (_table.length - 1);
-            final Entry/*<K,V>*/ beside = _beside;
-            Entry/*<K,V>*/ previous = _table[index];
+            final int index = (_keyHash >> R0) & (_table.length - 1);
+            final Entry/*<K,V>*/beside = _beside;
+            Entry/*<K,V>*/previous = _table[index][_keyHash & M0];
             if (previous == this) { // First in bucket.
-                _table[index] = beside;
+                _table[index][_keyHash & M0] = beside;
             } else {
                 while (previous._beside != this) {
                     previous = previous._beside;
@@ -1190,11 +1222,13 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
     /**
      * This class represents an read-only view over a {@link FastMap}.
      */
-    private final class Unmodifiable extends RealtimeObject implements Map/*<K,V>*/, Serializable {
-        
+    private final class Unmodifiable extends RealtimeObject implements
+            Map/*<K,V>*/, Serializable {
+
         public boolean equals(Object obj) {
             return FastMap.this.equals(obj);
         }
+
         public int hashCode() {
             return FastMap.this.hashCode();
         }
@@ -1219,19 +1253,19 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             return FastMap.this.containsValue(value);
         }
 
-        public Object/*V*/ get(Object key) {
+        public Object/*V*/get(Object key) {
             return FastMap.this.get(key);
         }
 
-        public Object/*V*/ put(Object/*K*/ key, Object/*V*/ value) {
+        public Object/*V*/put(Object/*K*/key, Object/*V*/value) {
             throw new UnsupportedOperationException("Unmodifiable map");
         }
 
-        public Object/*V*/ remove(Object key) {
+        public Object/*V*/remove(Object key) {
             throw new UnsupportedOperationException("Unmodifiable map");
         }
 
-        public void putAll(Map/*<? extends K, ? extends V>*/ map) {
+        public void putAll(Map/*<? extends K, ? extends V>*/map) {
             throw new UnsupportedOperationException("Unmodifiable map");
         }
 
@@ -1239,22 +1273,22 @@ public class FastMap/*<K,V>*/ extends RealtimeObject implements Map/*<K,V>*/, Re
             throw new UnsupportedOperationException("Unmodifiable map");
         }
 
-        public Set/*<K>*/ keySet() {
+        public Set/*<K>*/keySet() {
             return (Set/*<K>*/) FastMap.this._keySet.unmodifiable();
         }
 
-        public Collection/*<V>*/ values() {
+        public Collection/*<V>*/values() {
             return FastMap.this._values.unmodifiable();
         }
 
-        public Set/*<Map.Entry<K,V>>*/ entrySet() {
+        public Set/*<Map.Entry<K,V>>*/entrySet() {
             throw new UnsupportedOperationException(
-                    "Direct view over unmodifiable map entries is not supported " +
-                    " (to prevent access to Entry.setValue(Object) method). " +
-                    "To iterate over unmodifiable map entries, applications may " +
-                    "use the keySet() and values() fast collection views " +
-                    "in conjonction.");
-        }        
-        
+                    "Direct view over unmodifiable map entries is not supported "
+                            + " (to prevent access to Entry.setValue(Object) method). "
+                            + "To iterate over unmodifiable map entries, applications may "
+                            + "use the keySet() and values() fast collection views "
+                            + "in conjonction.");
+        }
+
     }
 }

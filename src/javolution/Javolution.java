@@ -93,7 +93,7 @@ public class Javolution {
         println("");
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
-        // new Perf_Io().run();
+        //new Perf_Io().run();
         new Perf_Lang().run();
         new Perf_Realtime().run();
         new Perf_Util().run();

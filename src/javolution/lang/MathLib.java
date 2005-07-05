@@ -322,7 +322,19 @@ public final class MathLib {
         return MathLib._ieee754_log(x);
     }
     /**/
-    
+
+    /**
+     * Returns the decimal logarithm of the specified value.
+     *
+     * @param x the value greater than <code>0.0</code>.
+     * @return the value y such as <code>10<sup>y</sup> == x</code>
+     @FLOATING_POINT@
+    public static double log10(double x) {
+        return log(x) * INV_LOG10;
+    }
+    private static double INV_LOG10 = 0.43429448190325182765112891891661;    
+    /**/
+
     /**
      * Returns the value of the first argument raised to the power of the
      * second argument. 

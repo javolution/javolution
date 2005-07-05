@@ -40,40 +40,34 @@ import javolution.JavolutionError;
  *             return multiply(that.longValue()); // Direct multiplication.
  *             
  *         } else { // Karatsuba multiplication  in O(n<sup>Log(3)</sup>)
- *         
  *             int bitLength = this.bitLength();
  *             int n = (bitLength >> 1) + (bitLength & 1);
  *             LargeInteger b = this.shiftRight(n);
- *             LargeInteger a = this.subtract(b.shiftLeft(n));
+ *             LargeInteger a = this.minus(b.shiftLeft(n));
  *             LargeInteger d = that.shiftRight(n);
- *             LargeInteger c = that.subtract(d.shiftLeft(n));
- *             Reference<LargeInteger> acRef = FACTORY.reference();
- *             Reference<LargeInteger> bdRef = FACTORY.reference();
- *             Reference<LargeInteger> abcdRef = FACTORY.reference();
+ *             LargeInteger c = that.minus(d.shiftLeft(n));
+ *             StackReference&lt;LargeInteger&gt; ac = StackReference.newInstance();
+ *             StackReference&lt;LargeInteger&gt; bd = StackReference.newInstance();
+ *             StackReference&lt;LargeInteger&gt; abcd = StackReference.newInstance();
  *             ConcurrentContext.enter();
  *             try { // this = a + 2^n b,   that = c + 2^n d
- *                 ConcurrentContext.execute(MULTIPLY, a, c, acRef);
- *                 ConcurrentContext.execute(MULTIPLY, b, d, bdRef);
- *                 ConcurrentContext.execute(MULTIPLY, a.add(b), c.add(d), abcdRef);
+ *                 ConcurrentContext.execute(MULTIPLY, a, c, ac);
+ *                 ConcurrentContext.execute(MULTIPLY, b, d, bd);
+ *                 ConcurrentContext.execute(MULTIPLY, a.plus(b), c.plus(d), abcd);
  *             } finally {
- *                 ConcurrentContext.exit();
+ *                 ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
  *             }
- *             
- *             LargeInteger ac = acRef.get();
- *             LargeInteger bd = bdRef.get();
- *             LargeInteger abcd = abcdRef.get();
- *             return ac.add(abcd.subtract(ac).subtract(bd).shiftLeft(n)).add(bd.shiftLeft(2 * n));
+ *             return ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
  *         }
  *     }
  *     private static final Logic MULTIPLY = new Logic() {
  *         public void run(Object[] args) {
  *             LargeInteger left = (LargeInteger) args[0];
  *             LargeInteger right = (LargeInteger) args[1];
- *             Reference<LargeInteger> result = (Reference<LargeInteger>) args[2];
- *             result.set(left.multiply(right).export()); // Recursive.
+ *             StackReference result = (StackReference) args[2];
+ *             result.set(left.times(right).export());  // Recursive.
  *         }
- *    };
- *    private static final Factory&lt;LargeInteger&gt; FACTORY = ... // LargeInteger factory.</pre>
+ *    };</pre>
  * 
  * <p> Finally, it should be noted that concurrent contexts ensure the same 
  *     behavior whether or not the execution is performed by the current

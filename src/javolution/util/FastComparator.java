@@ -25,15 +25,15 @@ import j2me.util.Comparator;
 public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serializable {
 
     /**
-     * Holds the default object comparator; no rehash is performed.
+     * Holds the direct object comparator; no rehash is performed.
      * Two objects o1 and o2 are considered {@link #areEqual equal} if and
      * only if <code>o1.equals(o2)</code>. The {@link #compare} method 
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}. 
      */
-    public static final FastComparator DEFAULT = new Default();
+    public static final FastComparator DIRECT = new Direct();
 
-    private static class Default extends FastComparator {
+    private static class Direct extends FastComparator {
         public int hashCodeOf(Object obj) {
             return (obj == null) ? 0 : obj.hashCode();
         }
@@ -47,7 +47,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
         }
 
         public String toString() {
-            return "Default";
+            return "Direct";
         }
     };
 
@@ -270,4 +270,8 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      */
     public abstract int compare(Object/*T*/ o1, Object/*T*/ o2);
 
+    /**
+     * @deprecated Replaced by {@link #DIRECT}
+     */
+    public static final FastComparator DEFAULT = DIRECT;
 }

@@ -68,9 +68,9 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     /**
-     * Creates a set of specified initial capacity. Unless the set size 
+     * Creates a set of specified initial capacity; unless the set size 
      * reaches the specified capacity, operations on this set will not allocate
-     * memory (e.g. no lazy initialization).
+     * memory (no lazy object creation).
      * 
      * @param capacity the initial capacity.
      */
@@ -104,8 +104,8 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      *
      * @return a new, pre-allocated or recycled set instance.
      */
-    public static FastSet newInstance() {
-        return (FastSet) FACTORY.object();
+    public static /*<E>*/ FastSet/*<E>*/ newInstance() {
+        return (FastSet/*<E>*/) FACTORY.object();
     }
 
     /**
@@ -152,7 +152,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Implements Reusable.
     public void reset() {
-        super.setValueComparator(FastComparator.DEFAULT);
+        super.setValueComparator(FastComparator.DIRECT);
         _map.reset();
     }
 

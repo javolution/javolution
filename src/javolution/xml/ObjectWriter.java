@@ -121,37 +121,38 @@ public class ObjectWriter/*<T>*/ implements Reusable {
 
     /**
      * Defines bit flag that causes the "j:class" attribute to always be included
-     * every element; ordinarily, this attribute would not be output as a SAX
-     * event if an alias was defined.
+     * every element; ordinarily, this attribute is not output if the 
+     * class is aliased or if the format has an intrinsic element name to 
+     * class {@link XmlFormat#classFor(CharSequence) mapping}).
      */
-    public static int OUTPUT_CLASS_NAME = 0x01;
+    public static int OUTPUT_JCLASS = 0x01;
 
     /**
      * Defines bit flag that causes "xmlns:<prefix>" attributes to be output
      * with every element; sometimes this is required for SAX sources that
      * are used for transformations.
      */
-    public static int OUTPUT_XMLNS_ATTRIBUTES = 0x02;
+    public static int OUTPUT_XMLNS = 0x02;
 
     /**
      * Defines bit flag the prevents ID and IDREF attributes from being output,
      * even if they are defined by an <code>XmlFormat</code> instance.
      */
-    public static int OUTPUT_IDENTIFIERS = 0x04;
+    public static int NO_IDENTIFIER = 0x04;
 
     /**
-     * Defines bit flag that causes the IDREF attribute to be output only if
-     * infinite recursion would occur. This feature is very useful if you would like
-     * to process the serialization object using XSLT, and would like all IDREF
-     * objects to be expanded in the SAX stream.  This flag has no effect if 
-     * OUTPUT_IDENTIFIERS is not set.
+     * Defines bit flag that causes the IDREF attribute to be expanded 
+     * unless infinite recursion would occur. This feature is useful if you
+     * would like to process the serialization object using XSLT, and would 
+     * like all IDREF objects to be expanded in the SAX stream. 
+     * This flag has no effect if OUTPUT_IDENTIFIERS is not set.
      */
-    public static int AVOID_OUTPUT_IDREF = 0x08;
+    public static int EXPAND_REFERENCES = 0x08;
 
     /**
-     * Holds bit flag that defines default output features
+     * Holds bit flag that defines default output features (no feature set).
      */
-    public static int DEFAULT_FEATURES = OUTPUT_IDENTIFIERS;
+    public static int DEFAULT_FEATURES = 0;
 
     /**
      * Holds prefix-package pairs (String).
@@ -219,7 +220,7 @@ public class ObjectWriter/*<T>*/ implements Reusable {
      * Default constructor.
      */
     public ObjectWriter() {
-        _stack.add(new XmlElement());
+        _stack.addLast(new XmlElement());
     }
 
     /**
@@ -244,8 +245,8 @@ public class ObjectWriter/*<T>*/ implements Reusable {
         if (prefix.length() == 0) { // Default namespace.
             _defaultPkg = packageName;
         }
-        _namespaces.add(prefix);
-        _namespaces.add(packageName);
+        _namespaces.addLast(prefix);
+        _namespaces.addLast(packageName);
     }
 
     /**
@@ -456,21 +457,25 @@ public class ObjectWriter/*<T>*/ implements Reusable {
         if (level >= _stack.size()) {
             XmlElement tmp = (XmlElement) XmlElement.FACTORY.newObject();
             tmp._parent = (XmlElement) _stack.get(level - 1);
-            _stack.add(tmp);
+            _stack.addLast(tmp);
         }
         XmlElement xml = (XmlElement) _stack.get(level);
         xml._object = obj;
         xml._objectClass = clazz;
-        if ((_features & OUTPUT_IDENTIFIERS) != 0 && ci.format._idName != null) { // Identifier attribute must be present.
+        xml._format = ci.format;
+        
+        if ((ci.format._idName != null) && ((_features & NO_IDENTIFIER) == 0)) { 
+            // Writes identifier attribute.
             CharSequence idValue = (CharSequence) _objectToId.get(obj);
-            if (idValue != null) { // Already formatted
-                if (((_features & AVOID_OUTPUT_IDREF) == 0) || xml.isRecursion()) { // Write the reference.
+            if (idValue != null) { // Already has an identifier.
+                if (((_features & EXPAND_REFERENCES) != 0) && !xml.isRecursion()) { 
+                    // Expands object.
+                    xml._format.format(obj, xml);
+                } else { // Write the reference.
                     xml.setAttribute(ci.format._idRef.toString(), idValue);
-                } else { // Reoutput
-                    ci.format.format(obj, xml);
                 }
-            } else { // First object occurence.
-                ci.format.format(obj, xml);
+            } else { // Creates identifier.
+                xml._format.format(obj, xml);
 
                 // Sets idValue if not set already
                 idValue = xml.getAttribute(ci.format._idName.toString());
@@ -481,32 +486,20 @@ public class ObjectWriter/*<T>*/ implements Reusable {
                 _objectToId.put(obj, idValue);
             }
         } else { // No object identifier.
-            // The following test is commented out (to expensive).
-            // if (visited(obj))
-            //    throw new SAXException("Circular reference to object " + obj);
-            ci.format.format(obj, xml);
+            xml._format.format(obj, xml);
         }
 
-        boolean jPrefix = false;
-        if ((_features & OUTPUT_CLASS_NAME) != 0) { // Always output class name
+        if (((_features & OUTPUT_JCLASS) != 0) ||
+            ((tagName != null) && (xml.classFor(tagName) == null))) {
+            // Outputs j:class attribute.
             xml._attributes.addAttribute(JAVOLUTION_URI, CLASS, J, J_CLASS,
                     "CDATA", toCharSeq(ci.className));
-            jPrefix = true;
-        } else if (tagName != null) { // Output alias or class name
-            xml._attributes.addAttribute(JAVOLUTION_URI, CLASS, J, J_CLASS,
-                    "CDATA", toCharSeq(ci.alias));
-            jPrefix = true;
         }
 
-        if ((_features & OUTPUT_XMLNS_ATTRIBUTES) != 0) {
-            // TODO: should check if any of the attributes already added (such as j:id or 
-            // j:idref) has been used.
-            if (jPrefix) {
-                xml._attributes.addAttribute(XMLNS_URI, J, XMLNS, XMLNS_J,
-                        "CDATA", JAVOLUTION_URI);
-            }
-            // TODO: should build list of arbitrary prefixes used by user, and
-            // output XMLNS attributes if requested
+        if ((_features & OUTPUT_XMLNS) != 0) {
+            xml._attributes.addAttribute(XMLNS_URI, J, XMLNS, XMLNS_J,
+                  "CDATA", JAVOLUTION_URI);
+            // TODO: Output all current namespace mapping.
         }
 
         // Writes start tag.
@@ -537,7 +530,7 @@ public class ObjectWriter/*<T>*/ implements Reusable {
         }
 
         xml.reset();
-    }
+   }
 
     /**
      * Resets all internal data maintained by this writer including any 

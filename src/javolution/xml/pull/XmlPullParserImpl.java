@@ -148,7 +148,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     private final Namespaces _namespaces = new Namespaces();
 
     /**
-     * Holds the current attributes (view over _attrStack.get(_depth)).
+     * Holds the current attributes (view over _attrPool.get(_depth)).
      */
     private AttributesImpl _attributes;
 
@@ -300,7 +300,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
      */
     public XmlPullParserImpl() {
         _attributes = new AttributesImpl();
-        _attrPool.add(_attributes);
+        _attrPool.addLast(_attributes);
     }
 
     /**
@@ -640,17 +640,11 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             _elemLocalName = null;
             _elemNamespace = null;
             _elemQName = null;
-            // Retrieves a new AttributesImpl instance from the stack
-            // to avoid overriding the current one.
-            if (_depth >= _attrPool.size()) {
-                _attrPool.add(ATTRIBUTES_IMPL_FACTORY.newObject());
-            }
-            _attributes = (AttributesImpl) _attrPool.get(_depth);
-            _attributes.reset();
             break;
         case END_TAG:
             _attributes.reset();
             _depth--;
+            _attributes = (AttributesImpl) _attrPool.get(_depth);
             _length = _elemQName.offset;
             _start = _length;
             while (_seqs[--_seqsIndex] != _elemQName) {
@@ -742,6 +736,11 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         _length = _start;
                     } else if (c != '!') {
                         _state = OPEN_TAG + READ_ELEM_NAME;
+                        // Sets the attributes for the current depth.
+                        if (_depth >= _attrPool.size()) {
+                            _attrPool.addLast(ATTRIBUTES_IMPL_FACTORY.newObject());
+                        }
+                        _attributes = (AttributesImpl) _attrPool.get(_depth);
                         _elemQName = newSeq();
                         _elemQName.offset = _start;
                     }

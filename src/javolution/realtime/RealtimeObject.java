@@ -9,7 +9,6 @@
 package javolution.realtime;
 
 import j2me.lang.UnsupportedOperationException;
-
 import javolution.JavolutionError;
 import javolution.lang.Text;
 
@@ -19,8 +18,8 @@ import javolution.lang.Text;
  * <p> Instances of this class should be created using the inner 
  *     {@link Factory Factory} class. For example:<pre>
  *     public class Foo extends RealtimeObject {
- *         static final Factory&lt;Foo&lgt; FACTORY = new Factory&lt;Foo&lgt;() {
- *             public Foo create() {
+ *         static final Factory&lt;Foo&gt; FACTORY = new Factory&lt;Foo&gt;() {
+ *             protected Foo create() {
  *                 return new Foo();
  *             }
  *         };
@@ -100,9 +99,9 @@ public abstract class RealtimeObject implements Realtime {
      * 
      * @return <code>this</code>
      */
-    public final Object export() {
+    public final /*<T>*/ Object/*T*/ export() {
         move(ObjectSpace.OUTER);
-        return this;
+        return (Object/*T*/) this;
     }
 
     /**
@@ -111,9 +110,9 @@ public abstract class RealtimeObject implements Realtime {
      * 
      * @return <code>this</code>
      */
-    public final Object moveHeap() {
+    public final /*<T>*/ Object/*T*/ moveHeap() {
         move(ObjectSpace.HEAP);
-        return this;
+        return (Object/*T*/) this;
     }
 
     /**
@@ -124,9 +123,9 @@ public abstract class RealtimeObject implements Realtime {
      * @return <code>this</code>
      * @see    #unpreserve
      */
-    public final Object preserve() {
+    public final /*<T>*/ Object/*T*/ preserve() {
         move(ObjectSpace.HOLD);
-        return this;
+        return (Object/*T*/) this;
     }
 
     /**
@@ -138,9 +137,9 @@ public abstract class RealtimeObject implements Realtime {
      * @return <code>this</code>
      * @see    #preserve
      */
-    public final Object unpreserve() {
+    public final /*<T>*/ Object/*T*/ unpreserve() {
         move(ObjectSpace.LOCAL);
-        return this;
+        return (Object/*T*/) this;
     }
 
     // Implements Realtime interface.

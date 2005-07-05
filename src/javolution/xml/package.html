@@ -13,11 +13,14 @@
     <li> Runs on any platform including J2ME CLDC 1.0 It does not require reflection or 
          or any interface (e.g. <code>Serializable</code>) to be implemented.</li>
     <li> Allows for sharing and unicity  (through the use of factory methods instead of constructors).</li>
-    <li> The XML mapping is fully customizable and is not tight to the class internal representation 
+    <li> The XML mapping is customizable and is not tight to the class internal representation.
          (backward compatibility ensured even when implementation changes or after obfuscation).</li>
     <li> The XML mapping can be defined for a top class (or interface) and is automatically inherited by all sub-classes
          (or all implementing classes).</li>
     <li> The XML mapping can be dynamically changed.</li>
+    <li> Can even be used when the application has absolutely no control over the XML format 
+         (e.g. SOAP messages), ref. {@link javolution.xml.XmlFormat#classFor(CharSequence) 
+         XmlFormat.classFor(CharSequence)}.</li>
     </ul>
 </p>
     
@@ -32,20 +35,19 @@
            
           // XML format with name associations (members identified by an unique name).
           // See {@link javolution.xml.XmlFormat XmlFormat} for examples of positional associations.
-          protected static final XmlFormat GRAPHIC_XML = new XmlFormat(Graphic.class) {
-               public void format(Object obj, XmlElement xml) {
-                   Graphic g = (Graphic) obj;
+          static final XmlFormat&lt;Graphic> GRAPHIC_XML = new XmlFormat&lt;Graphic>(Graphic.class) {
+               public void format(Graphic g, XmlElement xml) {
                    xml.setAttribute("isVisible", g._isVisible); 
                    xml.add("Paint", g._paint);
                    xml.add("Stroke", g._stroke,);
                    xml.add("Transform", g._transform);
                }
-               public Object parse(XmlElement xml) {
-                   Graphic g = (Graphic) xml.object();
+               public Graphic parse(XmlElement xml) {
+                   Graphic g = xml.object();
                    g._isVisible = xml.getAttribute("isVisible", true);
-                   g._paint = (Paint) xml.get("Paint");
-                   g._stroke = (Stroke) xml.get("Stroke");
-                   g._transform = (Transform) xml.get("Transform");
+                   g._paint = xml.get("Paint");
+                   g._stroke = xml.get("Stroke");
+                   g._transform = xml.get("Transform");
                    return g;
               }
           };
@@ -55,24 +57,23 @@
           private Surface _geometry;  
         
           // Adds geometry (surface) to format.
-          protected static final XmlFormat AREA_XML = new XmlFormat(Area.class) {
-              public void format(Object obj, XmlElement xml) {
-                  Area area = (Area) obj;
-                  GRAPHIC_XML.format(area, xml); // Calls parent format.
+          static final XmlFormat&lt;Area> AREA_XML = new XmlFormat&lt;Area>(Area.class) {
+              public void format(Area area, XmlElement xml) {
+                  getSuper().format(area, xml); // Calls parent Graphic format.
                   xml.add("Geometry", area._geometry);
               }
-              public Object parse(XmlElement xml) {
-                  Area area = (Area) GRAPHIC_XML.parse(xml); // Calls parent parse.
-                  area._geometry = (Surface) xml.get("Geometry");
+              public Area parse(XmlElement xml) {
+                  Area area = (Area) getSuper().parse(xml); // Calls parent Graphic parse.
+                  area._geometry = xml.get("Geometry");
                   return area;
               }
           };
       }</pre>
     
     The following writes a graphic area to a file, then reads it:<pre>
-      new ObjectWriter().write(area, new FileOutputStream("C:/area.xml"));
-      Area a = (Area) new ObjectReader().read(new FileInputStream("C:/area.xml"));</pre> 
-
+      new ObjectWriter&lt;Area>().write(area, new FileOutputStream("C:/area.xml"));
+      Area a = new ObjectReader&lt;area>().read(new FileInputStream("C:/area.xml"));</pre> 
+ 
     <p><i>For multiple objects transmissions over open I/O streams, 
     {@link javolution.xml.XmlInputStream} and {@link javolution.xml.XmlOutputStream} are recommended.</i></p>
 
@@ -97,15 +98,14 @@
 
 <p> Cross-references are supported for formats using identifiers. For example:<pre>
     public class Polygon extends Surface { 
-        FastList _vertices = new FastList(); 
+        FastList&lt;Point> _vertices = new FastList&lt;Point>(); 
         
-        protected static final XmlFormat POLYGON_XML = new XmlFormat(Polygon.class, "id", "ref") {
-            public void format(Object obj, XmlElement xml) {
-                Polygon polygon = (Polygon) obj;
+        static final XmlFormat&lt;Polygon> POLYGON_XML = new XmlFormat&lt;Polygon>(Polygon.class, "id", "ref") {
+            public void format(Polygon polygon, XmlElement xml) {
                 xml.getContent().addAll(polygon._vertices); 
             }
-            public Object parse(XmlElement xml) {
-                Polygon polygon = (Polygon) xml.object();
+            public Polygon parse(XmlElement xml) {
+                Polygon polygon = xml.object();
                 polygon._vertices.addAll(xml.getContent());
                 return polygon;
             }
@@ -130,13 +130,12 @@
     The value of the identifier attribute can be set explicitly. For example:<pre>
       public abstract class Person {
           private String _name;
-          protected static final XmlFormat PERSON_XML = new XmlFormat(Person.class, "name", "name") { // Use the same attribute ("name") as identifier and reference.
-              public void format(Object obj, XmlElement xml) {
-                  Person person = (Person) obj;
+          protected static final XmlFormat&lt;Person> PERSON_XML = new XmlFormat&lt;Person>(Person.class, "name", "name") { // Use the same attribute ("name") as identifier and reference.
+              public void format(Person person, XmlElement xml) {
                   xml.setAttribute("name", person._name); // Sets identifier value explicitly.
               }
-              public Object parse(XmlElement xml) {
-                  Persone person = (Person) xml.object();
+              public Person parse(XmlElement xml) {
+                  Persone person = xml.object();
                   person._name = xml.getAttribute("name", "");
                   return person;
               }

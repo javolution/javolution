@@ -7,6 +7,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.io;
+
 import j2me.lang.IllegalStateException;
 import j2me.io.CharConversionException;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
+import javolution.lang.Appendable;
 import javolution.lang.Reusable;
 
 /**
@@ -139,6 +141,7 @@ public final class Utf8StreamReader extends Reader implements Reusable {
         byte b = _bytes[_start];
         return ((b >= 0) && (_start++ < _end)) ? b : read2();
     }
+
     // Reads one full character, blocks if necessary.
     private int read2() throws IOException {
         if (_start < _end) {
@@ -185,25 +188,25 @@ public final class Utf8StreamReader extends Reader implements Reusable {
                 throw new CharConversionException("Invalid UTF-8 Encoding");
             }
         } else { // No more bytes in buffer.
-            if (_inputStream != null) {
-                _start = 0;
-                _end = _inputStream.read(_bytes, 0, _bytes.length);
-                if (_end > 0) {
-                    return read2(); // Continues.
-                } else { // Done.
-                    if (_moreBytes == 0) {
-                        return -1;
-                    } else { // Incomplete sequence.
-                        throw new CharConversionException(
-                            "Unexpected end of stream");
-                    }
-                }
-            } else {
+            if (_inputStream == null)
                 throw new IOException("Stream closed");
+            _start = 0;
+            _end = _inputStream.read(_bytes, 0, _bytes.length);
+            if (_end > 0) {
+                return read2(); // Continues.
+            } else { // Done.
+                if (_moreBytes == 0) {
+                    return -1;
+                } else { // Incomplete sequence.
+                    throw new CharConversionException(
+                            "Unexpected end of stream");
+                }
             }
         }
     }
+
     private int _code;
+
     private int _moreBytes;
 
     /**
@@ -222,49 +225,82 @@ public final class Utf8StreamReader extends Reader implements Reusable {
      * @throws IOException if an I/O error occurs.
      */
     public int read(char cbuf[], int off, int len) throws IOException {
-        if (_inputStream != null) {
+        if (_inputStream == null)
+            throw new IOException("Stream closed");
+        if (_start >= _end) { // Fills buffer.
+            _start = 0;
+            _end = _inputStream.read(_bytes, 0, _bytes.length);
+            if (_end <= 0) { // Done.
+                return _end;
+            }
+        }
+        final int off_plus_len = off + len;
+        for (int i = off; i < off_plus_len;) {
+            // assert(_start < _end)
+            byte b = _bytes[_start];
+            if ((b >= 0) && (++_start < _end)) {
+                cbuf[i++] = (char) b; // Most common case.
+            } else if (b < 0) {
+                if (i < off_plus_len - 1) { // Up to two 'char' can be read.
+                    int code = read2();
+                    if (code < 0x10000) {
+                        cbuf[i++] = (char) code;
+                    } else if (code <= 0x10ffff) { // Surrogates.
+                        cbuf[i++] = (char) (((code - 0x10000) >> 10) + 0xd800);
+                        cbuf[i++] = (char) (((code - 0x10000) & 0x3ff) + 0xdc00);
+                    } else {
+                        throw new CharConversionException("Cannot convert U+"
+                                + Integer.toHexString(code)
+                                + " to char (code greater than U+10FFFF)");
+                    }
+                    if (_start < _end) {
+                        continue;
+                    }
+                }
+                return i - off;
+            } else { // End of buffer (_start >= _end).
+                cbuf[i++] = (char) b;
+                return i - off;
+            }
+        }
+        return len;
+    }
+
+    /**
+     * Reads characters into the specified appendable.  This method will block
+     * until the end of the stream is reached.
+     *
+     * @param  dest the destination buffer.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void read(Appendable dest) throws IOException {
+        if (_inputStream == null)
+            throw new IOException("Stream closed");
+        while (true) {
             if (_start >= _end) { // Fills buffer.
                 _start = 0;
                 _end = _inputStream.read(_bytes, 0, _bytes.length);
                 if (_end <= 0) { // Done.
-                    return _end;
+                    break;
                 }
             }
-            final int off_plus_len = off + len;
-            for (int i=off; i < off_plus_len;) {
-                // assert(_start < _end)
-                byte b = _bytes[_start];
-                if ((b >= 0) && (++_start < _end)) {
-                    cbuf[i++] = (char) b; // Most common case.
-                } else if (b < 0) {
-                    if (i < off_plus_len - 1) { // Up to two 'char' can be read.
-                        int code = read2();
-                        if (code < 0x10000) {
-                            cbuf[i++] = (char)code;
-                        } else if (code <= 0x10ffff) { // Surrogates.
-                            cbuf[i++] = (char)
-                                (((code - 0x10000) >> 10) + 0xd800);
-                            cbuf[i++] = (char)
-                                (((code - 0x10000) & 0x3ff) + 0xdc00);
-                        } else {
-                            throw new CharConversionException(
-                                "Cannot convert U+" +
-                                Integer.toHexString(code) +
-                                " to char (code greater than U+10FFFF)");
-                        }
-                        if (_start < _end) {
-                            continue;
-                        }
-                    }
-                    return i - off;
-                } else { // End of buffer (_start >= _end).
-                    cbuf[i++] = (char) b;
-                    return i - off;
+            byte b = _bytes[_start];
+            if (b >= 0) {
+                dest.append((char) b); // Most common case.
+                _start++;
+            } else {
+                int code = read2();
+                if (code < 0x10000) {
+                    dest.append((char) code);
+                } else if (code <= 0x10ffff) { // Surrogates.
+                    dest.append((char) (((code - 0x10000) >> 10) + 0xd800));
+                    dest.append((char) (((code - 0x10000) & 0x3ff) + 0xdc00));
+                } else {
+                    throw new CharConversionException("Cannot convert U+"
+                            + Integer.toHexString(code)
+                            + " to char (code greater than U+10FFFF)");
                 }
             }
-            return len;
-        } else {
-            throw new IOException("Stream closed");
         }
     }
 
@@ -276,5 +312,5 @@ public final class Utf8StreamReader extends Reader implements Reusable {
         _moreBytes = 0;
         _start = 0;
     }
-    
+
 }

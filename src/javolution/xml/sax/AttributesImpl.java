@@ -325,12 +325,12 @@ public final class AttributesImpl implements Attributes, Reusable {
     public int addAttribute(CharSequence uri, CharSequence localName,
             CharSequence prefix, CharSequence qName, String type,
             CharSequence value) {
-        _entries.add(uri);
-        _entries.add(localName);
-        _entries.add(prefix);
-        _entries.add(qName);
-        _entries.add(type);
-        _entries.add(value);
+        _entries.addLast(uri);
+        _entries.addLast(localName);
+        _entries.addLast(prefix);
+        _entries.addLast(qName);
+        _entries.addLast(type);
+        _entries.addLast(value);
         return _length++;
     }
 

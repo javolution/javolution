@@ -20,10 +20,21 @@
 <P> This facility works with any VM or even native executable (GCJ). 
     It is also well suited for <a href="https://rtsj.dev.java.net/">RTSJ</a> VMs
     <UL> 
-    <LI> To avoid IllegalAssignmentError: Objects can be preallocated in immortal memory during class initialization and 
-         can be referenced by any other object (e.g. scoped objects).</LI>
-    <LI> To avoid MemoryAccessError: NoHeapRealTimeThread can always access objects in immortal memory 
-         and therefore can directly exchange "new" (recycled) objects with normal threads.</LI>
+    <LI> To avoid <b><code>IllegalAssignmentError</code></b>: Stack objects can be 
+         {@link javolution.realtime.AllocationProfile preallocated} in heap or immortal memory 
+         and be referenced from any other objects. For example:<PRE>
+         void main(String[]) {
+             // Preallocates factory objects in immortal memory at start-up.
+             ImmortalMemory.instance().enter(new Runnable() {
+                 public void run() {
+                     AllocationProfile.load(); 
+                 }
+             });
+         }</PRE></LI>
+    <LI> To avoid <b><code>MemoryAccessError</code></b>: NoHeapRealTimeThread 
+         may communicate with other threads through objects in immortal memory
+         with <i><b>J</b>avolution</i> doing the recycling (necessary as immortal
+         memory is never garbage collected).</LI>
     </UL></P>
     
 <P> <i><b>J</b>avolution</i> allows your application to control when the object creation 
@@ -87,7 +98,7 @@
         private double _latitude;
         private double _longitude;        
         private static final Factory&lt;Coordinates&gt; FACTORY = new Factory&lt;Coordinates&gt;() {
-              public Coordinates create() {
+              protected Coordinates create() {
                   return new Coordinates();
               }
         };
@@ -175,12 +186,12 @@
            Matrix result = null;
            while (exp >= 1) { // Iteration.
                 if ((exp & 1) == 1) {
-                   result = (result == null) ? pow2 : result.multiply(pow2);
+                   result = (result == null) ? pow2 : result.times(pow2);
                 }
-                pow2 = pow2.multiply(pow2);
+                pow2 = pow2.times(pow2);
                 exp >>>= 1;
            } 
-           return (Matrix) result.export(); // Exports result to outer stack (or heap).
+           return result.export(); // Exports result to outer stack (or heap).
        } finally {
             PoolContext.exit(); // Resets local stack (all temporary objects recycled at once).
        }
@@ -201,14 +212,14 @@
        
     // Use of factory pool access to recycle immediately.
     //
-    ObjectPool&gt;char[]&lt; charsPool = CHAR_1024_FACTORY.currentPool();
+    ObjectPool&lt;char[]&gt; charsPool = CHAR_1024_FACTORY.currentPool();
     char[] buffer = charsPool.next(); // Next object from pool.
     for (int i = reader.read(buffer, 0, buffer.length); i > 0;) {
         ...
     } 
     charsPool.recycle(buffer); // Puts object back into its pool immediatly (optional).
     ...
-    private static final ObjectFactory&gt;char[]&lt; CHAR_1024_FACTORY = new ObjectFactory&gt;char[]&lt;() { 
+    private static final ObjectFactory&lt;char[]&gt; CHAR_1024_FACTORY = new ObjectFactory&lt;char[]&gt;() { 
         public char[] create() { return new char[1024]; }
     };
         
@@ -280,14 +291,13 @@
                      PoolContext.enter();
                      try {
                          Coordinates newPosition = calculatePosition(); // Performed using objects from this pool context.
+                         position.unpreserve();                         // Allows old position object to be recycled
                          synchronized (this) {                          
-                             position = newPosition;
+                             position = newPosition.preserve();
                          }    
                      } finally {                     
-                         position.preserve();                           // Moves position object out of the stack.
-                         PoolContext.exit();                            // Recycles all stack objects except the position object (very fast, just a stack pointer reset).
-                         position.unpreserve();                         // Allows old position object to be recycled
-                     }                                                  // (moves the position object back to its stack). 
+                         PoolContext.exit();                            // Recycles all stack objects except the position object
+                     }                                                  // (very fast, just a stack pointer reset).
                  }
              }
              public synchronized Coordinates getPosition() {            // On the stack of the calling thread.
@@ -366,36 +376,32 @@
     <pre>
     public static void main(String[] args) {
         FastList&lt;Amoeba&gt; population = new FastList&lt;Amoeba&gt;();
-        FastList&lt;Amoeba&gt; nursery = new FastList&lt;Amoeba&gt;();
-        Amoeba[] amoebas = new Amoeba[COLLECTION_SIZE];
+        FastTable&lt;Amoeba&gt; survivors = new FastTable&lt;Amoeba&gt;();
         for (int i = 0; i < POPULATION_SIZE; i++) {
             population.add(Amoeba.newInstance());
         }
         while (...) {
             PoolContext.enter();
             try {
-        for (Record head = headRecord(), r = tailRecord().getPreviousRecord(); r != head;) {
-                // Removes starting from the tail (the same code would work with any FastCollection, e.g. FastTable).
-                for (FastList.Node&lt;Amoeba&gt; head = population.headNode(), n = population.tailNode().getPreviousNode(), previous; n != head; n = previous) {
-                    previous = n.getPreviousNode();
+                for (FastList.Node&lt;Amoeba&gt; n = population.headNode(), end = population.tailNode(); (n = n.getNextNode()) != end;) {
                     Amoeba a = n.getValue();
-                    if (a.getSurvivalLevel() < average) {
-                        population.delete(n);
+                    if (a.getSurvivalLevel() >= average) {
+                        survivors.add(a);
+                    } else {
+                        a.unpreserve(); // Allows recycling.
                     }
                 }
-                population.toArray(amoebas); // Use array to accelerate random access.
+                population.clear();
+                population.addAll(survivors); 
                 for (int i = population.size(); i < POPULATION_SIZE; i++) {
-                    Amoeba male = amobeas[random.nextInt(population.size())];
-                    Amoeba female = amobeas[random.nextInt(population.size())];
-                    nursery.add(PairingUtil.pair(male, female));
+                    Amoeba male = survivors.get(MathLib.randomInt(0, survivors.size()-1));
+                    Amoeba female = survivors.get(MathLib.randomInt(0, survivors.size()-1));
+                    population.add(PairingUtil.pair(male, female).preserve()); // New amoeba allocated on the stack but preserved!
                 }
-                population.addAll(nursery);
-                nursery.clear();
+                survivors.clear();
                 generation++;
-            } finally { // Recycles all except the current population.
-                population.preserve(); 
-                PoolContext.exit(); 
-                population.unpreserve();  
+            } finally { // Recycles all stack objects except for the current amoeba population.
+                PoolContext.exit(); // Recycles.
             }
         }
     }
@@ -403,9 +409,7 @@
     public int getSurvivalLevel() {
         ObjectPool&lt;int[][]&gt; boardPool = BOARD_FACTORY.currentPool();  
         int[][] board = boardPool.next(); // Returns thread-local board.
-        
         ... // Do some complicate stuff with the board (board game ?)
-        
         int level = 0;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {

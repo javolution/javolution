@@ -154,17 +154,6 @@ public abstract class ObjectFactory/*<T>*/{
     }
 
     /**
-     * Returns a temporary {@link StackReference reference on the stack} over
-     * the objects produced by this factory.
-     * 
-     * @return a recycled, pre-allocated or new reference object.
-     */
-    public StackReference/*<javolution.lang.Reference<T>>*/reference() {
-        return (StackReference/*<javolution.lang.Reference<T>>*/) StackReference.FACTORY
-                .object();
-    }
-
-    /**
      * Returns the local pool for the current thread or the {@link #heapPool}
      * when the current thread executes in a {@link HeapContext}. 
      * 

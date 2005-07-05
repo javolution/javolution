@@ -46,7 +46,7 @@ import j2me.lang.IllegalStateException;
  * <p> Once loaded, the allocation profile is updated automatically during 
  *     program execution. Allocation profiles are typically generated from
  *     test runs (from an initially empty profile) and contain the maximum 
- *     number of allocations between preallocations or before recycling 
+ *     number of allocations between preallocations or the stack maximum size
  *     for threads executing within a {@link PoolContext}.
  *     Here is an example of profile data (which can be manually edited):<pre>
  *     javolution.util.FastSet$1 20
@@ -108,7 +108,7 @@ public final class AllocationProfile {
     }
 
     /**
-     * Clears all preallocated object and reset Indicates if allocation profiling is enabled.
+     * Indicates if allocation profiling is enabled.
      * 
      * @return <code>true</code> if allocation profile is enabled;
      *        <code>false</code> otherwise.

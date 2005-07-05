@@ -286,7 +286,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  c the character to append.
      * @return <code>this</code>
      */
-    public final Appendable append(char c) {
+    public final Appendable/*TextBuilder*/ append(char c) {
         if (_length >= _capacity)
             increaseCapacity();
         final int i = _length++;
@@ -310,7 +310,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  csq the character sequence to append or <code>null</code>.
      * @return <code>this</code>
      */
-    public final Appendable append(CharSequence csq) {
+    public final Appendable/*TextBuilder*/ append(CharSequence csq) {
         return (csq == null) ? append("null") : append(csq, 0, csq.length());
     }
 
@@ -326,7 +326,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
      *         || (start > end) || (end > csq.length())</code>
      */
-    public final Appendable append(CharSequence csq, int start, int end) {
+    public final Appendable/*TextBuilder*/ append(CharSequence csq, int start, int end) {
         if (csq == null)
             return append("null");
         if ((start < 0) || (end < 0) || (start > end) || (end > csq.length()))

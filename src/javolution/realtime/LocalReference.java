@@ -1,5 +1,6 @@
 package javolution.realtime;
 
+import j2me.io.Serializable;
 import javolution.lang.Reference;
 import javolution.util.FastMap;
 
@@ -44,7 +45,7 @@ import javolution.util.FastMap;
  *     from within the same {@link LocalContext}.</p>
  *     
  */
-public class LocalReference/*<T>*/ implements Reference/*<T>*/ {
+public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
 
     /**
      * Holds the default value for this variable.
@@ -109,6 +110,15 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/ {
         }
         // No local context, sets default value.
         _defaultValue = value;
+    }
+
+    /**
+     * Returns the default value for this reference.
+     *
+     * @return the defaultValue.
+     */
+    public Object/*T*/ getDefault() {
+        return _defaultValue;
     }
 
     /**

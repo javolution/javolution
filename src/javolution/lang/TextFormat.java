@@ -21,20 +21,20 @@ import java.io.IOException;
  *     <code>toString()</code> or <code>toText()</code>) 
  *     can be {@link javolution.realtime.LocalContext locally scoped}.
  *     For example: <pre>
- *     class FooFormat extends Format&lt;Foo&gt; {
- *         static final FooFormat DEFAULT = ...; 
- *         static final LocalReference&lt;FooFormat&gt; CURRENT_REF = new LocalReference&lt;FooFormat&gt;(DEFAULT);
- *         public static FooFormat getInstance() {  
- *             return CURRENT_REF.get();
+ *     public class Foo {
+ *         private static final LocalReference&lt;TextFormat&lt;Foo&gt;&gt; TEXT_FORMAT 
+ *             = new LocalReference&lt;TextFormat&lt;Foo&gt;&gt;(DEFAULT);
+ *         public static TextFormat&lt;Foo&gt; getTextFormat() {  
+ *             return TEXT_FORMAT.get();
  *         }
- *         public static void setInstance(FooFormat format) {
- *             CURRENT_REF.set(format);
+ *         public static void setTextFormat(TextFormat&lt;Foo&gt; format) {
+ *             TEXT_FORMAT.set(format);
  *         }
  *     }
  *     ...
  *     LocalContext.enter();
  *     try {
- *         FooFormat.setInstance(myFormat);
+ *         Foo.setTextFormat(myFormat);
  *         System.out.println(foo); // Current thread displays foo using myFormat. 
  *     } finally {
  *         LocalContext.exit(); // Current thread reverts to previous format.

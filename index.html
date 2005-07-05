@@ -308,10 +308,7 @@ body {
          serialized/deserialized in 
          <A HREF="api/javolution/xml/package-summary.html">XML format</A> in any
          form you may want, no need to implement Serializable or for the
-         platform to support serialization (see the
-         <A HREF="https://bindmark.dev.java.net/">bindmark</A> project for performance 
-         reports on this facility)
-         <BR> </LI>
+         platform to support serialization</LI>
          <LI CLASS="simplespacer_body">Using the <B><I>Javolution</I></B> <A
             HREF="api/javolution/io/Struct.html">Struct</A> and 
          <A HREF="api/javolution/io/Union.html">Union</A> base classes,
@@ -341,7 +338,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16">Javolution Version 3.3.3 - May 22, 2005</SPAN></DIV>
+         CLASS="style16">Javolution Version 3.4.0 - July 4, 2005</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -349,10 +346,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-3.3.3-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-3.4.0-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-3.3.3-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-3.4.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -452,7 +449,8 @@ body {
          <LI CLASS="simplespacer_body">Real-time implementations of 
          <A HREF="api/javolution/util/FastMap.html">Map</A>, 
          <A HREF="api/javolution/util/FastList.html">List</A> and 
-         <A HREF="api/javolution/util/FastSet.html">Set</A>. </LI>
+         <A HREF="api/javolution/util/FastSet.html">Set</A> supporting 
+         concurrent access without synchronization.</LI>
          <LI CLASS="simplespacer_body">
          <A HREF="api/javolution/io/Struct.html">Struct</A> and 
          <A HREF="api/javolution/io/Union.html">Union</A> classes for
@@ -482,7 +480,7 @@ body {
          <LI CLASS="simplespacer_body">Miscellaneous 
          <A HREF="api/javolution/io/package-summary.html">UTF-8
          readers/writers</A>, <A HREF="api/javolution/lang/MathLib.html">math
-         functions</A>, <A HREF="api/javolution/util/ReetrantLock.html">locks</A>,
+         functions</A>, <A HREF="api/javolution/util/ReentrantLock.html">locks</A>,
          etc...</LI>
       </UL></TD>
       </TR>
@@ -589,7 +587,7 @@ body {
       <DIV CLASS="style9" ALIGN="center">1.5 
       </DIV></TD>
       <TD CLASS="style9">J2SE 1.5+ </TD>
-      <TD CLASS="style9">Generic <A HREF="api/javolution/util/package-summary.html">collection</A>  classes 
+      <TD CLASS="style9">Parameterization of relevant classes (e.g. <A HREF="api/javolution/util/package-summary.html">collections</A>)
       <BR> javolution.lang.Appendable and javolution.lang.Enum are moved to
       the java.lang.* package. </TD>
       </TR>
@@ -683,7 +681,7 @@ body {
       development, comments, issues, bug reporting).<BR> 
       <SPAN CLASS="style13">Coding Standard:</SPAN> 
       <A HREF="http://java.sun.com/docs/codeconv/index.html"> 
-      Sun Code Convention</A> with <A HREF="css/coding_standard.txt">Addendum</A>.<BR>
+      Sun Code Convention</A> with <A HREF="doc/coding_standard.txt">Addendum</A>.<BR>
       <SPAN CLASS="style13">Preferred Environment:</SPAN> 
       <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding). </TD>
       </TR>
@@ -747,17 +745,11 @@ body {
       <B><I>Javolution</I></B> (previously known as: <B>J.A.D.E. J</B>ava 
       <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment): 
       <UL>
-         <LI><IMG SRC="css/img/new.gif">
+         <LI>
          <A HREF="doc/Javolution-Collections.pdf">Collection Classes for Real-Time 
          and High-Performance Applications (pdf)</A><BR>
          Introduction to <B><I>Javolution</I></B>  
          <A href="https://rtsj.dev.java.net/">RTSJ-Compliant</A> Collections Classes.</LI>
-         <A HREF="https://bindmark.dev.java.net/">Performance
-         comparison of XML-Java bindings</A></LI>
-         <LI><A HREF="https://bindmark.dev.java.net/">Performance
-         comparison of XML-Java bindings</A></LI>
-         <LI><A HREF="http://wiki.apache.org/jakarta-commons/Digester/WhyUseDigester">
-         Digester - Why Use Digester (jakarta-common)</A></LI>
          <LI><A HREF="http://www.sys-con.com/story/?storyid=45500&DE=1">
          Turbo-Charging Java for Real-Time Applications</A><BR> (July 2004
          issue of <B>Java Developer Journal</B>)</LI>
@@ -776,7 +768,7 @@ body {
       <BR></I><B><I>Javolution</I></B>'s users can also show their
       support with the "Powered By Javolution" button:<BR> 
       <BR> 
-      <IMG HEIGHT="32" SRC="css/img/javolution.png" WIDTH="144"> 
+      <IMG HEIGHT="32" SRC="doc/img/javolution.png" WIDTH="144"> 
       <BR> 
       <BR> (e.g. <SPAN CLASS="style15">&lt;a
       href="http://javolution.org"&gt;&lt;img
@@ -846,37 +838,28 @@ body {
          From Fabrizio Fortino a <code>FastTree</code> ordered collection implementation.<BR>
          </LI>
  
-         <LI CLASS="simplespacer_body"><B> May 22, 2008: Javolution 3.3.3 </B><BR>
-         Allows successive parsing of documents without reseting the parser [3.3.3]<BR>
-         Fixed pull parser text error 
-         (<a href="https://javolution.dev.java.net/issues/show_bug.cgi?id=8">Issue #8</A>) [3.3.2]<BR>
-         Completed parameterization for all <B><I>Javolution</I></B> classes <I>(ant 1.5 target)</I><BR>
-         Updated <A HREF="http://javolution.org/doc/benchmark.html"> performance report</A> [3.3.1]<BR>
-         Added <A HREF="api/javolution/lang/Reference.html">Reference</A> class and sub-classes [3.3.0]<BR>
-         Fixed pull parser empty tag notification error 
-         (<a href="https://javolution.dev.java.net/issues/show_bug.cgi?id=7">Issue #7</A>) [3.3.0]<BR>
-         Fixed memory leak in xml marshalling and inneficiencies in xml unmarshalling [3.3.0]<BR>
-         <B>Backward Compatibility Warning:</B> <BR>
-         &nbsp;&nbsp;&nbsp;<A HREF="api/javolution/lang/MathLib.html">MathLib</A> and 
-         <A HREF="api/javolution/lang/Reflection.html">Reflection</A> have been moved
-         to <A HREF="api/javolution/lang/package-summary.html">java.lang</A>
+         <LI CLASS="simplespacer_body"><B> July 4, 2005: Javolution 3.4.0 </B><BR>
+         Smoother capacity increase for <A HREF="api/javolution/util/FastMap.html">FastMap</A> [3.4.0]<BR>
+         Linux benchmark <A HREF="http://javolution.org/doc/benchmark.html">results</A> instead of Windows [3.4.0]<BR>
+         Easier creation of <A HREF="api/javolution/realtime/StackReference.html">StackReference</A> for functions returning more than one value [3.4.0]<BR>
          </LI>
          
-         <LI CLASS="simplespacer_body"><B> May 4, 2008: Javolution 3.2.9 </B><BR>
-         Added insertion/deletion support to <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.2.9]<BR>
-         Added <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.2.8]<BR>
+         <LI CLASS="simplespacer_body"><B> June 24, 2008: Javolution 3.3 </B><BR>
+         Completed library parameterization.
+         </LI>
+         
+         <LI CLASS="simplespacer_body"><B> May 4, 2008: Javolution 3.2 </B><BR>
          Improved <A HREF="api/javolution/xml/package-summary.html">xml serialization/deserialization</A>
          (added support for name-based associations) [3.2.0]<BR>
          Realtime <A HREF="api/javolution/xml/pull/XmlPullParserImpl.html">xml pull parser</A>
          (no object creation and up to 5x the speed of standard XPP parsers) [3.2.0]<BR>
          </LI>
 
-         <LI CLASS="simplespacer_body"><B> March 12, 2005: Javolution 3.1.2</B><BR>
-         Fixed bug introduced in 3.1.0 (<A HREF="api/javolution/util/FastMap.html">FastMap</A>) [3.1.1] [3.1.2]<BR>
+         <LI CLASS="simplespacer_body"><B> March 12, 2005: Javolution 3.1</B><BR>
          Extensive testing (using <A HREF="http://sources.redhat.com/mauve/">Mauve</A> test suite) [3.1.0]<BR>
          </LI>
 
-         <LI CLASS="simplespacer_body"><B> March 3, 2005: Javolution 3.0.8</B><BR>
+         <LI CLASS="simplespacer_body"><B> March 3, 2005: Javolution 3.0</B><BR>
          <A HREF="api/javolution/lang/Text.html">Text</A> enhancements [3.0.5] [3.0.6] [3.0.7]<BR>
          <A HREF="api/javolution/realtime/AllocationProfile.html">Allocation profiler</A>!
          It allows your classes to be initialized and <B>ALL</B> your objects preallocated at start-up 
@@ -884,23 +867,17 @@ body {
          and garbage collection <B>EVER</B> (also several fold acceleration increase of your application)!<BR>
          </LI>
 
-         <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2.5</B><BR>
+         <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2</B><BR>
          Automatic detection of poorly distributed system hash code (see 
          <A HREF="api/javolution/util/FastMap.html">FastMap</A>) [2.2.2]<BR>
           Modified xml serialization to generate SAX events for 
          <A HREF="http://cocoon.apache.org/2.1/tutorial/tutorial-rmi-generator.html">cocoon</A>
          (see <A HREF="api/javolution/xml/ObjectWriter.html">ObjectWriter</A>) [2.2.0]<BR>
-          Removed calls to <CODE>System.getProprety()</CODE> (security issues with Java WebStart) [2.2.0]<BR>
+         Removed calls to <CODE>System.getProprety()</CODE> (security issues with Java WebStart) [2.2.0]<BR>
          </LI>
 
          <LI CLASS="simplespacer_body"><B> December 19, 2004: Javolution 2.1</B><BR>
          CLDC 1.0 support [2.1.0]<BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> December 12, 2004: Javolution 2.0</B><BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> November 8, 2004: Javolution 1.1</B><BR>
          </LI>
          
          <LI CLASS="simplespacer_body"><B> October 4, 2004: Javolution 1.0</B><BR>
@@ -913,17 +890,17 @@ body {
           WIDTH="92%">
       <TR>
       <TD CLASS="simplespacer_body style14">
-      <A HREF="http://www.opensource.org/"><IMG HEIGHT="60" BORDER="0" SRC="css/img/osi-certified-72x60.gif" WIDTH="72"></A></DIV>
+      <A HREF="http://www.opensource.org/"><IMG HEIGHT="60" BORDER="0" SRC="doc/img/osi-certified-72x60.gif" WIDTH="72"></A></DIV>
       </TD>
       <TD CLASS="simplespacer_body style14" >
-      <A HREF="http://javolution.dev.java.net/"><IMG HEIGHT="47" BORDER="0" SRC="css/img/javanet.gif" WIDTH="170"></A> 
+      <A HREF="http://javolution.dev.java.net/"><IMG HEIGHT="47" BORDER="0" SRC="doc/img/javanet.gif" WIDTH="170"></A> 
       </TD>
       <TD CLASS="simplespacer_body style14">
-      <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
+      <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="doc/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
       </TD>
       <TD CLASS="simplespacer_body style14">
       Comments: <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
-      Revision: May 22, 2005 
+      Revision: July 4, 2005 
       <BR> <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A></TD>
       </TR>
    </TABLE>

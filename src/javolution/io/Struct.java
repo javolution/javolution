@@ -17,6 +17,8 @@ import javolution.lang.Enum;
 import javolution.lang.Reflection;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * <p> This class represents a <code>C/C++ struct</code>; it confers
@@ -60,16 +62,16 @@ import java.io.IOException;
  *     }
  *     public static class Student extends Struct {
  *         public final Utf8String  name   = new Utf8String(64);
- *         public final Date        birth  = (Date) inner(new Date());
- *         public final Float32[]   grades = (Float32[]) array(new Float32[10]);
- *         public final Reference32 next   =  new Reference32(Student.class);
+ *         public final Date        birth  = inner(new Date());
+ *         public final Float32[]   grades = array(new Float32[10]);
+ *         public final Reference32&lt;Student&gt; next =  new Reference32&lt;Student&gt;();
  *     }</pre>
  *     Struct's members are directly accessible:<pre>
  *     Student student = new Student();
  *     student.name.set("John Doe"); // Null terminated (C compatible)
  *     int age = 2003 - student.birth.year.get();
  *     student.grades[2].set(12.5f);
- *     student = (Student) student.next.get();</pre></p>
+ *     student = student.next.get();</pre></p>
  * <p> Applications may also work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to 
  *     decode/encode UDP messages directly:<pre>
@@ -125,7 +127,7 @@ import java.io.IOException;
  *     memory mapped instances.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 2.2, February 4, 2005
+ * @version 3.3, June 7, 2005
  */
 public class Struct {
 
@@ -166,6 +168,11 @@ public class Struct {
     private boolean _resetIndex;
 
     /**
+     * Holds bytes array for Stream I/O when byteBuffer has no intrinsic array.
+     */
+    private byte[] _bytes;
+
+    /**
      * Default constructor.
      */
     public Struct() {
@@ -173,8 +180,8 @@ public class Struct {
     }
 
     /**
-     * Returns the size in bytes of this {@link Struct}. The size includes
-     * tail padding to satisfy the {@link Struct} alignment requirement
+     * Returns the size in bytes of this struct. The size includes
+     * tail padding to satisfy the struct alignment requirement
      * (defined by the largest alignment of its {@link Member members}).
      *
      * @return the C/C++ <code>sizeof(this)</code>.
@@ -186,13 +193,12 @@ public class Struct {
     }
 
     /**
-     * Returns the {@link ByteBuffer} for this {@link Struct}.
-     * This method will allocate a new buffer if none has been set.
+     * Returns the byte buffer for this struct. This method will allocate 
+     * a new <b>direct</b> buffer if none has been set.
      *
-     * <p> Changes to the buffer's content are visible in this {@link Struct},
+     * <p> Changes to the buffer's content are visible in this struct,
      *     and vice versa.</p>
-     * <p> The buffer of an inner {@link Struct} is the same as its parent
-     *     {@link Struct}.</p>
+     * <p> The buffer of an inner struct is the same as its parent struct.</p>
      * <p> The position of a {@link Struct.Member struct's member} within the 
      *     byte buffer is given by {@link Struct.Member#position
      *     member.position()}</p>
@@ -206,7 +212,9 @@ public class Struct {
         return (_byteBuffer != null) ? _byteBuffer : newBuffer();
     }
 
-    private ByteBuffer newBuffer() {
+    private synchronized ByteBuffer newBuffer() {
+        if (_byteBuffer != null)
+            return _byteBuffer; // Synchronized check.
         int size = size();
         // Covers misaligned 64 bits access when packed.
         int capacity = isPacked() ? (((size & 0x7) == 0) ? size : size + 8
@@ -218,7 +226,7 @@ public class Struct {
     }
 
     /**
-     * Sets the current {@link ByteBuffer} for this {@link Struct}.
+     * Sets the current byte buffer for this struct.
      * The specified byte buffer can be mapped to memory for direct memory
      * access or can wrap a shared byte array for I/O purpose 
      * (e.g. <code>DatagramPacket</code>).
@@ -226,9 +234,16 @@ public class Struct {
      * @param byteBuffer the new byte buffer.
      * @param position the position of this struct in the specified byte buffer.
      * @return <code>this</code>
-     * @throws UnsupportedOperationException if this struct is an inner struct. 
+     * @throws IllegalArgumentException if the specified byteBuffer has a 
+     *         different byte order than this struct. 
+     * @throws UnsupportedOperationException if this struct is an inner struct.
+     * @see #byteOrder() 
      */
     public final Struct setByteBuffer(ByteBuffer byteBuffer, int position) {
+        if (byteBuffer.order() != byteOrder())
+            throw new IllegalArgumentException(
+                    "The byte order of the specified byte buffer"
+                            + " is different from this struct byte order");
         if (_outer != null)
             throw new UnsupportedOperationException(
                     "Inner struct byte buffer is inherited from outer");
@@ -249,11 +264,64 @@ public class Struct {
     }
 
     /**
-     * Returns this {@link Struct} address. This method allows for 
-     * {@link Struct} to be referenced (e.g. pointer) from other {@link Struct}.
+     * Reads this struct from the specified input stream  
+     * (convenience method when using Stream I/O). For better performance,
+     * use of Block I/O (e.g. <code>java.nio.channels.*</code>) is recommended.
+     *
+     * @param in the input stream being read from.
+     * @return the number of bytes read (typically the {@link #size() size}
+     *         of this struct.
+     * @throws IOException if an I/O error occurs.
+     */
+    public int read(InputStream in) throws IOException {
+        ByteBuffer buffer = getByteBuffer();
+        if (buffer.hasArray()) {
+            int offset = buffer.arrayOffset() + getByteBufferPosition();
+            return in.read(buffer.array(), offset, size());
+        } else {
+            synchronized (buffer) {
+                if (_bytes == null) {
+                    _bytes = new byte[size()];
+                }
+                int bytesRead = in.read(_bytes);
+                buffer.position(getByteBufferPosition());
+                buffer.put(_bytes);
+                return bytesRead;
+            }
+        }
+    }
+
+    /**
+     * Writes this struct to the specified output stream  
+     * (convenience method when using Stream I/O). For better performance,
+     * use of Block I/O (e.g. <code>java.nio.channels.*</code>) is recommended.
+     *
+     * @param out the output stream to write to.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void write(OutputStream out) throws IOException {
+        ByteBuffer buffer = getByteBuffer();
+        if (buffer.hasArray()) {
+            int offset = buffer.arrayOffset() + getByteBufferPosition();
+            out.write(buffer.array(), offset, size());
+        } else {
+            synchronized (buffer) {
+                if (_bytes == null) {
+                    _bytes = new byte[size()];
+                }
+                buffer.position(getByteBufferPosition());
+                buffer.get(_bytes);
+                out.write(_bytes);
+            }
+        }
+    }
+
+    /**
+     * Returns this struct address. This method allows for structs 
+     * to be referenced (e.g. pointer) from other structs.
      *
      * @return the struct memory address.
-     * @throws UnsupportedOperationException if the struct's buffer is not 
+     * @throws UnsupportedOperationException if the struct buffer is not 
      *         a direct buffer.
      * @see    Reference32
      * @see    Reference64
@@ -273,7 +341,7 @@ public class Struct {
             .getMethod("sun.nio.ch.DirectBuffer.address()");
 
     /**
-     * Returns the <code>String</code> representation of this {@link Struct}
+     * Returns the <code>String</code> representation of this struct
      * in the form of its constituing bytes (hexadecimal). For example:<pre>
      *     public static class Student extends Struct {
      *         Utf8String name  = new Utf8String(16);
@@ -289,8 +357,8 @@ public class Struct {
      *     4A 6F 68 6E 20 44 6F 65 00 00 00 00 00 00 00 00
      *     07 D3 00 00 41 48 00 00</pre>
      *
-     * @return a hexadecimal representation of the bytes content for this
-     *         {@link Struct}.
+     * @return a hexadecimal representation of the bytes content for this 
+     *         struct.
      */
     public String toString() {
         final int size = size();
@@ -314,7 +382,7 @@ public class Struct {
     ///////////////////
 
     /**
-     * Returns the byte order for this {@link Struct} (configurable). 
+     * Returns the byte order for this struct (configurable). 
      * The byte order is inherited by inner structs. Sub-classes may change 
      * the byte order by overriding this method. For example:<pre>
      * public class TopStruct extends Struct {
@@ -333,9 +401,9 @@ public class Struct {
     }
 
     /**
-     * Indicates if this {@link Struct} is packed (configurable).
-     * By default, {@link Member} of a {@link Struct} are aligned on the
-     * boundary corresponding to the member's base type; padding is performed
+     * Indicates if this struct is packed (configurable).
+     * By default, {@link Member members} of a struct are aligned on the
+     * boundary corresponding to the member base type; padding is performed
      * if necessary. This directive is inherited by inner structs.
      * Sub-classes may change the packing directive by overriding this method.
      * For example:<pre>
@@ -362,7 +430,7 @@ public class Struct {
      * @throws IllegalArgumentException if the specified struct is already 
      *         an inner struct.
      */
-    public final Struct inner(Struct struct) {
+    public final/*<S extends Struct> S*/Struct inner(/*S*/Struct struct) {
         if (struct._outer != null)
             throw new IllegalArgumentException(
                     "struct: Already an inner struct");
@@ -370,7 +438,7 @@ public class Struct {
         final int bitSize = struct.size() << 3;
         updateIndexes(struct._alignment, bitSize, bitSize);
         struct._outerOffset = (_bitIndex - bitSize) >> 3;
-        return struct;
+        return (/*S*/Struct) struct;
     }
 
     /**
@@ -383,7 +451,7 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains 
      *         inner structs.
      */
-    public final Struct[] array(Struct[] structs) {
+    public final/*<S extends Struct> S*/Struct[] array(/*S*/Struct[] structs) {
         Class structClass = null;
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
@@ -391,7 +459,7 @@ public class Struct {
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < structs.length;) {
-            Struct struct = structs[i];
+            /*S*/Struct struct = structs[i];
             if (struct == null) {
                 try {
                     if (structClass == null) {
@@ -400,7 +468,7 @@ public class Struct {
                                 .length() - 1);
                         structClass = Reflection.getClass(structName);
                     }
-                    struct = (Struct) structClass.newInstance();
+                    struct = (/*S*/Struct) structClass.newInstance();
                 } catch (Exception e) {
                     throw new JavolutionError(e);
                 }
@@ -408,7 +476,7 @@ public class Struct {
             structs[i++] = inner(struct);
         }
         _resetIndex = resetIndexSaved;
-        return structs;
+        return (/*S*/Struct[]) structs;
     }
 
     /**
@@ -421,8 +489,7 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains 
      *         inner structs.
      */
-    public final Struct[][] array(Struct[][] structs) {
-        Class structClass = null;
+    public final/*<S extends Struct> S*/Struct[][] array(/*S*/Struct[][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _bitIndex = 0;
@@ -432,7 +499,7 @@ public class Struct {
             array(structs[i]);
         }
         _resetIndex = resetIndexSaved;
-        return structs;
+        return (/*S*/Struct[][]) structs;
     }
 
     /**
@@ -445,8 +512,7 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains 
      *         inner structs.
      */
-    public final Struct[][][] array(Struct[][][] structs) {
-        Class structClass = null;
+    public final/*<S extends Struct> S*/Struct[][][] array(/*S*/Struct[][][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _bitIndex = 0;
@@ -456,7 +522,7 @@ public class Struct {
             array(structs[i]);
         }
         _resetIndex = resetIndexSaved;
-        return structs;
+        return (/*S*/Struct[][][]) structs;
     }
 
     /**
@@ -469,7 +535,7 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array 
      *         is empty and the member type is unknown. 
      */
-    public final Member[] array(Member[] arrayMember) {
+    public final/*<M extends Member> M*/Member[] array(/*M*/Member[] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _bitIndex = 0;
@@ -477,40 +543,41 @@ public class Struct {
         }
         if (BOOL.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Bool();
+                arrayMember[i++] = (/*M*/Member) this.new Bool();
         } else if (SIGNED_8.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Signed8();
+                arrayMember[i++] = (/*M*/Member) this.new Signed8();
         } else if (UNSIGNED_8.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Unsigned8();
+                arrayMember[i++] = (/*M*/Member) this.new Unsigned8();
         } else if (SIGNED_16.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Signed16();
+                arrayMember[i++] = (/*M*/Member) this.new Signed16();
         } else if (UNSIGNED_16.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Unsigned16();
+                arrayMember[i++] = (/*M*/Member) this.new Unsigned16();
         } else if (SIGNED_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Signed32();
+                arrayMember[i++] = (/*M*/Member) this.new Signed32();
         } else if (UNSIGNED_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Unsigned32();
+                arrayMember[i++] = (/*M*/Member) this.new Unsigned32();
         } else if (SIGNED_64.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Signed64();
+                arrayMember[i++] = (/*M*/Member) this.new Signed64();
         } else if (FLOAT_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Float32();
+                arrayMember[i++] = (/*M*/Member) this.new Float32();
         } else if (FLOAT_64.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;)
-                arrayMember[i++] = this.new Float64();
+                arrayMember[i++] = (/*M*/Member) this.new Float64();
         } else {
             throw new UnsupportedOperationException(
-                    "Unknown member, literal array should be used");
+                    "Cannot create member elements, the arrayMember should " +
+                    "contain the member instances instead of null");
         }
         _resetIndex = resetIndexSaved;
-        return arrayMember;
+        return (/*M*/Member[]) arrayMember;
     }
 
     private static final Class BOOL = new Bool[0].getClass();
@@ -543,7 +610,7 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array 
      *         is empty and the member type is unknown. 
      */
-    public final Member[][] array(Member[][] arrayMember) {
+    public final/*<M extends Member> M*/Member[][] array(/*M*/Member[][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _bitIndex = 0;
@@ -553,7 +620,7 @@ public class Struct {
             array(arrayMember[i]);
         }
         _resetIndex = resetIndexSaved;
-        return arrayMember;
+        return (/*M*/Member[][]) arrayMember;
     }
 
     /**
@@ -566,7 +633,8 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array 
      *         is empty and the member type is unknown. 
      */
-    public final Member[][][] array(Member[][][] arrayMember) {
+    public final/*<M extends Member> M*/Member[][][] array(
+            /*M*/Member[][][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _bitIndex = 0;
@@ -576,7 +644,7 @@ public class Struct {
             array(arrayMember[i]);
         }
         _resetIndex = resetIndexSaved;
-        return arrayMember;
+        return (/*M*/Member[][][]) arrayMember;
     }
 
     /**
@@ -1159,30 +1227,24 @@ public class Struct {
      *           can be created at the address specified by {@link #value} 
      *           (using JNI) and then {@link #set set} to the reference.</p>
      */
-    public class Reference32 extends Member {
-        private final Class _structClass;
+    public class Reference32/*<S extends Struct>*/extends Member {
 
-        private Struct _struct;
+        private/*S*/Struct _struct;
 
-        public Reference32(Class structClass) {
+        public Reference32() {
             super(4, 4);
-            _structClass = structClass;
         }
 
-        public void set(Struct struct) {
-            if (_structClass.isInstance(struct)) {
+        public void set(/*S*/Struct struct) {
+            if (struct != null) {
                 getByteBuffer().putInt(position(), (int) struct.address());
-            } else if (struct == null) {
-                getByteBuffer().putInt(position(), 0);
             } else {
-                throw new IllegalArgumentException("struct: Is an instance of "
-                        + struct.getClass() + ", instance of " + _structClass
-                        + " expected");
+                getByteBuffer().putInt(position(), 0);
             }
             _struct = struct;
         }
 
-        public Struct get() {
+        public/*S*/Struct get() {
             return _struct;
         }
 
@@ -1210,30 +1272,23 @@ public class Struct {
      *           can be created at the address specified by {@link #value} 
      *           (using JNI) and then {@link #set set} to the reference.</p>
      */
-    public class Reference64 extends Member {
-        private final Class _structClass;
+    public class Reference64/*<S extends Struct>*/extends Member {
+        private/*S*/Struct _struct;
 
-        private Struct _struct;
-
-        public Reference64(Class structClass) {
+        public Reference64() {
             super(8, 8);
-            _structClass = structClass;
         }
 
-        public void set(Struct struct) {
-            if (_structClass.isInstance(struct)) {
+        public void set(/*S*/Struct struct) {
+            if (struct != null) {
                 getByteBuffer().putLong(position(), struct.address());
             } else if (struct == null) {
                 getByteBuffer().putLong(position(), 0L);
-            } else {
-                throw new IllegalArgumentException("struct: Is an instance of "
-                        + struct.getClass() + ", instance of " + _structClass
-                        + " expected");
             }
             _struct = struct;
         }
 
-        public Struct get() {
+        public/*S*/Struct get() {
             return _struct;
         }
 

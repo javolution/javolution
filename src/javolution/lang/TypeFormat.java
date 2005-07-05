@@ -715,7 +715,7 @@ public final class TypeFormat {
                 return append(chars, "0");
             if (!showZero)
                 return append(chars, "0.0");
-            chars.append("0.0");
+            append(chars, "0.0");
             for (int i = 2; i < digits; i++) {
                 chars.append('0');
             }

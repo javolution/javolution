@@ -92,7 +92,7 @@ public abstract class Context {
      * key removal (ref. FastMap documentation). The whole collection 
      * is replaced when dead threads are removed.
      */
-    private static FastMap ThreadToContext = new FastMap(1024);
+    private static FastMap ThreadToContext = new FastMap();
 
     /**
      * Holds class lock (used when thread-context mapping is changed).
@@ -327,7 +327,7 @@ public abstract class Context {
         }
         if (deadThreadCount > 256) { // Remove thread objects themselves.
             // Replaces the whole map to keep read access unsynchronized.
-            FastMap tmp = new FastMap(1024);
+            FastMap tmp = new FastMap(Context.ThreadToContext.size());
             for (FastMap.Entry e = Context.ThreadToContext.headEntry(), end = Context.ThreadToContext
                     .tailEntry(); (e = e.getNextEntry()) != end;) {
                 Thread thread = (Thread) e.getKey();
