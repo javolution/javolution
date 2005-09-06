@@ -45,6 +45,7 @@ css/img/ventrobanner.jpg -text
 css/index.css -text svneol=unset#application/octet-stream
 css/javadoc.css -text svneol=unset#application/octet-stream
 doc/Javolution-Collections.pdf -text
+doc/Man33955.pdf -text
 doc/benchmark.html -text
 doc/coding_standard.txt -text
 doc/img/.xvpics/j2ee.png -text
@@ -240,7 +241,7 @@ src/javolution/util/FastTable.java -text
 src/javolution/util/ReentrantLock.java -text
 src/javolution/util/package.html -text
 src/javolution/xml/CharacterData.java -text
-src/javolution/xml/ConstructorHandler.java -text
+src/javolution/xml/FormatAttributes.java -text
 src/javolution/xml/ObjectReader.java -text
 src/javolution/xml/ObjectWriter.java -text
 src/javolution/xml/XmlElement.java -text
@@ -249,6 +250,7 @@ src/javolution/xml/XmlFormat.java -text
 src/javolution/xml/XmlInputStream.java -text
 src/javolution/xml/XmlOutputStream.java -text
 src/javolution/xml/package.html -text
+src/javolution/xml/pull/AttributesImpl.java -text
 src/javolution/xml/pull/CharSequenceImpl.java -text
 src/javolution/xml/pull/Namespaces.java -text
 src/javolution/xml/pull/XmlPullParser.java -text
@@ -256,7 +258,6 @@ src/javolution/xml/pull/XmlPullParserException.java -text
 src/javolution/xml/pull/XmlPullParserImpl.java -text
 src/javolution/xml/pull/package.html -text
 src/javolution/xml/sax/Attributes.java -text
-src/javolution/xml/sax/AttributesImpl.java -text
 src/javolution/xml/sax/ContentHandler.java -text
 src/javolution/xml/sax/DefaultHandler.java -text
 src/javolution/xml/sax/WriterHandler.java -text
@@ -282,4 +283,3 @@ src/org/xml/sax/XMLFilter.java -text
 src/org/xml/sax/XMLReader.java -text
 src/org/xml/sax/package.html -text
 src/overview.html -text
-www/index.html -text

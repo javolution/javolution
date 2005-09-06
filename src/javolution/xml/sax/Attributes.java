@@ -10,17 +10,19 @@ package javolution.xml.sax;
 import j2me.lang.CharSequence;
 
 /**
- * This interface represents a list of XML attributes.
- * It is a more generic version of <code>org.xml.sax.Attributes</code> with
- * the non-constant <code>String</code> replaced by <code>CharSequence</code>.
- *
+ * <p> This interface represents a list of XML attributes.</p>
+ * 
+ * <p> It is a more generic version of <code>org.xml.sax.Attributes</code> with
+ *     <code>String</code> returned values replaced by the more versatile 
+ *     <code>CharSequence</code>.</p>
+ *     
  * <p> Note: To parse primitive types attributes (e.g. int, long, double), the
  *           use of the {@link javolution.lang.TypeFormat} class is
  *           recommended (faster and avoids memory allocation).</p>
  *
  * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.1, March 11, 2005
+ * @version 3.5, September 2, 2005
  */
 public interface Attributes {
 
@@ -102,10 +104,10 @@ public interface Attributes {
     CharSequence getValue(int index);
 
     /**
-     * Looks up the index of an attribute by Namespace name.
+     * Looks up the index of an attribute by namespace name (convenience 
+     * method).
      * This method returns the index of the attribute whose uri/localName 
-     * (String or CharSequence) have the same character content as the 
-     * specified uri/localName.
+     * have the same character content as the specified uri/localName.
      *
      * @param  uri the Namespace URI, or an empty character sequence if
      *         the name has no Namespace URI.
@@ -113,70 +115,65 @@ public interface Attributes {
      * @return the index of the attribute, or <code>-1</code> if it does not
      *         appear in the list.
      */
-    int getIndex(CharSequence uri, CharSequence localName);
+    int getIndex(String uri, String localName);
 
     /**
-     * Looks up the index of an attribute by XML 1.0 qualified name.
-     * This method returns the index of the attribute whose name 
-     * (String or CharSequence) has the same character content as the 
-     * specified qName.
+     * Looks up the index of an attribute by XML 1.0 qualified name 
+     * (convenience method). This method returns the index of the attribute 
+     * whose name has the same character content as the specified qName.
      *
      * @param  qName the qualified (prefixed) name.
      * @return the index of the attribute, or <code>-1</code> if it does not
      *         appear in the list.
      */
-    int getIndex(CharSequence qName);
+    int getIndex(String qName);
 
     /**
-     * Looks up an attribute's type by Namespace name.
+     * Looks up an attribute's type by Namespace name (convenience method).
      * This method returns the type of the attribute whose uri/localName 
-     * (String or CharSequence) have the same character content as the 
-     * specified uri/localName.
+     * have the same character content as the specified uri/localName.
      *
-     * @param  uri the Namespace URI, or an empty character sequence if the
+     * @param  uri the Namespace URI, or an empty string if the
      *         name has no Namespace URI.
      * @param  localName the local name of the attribute.
      * @return the attribute type as a string, or null if the attribute is not
      *         in the list or if Namespace processing is not being performed.
      */
-    String getType(CharSequence uri, CharSequence localName);
+    String getType(String uri, String localName);
 
     /**
      * Looks up an attribute's type by XML 1.0 qualified name.
      * This method returns the type of the attribute whose qName 
-     * (String or CharSequence) has the same character content as the 
-     * specified qName.
+     * has the same character content as the specified qName.
      *
      * @param  qName The XML 1.0 qualified name.
      * @return the attribute type as a string, or null if the attribute is not
      *         in the list or if qualified names are not available.
      */
-    String getType(CharSequence qName);
+    String getType(String qName);
 
     /**
-     * Looks up an attribute's value by Namespace name.
+     * Looks up an attribute's value by Namespace name (convenience method).
      * This method returns the value of the attribute whose uri/localName 
-     * (String or CharSequence) have the same character content as the 
-     * specified uri/localName.
+     * have the same character content as the specified uri/localName.
      *
-     * @param  uri the Namespace URI, or the empty character sequence if the
-     *         name has no Namespace URI.
+     * @param  uri the Namespace URI, or the empty string if the name has no 
+     *         Namespace URI.
      * @param  localName the local name of the attribute.
      * @return the attribute value as a character sequence, or <code>null</code>
      *         if the attribute is not in the list.
      */
-    CharSequence getValue(CharSequence uri, CharSequence localName);
+    CharSequence getValue(String uri, String localName);
 
     /**
-     * Looks up an attribute's value by XML 1.0 qualified name.
-     * This method returns the value of the attribute whose qName 
-     * (String or CharSequence) has the same character content as the 
-     * specified qName.
+     * Looks up an attribute's value by XML 1.0 qualified name (convenience 
+     * method). This method returns the value of the attribute whose qName 
+     * has the same character content as the specified qName.
      *
      * @param  qName The XML 1.0 qualified name.
      * @return the attribute value as a character sequence, or <code>null</code>
      *         if the attribute is not in the list or if qualified names
      *         are not available.
      */
-    CharSequence getValue(CharSequence qName);
+    CharSequence getValue(String qName);
 }

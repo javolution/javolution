@@ -18,6 +18,11 @@ package javolution.xml;
 public class XmlException extends RuntimeException {
 
     /**
+     * Holds cause if any.
+     */
+    private Throwable _cause;
+
+    /**
      * Constructs a <code>XmlException</code> with  no detail message.
      */
     public XmlException() {
@@ -43,6 +48,7 @@ public class XmlException extends RuntimeException {
      */
     public XmlException(String message, Throwable cause) {
         super(message + " caused by " + cause);
+        _cause = cause;
     }
 
     /**
@@ -51,8 +57,19 @@ public class XmlException extends RuntimeException {
      * @param  cause the cause.
      */
     public XmlException(Throwable cause) {
-        super("Constructor exception caused by " + cause.toString());
+        super("XML exception caused by " + cause);
+        _cause = cause;
     }
 
-    private static final long serialVersionUID = 3762814870390716212L;
+    /**
+     * Returns the original cause of this xml exception.
+     *
+     * @return  the cause of this exception or <code>null</code> if the
+     *          cause is nonexistent or unknown.
+     */
+    public Throwable getCause() {
+        return _cause;
+    }
+
+    private static final long serialVersionUID = 1L;
 }

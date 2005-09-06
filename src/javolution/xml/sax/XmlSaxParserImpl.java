@@ -363,7 +363,6 @@ public class XmlSaxParserImpl implements Reusable {
             if (eventType != XmlPullParser.START_DOCUMENT)
                 throw new SAXException("Currently parsing");
             _contentHandler.startDocument();
-            int namespaceCount = 0;
 
             while (true) {
                 eventType = _pullParser.nextToken();
@@ -404,11 +403,16 @@ public class XmlSaxParserImpl implements Reusable {
                         _contentHandler.endPrefixMapping(prefix);
                     }
 
-                } else if ((eventType == XmlPullParser.TEXT)
-                        || (eventType == XmlPullParser.CDSECT)) {
-                    char ch[] = _pullParser.getTextCharacters(_startLength);
-                    _contentHandler.characters(ch, _startLength[0],
+                } else if ((eventType == XmlPullParser.TEXT) || (eventType == XmlPullParser.CDSECT))  {
+                    if (_pullParser.isWhitespace()) {
+                        char ch[] = _pullParser.getTextCharacters(_startLength);
+                        _contentHandler.ignorableWhitespace(ch, _startLength[0],
                             _startLength[1]);
+                    } else {
+                        char ch[] = _pullParser.getTextCharacters(_startLength);
+                        _contentHandler.characters(ch, _startLength[0],
+                            _startLength[1]);
+                    }
 
                 } else if (eventType == XmlPullParser.END_DOCUMENT) {
                     break;

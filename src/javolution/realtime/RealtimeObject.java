@@ -359,13 +359,13 @@ public abstract class RealtimeObject implements Realtime {
 
             private RealtimeObject allocate() {
                 _next = _activeTail;
-                ObjectPool outer = getOuter();
+                ObjectPool outerPool = getOuter();
                 RealtimeObject obj;
-                if (outer == null) { // Heap.
+                if (outerPool == null) { // Heap.
                     obj = (RealtimeObject) newObject();
                 } else {
-                    synchronized (outer) {
-                        obj = (RealtimeObject) outer.next();
+                    synchronized (outerPool) {
+                        obj = (RealtimeObject) outerPool.next();
                         obj.detach();
                     }
                 }

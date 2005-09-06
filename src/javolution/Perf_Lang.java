@@ -123,7 +123,6 @@ final class Perf_Lang extends Javolution implements Runnable {
         println("");
         println("Delete 1,000 times one character at random location from the 80,000 characters text.");
 
-        StringBuffer tmp = new StringBuffer();
         print("StringBuffer delete: ");
         startTime();
         for (int i = 0; i < 100; i++) {

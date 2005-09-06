@@ -8,6 +8,7 @@
  */
 package javolution.xml;
 
+import javolution.lang.PersistentReference;
 import javolution.lang.Text;
 import javolution.realtime.RealtimeObject;
 import javolution.util.FastComparator;
@@ -24,8 +25,12 @@ import j2me.lang.CharSequence;
  * <p> During serialization, instances of this class are written in a 
  *     "CDATA" section (<code>&lt;![CDATA[...]]&gt;</code>).</p>
  *
+ * <p> Note: During deserialization, instances of this class are wrappers 
+ *           around the parser characters buffer; therefore immutability 
+ *           is not guarantee.</p>
+ *           
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.3, May 13, 2005
+ * @version 3.5, August 29, 2005
  */
 public final class CharacterData extends RealtimeObject implements
         Serializable, CharSequence {
@@ -38,16 +43,36 @@ public final class CharacterData extends RealtimeObject implements
             return new CharacterData();
         }
         protected void cleanup(Object obj) {
-            CharacterData charData = (CharacterData) obj;
-            charData._csq = null;
+            ((CharacterData) obj)._chars = null;
         }
     };
+    
+    /**
+     * Holds the configurable length for the CDATA buffer.
+     */
+    private static final PersistentReference LENGTH = new PersistentReference(
+            "javolution.xml.CharacterData#LENGTH", new Integer(0));
 
     /**
-     * Holds the character sequence being wrapped.
+     * Holds the characters.
      */
-    private CharSequence _csq;
+    private char[] _chars;
 
+    /**
+     * Holds the index of the first character.
+     */
+    private int _offset;
+
+    /**
+     * Holds the length of the character data.
+     */
+    private int _length;
+
+    /**
+     * Holds the internal buffer.
+     */
+    private char[] _buffer = new char[((Integer) LENGTH.get()).intValue()];
+    
     /**
      * Default constructor.
      */
@@ -55,15 +80,65 @@ public final class CharacterData extends RealtimeObject implements
     }
 
     /**
-     * Returns the character data wrapping the specified character sequence.
+     * Returns the character that contains the characters from the specified 
+     * subarray of characters.
+     *
+     * @param chars the source of the characters.
+     * @param offset the index of the first character in the data soure.
+     * @param length the length of the text returned.
+     * @return the corresponding instance.
+     * @throws IndexOutOfBoundsException if <code>(offset < 0) || 
+     *         (length < 0) || ((offset + length) > chars.length)</code>
+     */
+    public static CharacterData valueOf(char[] chars, int offset, int length) {
+        if ((offset < 0) || (length < 0) || ((offset + length) > chars.length))
+            throw new IndexOutOfBoundsException();
+        CharacterData cd = (CharacterData) FACTORY.object();
+        cd._chars = chars;
+        cd._offset = offset;
+        cd._length = length;
+        return cd;
+    }
+
+    /**
+     * Returns the character data for the specified character sequence
+     * (convenience method).
      * 
      * @param csq the character sequence being wrapped.
-     * @return a new, preallocated or recycled instance.
+     * @return the corresponding character data instance.
      */
     public static CharacterData valueOf(CharSequence csq) {
-        CharacterData charData = (CharacterData) FACTORY.object();
-        charData._csq = csq;
-        return charData;
+        final int length = csq.length();
+        CharacterData cd = (CharacterData) FACTORY.object();
+        if (length > cd._buffer.length) { // Resizes.
+            cd._buffer = new char[length];
+            LENGTH.setMinimum(new Integer(length)); 
+        }
+        cd._chars = cd._buffer;
+        cd._offset = 0;
+        cd._length = length;
+        for (int i=0; i < length;) {
+            cd._chars[i] = csq.charAt(i++);
+        }
+        return cd;
+    }
+
+    /**
+     * Returns the characters source of this character data.
+     *
+     * @return the character array.
+     */
+    public char[] chars() {
+        return _chars;
+    }
+
+    /**
+     * Returns the index of the first character in this character data.
+     *
+     * @return the first character index.
+     */
+    public int offset() {
+        return _offset;
     }
 
     /**
@@ -72,7 +147,7 @@ public final class CharacterData extends RealtimeObject implements
      * @return the number of characters.
      */
     public int length() {
-        return _csq.length();
+        return _length;
     }
 
     /**
@@ -84,7 +159,9 @@ public final class CharacterData extends RealtimeObject implements
      *         is equal or greater than <code>this.length()</code>.
      */
     public char charAt(int index) {
-        return _csq.charAt(index);
+        if (index >= _length)
+            throw new IndexOutOfBoundsException();
+        return _chars[index];
     }
 
     /**
@@ -97,7 +174,9 @@ public final class CharacterData extends RealtimeObject implements
      *         (start > end) || (end > this.length())</code>
      */
     public CharSequence subSequence(int start, int end) {
-        return CharacterData.valueOf(_csq.subSequence(start, end));
+        if ((start < 0) || (start > end) || (end > _length))
+            throw new IndexOutOfBoundsException();
+        return CharacterData.valueOf(_chars, _offset + start, end - start);
     }
 
     /**
@@ -114,8 +193,7 @@ public final class CharacterData extends RealtimeObject implements
             return true;
         if (!(obj instanceof CharacterData))
             return false;
-        final CharacterData that = (CharacterData) obj;
-        return FastComparator.LEXICAL.areEqual(this._csq, that._csq);
+        return FastComparator.LEXICAL.areEqual(this, obj);
     }
 
     /**
@@ -124,31 +202,12 @@ public final class CharacterData extends RealtimeObject implements
      * @return the hash code value.
      */
     public final int hashCode() {
-        return FastComparator.LEXICAL.hashCodeOf(this._csq);
-    }
-
-    /**
-     * Copies the characters from this character data into the destination
-     * character array.
-     *
-     * @param start the index of the first character to copy.
-     * @param end the index after the last character to copy.
-     * @param dest the destination array.
-     * @param destPos the start offset in the destination array.
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-     *         (start > end) || (end > this.length())</code>
-     */
-    public void getChars(int start, int end, char dest[], int destPos) {
-        if ((end > _csq.length()) || (end < start))
-            throw new IndexOutOfBoundsException();
-        for (int i = start, j = destPos; i < end;) {
-            dest[j++] = _csq.charAt(i++);
-        }
+        return FastComparator.LEXICAL.hashCodeOf(this);
     }
 
     // Overrides.
     public Text toText() {
-        return Text.valueOf(_csq);
+        return Text.valueOf(_chars, _offset, _length);
     }
 
 }

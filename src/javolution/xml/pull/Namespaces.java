@@ -9,7 +9,6 @@
 package javolution.xml.pull;
 
 import javolution.lang.PersistentReference;
-import j2me.lang.CharSequence;
 
 /**
  * This class represents the namespaces stack when parsing.
@@ -58,6 +57,13 @@ final class Namespaces {
     }
 
     /**
+     * Returns the default namespace.
+     */
+    public CharSequenceImpl getDefault() {
+        return _default;
+    }
+
+    /**
      * Returns the numbers of elements in the namespace stack for the given
      * depth.
      * 
@@ -96,7 +102,7 @@ final class Namespaces {
      * @param prefix the prefix to search for or <code>null</code>.
      * @return the associated namespace uri.
      */
-    public CharSequenceImpl getNamespaceUri(CharSequence prefix) {
+    public CharSequenceImpl getNamespaceUri(String prefix) {
         if (prefix == null)
             return _default;
         for (int i = _nspCounts[_depth] + _mapCount; i > 0;) {
@@ -122,6 +128,26 @@ final class Namespaces {
 
     private static final CharSequenceImpl XMLNS_URI = new CharSequenceImpl(
             "http://www.w3.org/2000/xmlns/");
+
+    /**
+     * Returns the namespace for the specified prefix (different from 
+     * <code>null</code>).
+     * 
+     * @param prefix the prefix to search for.
+     * @return the associated namespace uri.
+     */
+    CharSequenceImpl getNamespaceUri(CharSequenceImpl prefix) {
+        for (int i = _nspCounts[_depth] + _mapCount; i > 0;) {
+            CharSequenceImpl pfx = _namespaces[--i << 1];
+            if ((pfx != null) && pfx.equals(prefix))
+                return _namespaces[(i << 1) + 1];
+        }
+        if (XML_PREFIX.equals(prefix))
+            return XML_URI;
+        if (XMLNS_PREFIX.equals(prefix))
+            return XMLNS_URI;
+        return null;
+    }
 
     /**
      * Adds the specified mapping to the current mapping buffer.
@@ -201,6 +227,6 @@ final class Namespaces {
         CharSequenceImpl[] tmp1 = new CharSequenceImpl[size * 2];
         System.arraycopy(_namespaces, 0, tmp1, 0, size);
         _namespaces = tmp1;
-        SIZE.set(new Integer(size * 2));
+        SIZE.setMinimum(new Integer(_namespaces.length));
     }
 }

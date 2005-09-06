@@ -19,12 +19,11 @@
          (or all implementing classes).</li>
     <li> The XML mapping can be dynamically changed.</li>
     <li> Can even be used when the application has absolutely no control over the XML format 
-         (e.g. SOAP messages), ref. {@link javolution.xml.XmlFormat#classFor(CharSequence) 
-         XmlFormat.classFor(CharSequence)}.</li>
+         (e.g. SOAP messages).</li>
     </ul>
 </p>
-    
-<p> The default XML mapping for a class and its sub-classes is defined using 
+
+<p> The default XML mapping for a class and its sub-classes is typically defined using 
     a <code>static final</code> {@link javolution.xml.XmlFormat XmlFormat} instance. 
     For example:<pre>
       public abstract class Graphic {
@@ -35,12 +34,12 @@
            
           // XML format with name associations (members identified by an unique name).
           // See {@link javolution.xml.XmlFormat XmlFormat} for examples of positional associations.
-          static final XmlFormat&lt;Graphic> GRAPHIC_XML = new XmlFormat&lt;Graphic>(Graphic.class) {
+          public static final XmlFormat&lt;Graphic> XML = new XmlFormat&lt;Graphic>(Graphic.class) {
                public void format(Graphic g, XmlElement xml) {
                    xml.setAttribute("isVisible", g._isVisible); 
-                   xml.add("Paint", g._paint);
-                   xml.add("Stroke", g._stroke,);
-                   xml.add("Transform", g._transform);
+                   xml.add(g._paint, "Paint");
+                   xml.add(g._stroke, "Stroke");
+                   xml.add(g._transform, "Transform");
                }
                public Graphic parse(XmlElement xml) {
                    Graphic g = xml.object();
@@ -54,13 +53,13 @@
       }</pre>
     Sub-classes may override the inherited XML format:<pre>
       public class Area extends Graphic {
-          private Surface _geometry;  
+          private Shape _geometry;  
         
-          // Adds geometry (surface) to format.
-          static final XmlFormat&lt;Area> AREA_XML = new XmlFormat&lt;Area>(Area.class) {
+          // Adds geometry to format.
+          public static final XmlFormat&lt;Area> XML = new XmlFormat&lt;Area>(Area.class) {
               public void format(Area area, XmlElement xml) {
                   getSuper().format(area, xml); // Calls parent Graphic format.
-                  xml.add("Geometry", area._geometry);
+                  xml.add(area._geometry,"Geometry");
               }
               public Area parse(XmlElement xml) {
                   Area area = (Area) getSuper().parse(xml); // Calls parent Graphic parse.
@@ -72,79 +71,203 @@
     
     The following writes a graphic area to a file, then reads it:<pre>
       new ObjectWriter&lt;Area>().write(area, new FileOutputStream("C:/area.xml"));
-      Area a = new ObjectReader&lt;area>().read(new FileInputStream("C:/area.xml"));</pre> 
+      Area a = new ObjectReader&lt;Area>().read(new FileInputStream("C:/area.xml"));</pre> 
  
     <p><i>For multiple objects transmissions over open I/O streams, 
     {@link javolution.xml.XmlInputStream} and {@link javolution.xml.XmlOutputStream} are recommended.</i></p>
 
     Here is an example of valid XML representation for an area:<pre>
-      &lt;graphics:Area  xmlns:j="http://javolution.org" xmlns:graphics="java:org.jscience.graphics" isVisible="true"&gt;
+      &lt;org.jscience.graphics.Area  xmlns:j="http://javolution.org" isVisible="true"&gt;
           &lt;Paint j:class="java.awt.Color" rgb="#F3EBC6"/&gt;
           &lt;Geometry j:class="org.jscience.graphics.geom2d.Polygon" id="1"&gt;
-              &lt;graphics:geom2d.Point x="123" y="-34"/&gt;
-              &lt;graphics:geom2d.Point x="-43" y="-34"/&gt;
-              &lt;graphics:geom2d.Point x="-12" y="123"/&gt;
+              &lt;Point x="123" y="-34"/&gt;
+              &lt;Point x="-43" y="-34"/&gt;
+              &lt;Point x="-12" y="123"/&gt;
           &lt;/Geometry&gt;
-      &lt;/graphics:Area&gt;</pre>
+      &lt;/org.jscience.graphics.Area&gt;</pre>
    
+</p>
+<p> The following table illustrates the variety of xml representations supported 
+    (Foo class with a single String member named text):
+    <center>
+      <table cellpadding="2" cellspacing="2" border="1" style="text-align: left"><tbody>
+      <tr>
+        <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML FORMAT</span></td>
+        <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML DATA</span></td>
+      </tr>
+      <tr>
+<td><pre>XmlFormat&lt;Foo&gt; XML = new XmlFormat&lt;Foo&gt;(Foo.class) {
+    public void format(Foo foo, XmlElement xml) {
+        xml.setAttribute("text", foo.text); 
+    }
+    public Foo parse(XmlElement xml) {
+        Foo foo = xml.object();
+        foo.text = xml.getAttribute("text", "");
+        return foo;
+    }
+};</pre></td>
+<td><pre>
+ <b>&lt;!-- Member as attribute --&gt;</b>
+ &lt;Foo text="This is a text"/&gt;
+</pre></td>
+      </tr>
+      
+      <tr>
+<td><pre>XmlFormat&lt;Foo&gt; XML = new XmlFormat&lt;Foo&gt;(Foo.class) {
+    public void format(Foo foo, XmlElement xml) {
+        xml.add(foo.text); 
+    }
+    public Foo parse(XmlElement xml) {
+        Foo foo = xml.object();
+        foo.text = (String) xml.getNext();
+        return foo;
+    }
+};</pre></td>
+<td><pre>
+ <b>&lt;!-- Member as anonymous nested element --&gt;</b>
+ &lt;Foo&gt;
+     &lt;java.lang.String value="This is a text"/&gt;
+ &lt;/Foo&gt;
+</pre></td>
+      </tr>
+
+      <tr>
+<td><pre>XmlFormat&lt;Foo&gt; XML = new XmlFormat&lt;Foo&gt;(Foo.class) {
+    public void format(Foo foo, XmlElement xml) {
+        xml.add(CharacterData.valueOf(foo.text)); 
+    }
+    public Foo parse(XmlElement xml) {
+        Foo foo = xml.object();
+        foo.text = xml.getNext().toString();
+        return foo;
+    }
+};</pre></td>
+<td><pre>
+ <b>&lt;!-- Member as Character Data --&gt;</b>
+ &lt;Foo&gt;
+     &lt;![CDATA[This is a text]]&gt;
+ &lt;/Foo&gt;
+</pre></td>
+      </tr>
+
+      <tr>
+<td><pre>XmlFormat&lt;Foo&gt; XML = new XmlFormat&lt;Foo&gt;(Foo.class) {
+    public void format(Foo foo, XmlElement xml) {
+        xml.add(foo.text, "text"); 
+    }
+    public Foo parse(XmlElement xml) {
+        Foo foo = xml.object();
+        foo.text = xml.get("text");
+        return foo;
+    }
+};</pre></td>
+<td><pre>
+ <b>&lt;!-- Member as named element of unknown type  --&gt;</b>
+ &lt;Foo&gt;
+     &lt;text j:class="java.lang.String" value="This is a text"/&gt;
+ &lt;/Foo&gt;
+</pre></td>
+      </tr>
+
+      <tr>
+<td><pre>XmlFormat&lt;Foo&gt; XML = new XmlFormat&lt;Foo&gt;(Foo.class) {
+    public void format(Foo foo, XmlElement xml) {
+        xml.add(foo.text, "text", XmlFormat.STRING_XML); 
+    }
+    public Foo parse(XmlElement xml) {
+        Foo foo = xml.object();
+        foo.text = xml.get("text", XmlFormat.STRING_XML);
+        return foo;
+    }
+};</pre></td>
+<td><pre>
+ <b>&lt;!-- Member as named element of known type --&gt;</b>
+ &lt;Foo&gt;
+     &lt;text value="This is a text"/&gt;
+ &lt;/Foo&gt;
+</pre></td>
+      </tr>
+      </tbody></table>
+    </center>
+    <p><i>Applications may also {@link javolution.xml.XmlFormat#setAlias alias} class names
+    to ensure that the xml representation is impervious to obfuscation.</i></p>
 </p>
 
 <p> The {@link javolution.xml.XmlFormat XmlFormat} does not have to use the class
-    public default constructor ({@link javolution.xml.XmlElement#object xml.object()}),
-    instances can be created using factory methods, private constructors (with constructor parameters
-    set from the XML element) or even retrieved from a collection (if the object is shared
-    or unique).
+    public no-arg constructor ({@link javolution.xml.XmlElement#object xml.object()}), instances can be created using factory methods, 
+    private constructors (with constructor parameters set from the XML element) or even retrieved from a collection (if the object is shared
+    or unique). For example:<pre>
+        public final class Point {
+            public static final XmlFormat&lt;Point> XML = new XmlFormat&lt;Point>(Point.class) {
+                public void format(Point point, XmlElement xml) {
+                    xml.setAttribute("x", point._x);
+                    xml.setAttribute("y", point._y);
+                }
+                public Point parse(XmlElement xml) {
+                    return new Point(xml.getAttribute("x", 0.0), xml.getAttribute("y", 0.0)); 
+                }
+            };
+            private double _x;
+            private double _y;
+            // Point is immutable (no no-arg constructor).
+            public Point(double x, double y) {
+                _x = x;
+                _y = y;
+            }
+        }</pre>
 </p>
 
-<p> Cross-references are supported for formats using identifiers. For example:<pre>
-    public class Polygon extends Surface { 
-        FastList&lt;Point> _vertices = new FastList&lt;Point>(); 
-        
-        static final XmlFormat&lt;Polygon> POLYGON_XML = new XmlFormat&lt;Polygon>(Polygon.class, "id", "ref") {
-            public void format(Polygon polygon, XmlElement xml) {
-                xml.getContent().addAll(polygon._vertices); 
-            }
-            public Polygon parse(XmlElement xml) {
-                Polygon polygon = xml.object();
-                polygon._vertices.addAll(xml.getContent());
-                return polygon;
-            }
-        };
-    }</pre>
+<p> The following illustrates how xml cross-references are supported (including circular references):<pre>
+        public class Polygon extends Shape { 
+            public static final XmlFormat&lt;Polygon> XML = new XmlFormat&lt;Polygon>(Polygon.class) {
+                public void format(Polygon polygon, XmlElement xml) {
+                    Text id = (Text) xml.objects().get(polygon);
+                    if (id != null) { // Reference.
+                         setAttribute("ref", id);
+                         return; // Reference.
+                    }
+                    // First occurence.
+                    id = Text.valueOf(xml.newId());
+    	            xml.objects().put(polygon, id);
+    	            xml.setAttribute("id", id);
+                    xml.setAttribute("length", polygon._vertices.length);
+                    for (Point p : polygon._vertices) {
+                         xml.add(p, "Point", Point.XML);
+                    }
+                }
+                public Polygon parse(XmlElement xml) {
+                    CharSequence id = xml.getAttribute("ref");
+                    if (id != null) { // Reference.
+                         return (Polygon) xml.objects().get(id);
+                    }
+                    // First occurence.
+                    Polygon polygon = new Polygon(new Point[xml.getAttribute("length", 0)]);
+                    xml.objects().put(Text.valueOf(xml.getAttribute("id")), polygon);
+                    for (int i=0; i < polygon._vertices.length; i++)
+                        polygon._vertices[i] = xml.get("Point", Point.XML);
+                    return polygon;
+                }
+            };            
+            private Point[] _vertices;
+            private Polygon(Point[] vertices) {
+                _vertices = vertices;
+            } 
+        }</pre>
     Here the XML representation of a list of three polygons, 
     the first and the last one being shared:<pre>
-      &lt;j:java.util.ArrayList xmlns:j="http://javolution.org" xmlns="java:org.jscience.graphics.geom2d">
-          &lt;Polygon id="1"&gt;
+      &lt;java.util.ArrayList xmlns:j="http://javolution.org">
+          &lt;org.jscience.graphics.geom2d.Polygon id="1"&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-43" y="-34"/&gt;
               &lt;Point x="-12" y="123"/&gt;
-          &lt;/Polygon&gt;
-          &lt;Polygon id="2"&gt;
+          &lt;/org.jscience.graphics.geom2d.Polygon&gt;
+          &lt;org.jscience.graphics.geom2d.Polygon id="2"&gt;
               &lt;Point x="-43" y="-34"/&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-12" y="123"/&gt;
-          &lt;/Polygon&gt;
-          &lt;Polygon ref="1"/&gt;
-      &lt;/j:java.util.ArrayList&gt;</pre>
-
-    The value of the identifier attribute can be set explicitly. For example:<pre>
-      public abstract class Person {
-          private String _name;
-          protected static final XmlFormat&lt;Person> PERSON_XML = new XmlFormat&lt;Person>(Person.class, "name", "name") { // Use the same attribute ("name") as identifier and reference.
-              public void format(Person person, XmlElement xml) {
-                  xml.setAttribute("name", person._name); // Sets identifier value explicitly.
-              }
-              public Person parse(XmlElement xml) {
-                  Persone person = xml.object();
-                  person._name = xml.getAttribute("name", "");
-                  return person;
-              }
-          };
-      }</pre>
-    
-     <p><i>Circular references are supported for formats having the 
-           {@link javolution.xml.XmlFormat#preallocate XmlFormat.preallocate(xml)}
-           method implemented.</i></p>
+          &lt;/org.jscience.graphics.geom2d.Polygon&gt;
+          &lt;org.jscience.graphics.geom2d.Polygon ref="1"/&gt;
+      &lt;/java.util.ArrayList&gt;</pre>
 </p>
 
 <p> Finally, here is a code excerpt illustrating how objects can be 

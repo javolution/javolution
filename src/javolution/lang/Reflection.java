@@ -79,7 +79,7 @@ public final class Reflection {
                 }
             }
             /**/
-            throw e0;
+            throw new ClassNotFoundException("Class \"" + name + "\" not found");
         }
     }
 

@@ -33,7 +33,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      */
     public static final FastComparator DIRECT = new Direct();
 
-    private static class Direct extends FastComparator {
+    static class Direct extends FastComparator {
         public int hashCodeOf(Object obj) {
             return (obj == null) ? 0 : obj.hashCode();
         }
@@ -46,9 +46,6 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
             return ((Comparable) o1).compareTo(o2);
         }
 
-        public String toString() {
-            return "Direct";
-        }
     };
 
     /**
@@ -60,7 +57,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      */
     public static final FastComparator REHASH = new Rehash();
 
-    private static class Rehash extends FastComparator {
+    static class Rehash extends FastComparator {
         public int hashCodeOf(Object obj) {
             if (obj == null) 
                 return 0;
@@ -81,10 +78,6 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
         public int compare(Object o1, Object o2) {
             return ((Comparable) o1).compareTo(o2);
         }
-
-        public String toString() {
-            return "Rehash";
-        }
     };
 
     /**
@@ -96,7 +89,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      */
     public static final FastComparator IDENTITY = new Identity();
 
-    private static class Identity extends FastComparator {
+    static class Identity extends FastComparator {
         private boolean _rehash = !Configuration.isPoorSystemHash();
 
         public int hashCodeOf(Object obj) {
@@ -117,10 +110,6 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
         public int compare(Object o1, Object o2) {
             return ((Comparable) o1).compareTo(o2);
         }
-
-        public String toString() {
-            return "Identity";
-        }
     };
 
     /**
@@ -133,7 +122,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      */
     public static final FastComparator LEXICAL = new Lexical();
 
-    private static class Lexical extends FastComparator {
+    static class Lexical extends FastComparator {
 
         public int hashCodeOf(Object obj) {
             if ((obj instanceof String) || (obj instanceof Text))
@@ -231,10 +220,6 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
                 }
             }
             return seq1.length() - seq2.length();
-        }
-
-        public String toString() {
-            return "Lexical";
         }
     };
 

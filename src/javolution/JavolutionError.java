@@ -54,6 +54,5 @@ public final class JavolutionError extends Error {
         cause.printStackTrace();
     }
 
-    private static final long serialVersionUID = 3618701885583144500L;
-
+    private static final long serialVersionUID = 1L;
 }

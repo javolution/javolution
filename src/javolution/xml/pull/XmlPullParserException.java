@@ -3,12 +3,11 @@ package javolution.xml.pull;
 /**
  * This exception is thrown to signal XML Pull Parser related faults.
  *
- * @author <a href="http://www.extreme.indiana.edu/~aslom/">
- *         Aleksander Slominski</a>
+ * @author <a href="http://www.extreme.indiana.edu/~aslom/">Aleksander Slominski</a>
  */
 public class XmlPullParserException extends Exception {
-
-	protected Throwable detail;
+    
+    protected Throwable detail;
 
     protected int row = -1;
 
@@ -36,7 +35,6 @@ public class XmlPullParserException extends Exception {
         return detail;
     }
 
-    //    public void setDetail(Throwable cause) { this.detail = cause; }
     public int getLineNumber() {
         return row;
     }
@@ -58,5 +56,5 @@ public class XmlPullParserException extends Exception {
         }
     }
 
-	private static final long serialVersionUID = 3979269131675709496L;
+    private static final long serialVersionUID = 1L;
 }

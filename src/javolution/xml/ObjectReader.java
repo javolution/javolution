@@ -10,14 +10,13 @@ package javolution.xml;
 
 import j2me.nio.ByteBuffer;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
 import javolution.lang.Reusable;
-import javolution.xml.sax.XmlSaxParserImpl;
-
-import org.xml.sax.SAXException;
+import javolution.xml.pull.XmlPullParser;
+import javolution.xml.pull.XmlPullParserException;
+import javolution.xml.pull.XmlPullParserImpl;
 
 /**
  * <p> This class restores objects which have been serialized in XML
@@ -29,42 +28,24 @@ import org.xml.sax.SAXException;
  *     The final object constructed (and returned) is always the root element
  *     of the XML input source.</p>
  *     
- * <p> Processing instructions are ignored, but namespaces may be used to
- *     specify package names (java addressing scheme).</p>
- *     
  * <p> Non-blank character data of the XML document are represented 
  *     by {@link CharacterData} instances.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.3, May 13, 2005
- * @see     XmlSaxParserImpl
- * @see     ConstructorHandler
+ * @version 3.5, August 29, 2005
  */
-public class ObjectReader/*<T>*/ implements Reusable {
+public class ObjectReader/*<T>*/implements Reusable {
 
     /**
-     * Holds the real-time parser used.
+     * Hold the xml element used when parsing.
      */
-    private final XmlSaxParserImpl _parser = new XmlSaxParserImpl();
-
-    /**
-     * Holds the constructor handler.
-     */
-    private final ConstructorHandler _handler = new ConstructorHandler();
+    private final XmlElement _xml;
 
     /**
      * Default constructor.
      */
     public ObjectReader() {
-    }
-    
-    /**
-     * Resets this object reader; objects previously read cannot be refered to,
-     * they will have to be send again.
-     */
-    public void reset() {
-        _handler.reset();
-        _parser.reset();
+        _xml = new XmlElement(new XmlPullParserImpl());
     }
 
     /**
@@ -78,16 +59,9 @@ public class ObjectReader/*<T>*/ implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/ read(Reader reader) throws XmlException {
-        try {
-			_parser.setContentHandler(_handler);
-            _parser.parse(reader);
-            return (Object/*T*/) _handler.getRoot();
-        } catch (SAXException e1) {
-            throw new XmlException(e1);
-        } catch (IOException e2) {
-            throw new XmlException(e2);
-        }
+    public Object/*T*/read(Reader reader) throws XmlException {
+        _xml._parser.setInput(reader);
+        return (Object/*T*/) parse();
     }
 
     /**
@@ -101,16 +75,9 @@ public class ObjectReader/*<T>*/ implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/ read(InputStream in) throws XmlException {
-        try {
-			_parser.setContentHandler(_handler);
-            _parser.parse(in);
-            return (Object/*T*/) _handler.getRoot();
-        } catch (SAXException e1) {
-            throw new XmlException(e1);
-        } catch (IOException e2) {
-            throw new XmlException(e2);
-        }
+    public Object/*T*/read(InputStream in) throws XmlException {
+        _xml._parser.setInput(in);
+        return (Object/*T*/) parse();
     }
 
     /**
@@ -123,16 +90,32 @@ public class ObjectReader/*<T>*/ implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/ read(ByteBuffer byteBuffer) throws XmlException {
+    public Object/*T*/read(ByteBuffer byteBuffer) throws XmlException {
+        _xml._parser.setInput(byteBuffer);
+        return (Object/*T*/) parse();
+    }
+
+    private Object parse() throws XmlException {
         try {
-			_parser.setContentHandler(_handler);
-            _parser.parse(byteBuffer);
-            return (Object/*T*/) _handler.getRoot();
-        } catch (SAXException e1) {
+            Object obj = _xml.getNext();
+
+            if (_xml.hasNext() || (_xml._parser.getEventType() != XmlPullParser.END_DOCUMENT))
+                throw new XmlException("End Document Event Expected");
+            return obj;
+
+        } catch (XmlPullParserException e1) {
             throw new XmlException(e1);
-        } catch (IOException e2) {
-            throw new XmlException(e2);
+        } finally {
+            reset();
         }
+    }
+
+    /**
+     * Resets this object reader; objects previously read cannot be refered to,
+     * they will have to be send again.
+     */
+    public void reset() {
+        _xml.reset();
     }
 
 }

@@ -89,8 +89,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     private static final int D0 = 5;
 
-    private static final int R0 = 0;
-
     private static final int M0 = (1 << D0) - 1;
 
     private static final int C0 = 1 << D0; // capacity chars0
@@ -114,8 +112,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     private static final int D3 = D2 + 2;
 
     private static final int R3 = D0 + D1 + D2;
-
-    private static final int M3 = (1 << D3) - 1;
 
     // new Object[1<<7][1<<5], 12 bits (4096)
     private Object/*E*/[][] _elems1;

@@ -16,7 +16,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 import javolution.lang.Reflection;
-import javolution.lang.Text;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -310,41 +309,35 @@ public final class XMLReaderImpl implements XMLReader {
 
         // Implements Attributes
         public int getIndex(String uri, String localName) {
-            return _attributes.getIndex(toCharSequence(uri), toCharSequence(localName));
+            return _attributes.getIndex(uri, localName);
         }
 
         // Implements Attributes
         public int getIndex(String qName) {
-            return _attributes.getIndex(toCharSequence(qName));
+            return _attributes.getIndex(qName);
         }
 
         // Implements Attributes
         public String getType(String uri, String localName) {
-            return _attributes.getType(toCharSequence(uri), toCharSequence(localName));
+            return _attributes.getType(uri, localName);
         }
 
         // Implements Attributes
         public String getType(String qName) {
-            return _attributes.getType(toCharSequence(qName));
+            return _attributes.getType(qName);
         }
 
         // Implements Attributes
         public String getValue(String uri, String localName) {
-            return _attributes.getValue(toCharSequence(uri), toCharSequence(localName)).toString();
+            return _attributes.getValue(uri, localName).toString();
         }
 
         // Implements Attributes
         public String getValue(String qName) {
-            return _attributes.getValue(toCharSequence(qName)).toString();
+            return _attributes.getValue(qName).toString();
         }
     }
 
-    // Wrap strings if there are not CharSequence (e.g. J2ME).
-    private static CharSequence toCharSequence(Object obj) {
-        return (obj instanceof CharSequence) ? (CharSequence) obj :
-            Text.valueOf(obj);
-    }
-    
     private static final class Sax2DefaultHandler implements EntityResolver,
             DTDHandler, ContentHandler, ErrorHandler {
 

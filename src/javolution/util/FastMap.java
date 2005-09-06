@@ -466,6 +466,15 @@ public class FastMap/*<K,V>*/extends RealtimeObject implements Map/*<K,V>*/,
     }
 
     /**
+     * Returns the key comparator for this fast map.
+     * 
+     * @return the key comparator.
+     */
+    public FastComparator getKeyComparator() {
+        return _keyComp == null ? FastComparator.DIRECT : _keyComp;
+    }
+    
+    /**
      * Sets the value comparator for this map.
      * 
      * @param valueComparator the value comparator.
@@ -476,6 +485,15 @@ public class FastMap/*<K,V>*/extends RealtimeObject implements Map/*<K,V>*/,
         return this;
     }
 
+    /**
+     * Returns the value comparator for this fast map.
+     * 
+     * @return the value comparator.
+     */
+    public FastComparator getValueComparator() {
+        return _values.getValueComparator();
+    }
+    
     /**
      * Removes the specified entry from the map.
      * 

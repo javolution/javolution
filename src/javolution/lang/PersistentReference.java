@@ -9,6 +9,7 @@
 package javolution.lang;
 
 import j2me.io.Serializable;
+import j2me.lang.Comparable;
 import j2me.util.Iterator;
 import j2me.util.Map;
 import javolution.util.FastMap;
@@ -19,25 +20,25 @@ import javolution.util.FastMap;
  *     used to retrieve/set profiling configuration parameters, such as the
  *     appropriate array size to avoid resizing. For example:<pre>
  *     public class Foo {
- *        // Holds the configurable nominal size to avoid resizing.
- *        private static final PersistentReference&lt;Integer> SIZE
- *            = new PersistentReference&lt;Integer>("Foo#SIZE", new Integer(100));
- *        private Entry[] _entries = new Entry[SIZE.get().intValue()];
- *        private int _count; 
- *        
- *        public void addEntry(Entry entry) {
- *            if (_count >= _entries.length) { // Ooops, resizes.
- *                 Entry[] tmp = new Entry[_entries.length * 2];
+ *         // Holds the configurable nominal size to avoid resizing.
+ *         private static final PersistentReference&lt;Integer&gt; CAPACITY
+ *             = new PersistentReference&lt;Integer&gt;("Foo#CAPACITY", 100);
+ *         private Object[] _entries = new Object[CAPACITY.get()];
+ *         private int _length; 
+ *       
+ *         public void add(Object entry) {
+ *            if (_length >= _entries.length) { // Ooops, resizes.
+ *                 Object[] tmp = new Object[_entries.length * 2];
  *                 System.arraycopy(_entries, 0, tmp, 0, _entries.length);
  *                 _entries = tmp;
- *                 SIZE.set(new Integer(_entries.length)); // Saves.
+ *                 CAPACITY.setMinimum(_entries.length); // Saves.
  *            }
- *            _entries[_count++] = entry; 
- *        }
+ *            _entries[_length++] = entry; 
+ *         }
  *     }</pre></p>
  *     
  * <p> Real-time application may use persistent references for pre-built data 
- *     structure to avoid delaying time critical code. For example:<pre>
+ *     structures to avoid delaying time critical code. For example:<pre>
  *     public class Unit {
  *         // Holds the unit multiplication table. Allows for persistency.
  *         private static final PersistentReference&lt;FastMap&lt;Unit, FastMap&lt;Unit, Unit>>>
@@ -59,16 +60,17 @@ import javolution.util.FastMap;
  *      import javolution.xml.ObjectReader;
  *      import javolution.xml.ObjectWriter;
  *      public void main(String[]) {
- *           Map values  = (Map) new ObjectReader().read(new FileInputStream("C:/persistent.xml"));
+ *           Map values  = new ObjectReader&lt;Map&lt;().read(new FileInputStream("C:/persistent.xml"));
  *           PersistentReference.putAll(values)
  *           ... 
- *           new ObjectWriter().write(PersistentReference.values(), new FileOutputStream("C:/persistent.xml"));
+ *           new ObjectWriter&lt;Map>().write(PersistentReference.values(), new FileOutputStream("C:/persistent.xml"));
  *      }</pre></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.3, May 10, 2005
  */
-public final class PersistentReference /*<T>*/implements Reference/*<T>*/, Serializable {
+public final class PersistentReference /*<T>*/implements Reference/*<T>*/,
+        Serializable {
 
     /**
      * Holds the reference collection (id to reference).
@@ -138,6 +140,60 @@ public final class PersistentReference /*<T>*/implements Reference/*<T>*/, Seria
         synchronized (LOCK) {
             _value = value;
             VALUES.put(_id, _value);
+        }
+    }
+
+    /**
+     * Sets this reference to the specified value only if 
+     * <code>(value.compareTo(this.get()) &gt; 0)</code>.
+     * 
+     * @param value the minimum value for this reference.
+     * @throws IllegalArgumentException if the specified value is not 
+     *         {@link Comparable} or an {@link Integer} instance (J2ME).
+     */
+    public void setMinimum(Object/*T*/value) {
+        synchronized (LOCK) {
+            if (value instanceof Comparable) {
+                if (((Comparable) value).compareTo(_value) > 0) {
+                    _value = value;
+                    VALUES.put(_id, _value);
+                }
+            } else if (value instanceof Integer) {
+                if (((Integer) value).intValue() > ((Integer) _value)
+                        .intValue()) {
+                    _value = value;
+                    VALUES.put(_id, _value);
+                }
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
+
+    /**
+     * Sets this reference to the specified value only if 
+     * <code>(value.compareTo(this.get()) &lt; 0)</code>.
+     * 
+     * @param value the maximum value for this reference.
+     * @throws IllegalArgumentException if the specified value is not 
+     *         {@link Comparable} or an {@link Integer} instance (J2ME).
+     */
+    public void setMaximum(Object/*T*/value) {
+        synchronized (LOCK) {
+            if (value instanceof Comparable) {
+                if (((Comparable) value).compareTo(_value) < 0) {
+                    _value = value;
+                    VALUES.put(_id, _value);
+                }
+            } else if (value instanceof Integer) {
+                if (((Integer) value).intValue() < ((Integer) _value)
+                        .intValue()) {
+                    _value = value;
+                    VALUES.put(_id, _value);
+                }
+            } else {
+                throw new IllegalArgumentException();
+            }
         }
     }
 

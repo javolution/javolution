@@ -45,5 +45,5 @@ public class ConcurrentException extends RuntimeException {
         return _cause;
     }
 
-    private static final long serialVersionUID = 1865984637821984964L;
+    private static final long serialVersionUID = 1L;
 }

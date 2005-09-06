@@ -20,8 +20,6 @@ import javolution.realtime.RealtimeObject;
  */
 final class Perf_Realtime extends Javolution implements Runnable {
 
-    private volatile Object _object;
-
     private volatile Object[] _objects = new Object[1000];
 
     /** 

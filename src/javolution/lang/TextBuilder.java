@@ -58,8 +58,6 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     private static final int D0 = 5;
 
-    private static final int R0 = 0;
-
     private static final int M0 = (1 << D0) - 1;
 
     private static final int C0 = 1 << D0; // capacity chars0
@@ -83,8 +81,6 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     private static final int D3 = D2 + 2;
 
     private static final int R3 = D0 + D1 + D2;
-
-    private static final int M3 = (1 << D3) - 1;
 
     private final char[] _chars0 = new char[1 << D0]; // 5 bits (32).
 

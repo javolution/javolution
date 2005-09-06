@@ -75,14 +75,19 @@ import java.io.Reader;
  * import java.io.IOException;
  * import java.io.StringReader;
  *
- * import javolution.xml.pull.XmlPullParser;
- * import javolution.xml.pull.XmlPullParserException;
- * import javolution.xml.pull.XmlPullParserImpl;
+ * import org.xmlpull.v1.XmlPullParser;
+ * import org.xmlpull.v1.<a href="XmlPullParserException.html">XmlPullParserException.html</a>;
+ * import org.xmlpull.v1.<a href="XmlPullParserFactory.html">XmlPullParserFactory</a>;
  *
- * public class SimpleXmlPullApp {
+ * public class SimpleXmlPullApp
+ * {
  *
- *     public static void main (String args[]) throws XmlPullParserException, IOException {
- *         XmlPullParser xpp = new XmlPullParserImpl();
+ *     public static void main (String args[])
+ *         throws XmlPullParserException, IOException
+ *     {
+ *         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+ *         factory.setNamespaceAware(true);
+ *         XmlPullParser xpp = factory.newPullParser();
  *
  *         xpp.<a href="#setInput">setInput</a>( new StringReader ( "&lt;foo>Hello World!&lt;/foo>" ) );
  *         int eventType = xpp.getEventType();
@@ -101,7 +106,8 @@ import java.io.Reader;
  *          eventType = xpp.next();
  *         }
  *     }
- * }</pre>
+ * }
+ * </pre>
  *
  * <p>The above example will generate the following output:
  * <pre>
@@ -132,6 +138,7 @@ import java.io.Reader;
  * @author <a href="http://www-ai.cs.uni-dortmund.de/PERSONAL/haustein.html">Stefan Haustein</a>
  * @author <a href="http://www.extreme.indiana.edu/~aslom/">Aleksander Slominski</a>
  */
+
 public interface XmlPullParser {
 
     /** This constant represents the default namespace (empty string "") */
@@ -452,8 +459,7 @@ public interface XmlPullParser {
      *  if inputEncoding is null, the parser SHOULD try to determine
      *  input encoding following XML 1.0 specification (see below).
      *  If encoding detection is supported then following feature
-     *  <a href="http://xmlpull.org/v1/doc/features.html#detect-encoding">
-     *  http://xmlpull.org/v1/doc/features.html#detect-encoding</a>
+     *  <a href="http://xmlpull.org/v1/doc/features.html#detect-encoding">http://xmlpull.org/v1/doc/features.html#detect-encoding</a>
      *  MUST be true amd otherwise it must be false
      *
      * @param inputStream contains a raw byte input stream of possibly
@@ -509,7 +515,7 @@ public interface XmlPullParser {
      * @see #FEATURE_PROCESS_DOCDECL
      * @see #FEATURE_VALIDATION
      */
-    void defineEntityReplacementText(CharSequence entityName, CharSequence replacementText)
+    void defineEntityReplacementText(String entityName, String replacementText)
             throws XmlPullParserException;
 
     /**
@@ -534,6 +540,7 @@ public interface XmlPullParser {
      * @see #getNamespacePrefix
      * @see #getNamespaceUri
      * @see #getNamespace()
+     * @see #getNamespace(String)
      */
     int getNamespaceCount(int depth) throws XmlPullParserException;
 
@@ -590,7 +597,7 @@ public interface XmlPullParser {
      * @see #getNamespacePrefix
      * @see #getNamespaceUri
      */
-    CharSequence getNamespace(CharSequence prefix);
+    CharSequence getNamespace(String prefix);
 
     // --------------------------------------------------------------------------
     // miscellaneous reporting methods
@@ -662,7 +669,7 @@ public interface XmlPullParser {
     boolean isWhitespace() throws XmlPullParserException;
 
     /**
-     * Returns the text content of the current event as String.
+     * Returns the text content of the current event as CharSequence.
      * The value returned depends on current event type,
      * for example for TEXT event it is element content
      * (this is typical case when next() is used).
@@ -798,7 +805,7 @@ public interface XmlPullParser {
      * Throws an IndexOutOfBoundsException if the index is out of range
      * or current event type is not START_TAG.
      *
-     * @param index  zero based index of attribute
+     * @param index zero based index of attribute
      * @return attribute name (null is never returned)
      */
     CharSequence getAttributeName(int index);
@@ -867,7 +874,7 @@ public interface XmlPullParser {
      * @param name If namespaces enabled local name of attribute otherwise just attribute name
      * @return value of attribute or null if attribute with given name does not exist
      */
-    CharSequence getAttributeValue(CharSequence namespace, CharSequence name);
+    CharSequence getAttributeValue(String namespace, String name);
 
     // --------------------------------------------------------------------------
     // actual parsing methods
@@ -992,7 +999,7 @@ public interface XmlPullParser {
     int nextToken() throws XmlPullParserException, IOException;
 
     //-----------------------------------------------------------------------------
-    // utility methods to mak XML parsing easier ...
+    // utility methods to make XML parsing easier ...
 
     /**
      * Test if the current event is of the given type and if the
@@ -1010,7 +1017,7 @@ public interface XmlPullParser {
      *     throw new XmlPullParserException( "expected "+ TYPES[ type ]+getPositionDescription());
      * </pre>
      */
-    void require(int type, CharSequence namespace, CharSequence name)
+    void require(int type, String namespace, String name)
             throws XmlPullParserException, IOException;
 
     /**

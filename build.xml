@@ -16,7 +16,7 @@
     <target name="init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="3.3" />
+        <property name="version" value="3.5" />
         <property name="release" value="3" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
@@ -81,6 +81,33 @@
         <replace dir="${tmp}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java" />
         <delete file="${tmp}/javolution/lang/Appendable.java" />
         <delete file="${tmp}/javolution/lang/Enum.java" />
+        <!-- Return Types -->
+        <replace dir="${tmp}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[Appendable/*TextBuilder*/]]></replacetoken>
+            <replacevalue><![CDATA[TextBuilder]]></replacevalue>
+        </replace>
+        <!-- Struct class -->
+        <replace dir="${tmp}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*<S extends Struct> S*/Struct]]></replacetoken>
+            <replacevalue><![CDATA[ <S extends Struct> S ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*<S extends Struct>*/]]></replacetoken>
+            <replacevalue><![CDATA[ <S extends Struct> ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*S*/Struct]]></replacetoken>
+            <replacevalue><![CDATA[ S ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*<M extends Member> M*/Member]]></replacetoken>
+            <replacevalue><![CDATA[ <M extends Member> M ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*M*/Member]]></replacetoken>
+            <replacevalue><![CDATA[ M ]]></replacevalue>
+        </replace>
+        
         <!-- Generic Collections -->
         <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object[]/*<T> T[]*/]]></replacetoken>
@@ -89,10 +116,6 @@
         <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object[]/*T[]*/]]></replacetoken>
             <replacevalue><![CDATA[T[]]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[/*<javolution.lang.Reference<T>>*/]]></replacetoken>
-            <replacevalue><![CDATA[<javolution.lang.Reference<T>>]]></replacevalue>
         </replace>
         <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[Object/*Map.Entry<K,V>*/]]></replacetoken>

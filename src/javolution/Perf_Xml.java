@@ -21,6 +21,7 @@ import j2me.lang.UnsupportedOperationException;
 import j2me.nio.ByteBuffer;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
+import javolution.util.FastComparator;
 import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
@@ -41,7 +42,7 @@ final class Perf_Xml extends Javolution implements Runnable {
 
     private static final int OBJECT_SIZE = 1000; // Nbr of strings per object.
 
-    private static final int BYTE_BUFFER_SIZE = 50 * OBJECT_SIZE + 1000;
+    private static final int BYTE_BUFFER_SIZE = 100 * OBJECT_SIZE + 1000;
 
     /**
      * Executes benchmark.
@@ -64,6 +65,8 @@ final class Perf_Xml extends Javolution implements Runnable {
         CharacterData charData = CharacterData.valueOf(Text.valueOf(str));
         v.addElement(charData);
         FastMap fm = new FastMap();
+        fm.setKeyComparator(FastComparator.REHASH);
+        fm.setValueComparator(FastComparator.IDENTITY);
         fm.put("ONE", "1");
         fm.put("TWO", "2");
         fm.put("THREE", "3");
@@ -79,6 +82,7 @@ final class Perf_Xml extends Javolution implements Runnable {
         fs.add("ALPHA");
         v.addElement(fs);
         FastTable ft = new FastTable();
+        ft.setValueComparator(FastComparator.LEXICAL);
         ft.add("UN");
         ft.add("DEUX");
         ft.add("TROIS");
@@ -86,26 +90,24 @@ final class Perf_Xml extends Javolution implements Runnable {
 
         // Example of xml format for Vector with circular reference support.
         XmlFormat vectorXml = new XmlFormat() {
-            public Object preallocate(XmlElement xml) {
+            public Object allocate(XmlElement xml) {
                 return new Vector(xml.getAttribute("size", 0));
             }
 
             public void format(Object obj, XmlElement xml) {
-                Vector v = (Vector) obj;
-                xml.setAttribute("size", v.size());
-                for (int i = 0; i < v.size(); i++) {
-                    xml.getContent().add(v.elementAt(i));
+                Vector vector = (Vector) obj;
+                xml.setAttribute("size", vector.size());
+                for (int i = 0; i < vector.size(); i++) {
+                    xml.add(vector.elementAt(i));
                 }
             }
 
             public Object parse(XmlElement xml) {
-                Vector v = (Vector) xml.object(); // Preallocated instance.
-                for (FastList.Node n =  xml.getContent().headNode(), 
-                        end =  xml.getContent().tailNode();
-                        (n = n.getNextNode()) != end;) {
-                    v.addElement(n.getValue());
+                Vector vector = (Vector) xml.object(); // Preallocated instance.
+                while (xml.hasNext()) {
+                    vector.addElement(xml.getNext());
                 }
-                return v;
+                return vector;
             }
         };
         XmlFormat.setInstance(vectorXml, new Vector().getClass());
@@ -142,14 +144,13 @@ final class Perf_Xml extends Javolution implements Runnable {
         println("-- XML Serialization (I/O Stream) --");
         try {
             ObjectWriter ow = new ObjectWriter();
-            ow.setNamespace("", "java.lang");
             ByteArrayOutputStream out = new ByteArrayOutputStream(
                     BYTE_BUFFER_SIZE);
             print("Write Time: ");
             startTime();
             ow.write(v, out);
             println(endTime(1));
-            // System.out.println(out); 
+            //System.out.println(out); 
  
             ObjectReader or = new ObjectReader();
             ByteArrayInputStream in = new ByteArrayInputStream(out
@@ -158,7 +159,7 @@ final class Perf_Xml extends Javolution implements Runnable {
             startTime();
             Object readObject = or.read(in);
             println(endTime(1));
-            // System.out.println(readObject); 
+            //System.out.println(readObject); 
             if (!v.equals(readObject)) {
                 throw new Error("SERIALIZATION ERROR");
             }
@@ -170,7 +171,6 @@ final class Perf_Xml extends Javolution implements Runnable {
         println("-- XML Serialization (NIO ByteBuffer) --");
         try {
             ObjectWriter ow = new ObjectWriter();
-            ow.setNamespace("", "java.lang");
             ByteBuffer bb = ByteBuffer.allocateDirect(BYTE_BUFFER_SIZE);
             print("Write Time: ");
             startTime();
