@@ -36,6 +36,30 @@ import javolution.xml.sax.WriterHandler;
  *     <i>or</i> ow.write(obj, byteBuffer);     // UTF-8 NIO ByteBuffer.
  *     </pre></p>
  *     
+ * <p> Namespaces are supported and may be associated to Java packages 
+ *     in order to reduce the size of the xml generated (and to increase 
+ *     readability). For example, the following code creates an 
+ *     <code>ObjectWriter</code> using the default namespace for all 
+ *     <code>org.jscience.physics.quantities.*</code> classes and the 
+ *     <code>math</code> prefix for the 
+ *     <code>org.jscience.mathematics.matrices.*</code> classes.
+ *     <pre>
+ *        ObjectWriter ow = new ObjectWriter();
+ *        ow.setPackagePrefix("", "org.jscience.physics.quantities");
+ *        ow.setPackagePrefix("math", "org.jscience.mathematics.matrices");
+ *     </pre>
+ *     Here is an example of the xml data produced by such a writer:
+ *     <pre>
+ *     &lt;math:Matrix xmlns:j="http://javolution.org" 
+ *                     xmlns="java:org.jscience.physics.quantities"
+ *                     xmlns:math="java:org.jscience.mathematics.matrices"
+ *                     row="2" column="2">
+ *        &lt;Mass value="2.3" unit="mg"/&gt;
+ *        &lt;Pressure value="0.2" unit="Pa"/&gt;
+ *        &lt;Force value="20.0" unit="µN"/&gt;
+ *        &lt;Length value="3.0" unit="ft"/&gt;
+ *     &lt;/math:Matrix&gt;</pre></p>
+ *
  * <p> For more control over the xml document generated (e.g. indentation, 
  *     prolog, etc.), applications may use the 
  *     {@link #write(Object, ContentHandler)} method in conjonction with
@@ -47,9 +71,6 @@ import javolution.xml.sax.WriterHandler;
  *        handler.setProlog("&lt;?xml version=\"1.0\" encoding=\"UTF-8\"?&gt;");
  *        ...
  *        ow.write(obj, handler);</pre></p>
- *        
- * <p> Objects written using this facility may be read using
- *     the {@link ObjectReader} class.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.5, August 29, 2005
@@ -83,7 +104,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
     private final WriterHandler _writerHandler = new WriterHandler();
 
     /**
-     * Holds the writer namespaces.
+     * Holds the writer namespaces (CharSequence prefix/uri pairs).
      */
     private FastTable _namespaces = new FastTable();
 
@@ -112,6 +133,28 @@ public class ObjectWriter/*<T>*/implements Reusable {
             throw new IllegalArgumentException("Prefix: \"j\" is reserved.");
         _namespaces.addLast(toCharSeq(prefix));
         _namespaces.addLast(toCharSeq(uri));
+        if (prefix.length() == 0) { // Default namespace mapped
+            // Use javolution uri for all classes without namespace
+            // (default namespace cannot be used anymore).
+            _xml._packagePrefixes.addLast("j");
+            _xml._packagePrefixes.addLast("");
+        }
+    }
+
+    /**
+     * Maps a namespace to a Java package. The specified prefix is used to 
+     * shorten the class name of the object being serialized.
+     *
+     * @param  prefix the namespace prefix or empty sequence to set 
+     *         the default namespace.
+     * @param  packageName of the package associated to the specified prefix.
+     * @throws IllegalArgumentException if the prefix is "j" (reserved for 
+     *         the "http://javolution.org" uri).
+     */
+    public void setPackagePrefix(String prefix, String packageName) {
+        setNamespace(prefix, "java:" + packageName);
+        _xml._packagePrefixes.addLast(prefix);
+        _xml._packagePrefixes.addLast(packageName);
     }
 
     /**
@@ -228,6 +271,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
     public void reset() {
         _xml.reset();
         _namespaces.clear();
+        _xml._packagePrefixes.clear();
     }
 
     /**
@@ -241,6 +285,4 @@ public class ObjectWriter/*<T>*/implements Reusable {
             return (CharSequence) str;
         return Text.valueOf((String) str);
     }
-
-
 }

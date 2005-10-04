@@ -24,9 +24,9 @@ import javolution.realtime.RealtimeObject;
  * <p> This class represents collections which can quickly be iterated over 
  *     (forward or backward) in a thread-safe manner without creating new 
  *     objects and without using {@link #iterator iterators} . For example:<pre>
- *     static boolean contains(Object obj, FastCollection c) {
- *         for (FastCollection.Record r = c.headRecord(), end = c.tailRecord(); (r = r.getNextRecord()) != end;) {
- *              if (obj.equals(c.valueOf(r))) return true;
+ *     boolean search(Object item, FastCollection c) {
+ *         for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
+ *              if (item.equals(c.valueOf(r))) return true;
  *         }
  *         return false;
  *     }</pre></p>
@@ -51,7 +51,7 @@ import javolution.realtime.RealtimeObject;
  *     ordered (e.g. <code>FastTree</code>).
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, April 1, 2005
+ * @version 3.6, September 24, 2005
  */
 public abstract class FastCollection/*<E>*/extends RealtimeObject implements
         Collection/*<E>*/{
@@ -59,7 +59,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     /**
      * Holds the value comparator.  
      */
-    private FastComparator _valueComp = FastComparator.DIRECT;
+    private FastComparator _valueComp = FastComparator.DEFAULT;
 
     /**
      * Holds the value comparator.  
@@ -91,19 +91,19 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     /**
      * Returns the head record of this collection; it is the record such as 
-     * <code>headRecord().getNextRecord()</code> holds the first collection value.
+     * <code>head().getNext()</code> holds the first collection value.
      * 
      * @return the head record.
      */
-    public abstract Record headRecord();
+    public abstract Record head();
 
     /**
      * Returns the tail record of this collection; it is the record such as
-     * <code>tailRecord().getPreviousRecord()</code> holds the last collection value.
+     * <code>tail().getPrevious()</code> holds the last collection value.
      * 
      * @return the tail record.
      */
-    public abstract Record tailRecord();
+    public abstract Record tail();
 
     /**
      * Returns the collection value for the specified record.
@@ -148,8 +148,8 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public Iterator/*<E>*/iterator() {
         FastIterator iterator = (FastIterator) FastIterator.FACTORY.object();
         iterator._collection = this;
-        iterator._next = this.headRecord().getNextRecord();
-        iterator._tail = this.tailRecord();
+        iterator._next = this.head().getNext();
+        iterator._tail = this.tail();
         return iterator;
     }
 
@@ -167,7 +167,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     /**
      * Returns the value comparator for this collection (default 
-     * {@link FastComparator#DIRECT}).
+     * {@link FastComparator#DEFAULT}).
      *
      * @return the comparator to use for value equality (or ordering if 
      *        the collection is ordered)
@@ -203,8 +203,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      */
     public boolean remove(Object value) {
         final FastComparator valueComp = this.getValueComparator();
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             if (valueComp.areEqual(value, valueOf(r))) {
                 delete(r);
                 return true;
@@ -220,8 +219,8 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      */
     public void clear() {
         // Removes last record until empty.
-        for (Record head = headRecord(), r = tailRecord().getPreviousRecord(); r != head; r = r
-                .getPreviousRecord()) {
+        for (Record head = head(), r = tail().getPrevious(); r != head; r = r
+                .getPrevious()) {
             delete(r);
         }
     }
@@ -246,8 +245,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      */
     public boolean contains(Object value) {
         final FastComparator valueComp = this.getValueComparator();
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             if (valueComp.areEqual(value, valueOf(r)))
                 return true;
         }
@@ -280,8 +278,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     private boolean addAll(FastCollection/*<? extends E>*/c) {
         boolean modified = false;
-        for (Record r = c.headRecord(), end = c.tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
             if (this.add(c.valueOf(r))) {
                 modified = true;
             }
@@ -311,8 +308,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     private boolean containsAll(FastCollection/*<?>*/c) {
-        for (Record r = c.headRecord(), end = c.tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
             if (!contains(c.valueOf(r))) {
                 return false;
             }
@@ -332,9 +328,8 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public boolean removeAll(Collection/*<?>*/c) {
         boolean modified = false;
         // Iterates from the tail and removes the record if present in c. 
-        for (Record head = headRecord(), r = tailRecord().getPreviousRecord(), previous;
-                r != head; r = previous) {
-            previous = r.getPreviousRecord(); // Saves previous.
+        for (Record head = head(), r = tail().getPrevious(), previous; r != head; r = previous) {
+            previous = r.getPrevious(); // Saves previous.
             if (c.contains(valueOf(r))) {
                 delete(r);
                 modified = true;
@@ -354,9 +349,8 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public boolean retainAll(Collection/*<?>*/c) {
         boolean modified = false;
         // Iterates from the tail and remove the record if not present in c. 
-        for (Record head = headRecord(), r = tailRecord().getPreviousRecord(), previous;
-                 r != head; r = previous) {
-            previous = r.getPreviousRecord(); // Saves previous.
+        for (Record head = head(), r = tail().getPrevious(), previous; r != head; r = previous) {
+            previous = r.getPrevious(); // Saves previous.
             if (!c.contains(valueOf(r))) {
                 delete(r);
                 modified = true;
@@ -390,7 +384,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * @return the specified array.
      * @throws UnsupportedOperationException if <pre>array.length < size()</pre> 
      */
-    public Object[]/*<T> T[]*/toArray(Object[]/*T[]*/array) {
+    public Object[]/* <T> T[]*/toArray(Object[]/*T[]*/array) {
         int size = size();
         if (array.length < size)
             throw new UnsupportedOperationException(
@@ -400,8 +394,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
         }
         int i = 0;
         Object[] arrayView = array;
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             arrayView[i++] = valueOf(r);
         }
         return array;
@@ -415,10 +408,9 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public Text toText() {
         final Text sep = Text.valueOf(", ");
         Text text = Text.valueOf('[');
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             text = text.concat(Text.valueOf(valueOf(r)));
-            if (r.getNextRecord() != end) {
+            if (r.getNext() != end) {
                 text = text.concat(sep);
             }
         }
@@ -450,10 +442,10 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
             List/*<?>*/list = (List) obj;
             if (this.size() != list.size())
                 return false;
-            Record r1 = this.headRecord();
+            Record r1 = this.head();
             Iterator/*<?>*/i2 = list.iterator();
             for (int i = this.size(); i-- != 0;) {
-                r1 = r1.getNextRecord();
+                r1 = r1.getNext();
                 Object o1 = this.valueOf(r1);
                 Object o2 = i2.next();
                 if (!comp.areEqual(o1, o2))
@@ -475,8 +467,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
             return hashCodeList();
         final FastComparator valueComp = this.getValueComparator();
         int hash = 0;
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             hash += valueComp.hashCodeOf(valueOf(r));
         }
         return hash;
@@ -485,8 +476,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     private int hashCodeList() {
         final FastComparator comp = this.getValueComparator();
         int h = 1;
-        for (Record r = headRecord(), end = tailRecord(); (r = r
-                .getNextRecord()) != end;) {
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
             h = 31 * h + comp.hashCodeOf(valueOf(r));
         }
         return h;
@@ -497,21 +487,21 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * This interface represents the collection records which can directly be
      * iterated over.
      */
-    public interface Record/*<E>*/{
+    public interface Record {
 
         /**
          * Returns the record before this one.
          * 
          * @return the previous record.
          */
-        public Record getPreviousRecord();
+        public Record getPrevious();
 
         /**
          * Returns the record after this one.
          * 
          * @return the next record.
          */
-        public Record getNextRecord();
+        public Record getNext();
 
     }
 
@@ -554,7 +544,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
             if (_next == _tail)
                 throw new NoSuchElementException();
             _current = _next;
-            _next = _next.getNextRecord();
+            _next = _next.getNext();
             return _collection.valueOf(_current);
         }
 
@@ -562,10 +552,10 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
             if (_current != null) {
                 // Uses the previous record (not affected by the remove)
                 // to set the next record.
-                final Record previous = _current.getPreviousRecord();
+                final Record previous = _current.getPrevious();
                 _collection.delete(_current);
                 _current = null;
-                _next = previous.getNextRecord();
+                _next = previous.getNext();
             } else {
                 throw new IllegalStateException();
             }
@@ -576,7 +566,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * This inner class represents an unmodifiable view over the collection.
      */
     private final class Unmodifiable extends FastCollection/*<E>*/implements
-            Serializable, Set/*<E>*/ { // Allows to be used for unmodifiable set view.
+            Serializable, Set/*<E>*/{ // Allows to be used for unmodifiable set view.
 
         public Unmodifiable() {
             super(null);
@@ -586,12 +576,12 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
             return FastCollection.this.size();
         }
 
-        public Record headRecord() {
-            return FastCollection.this.headRecord();
+        public Record head() {
+            return FastCollection.this.head();
         }
 
-        public Record tailRecord() {
-            return FastCollection.this.tailRecord();
+        public Record tail() {
+            return FastCollection.this.tail();
         }
 
         public FastComparator getValueComparator() {

@@ -41,7 +41,7 @@ import javolution.realtime.RealtimeObject;
  * <p> {@link FastList} (as for any {@link FastCollection} sub-class) supports
  *     thread-safe, fast iterations without using iterators.<pre>
  *     FastList&lt;String&gt; list = new FastList&lt;String&gt;();
- *     for (FastList.Node&lt;String&gt; n = list.headNode(), end = list.tailNode(); (n = n.getNextNode()) != end;) {
+ *     for (FastList.Node&lt;String&gt; n = list.head(), end = list.tail(); (n = n.getNext()) != end;) {
  *         String value = n.getValue(); // No typecast necessary.    
  *     }</pre></p>
  *     
@@ -50,7 +50,7 @@ import javolution.realtime.RealtimeObject;
  *     from its list, it is automatically restored to its pool.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, April 2, 2005
+ * @version 3.6, September 24, 2005
  */
 public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         List/*<E>*/, Serializable {
@@ -457,7 +457,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * 
      * @param value the value to be inserted.
      */
-    public final void addLast(Object/*E*/value) { // Optimized.
+    public void addLast(Object/*E*/value) { // Optimized.
         Node newTail = _tail._next;
         if (newTail == null) {
             newTail = _tail._next = (Node) Node.FACTORY.newObject();
@@ -503,26 +503,6 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     ///////////////////////
     // Nodes operations. //
     ///////////////////////
-
-    /**
-     * Returns the head node of this list; it is the node such as 
-     * <code>headNode().getNextNode()</code> holds the first list value.
-     * 
-     * @return the head node.
-     */
-    public final Node/*<E>*/headNode() {
-        return _head;
-    }
-
-    /**
-     * Returns the tail node of this list; it is the node such as
-     * <code>tailNode().getPreviousNode()</code> holds the last list value.
-     * 
-     * @return the tail record.
-     */
-    public final Node/*<E>*/tailNode() {
-        return _tail;
-    }
 
     /**
      * Inserts the specified value before the specified Node.
@@ -577,12 +557,12 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     }
 
     // Implements FastCollection abstract method.
-    public final Record headRecord() {
+    public final Record/*Node<E>*/ head() {
         return _head;
     }
 
     // Implements FastCollection abstract method.
-    public final Record tailRecord() {
+    public final Record/*Node<E>*/ tail() {
         return _tail;
     }
 
@@ -675,7 +655,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * This class represents a {@link FastList} node; it allows for direct 
      * iteration over the list {@link #getValue values}.
      */
-    public static final class Node/*<E>*/implements Record/*<E>*/,
+    public static final class Node/*<E>*/implements Record,
             Serializable {
 
         /**
@@ -732,33 +712,30 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
             return _value;
         }
 
+        // Implements Record interface.
+        public final Record/*Node<E>*/getNext() {
+            return _next;
+        }
+
+        // Implements Record interface.
+        public final Record/*Node<E>*/getPrevious() {
+            return _previous;
+        }
+
         /**
-         * Returns the node after this one.
-         * 
-         * @return the next node.
+         * @deprecated Replaced by {@link #getNext()}
          */
         public final Node/*<E>*/getNextNode() {
             return _next;
         }
 
         /**
-         * Returns the node before this one.
-         * 
-         * @return the previous node.
+         * @deprecated Replaced by {@link #getPrevious()}
          */
         public final Node/*<E>*/getPreviousNode() {
             return _previous;
         }
 
-        // Implements Record interface.
-        public final Record/*<E>*/getNextRecord() {
-            return _next;
-        }
-
-        // Implements Record interface.
-        public final Record/*<E>*/getPreviousRecord() {
-            return _previous;
-        }
     }
 
     /**
@@ -885,11 +862,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
             return _size;
         }
 
-        public Record headRecord() {
+        public Record head() {
             return _head;
         }
 
-        public Record tailRecord() {
+        public Record tail() {
             return _tail;
         }
 
@@ -1010,6 +987,20 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
                 return node;
             }
         }
+    }
+
+    /**
+     * @deprecated Replaced by {@link #head}.
+     */
+    public final Node/*<E>*/headNode() {
+        return _head;
+    }
+
+    /**
+     * @deprecated Replaced by {@link #tail}.
+     */
+    public final Node/*<E>*/tailNode() {
+        return _tail;
     }
 
 }

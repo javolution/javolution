@@ -21,7 +21,11 @@ import javolution.lang.Appendable;
 import javolution.lang.Reflection;
 import javolution.lang.Text;
 import javolution.lang.TypeFormat;
+import javolution.util.FastCollection;
+import javolution.util.FastComparator;
 import javolution.util.FastMap;
+import javolution.util.FastTable;
+import javolution.util.LocalMap;
 
 /**
  * <p> This class represents the format base class for XML serialization and
@@ -41,17 +45,16 @@ import javolution.util.FastMap;
  *         public static final XmlFormat&lt;Graphic&gt; GRAPHIC_XML = new XmlFormat&lt;Graphic&gt;(Graphic.class) {
  *              public void format(Graphic g, XmlElement xml) {
  *                  xml.setAttribute("isVisible", g._isVisible); 
- *                  getSuper().format(g, xml); 
  *                  xml.add(g._paint); // First.
  *                  xml.add(g._stroke); // Second.
  *                  xml.add(g._transform); // Third.
  *              }
  *              public Graphic parse(XmlElement xml) {
+ *                  Graphic g = xml.object();
  *                  g._isVisible = xml.getAttribute("isVisible", true);
- *                  Graphic g = (Graphic) getSuper().parse(xml);
- *                  g._paint = (Paint) xml.getNext();
- *                  g._stroke = (Stroke) xml.getNext();
- *                  g._transform = (Transform) xml.getNext();
+ *                  g._paint = xml.getNext();
+ *                  g._stroke = xml.getNext();
+ *                  g._transform = xml.getNext();
  *                  return g;
  *             }
  *         };
@@ -61,15 +64,33 @@ import javolution.util.FastMap;
  *     formatting/parsing of xml attributes should always be performed before 
  *     formatting/parsing of the xml content.</p>
  * 
- * <p> Xml formats can also be dynamically associated. For example:<pre>
+ * <p> Xml formats can dynamically associated. For example:<pre>
  * 
  *     // XML Conversion (different formats for reading and writing).
  *     XmlFormat&lt;Foo&gt; readFormat = new XmlFormat&lt;Foo&gt;() {...};
  *     XmlFormat&lt;Foo&gt; writeFormat = new XmlFormat&lt;Foo&gt;() {...};
- *     XmlFormat.setInstance(readFormat, Foo.class);
- *     Foo foo = new ObjectReader&lt;Foo&gt;().read(in);
- *     XmlFormat.setInstance(writeFormat, Foo.class);
- *     new ObjectWriter&lt;Foo&gt;().write(foo, out);</pre></p>
+ *     LocalContext.enter();
+ *     try {  // Local context to avoid impacting other threads.
+ *        XmlFormat.setFormat(Foo.class, readFormat);
+ *        Foo foo = new ObjectReader&lt;Foo&gt;().read(in);
+ *        XmlFormat.setFormat(Foo.class, writeFormat);
+ *        new ObjectWriter&lt;Foo&gt;().write(foo, out);
+ *     } finally {
+ *        LocalContext.exit();
+ *     }
+ *     
+ *     // Temporary change of String format during formatting.
+ *     public void format(List list, XmlElement xml) {
+ *         LocalContext.enter();
+ *         try {  // Always safer to scope the change.
+ *             XmlFormat.setFormat(String.class, MY_STRING_FORMAT);
+ *             for (Object elem : list)  {
+ *                 xml.add(elem);
+ *             }
+ *        } finally {
+ *            LocalContext.exit(); 
+ *        }      
+ *     }</pre></p>
  *     
  * <p> A default format is defined for <code>null</code> values 
  *     (<code>&lt;null/&gt;</code>) and the following types:<ul>
@@ -110,8 +131,8 @@ import javolution.util.FastMap;
  *     List list = (List) or.read(new FileInputStream("C:/list.xml"));
  *     </pre></p>
  *     
- * <p> Finally, xml formats can be made impervious to obfuscation by setting 
- *     the {@link #setAlias aliases} of the obfuscated classes at start-up.</p>
+ * <p> Finally, xml formats can be made impervious to obfuscation by 
+ *     setting local {@link #setAlias aliases} for the obfuscated classes.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.5, August 29, 2005
@@ -119,33 +140,47 @@ import javolution.util.FastMap;
 public abstract class XmlFormat/*<T>*/{
 
     /**
-     * Holds the xml format instance (base class to xml format mapping,
-     * no removal allowed).
+     * Holds the default formats.
      */
-    private static final FastMap INSTANCES = new FastMap();
+    private static final FastMap DEFAULT_INSTANCES = new FastMap().setShared(true);
 
     /**
-     * Holds the class to xml format mapping (no removal allowed).
+     * Holds the dynamic class-to-format override.
      */
-    private static final FastMap CLASS_TO_FORMAT = new FastMap();
+    private static final LocalMap DYNAMIC_INSTANCES = new LocalMap();
 
     /**
-     * Holds class to alias (String) look-up table (no removal allowed).
+     * Holds the local look-up.
      */
-    private static final FastMap CLASS_TO_ALIAS = new FastMap();
+    private static final LocalMap CLASS_TO_FORMAT = new LocalMap();
 
     /**
-     * Holds the alias (String) to class look-up table (no removal allowed).
+     * Holds the class-to-alias mapping.
      */
-    private static final FastMap ALIAS_TO_CLASS = new FastMap();
+    private static final LocalMap CLASS_TO_ALIAS = new LocalMap();
+
+    /**
+     * Holds the class-name to class mapping.
+     */
+    private static FastMap CLASS_NAME_TO_CLASS = new FastMap().setShared(true);
+
+    /**
+     * Holds the local-name/uri to class mapping (localName to uri/class pairs).
+     */
+    private static FastMap LOCAL_NAME_TO_URI_CLASS = new FastMap().setShared(true);
+
+    /**
+     * Holds the alias-to-class mapping.
+     */
+    private static final LocalMap ALIAS_TO_CLASS = new LocalMap();
 
     /**
      * Holds the default XML representation when a more specific format 
      * cannot be found. This representation consists of an empty XML element
-     * with no attribute. Objects are deserialized using the class default 
-     * constructor (the class being identified by the element's name).
+     * with no attribute. Objects are deserialized using the class public
+     * no-arg constructor (the class being identified by the element's name).
      */
-    public static final XmlFormat DEFAULT_XML = new XmlFormat() {
+    public static final XmlFormat/*<Object>*/DEFAULT_XML = new XmlFormat() {
         public void format(Object obj, XmlElement xml) {
             // Do nothing.
         }
@@ -162,12 +197,9 @@ public abstract class XmlFormat/*<T>*/{
 
     /**
      * Holds the XML representation for <code>null</code> objects
-     * (<code>&lt;null/&gt;</code>). Applications may change the 
-     * representation of <code>null</code> values by aliasing the  
-     * {@link #getTargetClass() target class} of this format. For example:
-     * <pre>XmlFormat.setAlias(NULL_XML.getTargetClass(), "none");</pre>
+     * (<code>&lt;null/&gt;</code>).
      */
-    public static final XmlFormat NULL_XML = new XmlFormat(NULL.getClass()) {
+    static final XmlFormat NULL_XML = new XmlFormat(NULL.getClass()) {
         public void format(Object obj, XmlElement xml) {
             // Empty tag.
         }
@@ -177,7 +209,8 @@ public abstract class XmlFormat/*<T>*/{
         }
     };
     static {
-        XmlFormat.setAlias(NULL_XML.getTargetClass(), "null");
+        CLASS_TO_ALIAS.putDefault(NULL.getClass(), "null");
+        ALIAS_TO_CLASS.putDefault("null", NULL.getClass());
     }
 
     /**
@@ -185,7 +218,8 @@ public abstract class XmlFormat/*<T>*/{
      * instances. This representation consists of a <code>"name"</code> 
      * attribute holding the class name.
      */
-    public static final XmlFormat CLASS_XML = new XmlFormat("java.lang.Class") {
+    public static final XmlFormat/*<Class>*/CLASS_XML = new XmlFormat(
+            "java.lang.Class") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("name", ((Class) obj).getName());
         }
@@ -204,7 +238,8 @@ public abstract class XmlFormat/*<T>*/{
      * classes. This representation consists of a <code>"value"</code> attribute 
      * holding the string.
      */
-    public static final XmlFormat STRING_XML = new XmlFormat("java.lang.String") {
+    public static final XmlFormat/*<String>*/STRING_XML = new XmlFormat(
+            "java.lang.String") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", (String) obj);
         }
@@ -219,7 +254,7 @@ public abstract class XmlFormat/*<T>*/{
      * classes. This representation consists of a <code>"value"</code> attribute 
      * holding the characters.
      */
-    public static final XmlFormat TEXT_XML = new XmlFormat(
+    public static final XmlFormat/*<Text>*/TEXT_XML = new XmlFormat(
             "javolution.lang.Text") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", (Text) obj);
@@ -236,7 +271,7 @@ public abstract class XmlFormat/*<T>*/{
      * classes. This representation consists of a <code>"value"</code> attribute 
      * holding the characters.
      */
-    public static final XmlFormat APPENDABLE_XML = new XmlFormat(
+    public static final XmlFormat/*<Appendable>*/APPENDABLE_XML = new XmlFormat(
             "javolution.lang.Appendable") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", Text.valueOf(obj));
@@ -254,6 +289,35 @@ public abstract class XmlFormat/*<T>*/{
     };
 
     /**
+     * Holds the default XML representation for FastComparator.
+     */
+    static final XmlFormat FAST_COMPARATOR_XML = new XmlFormat(
+            "javolution.util.FastComparator") {
+
+        public Object allocate(XmlElement xml) {
+            if (xml.objectClass() == FastComparator.DEFAULT.getClass())
+                return FastComparator.DEFAULT;
+            if (xml.objectClass() == FastComparator.DIRECT.getClass())
+                return FastComparator.DIRECT;
+            if (xml.objectClass() == FastComparator.IDENTITY.getClass())
+                return FastComparator.IDENTITY;
+            if (xml.objectClass() == FastComparator.LEXICAL.getClass())
+                return FastComparator.LEXICAL;
+            if (xml.objectClass() == FastComparator.REHASH.getClass())
+                return FastComparator.REHASH;
+            return null;
+        }
+
+        public void format(Object obj, XmlElement xml) {
+            // Nothing to do.
+        }
+
+        public Object parse(XmlElement xml) {
+            return xml.object();
+        }
+    };
+
+    /**
      * Holds the default XML representation for classes implementing 
      * the <code>j2me.util.Collection</code> interface.
      * This representation consists of nested XML elements one for each 
@@ -261,16 +325,38 @@ public abstract class XmlFormat/*<T>*/{
      * the collection iterator order. Collections are deserialized using their
      * default constructor. 
      */
-    public static final XmlFormat COLLECTION_XML = new XmlFormat(
+    public static final XmlFormat/*<Collection>*/COLLECTION_XML = new XmlFormat(
             "j2me.util.Collection") {
         public void format(Object obj, XmlElement xml) {
-            for (Iterator i = ((Collection) obj).iterator(); i.hasNext();) {
+            final Collection collection = (Collection) obj;
+
+            // Special processing for FastCollection.
+            if (collection instanceof FastCollection) {
+                FastComparator valueComparator = ((FastCollection) collection)
+                        .getValueComparator();
+                if (valueComparator != FastComparator.DEFAULT) {
+                    xml.add(valueComparator, "ValueComparator");
+                }
+            }
+
+            for (Iterator i = collection.iterator(); i.hasNext();) {
                 xml.add(i.next());
             }
         }
 
         public Object parse(XmlElement xml) {
-            Collection collection = (Collection) xml.object();
+            final Collection collection = (Collection) xml.object();
+
+            // Special processing for FastCollection.
+            if (collection instanceof FastCollection) {
+                FastComparator valueComparator = (FastComparator) xml
+                        .get("ValueComparator");
+                if (valueComparator != null) {
+                    ((FastCollection) collection)
+                            .setValueComparator(valueComparator);
+                }
+            }
+
             while (xml.hasNext()) {
                 collection.add(xml.getNext());
             }
@@ -292,13 +378,30 @@ public abstract class XmlFormat/*<T>*/{
      *     &lt;Value j:class="java.lang.Integer" value="3"/>
      * &lt;/javolution.util.FastMap></pre>
      * 
-     * (elements' order is defined by the map 's entries iterator order. 
+     * The elements' order is defined by the map's entries iterator order. 
      * Maps are deserialized using their default constructor.
      */
-    public static final XmlFormat MAP_XML = new XmlFormat("j2me.util.Map") {
+    public static final XmlFormat/*<Map>*/MAP_XML = new XmlFormat(
+            "j2me.util.Map") {
 
         public void format(Object obj, XmlElement xml) {
-            Map map = (Map) obj;
+            final Map map = (Map) obj;
+
+            // Special processing for FastMap.
+            if (map instanceof FastMap) {
+                FastComparator keyComparator = ((FastMap) map)
+                        .getKeyComparator();
+                if (keyComparator != FastComparator.DEFAULT) {
+                    xml.add(keyComparator, "KeyComparator");
+                }
+
+                FastComparator valueComparator = ((FastMap) map)
+                        .getValueComparator();
+                if (valueComparator != FastComparator.DEFAULT) {
+                    xml.add(valueComparator, "ValueComparator");
+                }
+            }
+
             for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
                 Map.Entry entry = (Map.Entry) it.next();
                 xml.add(entry.getKey(), "Key");
@@ -307,7 +410,22 @@ public abstract class XmlFormat/*<T>*/{
         }
 
         public Object parse(XmlElement xml) {
-            Map map = (Map) xml.object();
+            final Map map = (Map) xml.object();
+
+            // Special processing for FastMap.
+            if (map instanceof FastMap) {
+                FastComparator keyComparator = (FastComparator) xml
+                        .get("KeyComparator");
+                if (keyComparator != null) {
+                    ((FastMap) map).setKeyComparator(keyComparator);
+                }
+                FastComparator valueComparator = (FastComparator) xml
+                        .get("ValueComparator");
+                if (valueComparator != null) {
+                    ((FastMap) map).setValueComparator(valueComparator);
+                }
+            }
+
             while (xml.hasNext()) {
                 Object key = xml.get("Key");
                 Object value = xml.get("Value");
@@ -320,7 +438,7 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Boolean</code>.
      */
-    public static final XmlFormat BOOLEAN_XML = new XmlFormat(
+    public static final XmlFormat/*<Boolean>*/BOOLEAN_XML = new XmlFormat(
             "java.lang.Boolean") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", ((Boolean) obj).booleanValue());
@@ -337,7 +455,8 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Byte</code>.
      */
-    public static final XmlFormat BYTE_XML = new XmlFormat("java.lang.Byte") {
+    public static final XmlFormat/*<Byte>*/BYTE_XML = new XmlFormat(
+            "java.lang.Byte") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", ((Byte) obj).byteValue());
         }
@@ -353,7 +472,7 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Character</code>.
      */
-    public static final XmlFormat CHARACTER_XML = new XmlFormat(
+    public static final XmlFormat/*<Character>*/CHARACTER_XML = new XmlFormat(
             "java.lang.Character") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", Text.valueOf(((Character) obj)
@@ -371,7 +490,7 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Integer</code>.
      */
-    public static final XmlFormat INTEGER_XML = new XmlFormat(
+    public static final XmlFormat/*<Integer>*/INTEGER_XML = new XmlFormat(
             "java.lang.Integer") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", ((Integer) obj).intValue());
@@ -388,7 +507,8 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Long</code>.
      */
-    public static final XmlFormat LONG_XML = new XmlFormat("java.lang.Long") {
+    public static final XmlFormat/*<Long>*/LONG_XML = new XmlFormat(
+            "java.lang.Long") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", ((Long) obj).longValue());
         }
@@ -404,7 +524,8 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Short</code>.
      */
-    public static final XmlFormat SHORT_XML = new XmlFormat("java.lang.Short") {
+    public static final XmlFormat/*<Short>*/SHORT_XML = new XmlFormat(
+            "java.lang.Short") {
         public void format(Object obj, XmlElement xml) {
             xml.setAttribute("value", ((Short) obj).shortValue());
         }
@@ -420,7 +541,10 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Float</code>.
      /*@FLOATING_POINT@
-     public static final XmlFormat FLOAT_XML = new XmlFormat("java.lang.Float") {
+     public static final XmlFormat
+     /**/
+    /*<Float>*//*@FLOATING_POINT@
+     FLOAT_XML = new XmlFormat("java.lang.Float") {
      public void format(Object obj, XmlElement xml) {
      xml.setAttribute("value", ((Float)obj).floatValue());
      }
@@ -437,7 +561,10 @@ public abstract class XmlFormat/*<T>*/{
     /**
      * Holds the default XML representation for <code>java.lang.Double</code>.
      /*@FLOATING_POINT@
-     public static final XmlFormat DOUBLE_XML = new XmlFormat("java.lang.Double") {
+     public static final XmlFormat
+     /**/
+    /*<Double>*//*@FLOATING_POINT@
+     DOUBLE_XML = new XmlFormat("java.lang.Double") {
      public void format(Object obj, XmlElement xml) {
      xml.setAttribute("value", ((Double)obj).doubleValue());
      }
@@ -452,18 +579,14 @@ public abstract class XmlFormat/*<T>*/{
      /**/
 
     /**
-     * The class/interface directly mapped to this format.
+     * Holds root class (for deprecated support).
      */
-    private Class _targetClass;
+    private Class _rootClass;
 
     /**
-     * Holds the xml format that this format overrides or <code>null<code>
-     * if unknown.
-     */
-    private XmlFormat _super;
-
-    /**
-     * Creates a XML format not mapped to any class (dynamic mapping).
+     * Creates a dynamic XML format which can be 
+     * {@link javolution.realtime.LocalContext locally} mapped to any class 
+     * (see {@link #setFormat}).
      */
     protected XmlFormat() {
     }
@@ -472,15 +595,16 @@ public abstract class XmlFormat/*<T>*/{
      * Creates a default XML format for instances of the specified 
      * class/interface.
      * 
-     * @param targetClass the target class/interface for this XML format.
+     * @param rootClass the root class/interface for this XML format.
      * @throws j2me.lang.IllegalStateException if the specified class is 
      *         already mapped to another format.
      */
-    protected XmlFormat(Class/*<T>*/targetClass) {
-        if (INSTANCES.containsKey(targetClass))
+    protected XmlFormat(Class/*<T>*/rootClass) {
+        _rootClass = rootClass;
+        if (DEFAULT_INSTANCES.put(rootClass, this) != null) {
             throw new IllegalStateException("XmlFormat already mapped to "
-                    + targetClass);
-        setInstance(this, targetClass);
+                    + rootClass);
+        }
     }
 
     /**
@@ -493,143 +617,64 @@ public abstract class XmlFormat/*<T>*/{
      *         already mapped to another format.
      */
     protected XmlFormat(String className) {
-        Class clazz;
+        this(classForName(className));
+    }
+
+    private static Class classForName(String className) {
         try {
-            clazz = Reflection.getClass(className);
+            return Reflection.getClass(className);
         } catch (ClassNotFoundException e) {
             throw new JavolutionError(e);
         }
-        if (INSTANCES.containsKey(clazz))
-            throw new IllegalStateException("XmlFormat already mapped to "
-                    + clazz);
-        setInstance(this, clazz);
     }
 
     /**
-     * Sets the format for the specified class/interface. Any previous 
-     * format associated to the specified class/interface is removed
-     * (including default formats if any).
-     * 
-     * @param xmlFormat the XML format for the specified class/interface
-     *        or <code>null</code> to unset the current mapping.
-     * @param targetClass the new target class for the specified format.
+     * Specifies the format associated to the specified class 
+     * ({@link LocalMap local association}).
+     *  
+     * @param forClass the class/interface being locally mapped.
+     * @param that the format to be associated to the specified class.
      */
-    public static/*<T>*/void setInstance(XmlFormat/*<T>*/xmlFormat,
-            Class/*<T>*/targetClass) {
-        synchronized (INSTANCES) {
-            if (xmlFormat != null) {
-                if (xmlFormat._targetClass != null) {
-                    INSTANCES.put(xmlFormat._targetClass, null);
-                }
-                xmlFormat._targetClass = targetClass;
-            }
-            INSTANCES.put(targetClass, xmlFormat);
-            invalidateClassToFormatMapping();
-        }
+    public static void setFormat(Class forClass, XmlFormat that) {
+        DYNAMIC_INSTANCES.put(forClass, that);
+        CLASS_TO_FORMAT.clear();
+        that._rootClass = forClass;
     }
 
     /**
      * Returns the format for the specified class/interface.
-     * This method looks for the more specialized format; if none is found
-     * {@link #DEFAULT_XML} format is returned.
+     * This method searches for the more specialized format (default or 
+     * dynamic); if none is found {@link #DEFAULT_XML} format is returned.
      * 
      * <p> Note: This method forces the initialization of the specified
      *           class. This to ensure that the class static fields (which 
      *           may hold the most specialized format) are initialized.</p> 
      * 
-     * @param clazz the class/interface for which the most specialized 
+     * @param forClass the class/interface for which the most specialized 
      *        format is returned.
      * @return the format to use for the specified class.
      */
-    public static/*<T>*/XmlFormat/*<T>*/getInstance(Class/*<T>*/clazz) {
-        Object obj = CLASS_TO_FORMAT.get(clazz);
-        if (obj != null)
-            return (XmlFormat/*<T>*/) obj;
-        return searchInstanceFor(clazz, false);
+    public static/*<T>*/XmlFormat/*<T>*/getInstance(Class/*<T>*/forClass) {
+        Object xmlFormat = CLASS_TO_FORMAT.get(forClass);
+        return (xmlFormat != null) ? (XmlFormat/*<T>*/) xmlFormat
+                : (XmlFormat/*<T>*/) searchInstanceFor(forClass, false);
     }
 
     /**
-     * Sets the alias to be used instead of the class name for the specified 
-     * class (element tag name or j:class attribute). This method is 
-     * particularly useful in case of obfuscation to ensure proper/invariant 
-     * xml formatting (you don't want to use the obfuscated class name in 
-     * such case). Aliases should be set prior to using the xml 
-     * serialization/deserialization facility (at start-up for example). 
+     * Sets the {@link javolution.realtime.LocalContext local} alias to be used 
+     * instead of the class name for the specified class (element tag name or 
+     * "j:class" attribute).
+     * This method is particularly useful in case of obfuscation to ensure 
+     * proper/invariant xml formatting (you don't want to use the obfuscated 
+     * class name in such case). 
      * 
      * @param forClass the class for which the specified alias should be used.
      * @param alias the name to use for the specified class.
+     * @see   LocalMap
      */
     public static void setAlias(Class forClass, String alias) {
-        synchronized (CLASS_TO_ALIAS) {
-            CLASS_TO_ALIAS.put(forClass, alias);
-            ALIAS_TO_CLASS.put(alias, forClass);
-        }
-    }
-
-    /**
-     * Returns the name to be used for the serialization of the specified 
-     * class. If no alias has been set this method returns the full class name.
-     * 
-     * @param clazz the class for which the name to use is returned.
-     * @return the name of the element identifying instances of the 
-     *        specified class during serialization.
-     */
-    static String aliasFor(Class clazz) {
-        String name = (String) CLASS_TO_ALIAS.get(clazz);
-        if (name != null)
-            return name;
-        name = clazz.getName();
-        synchronized (CLASS_TO_ALIAS) {
-            CLASS_TO_ALIAS.put(clazz, name);
-            ALIAS_TO_CLASS.put(name, clazz);
-        }
-        return name;
-    }
-
-    /**
-     * Returns the class for the specified identifier.
-     *
-     * @param  alias the class name or alias.
-     * @throws XmlException if there is no class matching the specified classId.
-     */
-    static Class classFor(CharSequence alias) {
-        Class clazz = (Class) ALIAS_TO_CLASS.get(alias);
-        if (clazz != null)
-            return clazz;
-        String className = alias.toString();
-        try {
-            clazz = Reflection.getClass(className);
-        } catch (ClassNotFoundException e) {
-            throw new XmlException(e);
-        }
-        synchronized (CLASS_TO_ALIAS) {
-            CLASS_TO_ALIAS.put(clazz, className);
-            ALIAS_TO_CLASS.put(className, clazz);
-        }
-        return clazz;
-    }
-
-    /**
-     * Returns the format being overriden by this format.
-     *
-     * @return the format being overriden.
-     */
-    public final/*<T>*/XmlFormat/*<T>*/getSuper() {
-        if (_super != null)
-            return _super;
-        if (this == DEFAULT_XML)
-            return null;
-        _super = searchInstanceFor(this._targetClass, true);
-        return _super;
-    }
-
-    /**
-     * Returns the base class/interface for which this format is employed.
-     *
-     * @return the target class for this format.
-     */
-    public final Class/*<T>*/getTargetClass() {
-        return (Class/*<T>*/) _targetClass;
+        CLASS_TO_ALIAS.put(forClass, alias);
+        ALIAS_TO_CLASS.put(alias, forClass);
     }
 
     /**
@@ -674,26 +719,50 @@ public abstract class XmlFormat/*<T>*/{
      */
     private static XmlFormat searchInstanceFor(Class clazz,
             boolean forceInherited) {
-        // Ensures that the class is initialized.
-        try {
+
+        try { // Ensures that the class is initialized.
             Reflection.getClass(clazz.getName());
         } catch (ClassNotFoundException e) {
             // Ignores (hopefully the class has already been initialized).
         }
+
         XmlFormat bestMatchFormat = null;
         Class bestMatchClass = null;
-        for (FastMap.Entry e = INSTANCES.headEntry(), end = INSTANCES
-                .tailEntry(); (e = e.getNextEntry()) != end;) {
+
+        // Searches dynamic mapping.
+        FastCollection dynamicEntries = (FastCollection) DYNAMIC_INSTANCES
+                .entrySet();
+        for (FastCollection.Record r = dynamicEntries.head(), end = dynamicEntries
+                .tail(); (r = r.getNext()) != end;) {
+            Map.Entry e = (Map.Entry) r;
+            Class cls = (Class) e.getKey();
+            if ((cls == clazz) && forceInherited)
+                continue;
+            if (cls.isAssignableFrom(clazz)) { // Compatible.
+                if ((bestMatchClass == null)
+                        || (bestMatchClass.isAssignableFrom(cls))) {
+                    bestMatchClass = cls;
+                    bestMatchFormat = (XmlFormat) e.getValue();
+                }
+            }
+        }
+
+        // Searches default mapping.
+        for (FastMap.Entry e = DEFAULT_INSTANCES.head(), end = DEFAULT_INSTANCES
+                .tail(); (e = (FastMap.Entry) /*CAST UNNECESSARY WITH JDK1.5*/e
+                .getNext()) != end;) {
             Class cl = (Class) e.getKey();
             if ((cl == clazz) && forceInherited)
                 continue;
-            if (cl.isAssignableFrom(clazz)) { // Compatible.
+            Class cls = (Class) e.getKey();
+            if ((cls == clazz) && forceInherited)
+                continue;
+            if (cls.isAssignableFrom(clazz)) { // Compatible.
                 if ((bestMatchClass == null)
-                        || (bestMatchClass.isAssignableFrom(cl))) {
-                    // Class more specialized that bestMatchClass.
-                    XmlFormat xmlFormat = (XmlFormat) e.getValue();
-                    bestMatchClass = cl;
-                    bestMatchFormat = xmlFormat;
+                        || ((bestMatchClass != cls) && bestMatchClass
+                                .isAssignableFrom(cls))) {
+                    bestMatchClass = cls;
+                    bestMatchFormat = (XmlFormat) e.getValue();
                 }
             }
         }
@@ -702,34 +771,90 @@ public abstract class XmlFormat/*<T>*/{
         if (bestMatchFormat == null) {
             bestMatchFormat = DEFAULT_XML;
         }
-        // Updates direct look-up (when not inherited format)
+
+        // Updates local look-up (when not inherited format)
         if (!forceInherited) {
-            synchronized (CLASS_TO_FORMAT) {
-                CLASS_TO_FORMAT.put(clazz, bestMatchFormat);
-            }
+            CLASS_TO_FORMAT.put(clazz, bestMatchFormat);
         }
         return bestMatchFormat;
     }
 
     /**
-     * Invalidates the current class to format mapping (including 
-     * (@link #getSuper()} values). 
+     * Returns the name or alias for the specified class.
+     *
+     * @param cls the class for which the name or alias is returned.
+     * @return the class name or alias. 
      */
-    private static void invalidateClassToFormatMapping() {
-        synchronized (INSTANCES) {
-            for (FastMap.Entry e = INSTANCES.headEntry(), end = INSTANCES
-                    .tailEntry(); (e = e.getNextEntry()) != end;) {
-                XmlFormat xmlFormat = (XmlFormat) e.getValue();
-                xmlFormat._super = null;
+    static String aliasFor(Class cls) {
+        return (String) CLASS_TO_ALIAS.get(cls);
+    }
+
+    /**
+     * Returns the class for the specified name or alias.
+     *
+     * @param name the class name or alias.
+     * @return the corresponding class. 
+     */
+    static Class classFor(CharSequence name) {
+        Class cls = (Class) CLASS_NAME_TO_CLASS.get(name);
+        return (cls != null) ? cls : searchClassFor(name);
+    }
+
+    private static Class searchClassFor(CharSequence name) {
+        Class cls = (Class) ALIAS_TO_CLASS.get(name);
+        if (cls != null)
+            return cls;
+        try {
+            String className = name.toString();
+            cls = Reflection.getClass(className);
+            CLASS_NAME_TO_CLASS.put(className, cls);
+            return cls;
+        } catch (ClassNotFoundException e) {
+            throw new XmlException(e);
+        }
+    }
+
+    /**
+     * Returns the class for the specified uri/local name.
+     * 
+     * @param uri the namespace uri.
+     * @param localName the local name.
+     * @return the corresponding class. 
+     */
+    static Class classFor(CharSequence uri, CharSequence localName) {
+        FastTable uriClassTable = (FastTable) LOCAL_NAME_TO_URI_CLASS
+                .get(localName);
+        if (uriClassTable != null) {
+            for (int i = 0; i < uriClassTable.size(); i += 2) {
+                if (uri.equals(uriClassTable.get(i)))
+                    return (Class) uriClassTable.get(i + 1);
             }
         }
-        // Look-up table cannot be cleared (to avoid synchronized read),
-        // each entry value is set to null.
-        synchronized (CLASS_TO_FORMAT) {
-            for (FastMap.Entry e = CLASS_TO_FORMAT.headEntry(), end = CLASS_TO_FORMAT
-                    .tailEntry(); (e = e.getNextEntry()) != end;) {
-                e.setValue(null);
+        return searchClassFor(uri, localName);
+    }
+
+    private static Class searchClassFor(CharSequence uri, CharSequence localName) {
+        String uriString = uri.toString();
+        String localNameString = localName.toString();
+        if (!uriString.startsWith("java:"))
+            throw new XmlException("Invalid package uri (" + uriString
+                    + "), the package uri should start with \"java:\"");
+        String className = uriString.substring(5)
+                + (uriString.length() > 5 ? "." : "") + localNameString;
+
+        try {
+            Class cls = Reflection.getClass(className);
+            FastTable uriClassTable = (FastTable) LOCAL_NAME_TO_URI_CLASS
+                    .get(localName);
+            if (uriClassTable == null) {
+                uriClassTable = new FastTable();
+                LOCAL_NAME_TO_URI_CLASS.put(localNameString, uriClassTable);
             }
+            uriClassTable.add(uriString);
+            uriClassTable.add(cls);
+            return cls;
+        } catch (ClassNotFoundException e) {
+            throw new XmlException(e);
         }
     }
 
@@ -738,4 +863,21 @@ public abstract class XmlFormat/*<T>*/{
      */
     private static class Null {
     };
+
+    /**
+     * @deprecated Replaced by {@link #setFormat}.
+     */
+    public static/*<T>*/void setInstance(XmlFormat/*<T>*/that,
+            Class/*<T>*/rootClass) {
+        XmlFormat.setFormat(rootClass, that);
+    }
+
+    /**
+     * @deprecated the XmlFormat instance should be stated explicitly
+     *             (xml formats might have multiple parents).
+     */
+    public final/*<T>*/XmlFormat/*<T>*/getSuper() {
+        return searchInstanceFor(_rootClass, true);
+    }
+
 }

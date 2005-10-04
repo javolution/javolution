@@ -8,4 +8,13 @@
  */
 package j2me.util;
 import javolution.util.FastSet;
-public class LinkedHashSet extends FastSet {}
+public class LinkedHashSet extends FastSet {
+    
+    public LinkedHashSet() {
+        super();
+    }
+    public LinkedHashSet(int capacity) {
+        super(capacity);
+    }
+
+}

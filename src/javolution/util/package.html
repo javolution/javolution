@@ -19,38 +19,30 @@
         }</pre>
         Not so with direct iterations:<pre>
         public static void visit(FastCollection&lt;FastCollection&gt; node) {
-            for (FastCollection.Record r = node.headRecord(), end = node.tailRecord();
-                    (r = r.getNextRecord()) != end;) {
+            for (FastCollection.Record r = node.head(), end = node.tail(); (r = r.getNext()) != end;) {
                 visit(node.valueOf(r));
             }
         }</pre></LI>
     <LI>Used to implement most of {@link javolution.util.FastCollection FastCollection} base class methods 
         (including {@link javolution.util.FastCollection#iterator iterator()}).</LI>
     <LI>Support forward/backward iterations from the start (head) or from the end (tail)</LI>
-    <LI>Thread-Safe as long as the record sequence iterated over is not modified by another thread
-       (objects can safely be append/prepend by other threads during iteration but not inserted/removed).</LI>
+    <LI>Thread-Safe as long as the record sequence iterated over is not modified by another thread.
+        Objects can safely be append/prepend by other threads during iteration but not inserted/removed
+        <i>(Note: {@link javolution.util.FastMap#setShared Shared FastMap} <b>do support</b> 
+        concurrent entry removal)</i>.</LI>
     <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible 
         with other platforms (J2ME, 1.4, GCJ).</LI>
     </UL>
     Here are few examples of direct iterations:<pre>
-        FastList&lt;String&gt; list = new FastList&lt;String&gt;();
-        for (FastList.Node&lt;String&gt; n = list.headNode(), end = list.tailNode(); (n = n.getNextNode()) != end;) {
+        FastList&lt;String&gt; list;
+        for (FastList.Node&lt;String&gt; n = list.head(), end = list.tail(); (n = n.getNext()) != end;) {
              String value = n.getValue(); // No typecast necessary.    
         }
         ...
-        FastMap map = new FastMap&lt;String, Thread&gt;();
-        for (FastMap.Entry&lt;String, Thread&gt; e = map.headEntry(), end = map.tailEntry(); (e = e.getNextEntry()) != end;) {
+        FastMap&lt;String, Thread&gt; map;
+        for (FastMap.Entry&lt;String, Thread&gt; e = map.head(), end = map.tail(); (e = e.getNext()) != end;) {
              String key = e.getKey(); // No typecast necessary.
              Thread value = e.getValue(); // No typecast necessary.
-        }
-        ...
-        FastCollection&lt;Thread&gt; threads ...
-        // Removes all dead threads (always iterate from the tail when removing record from an unknown FastCollection, see {@link javolution.util.FastCollection#delete delete}).
-        for (FastCollection.Record&lt;Thread&gt; head = threads.headRecord(), r = tailRecord().getPreviousRecord(), previous; r != head; r = previous) {
-             previous = r.getPreviousRecord(); // Saves previous.
-             if (!threads.valueOf(r).isAlive()) { // No typecast necessary.
-                 threads.delete(r);
-             }    
         }</pre></P>
 
 <P> Users may provide a read-only view of any {@link javolution.util.FastCollection FastCollection} 
@@ -68,24 +60,22 @@
           }
       }</pre></P>
 
-<P> Javolution collection classes support concurrent access without synchronization as long as the
-    records are not removed (e.g. {@link javolution.util.FastMap FastMap} look-up table) and not
-    inserted at arbitrary position (appending to the end of the collection is fine).
-    To keep read access unsynchronized when records are deleted, applications may either replace 
-    the whole collection/map or better set the record value to <code>null</code> instead of removing it.
-    Structural modifications (including appending) should always be synchronized. For example:<pre>
+<P> {@link javolution.util.FastMap FastCollection} classes support concurrent access without synchronization as long as the
+    records are not removed and not inserted at arbitrary position (appending to the end of the collection is fine).
+    For {@link javolution.util.FastMap FastMap}, unsynchronized concurrent access can be 
+    guaranteed by making the map {@link javolution.util.FastMap#setShared shared}.
+    For example:<pre>
         public class XmlFormat {
              
-             static final FastMap&lt;Class, XmlFormat&gt; CLASS_TO_FORMAT = new FastMap&lt;Class, XmlFormat&gt;();
+             // Class to format mapping is shared between multiple threads (static).
+             static final FastMap&lt;Class, XmlFormat&gt; CLASS_TO_FORMAT = new FastMap&lt;Class, XmlFormat&gt;().setShared(true);
              
              public static XmlFormat getInstance(Class forClass) {
-                 return CLASS_TO_FORMAT.get(forClass); // Unsynchronized read.
+                 return CLASS_TO_FORMAT.get(forClass); // No synchronization needs to occur.
              }
              
-             public void setClass(Class clazz) {
-                 synchronized (CLASS_TO_FORMAT) {      // Synchronized update.
-                     CLASS_TO_FORMAT.put(clazz, this);
-                 }
+             public static void setFormat(Class forClass, XmlFormat xmlFormat) {
+                 CLASS_TO_FORMAT.put(forClass, xmlFormat); // Internal synchronization occurs (shared map).
              } 
         }</pre></P>
 
@@ -121,7 +111,7 @@
               <TD>Yes</TD>
               <TD>{@link javolution.util.FastCollection#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastList.Node Node}</TD>
-              <TD>Reusable linked-list (recycles its nodes)</TD>
+              <TD> Recycle their own nodes (no adverse effect on GC)</TD>
             </TR>
             <TR>
               <TD>{@link javolution.util.FastSet FastSet}</TD>
@@ -146,9 +136,9 @@
               <TD>{@link javolution.util.FastMap#setKeyComparator setKeyComparator(FastComparator)}<BR>
                   {@link javolution.util.FastMap#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastMap.Entry Entry}</TD>
-              <TD>Thread-safe access without synchronization if the keys are not removed (e.g. look-up table)<BR>
+              <TD>Thread-safe when marked as {@link javolution.util.FastMap#setShared shared}<BR>
                   No rehash/resize ever performed <BR>
-                  Reusable hash map (recycles its entries)</TD>
+                  Unshared hash map recycles their own entries (no adverse effect on GC)</TD>
             </TR>
          </TABLE>
     </P>    

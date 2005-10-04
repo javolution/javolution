@@ -8,146 +8,106 @@
  */
 package javolution.realtime;
 
+import j2me.lang.IllegalStateException;
+import j2me.lang.ThreadLocal;
+
 import java.util.EmptyStackException;
-import javolution.util.FastMap;
+
+import javolution.JavolutionError;
 
 /**
- * <p> This class represents a real-time context (thread-based).
- *     Applications do not have direct access to instances of this class.
- *     {@link Context} methods are always static and typically affect
- *     the first outer context of appropriate type (as defined by the method's
- *     class). In some cases (e.g. <code>LogContext</code> below), context
- *     static methods may affect more than one context instance.</p>
- *
- * <p> The scope of a {@link Context} is defined by a <code>try, finally</code>
- *     block statement which starts with a static <code>enter</code> call and
- *     ends with a static <code>exit</code> call. For example:<pre>
+ * <p> This class represents a real-time context; they are typically 
+ *     thread-local but they can also be associated to particular objects.</p>
+ *     
+ * <p> This package provides few predefined contexts:<ul>
+ *     <li>{@link LocalContext} - To define locally 
+ *          scoped setting held by {@link LocalReference}</li>
+ *     <li>{@link PoolContext} - To transparently reuse objects created using
+ *          an {@link ObjectFactory} instead of a constructor.</li>
+ *     <li>{@link ConcurrentContext} - To take advantage of concurrent 
+ *         algorithms on multi-processors systems.</li>
+ *     </ul>           
+ *     Context-aware applications may extend the context base class or any 
+ *     predefined contexts to address system-wide concerns, such as logging,
+ *     security, performance, and so forth.</p>
+ *     
+ * <p> The scope of a {@link Context} should be surrounded by a <code>try, 
+ *     finally</code> block statement to ensure correct behavior in case 
+ *     of exceptions being raised. For example:<pre>
+ *     
  *     LocalContext.enter();
- *     try { // Current thread executes in a local context.
+ *     try 
+ *         Length.showAs(Unit.FOOT); // Thread-Local setting (no impact on other threads)
  *         ... 
  *     } finally {
  *         LocalContext.exit();
- *     }</pre>
- *     The class of the enter/exit methods identifies the context type.</p>
- *
- * <p> Because contexts are thread local, entering/exiting a context is 
- *     fast and does not involve any form of synchronization. Nonetheless,
- *     upon thread termination, it is recommended to {@link #clear} 
- *     the top-level context to ensure that all the associated resources 
- *     are immediately released. For example:<pre>
- *          public class MyThread extends Thread {
- *              public void run() {
- *                  try {
- *                      ...
- *                  } finally {  
- *                      Context.clear(); // Finalizes all contexts associated 
- *                  }                    // to this thread.
- *              } 
- *          }</pre></p> 
- *
- * <p> Context-aware applications may extend this base class to address
- *     system-wide concerns, such as logging, security, performance,
- *     and so forth. For example:<pre>
- *     public class LogContext extends Context {
- *         public static enter(Logger logger) { ... }
- *         public static void log(String msg) { ... }
- *         public static void exit() { ... }
- *         ...
  *     }
- *     ...
- *     LogContext.enter(logger_A);
- *     try {
- *         foo(); // Logs foo with logger_A
- *         LogContext.enter(logger_B);
- *         try {
- *             foo(); // Logs foo with logger_A and logger_B
- *         } finally {
- *             LogContext.exit();
+ *     
+ *     class Calculator {  
+ *         PoolContext _pool = new PoolContext();
+ *         void execute(Runnable logic) {
+ *             _pool.push(); 
+ *             try {
+ *                 logic.run(); // Executes the logic using this calculator objects.
+ *             } finally {
+ *                 _pool.pull(); // Recycles used objects all at once.    
+ *             }
  *         }
- *     } finally (
- *         LogContext.exit();
- *     }
- *     ...
- *     void foo() {
- *          LogContext.log("blah, blah, blah");
- *     }
- *     </pre></p>
- *
- * <p> Note: Javolution context programming is somewhat complementary to <a href=
- *    "http://www.javaworld.com/javaworld/jw-01-2002/jw-0118-aspect.html">
- *     aspect-oriented programming</a>. Whereas context programming is dynamic
- *     by nature (thread based); AOP is typically code based (ref.
- *     <a href="http://eclipse.org/aspectj/">AspectJ</a> tool/compiler).
- *     Both can be used in conjunction to insert custom context code
- *     automatically.</p>
+ *     }</pre></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.6, September 25, 2005
  */
 public abstract class Context {
 
     /**
-     * Holds the thread to current context look-up table.
-     * Because look-up tables (with no synchronized read) do not allow
-     * key removal (ref. FastMap documentation). The whole collection 
-     * is replaced when dead threads are removed.
+     * Holds the context for the current thread.
      */
-    private static FastMap ThreadToContext = new FastMap();
+    private static final ThreadLocal CURRENT = new ThreadLocal() {
+        protected Object initialValue() {
+            Thread thread = Thread.currentThread();
+            Context ctx = (thread instanceof ConcurrentThread) ? 
+                    (Context) new PoolContext()
+                    : new HeapContext();
+            ctx._owner = thread;
+            return ctx;
+        }
+    };
 
     /**
-     * Holds class lock (used when thread-context mapping is changed).
-     */
-    private static final Object LOCK = new Object();
-
-    /**
-     * Holds the thread owner of this context.
-     */
-    private final Thread _owner;
-
-    /**
-     * Holds a shortcut to the pool context for this context or 
+     * Holds a shortcut to the pool context or 
      * <code>null</code> if none (heap context). 
      */
-    private PoolContext _poolContext;
+    PoolContext inheritedPoolContext;
 
     /**
-     * Holds the outer context of this context or <code>null</code>
+     * Holds a shortcut to the local context or 
+     * <code>null</code> if none (global context). 
+     */
+    LocalContext inheritedLocalContext;
+
+    /**
+     * Holds the current thread owner of this context.
+     */
+    private Thread _owner;
+
+    /**
+     * Holds the current outer context of this context or <code>null</code>
      * if none (root context).
      */
     private Context _outer;
 
     /**
-     * Holds the last inner context used by the thread owner of this context.
+     * Holds contexts available for reuse.
+     * 
+     * @see #enter(Class)
      */
     private Context _inner;
 
     /**
      * Default constructor. 
-     * This constructor should be called from the thread owner of the context.
      */
     protected Context() {
-        _owner = Thread.currentThread();
-        if (this instanceof PoolContext) {
-            _poolContext = (PoolContext) this;
-        }
-    }
-
-    /**
-     * Clears the current contexts and all its inner contexts. This method 
-     * call {@link #dispose} on this context and its inner contexts. 
-     */
-    public static void clear() {
-        Context current = Context.currentContext();
-        if (current._outer == null) { // Root context is being cleared.
-            synchronized (Context.LOCK) { // Remove mapping.
-                Context.ThreadToContext.put(current._owner, null);
-            }
-        } else if (current._outer._inner == current) {
-            current._outer._inner = null;
-        }
-        for (Context ctx = current; ctx != null; ctx = ctx._inner) {
-            ctx.dispose();
-        }
     }
 
     /**
@@ -157,185 +117,162 @@ public abstract class Context {
      *
      * @return the current context (always different from <code>null</code>).
      */
-    protected static Context currentContext() {
-        Context ctx = (Context) Context.ThreadToContext.get(Thread
-                .currentThread());
-        return (ctx != null) ? ctx : newContext();
-    }
-
-    private static Context newContext() {
-        Context ctx = (Thread.currentThread() instanceof ConcurrentThread) ? (Context) new PoolContext()
-                : new HeapContext();
-        synchronized (Context.LOCK) {
-            cleanupDeadThreads();
-            Context.ThreadToContext.put(ctx._owner, ctx);
-            return ctx;
-        }
+    public static Context currentContext() {
+        return (Context) Context.CURRENT.get();
     }
 
     /**
-     * Returns the thread owner of this {@link Context}. The owner of a
+     * Returns the current owner of this context. The owner of a
      * context is the thread which entered the context.
-     * The owner of the {@link #currentContext current} context is always the
-     * current thread but the owner of the current outer context might
-     * be another thread due to concurrency.
      *
      * @return the thread owner of this context.
      */
-    protected final Thread getOwner() {
+    public final Thread getOwner() {
         return _owner;
     }
 
     /**
-     * Holds the outer context of this {@link Context} or <code>null</code>
+     * Holds the outer context of this context or <code>null</code>
      * if none (root context).
      *
      * @return the outer context or <code>null</code> if none (root context).
      */
-    protected final Context getOuter() {
+    public final Context getOuter() {
         return _outer;
     }
 
     /**
-     * Returns the last inner context used by the owner of this context.
-     * This method allows for traversing of the contexts which have 
-     * been used by this context's owner.
-     *
-     * @return the outer context or <code>null</code> if none (deepest context).
+     * Clears this context and releases any associated resource. Dead threads
+     * contexts are automatically cleared before finalization.
      */
-    protected final Context getInner() {
-        return _inner;
+    public void clear() {
+        if (_inner != null)
+            _inner.clear();
+        _inner = null;
     }
 
     /**
-     * Pushes a context of specified type as the current context.
-     * This method tries to reuse contexts from the context stack.
-     *
-     * @param contextClass the class of the context to be pushed.
-     * @return the context pushed or <code>null</code> if none found.
+     * The action to be performed after this context becomes the current 
+     * context.
      */
-    protected static Context push(Class contextClass) {
+    protected abstract void enterAction();
+
+    /**
+     * The action to be performed before this context is no more the current 
+     * context.
+     */
+    protected abstract void exitAction();
+
+    /**
+     * Pushes this context as the current context.
+     * 
+     * @throws IllegalStateException if this context is currently in use.
+     */
+    public final void push() {
+        if (_owner != null)
+            throw new IllegalStateException("Context is currently in use");
         Context current = Context.currentContext();
-        Context ctx = current._inner;
-        if (contextClass.isInstance(ctx)) {
-            // All fields members are correctly set.
-            synchronized (Context.LOCK) {
-                Context.ThreadToContext.put(ctx._owner, ctx);
-                return ctx;
-            }
-        }
-        // Searches inner stack.
-        while (ctx != null) {
-            ctx = ctx._inner;
-            if (contextClass.isInstance(ctx)) { // Found one.
-                // Detaches.
-                Context next = ctx._inner;
-                ctx._outer._inner = next;
-                if (next != null) {
-                    next._outer = ctx._outer;
-                }
-                // Reuses.
-                push(ctx);
-                return ctx;
-            }
-        }
-        return null;
+        _outer = current;
+        _owner = current._owner;
+        Context.CURRENT.set(this);
+        inheritedPoolContext = current.inheritedPoolContext;
+        inheritedLocalContext = current.inheritedLocalContext;
+        enterAction();
     }
 
     /**
-     * Pushes the specified context as the current context. The previous
-     * context becomes the {@link #getOuter} of the specified context.
-     *
-     * @param  ctx the new current context.
+     * Pulls this context out, the context prior from entering this context
+     * becomes the current context for the current thread.
+     * 
+     * @throws IllegalStateException if this context is not used by the 
+     *         current thread.
      */
-    protected static void push(Context ctx) {
-        Context current = Context.currentContext();
-        ctx._outer = current;
-        ctx._inner = ctx._outer._inner;
-        ctx._outer._inner = ctx;
-        if (ctx._inner != null) {
-            ctx._inner._outer = ctx;
-        }
-        synchronized (Context.LOCK) {
-            Context.ThreadToContext.put(ctx._owner, ctx);
-        }
-        if (!(ctx instanceof PoolContext) && !(ctx instanceof HeapContext)) {
-            // Inherits pool context.
-            ctx._poolContext = ctx._outer._poolContext;
-        }
-    }
-
-    /**
-     * Pops the current context from the context stack. The {@link #getOuter}
-     * of the current context becomes the current context.
-     *
-     * @return the previous {@link #currentContext}.
-     * @throws EmptyStackException if the current thread is not the owner
-     *         of the current context.
-     * @see    #getOwner
-     */
-    protected static Context pop() {
-        Context ctx = Context.currentContext();
-        if ((ctx._outer != null) && (ctx._outer._owner == ctx._owner)) {
-            synchronized (Context.LOCK) {
-                Context.ThreadToContext.put(ctx._owner, ctx._outer);
-            }
-            return ctx;
-        } else {
+    public final void pull() {
+        if (_owner != Thread.currentThread())
+            throw new IllegalStateException(
+                    "Context is not used by the current thread");
+        if ((_outer == null) || (_outer._owner != _owner))
             throw new EmptyStackException();
+        try {
+            exitAction();
+        } finally {
+            Context.CURRENT.set(_outer);
+            _outer = null;
+            _owner = null;
         }
     }
 
     /**
-     * Disposes of this context resources. This method is called by the 
-     * {@link #clear} method.
+     * Enters a context of specified class. This method searches the current
+     * context for a matching context to reuse; if none found a new instance
+     * is created using the specified class no-arg constructor.
+     *  
+     * @param contextClass the type of context to be entered.
      */
-    protected abstract void dispose();
-
-    /**
-     * Returns the pool context for this context.
-     *
-     * @return the pool context for this context or <code>null</code> if 
-     *         none (heap context).
-     */
-    final PoolContext poolContext() {
-        return _poolContext;
+    protected static void enter(Class contextClass) {
+        Context current = Context.currentContext();
+        Context context = current._inner;
+        if (!contextClass.isInstance(context)) { // Search inner stack.
+            while (context != null) {
+                Context outer = context;
+                context = context._inner;
+                if (contextClass.isInstance(context)) { // Found one.
+                    outer._inner = context._inner; // Detaches.
+                    break;
+                }
+            }
+            if (context == null) { // None found.
+                try {
+                    context = (Context) contextClass.newInstance();
+                } catch (InstantiationException e) {
+                    throw new JavolutionError(e);
+                } catch (IllegalAccessException e) {
+                    throw new JavolutionError(e);
+                }
+            }
+            // Attaches as inner of current.
+            context._inner = current._inner;
+            current._inner = context;
+        }
+        context._outer = current;
+        context._owner = current._owner;
+        context.inheritedPoolContext = current.inheritedPoolContext;
+        context.inheritedLocalContext = current.inheritedLocalContext;
+        Context.CURRENT.set(context);
+        context.enterAction();
     }
 
     /**
-     * Sets the outer of this context (used by concurrent threads only).
+     * Exits the current context which must be of specified type.
+     * 
+     * @param contextClass the type of context to be exited.
+     * @throws j2me.lang.IllegalStateException if the current context 
+     *         is not an instance of the specified class. 
+     */
+    protected static void exit(Class contextClass) {
+        Context current = Context.currentContext();
+        if (!contextClass.isInstance(current))
+            throw new IllegalStateException(
+                    "Current context is not an instance of " + contextClass);
+        Context outer = current._outer;
+        if ((outer == null) || (outer._owner != current._owner))
+            throw new EmptyStackException();
+        try {
+            current.exitAction();
+        } finally {
+            Context.CURRENT.set(outer);
+            current._outer = null;
+            current._owner = null;
+        }
+    }
+
+    /**
+     * Sets the outer of this context, used by {@link ConcurrentThread}
+     * exclusively.
      * 
      * @param outer the new outer context.
      */
     final void setOuter(Context outer) {
         _outer = outer;
-    }
-
-    /**
-     * Dissociates contexts from dead threads (for GC) and removes 
-     * the threads objects themselves when more than 256 of them.
-     */
-    private static void cleanupDeadThreads() {
-        int deadThreadCount = 0;
-        for (FastMap.Entry e = Context.ThreadToContext.headEntry(), end = Context.ThreadToContext
-                .tailEntry(); (e = e.getNextEntry()) != end;) {
-            Thread thread = (Thread) e.getKey();
-            if (!thread.isAlive()) {
-                Context.ThreadToContext.put(thread, null);
-                deadThreadCount++;
-            }
-        }
-        if (deadThreadCount > 256) { // Remove thread objects themselves.
-            // Replaces the whole map to keep read access unsynchronized.
-            FastMap tmp = new FastMap(Context.ThreadToContext.size());
-            for (FastMap.Entry e = Context.ThreadToContext.headEntry(), end = Context.ThreadToContext
-                    .tailEntry(); (e = e.getNextEntry()) != end;) {
-                Thread thread = (Thread) e.getKey();
-                if (thread.isAlive()) {
-                    tmp.put(thread, e.getValue());
-                }
-            }
-            Context.ThreadToContext = tmp;
-        }
     }
 }

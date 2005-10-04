@@ -888,10 +888,10 @@ public interface XmlPullParser {
     int getEventType() throws XmlPullParserException;
 
     /**
-     * Get next parsing event - element content wil be coalesced and only one
+     * Get next parsing event - element content will be coalesced and only one
      * TEXT event must be returned for whole element content
-     * (comments and processing instructions will be ignored and emtity references
-     * must be expanded or exception mus be thrown if entity reerence can not be exapnded).
+     * (comments and processing instructions will be ignored and entity references
+     * must be expanded or exception mus be thrown if entity reference can not be expanded).
      * If element content is empty (content is "") then no TEXT event will be reported.
      *
      * <p><b>NOTE:</b> empty element (such as &lt;tag/>) will be reported

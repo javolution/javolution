@@ -33,22 +33,27 @@ package javolution.realtime;
  *     objects are not referenced anymore). They will be collected after 
  *     the thread finalization. It is also possible to move all pools' objects 
  *     to the heap directly (for early garbage collection) by calling the 
- *     {@link PoolContext#clear} static method.</p>
+ *     {@link PoolContext#clear} method.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, March 5, 2005
+ * @version 3.6, September 24, 2005
  */
-public final class PoolContext extends Context {
+public class PoolContext extends Context {
+
+    /**
+     * Holds the class object (cannot use .class with j2me).
+     */
+    private static final Class CLASS = new PoolContext(0).getClass();
 
     /**
      * Holds the pools for this context.
      */
-    final ObjectPool[] _pools = new ObjectPool[ObjectFactory.MAX];
+    final ObjectPool[] _pools;
 
     /**
      * Holds the pools in use.
      */
-    private final ObjectPool[] _inUsePools = new ObjectPool[ObjectFactory.MAX];
+    private final ObjectPool[] _inUsePools;
 
     /**
      * Holds the number of pools used.
@@ -58,8 +63,19 @@ public final class PoolContext extends Context {
     /**
      * Default constructor.
      */
-    PoolContext() {
-        for (int i=_pools.length; i > 0;) {
+    public PoolContext() {
+        this(ObjectFactory.MAX);
+    }
+
+    /**
+     * Creates of pool context of specified capacity.
+     * 
+     * @param capacity the maximum number of pool.
+     */
+    private PoolContext(int capacity) {
+        _pools = new ObjectPool[capacity];
+        _inUsePools = new ObjectPool[capacity];
+        for (int i = _pools.length; i > 0;) {
             _pools[--i] = ObjectPool.NULL;
         }
     }
@@ -68,35 +84,34 @@ public final class PoolContext extends Context {
      * Enters a {@link PoolContext}.
      */
     public static void enter() {
-        PoolContext ctx = (PoolContext) push(POOL_CONTEXT_CLASS);
-        if (ctx == null) {
-            ctx = new PoolContext();
-            push(ctx);
-        }
-        PoolContext outer = ctx.getOuter().poolContext();
-        if (outer != null) {
-            outer.setInUsePoolsLocal(false);
-        }
+        Context.enter(PoolContext.CLASS);
     }
-    private static final Class POOL_CONTEXT_CLASS = new PoolContext().getClass();
 
     /**
      * Exits the current {@link PoolContext}.
      *
-     * @throws ClassCastException if the current context is not a
-     *         {@link PoolContext}.
+     * @throws j2me.lang.IllegalStateException if the current context 
+     *         is not an instance of PoolContext. 
      */
     public static void exit() {
-        PoolContext ctx = (PoolContext) pop();
-        ctx.recyclePools();
-        PoolContext outer = ctx.getOuter().poolContext();
-        if (outer != null) {
-            outer.setInUsePoolsLocal(true);
-        }
+        Context.exit(PoolContext.CLASS);
     }
 
-    // Overrides.
-    protected void dispose() {
+    /**
+     * Returns the current pool context or <code>null<code> if the current
+     * thread does not execute within a pool context.  
+     *
+     * @return the current pool context.
+     */
+    public static PoolContext currentPoolContext() {
+        return Context.currentContext().inheritedPoolContext;
+    }
+
+    /**
+     * Moves all objects belonging to this pool context to the heap.
+     */
+    public void clear() {
+        super.clear();
         for (int i = ObjectFactory.Count; i > 0;) {
             ObjectPool pool = _pools[--i];
             if (pool != ObjectPool.NULL) {
@@ -104,6 +119,24 @@ public final class PoolContext extends Context {
             }
         }
         _inUsePoolsLength = 0;
+    }
+
+    // Implements Context abstract method.
+    protected void enterAction() {
+        inheritedPoolContext = this; // Overrides inherited.
+        PoolContext outer = getOuter().inheritedPoolContext;
+        if (outer != null) {
+            outer.setInUsePoolsLocal(false);
+        }
+    }
+
+    // Implements Context abstract method.
+    protected void exitAction() {
+        recyclePools();
+        PoolContext outer = getOuter().inheritedPoolContext;
+        if (outer != null) {
+            outer.setInUsePoolsLocal(true);
+        }
     }
 
     /**
@@ -129,6 +162,7 @@ public final class PoolContext extends Context {
         ObjectPool pool = _pools[index];
         return (pool.user != null) ? pool : getLocalPool2(index);
     }
+
     private ObjectPool getLocalPool2(int index) {
         ObjectPool pool = getPool(index);
         pool.user = getOwner();
@@ -151,7 +185,7 @@ public final class PoolContext extends Context {
         if (!pool.inUse) { // Marks it used and set its outer.
             pool.inUse = true;
             _inUsePools[_inUsePoolsLength++] = pool;
-            PoolContext outerPoolContext = this.getOuter().poolContext();
+            PoolContext outerPoolContext = this.getOuter().inheritedPoolContext;
             if (outerPoolContext != null) {
                 synchronized (outerPoolContext) { // Not local.
                     pool.outer = outerPoolContext.getPool(index);
@@ -176,5 +210,4 @@ public final class PoolContext extends Context {
         }
         _inUsePoolsLength = 0;
     }
-
 }

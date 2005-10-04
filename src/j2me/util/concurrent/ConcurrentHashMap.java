@@ -6,16 +6,16 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package j2me.util;
-import javolution.util.FastList;
-public class LinkedList extends FastList {
+package j2me.util.concurrent;
+import javolution.util.FastMap;
+public class ConcurrentHashMap extends FastMap {
     
-    public LinkedList() {
-        super();
+    public ConcurrentHashMap() {
+        setShared(true);
     }
-    public LinkedList(int capacity) {
+    public ConcurrentHashMap(int capacity) {
         super(capacity);
+        setShared(true);
     }
-
     
 }

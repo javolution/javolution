@@ -57,6 +57,7 @@ import javolution.JavolutionError;
  *             } finally {
  *                 ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
  *             }
+ *             // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
  *             return ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
  *         }
  *     }
@@ -77,14 +78,14 @@ import javolution.JavolutionError;
  *     to the current thread.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
+ * @version 3.6, September 24, 2005
  */
-public final class ConcurrentContext extends Context {
+public class ConcurrentContext extends Context {
 
     /**
-     * Holds the queue size for concurrent logic executions. 
+     * Holds the class object (cannot use .class with j2me).
      */
-    private static final int QUEUE_SIZE = 256;
+    private static final Class CLASS = new ConcurrentContext(0).getClass();
 
     /**
      * Holds the maximum number of arguments. 
@@ -94,17 +95,17 @@ public final class ConcurrentContext extends Context {
     /**
      * Holds the pending logics.
      */
-    private Logic[] _logics = new Logic[QUEUE_SIZE];
+    private final Logic[] _logics;
 
     /**
      * Holds the pending logics arguments.
      */
-    private Object[][] _args = new Object[QUEUE_SIZE][];
+    private final Object[][] _args;
 
     /**
      * Holds the arguments pool.
      */
-    private Object[][][] _argsPool = new Object[QUEUE_SIZE][ARGS_SIZE][];
+    private final Object[][][] _argsPool;
 
     /**
      * Holds the number of pending logics.
@@ -137,7 +138,61 @@ public final class ConcurrentContext extends Context {
     /**
      * Default constructor.
      */
-    ConcurrentContext() {
+    public ConcurrentContext() {
+        this(256);
+    }
+
+    /**
+     * Creates of concurrent context of specified capacity.
+     * 
+     * @param queueSize the maximum queue size.
+     */
+    private ConcurrentContext(int queueSize) {
+        _logics = new Logic[queueSize];
+        _args = new Object[queueSize][];
+        _argsPool = new Object[queueSize][ARGS_SIZE][];
+    }
+
+    /**
+     * Enters a {@link ConcurrentContext}.
+     */
+    public static void enter() {
+        Context.enter(ConcurrentContext.CLASS);
+    }
+
+    /**
+     * Exits the current {@link ConcurrentContext}. This method blocks until all
+     * concurrent executions within the current context are completed.
+     * Errors and exceptions raised in concurrent threads are propagated here.
+     *
+     * @throws j2me.lang.IllegalStateException if the current context 
+     *         is not an instance of ConcurrentContext. 
+     * @throws ConcurrentException propagates any error or exception raised
+     *         during the execution of a concurrent logic.
+     */
+    public static void exit() {
+        Context.exit(ConcurrentContext.CLASS);
+    }
+
+    // Implements Context abstract method.
+    protected void enterAction() {
+        inheritedPoolContext = null; // Overrides inherited.
+        PoolContext outer = getOuter().inheritedPoolContext;
+        if (outer != null) {
+            outer.setInUsePoolsLocal(false);
+        }
+    }
+
+    // Implements Context abstract method.
+    protected void exitAction() {
+        flush(); // Executes remaining logics.
+
+        // Propagates any concurrent error to current thread.
+        if (_error != null) {
+            ConcurrentException error = new ConcurrentException(_error);
+            _error = null; // Resets error flag.
+            throw error;
+        }
     }
 
     /**
@@ -162,18 +217,6 @@ public final class ConcurrentContext extends Context {
     }
 
     /**
-     * Enters a {@link ConcurrentContext}.
-     */
-    public static void enter() {
-        ConcurrentContext ctx = (ConcurrentContext) push(CONCURRENT_CONTEXT_CLASS);
-        if (ctx == null) {
-            ctx = new ConcurrentContext();
-            push(ctx);
-        }
-    }
-    private static final Class CONCURRENT_CONTEXT_CLASS = new ConcurrentContext().getClass();
-
-    /**
      * Executes the specified logic by a {@link ConcurrentThread} when possible.
      * The specified logic is always executed within a {@link PoolContext}
      * and inherits the context of the parent thread. Any exception or error
@@ -186,7 +229,7 @@ public final class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         ctx._args[ctx._logicsCount] = Logic.NO_ARG;
@@ -204,7 +247,7 @@ public final class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(1);
@@ -224,7 +267,7 @@ public final class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0, Object arg1) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(2);
@@ -247,7 +290,7 @@ public final class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(3);
@@ -272,7 +315,7 @@ public final class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(4);
@@ -299,7 +342,7 @@ public final class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(5);
@@ -328,7 +371,7 @@ public final class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4, Object arg5) {
         ConcurrentContext ctx = (ConcurrentContext) currentContext();
-        if (ctx._logicsCount >= QUEUE_SIZE) {
+        if (ctx._logicsCount >= ctx._logics.length) {
             ctx.flush();
         }
         Object[] args = ctx.getArgs(6);
@@ -339,29 +382,6 @@ public final class ConcurrentContext extends Context {
         args[4] = arg4;
         args[5] = arg5;
         ctx._logics[ctx._logicsCount++] = logic;
-    }
-
-    /**
-     * Exits the {@link ConcurrentContext}. This method blocks until all
-     * concurrent executions within the current context are completed.
-     * Errors and exceptions raised in concurrent threads are propagated here.
-     *
-     * @throws ClassCastException if the current context is not a
-     *         {@link ConcurrentContext}.
-     * @throws ConcurrentException propagates any error or exception raised
-     *         during the execution of a concurrent logic.
-     */
-    public static void exit() throws ConcurrentException {
-        ConcurrentContext ctx = (ConcurrentContext) Context.currentContext();
-        ctx.flush(); // Executes remaining logics.
-        Context.pop();
-
-        // Propagates any concurrent error to current thread.
-        if (ctx._error != null) {
-            ConcurrentException error = new ConcurrentException(ctx._error);
-            ctx._error = null; // Resets error flag.
-            throw error;
-        }
     }
 
     /**
@@ -447,12 +467,6 @@ public final class ConcurrentContext extends Context {
         return args;
     }
 
-    // Implements abstract method.
-    protected void dispose() {
-        _logics = null;
-        _args = null;
-        _argsPool = null;
-    }
 
     /**
      * <p> This abstract class represents some parameterized code which may be

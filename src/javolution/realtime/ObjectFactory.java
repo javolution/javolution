@@ -148,7 +148,7 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a recycled, pre-allocated or new factory object.
      */
     public Object/*T*/object() {
-        PoolContext poolContext = Context.currentContext().poolContext();
+        PoolContext poolContext = Context.currentContext().inheritedPoolContext;
         return (poolContext != null) ? (Object/*T*/) poolContext.getLocalPool(
                 _index).next() : newObject();
     }
@@ -160,7 +160,7 @@ public abstract class ObjectFactory/*<T>*/{
      * @return the local pool or a pool representing the heap. 
      */
     public final ObjectPool/*<T>*/currentPool() {
-        PoolContext poolContext = Context.currentContext().poolContext();
+        PoolContext poolContext = Context.currentContext().inheritedPoolContext;
         return (poolContext != null) ? (ObjectPool/*<T>*/) poolContext
                 .getLocalPool(_index) : _heapPool;
     }

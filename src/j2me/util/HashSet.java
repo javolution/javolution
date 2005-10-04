@@ -8,4 +8,14 @@
  */
 package j2me.util;
 import javolution.util.FastSet;
-public class HashSet extends FastSet {}
+public class HashSet extends FastSet {
+    
+    public HashSet() {
+        super();
+    }
+    public HashSet(int capacity) {
+        super(capacity);
+    }
+
+    
+}

@@ -38,9 +38,7 @@ import javolution.realtime.RealtimeObject;
  *          full garbage collection due to memory fragmentation).</li>
  *     <li> Support concurrent access/iteration without synchronization if the 
  *          collection values are not removed/inserted (Ref. 
- *          {@link javolution.util} discussion). To keep access/iterations 
- *          unsynchronized, users might want to consider replacing
- *          the whole collection instead of clearing it for example.</li>
+ *          {@link javolution.util} discussion).</li>
  *     </ul></p>
  *     
  *  <p> Iterations over the {@link FastTable} values are faster when
@@ -50,7 +48,7 @@ import javolution.realtime.RealtimeObject;
  *          table.get(i);
  *     }</pre></p>
  *     
- * <p><i> Implementation Note: To avoid expensive resize/copy operations
+ * <p><i><b> Implementation Note:</b> To avoid expensive resize/copy operations
  *        {@link FastTable} used multi-dimensional arrays internally. This 
  *        has also for effect to reduce memory fragmentation (and garbage 
  *        collection time) because the allocated objects are always small.
@@ -589,12 +587,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     }
 
     // Implements FastCollection abstract method.
-    public final Record headRecord() {
+    public final Record head() {
         return Index.MINUS_ONE;
     }
 
     // Implements FastCollection abstract method.
-    public final Record tailRecord() {
+    public final Record tail() {
         return (Index) Index.COLLECTION.get(_size);
     }
 
@@ -785,12 +783,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         }
 
         // Implements Record interface.
-        public final Record getNextRecord() {
+        public final Record getNext() {
             return _next;
         }
 
         // Implements Record interface.
-        public final Record getPreviousRecord() {
+        public final Record getPrevious() {
             return _previous;
         }
     }
@@ -905,11 +903,11 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return _size;
         }
 
-        public Record headRecord() {
+        public Record head() {
             return Index.MINUS_ONE;
         }
 
-        public Record tailRecord() {
+        public Record tail() {
             return (Index) Index.COLLECTION.get(_size);
         }
 

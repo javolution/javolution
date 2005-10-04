@@ -26,14 +26,13 @@ final class FormatAttributes implements Attributes, Reusable {
     /**
      * Holds the qualified names.
      */
-    private String[] _qNames = new String[((Integer) CAPACITY
-            .get()).intValue()];
+    private String[] _qNames = new String[((Integer) CAPACITY.get()).intValue()];
 
     /**
      * Holds the values.
      */
-    private CharSequence[] _values = new CharSequence[((Integer) CAPACITY
-            .get()).intValue()];
+    private CharSequence[] _values = new CharSequence[((Integer) CAPACITY.get())
+            .intValue()];
 
     /**
      * Holds the text builders (to avoid object creation).
@@ -54,7 +53,7 @@ final class FormatAttributes implements Attributes, Reusable {
      * Default constructor.
      */
     public FormatAttributes() {
-        for (int i=0; i < _textBuilders.length;) {
+        for (int i = 0; i < _textBuilders.length;) {
             _textBuilders[i++] = new TextBuilder();
         }
     }
@@ -71,7 +70,8 @@ final class FormatAttributes implements Attributes, Reusable {
 
     // Implements Attributes.
     public CharSequence getLocalName(int index) {
-        return (index >= 0 && index < _length) ? toCharSeq(_qNames[index]) : null;
+        return (index >= 0 && index < _length) ? toCharSeq(_qNames[index])
+                : null;
     }
 
     // Implements Attributes.
@@ -81,7 +81,8 @@ final class FormatAttributes implements Attributes, Reusable {
 
     // Implements Attributes.
     public CharSequence getQName(int index) {
-        return (index >= 0 && index < _length) ? toCharSeq(_qNames[index]) : null;
+        return (index >= 0 && index < _length) ? toCharSeq(_qNames[index])
+                : null;
     }
 
     // Implements Attributes.
@@ -161,11 +162,11 @@ final class FormatAttributes implements Attributes, Reusable {
             CharSequence[] tmp2 = new CharSequence[newCapacity];
             System.arraycopy(_values, 0, tmp2, 0, _length);
             _values = tmp2;
-            
+
             TextBuilder[] tmp3 = new TextBuilder[newCapacity];
             System.arraycopy(_textBuilders, 0, tmp3, 0, _length);
             _textBuilders = tmp3;
-            for (int i=_length; i < _textBuilders.length;) { // Populates.
+            for (int i = _length; i < _textBuilders.length;) { // Populates.
                 _textBuilders[i++] = new TextBuilder();
             }
         }
@@ -182,8 +183,8 @@ final class FormatAttributes implements Attributes, Reusable {
      */
     public TextBuilder newAttribute(String qName) {
         addAttribute(qName, null);
-        TextBuilder tb = _textBuilders[_length-1];
-        _values[_length-1] = tb;
+        TextBuilder tb = _textBuilders[_length - 1];
+        _values[_length - 1] = tb;
         tb.reset();
         return tb;
     }
@@ -214,4 +215,22 @@ final class FormatAttributes implements Attributes, Reusable {
         return Text.valueOf((String) str);
     }
 
+    /**
+     * Returns the string representation of these attributes.
+     * 
+     * @return this attributes textual representation.
+     */
+    public String toString() {
+        Text text = Text.valueOf('[');
+        final Text equ = Text.valueOf('=');
+        final Text sep = Text.valueOf(", ");
+        for (int i = 0; i < _length;) {
+            text = text.concat(Text.valueOf(_qNames[i]).concat(equ).concat(
+                    Text.valueOf(_values[i])));
+            if (++i != _length) {
+                text = text.concat(sep);
+            }
+        }
+        return text.concat(Text.valueOf(']')).toString();
+    }
 }

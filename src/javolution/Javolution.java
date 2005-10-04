@@ -82,7 +82,8 @@ public class Javolution {
     private static void testing() throws Exception {
         print("Testing...");
         println("");
-		println("Success");
+        // TBD
+        println("Success");
     }
     
     /**
@@ -163,7 +164,7 @@ public class Javolution {
             unit = " ms";
             divisor = 1000 * 1000 * 1000L;
         } else if (picoDuration > 1000 * 1000L) {
-            unit = " µs";
+            unit = " us";
             divisor = 1000 * 1000L;
         } else {
             unit = " ns";

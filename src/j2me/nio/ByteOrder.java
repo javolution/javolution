@@ -11,7 +11,7 @@ import j2me.lang.UnsupportedOperationException;
 
 /**
  * Clean-room implementation of ByteOrder to support 
- * <code>javolution.util.Struct</code> when <code>j2me.nio</code> is
+ * <code>javolution.util.Struct</code> when <code>java.nio</code> is
  * not available.
  */
 public final class ByteOrder {

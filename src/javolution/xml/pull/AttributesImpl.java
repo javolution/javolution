@@ -3,6 +3,7 @@ package javolution.xml.pull;
 import j2me.lang.CharSequence;
 import javolution.lang.PersistentReference;
 import javolution.lang.Reusable;
+import javolution.lang.Text;
 import javolution.xml.sax.Attributes;
 
 /**
@@ -190,5 +191,24 @@ final class AttributesImpl implements Attributes, Reusable {
         _prefixes[_length] = prefix;
         _qNames[_length] = qName;
         _values[_length++] = value;
+    }
+
+    /**
+     * Returns the string representation of these attributes.
+     * 
+     * @return this attributes textual representation.
+     */
+    public String toString() {
+        Text text = Text.valueOf('[');
+        final Text equ = Text.valueOf('=');
+        final Text sep = Text.valueOf(", ");
+        for (int i = 0; i < _length;) {
+            text = text.concat(Text.valueOf(_qNames[i]).concat(equ).concat(
+                    Text.valueOf(_values[i])));
+            if (++i != _length) {
+                text = text.concat(sep);
+            }
+        }
+        return text.concat(Text.valueOf(']')).toString();
     }
 }

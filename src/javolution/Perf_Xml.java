@@ -67,6 +67,7 @@ final class Perf_Xml extends Javolution implements Runnable {
         FastMap fm = new FastMap();
         fm.setKeyComparator(FastComparator.REHASH);
         fm.setValueComparator(FastComparator.IDENTITY);
+        
         fm.put("ONE", "1");
         fm.put("TWO", "2");
         fm.put("THREE", "3");
@@ -110,7 +111,7 @@ final class Perf_Xml extends Javolution implements Runnable {
                 return vector;
             }
         };
-        XmlFormat.setInstance(vectorXml, new Vector().getClass());
+        XmlFormat.setFormat(v.getClass(), vectorXml);
 
         println("");
         println("-- Java(TM) Serialization --");
@@ -144,6 +145,7 @@ final class Perf_Xml extends Javolution implements Runnable {
         println("-- XML Serialization (I/O Stream) --");
         try {
             ObjectWriter ow = new ObjectWriter();
+            //ow.setPackagePrefix("", "java.lang");
             ByteArrayOutputStream out = new ByteArrayOutputStream(
                     BYTE_BUFFER_SIZE);
             print("Write Time: ");

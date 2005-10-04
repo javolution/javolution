@@ -26,17 +26,12 @@ import javolution.lang.Reusable;
  * 
  * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
  *     thread-safe fast iterations without using iterators. For example:<pre>
- *     for (FastSet.Record r = set.headRecord(), end = set.tailRecord(); (r = r.getNextRecord()) != end;) {
+ *     for (FastSet.Record r = set.head(), end = set.tail(); (r = r.getNext()) != end;) {
  *         Object value = set.valueOf(r);    
  *     }</pre></p>
  *     
- * <p> {@link FastSet} supports concurrent read without synchronization
- *     if the set elements are never removed. The structural modifications
- *     themselves (value being added/removed) should always be synchronized.
- *     </p>
- * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, April 2, 2005
+ * @version 3.6, September 24, 2005
  */
 public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/, Reusable,
         Serializable {
@@ -144,7 +139,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     // Overrides.
-    public final FastCollection/*<E>*/ setValueComparator(FastComparator comparator) {
+    public FastCollection/*<E>*/ setValueComparator(FastComparator comparator) {
         super.setValueComparator(comparator);
         _map.setKeyComparator(comparator);
         return this;
@@ -171,20 +166,20 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.writeInt(size());
         stream.writeObject(getValueComparator());
-        for (FastMap.Entry/*<E,E>*/ e = _map.headEntry(), end = _map.tailEntry(); 
-              (e = e.getNextEntry()) != end;) {
+        for (FastMap.Entry e = _map.head(), end = _map.tail(); 
+              (e = (FastMap.Entry) e.getNext()) != end;) {
             stream.writeObject(e.getKey());
         }
     }
 
     // Implements FastCollection abstract method.
-    public final Record/*<FastMap.Entry<E,E>>*/ headRecord() {
-        return _map.headEntry();
+    public final Record head() {
+        return _map.head();
     }
 
     // Implements FastCollection abstract method.
-    public final Record/*<FastMap.Entry<E,E>>*/ tailRecord() {
-        return _map.tailEntry();
+    public final Record tail() {
+        return _map.tail();
     }
 
     // Implements FastCollection abstract method.
@@ -194,8 +189,22 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Implements FastCollection abstract method.
     public final void delete(Record record) {
-        _map.removeEntry((FastMap.Entry/*<E,E>*/) record);
+        _map.remove(((FastMap.Entry/*<E,E>*/) record).getKey());
     }
 
+    /*
+     * @deprecated Replaced by {@link #head}
+     */
+    public final Record headRecord() {
+        return _map.head();
+    }
+
+    /*
+     * @deprecated Replaced by {@link #tail}
+     */
+    public final Record tailRecord() {
+        return _map.tail();
+    }
+    
     private static final long serialVersionUID = 3257563997099275574L;
 }

@@ -8,4 +8,13 @@
  */
 package j2me.util;
 import javolution.util.FastMap;
-public class LinkedHashMap extends FastMap {}
+public class LinkedHashMap extends FastMap {
+    
+    public LinkedHashMap() {
+        super();
+    }
+    public LinkedHashMap(int capacity) {
+        super(capacity);
+    }
+
+}

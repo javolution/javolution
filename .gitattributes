@@ -140,6 +140,7 @@ src/j2me/lang/NoSuchFieldException.java -text
 src/j2me/lang/NoSuchMethodException.java -text
 src/j2me/lang/Readable.java -text
 src/j2me/lang/SecurityException.java -text
+src/j2me/lang/ThreadLocal.java -text
 src/j2me/lang/TypeNotPresentException.java -text
 src/j2me/lang/UnsupportedOperationException.java -text
 src/j2me/nio/Buffer.java -text
@@ -189,6 +190,7 @@ src/j2me/util/SortedSet.java -text
 src/j2me/util/TooManyListenersException.java -text
 src/j2me/util/UnknownFormatConversionException.java -text
 src/j2me/util/UnknownFormatFlagsException.java -text
+src/j2me/util/concurrent/ConcurrentHashMap.java -text
 src/javolution/Configuration.java -text
 src/javolution/Javolution.java -text
 src/javolution/JavolutionError.java -text
@@ -238,7 +240,9 @@ src/javolution/util/FastList.java -text
 src/javolution/util/FastMap.java -text
 src/javolution/util/FastSet.java -text
 src/javolution/util/FastTable.java -text
+src/javolution/util/LocalMap.java -text
 src/javolution/util/ReentrantLock.java -text
+src/javolution/util/doc-files/map-put.png -text
 src/javolution/util/package.html -text
 src/javolution/xml/CharacterData.java -text
 src/javolution/xml/FormatAttributes.java -text

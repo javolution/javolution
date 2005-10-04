@@ -20,9 +20,45 @@ import j2me.util.Comparator;
  *     classes.</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2004
+ * @version 3.4, September 20, 2005
  */
-public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serializable {
+public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
+        Serializable {
+
+    /**
+     * Holds the default object comparator; rehash is performed if the 
+     * system hash code (platform dependent) is not evenly distributed.
+     * 
+     * @see Configuration#isPoorSystemHash() 
+     */
+    public static final FastComparator DEFAULT = new Default(Configuration
+            .isPoorSystemHash());
+
+    static class Default extends FastComparator {
+        private boolean _isPoorSystemHash;
+
+        public Default(boolean isPoorSystemHash) {
+            _isPoorSystemHash = isPoorSystemHash;
+        }
+
+        public int hashCodeOf(Object obj) {
+            return (obj == null) ? 0 : (_isPoorSystemHash ? REHASH
+                    .hashCodeOf(obj) : obj.hashCode());
+        }
+
+        public boolean areEqual(Object o1, Object o2) {
+            return (o1 == null) ? (o2 == null) : o1.equals(o2);
+        }
+
+        public int compare(Object o1, Object o2) {
+            return ((Comparable) o1).compareTo(o2);
+        }
+
+        public String toString() {
+            return "default";
+        }
+
+    };
 
     /**
      * Holds the direct object comparator; no rehash is performed.
@@ -46,6 +82,10 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
             return ((Comparable) o1).compareTo(o2);
         }
 
+        public String toString() {
+            return "direct";
+        }
+
     };
 
     /**
@@ -59,9 +99,9 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
 
     static class Rehash extends FastComparator {
         public int hashCodeOf(Object obj) {
-            if (obj == null) 
+            if (obj == null)
                 return 0;
-            
+
             // Formula identical <code>java.util.HashMap</code> to ensures
             // similar behavior for ill-conditioned hashcode keys. 
             int h = obj.hashCode();
@@ -78,6 +118,11 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
         public int compare(Object o1, Object o2) {
             return ((Comparable) o1).compareTo(o2);
         }
+
+        public String toString() {
+            return "rehash";
+        }
+
     };
 
     /**
@@ -109,6 +154,10 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
 
         public int compare(Object o1, Object o2) {
             return ((Comparable) o1).compareTo(o2);
+        }
+
+        public String toString() {
+            return "identity";
         }
     };
 
@@ -206,7 +255,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
             }
             if (right instanceof String)
                 return -compare(right, left);
-            
+
             // Both are CharSequence.
             CharSequence seq1 = (CharSequence) left;
             CharSequence seq2 = (CharSequence) right;
@@ -221,6 +270,11 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
             }
             return seq1.length() - seq2.length();
         }
+
+        public String toString() {
+            return "lexical";
+        }
+
     };
 
     /**
@@ -231,7 +285,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      * @param  obj the object to return the hashcode for (or <code>null</code>).
      * @return the hashcode for the specified object.
      */
-    public abstract int hashCodeOf(Object/*T*/ obj);
+    public abstract int hashCodeOf(Object/*T*/obj);
 
     /**
      * Indicates if the specified objects can be considered equal.
@@ -241,7 +295,7 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-    public abstract boolean areEqual(Object/*T*/ o1, Object/*T*/ o2);
+    public abstract boolean areEqual(Object/*T*/o1, Object/*T*/o2);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
@@ -253,10 +307,6 @@ public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/, Serial
      * @return a negative integer, zero, or a positive integer as the first
      *         argument is less than, equal to, or greater than the second.
      */
-    public abstract int compare(Object/*T*/ o1, Object/*T*/ o2);
+    public abstract int compare(Object/*T*/o1, Object/*T*/o2);
 
-    /**
-     * @deprecated Replaced by {@link #DIRECT}
-     */
-    public static final FastComparator DEFAULT = DIRECT;
 }

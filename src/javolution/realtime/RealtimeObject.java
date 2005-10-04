@@ -151,7 +151,7 @@ public abstract class RealtimeObject implements Realtime {
                 return false; // Not on the stack.
             }
             detach();
-            ObjectPool outer = _pool.getOuter();
+            ObjectPool outer = _pool.outer;
             if (outer == null) { // Heap.
                 _next = null;
                 _previous = null;
@@ -256,7 +256,7 @@ public abstract class RealtimeObject implements Realtime {
      * This abstract class represents the factory responsible for the 
      * creation of {@link RealtimeObject} instances.
      */
-    public static abstract class Factory/*<T>*/ extends ObjectFactory/*<T>*/{
+    public static abstract class Factory/*<T extends RealtimeObject>*/ extends ObjectFactory/*<T>*/{
 
         /**
          * Holds the last used pools from this factory.
@@ -277,19 +277,18 @@ public abstract class RealtimeObject implements Realtime {
          */
         public final Object/*T*/object() {
             Pool pool = _cachedPool;
-            if (pool.getUser() == Thread.currentThread()) {
+            if (pool.user == Thread.currentThread()) {
                 // Inline next()
                 final RealtimeObject next = pool._next;
                 final RealtimeObject tmp = pool._next = next._next;
                 return (Object/*T*/) ((tmp != null) ? next : pool.allocate());
+            }
+            final ObjectPool/*<T>*/currentPool = currentPool();
+            if (currentPool == heapPool()) {
+                return newObject();
             } else {
-                final ObjectPool/*<T>*/currentPool = currentPool();
-                if (currentPool == heapPool()) {
-                    return newObject();
-                } else {
-                    _cachedPool = pool = (Pool) currentPool;
-                    return pool.next();
-                }
+                _cachedPool = pool = (Pool) currentPool;
+                return pool.next();
             }
         }
 

@@ -33,6 +33,7 @@ import javolution.lang.Reflection;
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 1.0, October 4, 2004
+ * @see ConcurrentContext
  */
 public final class ConcurrentThread extends Thread {
 
@@ -112,6 +113,7 @@ public final class ConcurrentThread extends Thread {
      */
     public void run() {
         PoolContext rootContext = (PoolContext) Context.currentContext();
+        rootContext.inheritedPoolContext = rootContext;
         while (true) {
            try {
                synchronized (this) {
@@ -120,6 +122,8 @@ public final class ConcurrentThread extends Thread {
                     }
                }
                rootContext.setOuter(_concurrentContext);
+               rootContext.inheritedLocalContext 
+                    = _concurrentContext.inheritedLocalContext;
                while (_concurrentContext.executeNext()) {
                    rootContext.recyclePools();
                }

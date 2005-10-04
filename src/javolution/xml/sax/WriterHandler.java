@@ -14,7 +14,7 @@ import java.io.Writer;
 import j2me.lang.CharSequence;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
-import javolution.util.FastList;
+import javolution.util.FastTable;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -50,7 +50,7 @@ public class WriterHandler implements ContentHandler, Reusable {
 	/** 
 	 * Holds the current prefix mapping (prefix followed by uri).
 	 */
-	private FastList _prefixMappings = new FastList();
+	private FastTable _prefixMappings = new FastTable();
 
 	/** 
 	 * Holds the current nesting level.
@@ -210,11 +210,9 @@ public class WriterHandler implements ContentHandler, Reusable {
     
     private void writeNamespaces() throws IOException {
         // Writes namespace declaration.
-        for (FastList.Node n = _prefixMappings.headNode(), end = _prefixMappings
-                .tailNode(); (n = n.getNextNode()) != end;) {
-            CharSequence prefix = (CharSequence) n.getValue();
-            CharSequence prefixUri = (CharSequence) (n = n.getNextNode())
-                    .getValue();
+        for (int i=0, length=_prefixMappings.size() ; i < length;) { 
+            CharSequence prefix = (CharSequence) _prefixMappings.get(i++);
+            CharSequence prefixUri = (CharSequence) _prefixMappings.get(i++);
             if (prefix.length() == 0) { // Default namespace.
                 writeNoEscape(" xmlns=\"");
                 write(prefixUri);

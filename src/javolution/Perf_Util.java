@@ -16,6 +16,7 @@ import j2me.util.LinkedHashMap;
 import j2me.util.LinkedHashSet;
 import j2me.util.LinkedList;
 import j2me.util.RandomAccess;
+import j2me.util.concurrent.ConcurrentHashMap;
 
 import javolution.util.FastList;
 import javolution.util.FastMap;
@@ -86,6 +87,17 @@ final class Perf_Util extends Javolution implements Runnable {
         benchmarkLinkedHashMap();
         setOutputStream(System.out);
         benchmarkLinkedHashMap();
+        println("");
+
+        println("-- FastMap.setShared(true) versus ConcurrentHashMap  --");
+        setOutputStream(null); // Warming up, to avoid measuring JIT.
+        benchmarkSharedFastMap();
+        setOutputStream(System.out);
+        benchmarkSharedFastMap();
+        setOutputStream(null); // Warming up, to avoid measuring JIT.
+        benchmarkConcurrentHashMap();
+        setOutputStream(System.out);
+        benchmarkConcurrentHashMap();
         println("");
 
         println("-- FastSet versus HashSet --");
@@ -202,8 +214,9 @@ final class Perf_Util extends Javolution implements Runnable {
             FastList fl = (FastList) list;
             startTime();
             for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastList.Node n = fl.headNode(), end = fl.tailNode(); (n = n
-                        .getNextNode()) != end;) {
+                for (FastList.Node n = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ fl.head(),
+                        end = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ fl.tail();
+                        (n = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ n.getNext()) != end;) {
                     if (n.getValue() == list)
                         throw new Error();
                 }
@@ -354,7 +367,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map = new FastMap();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -364,7 +377,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map.clear();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -373,7 +386,7 @@ final class Perf_Util extends Javolution implements Runnable {
             startTime();
             for (int j = 0; j < nbrIterations; j++) {
                 for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) == map)
+                    if (map.get(_objects[i++]) != "")
                         throw new Error();
                 }
             }
@@ -392,8 +405,8 @@ final class Perf_Util extends Javolution implements Runnable {
             print(", iteration (entry): ");
             startTime();
             for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastMap.Entry e = map.headEntry(), end = map.tailEntry(); (e = e
-                        .getNextEntry()) != end;) {
+                for (FastMap.Entry e = map.head(), end = map.tail(); 
+                     (e = (FastMap.Entry)/*CAST UNNECESSARY WITH JDK1.5*/ e.getNext()) != end;) { 
                     if (e.getValue() == map)
                         throw new Error();
                 }
@@ -421,7 +434,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map = new HashMap();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -431,7 +444,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map.clear();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -440,7 +453,127 @@ final class Perf_Util extends Javolution implements Runnable {
             startTime();
             for (int j = 0; j < nbrIterations; j++) {
                 for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) == map)
+                    if (map.get(_objects[i++]) != "")
+                        throw new Error();
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", iteration (iterator): ");
+            startTime();
+            for (int j = 0; j < nbrIterations * 10; j++) {
+                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                    if (i.next() == map)
+                        throw new Error();
+                }
+            }
+            print(endTime(nbrIterations * size * 10));
+
+            println("");
+        }
+        println("");
+    }
+
+    private void benchmarkSharedFastMap() {
+        FastMap map = new FastMap().setShared(true);
+        println("Shared FastMap");
+
+        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+            print("    Size: " + size);
+
+            print(", put (new): ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                map = new FastMap().setShared(true);
+                for (int i = 0; i < size;) {
+                    map.put(_objects[i++], "");
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", put (recycled): ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                map.clear();
+                for (int i = 0; i < size;) {
+                    map.put(_objects[i++], "");
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", get: ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                for (int i = 0; i < size;) {
+                    if (map.get(_objects[i++]) != "")
+                        throw new Error();
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", iteration (iterator): ");
+            startTime();
+            for (int j = 0; j < nbrIterations * 10; j++) {
+                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                    if (i.next() == map)
+                        throw new Error();
+                }
+            }
+            print(endTime(nbrIterations * size * 10));
+
+            print(", iteration (entry): ");
+            startTime();
+            for (int j = 0; j < nbrIterations * 10; j++) {
+                for (FastMap.Entry e = map.head(), end = map.tail(); 
+                     (e = (FastMap.Entry)/*CAST UNNECESSARY WITH JDK1.5*/ e.getNext()) != end;) { 
+                    if (e.getValue() == map)
+                        throw new Error();
+                }
+            }
+            print(endTime(nbrIterations * size * 10));
+
+            println("");
+        }
+        println("");
+
+    }
+
+    private void benchmarkConcurrentHashMap() {
+        ConcurrentHashMap map = new ConcurrentHashMap();
+        if (!map.getClass().getName().equals("java.util.concurrent.ConcurrentHashMap"))
+            return; // J2ME Target.
+        println(map.getClass());
+
+        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+            print("    Size: " + size);
+
+            print(", put (new): ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                map = new ConcurrentHashMap();
+                for (int i = 0; i < size;) {
+                    map.put(_objects[i++], "");
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", put (recycled): ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                map.clear();
+                for (int i = 0; i < size;) {
+                    map.put(_objects[i++], "");
+                }
+            }
+            print(endTime(nbrIterations * size));
+
+            print(", get: ");
+            startTime();
+            for (int j = 0; j < nbrIterations; j++) {
+                for (int i = 0; i < size;) {
+                    if (map.get(_objects[i++]) != "")
                         throw new Error();
                 }
             }
@@ -476,7 +609,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map = new LinkedHashMap();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -486,7 +619,7 @@ final class Perf_Util extends Javolution implements Runnable {
             for (int j = 0; j < nbrIterations; j++) {
                 map.clear();
                 for (int i = 0; i < size;) {
-                    map.put(_objects[i++], null);
+                    map.put(_objects[i++], "");
                 }
             }
             print(endTime(nbrIterations * size));
@@ -495,7 +628,7 @@ final class Perf_Util extends Javolution implements Runnable {
             startTime();
             for (int j = 0; j < nbrIterations; j++) {
                 for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) == map)
+                    if (map.get(_objects[i++]) != "")
                         throw new Error();
                 }
             }
@@ -567,8 +700,8 @@ final class Perf_Util extends Javolution implements Runnable {
             print(", iteration (record): ");
             startTime();
             for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastSet.Record r = set.headRecord(), end = set
-                        .tailRecord(); (r = r.getNextRecord()) != end;) {
+                for (FastSet.Record r = set.head(), end = set
+                        .tail(); (r = r.getNext()) != end;) {
                     if (set.valueOf(r) == set)
                         throw new Error();
                 }

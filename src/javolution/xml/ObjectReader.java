@@ -97,8 +97,8 @@ public class ObjectReader/*<T>*/implements Reusable {
 
     private Object parse() throws XmlException {
         try {
+            _xml._parser.setFeature(_xml._parser.FEATURE_IGNORE_WHITESPACE, true);
             Object obj = _xml.getNext();
-
             if (_xml.hasNext() || (_xml._parser.getEventType() != XmlPullParser.END_DOCUMENT))
                 throw new XmlException("End Document Event Expected");
             return obj;

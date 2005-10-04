@@ -8,9 +8,6 @@
  */
 package javolution.io;
 
-
-
-
 /**
  * <p> This class represents a <code>C/C++ union</code>; it works in the same
  *     way as {@link Struct} (sub-class) except that all members are mapped
@@ -44,7 +41,12 @@ public abstract class Union extends Struct {
     public Union() {
     }
 
-    ///////////////////////////////
-    // No method, tagging class. //
-    ///////////////////////////////
+    /**
+     * Returns <code>true</code>.
+     * 
+     * @return <code>true</code>
+     */
+    public final boolean isUnion() {
+        return true;
+    }
 }

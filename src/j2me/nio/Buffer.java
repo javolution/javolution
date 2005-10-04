@@ -10,7 +10,7 @@ package j2me.nio;
 
 /**
  * Clean-room implementation of Buffer to support 
- * <code>javolution.util.Struct</code> when <code>j2me.nio</code> is
+ * <code>javolution.util.Struct</code> when <code>java.nio</code> is
  * not available.
  */
 public abstract class Buffer {

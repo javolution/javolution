@@ -37,20 +37,23 @@ import javolution.util.FastMap;
  *        LocalContext.exit();
  *     }</pre></p>
  *     
- * <p> Accessing a local reference is fast and is performed without internal 
- *     synchronization (through the use of thread-safe {@link 
- *     javolution.util fast collection} classes). 
- *     Default setting are inherited by all threads (volatile), local settings
- *     are inherited by {@link ConcurrentThread concurrent threads} spawned
- *     from within the same {@link LocalContext}.</p>
- *     
+ * <p> Accessing/setting a local reference is fast and does not require 
+ *     any form of synchronization. Local settings are inherited by 
+ *     {@link ConcurrentThread concurrent threads} spawned from within the 
+ *     same {@link LocalContext}.</p>
  */
-public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
+public class LocalReference/*<T>*/implements Reference/*<T>*/, Serializable {
 
     /**
-     * Holds the default value for this variable.
+     * Holds the default value for this reference.
      */
-    private volatile Object/*T*/ _defaultValue;
+    private Object/*T*/_defaultValue;
+
+    /**
+     * Indicates if this reference value has ever been locally overriden 
+     * (optimization, most applications use default values).
+     */
+    private boolean _hasBeenLocallyOverriden;
 
     /**
      * Default constructor (default referent is <code>null</code>).
@@ -64,11 +67,10 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
      * 
      * @param defaultValue the default value or root value of this variable.
      */
-    public LocalReference(Object/*T*/ defaultValue) {
+    public LocalReference(Object/*T*/defaultValue) {
         _defaultValue = defaultValue;
     }
 
-    
     /**
      * Returns the local value for this reference.
      * The first outer {@link LocalContext} is searched first, then
@@ -77,14 +79,16 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
      *
      * @return the context-local value.
      */
-    public Object/*T*/ get() {
-        for (Context ctx = Context.currentContext(); ctx != null; ctx = ctx
-                .getOuter()) {
-            if (ctx instanceof LocalContext) {
-                Object value = ((LocalContext)ctx)._references.get(this);
-                if (value != null) {
-                    return (Object/*T*/) value;
-                }
+    public final Object/*T*/get() {
+        return (_hasBeenLocallyOverriden) ? retrieveValue() : _defaultValue;
+    }
+
+    private Object/*T*/retrieveValue() {
+        for (LocalContext ctx = LocalContext.currentLocalContext(); ctx != null; ctx = ctx
+                .getOuter().inheritedLocalContext) {
+            Object value = ctx._references.get(this);
+            if (value != null) {
+                return (Object/*T*/) value;
             }
         }
         // Not found, returns default value.
@@ -97,16 +101,13 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
      * @param value the new local value or <code>null</code> to inherit
      *        the outer value.
      */
-    public void set(Object/*T*/ value) {
-        for (Context ctx = Context.currentContext(); ctx != null; ctx = ctx
-                .getOuter()) {
-            if (ctx instanceof LocalContext) {
-                FastMap references = ((LocalContext)ctx)._references;
-                synchronized (references) { // Setting have to be synchronized.
-                    references.put(this, value);
-                }
-                return;
-            }
+    public void set(Object/*T*/value) {
+        LocalContext ctx = LocalContext.currentLocalContext();
+        if (ctx != null) {
+            FastMap references = ctx._references;
+            references.put(this, value);
+            _hasBeenLocallyOverriden = true;
+            return;
         }
         // No local context, sets default value.
         _defaultValue = value;
@@ -117,8 +118,20 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
      *
      * @return the defaultValue.
      */
-    public Object/*T*/ getDefault() {
+    public Object/*T*/getDefault() {
         return _defaultValue;
+    }
+
+    /**
+     * Returns the local (non-inherited) value for this reference.
+     *
+     * @return the local value or <code>null</code> if none (value to be 
+     *         inherited or not set).
+     */
+    public Object/*T*/getLocal() {
+        LocalContext ctx = LocalContext.currentLocalContext();
+        return (ctx != null) ? (Object/*T*/) ctx._references.get(this)
+                : _defaultValue;
     }
 
     /**
@@ -126,7 +139,7 @@ public class LocalReference/*<T>*/ implements Reference/*<T>*/, Serializable {
      *
      * @param  defaultValue the root value.
      */
-    public void setDefault(Object/*T*/ defaultValue) {
+    public void setDefault(Object/*T*/defaultValue) {
         _defaultValue = defaultValue;
     }
 }

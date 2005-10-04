@@ -8,4 +8,12 @@
  */
 package j2me.util;
 import javolution.util.FastTable;
-public class ArrayList extends FastTable {}
+public class ArrayList extends FastTable {
+    
+    public ArrayList() {
+        super();
+    }
+    public ArrayList(int capacity) {
+        super(capacity);
+    }
+}

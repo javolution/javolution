@@ -8,4 +8,13 @@
  */
 package j2me.util;
 import javolution.util.FastMap;
-public class HashMap extends FastMap {}
+public class HashMap extends FastMap {
+    
+    public HashMap() {
+        super();
+    }
+    public HashMap(int capacity) {
+        super(capacity);
+    }
+
+}

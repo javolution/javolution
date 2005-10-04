@@ -4,22 +4,22 @@
    object graph from <code>XML</code>. 
 </p>
 
-<p> This facility is similar to existing products such as
-    <a href="http://jsx.org/">JSX</a> or <a href="http://xstream.codehaus.org/">
-    XStream</a>, with the following advantages:<ul>
-    <li> Integrated with NIO high-performance framework (e.g. <code>ByteBuffer</code>),
-         performance on a par or better than default Java<sup>TM</sup> Serialization/Deserialization 
-         (<a href="http://javolution.org/doc/benchmark.html">benchmark data</a>).</li>
+<p> This xml marshalling/unmarshalling facility has the following advatanges:<ul>
+    <li> Very fast and small memory footprint (unmarshalling performed using
+         our real-time {@link javolution.xml.pull.XmlPullParserImpl pull parser}).</li>
+    <li> Performance on a par or better than default Java<sup>TM</sup> Serialization/Deserialization 
+         (See <a href="https://bindmark.dev.java.net/">bindmark</a> for performance comparison).</li>
     <li> Runs on any platform including J2ME CLDC 1.0 It does not require reflection or 
          or any interface (e.g. <code>Serializable</code>) to be implemented.</li>
-    <li> Allows for sharing and unicity  (through the use of factory methods instead of constructors).</li>
-    <li> The XML mapping is customizable and is not tight to the class internal representation.
-         (backward compatibility ensured even when implementation changes or after obfuscation).</li>
     <li> The XML mapping can be defined for a top class (or interface) and is automatically inherited by all sub-classes
          (or all implementing classes).</li>
-    <li> The XML mapping can be dynamically changed.</li>
-    <li> Can even be used when the application has absolutely no control over the XML format 
-         (e.g. SOAP messages).</li>
+    <li> Allows for sharing and unicity  (through the use of factory methods instead of constructors).</li>
+    <li> The XML mapping is customizable and is not tight to the class internal representation
+         (backward compatibility ensured even when implementation changes or after obfuscation).</li>
+    <li> The XML mapping can be dynamically changed (even while parsing/formatting).</li>
+    <li> Integrated with NIO high-performance framework (e.g. <code>java.nio.ByteBuffer</code>).</li>
+    <li> Can be used when the application has absolutely no control over the XML format 
+         (e.g. SOAP messages) or with xml data produced by other facilities.</li>
     </ul>
 </p>
 
@@ -58,11 +58,11 @@
           // Adds geometry to format.
           public static final XmlFormat&lt;Area> XML = new XmlFormat&lt;Area>(Area.class) {
               public void format(Area area, XmlElement xml) {
-                  getSuper().format(area, xml); // Calls parent Graphic format.
+                  Graphic.XML.format(area, xml); 
                   xml.add(area._geometry,"Geometry");
               }
               public Area parse(XmlElement xml) {
-                  Area area = (Area) getSuper().parse(xml); // Calls parent Graphic parse.
+                  Area area = (Area) Graphic.XML.parse(xml); 
                   area._geometry = xml.get("Geometry");
                   return area;
               }
@@ -70,21 +70,24 @@
       }</pre>
     
     The following writes a graphic area to a file, then reads it:<pre>
-      new ObjectWriter&lt;Area>().write(area, new FileOutputStream("C:/area.xml"));
+      ObjectWriter&lt;Area> areaWriter = new ObjectWriter&lt;Area>();
+      areaWriter.setPackagePrefix("g", "org.jscience.graphics.geom2d"); // Use namespace for package (optional).
+      areaWriter.write(area, new FileOutputStream("C:/area.xml"));
+      ...
       Area a = new ObjectReader&lt;Area>().read(new FileInputStream("C:/area.xml"));</pre> 
  
     <p><i>For multiple objects transmissions over open I/O streams, 
     {@link javolution.xml.XmlInputStream} and {@link javolution.xml.XmlOutputStream} are recommended.</i></p>
 
     Here is an example of valid XML representation for an area:<pre>
-      &lt;org.jscience.graphics.Area  xmlns:j="http://javolution.org" isVisible="true"&gt;
+      &lt;g:Area xmlns:j="http://javolution.org" xmlns:g="java:org.jscience.graphics.geom2d" isVisible="true"&gt;
           &lt;Paint j:class="java.awt.Color" rgb="#F3EBC6"/&gt;
           &lt;Geometry j:class="org.jscience.graphics.geom2d.Polygon" id="1"&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-43" y="-34"/&gt;
               &lt;Point x="-12" y="123"/&gt;
           &lt;/Geometry&gt;
-      &lt;/org.jscience.graphics.Area&gt;</pre>
+      &lt;/g:Area&gt;</pre>
    
 </p>
 <p> The following table illustrates the variety of xml representations supported 
@@ -189,84 +192,101 @@
       </tr>
       </tbody></table>
     </center>
-    <p><i>Applications may also {@link javolution.xml.XmlFormat#setAlias alias} class names
-    to ensure that the xml representation is impervious to obfuscation.</i></p>
+    <p><i>Applications may also temporarily change the classes {@link javolution.xml.XmlFormat#setAlias aliases}
+    and associated {@link javolution.xml.XmlFormat#setFormat formats} during parsing/formatting.</i></p>
 </p>
 
 <p> The {@link javolution.xml.XmlFormat XmlFormat} does not have to use the class
     public no-arg constructor ({@link javolution.xml.XmlElement#object xml.object()}), instances can be created using factory methods, 
     private constructors (with constructor parameters set from the XML element) or even retrieved from a collection (if the object is shared
     or unique). For example:<pre>
-        public final class Point {
+        public final class Point { // Immutable, no no-arg constructor.
             public static final XmlFormat&lt;Point> XML = new XmlFormat&lt;Point>(Point.class) {
                 public void format(Point point, XmlElement xml) {
                     xml.setAttribute("x", point._x);
                     xml.setAttribute("y", point._y);
                 }
                 public Point parse(XmlElement xml) {
-                    return new Point(xml.getAttribute("x", 0.0), xml.getAttribute("y", 0.0)); 
+                    return Point.valueOf(xml.getAttribute("x", 0.0), xml.getAttribute("y", 0.0)); 
                 }
             };
             private double _x;
             private double _y;
-            // Point is immutable (no no-arg constructor).
-            public Point(double x, double y) {
-                _x = x;
-                _y = y;
-            }
+            private Point() {}; // No-arg constructor not visible.
+            public static Point valueOf(double x, double y) { ... }
+        }
+        ...
+        private class MyPrivateGraphic extends Graphic { // Private class (can be inner class).
+            static final XmlFormat&lt;MyPrivateGraphic> XML = new XmlFormat&lt;MyPrivateGraphic>(MyPrivateGraphic.class) {
+                public MyPrivateGraphic allocate(XmlElement xml) {
+                    return new MyPrivateGraphic(); 
+                }
+                public void format(MyPrivateGraphic g, XmlElement xml) {
+                    Graphic.XML.format(g, xml); // Calls parent format.
+                }
+                public MyPrivateGraphic parse(XmlElement xml) {
+                    return (MyPrivateGraphic) Graphic.XML.parse(xml); // Calls parent parse. 
+                }
+            };
         }</pre>
 </p>
 
 <p> The following illustrates how xml cross-references are supported (including circular references):<pre>
-        public class Polygon extends Shape { 
-            public static final XmlFormat&lt;Polygon> XML = new XmlFormat&lt;Polygon>(Polygon.class) {
-                public void format(Polygon polygon, XmlElement xml) {
-                    Text id = (Text) xml.objects().get(polygon);
-                    if (id != null) { // Reference.
-                         setAttribute("ref", id);
-                         return; // Reference.
-                    }
-                    // First occurence.
-                    id = Text.valueOf(xml.newId());
-    	            xml.objects().put(polygon, id);
-    	            xml.setAttribute("id", id);
-                    xml.setAttribute("length", polygon._vertices.length);
-                    for (Point p : polygon._vertices) {
-                         xml.add(p, "Point", Point.XML);
-                    }
+    public static class Polygon {
+        // For cross references local to a xml document, parsing/formatting should be 
+        // performed within a {@link javolution.realtime.LocalContext LocalContext}.
+        public static final XmlFormat&lt;Polygon&gt; XML = new XmlFormat&lt;Polygon&gt;(Polygon.class) {
+            public void format(Polygon polygon, XmlElement xml) {
+                Integer id = POLYGON_TO_ID.get(polygon);
+                if (id != null) { // Reference.
+                    xml.setAttribute("ref", id);
+                    return;
                 }
-                public Polygon parse(XmlElement xml) {
-                    CharSequence id = xml.getAttribute("ref");
-                    if (id != null) { // Reference.
-                         return (Polygon) xml.objects().get(id);
-                    }
-                    // First occurence.
-                    Polygon polygon = new Polygon(new Point[xml.getAttribute("length", 0)]);
-                    xml.objects().put(Text.valueOf(xml.getAttribute("id")), polygon);
-                    for (int i=0; i < polygon._vertices.length; i++)
-                        polygon._vertices[i] = xml.get("Point", Point.XML);
-                    return polygon;
+                id = POLYGON_TO_ID.size() + 1;
+                POLYGON_TO_ID.put(polygon, id);
+                xml.setAttribute("id", id);
+
+                // Writes vertices.
+                xml.setAttribute("length", polygon._vertices.length);
+                for (Point p : polygon._vertices) {
+                    xml.add(p, "Point", Point.XML);
                 }
-            };            
-            private Point[] _vertices;
-            private Polygon(Point[] vertices) {
-                _vertices = vertices;
-            } 
-        }</pre>
+            }
+
+            public Polygon parse(XmlElement xml) {
+                Integer id = xml.getAttribute("ref", -1);
+                if (id >= 0) // Reference
+                    return ID_TO_POLYGON.get(id);
+                Polygon polygon = new Polygon();
+                ID_TO_POLYGON.put(xml.getAttribute("id", -1), polygon);
+
+                // Reads vertices.
+                polygon._vertices = new Point[xml.getAttribute("length", 0)];
+                for (int i = 0; i < polygon._vertices.length; i++)
+                    polygon._vertices[i] = xml.get("Point", Point.XML);
+                return polygon;
+            }
+        };
+        private static LocalMap&lt;Polygon, Integer&gt; POLYGON_TO_ID = new LocalMap&lt;Polygon, Integer&gt;()
+                .setKeyComparator(FastComparator.IDENTITY);
+        private static LocalMap&lt;Integer, Polygon&gt; ID_TO_POLYGON = new LocalMap&lt;Integer, Polygon&gt;();
+
+        Point[] _vertices;
+    }</pre>
     Here the XML representation of a list of three polygons, 
     the first and the last one being shared:<pre>
-      &lt;java.util.ArrayList xmlns:j="http://javolution.org">
-          &lt;org.jscience.graphics.geom2d.Polygon id="1"&gt;
+      &lt;java.util.ArrayList xmlns:j="http://javolution.org" xmlns:geom2d="java:org.jscience.graphics.geom2d">
+          &lt;geom2d:Polygon id="1"&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-43" y="-34"/&gt;
               &lt;Point x="-12" y="123"/&gt;
-          &lt;/org.jscience.graphics.geom2d.Polygon&gt;
-          &lt;org.jscience.graphics.geom2d.Polygon id="2"&gt;
+          &lt;/geom2d:Polygon&gt;
+          &lt;geom2d:Polygon id="2"&gt;
               &lt;Point x="-43" y="-34"/&gt;
               &lt;Point x="123" y="-34"/&gt;
               &lt;Point x="-12" y="123"/&gt;
-          &lt;/org.jscience.graphics.geom2d.Polygon&gt;
-          &lt;org.jscience.graphics.geom2d.Polygon ref="1"/&gt;
+          &lt;/geom2d:Polygon&gt;
+          &lt;geom2d:Polygon ref="1"/&gt;
       &lt;/java.util.ArrayList&gt;</pre>
 </p>
 

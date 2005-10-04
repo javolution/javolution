@@ -383,7 +383,7 @@
         while (...) {
             PoolContext.enter();
             try {
-                for (FastList.Node&lt;Amoeba&gt; n = population.headNode(), end = population.tailNode(); (n = n.getNextNode()) != end;) {
+                for (FastList.Node&lt;Amoeba&gt; n = population.head(), end = population.tail(); (n = n.getNext()) != end;) {
                     Amoeba a = n.getValue();
                     if (a.getSurvivalLevel() >= average) {
                         survivors.add(a);
