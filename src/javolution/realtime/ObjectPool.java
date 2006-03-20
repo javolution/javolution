@@ -11,15 +11,16 @@ package javolution.realtime;
 import javolution.JavolutionError;
 
 /**
- * This abstract class represents an object pool managed by a 
- * {@link PoolContext}. {@link #isLocal Local} pools are safe to use 
- * without synchronization. The real-time framework guarantees that 
- * no more than one thread can have access to any local pool at any
- * given time. As for operations upon non-local pools, synchronization
- * has to be performed on the pool itself to guarantee thread-safety.
- * 
+ * <p> This abstract class represents an object pool managed by a 
+ *     {@link PoolContext}.</p>
+ *     
+ * <p> Pool objects are always allocated in the same memory area as the pool 
+ *     object itself. In other words, <code>NoHeapRealtimeThread</code>
+ *     executing in <code>ScopedMemory</code> can safely use pools allocated in 
+ *     <code>ImmortalMemory</code>.
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.7, December 20, 2005
  */
 public abstract class ObjectPool/*<T>*/ {
 
@@ -27,6 +28,9 @@ public abstract class ObjectPool/*<T>*/ {
      * Holds a pool returning <code>null</code> values.
      */
     public static final ObjectPool NULL = new ObjectPool() {
+        public int size() {
+            return 0;
+        }
         public Object next() {
             return null;
         }
@@ -118,9 +122,16 @@ public abstract class ObjectPool/*<T>*/ {
     }
 
     /**
+     * Returns the number of objects held by this pool.
+     * 
+     * @return this pool size.
+     */
+    public abstract int size();
+
+    /**
      * Returns the next available object from this pool. If there is none,
-     * a new object from the {@link #getOuter outer} pool is moved to this pool
-     * and returned.  
+     * a new object is allocated from the same memory area as this pool,
+     * added to the pool and then returned.
      * 
      * @return the next available object from this pool.
      */
@@ -132,7 +143,8 @@ public abstract class ObjectPool/*<T>*/ {
      * be garbage collected).
      * 
      * @param obj the object to recycle to this pool.
-     * @throws JavolutionError if the specified object do not belong to the pool.
+     * @throws IllegalArgumentException if the specified object do not belong
+     *         to the pool.
      */
     public abstract void recycle(Object/*T*/ obj);
 

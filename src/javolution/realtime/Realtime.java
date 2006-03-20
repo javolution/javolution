@@ -14,31 +14,30 @@ import javolution.lang.Text;
  *     different {@link ObjectSpace ObjectSpace} for higher
  *     performance and higher predictability.</p>
  *     
- * <p> Real-time objects may contain references (direct or indirect) to
- *     other real-time objects. Whether these objects being referenced 
- *     have to be moved along when a real-time object is moved to a different 
- *     object space depends whether or not the referenced objects are heap 
- *     allocated. Heap allocated objects (such as intrinsic data structures) are
- *     moved implicitly with the object; but non-heap objects (external objects)
- *     might have to be moved explicitly. For example:<pre>
+ * <p> Real-time objects may contain references to external real-time objects.
+ *     These referenced objects might have to be moved along when the real-time
+ *     object is moved. For example:[code]
  *     public class Person extends RealtimeObject  { // Implements Realtime.
- *         private FastList children = new FastList(); // Also Realtime.
+ *         private Person _mother; // External.
+ *         private Person _father; // External.
+ *         private final FastList<Person> _children = new FastList<Person>();  
  *         ...
  *         public boolean move(ObjectSpace os) { 
- *             if (super.move(os)) { // Propagates to external references.
- *                 // The children list is intrinsic (heap allocated) but 
- *                 // it contains references to external persons (the children).
- *                 for (Iterator i=children.fastIterator(); i.hasNext();) {
- *                      ((Person)i.next()).move(os);
- *                 }
- *                 return true;
+ *             if (super.move(os)) { // Propagates to referenced objects.
+ *                 _mother.move(os);
+ *                 _father.move(os);
+ *                 // The children list itself is part of this object
+ *                 // and does not require any particular action, but it 
+ *                 // references external objects which need to be moved along.
+ *                 for (Person child : _children) child.move(os);
+ *                 return true; // For sub-classes to do their part.
  *             }
  *             return false;
  *         }
- *     }</pre></p> 
+ *     }[/code]</p> 
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.0, February 16, 2005
+ * @version 3.7, January 1, 2006
  */
 public interface Realtime {
 
@@ -46,8 +45,8 @@ public interface Realtime {
      * Moves this real-time object to the specified object space.
      * 
      * @param os the object space to move this real-time object to.
-     * @return <code>true</code> if this move has to be propagated to 
-     *         non-heap external references; <code>false</code> otherwise.
+     * @return <code>true</code> if the move has to be propagated to 
+     *         external real-time references; <code>false</code> otherwise.
      */
     boolean move(ObjectSpace os);
 
@@ -61,17 +60,25 @@ public interface Realtime {
     Text toText();
 
     /**
-     * This inner class represents an object space destination.
+     * This class represents an object space which determinates when object 
+     * recycling occurs. <ul>
+     * <li>{@link #HEAP}: Associated memory recycled through garbage collection
+     *                    when the object is not reachable (default).</li>
+     * <li>{@link #STACK}: Recycled when the current thread exits the scope of 
+     *                     the {@link PoolContext} where the object has been 
+     *                     "factory produced".</li>
+     * <li>{@link #HOLD}: Not recycled, moved back to its original space when 
+     *                    internal preserve count drops to zero.</li>
+     * </li>
      * Applications may create their own object space. Here are few examples
-     * of possible spaces with their defining characteristics.<UL>
-     * <LI><B>AGING:</B> Objects are accessible by all; recycling is 
-     *     done when the objects are old enough.<BR>Constraint: 
-     *     It assumes that old objects become obsolete and are not referenced 
-     *     anymore.
-     * <LI><B>FLIP:</B> Objects are accessible by all; recycling 
-     *     is done when the object space is flipped.<BR>Constraint:
-     *     Objects from previous period (before flip) are discarded.</LI>
-     * </UL> 
+     * of possible spaces with their defining characteristics.<ul>
+     * <li><b>AGING:</b> Recycling done when the objects are old enough.<br>
+     *                   <b>Constraint:</b> It assumes that old objects become 
+     *                   obsolete and are not referenced anymore.</li>
+     * <li><b>FLIP:</b> Recycling done when the object space is flipped.<br>
+     *                  <b>Constraint:</b> Objects from previous period 
+     *                  (before flip) are discarded.</li>
+     * </ul> 
      */
     public static class ObjectSpace {
         
@@ -89,13 +96,13 @@ public interface Realtime {
          * {@link PoolContext#exit exits} the {@link PoolContext} scope
          * where the object has been {@link ObjectFactory factory} produced.
          */
-        public static final ObjectSpace LOCAL = new ObjectSpace();
+        public static final ObjectSpace STACK = new ObjectSpace();
     
         /**
-         * Identifies the {@link Context#getOuter() outer} object space; 
+         * Identifies the current {@link Context#getOuter() outer} object space; 
          * it is the object space after {@link PoolContext#exit exiting} 
          * the current {@link PoolContext} (typically the {@link #HEAP}
-         * or another {@link #LOCAL} space).
+         * or another {@link #STACK} space).
          */
         public static final ObjectSpace OUTER = new ObjectSpace();
     

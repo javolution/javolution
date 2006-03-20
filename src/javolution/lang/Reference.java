@@ -43,4 +43,5 @@ public interface Reference/*<T>*/ {
      * @param value the reference value.
      */
     void set(Object/*T*/ value);
+
 }

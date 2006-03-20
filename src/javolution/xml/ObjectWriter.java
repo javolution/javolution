@@ -27,14 +27,14 @@ import javolution.xml.sax.WriterHandler;
 
 /**
  * <p> This class takes an object and formats it to XML (SAX2 events or stream).
- *    <pre>
+ *    [code]
  *        ObjectWriter ow = new ObjectWriter();
  *        ...
  *        ow.write(obj, contentHandler); // SAX2 Events.
  *     <i>or</i> ow.write(obj, writer);         // Writer encoding.
  *     <i>or</i> ow.write(obj, outputStream);   // UTF-8 stream.
  *     <i>or</i> ow.write(obj, byteBuffer);     // UTF-8 NIO ByteBuffer.
- *     </pre></p>
+ *     [/code]</p>
  *     
  * <p> Namespaces are supported and may be associated to Java packages 
  *     in order to reduce the size of the xml generated (and to increase 
@@ -43,50 +43,48 @@ import javolution.xml.sax.WriterHandler;
  *     <code>org.jscience.physics.quantities.*</code> classes and the 
  *     <code>math</code> prefix for the 
  *     <code>org.jscience.mathematics.matrices.*</code> classes.
- *     <pre>
+ *     [code]
  *        ObjectWriter ow = new ObjectWriter();
  *        ow.setPackagePrefix("", "org.jscience.physics.quantities");
  *        ow.setPackagePrefix("math", "org.jscience.mathematics.matrices");
- *     </pre>
- *     Here is an example of the xml data produced by such a writer:
- *     <pre>
- *     &lt;math:Matrix xmlns:j="http://javolution.org" 
- *                     xmlns="java:org.jscience.physics.quantities"
- *                     xmlns:math="java:org.jscience.mathematics.matrices"
- *                     row="2" column="2">
- *        &lt;Mass value="2.3" unit="mg"/&gt;
- *        &lt;Pressure value="0.2" unit="Pa"/&gt;
- *        &lt;Force value="20.0" unit="µN"/&gt;
- *        &lt;Length value="3.0" unit="ft"/&gt;
- *     &lt;/math:Matrix&gt;</pre></p>
+ *     [/code]
+ *     Here is an example of the xml data produced by such a writer:[code]
+ *     <math:Matrix xmlns:j="http://javolution.org" 
+ *                  xmlns="java:org.jscience.physics.quantities"
+ *                  xmlns:math="java:org.jscience.mathematics.matrices"
+ *                  row="2" column="2">
+ *        <Mass value="2.3" unit="mg"/>
+ *        <Pressure value="0.2" unit="Pa"/>
+ *        <Force value="20.0" unit="µN"/>
+ *        <Length value="3.0" unit="ft"/>
+ *     </math:Matrix>[/code]</pre></p>
  *
  * <p> For more control over the xml document generated (e.g. indentation, 
  *     prolog, etc.), applications may use the 
  *     {@link #write(Object, ContentHandler)} method in conjonction with
- *     a custom {@link WriterHandler}. For example:<pre>
+ *     a custom {@link WriterHandler}. For example:[code]
  *        OutputStream out = new FileOutputStream("C:/document.xml");
  *        Writer writer = new Utf8StreamWriter().setOuptutStream(out); // UTF-8 encoding.
  *        WriterHandler handler = new WriterHandler().setWriter(writer);
  *        handler.setIndent("\t"); // Indents with tabs.
- *        handler.setProlog("&lt;?xml version=\"1.0\" encoding=\"UTF-8\"?&gt;");
+ *        handler.setProlog("<?xml version=\"1.0\" encoding=\"UTF-8\"/>");
  *        ...
- *        ow.write(obj, handler);</pre></p>
+ *        ow.write(obj, handler);[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.5, August 29, 2005
+ * @version 3.6, October 13, 2005
  */
-public class ObjectWriter/*<T>*/implements Reusable {
+public class ObjectWriter /*<T>*/ implements Reusable {
 
     /**
      * Holds Javolution prefix ("j").
      */
-    static final Text JAVOLUTION_PREFIX = Text.valueOf("j").intern();
+    static final Text JAVOLUTION_PREFIX = Text.intern("j");
 
     /**
      * Holds Javolution uri.
      */
-    static final Text JAVOLUTION_URI = Text.valueOf(
-            "http://javolution.org").intern();
+    static final Text JAVOLUTION_URI = Text.intern("http://javolution.org");
 
     /**
      * Holds the stream writer.
@@ -114,6 +112,26 @@ public class ObjectWriter/*<T>*/implements Reusable {
     private final XmlElement _xml = new XmlElement(null); // Formatting.
 
     /**
+     * Holds the element name of the root object.
+     */
+    private String _rootName;
+
+    /**
+     * Indicates if cross references are written out.
+     */
+    private boolean _areReferencesEnabled = false;
+
+    /**
+     * Indicates if references are expanded.
+     */
+    private boolean _expandReferences = false;
+
+    /**
+     * Indicates if class identifiers are written out.
+     */
+    private boolean _isClassIdentifierEnabled = true;
+
+    /**
      * Default constructor.
      */
     public ObjectWriter() {
@@ -130,7 +148,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
      */
     public void setNamespace(String prefix, String uri) {
         if ((prefix.length() == 1) && (prefix.charAt(0) == 'j'))
-            throw new IllegalArgumentException("Prefix: \"j\" is reserved.");
+            throw new IllegalArgumentException("Prefix: \"j\" is reserved.");        
         _namespaces.addLast(toCharSeq(prefix));
         _namespaces.addLast(toCharSeq(uri));
         if (prefix.length() == 0) { // Default namespace mapped
@@ -167,7 +185,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
      * @param  writer the writer to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object/*T*/obj, Writer writer) throws IOException {
+    public void write(Object/*T*/ obj, Writer writer) throws IOException {
         try {
             _writerHandler.setWriter(writer);
             write(obj, _writerHandler);
@@ -191,7 +209,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
      * @param  out the output stream to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object/*T*/obj, OutputStream out) throws IOException {
+    public void write(Object/*T*/ obj, OutputStream out) throws IOException {
         try {
             _utf8StreamWriter.setOutputStream(out);
             _writerHandler.setWriter(_utf8StreamWriter);
@@ -214,7 +232,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
      * @param  byteBuffer the byte buffer to write to.
      * @throws IOException if there's any problem writing.
      */
-    public void write(Object/*T*/obj, ByteBuffer byteBuffer)
+    public void write(Object/*T*/ obj, ByteBuffer byteBuffer)
             throws IOException {
         try {
             _utf8ByteBufferWriter.setByteBuffer(byteBuffer);
@@ -237,7 +255,7 @@ public class ObjectWriter/*<T>*/implements Reusable {
      * @param  obj the object to format.
      * @param  handler the SAX event handler.
      */
-    public void write(Object/*T*/obj, ContentHandler handler)
+    public void write(Object/*T*/ obj, ContentHandler handler)
             throws SAXException {
         handler.startDocument();
         try {
@@ -249,8 +267,14 @@ public class ObjectWriter/*<T>*/implements Reusable {
             }
             
             _xml._formatHandler = handler;
-            _xml.add(obj);
-            
+            _xml._areReferencesEnabled = _areReferencesEnabled;
+            _xml._expandReferences = _expandReferences;
+            _xml._isClassIdentifierEnabled = _isClassIdentifierEnabled;
+            if( _rootName != null ) {
+                _xml.add(obj,_rootName);
+            } else { 
+                _xml.add(obj);
+            }
         } finally {
             handler.endPrefixMapping(JAVOLUTION_PREFIX);
             for (int i=0; i < _namespaces.size();) {
@@ -272,6 +296,9 @@ public class ObjectWriter/*<T>*/implements Reusable {
         _xml.reset();
         _namespaces.clear();
         _xml._packagePrefixes.clear();
+        _areReferencesEnabled = false;
+        _expandReferences = false;
+        _isClassIdentifierEnabled = true;
     }
 
     /**
@@ -284,5 +311,54 @@ public class ObjectWriter/*<T>*/implements Reusable {
         if (str instanceof CharSequence)
             return (CharSequence) str;
         return Text.valueOf((String) str);
+    }
+
+    /**
+     * Enables/disables xml elements cross references (default 
+     * <code>false</code>).
+     * When enabled, identifiers attributes are added during serialization; 
+     * the name of these attributes is defined by {@link XmlFormat#identifier}.
+     * 
+     * @param enabled <code>true</code> if an unique identifier attribute is
+     *        added to objects being serialized; <code>false</code> otherwise.
+     */
+    public void setReferencesEnabled(boolean enabled) {
+        _areReferencesEnabled = enabled;
+    }
+
+    /**
+     * Controls whether or not references are expanced (default 
+     * <code>false</code>). References are not expanded if currently 
+     * being expanded (to avoid infinite recursion).
+     * 
+     * @param value <code>true</code> to expand references;
+     *        <code>false</code> otherwise.
+     * @see   XmlFormat#identifier 
+     */
+    public void setExpandReferences(boolean value) {
+        _expandReferences  = value;
+    }
+
+    /**
+     * Enables/disables class identifier attributes (default <code>true<code>).
+     * Disabling the class identifier should only be done if the serialized
+     * objects does not need to be deserialized (e.g. pure xml formatting).
+     * 
+     * @param enabled <code>true</code> to allow for an additional "j:class"
+     *        attribute; <code>false</code> otherwise. 
+     * @see   XmlElement#add(Object)
+     * @see   XmlElement#add(Object, String)
+     */
+    public void setClassIdentifierEnabled(boolean enabled) {
+        _isClassIdentifierEnabled = enabled;
+    }
+
+    /**
+     * Sets the element name or the root object.
+     * 
+     * @param name the name of the root element.
+     */
+    public void setRootName(String name) {
+        _rootName = name;
     }
 }

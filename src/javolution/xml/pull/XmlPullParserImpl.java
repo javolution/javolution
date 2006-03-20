@@ -14,13 +14,14 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+
 import j2me.lang.CharSequence;
 import j2me.lang.IllegalStateException;
 import j2me.nio.ByteBuffer;
+import j2mex.realtime.MemoryArea;
 
 import javolution.io.Utf8ByteBufferReader;
 import javolution.io.Utf8StreamReader;
-import javolution.lang.PersistentReference;
 import javolution.lang.Reusable;
 import javolution.lang.Text;
 import javolution.lang.TypeFormat;
@@ -29,7 +30,7 @@ import javolution.xml.sax.Attributes;
 
 /**
  * <p> This class provides a real-time XPP-like XML parser; this parser is
- *     <i>extremely</i> fast (around 2-3x time faster than conventional 
+ *     <i>extremely</i> fast (around 2-5x times faster than conventional 
  *     SAX/XPP parsers).</p>
  *     
  * <p> This parser <b>does not create temporary objects</b>
@@ -38,7 +39,20 @@ import javolution.xml.sax.Attributes;
  *     
  * <p> The parser input source can be either a {@link #setInput(Reader) Reader},
  *     an {@link #setInput(InputStream) InputStream} or even a {@link 
- *     #setInput(ByteBuffer) ByteBuffer} (e.g. <code>MappedByteBuffer</code>).</p>
+ *     #setInput(ByteBuffer) ByteBuffer} (e.g. <code>MappedByteBuffer</code>).
+ *     Here is an example parsing a resource as input stream:[code]
+ *     InputStream in = Configuration.class.getResourceAsStream("configuration.xml");
+ *     XmlPullParserImpl xpp = new XmlPullParserImpl();
+ *     xpp.setInput(in);
+ *     for (int e = xpp.getEventType(); e != XmlPullParserImpl.END_DOCUMENT; e = xpp.next()) {
+ *         if (e == XmlPullParserImpl.START_TAG) { // Reads <key>value</key>
+ *             CharSequence key = xpp.getName();
+ *             if (xpp.next() == XmlPullParserImpl.TEXT) {
+ *                 CharSequence value = xpp.getText();
+ *                 Configuration.set(key, value);
+ *             }
+ *         }
+ *     }[/code]</p>
  *     
  * <p> This parser is light (less than 15Kbytes compressed) and maintains
  *     a very small memory footprint while parsing (e.g. less than 10Kbytes
@@ -65,7 +79,11 @@ import javolution.xml.sax.Attributes;
  *     
  * <p> Finally, this parser does not break up character data during call back
  *     (the whole character data between markups is always being returned).</p>
- *
+ *     
+ * <P> <i> Note: If a SAX2 parser is required, applications may also use the 
+ *    {@link javolution.xml.sax.XmlSaxParserImpl SAX2 wrapper} 
+ *    (3-5x faster than conventional SAX2 parsers).</i></p>
+ *    
  * @author  <a href="mailto:javolution@arakelian.com">Gregory Arakelian</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.4, September 20, 2005
@@ -82,26 +100,12 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds the internal event when text is being merged (ref. next())
      */
-    private static final int MERGED_TEXT = 16; 
+    private static final int MERGED_TEXT = 16;
 
     /**
      * Holds the reader buffer capacity.
      */
     private static final int READER_BUFFER_CAPACITY = 2048;
-
-    /**
-     * Holds the configurable nominal length for the data array length (must be 
-     * larger than the reader buffer capacity to avoid overflow).
-     */
-    private static final PersistentReference DATA_SIZE = new PersistentReference(
-            "javolution.xml.pull.XmlPullParserImpl#DATA_SIZE", new Integer(
-                    READER_BUFFER_CAPACITY * 2));
-
-    /**
-     * Holds the configurable nominal length for the CharSequenceImpl stack.
-     */
-    private static final PersistentReference SEQ_SIZE = new PersistentReference(
-            "javolution.xml.pull.XmlPullParserImpl#SEQ_SIZE", new Integer(256));
 
     /**
      * Holds the parsing line.
@@ -132,8 +136,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds the data buffer for CharSequence produced by this parser.
      */
-    private char[] _data = (char[]) new char[((Integer) DATA_SIZE.get())
-            .intValue()];
+    private char[] _data = new char[READER_BUFFER_CAPACITY * 2];
 
     /**
      * Holds the current length of the data buffer (_data).
@@ -280,8 +283,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     /**
      * Holds character sequences instances.
      */
-    private CharSequenceImpl[] _seqs = new CharSequenceImpl[((Integer) SEQ_SIZE
-            .get()).intValue()];
+    private CharSequenceImpl[] _seqs = new CharSequenceImpl[256];
 
     /**
      * Holds character sequence index. 
@@ -542,7 +544,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                 _mergedText = null;
                 return _eventType = TEXT;
             default:
-                return _eventType; 
+                return _eventType;
             }
         }
     }
@@ -577,7 +579,6 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
             throw error("parser must be on START_TAG or TEXT to read text");
         }
     }
-
 
     // Implements XmlPullParser interface.
     public void setFeature(String name, boolean state)
@@ -664,10 +665,7 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                 _charsRead = _reader.read(_chars, 0, _chars.length);
                 while ((_length + _charsRead) >= _data.length) {
                     // Potential overflow, resizes.
-                    char[] tmp = new char[_data.length * 2];
-                    System.arraycopy(_data, 0, tmp, 0, _data.length);
-                    _data = tmp;
-                    DATA_SIZE.setMinimum(new Integer(_data.length));
+                    increaseDataBuffer();
                 }
             }
             // Replaces #xD and #xD#xA with #xA as per XML 1.0
@@ -708,8 +706,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                     _state = MARKUP;
                     int nbrChar = _length - _start - 1;
                     _length = _start; // Do not keep.
-                    if (_hasNonWhitespace || 
-                            (!_ignoreWhitespace && (nbrChar > 0))) {
+                    if (_hasNonWhitespace
+                            || (!_ignoreWhitespace && (nbrChar > 0))) {
                         setText(_start, nbrChar);
                         return _eventType = TEXT;
                     }
@@ -725,7 +723,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         _length = _start;
                         _elemQName = newSeq();
                         _elemQName.offset = _start;
-                        if (_mergedText != null) return _eventType = MERGED_TEXT; // Flushes.
+                        if (_mergedText != null)
+                            return _eventType = MERGED_TEXT; // Flushes.
                     } else if (c == '?') {
                         _state = PI;
                         _length = _start;
@@ -733,7 +732,8 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
                         _state = OPEN_TAG + READ_ELEM_NAME;
                         _elemQName = newSeq();
                         _elemQName.offset = _start;
-                        if (_mergedText != null) return _eventType = MERGED_TEXT; // Flushes.
+                        if (_mergedText != null)
+                            return _eventType = MERGED_TEXT; // Flushes.
                     }
                 } else if ((_length - _start == 3) && (_data[_start] == '!')
                         && (_data[_start + 1] == '-')
@@ -1197,14 +1197,26 @@ public final class XmlPullParserImpl implements XmlPullParser, Reusable {
     }
 
     private CharSequenceImpl newSeq2() {
-        if (_seqsCapacity++ >= _seqs.length) { // Resizes. 
-            CharSequenceImpl[] tmp = new CharSequenceImpl[_seqs.length * 2];
-            System.arraycopy(_seqs, 0, tmp, 0, _seqs.length);
-            _seqs = tmp;
-            SEQ_SIZE.setMinimum(new Integer(_seqs.length));
-        }
-        return _seqs[_seqsIndex++] = (CharSequenceImpl) CharSequenceImpl.FACTORY
-                .newObject();
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                if (_seqsCapacity++ >= _seqs.length) { // Resizes.
+                    CharSequenceImpl[] tmp = new CharSequenceImpl[_seqs.length * 2];
+                    System.arraycopy(_seqs, 0, tmp, 0, _seqs.length);
+                    _seqs = tmp;
+                }
+                _seqs[_seqsIndex] = new CharSequenceImpl();
+            }
+        });
+        return _seqs[_seqsIndex++];
     }
 
+    private void increaseDataBuffer() {
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                char[] tmp = new char[_data.length * 2];
+                System.arraycopy(_data, 0, tmp, 0, _data.length);
+                _data = tmp;
+            }
+        });
+    }
 }

@@ -8,6 +8,9 @@
  */
 package javolution.realtime;
 
+import javolution.JavolutionError;
+import javolution.lang.Reflection;
+
 /**
  * <p> This class represents a heap context; it is used to allocate objects
  *     from the heap exclusively.</p>
@@ -20,12 +23,31 @@ public class HeapContext extends Context {
     /**
      * Holds the class object (cannot use .class with j2me).
      */
-    private static final Class CLASS = new HeapContext().getClass();
+    private static final Class CLASS = Reflection
+            .getClass("javolution.realtime.HeapContext");
 
     /**
      * Default constructor.
      */
     public HeapContext() {
+    }
+
+    /**
+     * Returns the current heap context or <code>null<code> if the current
+     * thread executes within a pool context.  
+     *
+     * @return the current heap context.
+     */
+    public static/*HeapContext*/Context current() {
+        Context ctx = Context.current();
+        if (ctx.inheritedPoolContext != null)
+            return null;
+        while (ctx != null) {
+            if (ctx instanceof HeapContext)
+                return (HeapContext) ctx;
+            ctx = ctx.getOuter();
+        }
+        throw new JavolutionError("No heap context or pool context");
     }
 
     /**

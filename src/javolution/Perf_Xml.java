@@ -40,9 +40,9 @@ import javolution.xml.XmlFormat;
  */
 final class Perf_Xml extends Javolution implements Runnable {
 
-    private static final int OBJECT_SIZE = 1000; // Nbr of strings per object.
+    private static final int OBJECT_SIZE = 10000; // Nbr of string tables per object.
 
-    private static final int BYTE_BUFFER_SIZE = 100 * OBJECT_SIZE + 1000;
+    private static final int BYTE_BUFFER_SIZE = 300 * OBJECT_SIZE + 2000;
 
     /**
      * Executes benchmark.
@@ -55,7 +55,11 @@ final class Perf_Xml extends Javolution implements Runnable {
         // Create a dummy object (vector).
         Vector v = new Vector(OBJECT_SIZE);
         for (int i = 0; i < OBJECT_SIZE; i++) {
-            v.addElement("This is the string #" + i);
+            FastTable ft = new FastTable();
+            ft.add("This is the first String");
+            ft.add("This is the second String");
+            ft.add("This is the third String");
+            v.addElement(ft);
         }
         // Adds miscellaneous data.
         v.addElement(null);
@@ -67,7 +71,7 @@ final class Perf_Xml extends Javolution implements Runnable {
         FastMap fm = new FastMap();
         fm.setKeyComparator(FastComparator.REHASH);
         fm.setValueComparator(FastComparator.IDENTITY);
-        
+
         fm.put("ONE", "1");
         fm.put("TWO", "2");
         fm.put("THREE", "3");
@@ -76,6 +80,9 @@ final class Perf_Xml extends Javolution implements Runnable {
         fl.add("FIRST");
         fl.add("SECOND");
         fl.add("THIRD");
+        fl.add("...");
+        fl.add("...");
+        fl.add("...");
         v.addElement(fl);
         FastSet fs = new FastSet();
         fs.add("ALPHA");
@@ -132,8 +139,12 @@ final class Perf_Xml extends Javolution implements Runnable {
             Object readObject = oi.readObject();
             oi.close();
             println(endTime(1));
-            if (!v.equals(readObject)) {
-                throw new Error("SERIALIZATION ERROR");
+            for (int i = 0; i < v.size(); i++) {
+                Object e0 = v.elementAt(i);
+                Object e1 = ((Vector) readObject).elementAt(i);
+                if (((e0 != null) && !e0.equals(e1))
+                        || ((e0 == null) && (e1 != null)))
+                    throw new Error("SERIALIZATION ERROR");
             }
         } catch (UnsupportedOperationException e) {
             println("NOT SUPPORTED (J2SE 1.4+ build required)");
@@ -145,6 +156,8 @@ final class Perf_Xml extends Javolution implements Runnable {
         println("-- XML Serialization (I/O Stream) --");
         try {
             ObjectWriter ow = new ObjectWriter();
+            //ow.setReferencesEnabled(true);
+            //ow.setExpandReferences(true);
             //ow.setPackagePrefix("", "java.lang");
             ByteArrayOutputStream out = new ByteArrayOutputStream(
                     BYTE_BUFFER_SIZE);
@@ -153,7 +166,7 @@ final class Perf_Xml extends Javolution implements Runnable {
             ow.write(v, out);
             println(endTime(1));
             //System.out.println(out); 
- 
+
             ObjectReader or = new ObjectReader();
             ByteArrayInputStream in = new ByteArrayInputStream(out
                     .toByteArray());
@@ -162,8 +175,12 @@ final class Perf_Xml extends Javolution implements Runnable {
             Object readObject = or.read(in);
             println(endTime(1));
             //System.out.println(readObject); 
-            if (!v.equals(readObject)) {
-                throw new Error("SERIALIZATION ERROR");
+            for (int i = 0; i < v.size(); i++) {
+                Object e0 = v.elementAt(i);
+                Object e1 = ((Vector) readObject).elementAt(i);
+                if (((e0 != null) && !e0.equals(e1))
+                        || ((e0 == null) && (e1 != null)))
+                    throw new Error("SERIALIZATION ERROR");
             }
         } catch (IOException e) {
             throw new JavolutionError(e);
@@ -174,6 +191,9 @@ final class Perf_Xml extends Javolution implements Runnable {
         try {
             ObjectWriter ow = new ObjectWriter();
             ByteBuffer bb = ByteBuffer.allocateDirect(BYTE_BUFFER_SIZE);
+            //ow.setReferencesEnabled(true);
+            //ow.setExpandReferences(true);
+            //ow.setPackagePrefix("", "java.lang");
             print("Write Time: ");
             startTime();
             ow.write(v, bb);
@@ -184,8 +204,12 @@ final class Perf_Xml extends Javolution implements Runnable {
             startTime();
             Object readObject = or.read(bb);
             println(endTime(1));
-            if (!v.equals(readObject)) {
-                throw new Error("SERIALIZATION ERROR");
+            for (int i = 0; i < v.size(); i++) {
+                Object e0 = v.elementAt(i);
+                Object e1 = ((Vector) readObject).elementAt(i);
+                if (((e0 != null) && !e0.equals(e1))
+                        || ((e0 == null) && (e1 != null)))
+                    throw new Error("SERIALIZATION ERROR");
             }
         } catch (IOException e) {
             throw new JavolutionError(e);

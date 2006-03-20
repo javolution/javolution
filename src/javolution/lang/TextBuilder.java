@@ -10,11 +10,12 @@ package javolution.lang;
 
 import java.io.IOException;
 
+
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
+import j2mex.realtime.MemoryArea;
 
 import javolution.JavolutionError;
-import javolution.realtime.ObjectFactory;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 
@@ -30,7 +31,7 @@ import javolution.realtime.RealtimeObject;
  * <p> This implementation is not synchronized.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.1, March 16, 2005
+ * @version 3.7, January 1, 2006
  */
 public class TextBuilder extends RealtimeObject implements Appendable,
         CharSequence, Reusable, Serializable {
@@ -89,30 +90,6 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     private char[][][] _chars2; // new char[1<<9][1<<7][1<<5]; // 21 bits (2097152)
 
     private char[][][][] _chars3; // new char[1<<11][1<<9][1<<7][1<<5]; 
-
-    private static final ObjectFactory CHARS0_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[1 << D0];
-        }
-    };
-
-    private static final ObjectFactory CHARS1_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[1 << D1][];
-        }
-    };
-
-    private static final ObjectFactory CHARS2_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[1 << D2][][];
-        }
-    };
-
-    private static final ObjectFactory CHARS3_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[1 << D3][][][];
-        }
-    };
 
     /**
      * Holds the current capacity. 
@@ -282,7 +259,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  c the character to append.
      * @return <code>this</code>
      */
-    public final Appendable/*TextBuilder*/ append(char c) {
+    public final Appendable/*TextBuilder*/append(char c) {
         if (_length >= _capacity)
             increaseCapacity();
         final int i = _length++;
@@ -306,7 +283,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  csq the character sequence to append or <code>null</code>.
      * @return <code>this</code>
      */
-    public final Appendable/*TextBuilder*/ append(CharSequence csq) {
+    public final Appendable/*TextBuilder*/append(CharSequence csq) {
         return (csq == null) ? append("null") : append(csq, 0, csq.length());
     }
 
@@ -322,7 +299,8 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
      *         || (start > end) || (end > csq.length())</code>
      */
-    public final Appendable/*TextBuilder*/ append(CharSequence csq, int start, int end) {
+    public final Appendable/*TextBuilder*/append(CharSequence csq, int start,
+            int end) {
         if (csq == null)
             return append("null");
         if ((start < 0) || (end < 0) || (start > end) || (end > csq.length()))
@@ -582,8 +560,8 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @throws IllegalArgumentException if <code>((digits > 19) || 
      *         (digits <= 0))</code>)
      /*@FLOATING_POINT@
-    public final TextBuilder append(double value, int digits, 
-            boolean scientific, boolean showZero) {
+     public final TextBuilder append(double value, int digits, 
+     boolean scientific, boolean showZero) {
      try {
      TypeFormat.format(value, digits, scientific, showZero, this);
      return this;
@@ -592,7 +570,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      }
      }
      /**/
-    
+
     /**
      * Inserts the specified character sequence at the specified location.
      *
@@ -712,37 +690,38 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * Increases this text builder capacity.
      */
     private void increaseCapacity() {
-        final int c = _capacity;
-        _capacity += 1 << D0;
-        if (c < C1) {
-            if (_chars1 == null) {
-                _chars1 = (char[][]) CHARS1_FACTORY.newObject();
-            }
-            _chars1[(c >> R1)] = (char[]) CHARS0_FACTORY.newObject();
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                final int c = _capacity;
+                _capacity += 1 << D0;
+                if (c < C1) {
+                    if (_chars1 == null) {
+                        _chars1 = new char[1 << D1][];
+                    }
+                    _chars1[(c >> R1)] = new char[1 << D0];
 
-        } else if (c < C2) {
-            if (_chars2 == null) {
-                _chars2 = (char[][][]) CHARS2_FACTORY.newObject();
-            }
-            if (_chars2[(c >> R2)] == null) {
-                _chars2[(c >> R2)] = (char[][]) CHARS1_FACTORY.newObject();
-            }
-            _chars2[(c >> R2)][(c >> R1) & M1] = (char[]) CHARS0_FACTORY
-                    .newObject();
+                } else if (c < C2) {
+                    if (_chars2 == null) {
+                        _chars2 = new char[1 << D2][][];
+                    }
+                    if (_chars2[(c >> R2)] == null) {
+                        _chars2[(c >> R2)] = new char[1 << D1][];
+                    }
+                    _chars2[(c >> R2)][(c >> R1) & M1] = new char[1 << D0];
 
-        } else {
-            if (_chars3 == null) {
-                _chars3 = (char[][][][]) CHARS3_FACTORY.newObject();
+                } else {
+                    if (_chars3 == null) {
+                        _chars3 = new char[1 << D3][][][];
+                    }
+                    if (_chars3[(c >> R3)] == null) {
+                        _chars3[(c >> R3)] = new char[1 << D2][][];
+                    }
+                    if (_chars3[(c >> R3)][(c >> R2) & M2] == null) {
+                        _chars3[(c >> R3)][(c >> R2) & M2] = new char[1 << D1][];
+                    }
+                    _chars3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = new char[1 << D0];
+                }
             }
-            if (_chars3[(c >> R3)] == null) {
-                _chars3[(c >> R3)] = (char[][][]) CHARS2_FACTORY.newObject();
-            }
-            if (_chars3[(c >> R3)][(c >> R2) & M2] == null) {
-                _chars3[(c >> R3)][(c >> R2) & M2] = (char[][]) CHARS1_FACTORY
-                        .newObject();
-            }
-            _chars3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (char[]) CHARS0_FACTORY
-                    .newObject();
-        }
+        });
     }
 }

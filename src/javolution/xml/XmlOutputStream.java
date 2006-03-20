@@ -42,7 +42,7 @@ public class XmlOutputStream/*<T>*/ extends OutputStream implements Reusable {
     /**
      * Holds the object writer.
      */
-    private final ObjectWriter/*<T>*/ _objectWriter = new ObjectWriter/*<T>*/();
+    private final ObjectWriter/*<T>*/ _objectWriter;
 
     /**
      * Holds the object writer.
@@ -53,6 +53,16 @@ public class XmlOutputStream/*<T>*/ extends OutputStream implements Reusable {
      * Default constructor.
      */
     public XmlOutputStream() {
+    	this(new ObjectWriter/*<T>*/());
+    }
+    
+    /**
+     * Creates a xml output stream using the specified object writer.
+     * 
+     * @param writer the object writer.
+     */
+    public XmlOutputStream(ObjectWriter/*<T>*/ writer) {
+    	_objectWriter = writer;
     }
     
     /**

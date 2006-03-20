@@ -9,6 +9,7 @@
 package javolution.realtime;
 
 import javolution.lang.Reference;
+import javolution.lang.Text;
 
 /**
  * <p> This class encapsulates a reference allocated on the current stack
@@ -22,15 +23,15 @@ import javolution.lang.Reference;
  *     the {@link PoolContext} where they have been factory produced.</p>
  *     
  * <p> Stack references are typically used by functions having more than one
- *     return value to avoid creating new objects on the heap. For example:<pre>
+ *     return value to avoid creating new objects on the heap. For example:[code]
  *     // Returns both the position and its status.
- *     public Coordinates getPosition(Reference&lt;Status&gt; status) {
+ *     public Coordinates getPosition(Reference<Status> status) {
  *         ...
  *     }
  *     ...
- *     StackReference&lt;Status&gt; status = StackReference.newInstance(); // On the stack.
+ *     StackReference<Status> status = StackReference.newInstance(); // On the stack.
  *     Coordinates position = getPosition(status);
- *     if (status.get() == ACCURATE) ...</pre> 
+ *     if (status.get() == ACCURATE) ...[/code] 
  *     See also {@link ConcurrentContext} for examples of 
  *     {@link StackReference} usage.</p>
  *          
@@ -74,7 +75,16 @@ public final class StackReference/*<T>*/extends RealtimeObject implements
     public static/*<T>*/StackReference /*<T>*/newInstance() {
         return (StackReference) FACTORY.object();
     }
-
+    /**
+     * Returns the text representation of the current value of this 
+     * reference.
+     *
+     * @return <code>Text.valueOf(this.get())</code>
+     */
+    public Text toText() {
+        return Text.valueOf(this.get());
+    }
+    
     // Implements Reference interface.
     public Object/*T*/get() {
         return _value;

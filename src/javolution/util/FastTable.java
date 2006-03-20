@@ -10,7 +10,6 @@ package javolution.util;
 
 import java.util.NoSuchElementException;
 
-import j2me.io.Serializable;
 import j2me.lang.IllegalStateException;
 import j2me.lang.UnsupportedOperationException;
 import j2me.util.Collection;
@@ -18,8 +17,9 @@ import j2me.util.Iterator;
 import j2me.util.List;
 import j2me.util.ListIterator;
 import j2me.util.RandomAccess;
+import j2mex.realtime.MemoryArea;
+import javolution.lang.PersistentReference;
 import javolution.lang.Reusable;
-import javolution.realtime.ObjectFactory;
 import javolution.realtime.RealtimeObject;
 
 /**
@@ -43,26 +43,16 @@ import javolution.realtime.RealtimeObject;
  *     
  *  <p> Iterations over the {@link FastTable} values are faster when
  *      performed using the {@link #get} method rather than using collection
- *      records or iterators:<pre>
+ *      records or iterators:[code]
  *     for (int i = 0, n = table.size(); i < n; i++) {
  *          table.get(i);
- *     }</pre></p>
- *     
- * <p><i><b> Implementation Note:</b> To avoid expensive resize/copy operations
- *        {@link FastTable} used multi-dimensional arrays internally. This 
- *        has also for effect to reduce memory fragmentation (and garbage 
- *        collection time) because the allocated objects are always small.
- *        Performance comparison  with <code>ArrayList</code>
- *         <a href="http://javolution.org/doc/benchmark.html">shows</a>
- *        almost identical {@link #get(int) access} time and up to 2x 
- *        improvement when {@link #add adding} values to a new collection.
- *        </i></p>
+ *     }[/code]</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.4, July 4, 2005
+ * @version 3.7, January 1, 2006
  */
 public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
-        List/*<E>*/, Reusable, RandomAccess, Serializable {
+        List/*<E>*/, Reusable, RandomAccess {
 
     /**
      * Holds the factory for this fast table.
@@ -120,30 +110,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     // new Object[1<<11][1<<9][1<<7][1<<5], 32 bits
     private Object/*E*/[][][][] _elems3;
 
-    private static final ObjectFactory OBJS0_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new Object[1 << D0];
-        }
-    };
-
-    private static final ObjectFactory OBJS1_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new Object[1 << D1][];
-        }
-    };
-
-    private static final ObjectFactory OBJS2_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new Object[1 << D2][][];
-        }
-    };
-
-    private static final ObjectFactory OBJS3_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new Object[1 << D3][][][];
-        }
-    };
-
     /**
      * Holds the current capacity. 
      */
@@ -159,7 +125,24 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      */
     public FastTable() {
         _elems1 = (Object/*E*/[][]) new Object[1][];
-        _elems1[0] =(Object/*E*/[]) new Object[C0];
+        _elems1[0] = (Object/*E*/[]) new Object[C0];
+    }
+
+    /**
+     * Creates a persistent table associated to the specified unique identifier
+     * (convenience method).
+     * 
+     * @param id the unique identifier for this map.
+     * @throws IllegalArgumentException if the identifier is not unique.
+     * @see javolution.lang.PersistentReference
+     */
+    public FastTable(String id) {
+        this();
+        PersistentReference ref = new PersistentReference(id);
+        FastTable persistentTable = (FastTable) ref.get();
+        if (persistentTable != null)
+            this.addAll(persistentTable);
+        ref.set(this); // Sets this table as persistent.
     }
 
     /**
@@ -214,10 +197,10 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     private final Object/*E*/get2(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        if (index < C2)
-            return _elems2[(index >> R2)][(index >> R1) & M1][index & M0];
-        return _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index
-                & M0];
+        return (index < C2) ? _elems2[(index >> R2)][(index >> R1) & M1][index
+                & M0]
+                : _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index
+                        & M0];
     }
 
     /**
@@ -249,7 +232,17 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      *         <code>Collection.add</code> method).
      */
     public final boolean add(Object/*E*/value) {
-        addLast(value);
+        final int i = _size;
+        if (i >= _capacity) {
+            increaseCapacity();
+        }
+        final Object/*E*/[] elems = (i < C1) ? _elems1[(i >> R1)]
+                : (i < C2) ? _elems2[(i >> R2)][(i >> R1) & M1]
+                        : _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
+        elems[i & M0] = value;
+        // The size increment is always performed last (the compiler will not 
+        // reorder due to possible IndexOutOfBoundsException above).
+        _size++;
         return true;
     }
 
@@ -262,7 +255,11 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     public final Object/*E*/getLast() {
         if (_size == 0)
             throw new NoSuchElementException();
-        return get(_size - 1);
+        final int i = _size - 1;
+        final Object/*E*/[] elems = (i < C1) ? _elems1[(i >> R1)]
+                : (i < C2) ? _elems2[(i >> R2)][(i >> R1) & M1]
+                        : _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
+        return elems[i & M0];
     }
 
     /**
@@ -271,54 +268,38 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @param value the value to be added.
      */
     public final void addLast(Object/*E*/value) {
-        final int i = _size;
-        if (i >= _capacity) {
-            increaseCapacity();
-        }
-        if (i < C1) {
-            _elems1[(i >> R1)][i & M0] = value;
-        } else if (i < C2) {
-            _elems2[(i >> R2)][(i >> R1) & M1][i & M0] = value;
-        } else {
-            _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1][i & M0] = value;
-        }
-        checkpoint(); // Ensures that size is incremented last.
-        _size++;
+        add(value);
     }
 
     /**
      * Removes and returns the last value of this table <i>(fast)</i>.
      *
      * @return this table's last value before this call.
-     * @throws NoSuchElementException if this list is empty.
+     * @throws NoSuchElementException if this table is empty.
      */
     public final Object/*E*/removeLast() {
         if (_size == 0)
             throw new NoSuchElementException();
-        final int index = --_size;
-        final Object/*E*/[] elems = (index < C1) ? _elems1[(index >> R1)]
-                : (index < C2) ? _elems2[(index >> R2)][(index >> R1) & M1]
-                        : _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1)
-                                & M1];
-        final Object/*E*/oldValue = elems[index & M0];
-        elems[index & M0] = null;
+        final int i = --_size;
+        final Object/*E*/[] elems = (i < C1) ? _elems1[(i >> R1)]
+                : (i < C2) ? _elems2[(i >> R2)][(i >> R1) & M1]
+                        : _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
+        final Object/*E*/oldValue = elems[i & M0];
+        elems[i & M0] = null;
         return oldValue;
     }
 
     // Overrides.
     public final void clear() {
-        for (int index = 0, end = _size; index < end;) {
-            if (index < C1) {
-                _elems1[(index >> R1)][index++ & M0] = null;
-            } else if (index < C2) {
-                _elems2[(index >> R2)][(index >> R1) & M1][index++ & M0] = null;
-            } else {
-                _elems3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index++
-                        & M0] = null;
-            }
+        for (int i = 0; i < _size; i += C0) {
+            final Object/*E*/[] elems = (i < C1) ? _elems1[(i >> R1)]
+                    : (i < C2) ? _elems2[(i >> R2)][(i >> R1) & M1]
+                            : _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
+            System.arraycopy(NULL_BLOCK, 0, elems, 0, C0);
         }
         _size = 0;
     }
+    private static final Object[] NULL_BLOCK = (Object[]) new Object[C0];
 
     /**
      * Inserts all of the values in the specified collection into this
@@ -470,7 +451,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @return an iterator over this list values.
      */
     public final Iterator/*<E>*/iterator() {
-        FastTableIterator/*<E>*/i = (FastTableIterator/*<E>*/) FastTableIterator.FACTORY
+        FastTableIterator i = (FastTableIterator) FastTableIterator.FACTORY
                 .object();
         i._table = this;
         i._start = 0;
@@ -488,7 +469,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @return an iterator over this list values.
      */
     public final ListIterator/*<E>*/listIterator() {
-        FastTableIterator/*<E>*/i = (FastTableIterator/*<E>*/) FastTableIterator.FACTORY
+        FastTableIterator i = (FastTableIterator) FastTableIterator.FACTORY
                 .object();
         i._table = this;
         i._start = 0;
@@ -508,12 +489,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      *        list iterator (by a call to the <code>next</code> method).
      * @return a list iterator of the values in this table
      *         starting at the specified position in this list.
-     * @throws IndexOutOfBoundsException if the index is out of range (index
-     *         &lt; 0 || index &gt; size()).
+     * @throws IndexOutOfBoundsException if the index is out of range 
+     *         [code](index < 0 || index > size())[/code]
      */
     public final ListIterator/*<E>*/listIterator(int index) {
         if ((index >= 0) && (index <= _size)) {
-            FastTableIterator/*<E>*/i = (FastTableIterator/*<E>*/) FastTableIterator.FACTORY
+            FastTableIterator i = (FastTableIterator) FastTableIterator.FACTORY
                     .object();
             i._table = this;
             i._start = 0;
@@ -539,10 +520,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * the sort that commonly exist for arrays). Any operation that expects
      * a list can be used as a range operation by passing a subList view
      * instead of a whole list.  For example, the following idiom
-     * removes a range of values from a list:
-     * <pre>
-     *      list.subList(from, to).clear();
-     * </pre>
+     * removes a range of values from a list: [code]
+     * list.subList(from, to).clear();[/code]
      * Similar idioms may be constructed for <code>indexOf</code> and
      * <code>lastIndexOf</code>, and all of the algorithms in the
      * <code>Collections</code> class can be applied to a subList.
@@ -557,14 +536,14 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      * @param toIndex high endpoint (exclusive) of the subList.
      * @return a view of the specified range within this list.
      * 
-     * @throws IndexOutOfBoundsException if <code>(fromIndex &lt; 0 ||
-     *          toIndex &gt; size || fromIndex &gt; toIndex)</code>
+     * @throws IndexOutOfBoundsException if [code](fromIndex < 0 ||
+     *          toIndex > size || fromIndex > toIndex)[/code]
      */
     public final List/*<E>*/subList(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex > _size) || (fromIndex > toIndex))
             throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
                     + ", toIndex: " + toIndex + " for list of size: " + _size);
-        SubTable/*<E>*/st = (SubTable/*<E>*/) SubTable.FACTORY.object();
+        SubTable st = (SubTable) SubTable.FACTORY.object();
         st._table = this;
         st._offset = fromIndex;
         st._size = toIndex - fromIndex;
@@ -612,53 +591,57 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         clear();
     }
 
+    // Overrides  to return a list (JDK1.5+).
+    public Collection/*List<E>*/unmodifiable() {
+        return (Collection/*List<E>*/) super.unmodifiable();
+    }
+
     /**
      * Increases this table capacity.
      */
     private void increaseCapacity() {
-        final int c = _capacity;
-        _capacity += C0;
-        if (c < C1) {
-            if (_elems1.length == 1) { // Replaces the original table.
-                Object/*E*/[][] tmp = (Object/*E*/[][]) OBJS1_FACTORY
-                        .newObject();
-                tmp[0] = _elems1[0];
-                _elems1 = tmp;
-            }
-            _elems1[(c >> R1)] = (Object/*E*/[]) OBJS0_FACTORY.newObject();
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                final int c = _capacity;
+                _capacity += C0;
+                if (c < C1) {
+                    if (_elems1.length == 1) { // Replaces the original table.
+                        Object/*E*/[][] tmp = (Object/*E*/[][]) new Object[1 << D1][];
+                        tmp[0] = _elems1[0];
+                        _elems1 = tmp;
+                    }
+                    _elems1[(c >> R1)] = (Object/*E*/[]) new Object[1 << D0];
 
-        } else if (c < C2) {
-            if (_elems2 == null) {
-                _elems2 = (Object/*E*/[][][]) OBJS2_FACTORY.newObject();
-            }
-            if (_elems2[(c >> R2)] == null) {
-                _elems2[(c >> R2)] = (Object/*E*/[][]) OBJS1_FACTORY
-                        .newObject();
-            }
-            _elems2[(c >> R2)][(c >> R1) & M1] = (Object/*E*/[]) OBJS0_FACTORY
-                    .newObject();
+                } else if (c < C2) {
+                    if (_elems2 == null) {
+                        _elems2 = (Object/*E*/[][][]) new Object[1 << D2][][];
+                    }
+                    if (_elems2[(c >> R2)] == null) {
+                        _elems2[(c >> R2)] = (Object/*E*/[][]) new Object[1 << D1][];
+                    }
+                    _elems2[(c >> R2)][(c >> R1) & M1] = (Object/*E*/[]) new Object[1 << D0];
 
-        } else {
-            if (_elems3 == null) {
-                _elems3 = (Object/*E*/[][][][]) OBJS3_FACTORY.newObject();
+                } else {
+                    if (_elems3 == null) {
+                        _elems3 = (Object/*E*/[][][][]) new Object[D3][][][];
+                    }
+                    if (_elems3[(c >> R3)] == null) {
+                        _elems3[(c >> R3)] = (Object/*E*/[][][]) new Object[D2][][];
+                    }
+                    if (_elems3[(c >> R3)][(c >> R2) & M2] == null) {
+                        _elems3[(c >> R3)][(c >> R2) & M2] = (Object/*E*/[][]) new Object[D1][];
+                    }
+                    _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (Object/*E*/[]) new Object[D0];
+                }
+                // Checks if more indices are necessary.
+                if ((_capacity >= Index.COLLECTION._size)
+                        && (FastTable.this != Index.COLLECTION)) {
+                    while (_capacity >= Index.COLLECTION._size) {
+                        Index.augment();
+                    }
+                }
             }
-            if (_elems3[(c >> R3)] == null) {
-                _elems3[(c >> R3)] = (Object/*E*/[][][]) OBJS2_FACTORY
-                        .newObject();
-            }
-            if (_elems3[(c >> R3)][(c >> R2) & M2] == null) {
-                _elems3[(c >> R3)][(c >> R2) & M2] = (Object/*E*/[][]) OBJS1_FACTORY
-                        .newObject();
-            }
-            _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (Object/*E*/[]) OBJS0_FACTORY
-                    .newObject();
-        }
-        // Checks if more indices are necessary.
-        if ((_capacity >= Index.COLLECTION._size) && (this != Index.COLLECTION)) {
-            while (_capacity >= Index.COLLECTION._size) {
-                Index.augment();
-            }
-        }
+        });
     }
 
     /**
@@ -684,30 +667,10 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     }
 
     /**
-     * Ensures that the compiler will not reorder previous instructions below
-     * this point.
-     */
-    private static void checkpoint() {
-        if (CHECK_POINT)
-            throw new Error(); // Reads volatile.
-    }
-
-    static volatile boolean CHECK_POINT;
-
-    /**
      * This class represents a {@link FastTable} index; it allows for direct 
      * iteration over the collection.
      */
     public static final class Index implements Record {
-
-        /**
-         * Holds the index factory (to allow for pre-allocation).
-         */
-        private static ObjectFactory FACTORY = new ObjectFactory() {
-            protected Object create() {
-                return new Index();
-            }
-        };
 
         /**
          * Holds the indexes.
@@ -772,14 +735,20 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
          * Augments index table.
          */
         private static void augment() {
-            Index index = (Index) Index.FACTORY.newObject();
-            synchronized (COLLECTION) {
-                index._position = COLLECTION._size;
-                Index.CollectionLast._next = index;
-                index._previous = Index.CollectionLast;
-                COLLECTION.addLast(index);
-                Index.CollectionLast = index;
-            }
+            MemoryArea.getMemoryArea(Index.COLLECTION).executeInArea(
+                    new Runnable() {
+                        public void run() {
+                            Index index = new Index();
+                            synchronized (COLLECTION) {
+                                index._position = COLLECTION._size;
+                                Index.CollectionLast._next = index;
+                                index._previous = Index.CollectionLast;
+                                COLLECTION.addLast(index);
+                                Index.CollectionLast = index;
+                            }
+
+                        }
+                    });
         }
 
         // Implements Record interface.
@@ -796,8 +765,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * This inner class implements a fast table iterator.
      */
-    private static final class FastTableIterator/*<E>*/extends RealtimeObject
-            implements ListIterator/*<E>*/{
+    private static final class FastTableIterator extends RealtimeObject
+            implements ListIterator {
 
         private static final Factory FACTORY = new Factory() {
             protected Object create() {
@@ -810,7 +779,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             }
         };
 
-        private FastTable/*<E>*/_table;
+        private FastTable _table;
 
         private int _currentIndex;
 
@@ -824,7 +793,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return (_nextIndex != _end);
         }
 
-        public Object/*E*/next() {
+        public Object next() {
             if (_nextIndex == _end)
                 throw new NoSuchElementException();
             return _table.get(_currentIndex = _nextIndex++);
@@ -838,7 +807,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return _nextIndex != _start;
         }
 
-        public Object/*E*/previous() {
+        public Object previous() {
             if (_nextIndex == _start)
                 throw new NoSuchElementException();
             return _table.get(_currentIndex = --_nextIndex);
@@ -848,13 +817,13 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return _nextIndex - 1;
         }
 
-        public void add(Object/*E*/o) {
+        public void add(Object o) {
             _table.add(_nextIndex++, o);
             _end++;
             _currentIndex = -1;
         }
 
-        public void set(Object/*E*/o) {
+        public void set(Object o) {
             if (_currentIndex >= 0) {
                 _table.set(_currentIndex, o);
             } else {
@@ -879,8 +848,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * This inner class implements a sub-table.
      */
-    private static final class SubTable/*<E>*/extends FastCollection
-    /*<E>*/implements List/*<E>*/, RandomAccess, Serializable {
+    private static final class SubTable extends FastCollection implements List,
+            RandomAccess {
 
         private static final Factory FACTORY = new Factory() {
             protected Object create() {
@@ -893,7 +862,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             }
         };
 
-        private FastTable/*<E>*/_table;
+        private FastTable _table;
 
         private int _offset;
 
@@ -911,7 +880,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return (Index) Index.COLLECTION.get(_size);
         }
 
-        public Object/*E*/valueOf(Record record) {
+        public Object valueOf(Record record) {
             return _table.get(((Index) record)._position + _offset);
         }
 
@@ -920,29 +889,29 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
                     "Deletion not supported, thread-safe collections.");
         }
 
-        public boolean addAll(int index, Collection/*<? extends E>*/values) {
+        public boolean addAll(int index, Collection values) {
             throw new UnsupportedOperationException(
                     "Insertion not supported, thread-safe collections.");
         }
 
-        public Object/*E*/get(int index) {
+        public Object get(int index) {
             if ((index < 0) || (index >= _size))
                 throw new IndexOutOfBoundsException("index: " + index);
             return _table.get(index + _offset);
         }
 
-        public Object/*E*/set(int index, Object/*E*/value) {
+        public Object set(int index, Object value) {
             if ((index < 0) || (index >= _size))
                 throw new IndexOutOfBoundsException("index: " + index);
             return _table.set(index + _offset, value);
         }
 
-        public void add(int index, Object/*E*/element) {
+        public void add(int index, Object element) {
             throw new UnsupportedOperationException(
                     "Insertion not supported, thread-safe collections.");
         }
 
-        public Object/*E*/remove(int index) {
+        public Object remove(int index) {
             throw new UnsupportedOperationException(
                     "Deletion not supported, thread-safe collections.");
         }
@@ -965,13 +934,13 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return -1;
         }
 
-        public ListIterator/*<E>*/listIterator() {
+        public ListIterator listIterator() {
             return listIterator(0);
         }
 
-        public ListIterator/*<E>*/listIterator(int index) {
+        public ListIterator listIterator(int index) {
             if ((index >= 0) && (index <= _size)) {
-                FastTableIterator/*<E>*/i = (FastTableIterator/*<E>*/) FastTableIterator.FACTORY
+                FastTableIterator i = (FastTableIterator) FastTableIterator.FACTORY
                         .object();
                 i._table = _table;
                 i._start = _offset;
@@ -984,17 +953,16 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             }
         }
 
-        public List/*<E>*/subList(int fromIndex, int toIndex) {
+        public List subList(int fromIndex, int toIndex) {
             if ((fromIndex < 0) || (toIndex > _size) || (fromIndex > toIndex))
                 throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
                         + ", toIndex: " + toIndex + " for list of size: "
                         + _size);
-            SubTable/*<E>*/st = (SubTable/*<E>*/) SubTable.FACTORY.object();
+            SubTable st = (SubTable) SubTable.FACTORY.object();
             st._table = _table;
             st._offset = _offset + fromIndex;
             st._size = toIndex - fromIndex;
             return st;
         }
-
     }
 }

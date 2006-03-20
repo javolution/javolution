@@ -8,32 +8,37 @@
  */
 package javolution.realtime;
 
+
 import javolution.Configuration;
 import javolution.JavolutionError;
+import javolution.lang.ClassInitializer;
 import j2me.lang.UnsupportedOperationException;
+import j2mex.realtime.MemoryArea;
 
 /**
- * <p> This class represents an object factory; it provides control upon how 
- *     and when objects are allocated (or pre-allocated). Object factories 
- *     should be used preferably to class constructors (ref. "new" keyword)
- *     to allow for {@link PoolContext stack} allocations and objects 
- *     {@link AllocationProfile pre-allocations}. For example:<pre>
- *     static ObjectFactory&lt;int[][]&gt; CHESSBOARD_FACTORY = new ObjectFactory&lt;int[][]&gt;() { 
+ * <p> This class represents an object factory; it allows for object 
+ *     recycling and pre-allocation.
+ *     
+ * <p> Object factories are recommended over class constructors (ref. "new" 
+ *     keyword) in order to benefit from context-based allocation policies.
+ *     For example:[code]
+ *     static ObjectFactory<int[][]> BOARD_FACTORY = new ObjectFactory<int[][]>() { 
  *         protected int[][] create() {
  *             return new int[8][8];
  *         }
  *     };
  *     ...
- *     int[][] chessboard = CHESSBOARD_FACTORY.object(); // On the stack if current thread executes 
- *     ...                                               // in a {@link PoolContext}; heap otherwise.
- *     </pre>
+ *     int[][] board = BOARD_FACTORY.object(); // On the stack if current thread executes 
+ *     ...                                     // in a PoolContext; heap otherwise.
+ *     [/code]</p>
+ *     
  * <p> {@link ObjectFactory} instances are uniquely identified by their class
  *     (one instance per sub-class). The number of instances is voluntarely 
  *     limited (see <a href="{@docRoot}/overview-summary.html#configuration">
  *     Javolution Configuration</a> for details).</p>
- *
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.3, May 10, 2005
+ * @version 3.7, January 1, 2006
  */
 public abstract class ObjectFactory/*<T>*/{
 
@@ -53,34 +58,9 @@ public abstract class ObjectFactory/*<T>*/{
     static volatile int Count;
 
     /**
-     * Indicates if allocation profiling has been enabled.
-     */
-    static volatile boolean IsAllocationProfileEnabled;
-
-    /**
-     * Holds the number of object allocated since last preallocation.
-     */
-    volatile int _allocatedCount;
-
-    /**
-     * Holds the total number of preallocated object at last preallocation.
-     */
-    volatile int _preallocatedCount;
-
-    /**
-     * Holds the class product of this factory (for logging only)
-     */
-    volatile Class _productClass;
-
-    /**
-     * Holds pre-allocated objects.
-     */
-    Node/*<T>*/_preallocated;
-
-    /**
      * Holds the factory index (range [0..MAX[).
      */
-    private final int _index;
+    final int _index;
 
     /**
      * Holds the current pool when executing in a heap context.
@@ -118,7 +98,7 @@ public abstract class ObjectFactory/*<T>*/{
     }
 
     /**
-     * Creates a new factory object on the heap (using the <code>new</code> 
+     * Constructs a new object for this factory (using the <code>new</code> 
      * keyword).
      *
      * @return a new factory object.
@@ -126,31 +106,26 @@ public abstract class ObjectFactory/*<T>*/{
     protected abstract Object/*T*/create();
 
     /**
-     * Returns a {@link #create new}, potentially pre-allocated factory object.
-     *
-     * @return a pre-allocated or new factory object.
-     */
-    public final Object/*T*/newObject() {
-        if (!IsAllocationProfileEnabled)
-            return create();
-        Node/*<T>*/node = preallocatedNode();
-        Object/*T*/obj = (node != null) ? node._object : create();
-        if (_productClass == null) {
-            _productClass = obj.getClass();
-        }
-        return obj;
-    }
-
-    /**
-     * Returns a factory object allocated on the stack when executing in a 
-     * {@link PoolContext}.
+     * Returns a factory object possibly recycled or preallocated.
+     * This method is equivalent to <code>object(PoolContext.current())</code>.
      * 
      * @return a recycled, pre-allocated or new factory object.
      */
     public Object/*T*/object() {
-        PoolContext poolContext = Context.currentContext().inheritedPoolContext;
-        return (poolContext != null) ? (Object/*T*/) poolContext.getLocalPool(
-                _index).next() : newObject();
+        return object(Context.current().inheritedPoolContext);
+    }
+
+    /**
+     * Returns a factory object from the specified pool context.
+     * If a new object has to be created, it is allocated from the same 
+     * memory area as the specified pool.
+     * 
+     * @param pool the pool context 
+     * @return a recycled, pre-allocated or new factory object.
+     */
+    public final Object/*T*/object(PoolContext pool) {
+        return (pool != null) ? (Object/*T*/) pool.getLocalPool(_index).next()
+                : create();
     }
 
     /**
@@ -160,14 +135,14 @@ public abstract class ObjectFactory/*<T>*/{
      * @return the local pool or a pool representing the heap. 
      */
     public final ObjectPool/*<T>*/currentPool() {
-        PoolContext poolContext = Context.currentContext().inheritedPoolContext;
+        PoolContext poolContext = Context.current().inheritedPoolContext;
         return (poolContext != null) ? (ObjectPool/*<T>*/) poolContext
                 .getLocalPool(_index) : _heapPool;
     }
 
     /**
      * Returns the pool representing the heap; this pool always returns 
-     * {@link #newObject} (potentially pre-allocated).
+     * objects allocated on the heap.
      * 
      * @return the heap pool for this factory. 
      */
@@ -202,46 +177,23 @@ public abstract class ObjectFactory/*<T>*/{
     }
 
     /**
-     * Pre-allocates (replenish the pool).
+     * Returns the factory object of specified class.
+     * 
+     * @return the corresponding factory or <code>null</code>.
      */
-    synchronized void preallocate() {
-        for (int i = 0; i < _allocatedCount; i++) {
-            Node/*<T>*/ node = new Node/*<T>*/();
-            node._object = this.create();
-            node._next = _preallocated;
-            _preallocated = node;
+    static ObjectFactory getInstance(Class factoryClass)  {
+        // Ensures that enclosing class if any is initialized.
+        String className = factoryClass.getName();
+        int sep = className.lastIndexOf('$');
+        if (sep > 0) {
+            ClassInitializer.initialize(className.substring(0, sep));
         }
-        if (_allocatedCount > _preallocatedCount) {
-            _preallocatedCount = _allocatedCount;
+        ClassInitializer.initialize(factoryClass);
+        for (int i=0; i < ObjectFactory.Count; i++) {
+            if (INSTANCES[i].getClass().equals(factoryClass)) 
+                return INSTANCES[i];
         }
-        _allocatedCount = 0;
-    }
-
-    /**
-     * Clears preallocated pool and resets counters.
-     */
-    final synchronized void reset() {
-        _allocatedCount = 0;
-        _preallocatedCount = 0;
-        _preallocated = null;
-    }
-
-    /**
-     * Returns a preallocated node or <code>null</code> if none.
-     * Should only be called when (IsAllocationProfileEnabled == true)
-     */
-    private synchronized Node/*<T>*/ preallocatedNode() {
-        if ((_allocatedCount++ == _preallocatedCount)
-                && AllocationProfile.OverflowHandler != null) { // Notifies.
-            AllocationProfile.OverflowHandler.run();
-        }
-        if (_preallocated != null) {
-            Node/*<T>*/ node = _preallocated;
-            _preallocated = _preallocated._next;
-            return node;
-        } else {
-            return null;
-        }
+        return null;
     }
 
     /**
@@ -250,8 +202,13 @@ public abstract class ObjectFactory/*<T>*/{
     private final class HeapPool extends ObjectPool/*<T>*/{
 
         // Implements ObjectPool abstract method.
+        public int size() {
+            return 0;
+        }
+
+        // Implements ObjectPool abstract method.
         public Object/*T*/next() {
-            return newObject();
+            return create();
         }
 
         // Implements ObjectPool abstract method.
@@ -273,7 +230,12 @@ public abstract class ObjectFactory/*<T>*/{
     /**
      * This class represents the default local pool implementation.
      */
-    private final class LocalPool extends ObjectPool/*<T>*/{
+    private final class LocalPool extends ObjectPool {
+
+        /**
+         * Holds the memory area of this pool. 
+         */
+        private final MemoryArea _memoryArea;
 
         /**
          * Indicates if clean-up has to be performed (switches to false if 
@@ -282,59 +244,73 @@ public abstract class ObjectFactory/*<T>*/{
         private boolean _doCleanup = true;
 
         /**
+         * Holds number of objects held by this pool. 
+         */
+        private int _size;
+
+        /**
          * Holds used objects. 
          */
-        private Node/*<T>*/_usedNodes;
+        private Node _usedNodes;
 
         /**
          * Holds available objects. 
          */
-        private Node/*<T>*/_availNodes;
+        private Node _availNodes;
 
         /**
          * Holds the tail node of the used list.
          */
-        private Node/*<T>*/_usedNodesTail;
+        private Node _usedNodesTail;
 
-        // Implements ObjectPool abstract method.
-        public Object/*T*/next() {
-            Node/*<T>*/node;
-            if (_availNodes != null) { // Gets node from recycled.
-                node = _availNodes;
-                _availNodes = node._next;
-            } else { // Gets preallocated node or create a new node.
-                if (IsAllocationProfileEnabled) {
-                    node = preallocatedNode();
-                    if (node == null) {
-                        node = new Node/*<T>*/();
-                        node._object = create();
-                    }
-                } else {
-                    node = new Node/*<T>*/();
-                    node._object = create();
-                }
-            }
-            if (_usedNodes == null) { // Marks tail node.
-                _usedNodesTail = node;
-            }
-            node._next = _usedNodes;
-            _usedNodes = node;
-            return node._object;
+        /**
+         * Default constructor.
+         */
+        private LocalPool() {
+            _memoryArea = MemoryArea.getMemoryArea(this);
         }
 
         // Implements ObjectPool abstract method.
-        public void recycle(Object/*T*/obj) {
+        public int size() {
+            return _size;
+        }
+
+        // Implements ObjectPool abstract method.
+        public Object next() {
+            if (_availNodes != null) { // Gets node from recycled.
+                _node = _availNodes;
+                _availNodes = _node._next;
+            } else { // Object creation in the same memory area as the pool.
+                _memoryArea.executeInArea(new Runnable() {
+                    public void run() {
+                        _node = new Node ();
+                        _node._object = create();
+                    }
+                });
+                _size++;
+            }
+            if (_usedNodes == null) { // Marks tail node.
+                _usedNodesTail = _node;
+            }
+            _node._next = _usedNodes;
+            _usedNodes = _node;
+            return _node._object;
+        }
+        private Node _node;
+
+        // Implements ObjectPool abstract method.
+        public void recycle(Object obj) {
             // Cleanups object.
             if (_doCleanup) {
                 try {
-                    cleanup(obj);
+                    cleanup((Object/*T*/)obj);
                 } catch (UnsupportedOperationException ex) {
                     _doCleanup = false;
                 }
             }
             // Moves associated node from used to available list.
             if (_usedNodes._object == obj) { // Last one allocated.
-                Node/*<T>*/node = _usedNodes;
+                Node node = _usedNodes;
                 if (node == _usedNodesTail) { // Only one node used.
                     _usedNodesTail = null;
                     if (node._next != null) // Sanity check.
@@ -344,8 +320,8 @@ public abstract class ObjectFactory/*<T>*/{
                 node._next = _availNodes;
                 _availNodes = node;
             } else { // Search 
-                Node/*<T>*/previous = _usedNodes;
-                for (Node/*<T>*/node = previous._next; node != null;) {
+                Node previous = _usedNodes;
+                for (Node node = previous._next; node != null;) {
                     if (node._object == obj) { // Found it.
                         if (node == _usedNodesTail) { // Tail node being removed.
                             _usedNodesTail = previous;
@@ -358,7 +334,7 @@ public abstract class ObjectFactory/*<T>*/{
                     previous = node;
                     node = node._next;
                 }
-                throw new JavolutionError("Object not in the pool");
+                throw new IllegalArgumentException("Object not in the pool");
             }
         }
 
@@ -367,8 +343,8 @@ public abstract class ObjectFactory/*<T>*/{
             // Cleanups objects.
             if (_doCleanup) {
                 try {
-                    for (Node/*<T>*/node = _usedNodes; node != null;) {
-                        cleanup(node._object);
+                    for (Node node = _usedNodes; node != null;) {
+                        cleanup((Object/*T*/)node._object);
                         node = node._next;
                     }
                 } catch (UnsupportedOperationException ex) {
@@ -390,16 +366,16 @@ public abstract class ObjectFactory/*<T>*/{
             _usedNodes = null;
             _usedNodesTail = null;
         }
-
     }
 
     /**
      * This inner class represents a simple pool node.
      */
-    static final class Node/*<T>*/{
+    static final class Node {
 
-        Object/*T*/_object;
+        Object _object;
 
-        Node/*<T>*/_next;
+        Node _next;
     }
+
 }

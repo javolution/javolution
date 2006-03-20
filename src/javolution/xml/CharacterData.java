@@ -23,7 +23,7 @@ import j2me.lang.CharSequence;
  *     character data containing at least one non-whitespace character.</p>
  *     
  * <p> During serialization, instances of this class are written in a 
- *     "CDATA" section (<code>&lt;![CDATA[...]]&gt;</code>).</p>
+ *     "CDATA" section ([code]<![CDATA[...]]>[/code]).</p>
  *
  * <p> Note: During deserialization, instances of this class are wrappers 
  *           around the parser characters buffer; therefore immutability 

@@ -16,8 +16,8 @@
     <target name="init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="3.6" />
-        <property name="release" value="3" />
+        <property name="version" value="3.7" />
+        <property name="release" value="6" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />
@@ -59,9 +59,23 @@
         <copy todir="${tmp}" filtering="true">
             <fileset dir="${src}" />
         </copy>
-        <delete dir="${tmp}/j2me" />
-        <delete dir="${tmp}/org/xml/sax" />
-        <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java" />
+        <delete>
+           <fileset dir="${tmp}/org/xml/sax"/>
+           <fileset dir="${tmp}/j2me/io" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/lang" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/nio" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/text" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util/logging" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util/zip" includes="*.java"/>
+           <fileset dir="${tmp}/j2mex/realtime" includes="*.java"/>
+         </delete>
+        <copy todir="${tmp}/javax/realtime">
+            <fileset dir="${src}/j2mex/realtime" />
+        </copy>
+        <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java"/>
+        <replace dir="${tmp}" token="j2mex." value="javax." includes="**/*.java"/>
+        <replace dir="${tmp}/javolution" token="java.util.concurrent." value="j2me.util.concurrent." includes="**/*.java"/>
     </target>
 
     <target name="init_1.5" depends="init">
@@ -74,9 +88,16 @@
         <copy todir="${tmp}" filtering="true">
             <fileset dir="${src}" />
         </copy>
-        <delete dir="${tmp}/j2me" />
-        <delete dir="${tmp}/org/xml/sax" />
+        <delete>
+            <fileset dir="${tmp}/org/xml/sax"/>
+            <fileset dir="${tmp}/j2me"/>
+            <fileset dir="${tmp}/j2mex"/>
+         </delete>
+        <copy todir="${tmp}/javax/realtime">
+            <fileset dir="${src}/j2mex/realtime" />
+        </copy>
         <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java" />
+        <replace dir="${tmp}" token="j2mex." value="javax." includes="**/*.java"/>
         <replace dir="${tmp}" token="javolution.lang.Appendable" value="java.lang.Appendable" includes="**/*.java" />
         <replace dir="${tmp}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java" />
         <delete file="${tmp}/javolution/lang/Appendable.java" />
@@ -84,7 +105,40 @@
         <!-- Return Types (more specialized return type)-->
         <replace dir="${tmp}/javolution" includes="**/TextBuilder.java">
             <replacetoken><![CDATA[Appendable/*TextBuilder*/]]></replacetoken>
-            <replacevalue><![CDATA[TextBuilder]]></replacevalue>
+            <replacevalue><![CDATA[ TextBuilder ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/FastSet.java">
+            <replacetoken><![CDATA[Collection/*Set<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ Set<E> ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/FastTable.java">
+            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/FastList.java">
+            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
+        </replace>
+        <!-- Context classes -->
+        <replace dir="${tmp}/javolution" includes="**/ConcurrentContext.java">
+            <replacetoken><![CDATA[/*ConcurrentContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ ConcurrentContext ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/HeapContext.java">
+            <replacetoken><![CDATA[/*HeapContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ HeapContext ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/LocalContext.java">
+            <replacetoken><![CDATA[/*LocalContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ LocalContext ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/LogContext.java">
+            <replacetoken><![CDATA[/*LogContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ LogContext ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/PoolContext.java">
+            <replacetoken><![CDATA[/*PoolContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ PoolContext ]]></replacevalue>
         </replace>
         <!-- Struct class -->
         <replace dir="${tmp}/javolution" includes="**/Struct.java">
@@ -153,6 +207,11 @@
             <replacetoken><![CDATA[/*<T extends RealtimeObject>*/]]></replacetoken>
             <replacevalue><![CDATA[<T extends RealtimeObject>]]></replacevalue>
         </replace>
+        <!-- Variable length arguments-->
+        <replace dir="${tmp}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[[]/*...*/]]></replacetoken>
+            <replacevalue><![CDATA[...]]></replacevalue>
+        </replace>
         <!-- Parameterized types-->
         <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[/*<]]></replacetoken>
@@ -174,8 +233,22 @@
         <copy todir="${tmp}" filtering="true">
             <fileset dir="${src}" />
         </copy>
-        <delete dir="${tmp}/j2me" />
-        <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java" />
+        <delete>
+           <fileset dir="${tmp}/j2me/io" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/lang" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/nio" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/text" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util/zip" includes="*.java"/>
+           <fileset dir="${tmp}/j2me/util/logging" includes="*.java"/>
+           <fileset dir="${tmp}/j2mex/realtime" includes="*.java"/>
+         </delete>
+        <copy todir="${tmp}/javax/realtime">
+            <fileset dir="${src}/j2mex/realtime" />
+        </copy>
+        <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java"/>
+        <replace dir="${tmp}" token="j2mex." value="javax." includes="**/*.java"/>
+        <replace dir="${tmp}/javolution" token="java.util.concurrent." value="j2me.util.concurrent." includes="**/*.java"/>
     </target>
 
     <target name="compile" depends="init">
@@ -206,7 +279,7 @@
             </A>]]>
             </header>
         <bottom>
-            <![CDATA[<i>Copyright &#169; 2005 Javolution.</i>]]>
+            <![CDATA[<i>Copyright &#169; 2006 Javolution.</i>]]>
             </bottom>
     <packageset dir="${tmp}" defaultexcludes="yes">
         <include name="javolution/**/*" />
@@ -214,18 +287,21 @@
         <exclude name="**/res-files/**" />
     </packageset>
 </javadoc>
+<java classname="Colapi" classpath="colapi.jar">
+   <arg value="${api}"/>
+</java>
 </target>
 
 <target name="jar" depends="init">
 <jar jarfile="${library}.jar" basedir="${bin}" update="false">
     <manifest>
         <attribute name="Main-Class" value="javolution.Javolution" />
-        <attribute name="Specification-Title" value="Javolution - Java(TM) Solution for Real-Time and Embedded Systems" />
+        <attribute name="Specification-Title" value="Javolution" />
         <attribute name="Specification-Version" value="${version} (${vm})" />
-        <attribute name="Specification-Vendor" value="Free Software Foundation" />
-        <attribute name="Implementation-Title" value="javolution" />
+        <attribute name="Specification-Vendor" value="Javolution" />
+        <attribute name="Implementation-Title" value="Javolution" />
         <attribute name="Implementation-URL" value="http://javolution.org" />
-        <attribute name="Implementation-Vendor" value="Free Software Foundation" />
+        <attribute name="Implementation-Vendor" value="Javolution" />
         <attribute name="Implementation-Version" value="${version}.${release} ${TODAY}" />
     </manifest>
 </jar>
@@ -234,7 +310,7 @@
 <target name="zip" depends="init">
 <zip destfile="${library}-${version}.${release}-src.zip" update="false">
     <zipfileset dir="." prefix="${library}-${version}" includes=
-        "src/**/*, doc/license.txt, css/**/*, index.html, build.xml" />
+        "src/**/*, doc/license.txt, css/**/*, index.html, build.xml, colapi.jar" />
 </zip>
 <zip destfile="${library}-${version}.${release}-bin.zip" update="false">
     <zipfileset dir="." prefix="${library}-${version}" includes=
@@ -245,7 +321,7 @@
 <target name="web" depends="clean, init_1.5, compile, doc, jar, zip">
     <zip destfile="${library}-${version}.${release}-web.zip" update="false">
         <zipfileset dir="." prefix="${library}-${version}" includes=
-            "doc/**/*, css/**/* ,${api}/**/*, index.html,
+            "doc/**/*, css/**/* ,${api}/**/*, index.html, colapi.jar
             ${library}-${version}.${release}-src.zip, 
             ${library}-${version}.${release}-bin.zip" />
     </zip>

@@ -8,12 +8,13 @@
  */
 package javolution.realtime;
 
+import javolution.lang.Reflection;
 import javolution.util.FastMap;
 
 /**
  * <p> This class represents a local context; it is used to define locally 
  *     scoped setting through the use of {@link LocalReference} typically 
- *     wrapped within a static method. For example:<pre>
+ *     wrapped within a static method. For example:[code]
  *     LocalContext.enter();
  *     try {
  *         LargeInteger.setModulus(m); // Performs integer operations modulo m.
@@ -23,7 +24,7 @@ import javolution.util.FastMap;
  *         XmlFormat.setFormat(Foo.class, myFormat); // Uses myFormat for instances of Foo.
  *     } finally {
  *         LocalContext.exit(); // Reverts to previous settings.
- *     }</pre></p>   
+ *     }[/code]</p>   
  *     
  * <p> Calls to locally scoped methods should be performed either at
  *     start-up (global setting) or within a local context (to avoid 
@@ -41,7 +42,8 @@ public class LocalContext extends Context {
     /**
      * Holds the class object (cannot use .class with j2me).
      */
-    private static final Class CLASS = new LocalContext().getClass();
+    private static final Class CLASS = Reflection
+            .getClass("javolution.realtime.LocalContext");
 
     /**
      * Holds any reference associated to this context (reference to 
@@ -61,10 +63,10 @@ public class LocalContext extends Context {
      *
      * @return the current local context.
      */
-    public static LocalContext currentLocalContext() {
-        return Context.currentContext().inheritedLocalContext;
+    public static/*LocalContext*/Context current() {
+        return Context.current().inheritedLocalContext;
     }
-    
+
     /**
      * Enters a {@link LocalContext}.
      */

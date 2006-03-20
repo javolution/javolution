@@ -13,8 +13,10 @@ import java.io.IOException;
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
+import j2mex.realtime.MemoryArea;
 
 import javolution.JavolutionError;
+import javolution.realtime.HeapContext;
 import javolution.realtime.Realtime;
 import javolution.realtime.RealtimeObject;
 import javolution.util.FastComparator;
@@ -47,10 +49,11 @@ import javolution.util.FastMap;
  *     be achieved using the {@link javolution.lang.TypeFormat} utility class.</p>
  * <p> {@link Text} literals should be explicitely {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
- *     interning is not implicit. For example:<pre>
- *         final static Text TRUE = Text.valueOf("true").intern();
- *         final static Text FALSE = Text.valueOf("false").intern();
- *     </pre></p>
+ *     interning is not implicit. For example:[code]
+ *         final static Text TRUE = Text.intern("true");
+ *         final static Text FALSE = Text.intern("false");
+ *     [/code]
+ *     Interned texts are always allocated in ImmortalMemory (RTSJ VMs).</p>
  * <p><i> Implementation Note: To avoid expensive copy operations , 
  *        {@link Text} instances are broken down into smaller immutable 
  *        sequences (they form a minimal-depth binary tree). 
@@ -58,25 +61,27 @@ import javolution.util.FastMap;
  *        instead of <code>O[n]</code>).</i></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.1, March 16, 2005
+ * @author Wilfried Middleton
+ * @version 3.6, November 6, 2005
  */
 public abstract class Text extends RealtimeObject implements CharSequence,
-        Comparable, Serializable {
+        Comparable, Serializable, Immutable {
 
     /**
-     * Holds the text interned.
+     * Holds the texts interned in ImmortalMemory
      */
-    private static final FastMap INTERN_TEXT = new FastMap();
+    private static final FastMap INTERN_TEXT = new FastMap()
+            .setKeyComparator(FastComparator.LEXICAL);
 
     /**
      * Holds an empty character sequence.
      */
-    public static final Text EMPTY = Text.valueOf("").intern();
+    public static final Text EMPTY = Text.intern("");
 
     /**
      * Holds the <code>"null"</code> character sequence.
      */
-    public static final Text NULL = Text.valueOf("null").intern();
+    public static final Text NULL = Text.intern("null");
 
     /**
      * Holds the total number of characters.
@@ -198,9 +203,9 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         return b ? TRUE : FALSE;
     }
 
-    private static final Text TRUE = Text.valueOf("true").intern();
+    private static final Text TRUE = Text.intern("true");
 
-    private static final Text FALSE = Text.valueOf("false").intern();
+    private static final Text FALSE = Text.intern("false");
 
     /**
      * Returns the {@link #intern unique} text instance corresponding to the 
@@ -214,12 +219,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             return ASCII[c];
         Primitive text = Primitive.newInstance(1);
         text._data[0] = c;
-        Text textIntern = text.intern();
+        Text textIntern = Text.intern(text);
         if (c < 128) {
             ASCII[c] = textIntern;
         }
         return textIntern;
     }
+
     private static final Text[] ASCII = new Text[128];
 
     /**
@@ -299,15 +305,15 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @param  f the <code>float</code> to format.
      * @return the corresponding text instance.
      /*@FLOATING_POINT@
-    public static Text valueOf(float f) {
-        try {
-            Primitive text = Primitive.newInstance(0);
-            TypeFormat.format(f, text);
-            return text;
-        } catch (IOException e) {
-            throw new JavolutionError(e);
-        }
-    }
+     public static Text valueOf(float f) {
+     try {
+     Primitive text = Primitive.newInstance(0);
+     TypeFormat.format(f, text);
+     return text;
+     } catch (IOException e) {
+     throw new JavolutionError(e);
+     }
+     }
      /**/
 
     /**
@@ -317,15 +323,15 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @param  d the <code>double</code> to format.
      * @return the corresponding text instance.
      /*@FLOATING_POINT@
-    public static Text valueOf(double d) {
-        try {
-            Primitive text = Primitive.newInstance(0);
-            TypeFormat.format(d, text);
-            return text;
-        } catch (IOException e) {
-            throw new JavolutionError(e);
-        }
-    }
+     public static Text valueOf(double d) {
+     try {
+     Primitive text = Primitive.newInstance(0);
+     TypeFormat.format(d, text);
+     return text;
+     } catch (IOException e) {
+     throw new JavolutionError(e);
+     }
+     }
      /**/
 
     /**
@@ -343,17 +349,17 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @throws IllegalArgumentException if <code>((digits > 19) || 
      *         (digits <= 0))</code>)
      /*@FLOATING_POINT@
-    public static Text valueOf(double value, int digits,
-            boolean scientific, boolean showZero) {
-        try {
-            Primitive text = Primitive.newInstance(0);
-            TypeFormat.format(value, digits, scientific, showZero, text);
-            return text;
-        } catch (IOException e) {
-            throw new JavolutionError(e);
-        }
-    }
-    /**/
+     public static Text valueOf(double value, int digits,
+     boolean scientific, boolean showZero) {
+     try {
+     Primitive text = Primitive.newInstance(0);
+     TypeFormat.format(value, digits, scientific, showZero, text);
+     return text;
+     } catch (IOException e) {
+     throw new JavolutionError(e);
+     }
+     }
+     /**/
 
     /**
      * Returns the length of this text.
@@ -362,6 +368,17 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      */
     public final int length() {
         return _count;
+    }
+
+    /**
+     * Returns the concatenation of this text and the textual 
+     * representation of the specified object.
+     * 
+     * @param  obj the object whose textual representation is appended.
+     * @return <code>this.concat(Text.valueOf(obj))</code>
+     */
+    public final Text plus(Object obj) {
+        return this.concat(Text.valueOf(obj));
     }
 
     /**
@@ -640,26 +657,63 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Returns a text equals to this text from a pool of unique text
-     * instances.  
-     * For any two text t1 and t2, <code>(t1.intern() == t2.intern())</code>
-     * if and only if <code>(t1.equals(t2))</code>.
+     * Returns a text equals to the specified character sequence from a pool of
+     * unique text instances in <code>ImmortalMemory</code>.  
      * 
-     * @return an unique instance allocated on the heap and equals to this text.
+     * @return an unique text instance allocated in <code>ImmortalMemory</code>.
      */
-    public final Text intern() {
-        Text text = (Text) INTERN_TEXT.get(this); // FastMap supports concurrency.
-        if (text == null) {
-            synchronized (INTERN_TEXT) {
-                text = (Text) INTERN_TEXT.get(this); // Ensures unicity.
-                if (text == null) {
-                    text = this;
-                    text.moveHeap();
-                    INTERN_TEXT.put(text, text);
+    public static Text intern(final CharSequence csq) {
+        Text text = (Text) INTERN_TEXT.get(csq); // Thread-Safe - No entry removed.
+        if (text != null)
+            return text;
+        synchronized (INTERN_TEXT) {
+            // Synchronized check to ensure unicity.
+            text = (Text) INTERN_TEXT.get(csq);
+            if (text != null)
+                return text;
+            MemoryArea.getMemoryArea(INTERN_TEXT).executeInArea(new Runnable() {
+                public void run() {
+                    HeapContext.enter(); // Prevents stack allocations.
+                    try {
+                        Text tmp = Text.valueOf(csq, 0, csq.length()); // Copies.
+                        INTERN_TEXT.put(tmp, tmp);
+                    } finally {
+                        HeapContext.exit();
+                    }
                 }
-            }
+            });
         }
-        return text;
+        return (Text) INTERN_TEXT.get(csq);
+    }
+
+    /**
+     * Returns a text equals to the specified string from a pool of
+     * unique text instances in <code>ImmortalMemory</code>.  
+     * 
+     * @return an unique text instance allocated in <code>ImmortalMemory</code>.
+     */
+    public static Text intern(final String str) {
+        Text text = (Text) INTERN_TEXT.get(str); // Thread-Safe - No entry removed.
+        if (text != null)
+            return text;
+        synchronized (INTERN_TEXT) {
+            // Synchronized check to ensure unicity.
+            text = (Text) INTERN_TEXT.get(str);
+            if (text != null)
+                return text;
+            MemoryArea.getMemoryArea(INTERN_TEXT).executeInArea(new Runnable() {
+                public void run() {
+                    HeapContext.enter(); // Prevents stack allocations.
+                    try {
+                        Text tmp = Text.valueOf(new String(str)); // Copies.
+                        INTERN_TEXT.put(tmp, tmp);
+                    } finally {
+                        HeapContext.exit();
+                    }
+                }
+            });
+        }
+        return (Text) INTERN_TEXT.get(str);
     }
 
     /**
@@ -871,6 +925,243 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return the <code>java.lang.String</code> for this text.
      */
     public abstract String stringValue();
+
+    //////////////////////////////////////////////////////////////////
+    // Wilfried add-ons (methods provided by Microsoft .Net in C#)
+    //
+
+    /**
+     * Returns the text that contains a specific length sequence of the
+     * character specified.
+     *
+     * @param c the character to fill this text with.
+     * @param length the length of the text returned.
+     * @return the corresponding instance.
+     * @throws IndexOutOfBoundsException if <code>(length < 0)</code>
+     */
+    public static Text valueOf(char c, int length) {
+        if (length < 0)
+            throw new IndexOutOfBoundsException();
+        if (length <= Primitive.BLOCK_SIZE) {
+            Primitive text = Primitive.newInstance(length);
+            for (int i = 0; i < length;) {
+                text._data[i++] = c;
+            }
+            return text;
+        } else {
+            final int middle = (length >> 1);
+            return Composite.newInstance(Text.valueOf(c, middle), Text.valueOf(
+                    c, length - middle));
+        }
+    }
+
+    /**
+     * Indicates if all characters of this text are whitespaces
+     * (no characters greater than the space character).
+     *
+     *@return <code>true</code> if this text  contains only whitespace.
+     */
+    public final boolean isBlank() {
+        return isBlank(0, length());
+    }
+
+    /**
+     * Indicates if the specified sub-range of characters of this text
+     * are whitespaces (no characters greater than the space character).
+     *
+     *@param start the start index.
+     *@param length the number of characters to inspect.
+     */
+    public final boolean isBlank(int start, int length) {
+        for (; start < length; start++) {
+            if (charAt(start) > ' ')
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns a copy of this text, with leading whitespace omitted.
+     *
+     * @return a copy of this text with leading white space removed,
+     * or this text if it has no leading white space.
+     */
+    public final Text trimStart() {
+        int first = 0; // First character index.
+        int last = length() - 1; // Last character index.
+        while ((first <= last) && (charAt(first) <= ' ')) {
+            first++;
+        }
+        return subtext(first, last + 1);
+    }
+
+    /**
+     * Returns a copy of this text, with trailing
+     * whitespace omitted.
+     *
+     * @return a copy of this text with trailing white space removed,
+     * or this text if it has no trailing white space.
+     */
+    public final Text trimEnd() {
+        int first = 0; // First character index.
+        int last = length() - 1; // Last character index.
+        while ((last >= first) && (charAt(last) <= ' ')) {
+            last--;
+        }
+        return subtext(first, last + 1);
+    }
+
+    /**
+     * Pads this text on the left with spaces to make the minimum total length
+     * as specified.
+     * The new length of the new text is equal to the original length plus
+     * <code>(length()-len)</code> spaces.
+     *
+     * @param len the total number of characters to make this text equal to.
+     * @return a new text or the same text if no padding required.
+     * @throws an IllegalArgumentException if the <code>(len<0)</code>.
+     */
+    public final Text padLeft(int len) {
+        return padLeft(len, ' ');
+    }
+
+    /**
+     * Pads this text on the left to make the minimum total length as specified.
+     * Spaces or the given Unicode character are used to pad with.
+     * <br>
+     * The new length of the new text is equal to the original length plus
+     * <code>(length()-len)</code> pad characters.
+     *
+     * @param len the total number of characters to make this text equal to.
+     * @param c the character to pad using.
+     * @return a new text or the same text if no padding required.
+     * @throws an IllegalArgumentException if the <code>(len<0)</code>.
+     */
+    public final Text padLeft(int len, char c) {
+        final int padSize = (len <= length()) ? 0 : len - length();
+        return this.insert(0, Text.valueOf(c, padSize));
+    }
+
+    /**
+     * Pads this text on the right with spaces to make the minimum total length
+     * as specified.
+     * The new length of the new text is equal to the original length plus
+     * <code>(length()-len)</code> spaces.
+     *
+     * @param len the total number of characters to make this text equal to.
+     * @return a new text or the same text if no padding required.
+     * @throws an IllegalArgumentException if the <code>(len<0)</code>.
+     */
+    public final Text padRight(int len) {
+        return padRight(len, ' ');
+    }
+
+    /**
+     * Pads this text on the right to make the minimum total length as specified.
+     * Spaces or the given Unicode character are used to pad with.
+     * <br>
+     * The new length of the new text is equal to the original length plus
+     * <code>(length()-len)</code> pad characters.
+     *
+     * @param len the total number of characters to make this text equal to.
+     * @param c the character to pad using.
+     * @return a new text or the same text if no padding required.
+     * @throws an IllegalArgumentException if the <code>(len<0)</code>.
+     */
+    public final Text padRight(int len, char c) {
+        final int padSize = (len <= length()) ? 0 : len - length();
+        return this.concat(Text.valueOf(c, padSize));
+    }
+
+    /**
+     * Returns the index within this text of the first occurrence
+     * of any character in the specified character set.
+     *
+     * @param  charSet the character set.
+     * @return the index of the first character that matches one of the
+     *         characters in the supplied set; or <code>-1</code> if none.
+     */
+    public final int indexOfAny(CharSet charSet) {
+        return indexOfAny(charSet, 0, length());
+    }
+
+    /**
+     * Returns the index within a region of this text of the first occurrence
+     * of any character in the specified character set.
+     *
+     * @param charSet the character set.
+     * @param start the index of the start of the search region in this text.
+     * @return the index of the first character that matches one of the
+     *         characters in the supplied set; or <code>-1</code> if none.
+     */
+    public final int indexOfAny(CharSet charSet, int start) {
+        return indexOfAny(charSet, start, length());
+    }
+
+    /**
+     * Returns the index within a region of this text of the first occurrence
+     * of any character in the specified character set.
+     *
+     * @param charSet the character set.
+     * @param start the index of the start of the search region in this text.
+     * @param length the length of the region to search.
+     * @return the index of the first character that matches one of the
+     *         characters in the supplied array; or <code>-1</code> if none.
+     */
+    public final int indexOfAny(CharSet charSet, int start, int length) {
+        final int stop = start + length;
+        for (int i = start; i < stop; i++) {
+            if (charSet.contains(charAt(i)))
+                return i;
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the index within this text of the last occurrence
+     * of any character in the specified character set.
+     *
+     * @param charSet the character set.
+     * @return the index of the last character that matches one of the
+     *         characters in the supplied array; or <code>-1</code> if none.
+     */
+    public final int lastIndexOfAny(CharSet charSet) {
+        return lastIndexOfAny(charSet, 0, length());
+    }
+
+    /**
+     * Returns the index within a region of this text of the last occurrence
+     * of any character in the specified character set.
+     *
+     * @param charSet the character set.
+     * @param start the index of the start of the search region in this text.
+     * @return the index of the last character that matches one of the
+     *         characters in the supplied array; or <code>-1</code> if none.
+     */
+    public final int lastIndexOfAny(CharSet charSet, int start) {
+        return lastIndexOfAny(charSet, start, length() - start);
+    }
+
+    /**
+     * Returns the index within a region of this text of the last occurrence
+     * of any character in the specified character set.
+     *
+     * @param charSet the character set.
+     * @param start the index of the start of the search region in this text.
+     * @param length the length of the region to search.
+     * @return the index of the last character that matches one of the
+     *         characters in the supplied array; or <code>-1</code> if none.
+     */
+    public final int lastIndexOfAny(CharSet charSet, int start, int length) {
+        for (int i = start + length; --i >= start;) {
+            if (charSet.contains(charAt(i)))
+                return i;
+        }
+        return -1;
+    }
+
+    //
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
      * This class represents a text block (up to 32 characters).

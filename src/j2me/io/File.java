@@ -34,10 +34,24 @@ public class File {
     public String getPath() {
         return _path;
     }
-
+    
     public boolean exists() {
         throw new UnsupportedOperationException(
                 "File operations not supported for J2ME build");
     }
 
+    public boolean isDirectory() {
+        throw new UnsupportedOperationException(
+                "File operations not supported for J2ME build");
+    }
+
+    public String getName() {
+        throw new UnsupportedOperationException(
+                "File operations not supported for J2ME build");
+    }
+
+    public File[] listFiles() {
+        throw new UnsupportedOperationException(
+                "File operations not supported for J2ME build");
+    }
 }

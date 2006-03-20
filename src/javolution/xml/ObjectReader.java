@@ -32,9 +32,9 @@ import javolution.xml.pull.XmlPullParserImpl;
  *     by {@link CharacterData} instances.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.5, August 29, 2005
+ * @version 3.6, October 13, 2005
  */
-public class ObjectReader/*<T>*/implements Reusable {
+public class ObjectReader /*<T>*/ implements Reusable {
 
     /**
      * Hold the xml element used when parsing.
@@ -59,7 +59,7 @@ public class ObjectReader/*<T>*/implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/read(Reader reader) throws XmlException {
+    public Object/*T*/ read(Reader reader) throws XmlException {
         _xml._parser.setInput(reader);
         return (Object/*T*/) parse();
     }
@@ -75,7 +75,7 @@ public class ObjectReader/*<T>*/implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/read(InputStream in) throws XmlException {
+    public Object/*T*/ read(InputStream in) throws XmlException {
         _xml._parser.setInput(in);
         return (Object/*T*/) parse();
     }
@@ -90,7 +90,7 @@ public class ObjectReader/*<T>*/implements Reusable {
      * @return the object corresponding to the xml root element.
      * @throws XmlException if the object cannot be created.
      */
-    public Object/*T*/read(ByteBuffer byteBuffer) throws XmlException {
+    public Object/*T*/ read(ByteBuffer byteBuffer) throws XmlException {
         _xml._parser.setInput(byteBuffer);
         return (Object/*T*/) parse();
     }
@@ -98,6 +98,7 @@ public class ObjectReader/*<T>*/implements Reusable {
     private Object parse() throws XmlException {
         try {
             _xml._parser.setFeature(_xml._parser.FEATURE_IGNORE_WHITESPACE, true);
+            _xml._areReferencesEnabled = true; // Enabled by default.
             Object obj = _xml.getNext();
             if (_xml.hasNext() || (_xml._parser.getEventType() != XmlPullParser.END_DOCUMENT))
                 throw new XmlException("End Document Event Expected");
@@ -117,5 +118,4 @@ public class ObjectReader/*<T>*/implements Reusable {
     public void reset() {
         _xml.reset();
     }
-
 }

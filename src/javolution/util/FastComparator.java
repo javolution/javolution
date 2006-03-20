@@ -9,14 +9,14 @@ import j2me.util.Comparator;
 
 /**
  * <p> This class represents a comparator to be used for equality as well as 
- *     for ordering; instances of this class provide an hashcode function 
+ *     for ordering; instances of this class provide a hashcode function 
  *     consistent with equal (if two objects {@link #areEqual
  *     are equal}, they have the same {@link #hashCodeOf hashcode}),
- *     equality with <code>null</code> value is supported.</p>
+ *     equality with <code>null</code> values is supported.</p>
  *     
- * <p> {@link FastComparator} can be employed with {@link FastMap} (custom 
- *     key comparators for identity maps, value retrieval using keys of 
- *     different class that the map's keys, etc) or with {@link FastCollection}
+ * <p> {@link FastComparator} can be employed with {@link FastMap} (e.g. custom 
+ *     key comparators for identity maps, value retrieval using keys of a 
+ *     different class that the map keys) or with {@link FastCollection}
  *     classes.</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -42,12 +42,11 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         }
 
         public int hashCodeOf(Object obj) {
-            return (obj == null) ? 0 : (_isPoorSystemHash ? REHASH
-                    .hashCodeOf(obj) : obj.hashCode());
+            return (_isPoorSystemHash ? REHASH.hashCodeOf(obj) : obj.hashCode());
         }
 
         public boolean areEqual(Object o1, Object o2) {
-            return (o1 == null) ? (o2 == null) : o1.equals(o2);
+            return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
         public int compare(Object o1, Object o2) {
@@ -71,11 +70,11 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
 
     static class Direct extends FastComparator {
         public int hashCodeOf(Object obj) {
-            return (obj == null) ? 0 : obj.hashCode();
+            return obj.hashCode();
         }
 
         public boolean areEqual(Object o1, Object o2) {
-            return (o1 == null) ? (o2 == null) : o1.equals(o2);
+            return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
         public int compare(Object o1, Object o2) {
@@ -99,9 +98,6 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
 
     static class Rehash extends FastComparator {
         public int hashCodeOf(Object obj) {
-            if (obj == null)
-                return 0;
-
             // Formula identical <code>java.util.HashMap</code> to ensures
             // similar behavior for ill-conditioned hashcode keys. 
             int h = obj.hashCode();
@@ -112,7 +108,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         }
 
         public boolean areEqual(Object o1, Object o2) {
-            return (o1 == null) ? (o2 == null) : o1.equals(o2);
+            return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
         public int compare(Object o1, Object o2) {
@@ -139,13 +135,13 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
 
         public int hashCodeOf(Object obj) {
             int h = System.identityHashCode(obj);
-            if (_rehash) {
-                h += ~(h << 9);
-                h ^= (h >>> 14);
-                h += (h << 4);
-                return h ^ (h >>> 10);
-            }
-            return h;
+            if (!_rehash)
+                return h;
+            h += ~(h << 9);
+            h ^= (h >>> 14);
+            h += (h << 4);
+            return h ^ (h >>> 10);
+
         }
 
         public boolean areEqual(Object o1, Object o2) {
@@ -176,18 +172,13 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         public int hashCodeOf(Object obj) {
             if ((obj instanceof String) || (obj instanceof Text))
                 return obj.hashCode();
-            if (obj instanceof CharSequence) {
-                CharSequence chars = (CharSequence) obj;
-                int h = 0;
-                final int length = chars.length();
-                for (int i = 0; i < length;) {
-                    h = 31 * h + chars.charAt(i++);
-                }
-                return h;
+            CharSequence chars = (CharSequence) obj;
+            int h = 0;
+            final int length = chars.length();
+            for (int i = 0; i < length;) {
+                h = 31 * h + chars.charAt(i++);
             }
-            if (obj == null)
-                return 0;
-            return obj.hashCode();
+            return h;
         }
 
         public boolean areEqual(Object o1, Object o2) {
@@ -205,7 +196,6 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
                 }
                 return true;
             }
-
             if ((o1 instanceof String) && (o2 instanceof CharSequence)) {
                 final CharSequence csq = (CharSequence) o2;
                 final String str = (String) o1;
@@ -218,21 +208,16 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
                 }
                 return true;
             }
-
-            if ((o1 instanceof CharSequence) && (o2 instanceof CharSequence)) {
-                final CharSequence csq1 = (CharSequence) o1;
-                final CharSequence csq2 = (CharSequence) o2;
-                final int length = csq1.length();
-                if (csq2.length() != length)
+            final CharSequence csq1 = (CharSequence) o1;
+            final CharSequence csq2 = (CharSequence) o2;
+            final int length = csq1.length();
+            if (csq2.length() != length)
+                return false;
+            for (int i = 0; i < length;) {
+                if (csq1.charAt(i) != csq2.charAt(i++))
                     return false;
-                for (int i = 0; i < length;) {
-                    if (csq1.charAt(i) != csq2.charAt(i++))
-                        return false;
-                }
-                return true;
             }
-
-            return (o1 == null) ? (o2 == null) : o1.equals(o2);
+            return true;
         }
 
         public int compare(Object left, Object right) {
@@ -282,8 +267,10 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * {@link #areEqual}). Two objects considered {@link #areEqual equal} have 
      * the same hash code. 
      * 
-     * @param  obj the object to return the hashcode for (or <code>null</code>).
+     * @param  obj the object to return the hashcode for.
      * @return the hashcode for the specified object.
+     * @throws NullPointerException if the specified object is 
+     *         <code>null</code>.
      */
     public abstract int hashCodeOf(Object/*T*/obj);
 
@@ -306,6 +293,8 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @param o2 the second object.
      * @return a negative integer, zero, or a positive integer as the first
      *         argument is less than, equal to, or greater than the second.
+     * @throws NullPointerException if any of the specified object is 
+     *         <code>null</code>.
      */
     public abstract int compare(Object/*T*/o1, Object/*T*/o2);
 

@@ -11,11 +11,10 @@ import javolution.realtime.LocalReference;
  *     without impacting other threads ({@link LocalContext locally}
  *     scoped changes).</p>
  *     
- * <p> Operations on instances of this class do not require any form
- *     of synchronization.<pre>
- *      
+ * <p> Operation on instances of this class are completely thread-safe. 
+ *     For example:
  *     public class XmlFormat {
- *         static LocalMap&lt;Class, XmlFormat&gt; CLASS_TO_FORMAT = new LocalMap&lt;Class, XmlFormat&gt;();
+ *         static LocalMap<Class, XmlFormat> CLASS_TO_FORMAT = new LocalMap<Class, XmlFormat>();
  *         public static void setFormat(Class forClass, XmlFormat that) {
  *             CLASS_TO_FORMAT.put(forClass, that); // No synchronization required.
  *         }
@@ -38,15 +37,19 @@ import javolution.realtime.LocalReference;
  *         LocalContext.exit();
  *     }
  *     getInstance(Foo.class); // Returns xFormat
- *     </pre></p>
+ *     [/code]</p>
+ * 
+ * <p> <b>Note:</b> Because key-value mappings are inherited, the semantic of  
+ *     {@link #remove} and {@link #clear} is slightly modified (associate
+ *     <code>null</code> values instead of removing the entries).</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, September 24, 2005
+ * @version 3.7, January 27, 2005
  */
 public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
 
     /**
-     * Holds the fast map reference (the global map is marked as shared).
+     * Holds the fast map reference (shared map).
      */
     private final LocalReference _mapRef = new LocalReference(new FastMap().setShared(true));
 
@@ -178,21 +181,20 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
     }
 
     /**
-     * Removes the mapping for this key from this map if present.
+     * Removes the mapping for this key from this map if present
+     * (sets the local value to <code>null</code>).
      * 
-     * @param key the key whose mapping is to be removed from the map.
-     * @return previous value associated with specified key, or
-     *         <code>null</code> if there was no mapping for key. A
-     *         <code>null</code> return can also indicate that the map
-     *         previously associated <code>null</code> with the specified key.
+     * @param key the key whose value is set to <code>null</code>
+     * @return <code>put(key, null)</code>
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public Object/*V*/remove(Object key) {
-        return (Object/*V*/) localMap().remove(key);
+        return localMap().remove(key);
     }
 
     /**
-     * Removes all mappings from this map.
+     * Removes all mappings from this map (sets the local values to
+     * <code>null</code>).
      */
     public void clear() {
         localMap().clear();
@@ -234,7 +236,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * Returns the local map or creates one on the stack and populates 
      * it from inherited settings.
      * 
-     * @return a map belonging to the current local context.
+     * @return a shared fast map belonging to the current local context.
      */
     private FastMap/*<K,V>*/localMap() {
         FastMap localMap = (FastMap) _mapRef.getLocal();
@@ -243,7 +245,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
 
     private FastMap newLocalMap() {
         FastMap parentMap = (FastMap) _mapRef.get();
-        FastMap localMap = FastMap.newInstance(); // Pool (unshared map).
+        FastMap localMap = FastMap.newInstance(); 
+        localMap.setShared(true);
         localMap.setKeyComparator(parentMap.getKeyComparator());
         localMap.setValueComparator(parentMap.getValueComparator());
         localMap.putAll(parentMap);

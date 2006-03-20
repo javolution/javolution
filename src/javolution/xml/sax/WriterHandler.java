@@ -285,63 +285,119 @@ public class WriterHandler implements ContentHandler, Reusable {
 	}
 
 	// Writes the specified characters. Use escape sequence when necessary.
-	private void write(CharSequence csq) throws IOException {
-		final int length = csq.length();
-		for (int i = 0; i < length;) {
-			char c = csq.charAt(i++);
-			if ((c >= '@') || (c == ' ')) { // Most common case.
-				_buffer[_index] = c;
-				if (++_index == BUFFER_LENGTH) {
-					flushBuffer();
-				}
-			} else { // Potential escape sequence.
-				switch (c) {
-				case '<':
-					writeNoEscape("&lt;");
-					break;
-				case '>':
-					writeNoEscape("&gt;");
-					break;
-				case '\'':
-					writeNoEscape("&apos;");
-					break;
-				case '\"':
-					writeNoEscape("&quot;");
-					break;
-				case '&':
-					writeNoEscape("&amp;");
-					break;
-				default:
-					if (c >= ' ') {
-						writeNoEscape(c);
-					} else {
-						writeNoEscape("&#");
-						writeNoEscape((char) ('0' + c / 10));
-						writeNoEscape((char) ('0' + c % 10));
-						writeNoEscape(';');
-					}
-				}
-			}
-		}
+	private void write(Object obj) throws IOException {
+        if (obj instanceof String) {
+            write((String)obj);
+        } else {
+            writeNonString((CharSequence)obj);
+        }
+    }
+    
+    private void write(String str) throws IOException {
+        final int length = str.length();
+        for (int i = 0; i < length;) {
+            char c = str.charAt(i++);
+            if ((c >= '@') || (c == ' ')) { // Most common case.
+                _buffer[_index] = c;
+                if (++_index == BUFFER_LENGTH) {
+                    flushBuffer();
+                }
+            } else { // Potential escape sequence.
+                switch (c) {
+                case '<':
+                    writeNoEscape("&lt;");
+                    break;
+                case '>':
+                    writeNoEscape("&gt;");
+                    break;
+                case '\'':
+                    writeNoEscape("&apos;");
+                    break;
+                case '\"':
+                    writeNoEscape("&quot;");
+                    break;
+                case '&':
+                    writeNoEscape("&amp;");
+                    break;
+                default:
+                    if (c >= ' ') {
+                        writeNoEscape(c);
+                    } else {
+                        writeNoEscape("&#");
+                        writeNoEscape((char) ('0' + c / 10));
+                        writeNoEscape((char) ('0' + c % 10));
+                        writeNoEscape(';');
+                    }
+                }
+            }
+        }
+    }
+
+    private void writeNonString(CharSequence csq) throws IOException {
+        final int length = csq.length();
+        for (int i = 0; i < length;) {
+            char c = csq.charAt(i++);
+            if ((c >= '@') || (c == ' ')) { // Most common case.
+                _buffer[_index] = c;
+                if (++_index == BUFFER_LENGTH) {
+                    flushBuffer();
+                }
+            } else { // Potential escape sequence.
+                switch (c) {
+                case '<':
+                    writeNoEscape("&lt;");
+                    break;
+                case '>':
+                    writeNoEscape("&gt;");
+                    break;
+                case '\'':
+                    writeNoEscape("&apos;");
+                    break;
+                case '\"':
+                    writeNoEscape("&quot;");
+                    break;
+                case '&':
+                    writeNoEscape("&amp;");
+                    break;
+                default:
+                    if (c >= ' ') {
+                        writeNoEscape(c);
+                    } else {
+                        writeNoEscape("&#");
+                        writeNoEscape((char) ('0' + c / 10));
+                        writeNoEscape((char) ('0' + c % 10));
+                        writeNoEscape(';');
+                    }
+                }
+            }
+        }
+    }
+
+    private void writeNoEscape(Object obj) throws IOException {
+        if (obj instanceof String) {
+            writeNoEscape((String)obj);
+        } else {
+            writeNoEscapeNonString((CharSequence)obj);
+        }
+    }
+
+	private void writeNoEscape(String str) throws IOException {
+        for (int i = 0, n = str.length(); i < n;) {
+            _buffer[_index] = str.charAt(i++);
+            if (++_index == BUFFER_LENGTH) {
+                flushBuffer();
+            }
+        }
 	}
 
-	private void writeNoEscape(CharSequence csq) throws IOException {
-		for (int i = 0, n = csq.length(); i < n;) {
-			_buffer[_index] = csq.charAt(i++);
-			if (++_index == BUFFER_LENGTH) {
-				flushBuffer();
-			}
-		}
-	}
-
-	private void writeNoEscape(String csq) throws IOException {
-		for (int i = 0, n = csq.length(); i < n;) {
-			_buffer[_index] = csq.charAt(i++);
-			if (++_index == BUFFER_LENGTH) {
-				flushBuffer();
-			}
-		}
-	}
+    private void writeNoEscapeNonString(CharSequence csq) throws IOException {
+        for (int i = 0, n = csq.length(); i < n;) {
+            _buffer[_index] = csq.charAt(i++);
+            if (++_index == BUFFER_LENGTH) {
+                flushBuffer();
+            }
+        }
+    }
 
 	private final void writeNoEscape(char c) throws IOException {
 		_buffer[_index] = c;

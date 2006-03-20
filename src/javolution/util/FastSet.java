@@ -12,7 +12,8 @@ import java.io.IOException;
 
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
-import j2me.io.Serializable;
+import j2me.lang.UnsupportedOperationException;
+import j2me.util.Collection;
 import j2me.util.Set;
 import javolution.lang.Reusable;
 
@@ -25,16 +26,15 @@ import javolution.lang.Reusable;
  *     (e.g. for throw-away set to avoid the creation cost).</p>  
  * 
  * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
- *     thread-safe fast iterations without using iterators. For example:<pre>
+ *     thread-safe fast iterations without using iterators. For example:[code]
  *     for (FastSet.Record r = set.head(), end = set.tail(); (r = r.getNext()) != end;) {
  *         Object value = set.valueOf(r);    
- *     }</pre></p>
+ *     }[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.6, September 24, 2005
  */
-public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/, Reusable,
-        Serializable {
+public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/, Reusable {
 
     /**
      * Holds the set factory.
@@ -60,6 +60,18 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      */
     public FastSet() {
         this(new FastMap/*<E,E>*/());
+    }
+
+    /**
+     * Creates a persistent set associated to the specified unique identifier
+     * (convenience method).
+     * 
+     * @param id the unique identifier for this map.
+     * @throws IllegalArgumentException if the identifier is not unique.
+     * @see javolution.lang.PersistentReference
+     */
+    public FastSet(String id) {
+        this(new FastMap/*<E,E>*/(id));
     }
 
     /**
@@ -121,6 +133,11 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      */
     public final boolean add(Object/*E*/ value) {
         return _map.put(value, value) == null;
+    }
+
+    // Overrides to return a set (JDK1.5+).
+    public Collection/*Set<E>*/unmodifiable() {
+        return (Collection/*Set<E>*/) super.unmodifiable();
     }
 
     // Overrides (optimization).
@@ -192,19 +209,5 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
         _map.remove(((FastMap.Entry/*<E,E>*/) record).getKey());
     }
 
-    /*
-     * @deprecated Replaced by {@link #head}
-     */
-    public final Record headRecord() {
-        return _map.head();
-    }
-
-    /*
-     * @deprecated Replaced by {@link #tail}
-     */
-    public final Record tailRecord() {
-        return _map.tail();
-    }
-    
     private static final long serialVersionUID = 3257563997099275574L;
 }

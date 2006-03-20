@@ -23,7 +23,7 @@ import javolution.lang.TextBuilder;
  * @version 1.0, September 14, 2004
  */
 public class Javolution {
-
+    
     /**
      * Holds the version information.
      */
@@ -43,17 +43,17 @@ public class Javolution {
     /**
      * The library {@link #main} method.
      * The archive <code>javolution.jar</code> is auto-executable.
-     * <pre>
+     * [code]
      *    java -jar javolution.jar version <i>(show version information)</i>
      *    java -jar javolution.jar test <i>(perform self-tests)</i>
      *    java -jar javolution.jar perf <i>(run benchmark)</i>
-     * </pre>
+     * [/code]
      *
      * @param  args the option arguments.
      * @throws Exception if a problem occurs.
      */
-    public static void main(String[] args) throws Exception {
-        println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
+    public static void main(String[] args) throws Exception {        
+       println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
         println("Version " + VERSION + " (http://javolution.org)");
         println("");
         if (args.length > 0) {

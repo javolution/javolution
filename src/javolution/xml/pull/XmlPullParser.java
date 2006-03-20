@@ -70,14 +70,13 @@ import java.io.Reader;
  *           and it was not declared in XMLDecl
  * </ul>
  *
- * A minimal example for using this API may look as follows:
- * <pre>
+ * A minimal example for using this API may look as follows:[code]
  * import java.io.IOException;
  * import java.io.StringReader;
  *
  * import org.xmlpull.v1.XmlPullParser;
- * import org.xmlpull.v1.<a href="XmlPullParserException.html">XmlPullParserException.html</a>;
- * import org.xmlpull.v1.<a href="XmlPullParserFactory.html">XmlPullParserFactory</a>;
+ * import org.xmlpull.v1.XmlPullParserException;
+ * import org.xmlpull.v1.XmlPullParserFactory;
  *
  * public class SimpleXmlPullApp
  * {
@@ -85,11 +84,9 @@ import java.io.Reader;
  *     public static void main (String args[])
  *         throws XmlPullParserException, IOException
  *     {
- *         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
- *         factory.setNamespaceAware(true);
- *         XmlPullParser xpp = factory.newPullParser();
+ *         XmlPullParser xpp = new XmlPullParserImpl();
  *
- *         xpp.<a href="#setInput">setInput</a>( new StringReader ( "&lt;foo>Hello World!&lt;/foo>" ) );
+ *         xpp.setInput( new StringReader ( "<foo>Hello World!</foo>" ) );
  *         int eventType = xpp.getEventType();
  *         while (eventType != XmlPullParser.END_DOCUMENT) {
  *          if(eventType == XmlPullParser.START_DOCUMENT) {
@@ -97,25 +94,23 @@ import java.io.Reader;
  *          } else if(eventType == XmlPullParser.END_DOCUMENT) {
  *              System.out.println("End document");
  *          } else if(eventType == XmlPullParser.START_TAG) {
- *              System.out.println("Start tag "+xpp.<a href="#getName()">getName()</a>);
+ *              System.out.println("Start tag "+xpp.getName());
  *          } else if(eventType == XmlPullParser.END_TAG) {
  *              System.out.println("End tag "+xpp.getName());
  *          } else if(eventType == XmlPullParser.TEXT) {
- *              System.out.println("Text "+xpp.<a href="#getText()">getText()</a>);
+ *              System.out.println("Text "+xpp.getText());
  *          }
  *          eventType = xpp.next();
  *         }
  *     }
- * }
- * </pre>
+ * }[/code]
  *
- * <p>The above example will generate the following output:
- * <pre>
+ * <p>The above example will generate the following output:[code]
  * Start document
  * Start tag foo
  * Text Hello World!
  * End tag foo
- * </pre>
+ * [/code]
  *
  * <p>For more details on API usage, please refer to the
  * quick Introduction available at <a href="http://www.xmlpull.org">http://www.xmlpull.org</a>
@@ -526,7 +521,7 @@ public interface XmlPullParser {
      * <p><b>NOTE:</b> when parser is on END_TAG then it is allowed to call
      *  this function with getDepth()+1 argument to retrieve position of namespace
      *  prefixes and URIs that were declared on corresponding START_TAG.
-     * <p><b>NOTE:</b> to retrieve lsit of namespaces declared in current element:<pre>
+     * <p><b>NOTE:</b> to retrieve lsit of namespaces declared in current element:[code]
      *       XmlPullParser pp = ...
      *       int nsStart = pp.getNamespaceCount(pp.getDepth()-1);
      *       int nsEnd = pp.getNamespaceCount(pp.getDepth());
@@ -535,7 +530,7 @@ public interface XmlPullParser {
      *          String ns = pp.getNamespaceUri(i);
      *           // ...
      *      }
-     * </pre>
+     * [/code]
      *
      * @see #getNamespacePrefix
      * @see #getNamespaceUri
@@ -576,14 +571,14 @@ public interface XmlPullParser {
      *
      * <p>This method is a convenience method for
      *
-     * <pre>
+     * [code]
      *  for (int i = getNamespaceCount(getDepth ())-1; i >= 0; i--) {
      *   if (getNamespacePrefix(i).equals( prefix )) {
      *     return getNamespaceUri(i);
      *   }
      *  }
      *  return null;
-     * </pre>
+     * [/code]
      *
      * <p><strong>Please note:</strong> parser implementations
      * may provide more efifcient lookup, e.g. using a Hashtable.
@@ -609,15 +604,15 @@ public interface XmlPullParser {
      * The depth is decremented AFTER the end tag
      * event was observed.
      *
-     * <pre>
-     * &lt;!-- outside --&gt;     0
-     * &lt;root>                  1
-     *   sometext                 1
-     *     &lt;foobar&gt;         2
-     *     &lt;/foobar&gt;        2
-     * &lt;/root&gt;              1
-     * &lt;!-- outside --&gt;     0
-     * </pre>
+     * [code]
+     * <!-- outside -->     0
+     * <root>               1
+     *   sometext           1
+     *     <foobar>         2
+     *     </foobar>        2
+     * </root>              1
+     * <!-- outside -->     0
+     * [/code]
      */
     int getDepth();
 
@@ -967,7 +962,7 @@ public interface XmlPullParser {
      * then return what is inside of DOCDECL for example it returns:<pre>
      * &quot; titlepage SYSTEM "http://www.foo.bar/dtds/typo.dtd"
      * [&lt;!ENTITY % active.links "INCLUDE">]&quot;</pre>
-     * <p>for input document that contained:<pre>
+     * <p>for input document that contained:[code]
      * &lt;!DOCTYPE titlepage SYSTEM "http://www.foo.bar/dtds/typo.dtd"
      * [&lt;!ENTITY % active.links "INCLUDE">]></pre>
      * otherwise if FEATURE_XML_ROUNDTRIP is false and PROCESS_DOCDECL is true

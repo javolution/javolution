@@ -72,11 +72,11 @@ public final class Utf8StreamWriter extends Writer implements Reusable {
 
     /**
      * Sets the output stream to use for writing until this writer is closed.
-     * For example:<pre>
+     * For example:[code]
      *     Writer writer = new Utf8StreamWriter().setOutputStream(out);
-     * </pre> is equivalent but writes faster than <pre>
+     * [/code] is equivalent but writes faster than [code]
      *     Writer writer = new j2me.io.OutputStreamWriter(out, "UTF-8");
-     * </pre>
+     * [/code]
      *
      * @param  out the output stream.
      * @return this UTF-8 writer.

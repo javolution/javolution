@@ -11,11 +11,11 @@ package javolution.util;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.List;
-import j2me.util.NoSuchElementException;
+import j2me.util.ListIterator;
 import j2me.util.Set;
 import j2me.io.Serializable;
-import j2me.lang.IllegalStateException;
 import j2me.lang.UnsupportedOperationException;
+import j2mex.realtime.MemoryArea;
 
 import javolution.lang.Text;
 import javolution.realtime.RealtimeObject;
@@ -23,28 +23,28 @@ import javolution.realtime.RealtimeObject;
 /**
  * <p> This class represents collections which can quickly be iterated over 
  *     (forward or backward) in a thread-safe manner without creating new 
- *     objects and without using {@link #iterator iterators} . For example:<pre>
+ *     objects and without using {@link #iterator iterators} . For example:[code]
  *     boolean search(Object item, FastCollection c) {
  *         for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
  *              if (item.equals(c.valueOf(r))) return true;
  *         }
  *         return false;
- *     }</pre></p>
+ *     }[/code]</p>
  *     
  * <p> Iterations are thread-safe as long as the {@link Record record} sequence
  *     iterated over is not structurally modified by another thread 
- *     (objects can safely be append/prepend during iteration but not 
+ *     (objects can safely be append/prepend during iterations but not 
  *     inserted/removed).</p>
  *     
  * <p> Users may provide a read-only view of any {@link FastCollection} 
- *     instance using the {@link #unmodifiable()} method. For example:<pre>
- *     public class Unit { // Immutable and unique.
- *         private final FastSet<Unit> _units = new FastSet<Unit>();
- *         // Read-only view (also thread-safe as units are never "deleted")
- *         public FastCollection<Unit> getInstances() { 
- *             return _units.unmodifiable();
+ *     instance using the {@link #unmodifiable()} method (the view is 
+ *     thread-safe if iterations are thread-safe). For example:[code]
+ *     public class Polynomial {
+ *         private final FastTable<Coefficient> _coefficients = new FastTable<Coefficient>();
+ *         public List<Coefficient> getCoefficients() { // Read-only view. 
+ *             return _coefficients.unmodifiable();
  *         }
- *     }</pre></p>
+ *     }[/code]</p>
  *     
  * <p> Finally, {@link FastCollection} may use custom {@link #setValueComparator
  *     comparators} for element equality or ordering if the collection is 
@@ -54,7 +54,7 @@ import javolution.realtime.RealtimeObject;
  * @version 3.6, September 24, 2005
  */
 public abstract class FastCollection/*<E>*/extends RealtimeObject implements
-        Collection/*<E>*/{
+        Collection/*<E>*/, Serializable {
 
     /**
      * Holds the value comparator.  
@@ -62,24 +62,15 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     private FastComparator _valueComp = FastComparator.DEFAULT;
 
     /**
-     * Holds the value comparator.  
+     * Holds the unmodifiable view (allocated in the same memory area as 
+     * this collection).  
      */
-    private final Unmodifiable _unmodifiable;
+    private Unmodifiable _unmodifiable;
 
     /**
      * Default constructor.  
      */
     protected FastCollection() {
-        _unmodifiable = new Unmodifiable();
-    }
-
-    /**
-     * Constructor for the Unmodifiable sub-class.
-     * 
-     * @param unmodifiable the unmodifiable collection.
-     */
-    private FastCollection(Unmodifiable unmodifiable) {
-        _unmodifiable = unmodifiable;
     }
 
     /**
@@ -128,13 +119,23 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public abstract void delete(Record record);
 
     /**
-     * Returns the unmodifiable view associated to this collection.
+     * Returns the unmodifiable view associated to this collection. 
      * Attempts to modify the returned collection result in an 
-     * {@link UnsupportedOperationException} being thrown.
-     *
-     * @return an unmodifiable view.
+     * {@link UnsupportedOperationException} being thrown. The view is 
+     * typically part of the collection itself (created only once)
+     * and also an instance of {@link FastCollection} supporting direct
+     * iterations.  
+     * 
+     * @return the unmodifiable view over this collection.
      */
-    public final FastCollection/*<E>*/unmodifiable() {
+    public Collection/*<E>*/unmodifiable() {
+        if (_unmodifiable == null) {
+            MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+                public void run() {
+                    _unmodifiable = new Unmodifiable();
+                }
+            });
+        }
         return _unmodifiable;
     }
 
@@ -146,11 +147,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * @return an iterator over this collection's elements.
      */
     public Iterator/*<E>*/iterator() {
-        FastIterator iterator = (FastIterator) FastIterator.FACTORY.object();
-        iterator._collection = this;
-        iterator._next = this.head().getNext();
-        iterator._tail = this.tail();
-        return iterator;
+        return FastIterator.valueOf(this);
     }
 
     /**
@@ -382,7 +379,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * @param  array the array into which the values of this collection
      *         are to be stored.
      * @return the specified array.
-     * @throws UnsupportedOperationException if <pre>array.length < size()</pre> 
+     * @throws UnsupportedOperationException if <code>array.length < size()</code> 
      */
     public Object[]/* <T> T[]*/toArray(Object[]/*T[]*/array) {
         int size = size();
@@ -430,8 +427,9 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     public boolean equals(Object obj) {
         if (this instanceof List)
             return equalsList(obj);
-        return (obj == this || (obj instanceof Collection
-                && ((Collection) obj).size() == size() && containsAll((Collection) obj)));
+        return obj == this
+                || (obj instanceof Collection
+                        && ((Collection) obj).size() == size() && containsAll((Collection) obj));
     }
 
     private boolean equalsList(Object obj) {
@@ -506,105 +504,107 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     /**
-     * This inner class implements a collection iterator.
-     */
-    private static final class FastIterator/*<E>*/extends RealtimeObject
-            implements Iterator/*<E>*/{
-
-        private static final Factory FACTORY = new Factory() {
-            protected Object create() {
-                return new FastIterator();
-            }
-
-            protected void cleanup(Object obj) {
-                FastIterator i = (FastIterator) obj;
-                i._collection = null;
-                i._current = null;
-                i._next = null;
-                i._tail = null;
-            }
-        };
-
-        private FastCollection/*<E>*/_collection;
-
-        private Record _current;
-
-        private Record _next;
-
-        private Record _tail;
-
-        private FastIterator() {
-        }
-
-        public boolean hasNext() {
-            return (_next != _tail);
-        }
-
-        public Object/*E*/next() {
-            if (_next == _tail)
-                throw new NoSuchElementException();
-            _current = _next;
-            _next = _next.getNext();
-            return _collection.valueOf(_current);
-        }
-
-        public void remove() {
-            if (_current != null) {
-                // Uses the previous record (not affected by the remove)
-                // to set the next record.
-                final Record previous = _current.getPrevious();
-                _collection.delete(_current);
-                _current = null;
-                _next = previous.getNext();
-            } else {
-                throw new IllegalStateException();
-            }
-        }
-    }
-
-    /**
      * This inner class represents an unmodifiable view over the collection.
      */
-    private final class Unmodifiable extends FastCollection/*<E>*/implements
-            Serializable, Set/*<E>*/{ // Allows to be used for unmodifiable set view.
+    private final class Unmodifiable extends FastCollection implements
+            Set, List { // Allows to be used for unmodifiable set/list view.
 
-        public Unmodifiable() {
-            super(null);
-        }
-
+        // Implements abstract method.
         public int size() {
             return FastCollection.this.size();
         }
 
+        // Implements abstract method.
         public Record head() {
             return FastCollection.this.head();
         }
 
+        // Implements abstract method.
         public Record tail() {
             return FastCollection.this.tail();
         }
 
+        // Implements abstract method.
+        public Object valueOf(Record record) {
+            return FastCollection.this.valueOf(record);
+        }
+
+        // Forwards...
+        public boolean contains(Object value) {
+            return (FastCollection.this).contains(value);
+        }
+
+        // Forwards...
+        public boolean containsAll(Collection c) {
+            return (FastCollection.this).containsAll(c);
+        }
+
+        // Forwards...
         public FastComparator getValueComparator() {
             return FastCollection.this.getValueComparator();
         }
 
-        public FastCollection/*<E>*/setValueComparator(
+        // Disallows...
+        public FastCollection setValueComparator(
                 FastComparator comparator) {
             throw new UnsupportedOperationException("Unmodifiable");
         }
 
-        public boolean add(Object/*E*/obj) {
+        // Disallows...
+        public boolean add(Object obj) {
             throw new UnsupportedOperationException("Unmodifiable");
         }
 
+        // Disallows...
         public void delete(Record node) {
             throw new UnsupportedOperationException("Unmodifiable");
         }
 
-        public Object/*E*/valueOf(Record record) {
-            return FastCollection.this.valueOf(record);
+        //////////////////////////////////////////
+        // List interface supplementary methods //
+        //////////////////////////////////////////
+        
+        public boolean addAll(int index, Collection c) {
+            throw new UnsupportedOperationException("Unmodifiable");
         }
 
-        private static final long serialVersionUID = 4048789065711367989L;
+        public Object get(int index) {
+            return ((List)FastCollection.this).get(index);
+        }
+
+        public Object set(int index, Object element) {
+            throw new UnsupportedOperationException("Unmodifiable");
+        }
+
+        public void add(int index, Object element) {
+            throw new UnsupportedOperationException("Unmodifiable");
+        }
+
+        public Object remove(int index) {
+            throw new UnsupportedOperationException("Unmodifiable");
+        }
+
+        public int indexOf(Object o) {
+            return ((List)FastCollection.this).indexOf(o);
+        }
+
+        public int lastIndexOf(Object o) {
+            return ((List)FastCollection.this).lastIndexOf(o);
+        }
+
+        public ListIterator listIterator() {
+            throw new UnsupportedOperationException(
+            "List iterator not supported for unmodifiable collection");
+        }
+
+        public ListIterator listIterator(int index) {
+            throw new UnsupportedOperationException(
+            "List iterator not supported for unmodifiable collection");
+        }
+
+        public List subList(int fromIndex, int toIndex) {
+            throw new UnsupportedOperationException(
+                    "Sub-List not supported for unmodifiable collection");
+        }
     }
 }

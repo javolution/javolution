@@ -86,11 +86,11 @@ public final class Utf8StreamReader extends Reader implements Reusable {
 
     /**
      * Sets the input stream to use for reading until this reader is closed.
-     * For example:<pre>
+     * For example:[code]
      *     Reader reader = new Utf8StreamReader().setInputStream(inStream);
-     * </pre> is equivalent but reads twice as fast as <pre>
+     * [/code] is equivalent but reads twice as fast as [code]
      *     Reader reader = new j2me.io.InputStreamReader(inStream, "UTF-8");
-     * </pre>
+     * [/code]
      *
      * @param  inStream the input stream.
      * @return this UTF-8 reader.
@@ -189,7 +189,7 @@ public final class Utf8StreamReader extends Reader implements Reusable {
             }
         } else { // No more bytes in buffer.
             if (_inputStream == null)
-                throw new IOException("Stream closed");
+                throw new IOException("No input stream or stream closed");
             _start = 0;
             _end = _inputStream.read(_bytes, 0, _bytes.length);
             if (_end > 0) {
@@ -226,7 +226,7 @@ public final class Utf8StreamReader extends Reader implements Reusable {
      */
     public int read(char cbuf[], int off, int len) throws IOException {
         if (_inputStream == null)
-            throw new IOException("Stream closed");
+            throw new IOException("No input stream or stream closed");
         if (_start >= _end) { // Fills buffer.
             _start = 0;
             _end = _inputStream.read(_bytes, 0, _bytes.length);
@@ -275,7 +275,7 @@ public final class Utf8StreamReader extends Reader implements Reusable {
      */
     public void read(Appendable dest) throws IOException {
         if (_inputStream == null)
-            throw new IOException("Stream closed");
+            throw new IOException("No input stream or stream closed");
         while (true) {
             if (_start >= _end) { // Fills buffer.
                 _start = 0;

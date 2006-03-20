@@ -149,6 +149,7 @@ src/j2me/nio/ByteBuffer.java -text
 src/j2me/nio/ByteOrder.java -text
 src/j2me/nio/CharBuffer.java -text
 src/j2me/nio/InvalidMarkException.java -text
+src/j2me/text/ParsePosition.java -text
 src/j2me/util/ArrayList.java -text
 src/j2me/util/Collection.java -text
 src/j2me/util/Comparator.java -text
@@ -191,6 +192,14 @@ src/j2me/util/TooManyListenersException.java -text
 src/j2me/util/UnknownFormatConversionException.java -text
 src/j2me/util/UnknownFormatFlagsException.java -text
 src/j2me/util/concurrent/ConcurrentHashMap.java -text
+src/j2me/util/logging/Level.java -text
+src/j2me/util/logging/LogRecord.java -text
+src/j2me/util/logging/Logger.java -text
+src/j2me/util/zip/ZipEntry.java -text
+src/j2me/util/zip/ZipFile.java -text
+src/j2mex/realtime/MemoryArea.java -text
+src/j2mex/realtime/NoHeapRealtimeThread.java -text
+src/j2mex/realtime/RealtimeThread.java -text
 src/javolution/Configuration.java -text
 src/javolution/Javolution.java -text
 src/javolution/JavolutionError.java -text
@@ -207,7 +216,10 @@ src/javolution/io/Utf8StreamReader.java -text
 src/javolution/io/Utf8StreamWriter.java -text
 src/javolution/io/package.html -text
 src/javolution/lang/Appendable.java -text
+src/javolution/lang/CharSet.java -text
+src/javolution/lang/ClassInitializer.java -text
 src/javolution/lang/Enum.java -text
+src/javolution/lang/Immutable.java -text
 src/javolution/lang/MathLib.java -text
 src/javolution/lang/PersistentReference.java -text
 src/javolution/lang/Reference.java -text
@@ -218,7 +230,6 @@ src/javolution/lang/TextBuilder.java -text
 src/javolution/lang/TextFormat.java -text
 src/javolution/lang/TypeFormat.java -text
 src/javolution/lang/package.html -text
-src/javolution/realtime/AllocationProfile.java -text
 src/javolution/realtime/ConcurrentContext.java -text
 src/javolution/realtime/ConcurrentException.java -text
 src/javolution/realtime/ConcurrentThread.java -text
@@ -226,6 +237,7 @@ src/javolution/realtime/Context.java -text
 src/javolution/realtime/HeapContext.java -text
 src/javolution/realtime/LocalContext.java -text
 src/javolution/realtime/LocalReference.java -text
+src/javolution/realtime/LogContext.java -text
 src/javolution/realtime/ObjectFactory.java -text
 src/javolution/realtime/ObjectPool.java -text
 src/javolution/realtime/PoolContext.java -text
@@ -236,12 +248,15 @@ src/javolution/realtime/doc-files/realtime.jpg -text
 src/javolution/realtime/package.html -text
 src/javolution/util/FastCollection.java -text
 src/javolution/util/FastComparator.java -text
+src/javolution/util/FastIterator.java -text
 src/javolution/util/FastList.java -text
 src/javolution/util/FastMap.java -text
 src/javolution/util/FastSet.java -text
 src/javolution/util/FastTable.java -text
 src/javolution/util/LocalMap.java -text
 src/javolution/util/ReentrantLock.java -text
+src/javolution/util/StandardLog.java -text
+src/javolution/util/doc-files/.xvpics/map-put.png -text
 src/javolution/util/doc-files/map-put.png -text
 src/javolution/util/package.html -text
 src/javolution/xml/CharacterData.java -text

@@ -42,7 +42,7 @@ import java.io.OutputStream;
  *     </ul></p>
  * <p> Because of its one-to-one mapping, it is relatively easy to convert C 
  *     header files (e.g. OpenGL bindings) to Java {@link Struct}/{@link Union}
- *     using simple text macros. Here is an example of C struct:<pre>
+ *     using simple text macros. Here is an example of C struct:<code><pre>
  *     struct Date {
  *         unsigned short year;
  *         unsigned char month;
@@ -53,8 +53,8 @@ import java.io.OutputStream;
  *         struct Date birth;
  *         float       grades[10];
  *         Student*    next;
- *     };</pre>
- *     and here is the Java equivalent using this class:<pre>
+ *     };</pre></code>
+ *     and here is the Java equivalent using this class:[code]
  *     public static class Date extends Struct {
  *         public final Unsigned16 year = new Unsigned16();
  *         public final Unsigned8 month = new Unsigned8();
@@ -64,17 +64,17 @@ import java.io.OutputStream;
  *         public final Utf8String  name   = new Utf8String(64);
  *         public final Date        birth  = inner(new Date());
  *         public final Float32[]   grades = array(new Float32[10]);
- *         public final Reference32&lt;Student&gt; next =  new Reference32&lt;Student&gt;();
- *     }</pre>
- *     Struct's members are directly accessible:<pre>
+ *         public final Reference32<Student> next =  new Reference32<Student>();
+ *     }[/code]
+ *     Struct's members are directly accessible:[code]
  *     Student student = new Student();
  *     student.name.set("John Doe"); // Null terminated (C compatible)
  *     int age = 2003 - student.birth.year.get();
  *     student.grades[2].set(12.5f);
- *     student = student.next.get();</pre></p>
+ *     student = student.next.get();[/code]</p>
  * <p> Applications may also work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to 
- *     decode/encode UDP messages directly:<pre>
+ *     decode/encode UDP messages directly:[code]
  *     class UdpMessage extends Struct {
  *          Unsigned16 xxx = new Unsigned16();
  *          ... 
@@ -90,11 +90,11 @@ import java.io.OutputStream;
  *             int xxx = message.xxx.get();
  *             ... // Process message fields directly.
  *         }
- *     }</pre></p> 
+ *     }[/code]</p> 
  * <p> It is relatively easy to map instances of this class to any physical
  *     address using
  *     <a href="http://java.sun.com/docs/books/tutorial/native1.1/index.html">
- *     JNI</a>. Here is an example:<pre>
+ *     JNI</a>. Here is an example:[code]
  *     import java.nio.ByteBuffer;
  *     class Clock extends Struct { // Hardware clock mapped to memory.
  *         Unsigned16 seconds  = new Unsigned16(5); // unsigned short seconds:5
@@ -104,14 +104,14 @@ import java.io.OutputStream;
  *             setByteBuffer(Clock.nativeBuffer(), 0);
  *         }
  *         private static native ByteBuffer nativeBuffer();
- *     }</pre>
+ *     }[/code]
  *     Below is the <code>nativeBuffer()</code> implementation
- *     (<code>Clock.c</code>):<pre>
- *     #include &lt;jni.h&gt;
+ *     (<code>Clock.c</code>):<code><pre>
+ *     #include <jni.h>
  *     #include "Clock.h" // Generated using javah
  *     JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
  *         return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
- *     }</pre></p>
+ *     }</pre></code></p>
  * <p> Bit-fields are supported (see <code>Clock</code> example above).
  *     Bit-fields allocation order is defined by the Struct {@link #byteOrder}
  *     return value (leftmost bit to rightmost bit if
@@ -155,7 +155,7 @@ public class Struct {
 	/**
 	 * Holds this struct alignment (largest alignment of its members).
 	 */
-	private int _alignment;
+	private int _alignment = 1;
 
 	/**
 	 * Holds the current bit index position (during construction).
@@ -342,7 +342,7 @@ public class Struct {
 
 	/**
 	 * Returns the <code>String</code> representation of this struct
-	 * in the form of its constituing bytes (hexadecimal). For example:<pre>
+	 * in the form of its constituing bytes (hexadecimal). For example:[code]
 	 *     public static class Student extends Struct {
 	 *         Utf8String name  = new Utf8String(16);
 	 *         Unsigned16 year  = new Unsigned16();
@@ -355,7 +355,7 @@ public class Struct {
 	 *     System.out.println(student);
 	 *
 	 *     4A 6F 68 6E 20 44 6F 65 00 00 00 00 00 00 00 00
-	 *     07 D3 00 00 41 48 00 00</pre>
+	 *     07 D3 00 00 41 48 00 00[/code]
 	 *
 	 * @return a hexadecimal representation of the bytes content for this 
 	 *         struct.
@@ -385,7 +385,7 @@ public class Struct {
 	 * Indicates if this struct's members are mapped to the same location
 	 * in memory (default <code>false</code>). This method is useful for
 	 * applications extending {@link Struct} with new member types in order to 
-	 * create unions from these new structs. For example:<pre>
+	 * create unions from these new structs. For example:[code]
 	 * public abstract class FortranStruct extends Struct {
 	 *     public class FortranString extends Member {...}
      *     protected FortranString[] array(FortranString[] array, int stringLength) { ... }
@@ -395,7 +395,7 @@ public class Struct {
 	 *     public final isUnion() {
 	 *         return true;
 	 *     }
-	 * }</pre>
+	 * }[/code]
 	 *
 	 * @return <code>true</code> if this struct's members are mapped to 
 	 *         to the same location in memory; <code>false</code> 
@@ -409,14 +409,14 @@ public class Struct {
 	/**
 	 * Returns the byte order for this struct (configurable). 
 	 * The byte order is inherited by inner structs. Sub-classes may change 
-	 * the byte order by overriding this method. For example:<pre>
+	 * the byte order by overriding this method. For example:[code]
 	 * public class TopStruct extends Struct {
 	 *     ... // Members initialization.
 	 *     public ByteOrder byteOrder() {
 	 *         // TopStruct and its inner structs use hardware byte order.
 	 *         return ByteOrder.nativeOrder();
 	 *    }
-	 * }}</pre></p></p>
+	 * }}[/code]</p></p>
 	 *
 	 * @return the byte order when reading/writing multibyte values
 	 *         (default: network byte order, <code>BIG_ENDIAN</code>).
@@ -431,14 +431,14 @@ public class Struct {
 	 * boundary corresponding to the member base type; padding is performed
 	 * if necessary. This directive is inherited by inner structs.
 	 * Sub-classes may change the packing directive by overriding this method.
-	 * For example:<pre>
+	 * For example:[code]
 	 * public class TopStruct extends Struct {
 	 *     ... // Members initialization.
 	 *     public boolean isPacked() {
 	 *         // TopStruct and its inner structs are packed.
 	 *         return true;
 	 *     }
-	 * }}</pre></p></p>
+	 * }}[/code]
 	 *
 	 * @return <code>true</code> if alignment requirements are ignored.
 	 *         <code>false</code> otherwise (default).
@@ -492,6 +492,8 @@ public class Struct {
 						String structName = arrayName.substring(2, arrayName
 								.length() - 1);
 						structClass = Reflection.getClass(structName);
+                        if (structClass == null) throw new 
+                            JavolutionError("Struct class: " + structName + " not found");
 					}
 					struct = (/*S*/Struct) structClass.newInstance();
 				} catch (Exception e) {
@@ -751,7 +753,7 @@ public class Struct {
 	/**
 	 * This inner class represents the base class for all {@link Struct}
 	 * members. It allows applications to define additional member types.
-	 * For example:<pre>
+	 * For example:[code]
 	 *    public class MyStruct extends Struct {
 	 *        BitSet bits = new BitSet(256);
 	 *        ...
@@ -762,7 +764,7 @@ public class Struct {
 	 *            public boolean get(int i) { ... }
 	 *            public void set(int i, boolean value) { ...}
 	 *        }
-	 *    }</pre>
+	 *    }[/code]
 	 */
 	protected class Member {
 
@@ -793,6 +795,15 @@ public class Struct {
 		Member(int alignment, int nbrOfBits, int capacity) {
 			_offset = updateIndexes(alignment, nbrOfBits, capacity);
 		}
+
+        /**
+         * Returns the outer {@link Struct struct} container.
+         *
+         * @return the outer struct.
+         */
+        public final Struct struct() {
+            return Struct.this;
+        }
 
 		/**
 		 * Returns the relative offset of this member within its struct.

@@ -13,11 +13,15 @@ import java.io.IOException;
 import org.xml.sax.SAXException;
 
 import j2me.lang.CharSequence;
-import j2me.util.NoSuchElementException;
+import j2me.lang.IllegalStateException;
+
+import java.util.NoSuchElementException;
 import javolution.lang.Text;
 import javolution.lang.TextBuilder;
 import javolution.lang.TypeFormat;
+import javolution.util.FastComparator;
 import javolution.util.FastList;
+import javolution.util.FastMap;
 import javolution.util.FastTable;
 import javolution.xml.pull.XmlPullParser;
 import javolution.xml.pull.XmlPullParserException;
@@ -38,7 +42,7 @@ import javolution.xml.sax.ContentHandler;
  *     XML representations.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.5, August 29, 2005
+ * @version 3.6, October 13, 2005
  */
 public final class XmlElement {
 
@@ -75,7 +79,7 @@ public final class XmlElement {
     /**
      * Holds this element attributes when formatting. 
      */
-    private final FormatAttributes _formatAttributes;
+    final FormatAttributes _formatAttributes;
 
     /**
      * Holds intermediate text builder instance 
@@ -93,6 +97,36 @@ public final class XmlElement {
     final FastTable _packagePrefixes = new FastTable();
 
     /**
+     * Indicates if cross references are enabled.
+     */
+    boolean _areReferencesEnabled;
+
+    /**
+     * Indicates if references are expanded.
+     */
+    boolean _expandReferences = false;
+
+    /**
+     * Indicates if class identifers are enabled.
+     */
+    boolean _isClassIdentifierEnabled;
+
+    /**
+     * Maps unique identifiers to objects (deserialization).
+     */
+    private final FastMap _idToObject;
+
+    /**
+     * Maps objects to unique identifiers (serialization).
+     */
+    private final FastMap _objectToId;
+
+    /**
+     * Olds stack of formatted object in order to detect circular references.
+     */
+    private final FastTable _formatStack;
+
+    /**
      * Creates a new xml element.
      * 
      * @param parser the pull parser or <code>null</code> when formatting.
@@ -102,11 +136,18 @@ public final class XmlElement {
             _parser = parser;
             _parseContents = new FastTable();
             _formatAttributes = null;
-
+            _idToObject = new FastMap();
+            _objectToId = null;
+            _formatStack = null;
         } else { // Formatting.
             _parser = null;
             _parseContents = null;
             _formatAttributes = new FormatAttributes();
+            _idToObject = null;
+            _objectToId = new FastMap()
+                    .setKeyComparator(FastComparator.IDENTITY);
+            _formatStack = (FastTable) new FastTable()
+                    .setValueComparator(FastComparator.IDENTITY);
         }
 
     }
@@ -186,10 +227,29 @@ public final class XmlElement {
                 return;
             }
 
-            // Formats the specified object.
+            // Checks if content name set.
             Class cls = _objectClass = obj.getClass();
+            XmlFormat xmlFormat = XmlFormat.getInstance(cls);
+            String defaultName = xmlFormat.defaultName();
+            if (defaultName != null) {
+                _objectClass = obj.getClass();
+                String alias = XmlFormat.aliasFor(_objectClass);
+                if (_isClassIdentifierEnabled) {
+                    _formatAttributes.addAttribute("j:class",
+                            (alias != null) ? toCharSeq(alias)
+                                    : toCharSeq(_objectClass.getName()));
+                }
+                CharSequence elemName = _elemName = toCharSeq(defaultName);
+                format(obj, xmlFormat);
+                if (_elemName != null)
+                    flushStart();
+                _formatHandler.endElement(Text.EMPTY, elemName, elemName);
+                return;
+            }
+
+            // Formats the specified object using classname as element name.
             CharSequence elemName = _elemName = qNameFor(cls);
-            XmlFormat.getInstance(cls).format(obj, this);
+            format(obj, xmlFormat);
             if (_elemName != null)
                 flushStart();
             if (elemName == _textBuilder) { // Mutable, likely lost.
@@ -221,11 +281,13 @@ public final class XmlElement {
             // Formats the specified object.
             _objectClass = obj.getClass();
             String alias = XmlFormat.aliasFor(_objectClass);
-            _formatAttributes.addAttribute("j:class",
-                    (alias != null) ? toCharSeq(alias) : toCharSeq(_objectClass
-                            .getName()));
+            if (_isClassIdentifierEnabled) {
+                _formatAttributes.addAttribute("j:class",
+                        (alias != null) ? toCharSeq(alias)
+                                : toCharSeq(_objectClass.getName()));
+            }
             CharSequence elemName = _elemName = toCharSeq(qName);
-            XmlFormat.getInstance(_objectClass).format(obj, this);
+            format(obj, XmlFormat.getInstance(_objectClass));
             if (_elemName != null)
                 flushStart();
             _formatHandler.endElement(Text.EMPTY, elemName, elemName);
@@ -253,7 +315,7 @@ public final class XmlElement {
 
             // Formats the specified object.
             CharSequence elemName = _elemName = toCharSeq(qName);
-            xmlFormat.format(obj, this);
+            format(obj, xmlFormat);
             if (_elemName != null)
                 flushStart();
             _formatHandler.endElement(Text.EMPTY, elemName, elemName);
@@ -266,12 +328,12 @@ public final class XmlElement {
     /**
      * Creates a new attribute for this xml element.
      * 
-     * This method allows for custom attribute formatting. For example:<pre>
+     * This method allows for custom attribute formatting. For example:[code]
      *     // Formats the color RGB value in hexadecimal.
      *     xml.newAttribute("color").append(_color.getRGB(), 16);
      *     
      *     // Formats the error using 4 digits.
-     *     xml.newAttribute("error").append(error, 4, false, false);</pre>
+     *     xml.newAttribute("error").append(error, 4, false, false);[/code]
      *
      * @param  name the attribute name.
      * @return the text builder to hold the attribute value.
@@ -370,6 +432,109 @@ public final class XmlElement {
      }
      /**/
 
+    ////////////////////////
+    // Primitive Wrappers //
+    ////////////////////////
+    /**
+     * Sets the specified <code>Boolean</code> attribute.
+     * 
+     * @param  name the name of the attribute.
+     * @param  value the <code>Boolean</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Boolean)
+     */
+    public void setAttribute(String name, Boolean value) {
+        if (value == null)
+            return;
+        newAttribute(name).append(value.booleanValue());
+    }
+
+    /**
+     * Sets the specified <code>Byte</code> attribute.
+     * 
+     * @param  name the name of the attribute.
+     * @param  value the <code>Byte</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Byte)
+     */
+    public void setAttribute(String name, Byte value) {
+        if (value == null)
+            return;
+        newAttribute(name).append(value.byteValue());
+    }
+
+    /**
+     * Sets the specified <code>Short</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  value the <code>Short</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Short)
+     */
+    public void setAttribute(String name, Short value) {
+        if (value == null)
+            return;
+        newAttribute(name).append(value.shortValue());
+    }
+
+    /**
+     * Sets the specified <code>Integer</code> attribute.
+     * 
+     * @param  name the name of the attribute.
+     * @param  value the <code>Integer</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Integer)
+     */
+    public void setAttribute(String name, Integer value) {
+        if (value == null)
+            return;
+        newAttribute(name).append(value.intValue());
+    }
+
+    /**
+     * Sets the specified <code>Long</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  value the <code>Long</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Long)
+     */
+    public void setAttribute(String name, Long value) {
+        if (value == null)
+            return;
+        newAttribute(name).append(value.longValue());
+    }
+
+    /**
+     * Sets the specified <code>Float</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  value the <code>Float</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Float)
+     /*@FLOATING_POINT@
+     public void setAttribute(String name, Float value) {
+     if (value == null)
+     return;
+     newAttribute(name).append(value.floatValue());
+     }
+     /**/
+
+    /**
+     * Sets the specified <code>Double</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  value the <code>Double</code> value for the specified attribute
+     *         or <code>null</code> in which case the attribute is not set.
+     * @see    #getAttribute(String, Double)
+     /*@FLOATING_POINT@
+     public void setAttribute(String name, Double value) {
+     if (value == null)
+     return;
+     newAttribute(name).append(value.doubleValue());
+     }
+     /**/
+
     /**
      * Removes the specified attribute.
      * 
@@ -387,12 +552,13 @@ public final class XmlElement {
     /////////////////////
     // Deserialization //
     /////////////////////
+    
     /**
      * Returns the pull parser used during deserialization.
      *
      * @return the pull parser.
      */
-    protected XmlPullParser parser() {
+    public XmlPullParser parser() {
         return _parser;
     }
 
@@ -414,7 +580,7 @@ public final class XmlElement {
      * Returns the object corresponding to the next nested element.
      *
      * @return the next nested object.
-     * @throws j2me.util.NoSuchElementException if 
+     * @throws java.util.NoSuchElementException if 
      *         <code>this.hasNext() == false</code>
      */
     public/*<T>*/Object/*T*/getNext() {
@@ -423,15 +589,23 @@ public final class XmlElement {
                 throw new NoSuchElementException();
             _isParserAtNext = false; // Move forward.
             if (_parser.getEventType() == XmlPullParser.START_TAG) {
-                CharSequence uri = _parser.getNamespace();
-                CharSequence name = _parser.getName();
-                _objectClass = ((uri.length() > 0) && (!uri
-                        .equals(ObjectWriter.JAVOLUTION_URI))) ? XmlFormat
-                        .classFor(uri, name) : XmlFormat.classFor(name);
+
+                // Search for the object class.
+                CharSequence className = _parser.getSaxAttributes().getValue(
+                        "j:class");
+                if (className == null) { // Element name as class name.
+                    CharSequence uri = _parser.getNamespace();
+                    CharSequence name = _parser.getName();
+                    _objectClass = ((uri.length() > 0) && (!uri
+                            .equals(ObjectWriter.JAVOLUTION_URI))) ? XmlFormat
+                            .classFor(uri, name) : XmlFormat.classFor(name);
+                } else {
+                    _objectClass = XmlFormat.classFor(className);
+                }
+
                 XmlFormat xmlFormat = XmlFormat.getInstance(_objectClass);
                 _parseContentIndex++;
-                _object = xmlFormat.allocate(this);
-                Object obj = xmlFormat.parse(this);
+                Object obj = parse(xmlFormat);
                 _parseContentIndex--;
                 if (hasNext())
                     incompleteReadError();
@@ -469,8 +643,7 @@ public final class XmlElement {
                 _objectClass = XmlFormat.classFor(name);
                 XmlFormat xmlFormat = XmlFormat.getInstance(_objectClass);
                 _parseContentIndex++;
-                _object = xmlFormat.allocate(this);
-                Object obj = xmlFormat.parse(this);
+                Object obj = parse(xmlFormat);
                 _parseContentIndex--;
                 if (hasNext())
                     incompleteReadError();
@@ -504,8 +677,7 @@ public final class XmlElement {
                     && _parser.getQName().equals(qName)) {
                 _isParserAtNext = false; // Move forward.
                 _parseContentIndex++;
-                _object = xmlFormat.allocate(this);
-                Object obj = xmlFormat.parse(this);
+                Object obj = parse(xmlFormat);
                 _parseContentIndex--;
                 if (hasNext())
                     incompleteReadError();
@@ -650,6 +822,107 @@ public final class XmlElement {
      }
      /**/
 
+    ////////////////////////
+    // Primitive Wrappers //
+    ////////////////////////
+    /**
+     * Searches for the specified <code>Boolean</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Boolean</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Boolean getAttribute(String name, Boolean defaultValue) {
+        CharSequence value = getAttributes().getValue(name);
+        return (value != null) ? new Boolean(TypeFormat.parseBoolean(value))
+                : defaultValue;
+    }
+
+    /**
+     * Searches for the specified <code>Byte</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Byte</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Byte getAttribute(String name, Byte defaultValue) {
+        CharSequence value = getAttributes().getValue(name);
+        return (value != null) ? new Byte(TypeFormat.parseByte(value))
+                : defaultValue;
+    }
+
+    /**
+     * Searches for the specified <code>Short</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Short</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Short getAttribute(String name, Short defaultValue) {
+        CharSequence value = getAttributes().getValue(name);
+        return (value != null) ? new Short(TypeFormat.parseShort(value))
+                : defaultValue;
+    }
+
+    /**
+     * Searches for the specified <code>Integer</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Integer</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Integer getAttribute(String name, Integer defaultValue) {
+        CharSequence value = getAttributes().getValue(name);
+        return (value != null) ? new Integer(TypeFormat.parseInt(value))
+                : defaultValue;
+    }
+
+    /**
+     * Searches for the specified <code>Long</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Long</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     */
+    public Long getAttribute(String name, Long defaultValue) {
+        CharSequence value = getAttributes().getValue(name);
+        return (value != null) ? new Long(TypeFormat.parseLong(value))
+                : defaultValue;
+    }
+
+    /**
+     * Searches for the specified <code>Float</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Float</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     /*@FLOATING_POINT@
+     public Float getAttribute(String name, Float defaultValue) {
+     CharSequence value = getAttributes().getValue(name);
+     return (value != null) ? new Float( TypeFormat.parseFloat(value) ) : defaultValue;
+     }
+     /**/
+
+    /**
+     * Searches for the specified <code>Double</code> attribute.
+     *
+     * @param  name the name of the attribute.
+     * @param  defaultValue the value returned if the attribute is not found.
+     * @return the <code>Double</code> value for the specified attribute or
+     *         the default value if the attribute is not found.
+     /*@FLOATING_POINT@
+     public Double getAttribute(String name, Double defaultValue) {
+     CharSequence value = getAttributes().getValue(name);
+     return (value != null) ? new Double( TypeFormat.parseDouble(value) ) : defaultValue;
+     }
+     /**/
+
     /**
      * Flushes the start element with the its attributes.
      */
@@ -659,6 +932,7 @@ public final class XmlElement {
         _object = null;
         _objectClass = null;
         _textBuilder.reset();
+
         if (_parser != null) { // Parsing.
             _parser.reset();
             for (int i = 0; i < _parseContents.size(); i++) {
@@ -667,11 +941,15 @@ public final class XmlElement {
             }
             _parseContentIndex = 0;
             _isParserAtNext = false;
+            _idToObject.clear();
         } else { // Formatting.
             _formatAttributes.reset();
             _formatContent.reset();
             _formatHandler = null;
+            _objectToId.clear();
+            _formatStack.clear();
         }
+
     }
 
     /**
@@ -686,25 +964,28 @@ public final class XmlElement {
 
     /**
      * Moves the parser to the next valid token.
+     * 
+     * @return the current event.
      */
-    private void nextToken() {
+    private int nextToken() {
         try {
             while (true) {
-                switch (_parser.nextToken()) {
-                    case XmlPullParser.START_TAG:
-                    case XmlPullParser.CDSECT:
+                int event = _parser.nextToken();
+                switch (event) {
+                case XmlPullParser.START_TAG:
+                case XmlPullParser.CDSECT:
+                    _isClosure = false;
+                    return event;
+                case XmlPullParser.END_TAG:
+                case XmlPullParser.END_DOCUMENT:
+                    _isClosure = true;
+                    return event;
+                case XmlPullParser.TEXT:
+                    if (!_parser.isWhitespace()) {
                         _isClosure = false;
-                        return;
-                    case XmlPullParser.END_TAG:
-                    case XmlPullParser.END_DOCUMENT:
-                        _isClosure = true;
-                        return;
-                    case XmlPullParser.TEXT:
-                        if (!_parser.isWhitespace()) {
-                            _isClosure = false;
-                            return;
-                        }
-                        break;
+                        return event;
+                    }
+                    break;
                 }
             }
         } catch (XmlPullParserException e) {
@@ -756,10 +1037,10 @@ public final class XmlElement {
         for (int i = 0; i < _packagePrefixes.size();) {
             String pfx = (String) _packagePrefixes.get(i++);
             String pkg = (String) _packagePrefixes.get(i++);
-            if (className.startsWith(pkg) && 
-                    (pkg.length() >= matchPkg.length()) &&
-                    ((alias == null) || (pfx.equals("j")))) {
-                    // For aliases only javolution uri can be used.
+            if (className.startsWith(pkg)
+                    && (pkg.length() >= matchPkg.length())
+                    && ((alias == null) || (pfx.equals("j")))) {
+                // For aliases only javolution uri can be used.
                 matchPfx = pfx;
                 matchPkg = pkg;
             }
@@ -786,10 +1067,99 @@ public final class XmlElement {
      * @param str the string to convert.
      * @return the corresponding CharSequence instance.
      */
-    private CharSequence toCharSeq(Object str) {
+    private static CharSequence toCharSeq(Object str) {
         if (str instanceof CharSequence)
             return (CharSequence) str;
         return Text.valueOf((String) str);
+    }
+
+    /**
+     * Parses this xml element using the specified format.
+     * 
+     * @param xmlFormat the xml format to use.
+     * @return the parsed object.
+     */
+    private Object parse(XmlFormat xmlFormat) {
+        if (_areReferencesEnabled && (xmlFormat.identifier(false) != null)) {
+            // Checks if reference.
+            CharSequence ref = getAttribute(xmlFormat.identifier(true));
+            if (ref != null) { // Reference.
+                Object obj = _idToObject.get(ref);
+                if (obj == null)
+                    throw new IllegalStateException("Reference " + ref
+                            + " not found.");
+                // Flushes/ignores content (if references have been expanded).
+                int depth = _parser.getDepth();
+                while ((nextToken() != XmlPullParser.END_TAG)
+                        && (_parser.getDepth() <= depth)) {
+                }
+                _isParserAtNext = true;
+                return obj;
+            }
+
+            // Not a reference.
+            _object = null;
+            Object obj = _object = xmlFormat.allocate(this);
+            CharSequence id = getAttribute(xmlFormat.identifier(false));
+            if (id != null) { // Identifier found.
+                if (obj != null) { // Stores reference now in case of circularity.
+                    _idToObject.put(Text.valueOf(id), obj);
+                    if (xmlFormat.parse(this) != obj)
+                        throw new XmlException(
+                                "Parse should return xml.object() when allocate(xml) != null");
+                    return obj;
+                } else {
+                    obj = xmlFormat.parse(this);
+                    _idToObject.put(Text.valueOf(id), obj);
+                    return obj;
+                }
+            } else { // Identifier not present, disables references for this object and its content.
+                _areReferencesEnabled = false;
+                obj = xmlFormat.parse(this);
+                _areReferencesEnabled = true;
+                return obj;
+            }
+        } else { // References disabled.
+            _object = null;
+            Object obj = _object = xmlFormat.allocate(this);
+            if (obj != null) {
+                if (xmlFormat.parse(this) != obj)
+                    throw new XmlException(
+                            "Parse should return xml.object() when allocate(xml) != null");
+                return obj;
+            } else {
+                return xmlFormat.parse(this);
+            }
+        }
+    }
+
+    /**
+     * Format the specified object to this xml element using the specified 
+     * format.
+     * 
+     * @param obj the object to format.
+     * @param xmlFormat the xml format to use.
+     */
+    private void format(Object obj, XmlFormat xmlFormat) {
+        if (_areReferencesEnabled && (xmlFormat.identifier(false) != null)) {
+            // Checks if reference exists.
+            Text ref = (Text) _objectToId.get(obj);
+            if (ref != null) { // Reference.
+                setAttribute(xmlFormat.identifier(true), ref);
+            } else { // New identifier.   
+                Text id = Text.valueOf(_objectToId.size());
+                _objectToId.put(obj, id);
+                setAttribute(xmlFormat.identifier(false), id);
+            }
+            if ((ref == null)
+                    || (_expandReferences && !_formatStack.contains(obj))) {
+                _formatStack.addLast(obj);
+                xmlFormat.format(obj, this);
+                _formatStack.removeLast();
+            }
+            return;
+        }
+        xmlFormat.format(obj, this);
     }
 
     /**
@@ -822,4 +1192,5 @@ public final class XmlElement {
     private final FastTable _parseContents;
 
     private int _parseContentIndex;
+
 }

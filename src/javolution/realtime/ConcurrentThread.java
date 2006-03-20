@@ -8,130 +8,81 @@
  */
 package javolution.realtime;
 
-import javolution.Configuration;
+import j2mex.realtime.MemoryArea;
+import j2mex.realtime.RealtimeThread;
+
 import javolution.lang.Reflection;
+import javolution.realtime.ConcurrentContext.Logic;
 
 /**
  * <p> This class represents "worker" threads employed by 
- *     {@link ConcurrentContext} to perform concurrent 
- *     {@link ConcurrentContext#execute executions} on multi-processors
- *     systems.</p>
- *     
- * <p> Instances of this class are created at start-up and maintained
- *     on-standby in order to execute quickly.</p>
- *     
- * <p> The default context for instances of this class is a {@link PoolContext},
- *     unlike normal threads for which the default context is
- *     a {@link HeapContext}.</p>
- *     
- * <p> To avoid thread proliferation, the number of instance of this class 
- *     is voluntarily limited (see <a href=
- *     "{@docRoot}/overview-summary.html#configuration">Javolution 
- *     Configuration</a> for details). Using the default configuration,
- *     only systems with Hyper-Threading or multi-processors have instances 
- *     of this class.</p> 
+ *     {@link ConcurrentContext} to perform concurrent execution 
+ *     on multi-processors systems.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.0, October 4, 2004
- * @see ConcurrentContext
+ * @version 3.7, January 1, 2006
  */
-public final class ConcurrentThread extends Thread {
+public class ConcurrentThread extends RealtimeThread {
 
-    /**
-     * Holds the maximum number of {@link ConcurrentThread}.
-     */
-    public static final int MAX = Configuration.concurrency();
-    
-    /**
-     * Holds the concurrent threads instances.
-     */
-    private static final ConcurrentThread[] INSTANCES 
-        = new ConcurrentThread[MAX];
-    static {
-        for (int i=0; i < MAX; i++) {
-            INSTANCES[i] = new ConcurrentThread(i);
-            INSTANCES[i].start();
+    private boolean _terminate;
+    private Logic _logic;
+    private Object[] _args;
+    private ConcurrentContext _context;
+    private MemoryArea _area;
+    private final PoolContext _pool = new PoolContext();
+    private final Runnable _runLogic = new Runnable() {
+        public void run() {
+            _logic.run(_args);
         }
-    }
-    
-    /**
-     * Holds the concurrent context this thread belongs to.
-     */
-    private ConcurrentContext _concurrentContext;
+    };
 
     /**
-     * Holds the number of logics to be executed.
+     * Default constructor.
      */
-    int logicsLength;
-
-    /**
-     * Holds this thread's name.
-     */
-    private final String _name;
-
-    /**
-     * Creates a new concurrent thread with the specified index.
-     * 
-     * @param index the thread index in the range [0 .. {@link #MAX}[
-     */
-    private ConcurrentThread(int index) {
-        _name = "ConcurrentThread-" + index;
+    public ConcurrentThread() {
         if (SET_DAEMON != null) {
             SET_DAEMON.invoke(this, new Boolean(true));
         }
     }
     private static final Reflection.Method SET_DAEMON 
-        = Reflection.getMethod("java.lang.Thread.setDaemon(bool)");
-    
-
-    /**
-     * Requests for all {@link ConcurrentThread} available to execute the logics
-     * of the specified concurrent context.
-     *
-     * @return the actual number of threads working for this concurrent context.
-     */
-    static int execute(ConcurrentContext concurrentContext) {
-        int concurrency = 0;
-        if (MAX > 0) { 
-            synchronized (INSTANCES) {
-                for (int i=0; i < MAX; i++) {
-                    if (INSTANCES[i]._concurrentContext == null) {
-                        synchronized (INSTANCES[i]) {
-                            INSTANCES[i]._concurrentContext = concurrentContext;
-                            INSTANCES[i].notify();
-                        }
-                        concurrency++;
-                    }
-                }
-            }
-        }
-        return concurrency;
-    }
+        = Reflection.getMethod("java.lang.Thread.setDaemon(boolean)");
 
     /**
      * Overrides parent's <code>run</code> method.
      */
-    public void run() {
-        PoolContext rootContext = (PoolContext) Context.currentContext();
-        rootContext.inheritedPoolContext = rootContext;
+    public final void run() {
         while (true) {
-           try {
-               synchronized (this) {
-                    while (_concurrentContext == null) {
+            synchronized (this) {
+                while ((_logic == null) && (!_terminate)) {
+                    try {
                         this.wait();
+                    } catch (InterruptedException e) {
+                        throw new ConcurrentException(e);
                     }
+                }
+           }
+           if (_logic == null) return; // Terminate.
+           try {
+               Thread parent = _context.getOwner();
+               Thread.currentThread().setPriority(parent.getPriority());
+               Context.setCurrent(_pool, _context);
+               try {
+                   _area.executeInArea(_runLogic);
+               } finally {
+                   _pool.recyclePools();
                }
-               rootContext.setOuter(_concurrentContext);
-               rootContext.inheritedLocalContext 
-                    = _concurrentContext.inheritedLocalContext;
-               while (_concurrentContext.executeNext()) {
-                   rootContext.recyclePools();
-               }
-           } catch (Throwable e) {
-               e.printStackTrace();   
+           } catch (Throwable error) {
+               _context.setError(error);
            } finally {
-               synchronized (INSTANCES) {  
-                   _concurrentContext = null; // Thread available again.
+               _context.decreaseActiveCount();
+               synchronized (this) {
+                   for (int i=0; i < _args.length;) {
+                       _args[i++] = null;
+                   }
+                   _logic = null;
+                   _context = null;
+                   _area = null;
+                   this.notify();
                }
            }
         }
@@ -141,6 +92,170 @@ public final class ConcurrentThread extends Thread {
      * Overrides parent's <code>toString</code> method.
      */
     public String toString() {
-        return _name;
+        return "Concurrent-" + super.toString();
+    }
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args = _args0;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args0 = new Object[0];
+    
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args1[0] = arg0;
+                _args = _args1;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args1 = new Object[1];
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, Object arg1, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args2[0] = arg0;
+                _args2[1] = arg1;
+                _args = _args2;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args2 = new Object[2];
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, Object arg1, Object arg2, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args3[0] = arg0;
+                _args3[1] = arg1;
+                _args3[2] = arg2;
+                _args = _args3;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args3 = new Object[3];
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, Object arg1, Object arg2, Object arg3, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args4[0] = arg0;
+                _args4[1] = arg1;
+                _args4[2] = arg2;
+                _args4[3] = arg3;
+                _args = _args4;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args4 = new Object[4];
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, Object arg1, Object arg2, Object arg3, Object arg4, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args5[0] = arg0;
+                _args5[1] = arg1;
+                _args5[2] = arg2;
+                _args5[3] = arg3;
+                _args5[4] = arg4;
+                _args = _args5;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args5 = new Object[5];
+
+    /**
+     * Executes the specified logic asynchronously.
+     */
+    boolean execute(Logic logic, Object arg0, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, ConcurrentContext context, MemoryArea area) {
+        synchronized (this) {
+            if ((_logic == null) && (!_terminate)) {
+                _logic = logic;
+                _args6[0] = arg0;
+                _args6[1] = arg1;
+                _args6[2] = arg2;
+                _args6[3] = arg3;
+                _args6[4] = arg4;
+                _args6[5] = arg5;
+                _args = _args6;
+                _context = context;
+                _area = area;
+                this.notify();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    private final Object[] _args6 = new Object[6];
+
+    /**
+     * Terminates this thread (called when holder context is disposed).
+     */
+    public void terminate() {
+        synchronized (this) {
+            _terminate = true;
+            this.notify();
+        }
     }
 }

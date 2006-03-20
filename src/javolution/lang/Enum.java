@@ -10,6 +10,7 @@ package javolution.lang;
 
 import j2me.io.Serializable;
 import j2me.lang.Comparable;
+import j2mex.realtime.MemoryArea;
 
 import javolution.util.FastMap;
 
@@ -69,15 +70,23 @@ public abstract class Enum implements Comparable, Serializable {
         _name = name;
         _ordinal = ordinal;
         synchronized (CLASS_TO_ENUMS) {
-            FastMap nameToEnum = (FastMap) CLASS_TO_ENUMS.get(this.getClass());
-            if (nameToEnum == null) {
-                nameToEnum = new FastMap();
-                CLASS_TO_ENUMS.put(this.getClass(), nameToEnum);
-            }
-            Object prev = nameToEnum.put(name, this);
-            if (prev != null) {
-                throw new IllegalArgumentException("Duplicate enum " + name);
-            }
+            MemoryArea.getMemoryArea(CLASS_TO_ENUMS).executeInArea(
+                    new Runnable() {
+                        public void run() {
+                            FastMap nameToEnum = (FastMap) CLASS_TO_ENUMS
+                                    .get(Enum.this.getClass());
+                            if (nameToEnum == null) {
+                                nameToEnum = new FastMap();
+                                CLASS_TO_ENUMS.put(Enum.this.getClass(),
+                                        nameToEnum);
+                            }
+                            Object prev = nameToEnum.put(_name, Enum.this);
+                            if (prev != null) {
+                                throw new IllegalArgumentException(
+                                        "Duplicate enum " + _name);
+                            }
+                        }
+                    });
         }
     }
 
@@ -155,5 +164,5 @@ public abstract class Enum implements Comparable, Serializable {
         }
         throw new IllegalArgumentException(enumType + "." + name + " not found");
     }
- 
+
 }

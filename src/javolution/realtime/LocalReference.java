@@ -8,34 +8,23 @@ import javolution.util.FastMap;
  * <p> This class represents a reference whose setting is local to the current 
  *     {@link LocalContext}; setting outside of any {@link LocalContext} scope 
  *     affects the reference default value (equivalent to {@link #setDefault}).
- *     For example:<pre>
- *     import org.jscience.physics.units.*;
- *     public class Length {
- *         private static final LocalReference&lt;Unit&gt; OUTPUT_UNIT 
- *             = new LocalReference&lt;Unit&gt;(SI.METER); // Default value.
+ *     For example:[code]
+ *     public class Foo {
+ *         public static final LocalReference<TextFormat<Foo>> FORMAT 
+ *             = new LocalReference<TextFormat<Foo>>(DEFAULT_FORMAT);
  *             
- *         // Sets of output unit for Length instances.
- *         public static showAs(Unit unit) {
- *             OUTPUT_UNIT.set(unit);
- *         }
- *         public Text toText() {
- *              return QuantityFormat.getInstance().format(this, OUTPUT_UNIT.get());
+ *         public Text toString() {
+ *              return FORMAT.get().format(this).toString();
  *         }     
  *     }
  *     ...
- *     public static void main(String[] args) {
- *          // Sets the default length output unit to Inches.
- *          Length.showAs(NonSI.INCH); //  Affects all threads.
- *     }
- *     ...
- *     Vector result ... // Shows result with Length stated in kilometers.
  *     LocalContext.enter();
  *     try {
- *        Length.showAs(SI.KILO(SI.METER)); // Affects the local thread only.
- *        System.out.println(result);
+ *        Foo.FORMAT.set(localFormat);
+ *        ... // This thread displays Foo instances using localFormat. 
  *     } finally {
- *        LocalContext.exit();
- *     }</pre></p>
+ *        LocalContext.exit(); // Reverts to previous format.
+ *     }[/code]</p>
  *     
  * <p> Accessing/setting a local reference is fast and does not require 
  *     any form of synchronization. Local settings are inherited by 
@@ -84,7 +73,7 @@ public class LocalReference/*<T>*/implements Reference/*<T>*/, Serializable {
     }
 
     private Object/*T*/retrieveValue() {
-        for (LocalContext ctx = LocalContext.currentLocalContext(); ctx != null; ctx = ctx
+        for (LocalContext ctx = Context.current().inheritedLocalContext; ctx != null; ctx = ctx
                 .getOuter().inheritedLocalContext) {
             Object value = ctx._references.get(this);
             if (value != null) {
@@ -102,7 +91,7 @@ public class LocalReference/*<T>*/implements Reference/*<T>*/, Serializable {
      *        the outer value.
      */
     public void set(Object/*T*/value) {
-        LocalContext ctx = LocalContext.currentLocalContext();
+        LocalContext ctx = Context.current().inheritedLocalContext;
         if (ctx != null) {
             FastMap references = ctx._references;
             references.put(this, value);
@@ -129,7 +118,7 @@ public class LocalReference/*<T>*/implements Reference/*<T>*/, Serializable {
      *         inherited or not set).
      */
     public Object/*T*/getLocal() {
-        LocalContext ctx = LocalContext.currentLocalContext();
+        LocalContext ctx = Context.current().inheritedLocalContext;
         return (ctx != null) ? (Object/*T*/) ctx._references.get(this)
                 : _defaultValue;
     }
@@ -141,5 +130,15 @@ public class LocalReference/*<T>*/implements Reference/*<T>*/, Serializable {
      */
     public void setDefault(Object/*T*/defaultValue) {
         _defaultValue = defaultValue;
+    }
+    
+    /**
+     * Returns the string representation of the current value of this 
+     * reference.
+     *
+     * @return <code>String.valueOf(this.get())</code>
+     */
+    public String toString() {
+        return String.valueOf(this.get());
     }
 }

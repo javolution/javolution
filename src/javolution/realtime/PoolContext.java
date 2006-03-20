@@ -8,6 +8,13 @@
  */
 package javolution.realtime;
 
+import j2mex.realtime.MemoryArea;
+import javolution.lang.Reflection;
+import javolution.util.FastMap;
+import javolution.xml.XmlElement;
+import javolution.xml.XmlException;
+import javolution.xml.XmlFormat;
+
 /**
  * <p> This class represents a pool context; it is used to recycle objects 
  *     transparently, reduce memory allocation and avoid garbage collection.</p>
@@ -28,32 +35,69 @@ package javolution.realtime;
  *     effect on garbarge collection) and often lead to safer, faster and
  *     more robust applications.</p>
  *     
- * <p> Upon thread termination, pool objects associated to a thread are 
- *     candidate for garbage collection (the "export rule" guarantees that these
- *     objects are not referenced anymore). They will be collected after 
- *     the thread finalization. It is also possible to move all pools' objects 
- *     to the heap directly (for early garbage collection) by calling the 
- *     {@link PoolContext#clear} method.</p>
+ * <p> Finally, the framework guarantees that all pool objects belongs to 
+ *     the same memory area (the memory area where the pool context resides).
+ *     In other words, pool contexts allocated in ImmortalMemory can safely 
+ *     be used by <code>NoHeapRealtimeThread</code> executing in 
+ *     <code>ScopedMemory</code>.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, September 24, 2005
+ * @version 3.7, January 1, 2006
  */
 public class PoolContext extends Context {
 
     /**
+     * Holds the XML representation for pool contexts. It holds the sizes of 
+     * the pool being used in order to repopulate these pools during
+     * deserialization.
+     */
+    protected static final XmlFormat XML = new XmlFormat("javolution.realtime.PoolContext") {
+        public void format(Object obj, XmlElement xml) {
+            PoolContext ctx = (PoolContext) obj;
+            FastMap pools = FastMap.newInstance();
+            for (int i = ObjectFactory.Count; --i >= 0;) {
+                int size = ctx._pools[i].size();
+                if (size > 0) {
+                    pools.put(ObjectFactory.INSTANCES[i].getClass(), new Integer(size));
+                }
+            }
+            xml.add(pools);
+        }
+
+        public Object parse(XmlElement xml) {
+            PoolContext ctx = (PoolContext) xml.object();
+            FastMap pools = (FastMap) xml.getNext();
+            for (FastMap.Entry e=pools.head(), end = pools.tail(); (e=(FastMap.Entry)e.getNext())!= end;) {
+                Class factoryClass = (Class) e.getKey();
+                int size = ((Integer)e.getValue()).intValue();
+                ObjectFactory factory = ObjectFactory.getInstance(factoryClass);
+                if (factory == null) throw new XmlException("Factory for class " + factoryClass + " not found");
+                ObjectPool pool = factory.newPool();
+                while (pool.size() < size) {
+                    pool.next();
+                }
+                pool.recycleAll();
+                ctx._pools[factory._index] = pool;
+            }
+            return ctx;
+        }
+    };
+    
+    /**
      * Holds the class object (cannot use .class with j2me).
      */
-    private static final Class CLASS = new PoolContext(0).getClass();
+    private static final Class CLASS = Reflection
+            .getClass("javolution.realtime.PoolContext");
 
     /**
      * Holds the pools for this context.
      */
-    final ObjectPool[] _pools;
+    final ObjectPool[] _pools = new ObjectPool[ObjectFactory.MAX];
 
     /**
      * Holds the pools in use.
      */
-    private final ObjectPool[] _inUsePools;
+    private final ObjectPool[] _inUsePools = new ObjectPool[ObjectFactory.MAX]; 
 
     /**
      * Holds the number of pools used.
@@ -64,24 +108,24 @@ public class PoolContext extends Context {
      * Default constructor.
      */
     public PoolContext() {
-        this(ObjectFactory.MAX);
-    }
-
-    /**
-     * Creates of pool context of specified capacity.
-     * 
-     * @param capacity the maximum number of pool.
-     */
-    private PoolContext(int capacity) {
-        _pools = new ObjectPool[capacity];
-        _inUsePools = new ObjectPool[capacity];
         for (int i = _pools.length; i > 0;) {
             _pools[--i] = ObjectPool.NULL;
         }
     }
 
     /**
-     * Enters a {@link PoolContext}.
+     * Returns the current pool context or <code>null<code> if the current
+     * thread does not execute within a pool context.  
+     *
+     * @return the current pool context.
+     */
+    public static/*PoolContext*/Context current() {
+        return Context.current().inheritedPoolContext;
+    }
+
+    /**
+     * Enters a {@link PoolContext} allocated in the same memory area
+     * as the memory area of the current context.
      */
     public static void enter() {
         Context.enter(PoolContext.CLASS);
@@ -95,16 +139,6 @@ public class PoolContext extends Context {
      */
     public static void exit() {
         Context.exit(PoolContext.CLASS);
-    }
-
-    /**
-     * Returns the current pool context or <code>null<code> if the current
-     * thread does not execute within a pool context.  
-     *
-     * @return the current pool context.
-     */
-    public static PoolContext currentPoolContext() {
-        return Context.currentContext().inheritedPoolContext;
     }
 
     /**
@@ -176,12 +210,15 @@ public class PoolContext extends Context {
      * @param index the factory index of the pool to return.
      * @return the corresponding pool. 
      */
-    private ObjectPool getPool(int index) {
+    private ObjectPool getPool(final int index) {
         ObjectPool pool = _pools[index];
         if (pool == ObjectPool.NULL) { // Creates pool.
-            pool = ObjectFactory.INSTANCES[index].newPool();
-            _pools[index] = pool;
+            MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+                public void run() {
+                    _pools[index] = ObjectFactory.INSTANCES[index].newPool();
+                }});
         }
+        pool = _pools[index];
         if (!pool.inUse) { // Marks it used and set its outer.
             pool.inUse = true;
             _inUsePools[_inUsePoolsLength++] = pool;

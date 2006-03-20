@@ -58,11 +58,14 @@ public final class XMLReaderImpl implements XMLReader {
     private final XmlSaxParserImpl _parser = new XmlSaxParserImpl();
 
     /**
+     * Holds the content handler proxy.
+     */
+    private final Proxy _proxy = new Proxy();
+
+    /**
      * Default constructor.
      */
     public XMLReaderImpl() {
-        Proxy proxy = new Proxy();
-        _parser.setContentHandler(proxy);
     }
 
     // Implements XMLReader
@@ -112,8 +115,8 @@ public final class XMLReaderImpl implements XMLReader {
     // Implements XMLReader
     public void setContentHandler(ContentHandler handler) {
         if (handler != null) {
-            Proxy proxy = (Proxy) _parser.getContentHandler();
-            proxy._sax2Handler = handler;
+            _proxy._sax2Handler = handler;
+            _parser.setContentHandler(_proxy);
         } else {
             throw new NullPointerException();
         }
@@ -121,9 +124,8 @@ public final class XMLReaderImpl implements XMLReader {
 
     // Implements XMLReader
     public ContentHandler getContentHandler() {
-        Proxy proxy = (Proxy) _parser.getContentHandler();
-        return (proxy._sax2Handler == DEFAULT_HANDLER) ? null
-                : proxy._sax2Handler;
+        return (_proxy._sax2Handler == DEFAULT_HANDLER) ? null
+                : _proxy._sax2Handler;
     }
 
     // Implements XMLReader
@@ -220,6 +222,7 @@ public final class XMLReaderImpl implements XMLReader {
         // Implements ContentHandler
         public void endDocument() throws SAXException {
             _sax2Handler.endDocument();
+            _sax2Handler = DEFAULT_HANDLER;
         }
 
         // Implements ContentHandler

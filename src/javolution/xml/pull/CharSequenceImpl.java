@@ -24,9 +24,9 @@ import javolution.util.FastComparator;
 final class CharSequenceImpl implements CharSequence, Comparable {
 
     /**
-     * Holds the associated factory.
+     * Holds the associated factory (for subSequence).
      */
-    static final ObjectFactory FACTORY = new ObjectFactory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             return new CharSequenceImpl();
         }
@@ -194,12 +194,11 @@ final class CharSequenceImpl implements CharSequence, Comparable {
     public boolean equals(String str) {
         if (str == null)
             return false;
-        if (this.length != str.length())
+        if (length != str.length())
             return false;
         for (int i = 0, j = offset; i < length;) {
             if (data[j++] != str.charAt(i++))
                 return false;
-
         }
         return true;
     }

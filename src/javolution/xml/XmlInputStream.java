@@ -32,7 +32,7 @@ public class XmlInputStream/*<T>*/ extends InputStream implements Reusable {
     /**
      * Holds the object reader.
      */
-    private final ObjectReader/*<T>*/ _objectReader = new ObjectReader/*<T>*/();
+    private final ObjectReader/*<T>*/ _objectReader;
 
     /**
      * Holds the xml reader used for parsing.
@@ -43,6 +43,16 @@ public class XmlInputStream/*<T>*/ extends InputStream implements Reusable {
      * Default constructor.
      */
     public XmlInputStream() {
+    	this(new ObjectReader/*<T>*/());
+    }
+    
+    /**
+     * Creates a xml input stream using the specified object reader.
+     * 
+     * @param reader the object reader.
+     */
+    public XmlInputStream(ObjectReader/*<T>*/ reader) {
+    	_objectReader = reader;
     }
     
     /**
