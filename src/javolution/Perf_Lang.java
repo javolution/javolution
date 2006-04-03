@@ -20,7 +20,7 @@ import javolution.realtime.PoolContext;
  */
 final class Perf_Lang extends Javolution implements Runnable {
 
-    private static final int COUNT = 1000;
+    static volatile int COUNT = 1000; // Volatile to avoid loop unrolling.
 
     private final String STRING = "Concatenates this line 1000 times (resulting in a text of about 80,000 characters)";
 
@@ -45,7 +45,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         print("String \"+\" operator: ");
         startTime();
         String str = "";
-        for (int j = 0; j < COUNT; j++) {
+        for (int j = COUNT; --j >= 0;) {
             str += STRING;
         }
         println(endTime(1));
@@ -54,7 +54,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             StringBuffer sb = new StringBuffer();
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 sb.append(STRING);
             }
         }
@@ -64,7 +64,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             Text txt = Text.EMPTY;
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 txt = txt.concat(TEXT);
             }
         }
@@ -75,7 +75,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             PoolContext.enter();
             Text txt = Text.EMPTY;
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 txt = txt.concat(TEXT);
             }
             PoolContext.exit();
@@ -89,7 +89,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             StringBuffer sb = new StringBuffer(str);
-            for (int j = 1; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, sb.length());
                 sb.insert(index, 'X');
             }
@@ -100,7 +100,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             Text txt = Text.valueOf(str);
-            for (int j = 1; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, txt.length());
                 txt = txt.insert(index, ONE_CHAR);
             }
@@ -112,7 +112,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             PoolContext.enter();
             Text txt = Text.valueOf(str);
-            for (int j = 1; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, txt.length());
                 txt = txt.insert(index, ONE_CHAR);
             }
@@ -127,7 +127,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             StringBuffer sb = new StringBuffer(str); 
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, sb.length() - 1);
                 sb.deleteCharAt(index);
             }
@@ -138,7 +138,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         startTime();
         for (int i = 0; i < 100; i++) {
             Text txt = Text.valueOf(str);
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, txt.length() - 1);
                 txt = txt.delete(index, index + 1);
             }
@@ -150,7 +150,7 @@ final class Perf_Lang extends Javolution implements Runnable {
         for (int i = 0; i < 100; i++) {
             PoolContext.enter();
             Text txt = Text.valueOf(str);
-            for (int j = 0; j < COUNT; j++) {
+            for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.randomInt(0, txt.length() - 1);
                 txt = txt.delete(index, index + 1);
             }

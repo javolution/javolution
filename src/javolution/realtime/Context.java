@@ -125,8 +125,13 @@ public abstract class Context {
      * @return the current context (always different from <code>null</code>).
      */
     public static Context current() {
-        return (Context) Context.CURRENT.get();
+        Context ctx = Context.Cache;
+        return ctx._owner == Thread.currentThread() ?
+                ctx : (Context.Cache = (Context) Context.CURRENT.get());
     }
+    // Holds the latest context accessed and set (hopefully in cache memory).
+    private static Context Cache = (Context) Context.CURRENT.get();
+
 
     /**
      * Returns the current owner of this context. The owner of a
@@ -183,6 +188,7 @@ public abstract class Context {
         context._outer = current;
         context._owner = current._owner;
         Context.CURRENT.set(context);
+        Context.Cache = context;
         context.inheritedPoolContext = current.inheritedPoolContext;
         context.inheritedLocalContext = current.inheritedLocalContext;
         context.enterAction();
@@ -205,6 +211,7 @@ public abstract class Context {
             context.exitAction();
         } finally {
             Context.CURRENT.set(context._outer);
+            Context.Cache = context._outer;
             context._outer = null;
             context._owner = null;
         }
@@ -255,6 +262,7 @@ public abstract class Context {
 
         // Sets as current.
         Context.CURRENT.set(context);
+        Context.Cache = context;
         context.enterAction();
         return context;
     }
@@ -280,6 +288,7 @@ public abstract class Context {
             return current;
         } finally {
             Context.CURRENT.set(outer);
+            Context.Cache = outer;
             current._outer = null;
             current._owner = null;
         }
@@ -293,8 +302,36 @@ public abstract class Context {
         ((Context)context)._outer = outer;
         ((Context)context)._owner = Thread.currentThread();
         Context.CURRENT.set(context);
+        Context.Cache = context;
         context.inheritedPoolContext = context;
         context.inheritedLocalContext = outer.inheritedLocalContext;
     }
 
+    /**
+     * Returns the current pool context. 
+     *
+     * @param currentThread the current thread.
+     * @return the current pool context or <code>null</code> if the current 
+     *         thread allocates on the heap.
+     */
+    static PoolContext poolContext(Thread currentThread) {
+        Context ctx = Context.Cache;
+        return ctx._owner == currentThread ?
+                ctx.inheritedPoolContext : 
+                    (Context.Cache = (Context) Context.CURRENT.get()).inheritedPoolContext;
+    }
+
+    /**
+     * Returns the current local context. 
+     *
+     * @param currentThread the current thread.
+     * @return the current local context or <code>null</code> if the current 
+     *         thread does not run in a local context.
+     */
+    static LocalContext localContext(Thread currentThread) {
+        Context ctx = Context.Cache;
+        return ctx._owner == currentThread ?
+                ctx.inheritedLocalContext : 
+                    (Context.Cache = (Context) Context.CURRENT.get()).inheritedLocalContext;
+    }
 }

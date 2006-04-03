@@ -53,7 +53,7 @@ public class Javolution {
      * @throws Exception if a problem occurs.
      */
     public static void main(String[] args) throws Exception {        
-       println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
+        println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
         println("Version " + VERSION + " (http://javolution.org)");
         println("");
         if (args.length > 0) {

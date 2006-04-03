@@ -64,7 +64,7 @@ public class LocalContext extends Context {
      * @return the current local context.
      */
     public static/*LocalContext*/Context current() {
-        return Context.current().inheritedLocalContext;
+        return Context.localContext(Thread.currentThread());
     }
 
     /**

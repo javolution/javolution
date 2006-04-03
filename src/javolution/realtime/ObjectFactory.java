@@ -8,7 +8,6 @@
  */
 package javolution.realtime;
 
-
 import javolution.Configuration;
 import javolution.JavolutionError;
 import javolution.lang.ClassInitializer;
@@ -112,20 +111,10 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a recycled, pre-allocated or new factory object.
      */
     public Object/*T*/object() {
-        return object(Context.current().inheritedPoolContext);
-    }
-
-    /**
-     * Returns a factory object from the specified pool context.
-     * If a new object has to be created, it is allocated from the same 
-     * memory area as the specified pool.
-     * 
-     * @param pool the pool context 
-     * @return a recycled, pre-allocated or new factory object.
-     */
-    public final Object/*T*/object(PoolContext pool) {
-        return (pool != null) ? (Object/*T*/) pool.getLocalPool(_index).next()
-                : create();
+        final PoolContext poolContext = Context.poolContext(Thread
+                .currentThread());
+        return (poolContext == null) ? create() : (Object/*T*/) poolContext
+                .getLocalPool(_index).next();
     }
 
     /**
@@ -135,7 +124,7 @@ public abstract class ObjectFactory/*<T>*/{
      * @return the local pool or a pool representing the heap. 
      */
     public final ObjectPool/*<T>*/currentPool() {
-        PoolContext poolContext = Context.current().inheritedPoolContext;
+        PoolContext poolContext = Context.poolContext(Thread.currentThread());
         return (poolContext != null) ? (ObjectPool/*<T>*/) poolContext
                 .getLocalPool(_index) : _heapPool;
     }
@@ -181,7 +170,7 @@ public abstract class ObjectFactory/*<T>*/{
      * 
      * @return the corresponding factory or <code>null</code>.
      */
-    static ObjectFactory getInstance(Class factoryClass)  {
+    static ObjectFactory getInstance(Class factoryClass) {
         // Ensures that enclosing class if any is initialized.
         String className = factoryClass.getName();
         int sep = className.lastIndexOf('$');
@@ -189,8 +178,8 @@ public abstract class ObjectFactory/*<T>*/{
             ClassInitializer.initialize(className.substring(0, sep));
         }
         ClassInitializer.initialize(factoryClass);
-        for (int i=0; i < ObjectFactory.Count; i++) {
-            if (INSTANCES[i].getClass().equals(factoryClass)) 
+        for (int i = 0; i < ObjectFactory.Count; i++) {
+            if (INSTANCES[i].getClass().equals(factoryClass))
                 return INSTANCES[i];
         }
         return null;
@@ -283,7 +272,7 @@ public abstract class ObjectFactory/*<T>*/{
             } else { // Object creation in the same memory area as the pool.
                 _memoryArea.executeInArea(new Runnable() {
                     public void run() {
-                        _node = new Node ();
+                        _node = new Node();
                         _node._object = create();
                     }
                 });
@@ -296,6 +285,7 @@ public abstract class ObjectFactory/*<T>*/{
             _usedNodes = _node;
             return _node._object;
         }
+
         private Node _node;
 
         // Implements ObjectPool abstract method.
@@ -303,7 +293,7 @@ public abstract class ObjectFactory/*<T>*/{
             // Cleanups object.
             if (_doCleanup) {
                 try {
-                    cleanup((Object/*T*/)obj);
+                    cleanup((Object/*T*/) obj);
                 } catch (UnsupportedOperationException ex) {
                     _doCleanup = false;
                 }
@@ -344,7 +334,7 @@ public abstract class ObjectFactory/*<T>*/{
             if (_doCleanup) {
                 try {
                     for (Node node = _usedNodes; node != null;) {
-                        cleanup((Object/*T*/)node._object);
+                        cleanup((Object/*T*/) node._object);
                         node = node._next;
                     }
                 } catch (UnsupportedOperationException ex) {

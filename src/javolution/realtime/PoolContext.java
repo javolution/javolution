@@ -120,7 +120,7 @@ public class PoolContext extends Context {
      * @return the current pool context.
      */
     public static/*PoolContext*/Context current() {
-        return Context.current().inheritedPoolContext;
+        return Context.poolContext(Thread.currentThread());
     }
 
     /**

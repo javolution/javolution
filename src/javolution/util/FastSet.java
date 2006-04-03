@@ -12,7 +12,6 @@ import java.io.IOException;
 
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
-import j2me.lang.UnsupportedOperationException;
 import j2me.util.Collection;
 import j2me.util.Set;
 import javolution.lang.Reusable;

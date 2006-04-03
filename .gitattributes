@@ -257,6 +257,7 @@ src/javolution/util/LocalMap.java -text
 src/javolution/util/ReentrantLock.java -text
 src/javolution/util/StandardLog.java -text
 src/javolution/util/doc-files/.xvpics/map-put.png -text
+src/javolution/util/doc-files/list-add.png -text
 src/javolution/util/doc-files/map-put.png -text
 src/javolution/util/package.html -text
 src/javolution/xml/CharacterData.java -text

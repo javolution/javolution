@@ -8,7 +8,6 @@
  */
 package javolution.realtime;
 
-
 import j2me.lang.UnsupportedOperationException;
 import j2mex.realtime.MemoryArea;
 import javolution.lang.Text;
@@ -154,7 +153,8 @@ public abstract class RealtimeObject implements Realtime {
             if ((_pool == null) || (!_pool.isLocal()))
                 return false; // Not on the stack.
             Pool outer = (Pool) _pool.outer;
-            if (outer == null) return move(ObjectSpace.HEAP);
+            if (outer == null)
+                return move(ObjectSpace.HEAP);
             detach();
             // Exchanges with outer.
             synchronized (outer) { // Might be shared.
@@ -169,7 +169,8 @@ public abstract class RealtimeObject implements Realtime {
 
         } else if (os == ObjectSpace.HEAP) { // moveHeap()
             synchronized (this) { // Might not be local.
-                if (_pool == null) return false; // Already on the heap.
+                if (_pool == null)
+                    return false; // Already on the heap.
                 synchronized (_pool) { // Might be shared. 
                     detach();
                     _pool._size--; // Object removed from pool.
@@ -177,14 +178,15 @@ public abstract class RealtimeObject implements Realtime {
                     _previous = null;
                     _pool = null;
                     return true;
-               }
+                }
             }
 
         } else if (os == ObjectSpace.HOLD) { // preserve()
             synchronized (this) { // Might not be local.
-                if (_pool == null) return false; // On the heap.
+                if (_pool == null)
+                    return false; // On the heap.
                 if (_preserved++ == 0) {
-                    synchronized (_pool) {  // Might be shared.
+                    synchronized (_pool) { // Might be shared.
                         detach();
                         insertBefore(_pool._holdTail);
                     }
@@ -278,20 +280,20 @@ public abstract class RealtimeObject implements Realtime {
          *         executing in a pool context.
          */
         public final Object/*T*/object() {
+            final Thread currentThread = Thread.currentThread();
             Pool pool = _cachedPool;
-            if (pool.user == Thread.currentThread()) {
-                // Inline next()
+            if (pool.user == currentThread) { // Inline next()
                 final RealtimeObject next = pool._next;
                 return (Object/*T*/) (((pool._next = next._next) != null) ? next
                         : pool.allocate());
             }
-            final ObjectPool currentPool = currentPool();
-            if (currentPool == heapPool()) {
-                return create(); // We don't preallocate heap objects.
-            } else {
-                _cachedPool = pool = (Pool) currentPool;
-                return (Object/*T*/)pool.next();
-            }
+            final PoolContext poolContext = Context.poolContext(currentThread);
+            if (poolContext == null)
+                return create();
+            pool = (Pool) poolContext.getLocalPool(_index);
+            Object/*T*/ obj = (Object/*T*/) pool.next();
+            _cachedPool = pool; // Do it last.
+            return obj;
         }
 
         // Overrides.

@@ -335,7 +335,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><IMG SRC="css/img/new.gif"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16">Javolution Version 3.7.6 - March 19, 2006</SPAN></DIV>
+         CLASS="style16">Javolution Version 3.7.8 - March 31, 2006</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -343,10 +343,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-3.7.6-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-3.7.8-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-3.7.6-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-3.7.8-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -481,7 +481,7 @@ body {
       <BR> java -jar javolution.jar test (performs self-tests) 
       <BR> java -jar javolution.jar perf (runs benchmark) </H4><I><A
          HREF="http://javolution.org/doc/benchmark.html">Here</A> are the benchmark results 
-         on Linux and Windows platforms.</I> </TD>
+         on Windows platforms.</I> </TD>
       </TR>
    </TABLE>
 
@@ -719,9 +719,14 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
-         <LI CLASS="simplespacer_body"><B> March 19, 2006: Javolution 3.7.6</B><BR>
-         Allows <A HREF="api/javolution/util/FastCollection.html">FastCollection</A> unmodifiable() method
-         to return more specialized types, e.g. <code>FastSet.unmodifiable()</code> returns an unmodifiable Set,
+         <LI CLASS="simplespacer_body"><B> March 31, 2006: Javolution 3.7.8</B><BR>
+         Added sorting capabilities (quick sort) to <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.7.8]<BR>
+         Shared <A HREF="api/javolution/util/FastMap.html">FastMap</A> are now valid to 
+         substitute to <code>ConcurrentHashMap</code> 
+         (see <A HREF="api/javolution/util/package-summary.html#FAQ">util FAQ</A>) [3.7.7]<BR>
+         Benchmark <A HREF="http://javolution.org/doc/benchmark.html">results</A> with Mustang VM (JDK1.6-Beta2) [3.7.6]<BR>
+         <A HREF="api/javolution/util/FastCollection.html">FastCollection.unmodifiable()</A> may 
+         return more specialized types, e.g. <code>FastSet.unmodifiable()</code> returns an unmodifiable Set,
          <code>FastList.unmodifiable()</code> returns an unmodifiable List, etc.  [3.7.6]<BR>
          Added persistent constructor to 
          <A HREF="api/javolution/util/FastMap.html">FastMap</A>,
@@ -729,8 +734,6 @@ body {
          <A HREF="api/javolution/util/FastList.html">FastList</A> and
          <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.7.5]<BR>
          Added the <A HREF="api/javolution/lang/Immutable.html">Immutable</A> tagging interface [3.7.3]<BR>
-         Changed shared <A HREF="api/javolution/util/FastMap.html">FastMap</A> semantic to 
-         support non-blocking lookup table in <code>ImmortalMemory</code> [3.7.2]<BR>
          <I><B>J</B>avolution</I> is now the first library to be fully integrated with 
          the RTSJ Memory Model. If any container (collection, context, etc.) 
          is allocated in a non-heap memory area and its capacity increases,
@@ -831,7 +834,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : March 19, 2006<BR>
+      Revision      : March 31, 2006<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

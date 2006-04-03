@@ -189,7 +189,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public Object/*V*/remove(Object key) {
-        return localMap().remove(key);
+        return put((Object/*K*/)key, null);
     }
 
     /**
@@ -197,7 +197,10 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * <code>null</code>).
      */
     public void clear() {
-        localMap().clear();
+        FastMap localMap = localMap();
+        for (FastMap.Entry e = localMap.head(), end = localMap.tail(); (e = (FastMap.Entry) e.getNext()) != end;) {
+            e.setValue(null);
+        }
     }
 
     /**

@@ -27,6 +27,7 @@ import javolution.realtime.RealtimeObject;
  *     smooth capacity increase (no array resize/copy ever) and no memory 
  *     allocation as long as the collection size does not exceed its initial
  *     capacity.</p>
+ *     <img src="doc-files/list-add.png"/>
  *     
  * <p> This class has the following advantages over the widely used 
  *     <code>java.util.ArrayList</code>:<ul>
@@ -47,6 +48,10 @@ import javolution.realtime.RealtimeObject;
  *     for (int i = 0, n = table.size(); i < n; i++) {
  *          table.get(i);
  *     }[/code]</p>
+ *     
+ *  <p> {@link FastTable} supports {@link #sort sorting} in place (quick sort) 
+ *      using the {@link FastCollection#getValueComparator() value comparator}
+ *      for the table (no object or array allocation when sorting).</p> 
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
@@ -291,14 +296,17 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     // Overrides.
     public final void clear() {
-        for (int i = 0; i < _size; i += C0) {
+        final int size = _size;
+        _size = 0;
+        final int blockSize = Math.min(size, C0);
+        for (int i = 0; i < size; i += C0) {
             final Object/*E*/[] elems = (i < C1) ? _elems1[(i >> R1)]
                     : (i < C2) ? _elems2[(i >> R2)][(i >> R1) & M1]
                             : _elems3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
-            System.arraycopy(NULL_BLOCK, 0, elems, 0, C0);
+            System.arraycopy(NULL_BLOCK, 0, elems, 0, blockSize);
         }
-        _size = 0;
     }
+
     private static final Object[] NULL_BLOCK = (Object[]) new Object[C0];
 
     /**
@@ -560,6 +568,50 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         }
     }
 
+    /**
+     * Sorts this table in place (quick sort) using this table 
+     * {@link FastCollection#getValueComparator() value comparator}.
+     */
+    public final void sort() {
+        if (_size > 1) {
+            quicksort(0, _size - 1, this.getValueComparator());
+        }
+    }
+
+    // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
+    //
+    private void quicksort(int first, int last, FastComparator cmp) {
+        int pivIndex = 0;
+        if (first < last) {
+            pivIndex = partition(first, last, cmp);
+            quicksort(first, (pivIndex - 1), cmp);
+            quicksort((pivIndex + 1), last, cmp);
+        }
+    }
+
+    private int partition(int f, int l, FastComparator cmp) {
+        int up, down;
+        Object/*E*/ piv = this.get(f);
+        up = f;
+        down = l;
+        do {
+            while (cmp.compare(get(up), piv) <= 0 && up < l) {
+                up++;
+            }
+            while (cmp.compare(get(down), piv) > 0 && down > f) {
+                down--;
+            }
+            if (up < down) { // Swaps.
+                Object/*E*/ temp = get(up);
+                set(up, get(down));
+                set(down, temp);
+            }
+        } while (down > up);
+        set(f, get(down));
+        set(down, piv);
+        return down;
+    }
+
     // Implements FastCollection abstract method.
     public final int size() {
         return _size;
@@ -708,6 +760,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
          * Holds the previous node.
          */
         private Index _previous;
+
+        /**
+         * Default constructor.
+         */
+        private Index() {
+        }
 
         /**
          * Returns the unique index for the specified position 
