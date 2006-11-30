@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,10 +8,11 @@
  */
 package javolution;
 
+import j2me.lang.CharSequence;
 import java.io.PrintStream;
-
 import javolution.lang.Reflection;
-import javolution.lang.TextBuilder;
+import javolution.text.Text;
+import javolution.text.TextBuilder;
 
 /**
  * <p> This class contains the library {@link #main} method for
@@ -23,7 +24,7 @@ import javolution.lang.TextBuilder;
  * @version 1.0, September 14, 2004
  */
 public class Javolution {
-    
+
     /**
      * Holds the version information.
      */
@@ -40,6 +41,9 @@ public class Javolution {
     protected Javolution() {
     }
 
+    public static volatile Text txt = new TextBuilder("-7deDED1234567890")
+            .toText();
+
     /**
      * The library {@link #main} method.
      * The archive <code>javolution.jar</code> is auto-executable.
@@ -52,7 +56,7 @@ public class Javolution {
      * @param  args the option arguments.
      * @throws Exception if a problem occurs.
      */
-    public static void main(String[] args) throws Exception {        
+    public static void main(String[] args) throws Exception {
         println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
         println("Version " + VERSION + " (http://javolution.org)");
         println("");
@@ -85,6 +89,7 @@ public class Javolution {
         // TBD
         println("Success");
     }
+
     
     /**
      * Measures performance.
@@ -93,12 +98,12 @@ public class Javolution {
         println("Benchmark...");
         println("");
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-
-        //new Perf_Io().run();
-        new Perf_Lang().run();
-        new Perf_Realtime().run();
-        new Perf_Util().run();
-        new Perf_Xml().run();
+        //new PerfIO().run();
+        new PerfContext().run();
+        new PerfText().run();
+        new PerfUtil().run();
+        new PerfStream().run();
+        new PerfXML().run();
 
         println("");
         println("More performance analysis in future versions...");
@@ -110,7 +115,8 @@ public class Javolution {
      * @param obj the object to be displayed.
      */
     public static void println(Object obj) {
-        if (Javolution.Out == null) return;
+        if (Javolution.Out == null)
+            return;
         Javolution.Out.println(obj);
     }
 
@@ -120,7 +126,8 @@ public class Javolution {
      * @param obj the object to be displayed.
      */
     public static void print(Object obj) {
-        if (Javolution.Out == null) return;
+        if (Javolution.Out == null)
+            return;
         Javolution.Out.print(obj);
     }
 
@@ -174,7 +181,7 @@ public class Javolution {
         tb.append(picoDuration / divisor);
         int fracDigits = 4 - tb.length(); // 4 digits precision.
         tb.append(".");
-        for (int i=0, j=10; i < fracDigits; i++, j *= 10) {
+        for (int i = 0, j = 10; i < fracDigits; i++, j *= 10) {
             tb.append((picoDuration * j / divisor) % 10);
         }
         return tb.append(unit).toString();
@@ -194,4 +201,47 @@ public class Javolution {
     private static final Reflection.Method NANO_TIME_METHOD = Reflection
             .getMethod("java.lang.System.nanoTime()");
 
+    //////////////////////////////////////
+    // Utilities for Javolution use only.
+    //
+
+    /**
+     * Returns the class having the specified name; for 
+     * backward compatibility with CLDC 1.0 (cannot use .class as exception 
+     * java.lang.NoClassDefFoundError does not exist for that platform).
+     */
+    public static Class j2meGetClass(String name) {
+        Class cls = null;
+        try {
+            cls = Class.forName(name); // Caller class loader.
+        } catch (ClassNotFoundException e0) { // Try context class loader.
+            /*@JVM-1.4+@
+            try {
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                cls = Class.forName(name, true, cl);
+            } catch (ClassNotFoundException e1) { // Try system class loader.
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+                try {
+                    cls = Class.forName(name, true, cl);
+                } catch (ClassNotFoundException e) {
+                }
+            }
+            /**/
+        }
+        if (cls == null)
+            throw new JavolutionError("Class " + name + " not found");
+        return cls;
+    }
+
+    /**
+     * Converts the specified String as CharSequence (String is a 
+     * CharSequence only for J2SE 1.4+).
+     * 
+     * @param str the String to convert.
+     * @return <code>this</code> or a text wrapper.
+     */
+    public static CharSequence j2meToCharSeq(Object str) {
+        return (str instanceof CharSequence) ? (CharSequence) str
+                : (str == null) ? null : Text.valueOf((String) str);
+    }
 }

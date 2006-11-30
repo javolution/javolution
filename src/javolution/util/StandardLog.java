@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,8 +8,8 @@
  */
 package javolution.util;
 
-import javolution.lang.Text;
-import javolution.realtime.LogContext;
+import javolution.Javolution;
+import javolution.context.LogContext;
 import j2me.lang.CharSequence;
 import j2me.util.logging.Level;
 import j2me.util.logging.Logger;
@@ -105,11 +105,11 @@ public class StandardLog extends LogContext {
         } else {
             Throwable error = record.getThrown();
             if (error != null) {
-                log.logError(error, toCharSeq(record.getMessage()));
+                log.logError(error, toCsq(record.getMessage()));
             } else if (record.getLevel().intValue() > Level.WARNING.intValue()) {
-                log.logWarning(toCharSeq(record.getMessage()));
+                log.logWarning(toCsq(record.getMessage()));
             } else if (record.getLevel().intValue() > Level.INFO.intValue()) {
-                log.logInfo(toCharSeq(record.getMessage()));
+                log.logInfo(toCsq(record.getMessage()));
             }
         }
     }
@@ -126,7 +126,7 @@ public class StandardLog extends LogContext {
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.severe(msg);
         } else {
-            log.logWarning(toCharSeq(msg));
+            log.logWarning(toCsq(msg));
         }
     }
 
@@ -138,7 +138,7 @@ public class StandardLog extends LogContext {
      */
     public static void warning(String msg) {
         LogContext log = (LogContext) LogContext.current();
-        log.logWarning(toCharSeq(msg));
+        log.logWarning(toCsq(msg));
     }
 
     /**
@@ -149,7 +149,7 @@ public class StandardLog extends LogContext {
      */
     public static void info(String msg) {
         LogContext log = (LogContext) LogContext.current();
-        log.logInfo(toCharSeq(msg));
+        log.logInfo(toCsq(msg));
     }
 
     /**
@@ -286,16 +286,7 @@ public class StandardLog extends LogContext {
         _logger.severe(msg);
     }
 
-    /**
-     * Converts a String to a CharSequence (for J2ME compatibility)
-     * 
-     * @param str the string to convert.
-     * @return the corresponding CharSequence instance.
-     */
-    private static CharSequence toCharSeq(Object str) {
-        if (str instanceof CharSequence)
-            return (CharSequence) str;
-        return Text.valueOf((String) str);
+    private static CharSequence toCsq/**/(Object str) {
+        return Javolution.j2meToCharSeq(str);
     }
-
 }

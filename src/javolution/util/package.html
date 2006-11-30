@@ -144,15 +144,15 @@
            but <b>J</b>avolution FastTable does not, why?</b>
     <p> FastTable (or any <b>J</b>avolution collection/map) <b>do support concurrent modifications</b>
     as long as these are not insertions at an arbitrary position or deletions <i>(Note: Shared FastMap 
-    which <b>does</b> support concurrent deletions)</i>.
+    <b>does</b> support concurrent deletions)</i>.
     In other words you can safely iterate (using iterators or not) through a FastList, FastMap 
     (entries, keys values), FastTable, etc. while new elements/entries are being added 
-    (by you or another thread). You can also export a "read-only" view over your collection 
-    and still add more elements to it.</p>
+    (by you or another thread). You can also export a {@link javolution.util.FastCollection#unmodifiable() read-only}
+     view over your collection  and still add more elements to it.</p>
     
     <p><i> Disallowing concurrent modifications (standard java util) has proven to be a performance 
     killer for many (forcing users to work with copies of their whole collections). Furthermore the additional checks required
-    directly impact performance (e.g. ArrayList iterations about 3x slower FastTable iterations).</i></p>
+    directly impact performance (e.g. ArrayList iterations about 3x slower than FastTable iterations).</i></p>
     </li>
     
     <li><b>Do you have a test case showing any scenario of concurrent modification where 
@@ -193,12 +193,20 @@
            <code>ConcurrentHashMap</code>?</b>
        <p> Unlike <code>ConcurrentHashMap</code> access to a
            shared FastMap never blocks. Retrieval reflects the map state not older than the last 
-           time the accessing thread has been synchronized (for multi-processors
-           systems synchronizing ensures that the CPU internal cache is not 
-           stale).</p>
+           time the accessing threads have been synchronized<sup><b>*</b></sup> (for multi-processors
+           systems synchronizing ensures that the CPU internal cache is not stale).</p>
+           
        <p> In practice, it means that <b>most well-written</b> concurrent programs should 
            be able to use shared FastMap in place of <code>ConcurrentHashMap</code> as 
            threads are already synchronized to ensure proper behavior.</p>
+           
+       <p> <sup><b>*</b></sup> It is important for both threads to synchronize on the same monitor
+          in order to set up the happens-before relationship properly. It is not the case 
+          that everything visible to thread A when it synchronizes on object X becomes visible
+          to thread B after it synchronizes on object Y. The release and acquire have to
+          "match" (i.e., be performed on the same monitor) to have the right semantics.
+          Otherwise, the code has a data race.</p>
+           
     </li>
 </ol>
 </BODY>

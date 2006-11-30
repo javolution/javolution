@@ -89,7 +89,7 @@ public class ObjectInputStream extends InputStream implements
         throw new UnsupportedOperationException();
     }
 
-    /*@FLOATING_POINT@
+    /*@JVM-1.1+@
 
     public float readFloat() throws IOException {
         throw new UnsupportedOperationException();

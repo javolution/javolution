@@ -36,7 +36,7 @@ public interface DataOutput {
 
     void writeUTF(String str) throws IOException;
 
-    /*@FLOATING_POINT@
+    /*@JVM-1.1+@
 
      void writeFloat (float v) throws IOException;
      

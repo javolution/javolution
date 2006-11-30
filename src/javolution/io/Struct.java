@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -45,8 +45,8 @@ import java.io.OutputStream;
  *     using simple text macros. Here is an example of C struct:<code><pre>
  *     struct Date {
  *         unsigned short year;
- *         unsigned char month;
- *         unsigned char day;
+ *         unsigned byte month;
+ *         unsigned byte day;
  *     };
  *     struct Student {
  *         char        name[64];
@@ -61,7 +61,7 @@ import java.io.OutputStream;
  *         public final Unsigned8 day   = new Unsigned8();
  *     }
  *     public static class Student extends Struct {
- *         public final Utf8String  name   = new Utf8String(64);
+ *         public final Utf8String  name   = new UTF8String(64);
  *         public final Date        birth  = inner(new Date());
  *         public final Float32[]   grades = array(new Float32[10]);
  *         public final Reference32<Student> next =  new Reference32<Student>();
@@ -75,14 +75,14 @@ import java.io.OutputStream;
  * <p> Applications may also work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to 
  *     decode/encode UDP messages directly:[code]
- *     class UdpMessage extends Struct {
+ *     class UDPMessage extends Struct {
  *          Unsigned16 xxx = new Unsigned16();
  *          ... 
  *     }
  *     public void run() {
  *         byte[] bytes = new byte[1024];
  *         DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
- *         UdpMessage message = new UdpMessage();
+ *         UDPMessage message = new UDPMessage();
  *         message.setByteBuffer(ByteBuffer.wrap(bytes), 0);
  *         // packet and message are now two different views of the same data. 
  *         while (isListening) {
@@ -106,12 +106,12 @@ import java.io.OutputStream;
  *         private static native ByteBuffer nativeBuffer();
  *     }[/code]
  *     Below is the <code>nativeBuffer()</code> implementation
- *     (<code>Clock.c</code>):<code><pre>
+ *     (<code>Clock.c</code>):[code]
  *     #include <jni.h>
  *     #include "Clock.h" // Generated using javah
  *     JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
  *         return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
- *     }</pre></code></p>
+ *     }[/code]</p>
  * <p> Bit-fields are supported (see <code>Clock</code> example above).
  *     Bit-fields allocation order is defined by the Struct {@link #byteOrder}
  *     return value (leftmost bit to rightmost bit if
@@ -121,10 +121,14 @@ import java.io.OutputStream;
  *     bit-fields cannot straddle the storage-unit boundary as defined by their
  *     base type (padding is inserted at the end of the first bit-field
  *     and the second bit-field is put into the next storage unit).</p>
- * <p> Finally, it is possible to {@link #setByteBuffer change} the {@link 
- *     ByteBuffer} or the {@link Struct}'s position in the {@link ByteBuffer}
- *     to allow for a single {@link Struct} object to encode/decode multiple
- *     memory mapped instances.</p>
+ * <p> Finally, it is possible to change the {@link #setByteBuffer ByteBuffer} 
+ *     and/or the Struct {@link #setByteBufferPosition position} in its 
+ *     <code>ByteBuffer</code> to allow for a single {@link Struct} object to
+ *     encode/decode multiple memory mapped instances.</p>
+ *     
+ * <p><i>Note: Because Struct/Union are basically wrappers around 
+ *             <code>java.nio.ByteBuffer</code>, tutorials/usages for 
+ *             the Java NIO package are directly applicable to Struct.</i></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.3, June 7, 2005
@@ -251,6 +255,17 @@ public class Struct {
 		_outerOffset = position;
 		return this;
 	}
+
+    /**
+     * Sets the position of this struct within its byte buffer.
+     *
+     * @param position the position of this struct in its byte buffer.
+     * @return <code>this</code>
+     * @throws UnsupportedOperationException if this struct is an inner struct.
+     */
+    public final Struct setByteBufferPosition(int position) {
+        return setByteBuffer(this.getByteBuffer(), position);
+    }
 
 	/**
 	 * Returns the absolute position of this struct within its associated 
@@ -686,9 +701,9 @@ public class Struct {
 	 * @param stringLength the length of the string elements.
 	 * @return the specified string array.
 	 */
-	protected Utf8String[] array(Utf8String[] array, int stringLength) {
+	protected UTF8String[] array(UTF8String[] array, int stringLength) {
 		for (int i = 0; i < array.length; i++) {
-			array[i] = new Utf8String(stringLength);
+			array[i] = new UTF8String(stringLength);
 		}
 		return array;
 	}
@@ -833,16 +848,16 @@ public class Struct {
 	 * This class represents a UTF-8 character string, null terminated
 	 * (for C/C++ compatibility)
 	 */
-	public class Utf8String extends Member {
-		private final Utf8ByteBufferWriter _writer = new Utf8ByteBufferWriter();
+	public class UTF8String extends Member {
+		private final UTF8ByteBufferWriter _writer = new UTF8ByteBufferWriter();
 
-		private final Utf8ByteBufferReader _reader = new Utf8ByteBufferReader();
+		private final UTF8ByteBufferReader _reader = new UTF8ByteBufferReader();
 
 		private final char[] _chars;
 
 		private final int _length;
 
-		public Utf8String(int length) {
+		public UTF8String(int length) {
 			super(1, length);
 			_length = length; // Takes into account 0 terminator.
 			_chars = new char[length];
@@ -853,7 +868,7 @@ public class Struct {
 			synchronized (buffer) {
 				try {
 					buffer.position(position());
-					_writer.setByteBuffer(buffer);
+					_writer.setOutput(buffer);
 					if (string.length() < _length) {
 						_writer.write(string);
 						_writer.write(0); // Marks end of string.
@@ -875,7 +890,7 @@ public class Struct {
 			synchronized (buffer) {
 				try {
 					buffer.position(position());
-					_reader.setByteBuffer(buffer);
+					_reader.setInput(buffer);
 					for (int i = 0; i < _length;) {
 						char c = (char) _reader.read();
 						if (c == 0) { // Null terminator.
@@ -1244,7 +1259,7 @@ public class Struct {
 		public Float32() {
 			super(4, 4);
 		}
-		/*@FLOATING_POINT@
+		/*@JVM-1.1+@
 		 public void set(float value) {
 		 getByteBuffer().putFloat(position(), value);
 		 }
@@ -1262,7 +1277,7 @@ public class Struct {
 		public Float64() {
 			super(8, 8);
 		}
-		/*@FLOATING_POINT@
+		/*@JVM-1.1+@
 		 public void set(double value) {
 		 getByteBuffer().putDouble(position(), value);
 		 }
@@ -1278,9 +1293,9 @@ public class Struct {
 	 *     wrapper).</p>
 	 * <p> Note: For references which can be externally modified, an application
 	 *           may want to check the {@link #isUpToDate up-to-date} status of
-	 *           the reference. For out-of-date references, a new {@link Struct}
+	 *           the reference. For out-of-date references, a {@link Struct}
 	 *           can be created at the address specified by {@link #value} 
-	 *           (using JNI) and then {@link #set set} to the reference.</p>
+	 *           (using JNI) and the reference {@link #set set} accordingly.</p>
 	 */
 	public class Reference32/*<S extends Struct>*/extends Member {
 

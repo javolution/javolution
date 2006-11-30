@@ -23,10 +23,9 @@ import j2mex.realtime.MemoryArea;
 import java.util.NoSuchElementException;
 
 
-import javolution.lang.PersistentReference;
+import javolution.context.PersistentContext;
+import javolution.context.RealtimeObject;
 import javolution.lang.Reusable;
-import javolution.realtime.Realtime;
-import javolution.realtime.RealtimeObject;
 
 /**
  * <p> This class represents a linked list with real-time behavior; 
@@ -100,14 +99,16 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see javolution.lang.PersistentReference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastList(String id) {
-        this(256);
-        PersistentReference ref = new PersistentReference(id);
-        FastList persistentList = (FastList) ref.get();
-        if (persistentList != null) this.addAll(persistentList);
-        ref.set(this); // Sets this list as persistent.
+        this();
+        new PersistentContext.Reference(id, this) {
+            protected void notifyValueChange() {
+                FastList.this.clear();
+                FastList.this.addAll((FastList) this.get());
+            }
+        };
     }
     
     /**
@@ -141,13 +142,23 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     }
 
     /**
-     * Returns a list allocated from the stack when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * Returns a new, preallocated or {@link #recycle recycled} list instance
+     * (on the stack when executing in a {@link javolution.context.PoolContext
+     * PoolContext}).
      *
      * @return a new, preallocated or recycled list instance.
      */
     public static/*<E>*/FastList/*<E>*/newInstance() {
         return (FastList/*<E>*/) FACTORY.object();
+    }
+
+    /**
+     * Recycles a list {@link #newInstance() instance} immediately
+     * (on the stack when executing in a {@link javolution.context.PoolContext
+     * PoolContext}). 
+     */
+    public static void recycle(FastList instance) {
+        FACTORY.recycle(instance);
     }
 
     /**
@@ -158,7 +169,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @return <code>true</code> (as per the general contract of the
      *         <code>Collection.add</code> method).
      */
-    public final boolean add(Object/*E*/value) {
+    public final boolean add(Object/*{E}*/value) {
         addLast(value);
         return true;
     }
@@ -192,7 +203,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final Object/*E*/get(int index) {
+    public final Object/*{E}*/get(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
         return nodeAt(index)._value;
@@ -208,11 +219,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final Object/*E*/set(int index, Object/*E*/value) {
+    public final Object/*{E}*/ set(int index, Object/*{E}*/value) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
         final Node/*<E>*/node = nodeAt(index);
-        Object/*E*/previousValue = node._value;
+        Object/*{E}*/previousValue = node._value;
         node._value = value;
         return previousValue;
     }
@@ -228,7 +239,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index > size())</code>
      */
-    public final void add(int index, Object/*E*/value) {
+    public final void add(int index, Object/*{E}*/value) {
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
         addBefore(nodeAt(index), value);
@@ -277,11 +288,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final Object/*E*/remove(int index) {
+    public final Object/*{E}*/remove(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
         final Node/*<E>*/node = nodeAt(index);
-        Object/*E*/previousValue = node._value;
+        Object/*{E}*/previousValue = node._value;
         delete(node);
         return previousValue;
     }
@@ -326,11 +337,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns an iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.context.PoolContext PoolContext}).
      *
      * @return an iterator over this list values.
      */
-    public final Iterator/*<E>*/iterator() {
+    public Iterator/*<E>*/iterator() {
         FastListIterator i = (FastListIterator) FastListIterator.FACTORY
                 .object();
         i._list = this;
@@ -343,11 +354,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a list iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.context.PoolContext PoolContext}).
      *
      * @return an iterator over this list values.
      */
-    public final ListIterator/*<E>*/listIterator() {
+    public ListIterator/*<E>*/listIterator() {
         FastListIterator i = (FastListIterator) FastListIterator.FACTORY
                 .object();
         i._list = this;
@@ -360,7 +371,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a list iterator from the specified position
      * (allocated on the stack when executed in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.context.PoolContext PoolContext}).
      * 
      * The specified index indicates the first value that would be returned by
      * an initial call to the <code>next</code> method.  An initial call to
@@ -374,7 +385,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @throws IndexOutOfBoundsException if the index is out of range
      *        [code](index < 0 || index > size())[/code].
      */
-    public final ListIterator/*<E>*/listIterator(int index) {
+    public ListIterator/*<E>*/listIterator(int index) {
         if ((index >= 0) && (index <= _size)) {
             FastListIterator i = (FastListIterator) FastListIterator.FACTORY
                     .object();
@@ -392,7 +403,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a view of the portion of this list between the specified
      * indexes (allocated from the "stack" when executing in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.context.PoolContext PoolContext}).
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 
@@ -438,7 +449,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @return this list's first value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final Object/*E*/getFirst() {
+    public final Object/*{E}*/getFirst() {
         final Node/*<E>*/node = _head._next;
         if (node == _tail)
             throw new NoSuchElementException();
@@ -451,7 +462,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @return this list's last value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final Object/*E*/getLast() {
+    public final Object/*{E}*/getLast() {
         final Node/*<E>*/node = _tail._previous;
         if (node == _head)
             throw new NoSuchElementException();
@@ -463,7 +474,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * 
      * @param value the value to be inserted.
      */
-    public final void addFirst(Object/*E*/value) {
+    public final void addFirst(Object/*{E}*/value) {
         addBefore(_head._next, value);
     }
 
@@ -472,7 +483,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * 
      * @param value the value to be inserted.
      */
-    public void addLast(Object/*E*/value) { // Optimized.
+    public void addLast(Object/*{E}*/ value) { // Optimized.
         if (_tail._next == null) {
             increaseCapacity();
         }
@@ -487,11 +498,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @return this list's first value before this call.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final Object/*E*/removeFirst() {
+    public final Object/*{E}*/removeFirst() {
         final Node/*<E>*/first = _head._next;
         if (first == _tail)
             throw new NoSuchElementException();
-        Object/*E*/previousValue = first._value;
+        Object/*{E}*/previousValue = first._value;
         delete(first);
         return previousValue;
     }
@@ -502,12 +513,12 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @return this list's last value before this call.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final Object/*E*/removeLast() {
+    public final Object/*{E}*/removeLast() {
         if (_size == 0)
             throw new NoSuchElementException();
         _size--;
         final Node/*<E>*/last = _tail._previous;
-        final Object/*E*/previousValue = last._value;
+        final Object/*{E}*/previousValue = last._value;
         _tail = last;
         last._value = null;
         return previousValue;
@@ -523,7 +534,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * @param next the Node before which this value is inserted.
      * @param value the value to be inserted.   
      */
-    public final void addBefore(Node/*<E>*/next, Object/*E*/value) {
+    public final void addBefore(Node/*<E>*/next, Object/*{E}*/value) {
         if (_tail._next == null) {
             increaseCapacity();// Increases capacity.
         }
@@ -579,7 +590,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     }
 
     // Implements FastCollection abstract method.
-    public final Object/*E*/valueOf(Record record) {
+    public final Object/*{E}*/valueOf(Record record) {
         return ((Node/*<E>*/) record)._value;
     }
 
@@ -623,25 +634,6 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     public Collection/*List<E>*/unmodifiable() {
         return (Collection/*List<E>*/) super.unmodifiable();
     }
-    
-    // Implements Reusable.
-    public void reset() {
-        super.setValueComparator(FastComparator.DIRECT);
-        this.clear();
-    }
-
-    // Overrides (external references which might not be on the heap).
-    public boolean move(ObjectSpace os) {
-        if (super.move(os)) {
-            for (Node n = _head, end = _tail; (n = n._next) != end;) {
-                if (n._value instanceof Realtime) {
-                    ((Realtime) n._value).move(os);
-                }
-            }
-            return true;
-        }
-        return false;
-    }
 
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
@@ -653,7 +645,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         final int size = stream.readInt();
         setValueComparator((FastComparator) stream.readObject());
         for (int i = size; i-- != 0;) {
-            addLast((Object/*E*/) stream.readObject());
+            addLast((Object/*{E}*/) stream.readObject());
         }
     }
 
@@ -711,7 +703,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         /**
          * Holds the node value.
          */
-        private Object/*E*/_value;
+        private Object/*{E}*/_value;
 
         /**
          * Default constructor.
@@ -724,7 +716,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
          * 
          * @return the node value.
          */
-        public final Object/*E*/getValue() {
+        public final Object/*{E}*/getValue() {
             return _value;
         }
 

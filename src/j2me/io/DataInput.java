@@ -38,7 +38,7 @@ public interface DataInput {
 
     int skipBytes(int n) throws IOException;
 
-    /*@FLOATING_POINT@
+    /*@JVM-1.1+@
      
      float readFloat() throws IOException;
 

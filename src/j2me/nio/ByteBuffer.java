@@ -243,7 +243,7 @@ public final class ByteBuffer extends Buffer {
         return this;
     }
 
-    /*@FLOATING_POINT@
+    /*@JVM-1.1+@
 
     public float getFloat() {
         return getFloat(_position++);

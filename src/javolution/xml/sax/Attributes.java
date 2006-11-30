@@ -1,28 +1,26 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
+import javolution.text.CharArray;
 import j2me.lang.CharSequence;
 
 /**
  * <p> This interface represents a list of XML attributes.</p>
  * 
- * <p> It is a more generic version of <code>org.xml.sax.Attributes</code> with
- *     <code>String</code> returned values replaced by the more versatile 
- *     <code>CharSequence</code>.</p>
- *     
- * <p> Note: To parse primitive types attributes (e.g. int, long, double), the
- *           use of the {@link javolution.lang.TypeFormat} class is
- *           recommended (faster and avoids memory allocation).</p>
+ * <p> It is a more efficient version of <code>org.xml.sax.Attributes</code>
+ *     with  {@link CharArray CharArray}/{@link CharSequence CharSequence} 
+ *     instead of the <code>String</code> to avoid forcing dynamic object 
+ *     allocations.</p>
  *
  * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.5, September 2, 2005
+ * @version 4.0, June 16, 2006
  */
 public interface Attributes {
 
@@ -41,7 +39,7 @@ public interface Attributes {
      *         available, or <code>null</code> if the index is out of range.
      * @see    #getLength
      */
-    CharSequence getURI(int index);
+    CharArray getURI(int index);
 
     /**
      * Looks up an attribute's local name by index.
@@ -52,7 +50,7 @@ public interface Attributes {
      *         the index is out of range.
      * @see    #getLength
      */
-    CharSequence getLocalName(int index);
+    CharArray getLocalName(int index);
 
 
     /**
@@ -64,7 +62,7 @@ public interface Attributes {
      *         of range.
      * @see    #getLength
      */
-    CharSequence getQName(int index);
+    CharArray getQName(int index);
 
     /**
      * Looks up an attribute's type by index.
@@ -86,7 +84,7 @@ public interface Attributes {
      *         index is out of range.
      * @see    #getLength
      */
-    String getType(int index);
+    CharArray getType(int index);
 
     /**
      * Looks up an attribute's value by index.
@@ -101,7 +99,7 @@ public interface Attributes {
      *         <code>null</code> if the index is out of range.
      * @see    #getLength
      */
-    CharSequence getValue(int index);
+    CharArray getValue(int index);
 
     /**
      * Looks up the index of an attribute by namespace name (convenience 
@@ -115,7 +113,7 @@ public interface Attributes {
      * @return the index of the attribute, or <code>-1</code> if it does not
      *         appear in the list.
      */
-    int getIndex(String uri, String localName);
+    int getIndex(CharSequence uri, CharSequence localName);
 
     /**
      * Looks up the index of an attribute by XML 1.0 qualified name 
@@ -126,7 +124,7 @@ public interface Attributes {
      * @return the index of the attribute, or <code>-1</code> if it does not
      *         appear in the list.
      */
-    int getIndex(String qName);
+    int getIndex(CharSequence qName);
 
     /**
      * Looks up an attribute's type by Namespace name (convenience method).
@@ -139,7 +137,7 @@ public interface Attributes {
      * @return the attribute type as a string, or null if the attribute is not
      *         in the list or if Namespace processing is not being performed.
      */
-    String getType(String uri, String localName);
+    CharArray getType(CharSequence uri, CharSequence localName);
 
     /**
      * Looks up an attribute's type by XML 1.0 qualified name.
@@ -150,7 +148,7 @@ public interface Attributes {
      * @return the attribute type as a string, or null if the attribute is not
      *         in the list or if qualified names are not available.
      */
-    String getType(String qName);
+    CharArray getType(CharSequence qName);
 
     /**
      * Looks up an attribute's value by Namespace name (convenience method).
@@ -163,7 +161,7 @@ public interface Attributes {
      * @return the attribute value as a character sequence, or <code>null</code>
      *         if the attribute is not in the list.
      */
-    CharSequence getValue(String uri, String localName);
+    CharArray getValue(CharSequence uri, CharSequence localName);
 
     /**
      * Looks up an attribute's value by XML 1.0 qualified name (convenience 
@@ -175,5 +173,5 @@ public interface Attributes {
      *         if the attribute is not in the list or if qualified names
      *         are not available.
      */
-    CharSequence getValue(String qName);
+    CharArray getValue(CharSequence qName);
 }

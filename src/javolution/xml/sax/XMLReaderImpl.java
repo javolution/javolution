@@ -10,171 +10,180 @@ package javolution.xml.sax;
 
 import j2me.lang.CharSequence;
 import j2me.lang.UnsupportedOperationException;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 
 import javolution.lang.Reflection;
+import javolution.lang.Reusable;
+import javolution.text.CharArray;
+import javolution.xml.stream.XMLStreamConstants;
+import javolution.xml.stream.XMLStreamException;
+import javolution.xml.stream.XMLStreamReaderImpl;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
 
 /**
- * <p> This class provides a SAX2-compliant parser wrapping a
- *     {@link javolution.xml.sax.XmlSaxParserImpl}. This parser allocates 
- *     <code>java.lang.String</code> instances while parsing in accordance 
- *     with the SAX2 specification. For faster performance (2-5x), the use of 
- *     the SAX2-like {@link javolution.xml.sax.XmlSaxParserImpl 
- *     XmlSaxParserImpl} or {@link javolution.xml.pull.XmlPullParserImpl
- *     XmlPullParserImpl} (with <code>java.lang.String</code>
- *     replaced by <code>j2me.lang.CharSequence</code>) is recommended.</p>
+ * <p> This class provides a real-time SAX2-like XML parser; this parser is
+ *     <i>extremely</i> fast and <b>does not create temporary objects</b>
+ *     (no garbage generated and no GC interruption).</p>
+ *     
+ * <p> The parser is implemented as a SAX2 wrapper around  
+ *     {@link XMLStreamReaderImpl} and share the same characteristics.</p>
+ *
+ * <p><i> Note: This parser is a <b>SAX2-like</b> parser with the
+ *        <code>java.lang.String</code> type replaced by 
+ *        {@link CharArray}/{@link CharSequence} in the {@link ContentHandler},
+ *       {@link Attributes} interfaces and {@link DefaultHandler} base class.
+ *       If a standard SAX2 or JAXP parser is required, you may consider using
+ *       the wrapping class {@link SAX2ReaderImpl}. Fast but not as fast as 
+ *       <code>java.lang.String</code> instances are dynamically allocated
+ *       while parsing.</i></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.2, April 2, 2005
- * @see <a href="http://www.saxproject.org"> SAX -- Simple API for XML</a> 
+ * @version 4.0, June 16, 2006
  */
-public final class XMLReaderImpl implements XMLReader {
+public class XMLReaderImpl implements XMLReader, Reusable {
 
     /**
-     * Holds the SAX2 default handler instance.
+     * Holds the default handler instance.
      */
-    private static Sax2DefaultHandler DEFAULT_HANDLER 
-        = new Sax2DefaultHandler();
+    private static DefaultHandler DEFAULT_HANDLER = new DefaultHandler();
 
     /**
-     * Holds the real-time parser instance associated to this SAX2 parser.
+     * Holds the content handler.
      */
-    private final XmlSaxParserImpl _parser = new XmlSaxParserImpl();
+    private ContentHandler _contentHandler;
 
     /**
-     * Holds the content handler proxy.
+     * Holds the error handler.
      */
-    private final Proxy _proxy = new Proxy();
+    private ErrorHandler _errorHandler;
+
+    /**
+     * Holds reusable StAX reader.
+     */
+    private final XMLStreamReaderImpl _xmlReader = new XMLStreamReaderImpl();
 
     /**
      * Default constructor.
      */
     public XMLReaderImpl() {
+        // Sets default handlers.
+        setContentHandler(DEFAULT_HANDLER);
+        setErrorHandler(DEFAULT_HANDLER);
     }
 
-    // Implements XMLReader
-    public boolean getFeature(String name) throws SAXNotRecognizedException,
-            SAXNotSupportedException {
-        return _parser.getFeature(name);
+    /**
+     * Parses an XML document from the specified input stream 
+     * (encoding retrieved from input source and the XML prolog if any).
+     *
+     * @param in the input stream with unknown encoding.
+     * @throws org.xml.sax.SAXException any SAX exception, possibly
+     *         wrapping another exception.
+     * @throws IOException an IO exception from the parser,
+     *         possibly from a byte stream or character stream
+     *         supplied by the application.
+     */
+    public void parse(InputStream in) throws IOException, SAXException {
+        try {
+            _xmlReader.setInput(in);
+            parseAll();
+        } catch (XMLStreamException e) {
+            if (e.getNestedException() instanceof IOException) 
+                throw (IOException)e.getNestedException();
+            throw new SAXException(e);
+        } finally {
+            _xmlReader.reset();
+        }
     }
-
-    // Implements XMLReader
-    public void setFeature(String name, boolean value)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
-        _parser.setFeature(name, value);
+    
+    /**
+     * Parses an XML document from the specified input stream and encoding.
+     *
+     * @param in the input stream.
+     * @param encoding the input stream encoding.
+     * @throws org.xml.sax.SAXException any SAX exception, possibly
+     *         wrapping another exception.
+     * @throws IOException an IO exception from the parser,
+     *         possibly from a byte stream or character stream
+     *         supplied by the application.
+     */
+    public void parse(InputStream in, String encoding) throws IOException, SAXException {
+        try {
+            _xmlReader.setInput(in, encoding);
+            parseAll();
+        } catch (XMLStreamException e) {
+            if (e.getNestedException() instanceof IOException) 
+                throw (IOException)e.getNestedException();
+            throw new SAXException(e);
+        } finally {
+            _xmlReader.reset();
+        }
     }
-
-    // Implements XMLReader
-    public Object getProperty(String name) throws SAXNotRecognizedException,
-            SAXNotSupportedException {
-        return _parser.getProperty(name);
-    }
-
-    // Implements XMLReader
-    public void setProperty(String name, Object value)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
-        _parser.setProperty(name, value);
-    }
-
-    // Implements XMLReader
-    public void setEntityResolver(EntityResolver resolver) {
-        _parser.setEntityResolver(resolver);
-    }
-
-    // Implements XMLReader
-    public EntityResolver getEntityResolver() {
-        return _parser.getEntityResolver();
-    }
-
-    // Implements XMLReader
-    public void setDTDHandler(DTDHandler handler) {
-        _parser.setDTDHandler(handler);
-    }
-
-    // Implements XMLReader
-    public DTDHandler getDTDHandler() {
-        return _parser.getDTDHandler();
-    }
-
-    // Implements XMLReader
-    public void setContentHandler(ContentHandler handler) {
-        if (handler != null) {
-            _proxy._sax2Handler = handler;
-            _parser.setContentHandler(_proxy);
-        } else {
-            throw new NullPointerException();
+    
+    /**
+     * Parses an XML document using the specified reader.
+     *
+     * @param  reader the document reader.
+     * @throws SAXException any SAX exception, possibly wrapping another
+     *         exception.
+     * @throws IOException an IO exception from the parser, possibly from
+     *         a byte stream or character stream supplied by the application.
+     * @see    javolution.io.UTF8StreamReader
+     * @see    javolution.io.UTF8ByteBufferReader
+     * @see    javolution.io.CharSequenceReader
+     */
+    public void parse(Reader reader) throws IOException, SAXException {
+        try {
+            _xmlReader.setInput(reader);
+            parseAll();
+        } catch (XMLStreamException e) {
+            if (e.getNestedException() instanceof IOException) 
+                throw (IOException)e.getNestedException();
+            throw new SAXException(e);
+        } finally {
+            _xmlReader.reset();
         }
     }
 
-    // Implements XMLReader
-    public ContentHandler getContentHandler() {
-        return (_proxy._sax2Handler == DEFAULT_HANDLER) ? null
-                : _proxy._sax2Handler;
-    }
-
-    // Implements XMLReader
-    public void setErrorHandler(ErrorHandler handler) {
-        _parser.setErrorHandler(handler);
-    }
-
-    // Implements XMLReader
-    public ErrorHandler getErrorHandler() {
-        return _parser.getErrorHandler();
-    }
-
-    // Implements XMLReader
+    // Implements XMLReader interface.
     public void parse(InputSource input) throws IOException, SAXException {
         Reader reader = input.getCharacterStream();
         if (reader != null) {
-            _parser.parse(reader);
+            parse(reader);
         } else {
             InputStream inStream = input.getByteStream();
             if (inStream != null) {
-                String encoding = input.getEncoding();
-                if ((encoding == null) || encoding.equals("UTF-8")
-                        || encoding.equals("utf-8")) {
-                    _parser.parse(inStream);
-                } else {
-                    reader = new InputStreamReader(inStream, encoding);
-                    _parser.parse(reader);
-                }
+                parse(inStream, input.getEncoding());
             } else {
                 parse(input.getSystemId());
             }
         }
     }
 
-    // Implements XMLReader
+    // Implements XMLReader interface.
     public void parse(String systemId) throws IOException, SAXException {
-        InputStream in;
+        InputStream inStream;
         try {
             Object url = NEW_URL.newInstance(systemId);
-            in = (InputStream) OPEN_STREAM.invoke(url);
+            inStream = (InputStream) OPEN_STREAM.invoke(url);
         } catch (Exception urlException) { // Try as filename.
             try {
-                in = (InputStream) NEW_FILE_INPUT_STREAM.newInstance(systemId);
+                inStream = (InputStream) NEW_FILE_INPUT_STREAM.newInstance(systemId);
             } catch (Exception fileException) {
                 throw new UnsupportedOperationException("Cannot parse "
                         + systemId);
             }
         }
-        _parser.parse(in);
+        parse(inStream);
     }
 
     private static final Reflection.Constructor NEW_URL = Reflection
@@ -186,224 +195,183 @@ public final class XMLReaderImpl implements XMLReader {
     private static final Reflection.Constructor NEW_FILE_INPUT_STREAM = Reflection
             .getConstructor("j2me.io.FileInputStream(j2me.lang.String)");
 
+    // Implements XMLReader interface.
+    public void setContentHandler(ContentHandler handler) {
+        if (handler != null) {
+            _contentHandler = handler;
+        } else {
+            throw new NullPointerException();
+        }
+    }
+
+    // Implements XMLReader interface.
+    public ContentHandler getContentHandler() {
+        return (_contentHandler == DEFAULT_HANDLER) ? null : _contentHandler;
+    }
+
+    // Implements XMLReader interface.
+    public void setErrorHandler(ErrorHandler handler) {
+        if (handler != null) {
+            _errorHandler = handler;
+        } else {
+            throw new NullPointerException();
+        }
+    }
+
+    // Implements XMLReader interface.
+    public ErrorHandler getErrorHandler() {
+        return (_errorHandler == DEFAULT_HANDLER) ? null : _errorHandler;
+    }
+
+    // Implements XMLReader interface.
+    public boolean getFeature(String name) throws SAXNotRecognizedException,
+            SAXNotSupportedException {
+        if (name.equals("http://xml.org/sax/features/namespaces")) {
+            return true;
+        } else if (name
+                .equals("http://xml.org/sax/features/namespace-prefixes")) {
+            return true;
+        } else {
+            throw new SAXNotRecognizedException("Feature " + name
+                    + " not recognized");
+        }
+    }
+
+    public void setFeature(String name, boolean value)
+            throws SAXNotRecognizedException, SAXNotSupportedException {
+        if (name.equals("http://xml.org/sax/features/namespaces")
+                || name
+                        .equals("http://xml.org/sax/features/namespace-prefixes")) {
+            return; // Ignores, these features are always set.
+        } else {
+            throw new SAXNotRecognizedException("Feature " + name
+                    + " not recognized");
+        }
+    }
+
+    public Object getProperty(String name) throws SAXNotRecognizedException,
+            SAXNotSupportedException {
+        throw new SAXNotRecognizedException("Property " + name
+                + " not recognized");
+    }
+
+    public void setProperty(String name, Object value)
+            throws SAXNotRecognizedException, SAXNotSupportedException {
+        throw new SAXNotRecognizedException("Property " + name
+                + " not recognized");
+    }
+
+    public void setEntityResolver(EntityResolver resolver) {
+        _entityResolver = resolver;
+    }
+
+    private EntityResolver _entityResolver;
+
+    public EntityResolver getEntityResolver() {
+        return _entityResolver;
+    }
+
+    public void setDTDHandler(DTDHandler handler) {
+        _dtdHandler = handler;
+    }
+
+    private DTDHandler _dtdHandler;
+
+    public DTDHandler getDTDHandler() {
+        return _dtdHandler;
+    }
+
+    // Implements Reusable.
+    public void reset() {
+        setContentHandler(DEFAULT_HANDLER);
+        setErrorHandler(DEFAULT_HANDLER);
+        _xmlReader.reset();
+    }
+
     /**
-     * This class defines the proxy for content handler and attributes.
+     * Parses the whole document using the real-time pull parser.
+     * 
+     * @throws SAXException any SAX exception, possibly wrapping another
+     *         exception.
+     * @throws IOException an IO exception from the parser, possibly from
+     *         a byte stream or character stream supplied by the application.
      */
-    private static final class Proxy implements
-            javolution.xml.sax.ContentHandler, Attributes {
+    private void parseAll() throws XMLStreamException, SAXException {
+        int eventType = _xmlReader.getEventType();
+        if (eventType != XMLStreamConstants.START_DOCUMENT)
+            throw new SAXException("Currently parsing");
+        _contentHandler.startDocument();
 
-        /**
-         * Holds the SAX2 content handler to which SAX2 events are forwarded.
-         */
-        private ContentHandler _sax2Handler = DEFAULT_HANDLER;
+        boolean doContinue = true;
+        while (doContinue) {
+            CharArray uri, localName, qName, prefix, text;
+            switch (_xmlReader.next()) {
+            case XMLStreamConstants.START_ELEMENT:
 
-        /**
-         * Holds the real-time attributes implementation from which attributes
-         * values are read.
-         */
-        private javolution.xml.sax.Attributes _attributes;
+                // Start prefix mapping.
+                for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
+                    prefix = _xmlReader.getNamespacePrefix(i);
+                    prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
+                    uri = _xmlReader.getNamespaceURI(i);
+                    _contentHandler.startPrefixMapping(prefix, uri);
+                }
 
-        /**
-         * Default constructor.
-         */
-        public Proxy() {
-        }
+                // Start element.
+                uri = _xmlReader.getNamespaceURI();
+                uri = (uri == null) ? NO_CHAR : uri;
+                localName = _xmlReader.getLocalName();
+                qName = _xmlReader.getQName();
+                _contentHandler.startElement(uri, localName, qName, _xmlReader
+                        .getAttributes());
+                break;
 
-        // Implements ContentHandler
-        public void setDocumentLocator(Locator locator) {
-            _sax2Handler.setDocumentLocator(locator);
-        }
+            case XMLStreamConstants.END_ELEMENT:
 
-        // Implements ContentHandler
-        public void startDocument() throws SAXException {
-            _sax2Handler.startDocument();
-        }
+                // End element.
+                uri = _xmlReader.getNamespaceURI();
+                uri = (uri == null) ? NO_CHAR : uri;
+                localName = _xmlReader.getLocalName();
+                qName = _xmlReader.getQName();
+                _contentHandler.endElement(uri, localName, qName);
 
-        // Implements ContentHandler
-        public void endDocument() throws SAXException {
-            _sax2Handler.endDocument();
-            _sax2Handler = DEFAULT_HANDLER;
-        }
+                // End prefix mapping.
+                for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
+                    prefix = _xmlReader.getNamespacePrefix(i);
+                    prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
+                    _contentHandler.endPrefixMapping(prefix);
+                }
+                break;
 
-        // Implements ContentHandler
-        public void startPrefixMapping(CharSequence prefix, CharSequence uri)
-                throws SAXException {
-            _sax2Handler.startPrefixMapping(prefix.toString(), uri.toString());
-        }
+            case XMLStreamConstants.CDATA:
+            case XMLStreamConstants.CHARACTERS:
+                text = _xmlReader.getText();
+                _contentHandler.characters(text.array(), text.offset(), text
+                        .length());
+                break;
 
-        // Implements ContentHandler
-        public void endPrefixMapping(CharSequence prefix) throws SAXException {
-            _sax2Handler.endPrefixMapping(prefix.toString());
-        }
+            case XMLStreamConstants.SPACE:
+                text = _xmlReader.getText();
+                _contentHandler.ignorableWhitespace(text.array(),
+                        text.offset(), text.length());
+                break;
 
-        // Implements ContentHandler
-        public void startElement(CharSequence namespaceURI,
-                CharSequence localName, CharSequence qName,
-                javolution.xml.sax.Attributes atts) throws SAXException {
-            _attributes = atts;
-            _sax2Handler.startElement(namespaceURI.toString(), localName
-                    .toString(), qName.toString(), this);
-        }
+            case XMLStreamConstants.PROCESSING_INSTRUCTION:
+                _contentHandler.processingInstruction(
+                        _xmlReader.getPITarget(), _xmlReader.getPIData());
+                break;
 
-        // Implements ContentHandler
-        public void endElement(CharSequence namespaceURI,
-                CharSequence localName, CharSequence qName) throws SAXException {
-            _sax2Handler.endElement(namespaceURI.toString(), localName
-                    .toString(), qName.toString());
-        }
+            case XMLStreamConstants.COMMENT:
+                // Ignores.
+                break;
 
-        // Implements ContentHandler
-        public void characters(char ch[], int start, int length)
-                throws SAXException {
-            _sax2Handler.characters(ch, start, length);
-        }
+            case XMLStreamConstants.END_DOCUMENT:
+                doContinue = false;
+                _xmlReader.close();
+                break;
 
-        // Implements ContentHandler
-        public void ignorableWhitespace(char ch[], int start, int length)
-                throws SAXException {
-            _sax2Handler.ignorableWhitespace(ch, start, length);
-        }
-
-        // Implements ContentHandler
-        public void processingInstruction(CharSequence target, CharSequence data)
-                throws SAXException {
-            _sax2Handler.processingInstruction(target.toString(), data
-                    .toString());
-        }
-
-        // Implements ContentHandler
-        public void skippedEntity(CharSequence name) throws SAXException {
-            _sax2Handler.skippedEntity(name.toString());
-        }
-
-        // Implements Attributes
-        public int getLength() {
-            return _attributes.getLength();
-        }
-
-        // Implements Attributes
-        public String getURI(int index) {
-            CharSequence chars = _attributes.getURI(index);
-            return (chars != null) ? chars.toString() : null;
-        }
-
-        // Implements Attributes
-        public String getLocalName(int index) {
-            CharSequence chars = _attributes.getLocalName(index);
-            return (chars != null) ? chars.toString() : null;
-        }
-
-        // Implements Attributes
-        public String getQName(int index) {
-            CharSequence chars = _attributes.getQName(index);
-            return (chars != null) ? chars.toString() : null;
-        }
-
-        // Implements Attributes
-        public String getType(int index) {
-            return _attributes.getType(index);
-        }
-
-        // Implements Attributes
-        public String getValue(int index) {
-            CharSequence chars = _attributes.getValue(index);
-            return (chars != null) ? chars.toString() : null;
-        }
-
-        // Implements Attributes
-        public int getIndex(String uri, String localName) {
-            return _attributes.getIndex(uri, localName);
-        }
-
-        // Implements Attributes
-        public int getIndex(String qName) {
-            return _attributes.getIndex(qName);
-        }
-
-        // Implements Attributes
-        public String getType(String uri, String localName) {
-            return _attributes.getType(uri, localName);
-        }
-
-        // Implements Attributes
-        public String getType(String qName) {
-            return _attributes.getType(qName);
-        }
-
-        // Implements Attributes
-        public String getValue(String uri, String localName) {
-            return _attributes.getValue(uri, localName).toString();
-        }
-
-        // Implements Attributes
-        public String getValue(String qName) {
-            return _attributes.getValue(qName).toString();
+            }
         }
     }
-
-    private static final class Sax2DefaultHandler implements EntityResolver,
-            DTDHandler, ContentHandler, ErrorHandler {
-
-        public InputSource resolveEntity(String publicId, String systemId)
-                throws SAXException, IOException {
-            return null;
-        }
-
-        public void notationDecl(String name, String publicId, String systemId)
-                throws SAXException {
-        }
-
-        public void unparsedEntityDecl(String name, String publicId,
-                String systemId, String notationName) throws SAXException {
-        }
-
-        public void setDocumentLocator(Locator locator) {
-        }
-
-        public void startDocument() throws SAXException {
-        }
-
-        public void endDocument() throws SAXException {
-        }
-
-        public void startPrefixMapping(String prefix, String uri)
-                throws SAXException {
-        }
-
-        public void endPrefixMapping(String prefix) throws SAXException {
-        }
-
-        public void startElement(String uri, String localName, String qName,
-                Attributes atts) throws SAXException {
-        }
-
-        public void endElement(String uri, String localName, String qName)
-                throws SAXException {
-        }
-
-        public void characters(char[] ch, int start, int length)
-                throws SAXException {
-        }
-
-        public void ignorableWhitespace(char[] ch, int start, int length)
-                throws SAXException {
-        }
-
-        public void processingInstruction(String target, String data)
-                throws SAXException {
-        }
-
-        public void skippedEntity(String name) throws SAXException {
-        }
-
-        public void warning(SAXParseException exception) throws SAXException {
-        }
-
-        public void error(SAXParseException exception) throws SAXException {
-        }
-
-        public void fatalError(SAXParseException exception) throws SAXException {
-            throw exception;
-        }
-    }
+    
+    private static final CharArray NO_CHAR = new CharArray("");
 }

@@ -9,7 +9,8 @@
 package javolution.lang;
 
 import javolution.JavolutionError;
-import javolution.util.StandardLog;
+import javolution.util.FastMap;
+import j2me.lang.CharSequence;
 
 /**
  * <p> This utility class greatly facilitates the use of reflection to invoke 
@@ -44,7 +45,7 @@ import javolution.util.StandardLog;
  *    > hi[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, November 3, 2005
+ * @version 4.0, September 1, 2006
  */
 public final class Reflection {
 
@@ -55,40 +56,52 @@ public final class Reflection {
     }
 
     /**
-     * Returns and initializes the class having the specified name 
-     * (returns <code>null</code> if the class is not found). 
-     * This method searches the <code>Reflection.class</code> class loader 
-     * first (which might be the bootstrap class loader), then the context
-     * class loader and finally the system class loader.
+     * Returns the class having the specified name. 
+     * This method searches a lookup table first, then diverse class loaders 
+     * (caller, context, system); the newly found class is then initialized 
+     * and added to the lookup table for future reference.
      * 
      * @param name the name of the class to search for. 
-     * @return the corresponding class or <code>null</code> if the class
-     *         is not found or if an error occurs during initialization
-     *         (in which case a warning or error is 
-     *         {@link javolution.realtime.LogContext logged}).
+     * @return the corresponding class
+     * @throws ClassNotFoundException if the class is not found.
      */
-    public static Class getClass(String name) {
+    public static Class getClass(CharSequence name)
+            throws ClassNotFoundException {
+        Class cls = (Class) _NameToClass.get(name);
+        return (cls != null) ? cls : searchClass(name.toString());
+    }
+
+    private static Class searchClass(String name) throws ClassNotFoundException {
+        Class cls = null;
         try {
-            return Class.forName(name); // Try Reflection.class class loader.
+            cls = Class.forName(name); // Caller class loader.
         } catch (ClassNotFoundException e0) { // Try context class loader.
-            /*@REFLECTION@
+            /*@JVM-1.4+@
              try {
              ClassLoader cl = Thread.currentThread().getContextClassLoader();
-             return Class.forName(name, true, cl);
+             cls = Class.forName(name, true, cl);
              } catch (ClassNotFoundException e1) { // Try system class loader.
-             try {
              ClassLoader cl = ClassLoader.getSystemClassLoader();
-             return Class.forName(name, true, cl);
-             } catch (ClassNotFoundException e2) {
-             }
+             cls = Class.forName(name, true, cl);
              }
              /**/
-        } catch (Throwable error) {
-            StandardLog.error(error);
-            return null;
+            if (cls == null)
+                throw new ClassNotFoundException("Cannot found class " + name);
         }
-        StandardLog.warning(name + " not found");
-        return null;
+        synchronized (_NameToClass) {
+            _NameToClass.put(name.intern(), cls);
+        }
+        return cls;
+    }
+
+    private static final FastMap _NameToClass = new FastMap();
+
+    /**
+     * Equivalent to {@link #getClass(CharSequence)} (for J2ME compatibility).
+     */
+    public static Class getClass(String name) throws ClassNotFoundException {
+        Class cls = (Class) _NameToClass.get(name);
+        return (cls != null) ? cls : searchClass(name);
     }
 
     /**
@@ -108,21 +121,26 @@ public final class Reflection {
             throw new IllegalArgumentException("Parenthesis ')' not found");
         }
         String className = signature.substring(0, argStart - 1);
-        Class theClass = Reflection.getClass(className);
-        if (theClass == null)
+        Class theClass;
+        try {
+            theClass = Reflection.getClass(className);
+        } catch (ClassNotFoundException e) {
             return null;
+        }
         String args = signature.substring(argStart, argEnd);
         if (args.length() == 0)
             return new DefaultConstructor(theClass);
-        /*@REFLECTION@
-         Class[] argsTypes = classesFor(args);
-         if (argsTypes != null) {
+        /*@JVM-1.4+@
+         Class[] argsTypes;
+         try {
+         argsTypes = classesFor(args);
+         } catch (ClassNotFoundException e) {
+         return null;
+         }         
          try {
          return new ReflectConstructor(theClass.getConstructor(argsTypes),
          signature);
          } catch (NoSuchMethodException e) {
-         return null;
-         }
          }          
          /**/
         return null;
@@ -152,7 +170,7 @@ public final class Reflection {
         }
     }
 
-    /*@REFLECTION@
+    /*@JVM-1.4+@
      private static final class ReflectConstructor extends Constructor {
      private final java.lang.reflect.Constructor _value;
 
@@ -197,7 +215,7 @@ public final class Reflection {
      *         found. 
      */
     public static Method getMethod(String signature) {
-        /*@REFLECTION@
+        /*@JVM-1.4+@
          int argStart = signature.indexOf('(') + 1;
          if (argStart < 0) {
          throw new IllegalArgumentException("Parenthesis '(' not found");
@@ -210,12 +228,20 @@ public final class Reflection {
          try {
 
          String className = signature.substring(0, nameStart - 1);
-         Class theClass = Reflection.getClass(className);
-         if (theClass == null) return null;
+         Class theClass;
+         try {
+         theClass = Reflection.getClass(className);
+         } catch (ClassNotFoundException e) {
+         return null;
+         }         
          String methodName = signature.substring(nameStart, argStart - 1);
          String args = signature.substring(argStart, argEnd);
-         Class[] argsTypes = classesFor(args);
-         if (argsTypes == null) return null;
+         Class[] argsTypes;
+         try {
+         argsTypes = classesFor(args);
+         } catch (ClassNotFoundException e) {
+         return null;
+         }         
          return new ReflectMethod(theClass.getMethod(methodName, argsTypes),
          signature);
          } catch (Throwable t) {
@@ -224,7 +250,7 @@ public final class Reflection {
         return null;
     }
 
-    /*@REFLECTION@
+    /*@JVM-1.4+@
      private static final class ReflectMethod extends Method {
      private final java.lang.reflect.Method _value;
 
@@ -262,34 +288,34 @@ public final class Reflection {
      * 
      * @param args the comma separated arguments.
      * @return the classes or <code>null</code> if one of the class is not found.
-     @REFLECTION@
-     private static Class[] classesFor(String args)  {
+     @JVM-1.4+@
+     private static Class[] classesFor(String args) throws ClassNotFoundException {
      args = args.trim();
      if (args.length() == 0) {
      return new Class[0];
      }
-     // Count semicolons  occurences.
-     int semiColons = 0;
-     for (int i = 0; i < args.length(); i++) {
-     if (args.charAt(i) == ',') {
-     semiColons++;
+     // Counts commas.
+     int commas = 0;
+     for (int i=0;;) {
+     i = args.indexOf(',', i);
+     if (i++ < 0) break;
+     commas++;
      }
-     }
-     Class[] classes = new Class[semiColons + 1];
+     Class[] classes = new Class[commas + 1];
 
      int index = 0;
-     for (int i = 0; i < semiColons; i++) {
+     for (int i = 0; i < commas; i++) {
      int sep = args.indexOf(',', index);
      classes[i] = classFor(args.substring(index, sep).trim());
      if (classes[i] == null) return null;
      index = sep + 1;
      }
-     classes[semiColons] = classFor(args.substring(index).trim());
-     if (classes[semiColons] == null) return null;
+     classes[commas] = classFor(args.substring(index).trim());
+     if (classes[commas] == null) return null;
      return classes;
      }
 
-     private static Class classFor(String className) {
+     private static Class classFor(String className) throws ClassNotFoundException {
      int arrayIndex = className.indexOf("[]");
      if (arrayIndex >= 0) {
      if (className.indexOf("[][]") >= 0) {
@@ -350,7 +376,7 @@ public final class Reflection {
      } else if (className.equals("double")) {
      return "D";
      } else {
-     return "L" + className.replace('.', '/') + ";";
+     return "L" + className + ";";
      }
      }
      /**/

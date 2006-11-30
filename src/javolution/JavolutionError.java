@@ -22,9 +22,6 @@ public final class JavolutionError extends Error {
      * and cause.
      * 
      * @param  message the detail message.
-     * @param  cause the cause or <code>null</code> if the cause 
-     *         is nonexistent or unknown.
-     * @throws Error (always) 
      */
     public JavolutionError(String message) {
         super(message);

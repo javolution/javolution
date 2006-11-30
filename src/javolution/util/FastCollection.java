@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -17,8 +17,14 @@ import j2me.io.Serializable;
 import j2me.lang.UnsupportedOperationException;
 import j2mex.realtime.MemoryArea;
 
-import javolution.lang.Text;
-import javolution.realtime.RealtimeObject;
+import javolution.Javolution;
+import javolution.context.Realtime;
+import javolution.context.RealtimeObject;
+import javolution.lang.Reusable;
+import javolution.text.Text;
+import javolution.xml.XMLBinding;
+import javolution.xml.XMLFormat;
+import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents collections which can quickly be iterated over 
@@ -54,7 +60,38 @@ import javolution.realtime.RealtimeObject;
  * @version 3.6, September 24, 2005
  */
 public abstract class FastCollection/*<E>*/extends RealtimeObject implements
-        Collection/*<E>*/, Serializable {
+        Collection/*<E>*/, Reusable, Serializable {
+
+    /**
+     * Holds the default XML representation for FastCollection instances.
+     * This representation is identical to {@link XMLBinding#COLLECTION_XML}
+     * except that it may include the value comparator for the collection
+     * (if different from {@link FastComparator#DEFAULT}).
+     */
+    protected static final XMLFormat/*<FastCollection>*/ XML = new XMLFormat(
+            Javolution.j2meGetClass("javolution.util.FastCollection")) {
+
+        public void read(InputElement xml, Object obj) throws XMLStreamException {
+            FastCollection fc = (FastCollection) obj;
+            FastComparator comparator = (FastComparator) xml.get("Comparator");
+            if (comparator != null) {
+                fc.setValueComparator(comparator);
+            }
+            while (xml.hasNext()) {
+                fc.add(xml.getNext());
+            }
+        }
+
+        public void write(Object obj, OutputElement xml) throws XMLStreamException {
+            FastCollection fc = (FastCollection) obj;
+            if (fc.getValueComparator() != FastComparator.DEFAULT) {
+                xml.add(fc.getValueComparator(), "Comparator");
+            }
+            for (Record r=fc.head(), end=fc.tail(); (r=r.getNext())!=end;) {
+                xml.add(fc.valueOf(r));
+            }
+        }
+    };
 
     /**
      * Holds the value comparator.  
@@ -102,7 +139,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * @param record the record whose current value is returned.
      * @return the current value.
      */
-    public abstract Object/*E*/valueOf(Record record);
+    public abstract Object/*{E}*/valueOf(Record record);
 
     /**
      * Deletes the specified record from this collection.
@@ -142,7 +179,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     /**
      * Returns an iterator over the elements in this collection 
      * (allocated on the stack when executed in a 
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * {@link javolution.context.PoolContext PoolContext}).
      *
      * @return an iterator over this collection's elements.
      */
@@ -185,7 +222,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      *         <code>Collection.add</code> method).
      * @throws UnsupportedOperationException if not supported.
      */
-    public boolean add(Object/*E*/value) {
+    public boolean add(Object/*{E}*/value) {
         throw new UnsupportedOperationException();
     }
 
@@ -381,7 +418,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * @return the specified array.
      * @throws UnsupportedOperationException if <code>array.length < size()</code> 
      */
-    public Object[]/* <T> T[]*/toArray(Object[]/*T[]*/array) {
+    public Object/*{<T> T}*/[] toArray(Object/*{T}*/[] array) {
         int size = size();
         if (array.length < size)
             throw new UnsupportedOperationException(
@@ -481,6 +518,26 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     }
 
+    // Implements Reusable.
+    public void reset() {
+        _valueComp = FastComparator.DEFAULT;
+        clear();
+    }
+
+    // Overrides.
+    public boolean move(ObjectSpace os) {
+        if (super.move(os)) {
+            for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
+                Object obj = valueOf(r);
+                if (obj instanceof Realtime) {
+                    ((Realtime)obj).move(os);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    
     /**
      * This interface represents the collection records which can directly be
      * iterated over.

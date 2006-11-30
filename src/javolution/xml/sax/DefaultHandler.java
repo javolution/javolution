@@ -1,13 +1,13 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
-import j2me.lang.CharSequence;
+import javolution.text.CharArray;
 import j2me.lang.UnsupportedOperationException;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -62,19 +62,19 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
     public void endDocument() throws SAXException {}
 
     // Implements ContentHandler
-    public void startPrefixMapping(CharSequence prefix, CharSequence uri)
+    public void startPrefixMapping(CharArray prefix, CharArray uri)
         throws SAXException {}
 
     // Implements ContentHandler
-    public void endPrefixMapping(CharSequence prefix) throws SAXException {}
+    public void endPrefixMapping(CharArray prefix) throws SAXException {}
 
     // Implements ContentHandler
-    public void startElement(CharSequence namespaceURI, CharSequence localName,
-        CharSequence qName, Attributes atts) throws SAXException {}
+    public void startElement(CharArray namespaceURI, CharArray localName,
+        CharArray qName, Attributes atts) throws SAXException {}
 
     // Implements ContentHandler
-    public void endElement(CharSequence namespaceURI, CharSequence localName,
-        CharSequence qName) throws SAXException {}
+    public void endElement(CharArray namespaceURI, CharArray localName,
+        CharArray qName) throws SAXException {}
 
     // Implements ContentHandler
     public void characters(char ch[], int start, int length)
@@ -85,11 +85,11 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
         throws SAXException {}
 
     // Implements ContentHandler
-    public void processingInstruction(CharSequence target, CharSequence data)
+    public void processingInstruction(CharArray target, CharArray data)
         throws SAXException {}
 
     // Implements ContentHandler
-    public void skippedEntity(CharSequence name) throws SAXException {}
+    public void skippedEntity(CharArray name) throws SAXException {}
 
     /**
      * <b> Generates compile-time error if <code>startElement</code> is not
@@ -109,8 +109,8 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
      * @throws org.xml.sax.SAXException any SAX exception.
      */
     protected final void startElement(
-        CharSequence uri, CharSequence localName,
-        CharSequence qName, org.xml.sax.Attributes atts) throws SAXException {
+        CharArray uri, CharArray localName,
+        CharArray qName, org.xml.sax.Attributes atts) throws SAXException {
             throw new UnsupportedOperationException();
     }
 

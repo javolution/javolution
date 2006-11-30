@@ -3,8 +3,7 @@ package javolution.util;
 import j2me.util.Collection;
 import j2me.util.Map;
 import j2me.util.Set;
-import javolution.realtime.LocalContext;
-import javolution.realtime.LocalReference;
+import javolution.context.LocalContext;
 
 /**
  * <p> This class represents a map which can be temporarily modified 
@@ -13,26 +12,26 @@ import javolution.realtime.LocalReference;
  *     
  * <p> Operation on instances of this class are completely thread-safe. 
  *     For example:
- *     public class XmlFormat {
- *         static LocalMap<Class, XmlFormat> CLASS_TO_FORMAT = new LocalMap<Class, XmlFormat>();
- *         public static void setFormat(Class forClass, XmlFormat that) {
+ *     public class XMLFormat {
+ *         static LocalMap<Class, XMLFormat> CLASS_TO_FORMAT = new LocalMap<Class, XMLFormat>();
+ *         public static void setFormat(Class forClass, XMLFormat that) {
  *             CLASS_TO_FORMAT.put(forClass, that); // No synchronization required.
  *         }
- *         public static XmlFormat getInstance(Class forClass) {
+ *         public static XMLFormat getInstance(Class forClass) {
  *             return CLASS_TO_FORMAT.get(forClass); // No synchronization required.
  *         }
  *     }
  *     public void main(String[] args) {
  *         // Sets default (global settings).
- *         XmlFormat.setFormat(Foo.class, xFormat);
- *         XmlFormat.setFormat(Bar.class, yFormat);
+ *         XMLFormat.setFormat(Foo.class, xFormat);
+ *         XMLFormat.setFormat(Bar.class, yFormat);
  *     }
  *     ... // Another thread.
  *     LocalContext.enter();
  *     try { // Use of local context to avoid impacting other threads.
- *         XmlFormat.setFormat(Foo.class, zFormat);
- *         XmlFormat.getInstance(Foo.class); // Returns zFormat
- *         XmlFormat.getInstance(Bar.class); // Returns yFormat (inherited)
+ *         XMLFormat.setFormat(Foo.class, zFormat);
+ *         XMLFormat.getInstance(Foo.class); // Returns zFormat
+ *         XMLFormat.getInstance(Bar.class); // Returns yFormat (inherited)
  *     } finally {
  *         LocalContext.exit();
  *     }
@@ -51,7 +50,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
     /**
      * Holds the fast map reference (shared map).
      */
-    private final LocalReference _mapRef = new LocalReference(new FastMap().setShared(true));
+    private final LocalContext.Reference _mapRef 
+        = new LocalContext.Reference(new FastMap().setShared(true));
 
     /**
      * Default constructor.
@@ -94,8 +94,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      *         previously associated <code>null</code> with the specified key.
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public Object/*V*/putDefault(Object/*K*/key, Object/*V*/defaultValue) {
-        return (Object/*V*/) ((FastMap) _mapRef.getDefault()).put(key,
+    public Object/*{V}*/putDefault(Object/*{K}*/key, Object/*{V}*/defaultValue) {
+        return (Object/*{V}*/) ((FastMap) _mapRef.getDefault()).put(key,
                 defaultValue);
     }
     /**
@@ -150,8 +150,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      *         <code>null</code> if there is no mapping for the key.
      * @throws NullPointerException if key is <code>null</code>.
      */
-    public Object/*V*/get(Object key) {
-        return (Object/*V*/) ((FastMap) _mapRef.get()).get(key);
+    public Object/*{V}*/get(Object key) {
+        return (Object/*{V}*/) ((FastMap) _mapRef.get()).get(key);
     }
 
     /**
@@ -165,8 +165,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      *         previously associated <code>null</code> with the specified key.
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public Object/*V*/put(Object/*K*/key, Object/*V*/value) {
-        return (Object/*V*/) localMap().put(key, value);
+    public Object/*{V}*/put(Object/*{K}*/key, Object/*{V}*/value) {
+        return (Object/*{V}*/) localMap().put(key, value);
     }
 
     /**
@@ -188,8 +188,8 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * @return <code>put(key, null)</code>
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public Object/*V*/remove(Object key) {
-        return put((Object/*K*/)key, null);
+    public Object/*{V}*/remove(Object key) {
+        return put((Object/*{K}*/)key, null);
     }
 
     /**

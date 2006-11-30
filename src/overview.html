@@ -19,35 +19,35 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
 <a name="configuration"></a>
 <h3><b>Configuration:</b></h3>
 <b><i>Javolution</i></b>'s default configuration should satisfy most applications. 
-Nonetheless, it is possible to change these defaults by providing a custom <code>javolution.Configuration</code> class
-to be loaded in place of the default one (placed first in the classpath) or by modifying the <code>javolution.Configuration</code>
-class directly. Here is a summary of the class static methods with their default values.
+Nonetheless, it is possible to change these defaults at run-time (see 
+{@link javolution.lang.Configurable Configurable} for details).
+Here are few important configuration parameters with their default values:
 <p></p>
 <table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 1000px;">
   <tbody>
     <tr>
-      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Static Method</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Configurable</span></td>
       <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Javolution Default</span></td>
       <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">"concurrency()"</td>
+      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#CONCURRENCY}</td>
       <td style="vertical-align: top;">(Number of Processors) - 1</td>
       <td style="vertical-align: top;">The number of <a href="javolution/realtime/ConcurrentThread.html">ConcurrentThread</a>
       per <a href="javolution/realtime/ConcurrentContext.html">ConcurrentContext</a> (default)</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">"factories()"</td>
-      <td style="vertical-align: top;">1024</td>
+      <td style="vertical-align: top;">{@link javolution.context.ObjectFactory#COUNT}</code></td>
+      <td style="vertical-align: top;">256</td>
       <td style="vertical-align: top;">The maximum number of <a href="javolution/realtime/ObjectFactory.html">ObjectFactory</a></td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">"isPoorSystemHash()"</td>
+      <td style="vertical-align: top;">{@link javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE}</td>
       <td style="vertical-align: top;"><code>true</code> or <code>false</code><br>
                                        based upon the run-time platform<br> 
                                        (small test performed at start-up)</td>
-      <td style="vertical-align: top;">Indicates if the system hash code is 
-                                       well distributed (see <a href="javolution/util/FastMap.html">FastMap</a>)</td>
+      <td style="vertical-align: top;">Indicates if the system hash code requires rehashing 
+                                       (see <a href="javolution/util/FastMap.html">FastMap</a>)</td>
     </tr>
   </tbody>
 </table>

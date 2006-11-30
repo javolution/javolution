@@ -73,7 +73,7 @@ public class ObjectOutputStream
         throw new UnsupportedOperationException();
     }
 
-    /*@FLOATING_POINT@
+    /*@JVM-1.1+@
 
     public void writeFloat (float v) throws IOException {
         throw new UnsupportedOperationException();

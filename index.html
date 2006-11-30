@@ -191,18 +191,20 @@ body {
       <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
      That being accomplished through:
      <UL>
-     <LI> Safe/transparent <A HREF="api/javolution/realtime/package-summary.html#package_description">object
-         recycling</A> (including threads reuse with <A HREF="api/javolution/realtime/ConcurrentContext.html">
-         concurrent contexts</A>).</LI>
+     <LI> Safe/transparent <A HREF="api/javolution/context/package-summary.html#package_description">object
+         recycling</A> (faster than memory recycling, aka GC).</LI>
+     <LI> Fast/easy parallel computing support with <A HREF="api/javolution/context/ConcurrentContext.html">
+         concurrent contexts</A>.</LI>
      <LI> High <A HREF="http://javolution.org/doc/benchmark.html">performance</A> and real-time compliant
           <A HREF="api/javolution/util/package-summary.html#package_description">util</A> / 
           <A HREF="api/javolution/lang/package-summary.html#package_description">lang</A> /
+          <A HREF="api/javolution/text/package-summary.html#package_description">text</A> /
           <A HREF="api/javolution/io/package-summary.html#package_description">io</A> /
           <A HREF="api/javolution/xml/package-summary.html#package_description">xml</A> base classes.</LI>
      <LI> <A HREF="api/javolution/io/Struct.html">Struct</A> and 
           <A HREF="api/javolution/io/Union.html">Union</A> base classes for
           direct interfacing with native applications.</LI>
-     <LI> Java fastest xml <A HREF="api/javolution/xml/pull/XmlPullParserImpl.html">parsing</A>
+     <LI> Java fastest xml <A HREF="api/javolution/xml/stream/XMLStreamReader.html">parsing</A>
           and marshalling/unmarshalling <A HREF="api/javolution/xml/package-summary.html#package_description">facility</A>.</LI>
      </UL></TD>
       </TR>
@@ -266,24 +268,23 @@ body {
          <LI CLASS="simplespacer_body">Objects can be preallocated or 
          allocated on the "stack" and automatically recycled. With <B><I>Javolution</I></B>,
          your application is busy doing the <B>real work </B> not memory
-         management (e.g. <B><I>Javolution</I></B> xml
-         <A HREF="api/javolution/xml/sax/XmlSaxParserImpl.html">sax</A> and 
-         <A HREF="api/javolution/xml/pull/XmlPullParserImpl.html">pull</A> parsers
-         are 3-5x faster than conventional XML parsers only because they do
-         not waste 2/3 of the CPU doing memory allocation/garbage
-         collection). 
+         management (e.g. <B><I>Javolution</I></B> xml StAX-like
+         <A HREF="api/javolution/xml/stream/XMLStreamReader.html">reader</A>/ 
+         <A HREF="api/javolution/xml/stream/XMLStreamWriter.html">writer</A> 
+         can be 3-5x faster than conventional XML parsers only because they do
+         not waste 2/3 of the CPU doing memory allocation/garbage collection). 
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
          are simple to use, even simpler than most JDK classes. 
          You don't need to guess the capacity of a 
-         <A HREF="api/javolution/lang/TextBuilder.html">TextBuilder</A>,
+         <A HREF="api/javolution/text/TextBuilder.html">TextBuilder</A>,
          <A HREF="api/javolution/util/FastTable.html">FastTable</A> or a 
          <A HREF="api/javolution/util/FastMap.html">FastMap</A>, their
          size expand gently without ever incurring expensive resize/copy or rehash
          operations (unlike <code>StringBuffer</code>, <code>ArrayList</code>  or <code>HashMap</code>). 
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
-         are fast, very fast (e.g. <A HREF="api/javolution/lang/Text.html">Text</A> 
+         are fast, very fast (e.g. <A HREF="api/javolution/text/Text.html">Text</A> 
          insertion/deletion in <code>O[Log(n)]</code> instead of <code>O[n]</code> for standard 
          <code>String/StringBuffer/StringBuilder</code>).
          <BR> </LI>
@@ -295,7 +296,7 @@ body {
          objects preallocated/recycled in immortal memory.
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
-         <A HREF="api/javolution/realtime/ConcurrentContext.html">concurrent algorithms</A>
+         <A HREF="api/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
          to take advantage of multi-processors systems.
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>'s collection classes 
@@ -321,10 +322,10 @@ body {
          collector to the latest J2EE 1.5 with parameterized types.
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> is a pure
-         Java Solution (no native code), small (less than 200 KBytes jar
-         file) and <A HREF="doc/license.txt">free</A>; permission to use,
-         copy, modify, and distribute this software is freely granted,
-         provided that copyright notices are preserved. </LI>
+         Java Solution (no native code), small (less than 300 KBytes jar
+         file) and free; permission to use, copy, modify, and distribute
+         this software is freely granted, provided that copyright notices are preserved 
+         (<A HREF="doc/license.txt">BSD License</A>). </LI>
       </OL></TD>
       </TR>
    </TABLE>
@@ -334,8 +335,8 @@ body {
           CELLPADDING="0" WIDTH="89%">
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
-      <DIV ALIGN="center"><SPAN CLASS="quotetext"><IMG SRC="css/img/new.gif"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16">Javolution Version 3.7.8 - March 31, 2006</SPAN></DIV>
+      <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 4.1.0 - November 30, 2006</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -343,10 +344,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-3.7.8-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.1.0-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-3.7.8-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.1.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -461,6 +462,13 @@ body {
       </TR>
       <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
       <TD>
+      <DIV CLASS="style9" ALIGN="center">1.6
+      </DIV></TD>
+      <TD CLASS="style9">J2SE 1.6+ </TD>
+      <TD CLASS="style9">Includes performance comparison with standard StAX</TD>
+      </TR>
+      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+      <TD>
       <DIV CLASS="style9" ALIGN="center">gcj 
       </DIV></TD>
       <TD CLASS="style9"><A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for
@@ -549,9 +557,8 @@ body {
          CLASS="style13">Collaborative Tool:</SPAN> 
       <A HREF="http://javolution.dev.java.net/">java.net</A> (code
       development, comments, issues, bug reporting).<BR> 
-      <SPAN CLASS="style13">Coding Standard:</SPAN> 
-      <A HREF="http://java.sun.com/docs/codeconv/index.html"> 
-      Sun Code Convention</A> with <A HREF="doc/coding_standard.txt">Addendum</A>.<BR>
+      <SPAN CLASS="style13">Style Guide:</SPAN> 
+      <A HREF="doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
       <SPAN CLASS="style13">Preferred Environment:</SPAN> 
       <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding) 
       and <A HREF="http://www.netbeans.org/">NetBeans</A> <BR>
@@ -627,6 +634,9 @@ body {
       <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment): 
       <UL>
          <LI>
+         <A HREF="doc/TimeDeterministicJava.pdf">Time-Deterministic Java<SUP>TM</SUP></A> 
+         (pdf presentation).</LI>
+         <LI>
          <A HREF="doc/Man33955.pdf">Validating Java for Safety-Critical Applications</A> 
          (<A HREF="http://www.aiaa.org/">AIAA</A> Space 2005 Conference).</LI>
          <LI>
@@ -637,14 +647,16 @@ body {
          <LI><A HREF="http://www.sys-con.com/story/?storyid=45500&DE=1">
          Turbo-Charging Java for Real-Time Applications</A><BR> (July 2004
          issue of <B>Java Developer Journal</B>)</LI>
-         <LI>J.A.D.E. XML support, published in the 2001 February issue of 
-         <A HREF="http://www.ddj.com/">Dr Dobb's</A> Journal. </LI>
+         <LI><a href="http://www.ddj.com/184404483">Dr Dobb's: J.A.D.E.</a>
+               article published in the 2001 February issue of Dr Dobb's Journal. </LI>
       </UL>Known projects using <B><I>Javolution</I></B>: 
       <UL>
          <LI><A HREF="http://jscience.org/">
          <FONT COLOR="#B60606" FAMILY="Verdana">J</FONT><FONT COLOR="#506474" FAMILY="Verdana">Science</FONT></A> - Java Tools and Libraries for the Advancement of Sciences.</LI>
          <LI><A HREF="http://www.ofbiz.org/">Open For Business</A> - Open source enterprise automation software project.</LI>
+         <LI><A HREF="http://www.jgame.org/">jgame</A> - Real-time and embedded gaming API.</LI>
          <LI><A HREF="http://www.matheclipse.org/me/">MathEclipse</A> - A symbolic mathematics engine written in Java.</LI>
+         <LI><A HREF="http://www.intermedia.sa.it/lia/jroboop/">JRoboOp</A> - Java package for robotics simulation with visualization of a 3D robot model.</LI>
          <LI><A HREF="http://www.jmulti.de/">JMulTi</A> - Time Series Analysis with Java.</LI>
          <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
       </UL><I> (Let us know if your project uses <B>Javolution</B>
@@ -719,7 +731,48 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
-         <LI CLASS="simplespacer_body"><B> March 31, 2006: Javolution 3.7.8</B><BR>
+         <LI CLASS="simplespacer_body"><i>Early 2007: Javolution 4.2</i><BR>
+         <UL>
+            <LI> XMLReflectionBinding class (POJO serialization/deserialization 
+                 without writing XMLFormat)</LI>
+            <LI> Replace <code>ConcurrentThread</code> class with an interface (e.g. Concurrent)
+                 to allow for more flexibility (e.g. NoHeapRealtimeThread can then 
+                 be used as concurrent threads)</LI>
+            <LI> Diverse optimizations (Text, TextBuilder, ConcurrentContext, etc.)</LI>
+         </UL>            
+         </LI>
+         <BR>
+
+         <LI CLASS="simplespacer_body"><B>November 30, 2006: Javolution 4.1</B><BR>
+         Lossless formatting/parsing of floating point numbers in
+         <A HREF="api/javolution/text/TypeFormat.html">TypeFormat</A> [4.1.0] <BR>
+         Immediate recycling capability for
+         <A HREF="api/javolution/lang/Reusable.html">reusable</A> classes (e.g.
+         collections, text builder, ...) [4.1.0]
+<pre>FastTable&lt;String&gt tmp = FastTable.newInstance();
+...
+FastTable.recycle(tmp); // Recycles immediately.</pre>
+         </LI>
+
+         <LI CLASS="simplespacer_body"><B>September 18, 2006: Javolution 4.0</B><BR>
+         Faster parsing/formatting of primitive types (TypeFormat) [4.0.2] <BR>
+         Corrected error when parsing double (TypeFormat) [4.0.1] <BR>
+         There are many new features in this major release:<UL>
+         <LI> A new configuration plug-in class (<A HREF="api/javolution/lang/Configurable.html">Configurable</A> class) </LI>
+         <LI> XML stream <A HREF="api/javolution/xml/stream/XMLStreamReader.html">reader</A>/ 
+         <A HREF="api/javolution/xml/stream/XMLStreamWriter.html">writer</A>  (StAX-like) </LI>
+         <LI> Faster, Simpler, Meaner...
+             <A HREF="api/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A> (using the StAX-like classes) </LI>
+         <LI> Explicit object recycling now works in the default heap context </LI>
+         <LI> Faster object recycling (yes it can be even faster) </LI>
+         <LI> Refactoring and renaming (yes it breaks backward compatibility but it should be the last time ;) )</LI>
+         <LI> More I/O classes (e.g. AppendableWriter, CharSequenceReader) </LI>
+         <LI> ... </LI>
+         </UL>            
+         </LI>
+
+         <LI CLASS="simplespacer_body"><B> May 1, 2006: Javolution 3.7</B><BR>
+         Xml corrections and NetBeans support (Java Project with existing Ant script) [3.7.10]<BR>
          Added sorting capabilities (quick sort) to <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.7.8]<BR>
          Shared <A HREF="api/javolution/util/FastMap.html">FastMap</A> are now valid to 
          substitute to <code>ConcurrentHashMap</code> 
@@ -739,27 +792,27 @@ body {
          is allocated in a non-heap memory area and its capacity increases,
          the extension part is allocated in the same memory area
          (see also <A HREF="api/javolution/lang/Reusable.html">Reusable</A>) [3.7.0] <BR>
-         Faster document parsing with  <A HREF="api/javolution/lang/CharSet.html">CharSet</A>
-         and <A HREF="api/javolution/lang/TypeFormat.html">TypeFormat</A> [3.7.0]<BR>
-         <A HREF="api/javolution/realtime/Context.html">Contexts</A> can now be used to reduce 
+         Faster document parsing with  <A HREF="api/javolution/text/CharSet.html">CharSet</A>
+         and <A HREF="api/javolution/text/TypeFormat.html">TypeFormat</A> [3.7.0]<BR>
+         <A HREF="api/javolution/context/Context.html">Contexts</A> can now be used to reduce 
          "worst-case" execution time 
-         (see <A HREF="api/javolution/realtime/package-summary.html#package_description">realtime package</A>) [3.7.0]<BR>
+         (see <A HREF="api/javolution/context/package-summary.html#package_description">realtime package</A>) [3.7.0]<BR>
           
          <LI CLASS="simplespacer_body"><B> September 26, 2005: Javolution 3.6 </B><BR>
          Added <A HREF="api/javolution/util/StandardLog.html">StandardLog</A>
          class to leverage <code>java.util.logging</code> capabilities [3.6.9] [3.6.10]<BR>
          <A HREF="api/javolution/lang/ClassInitializer.html">Class initialization</A> at start-up
          to avoid initialization delays at runtime [3.6.7] [3.6.8]<BR>
-         Powerful/flexible <A HREF="api/javolution/realtime/LogContext.html">logging context</A> [3.6.7] [3.6.8]<BR>
+         Powerful/flexible <A HREF="api/javolution/context/LogContext.html">logging context</A> [3.6.7] [3.6.8]<BR>
          Wilfried Middleton added useful C# String operations to the 
-            <A HREF="api/javolution/lang/Text.html">Text</A> class [3.6.7]<BR>
+            <A HREF="api/javolution/text/Text.html">Text</A> class [3.6.7]<BR>
          Gregory Arakelian <A HREF="http://javolution.org/javoclipse-1_0_48.zip">JavoClipse</A> release! See tools above. <BR>
          Direct support for <A HREF="api/javolution/xml/package-summary.html#package_description">xml</A> cross references (to avoid expanding objects already formatted) [3.6.5]<BR>
          Minor additions to <A HREF="api/javolution/io/Struct.html">Struct</A> class [3.6.3] [3.6.4] <BR>
          Comparison graph illustrating real-time characteristic of <A HREF="api/javolution/util/FastMap.html">FastMap</A> [3.6.3] <BR>
-         <A HREF="api/javolution/realtime/Context.html">Contexts</A> now work with <code>NoHeapRealtimeThread</code> [3.6.3] <BR>
+         <A HREF="api/javolution/context/Context.html">Contexts</A> now work with <code>NoHeapRealtimeThread</code> [3.6.3] <BR>
          Fixed shared <A HREF="api/javolution/util/FastMap.html">FastMap</A> issues [3.6.1] [3.6.2] <BR>
-         Object-Local <A HREF="api/javolution/realtime/Context.html">contexts</A> 
+         Object-Local <A HREF="api/javolution/context/Context.html">contexts</A> 
          which can be inherited by threads executing their methods [3.6.0]<BR>
          </LI>
          
@@ -771,10 +824,10 @@ body {
          <i>New and improved</i> <A HREF="api/javolution/xml/package-summary.html#package_description">XML Serialization/Deserialization</A><BR>
          </LI>
          
-         <LI CLASS="simplespacer_body"><B> July 4, 2005: Javolution 3.4.0 </B><BR>
+         <LI CLASS="simplespacer_body"><B> July 4, 2005: Javolution 3.4 </B><BR>
          Smoother capacity increase for <A HREF="api/javolution/util/FastMap.html">FastMap</A> [3.4.0]<BR>
          Linux benchmark <A HREF="http://javolution.org/doc/benchmark.html">results</A> instead of Windows [3.4.0]<BR>
-         Easier creation of <A HREF="api/javolution/realtime/StackReference.html">StackReference</A> for functions returning more than one value [3.4.0]<BR>
+         Easier creation of <A HREF="api/javolution/context/StackReference.html">StackReference</A> for functions returning more than one value [3.4.0]<BR>
          </LI>
          
          <LI CLASS="simplespacer_body"><B> June 24, 2005: Javolution 3.3 </B><BR>
@@ -789,28 +842,15 @@ body {
          </LI>
 
          <LI CLASS="simplespacer_body"><B> March 12, 2005: Javolution 3.1</B><BR>
-         Extensive testing (using <A HREF="http://sources.redhat.com/mauve/">Mauve</A> test suite) [3.1.0]<BR>
          </LI>
 
          <LI CLASS="simplespacer_body"><B> March 3, 2005: Javolution 3.0</B><BR>
-         <A HREF="api/javolution/lang/Text.html">Text</A> enhancements [3.0.5] [3.0.6] [3.0.7]<BR>
-         <A HREF="api/javolution/realtime/AllocationProfile.html">Allocation profiler</A>!
-         It allows your classes to be initialized and <B>ALL</B> your objects preallocated at start-up 
-         (e.g. in immortal memory for RTSJ VM). No more dynamic object creation 
-         and garbage collection <B>EVER</B> (also several fold acceleration increase of your application)!<BR>
          </LI>
 
          <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2</B><BR>
-         Automatic detection of poorly distributed system hash code (see 
-         <A HREF="api/javolution/util/FastMap.html">FastMap</A>) [2.2.2]<BR>
-          Modified xml serialization to generate SAX events for 
-         <A HREF="http://cocoon.apache.org/2.1/tutorial/tutorial-rmi-generator.html">cocoon</A>
-         (see <A HREF="api/javolution/xml/ObjectWriter.html">ObjectWriter</A>) [2.2.0]<BR>
-         Removed calls to <CODE>System.getProprety()</CODE> (security issues with Java WebStart) [2.2.0]<BR>
          </LI>
 
          <LI CLASS="simplespacer_body"><B> December 19, 2004: Javolution 2.1</B><BR>
-         CLDC 1.0 support [2.1.0]<BR>
          </LI>
          
          <LI CLASS="simplespacer_body"><B> October 4, 2004: Javolution 1.0</B><BR>
@@ -834,7 +874,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : March 31, 2006<BR>
+      Revision      : November 30, 2006<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

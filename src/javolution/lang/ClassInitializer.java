@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -19,7 +19,7 @@ import javolution.util.StandardLog;
  * <p> This utility class allows for initialization of all Java(tm) classes
  *     at startup to avoid initialization delays at an innapropriate time.</p>
  * <p> Initialization logs are available through 
- *     {@link javolution.realtime.LogContext LogContext}. For example:[code]
+ *     {@link javolution.context.LogContext LogContext}. For example:[code]
  *     public static main(String[] args) {
  *         LogContext.enter(LogContext.NULL); // Temporarely disables logging errors and warnings.
  *         try {
@@ -133,7 +133,11 @@ public class ClassInitializer {
      * @param cls the class to initialize.
      */
     public static void initialize(Class cls) {
-        Reflection.getClass(cls.getName());
+        try {
+            Reflection.getClass(cls.getName());
+        } catch (ClassNotFoundException e) {
+            StandardLog.error(e); // Should not occur.
+        }
     }
 
     /**
@@ -142,7 +146,11 @@ public class ClassInitializer {
      * @param className the name of the class to initialize.
      */
     public static void initialize(String className) {
-        Reflection.getClass(className);
+        try {
+            Reflection.getClass(className);
+        } catch (ClassNotFoundException e) {
+            StandardLog.warning("Class + " + className + " not found");
+        }
     }
 
     /**
@@ -215,7 +223,12 @@ public class ClassInitializer {
             if (name.endsWith(".class")) {
                 String className = prefix + "."
                         + name.substring(0, name.length() - 6);
-                Class cls = Reflection.getClass(className);
+                Class cls = null;
+                try {
+                    cls = Reflection.getClass(className);
+                } catch (ClassNotFoundException e) {
+                    StandardLog.error(e);
+                }
                 if (cls != null) {
                     StandardLog.finer(className + " initialized");
                 }

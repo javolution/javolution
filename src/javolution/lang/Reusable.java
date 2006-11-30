@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -23,6 +23,10 @@ package javolution.lang;
  *     public class Targets implements Reusable {
  *         private Target[] _targets = new Target[32];
  *         private int _count;
+ *         public void add(Target target) {
+ *             if (_count >= _targets.length) capacityOverflow(); 
+ *             _targets[_count++] = target;
+ *         }
  *         private void capacityOverflow() {
  *              MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
  *                  public void run() {
@@ -38,16 +42,16 @@ package javolution.lang;
  * <p> Instances of this class can safely reside in permanent memory 
  *     (e.g. <code>static</code> members) or be an integral part of a
  *     higher level component. For example:[code]
- *     public class XmlFormat {
+ *     public class XMLFormat {
  *          // RTSJ Unsafe! Memory leaks (when entries removed) or IllegalAssignmentError (when new entries while in ScopedArea).   
- *          static HashMap<Class, XmlFormat> ClassToFormat = HashMap<Class, XmlFormat>();
+ *          static HashMap<Class, XMLFormat> ClassToFormat = HashMap<Class, XMLFormat>();
  *             
  *          // RTSJ safe! FastMap is Reusable. Removed entries are internally recycled, new entries are in ImmortalMemory.
- *          static FastMap<Class, XmlFormat> ClassToFormat = FastMap<Class, XmlFormat>();
+ *          static FastMap<Class, XMLFormat> ClassToFormat = FastMap<Class, XMLFormat>();
  *     }[/code]</p>
  *     
  * <p> Reusable objects can also be allocated on the stack providing that
- *     their {@link javolution.realtime.ObjectFactory factory} cleanup 
+ *     their {@link javolution.context.ObjectFactory factory} cleanup 
  *     method calls the {@link #reset reset} method. For example:[code]
  *     public class Foo extends RealtimeObject implements Reusable {
  *         private static final Factory<Foo> FACTORY = new Factory<Foo>() {

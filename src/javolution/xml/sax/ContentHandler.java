@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,18 +8,22 @@
  */
 package javolution.xml.sax;
 
+import javolution.text.CharArray;
 import j2me.lang.CharSequence;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 /**
- * Receives notification of the logical content of a document.
- * It is a more generic version of <code>org.xml.sax.ContentHandler</code> with
- * the <code>String</code> type replaced by <code>CharSequence</code>.
+ * <p> Receives notification of the logical content of a document.</p>
+ * 
+ * <p> It is a more efficient version of <code>org.xml.sax.ContentHandler</code>
+ *     with  {@link CharArray CharArray}/{@link CharSequence CharSequence} 
+ *     instead of the <code>String</code> to avoid forcing dynamic object 
+ *     allocations.</p>
  *
  * @author  <a href="mailto:sax@megginson.com">David Megginson</a>
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.1, March 11, 2005
+ * @version 4.0, June 16, 2006
  */
 public interface ContentHandler {
 
@@ -51,7 +55,7 @@ public interface ContentHandler {
      * @param  uri the namespace URI the prefix is mapped to.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void startPrefixMapping(CharSequence prefix, CharSequence uri)
+    void startPrefixMapping(CharArray prefix, CharArray uri)
         throws SAXException;
 
     /**
@@ -60,7 +64,7 @@ public interface ContentHandler {
      * @param  prefix the prefix that was being mapping.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void endPrefixMapping(CharSequence prefix) throws SAXException;
+    void endPrefixMapping(CharArray prefix) throws SAXException;
 
     /**
      * Receives notification of the beginning of an element.
@@ -76,8 +80,8 @@ public interface ContentHandler {
      *         attributes, it shall be an empty {@link Attributes} object.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void startElement(CharSequence uri, CharSequence localName,
-                      CharSequence qName, Attributes atts) throws SAXException;
+    void startElement(CharArray uri, CharArray localName,
+                      CharArray qName, Attributes atts) throws SAXException;
 
     /**
      * Receives notification of the end of an element.
@@ -91,8 +95,8 @@ public interface ContentHandler {
      *         character sequence if qualified names are not available.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void endElement (CharSequence uri, CharSequence localName,
-        CharSequence qName) throws SAXException;
+    void endElement (CharArray uri, CharArray localName,
+        CharArray qName) throws SAXException;
 
     /**
      * Receives notification of character data.
@@ -124,7 +128,7 @@ public interface ContentHandler {
      *         whitespace separating it from the target.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void processingInstruction(CharSequence target, CharSequence data)
+    void processingInstruction(CharArray target, CharArray data)
         throws SAXException;
 
     /**
@@ -136,6 +140,6 @@ public interface ContentHandler {
      *        "[dtd]".
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void skippedEntity(CharSequence name) throws SAXException;
+    void skippedEntity(CharArray name) throws SAXException;
 
 }

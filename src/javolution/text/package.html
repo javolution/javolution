@@ -1,0 +1,23 @@
+<body>
+<p> Provides classes and interfaces to handle text.</p>
+<h2><a name="FAQ">FAQ:</a></h2>
+<ol>
+    <a name="FAQ-1"></a>
+    <li><b> I'm accumulating a large string, and all I want to do is 
+append to the end of the current string, which is the better class to use, 
+Text or TextBuilder? Bearing in mind that speed is important, but I also want 
+to conserve memory.</b>
+    <p> It all depends of the size of the text to append (the actual size of the
+         document being appended has almost no impact in both cases).</p>
+    <p> If you append one character at a time or a small text then 
+        {@link javolution.text.TextBuilder#append(Object) TextBuilder.append(Object)}
+        is faster (the cost of copying the characters to the internal buffer is 
+        then negligeable and TextBuilder never resizes its internal arrays).</p>
+    <p> If you append larger character sequences (the threshold might be around 20 
+        characters) then {@link javolution.text.Text#concat(Text) Text.concat(Text)}
+        is more efficient (it avoid character copies, but creates small nodes objects
+        instead).</p>
+    <p></p>
+</ol>
+    
+</body>

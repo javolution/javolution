@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -10,7 +10,7 @@ package j2me.nio;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
 import j2me.lang.Readable;
-import javolution.lang.Appendable;
+import javolution.text.Appendable;
 
 /**
  *  Class provided for the sole purpose of compiling the Readable interface.

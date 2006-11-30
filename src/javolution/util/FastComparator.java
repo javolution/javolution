@@ -1,7 +1,10 @@
 package javolution.util;
 
-import javolution.Configuration;
-import javolution.lang.Text;
+import javolution.Javolution;
+import javolution.lang.Configurable;
+import javolution.text.Text;
+import javolution.xml.XMLFormat;
+import javolution.xml.stream.XMLStreamException;
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
@@ -26,23 +29,61 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         Serializable {
 
     /**
-     * Holds the default object comparator; rehash is performed if the 
-     * system hash code (platform dependent) is not evenly distributed.
-     * 
-     * @see Configuration#isPoorSystemHash() 
+     * Holds the default XML representation for FastComparator instances
+     * (format ensures unicity of predefined comparator).
      */
-    public static final FastComparator DEFAULT = new Default(Configuration
-            .isPoorSystemHash());
+    protected static final XMLFormat/*<FastComparator>*/ XML = new XMLFormat(
+            Javolution.j2meGetClass("javolution.util.FastComparator")) {
 
-    static class Default extends FastComparator {
-        private boolean _isPoorSystemHash;
-
-        public Default(boolean isPoorSystemHash) {
-            _isPoorSystemHash = isPoorSystemHash;
+        public Object newInstance(Class cls, javolution.xml.XMLFormat.InputElement xml) throws XMLStreamException {
+            if (cls == FastComparator.DEFAULT.getClass())
+                return FastComparator.DEFAULT;
+            if (cls == FastComparator.DIRECT.getClass())
+                return FastComparator.DIRECT;
+            if (cls == FastComparator.IDENTITY.getClass())
+                return FastComparator.IDENTITY;
+            if (cls == FastComparator.LEXICAL.getClass())
+                return FastComparator.LEXICAL;
+            if (cls == FastComparator.REHASH.getClass())
+                return FastComparator.REHASH;
+            return super.newInstance(cls, xml);
         }
 
+        public void read(InputElement xml, Object obj) throws XMLStreamException {
+            // Do nothing.
+        }
+
+        public void write(Object obj, OutputElement xml) throws XMLStreamException {
+            // Do nothing.
+        }
+    };
+
+    /**
+     * Indicates if the system hash code should be rehashed 
+     * (see <a href="{@docRoot}/overview-summary.html#configuration">
+     * Javolution Configuration</a> for details).
+     */
+    public static final Configurable/*<Boolean>*/ REHASH_SYSTEM_HASHCODE 
+         = new Configurable(isPoorSystemHash()) {
+        protected void notifyChange() {
+            _Rehash = ((Boolean)get()).booleanValue();
+        }
+    };
+    static boolean _Rehash 
+         = ((Boolean)REHASH_SYSTEM_HASHCODE.get()).booleanValue();
+
+    /**
+     * Holds the default object comparator; rehash is performed if the 
+     * system hash code (platform dependent) is not evenly distributed.
+     * @see <a href="{@docRoot}/overview-summary.html#configuration">
+     *      Javolution Configuration</a> 
+     */
+    public static final FastComparator DEFAULT = new Default();
+
+    private static final class Default extends FastComparator {
+
         public int hashCodeOf(Object obj) {
-            return (_isPoorSystemHash ? REHASH.hashCodeOf(obj) : obj.hashCode());
+            return (_Rehash ? REHASH.hashCodeOf(obj) : obj.hashCode());
         }
 
         public boolean areEqual(Object o1, Object o2) {
@@ -68,7 +109,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      */
     public static final FastComparator DIRECT = new Direct();
 
-    static class Direct extends FastComparator {
+    private static final class Direct extends FastComparator {
         public int hashCodeOf(Object obj) {
             return obj.hashCode();
         }
@@ -96,7 +137,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      */
     public static final FastComparator REHASH = new Rehash();
 
-    static class Rehash extends FastComparator {
+    private static final class Rehash extends FastComparator {
         public int hashCodeOf(Object obj) {
             // Formula identical <code>java.util.HashMap</code> to ensures
             // similar behavior for ill-conditioned hashcode keys. 
@@ -130,12 +171,10 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      */
     public static final FastComparator IDENTITY = new Identity();
 
-    static class Identity extends FastComparator {
-        private boolean _rehash = !Configuration.isPoorSystemHash();
-
+    private static final class Identity extends FastComparator {
         public int hashCodeOf(Object obj) {
             int h = System.identityHashCode(obj);
-            if (!_rehash)
+            if (!_Rehash)
                 return h;
             h += ~(h << 9);
             h ^= (h >>> 14);
@@ -167,7 +206,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      */
     public static final FastComparator LEXICAL = new Lexical();
 
-    static class Lexical extends FastComparator {
+    private static final class Lexical extends FastComparator {
 
         public int hashCodeOf(Object obj) {
             if ((obj instanceof String) || (obj instanceof Text))
@@ -208,6 +247,8 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
                 }
                 return true;
             }
+            if ((o1 == null) || (o2 == null)) 
+                return o1 == o2;
             final CharSequence csq1 = (CharSequence) o1;
             final CharSequence csq2 = (CharSequence) o2;
             final int length = csq1.length();
@@ -272,7 +313,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @throws NullPointerException if the specified object is 
      *         <code>null</code>.
      */
-    public abstract int hashCodeOf(Object/*T*/obj);
+    public abstract int hashCodeOf(Object/*{T}*/obj);
 
     /**
      * Indicates if the specified objects can be considered equal.
@@ -282,7 +323,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-    public abstract boolean areEqual(Object/*T*/o1, Object/*T*/o2);
+    public abstract boolean areEqual(Object/*{T}*/o1, Object/*{T}*/o2);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
@@ -296,6 +337,24 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @throws NullPointerException if any of the specified object is 
      *         <code>null</code>.
      */
-    public abstract int compare(Object/*T*/o1, Object/*T*/o2);
+    public abstract int compare(Object/*{T}*/o1, Object/*{T}*/o2);
 
+    /**
+     * Test the system hash code.
+     * 
+     * @return <code>true</code> if the system hash code is not evenly 
+     *         distributed; <code>false<code> otherwise.
+     */
+    private static Boolean isPoorSystemHash() {
+        boolean[] dist = new boolean[32]; // Length power of 2.
+        for (int i = 0; i < dist.length; i++) {
+            dist[new Object().hashCode() & (dist.length - 1)] = true;
+        }
+        int holes = 0;
+        for (int i = 0; i < dist.length; i++) {
+            if (!dist[i])
+                holes++; // Count holes.
+        }
+        return new Boolean(holes > (dist.length >> 1));
+    }
 }

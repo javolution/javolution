@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,20 +8,22 @@
  */
 package javolution.lang;
 
+
+
 /**
  * <p> This interface represents an object reference, the reachability level 
  *     of a reference varies based on the actual reference implementation.
  *     Here are the reachability levels for some of <i><b>J</b>avolution</i>
  *     references:<ul>
- *     <li> {@link javolution.lang.PersistentReference PersistentReference} : 
+ *     <li> {@link javolution.context.PersistentContext.Reference PersistentContext.Reference} : 
  *          Reachable accross multiple program executions.</li>
- *     <li> {@link javolution.realtime.LocalReference LocalReference} : 
+ *     <li> {@link javolution.context.LocalContext.Reference LocalContext.Reference} : 
  *          Reachable only within the scope of the 
- *          {@link javolution.realtime.LocalContext LocalContext}
+ *          {@link javolution.context.LocalContext LocalContext}
  *          where it has been set.</li>
- *     <li> {@link javolution.realtime.StackReference StackReference} :
+ *     <li> {@link javolution.context.PoolContext.Reference PoolContext.Reference} :
  *          Reachable only within the scope of the  
- *          {@link javolution.realtime.PoolContext PoolContext}
+ *          {@link javolution.context.PoolContext PoolContext}
  *          where it has been created (factory produced).</li>
  *     </ul></p>
  * 
@@ -35,13 +37,13 @@ public interface Reference/*<T>*/ {
      *
      * @return the referent or <code>null</code> if not set.
      */
-    Object/*T*/ get();
+    Object/*{T}*/ get();
 
     /**
      * Sets the value this reference referes to.
      *
      * @param value the reference value.
      */
-    void set(Object/*T*/ value);
+    void set(Object/*{T}*/ value);
 
 }

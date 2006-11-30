@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2006 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -52,13 +52,13 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     /**
      * Holds the backing map.
      */
-    private transient FastMap/*<E,E>*/ _map;
+    private transient FastMap _map;
 
     /**
      * Creates a set of small initial capacity.
      */
     public FastSet() {
-        this(new FastMap/*<E,E>*/());
+        this(new FastMap());
     }
 
     /**
@@ -67,10 +67,10 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see javolution.lang.PersistentReference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastSet(String id) {
-        this(new FastMap/*<E,E>*/(id));
+        this(new FastMap(id));
     }
 
     /**
@@ -81,7 +81,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      * @param capacity the initial capacity.
      */
     public FastSet(int capacity) {
-        this(new FastMap/*<E,E>*/(capacity));
+        this(new FastMap(capacity));
     }
 
     /**
@@ -91,7 +91,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      * @param elements the elements to be placed into this fast set.
      */
     public FastSet(Set/*<? extends E>*/ elements) {
-        this(new FastMap/*<E,E>*/(elements.size()));
+        this(new FastMap(elements.size()));
         addAll(elements);
     }
 
@@ -100,18 +100,28 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      * 
      * @param map the backing map.
      */
-    private FastSet(FastMap/*<E,E>*/ map) {
+    private FastSet(FastMap map) {
         _map = map;
     }
 
     /**
-     * Returns a set allocated from the stack when executing in a
-     * {@link javolution.realtime.PoolContext PoolContext}).
+     * Returns a new, preallocated or {@link #recycle recycled} set instance
+     * (on the stack when executing in a {@link javolution.context.PoolContext
+     * PoolContext}).
      *
-     * @return a new, pre-allocated or recycled set instance.
+     * @return a new, preallocated or recycled set instance.
      */
     public static /*<E>*/ FastSet/*<E>*/ newInstance() {
         return (FastSet/*<E>*/) FACTORY.object();
+    }
+
+    /**
+     * Recycles a set {@link #newInstance() instance} immediately
+     * (on the stack when executing in a {@link javolution.context.PoolContext
+     * PoolContext}). 
+     */
+    public static void recycle(FastSet instance) {
+        FACTORY.recycle(instance);
     }
 
     /**
@@ -129,8 +139,9 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      * @param value the value to be added to this set.
      * @return <code>true</code> if this set did not already contain the 
      *         specified element.
+     * @throws NullPointerException if the value is <code>null</code>.
      */
-    public final boolean add(Object/*E*/ value) {
+    public final boolean add(Object/*{E}*/ value) {
         return _map.put(value, value) == null;
     }
 
@@ -151,7 +162,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Overrides (optimization).
     public final boolean remove(Object o) {
-        return _map.remove(o) == o;
+        return _map.remove(o) != null;
     }
 
     // Overrides.
@@ -163,7 +174,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Implements Reusable.
     public void reset() {
-        super.setValueComparator(FastComparator.DIRECT);
+        super.reset();
         _map.reset();
     }
 
@@ -171,10 +182,11 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
         final int size = stream.readInt();
-        _map = new FastMap/*<E,E>*/(size);
+        _map = new FastMap(size);
         setValueComparator((FastComparator) stream.readObject());
         for (int i = size; i-- != 0;) {
-            add((Object/*E*/)stream.readObject());
+            Object key = stream.readObject(); 
+            _map.put(key, key);
         }
     }
 
@@ -199,13 +211,13 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     }
 
     // Implements FastCollection abstract method.
-    public final Object/*E*/ valueOf(Record record) {
-        return ((FastMap.Entry/*<E,E>*/) record).getKey();
+    public final Object/*{E}*/ valueOf(Record record) {
+        return (Object/*{E}*/) ((FastMap.Entry) record).getKey();
     }
 
     // Implements FastCollection abstract method.
     public final void delete(Record record) {
-        _map.remove(((FastMap.Entry/*<E,E>*/) record).getKey());
+        _map.remove(((FastMap.Entry) record).getKey());
     }
 
     private static final long serialVersionUID = 3257563997099275574L;
