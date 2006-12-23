@@ -8,8 +8,11 @@
  */
 package javolution.util;
 
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
+import j2me.io.ObjectInputStream;
+import j2me.io.ObjectOutputStream;
 import j2me.lang.IllegalStateException;
 import j2me.lang.UnsupportedOperationException;
 import j2me.util.Collection;
@@ -54,7 +57,7 @@ import javolution.lang.Reusable;
  *      for the table (no object or array allocation when sorting).</p> 
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.7, January 1, 2006
+ * @version 4.2, December 18, 2006
  */
 public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         List/*<E>*/, Reusable, RandomAccess {
@@ -107,23 +110,28 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     private static final int R3 = D0 + D1 + D2;
 
     // new Object[1<<7][1<<5], 12 bits (4096)
-    private Object/*{E}*/[][] _elems1;
+    private transient Object/*{E}*/[][] _elems1;
 
     // new Object[1<<9][1<<7][1<<5], 21 bits (2097152)
-    private Object/*{E}*/[][][] _elems2;
+    private transient Object/*{E}*/[][][] _elems2;
 
     // new Object[1<<11][1<<9][1<<7][1<<5], 32 bits
-    private Object/*{E}*/[][][][] _elems3;
+    private transient Object/*{E}*/[][][][] _elems3;
 
     /**
      * Holds the current capacity. 
      */
-    private int _capacity = C0;
+    private transient int _capacity = C0;
 
     /**
      * Holds the current size.
      */
-    private int _size;
+    private transient int _size;
+
+    /**
+     * Holds the value comparator.
+     */
+    private transient FastComparator/*<? super E>*/ _valueComparator = FastComparator.DEFAULT;
 
     /**
      * Creates a table of small initial capacity.
@@ -339,7 +347,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         }
     }
 
-    private static final Object[] NULL_BLOCK = (Object[]) new Object[C0];
+    private static final Object[] NULL_BLOCK = (Object[]) new Object[C0];    
 
     /**
      * Inserts all of the values in the specified collection into this
@@ -644,6 +652,23 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         return down;
     }
 
+
+    /**
+     * Sets the comparator to use for value equality.
+     *
+     * @param comparator the value comparator.
+     * @return <code>this</code>
+     */
+    public FastTable/*<E>*/ setValueComparator(FastComparator/*<? super E>*/ comparator) {
+        _valueComparator = comparator;
+        return this;
+    }
+    
+    // Overrides.
+    public FastComparator/*<? super E>*/ getValueComparator() {
+        return _valueComparator;
+    }
+    
     // Implements FastCollection abstract method.
     public final int size() {
         return _size;
@@ -651,27 +676,52 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     // Implements FastCollection abstract method.
     public final Record head() {
-        return Index.MINUS_ONE;
+        return Index.valueOf(-1);
     }
 
     // Implements FastCollection abstract method.
     public final Record tail() {
-        return (Index) Index.COLLECTION.get(_size);
+        return Index.valueOf(_size);
     }
 
     // Implements FastCollection abstract method.
     public final Object/*{E}*/valueOf(Record record) {
-        return get(((Index) record)._position);
+        return get(((Index) record).intValue());
     }
 
     // Implements FastCollection abstract method.
     public final void delete(Record record) {
-        remove(((Index) record)._position);
+        remove(((Index) record).intValue());
     }
 
     // Overrides  to return a list (JDK1.5+).
     public Collection/*List<E>*/unmodifiable() {
         return (Collection/*List<E>*/) super.unmodifiable();
+    }
+
+    // Requires special handling during de-serialization process.
+    private void readObject(ObjectInputStream stream) throws IOException,
+            ClassNotFoundException {
+        // Default setup.
+        _capacity = C0;
+        _elems1 = (Object/*{E}*/[][]) new Object[1][];
+        _elems1[0] = (Object/*{E}*/[]) new Object[C0];
+        
+        setValueComparator((FastComparator) stream.readObject());
+        final int size = stream.readInt();
+        for (int i = 0; i < size; i++) {
+            addLast((Object/*{E}*/) stream.readObject());
+        }
+    }
+
+    // Requires special handling during serialization process.
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        stream.writeObject(getValueComparator());
+        final int size = _size;
+        stream.writeInt(size);
+        for (int i = 0; i < size; i++) {
+            stream.writeObject(get(i));
+        }
     }
 
     /**
@@ -711,13 +761,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
                     }
                     _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (Object/*{E}*/[]) new Object[D0];
                 }
-                // Checks if more indices are necessary.
-                if ((_capacity >= Index.COLLECTION._size)
-                        && (FastTable.this != Index.COLLECTION)) {
-                    while (_capacity >= Index.COLLECTION._size) {
-                        Index.augment();
-                    }
-                }
             }
         });
     }
@@ -738,117 +781,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             _elems3 = null;
         } else {
             _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = null;
-        }
-    }
-
-    /**
-     * This class represents a {@link FastTable} index; it allows for direct 
-     * iteration over the collection.
-     */
-    public static final class Index implements Record {
-
-        /**
-         * Holds the indexes.
-         */
-        private static final FastTable COLLECTION = new FastTable();
-
-        /**
-         * Holds the head record for all tables.
-         */
-        private static final Index MINUS_ONE = new Index();
-
-        /**
-         * Holds the last collection index.
-         */
-        private static Index CollectionLast = MINUS_ONE;
-
-        static {
-            MINUS_ONE._position = -1;
-            while (COLLECTION._size <= (1 << D0)) { // Default capacity.
-                augment();
-            }
-        }
-
-        /**
-         * Holds the index position.
-         */
-        private int _position;
-
-        /**
-         * Holds the next index.
-         */
-        private Index _next;
-
-        /**
-         * Holds the previous node.
-         */
-        private Index _previous;
-
-        /**
-         * Default constructor.
-         */
-        private Index() {
-        }
-
-        /**
-         * Returns the unique index for the specified position 
-         * (creating it as well as all its previous indices if they do not 
-         * exist). This method may be called at initialization to create
-         * all the indices used by {@link FastTable} instances at start-up.
-         * 
-         * @param position the position in the table
-         * @return the corresponding unique index.
-         * @throws IllegalArgumentException if <code>position < -1</code>.
-         */
-        public static Index getInstance(int position) {
-            if (position == -1)
-                return MINUS_ONE;
-            if (position < -1)
-                throw new IllegalArgumentException(
-                        "position: Should be greater or equal to -1");
-            while (position >= COLLECTION.size()) {
-                augment();
-            }
-            return (Index) Index.COLLECTION.get(position);
-        }
-
-        /**
-         * Returns the index position.
-         * 
-         * @return the index position.
-         */
-        public int intValue() {
-            return _position;
-        }
-
-        /**
-         * Augments index table.
-         */
-        private static void augment() {
-            MemoryArea.getMemoryArea(Index.COLLECTION).executeInArea(
-                    new Runnable() {
-                        public void run() {
-                            Index index = new Index();
-                            synchronized (COLLECTION) {
-                                index._position = COLLECTION._size;
-                                Index.CollectionLast._next = index;
-                                index._previous = Index.CollectionLast;
-                                COLLECTION.addLast(index);
-                                Index.CollectionLast = index;
-                            }
-
-                        }
-                    });
-        }
-
-        // Implements Record interface.
-        public final Record getNext() {
-            return _next;
-        }
-
-        // Implements Record interface.
-        public final Record getPrevious() {
-            return _previous;
         }
     }
 
@@ -963,15 +895,15 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         }
 
         public Record head() {
-            return Index.MINUS_ONE;
+            return Index.valueOf(-1);
         }
 
         public Record tail() {
-            return (Index) Index.COLLECTION.get(_size);
+            return Index.valueOf(_size);
         }
 
         public Object valueOf(Record record) {
-            return _table.get(((Index) record)._position + _offset);
+            return _table.get(((Index) record).intValue() + _offset);
         }
 
         public void delete(Record record) {
@@ -1055,4 +987,6 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             return st;
         }
     }
+
+    private static final long serialVersionUID = 1L;
 }

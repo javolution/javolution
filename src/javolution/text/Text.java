@@ -823,7 +823,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *          <code>CharSequence</code> or a <code>String</code>.
      */
     public final int compareTo(Object csq) {
-        return FastComparator.LEXICAL.compare(this, csq);
+        return ((FastComparator)FastComparator.LEXICAL).compare(this, csq);
     }
 
     /**

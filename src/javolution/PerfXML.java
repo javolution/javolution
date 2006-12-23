@@ -19,6 +19,7 @@ import j2me.lang.UnsupportedOperationException;
 import j2me.nio.ByteBuffer;
 import javolution.io.UTF8ByteBufferReader;
 import javolution.io.UTF8ByteBufferWriter;
+import javolution.lang.MathLib;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
 import javolution.util.FastComparator;
@@ -26,6 +27,7 @@ import javolution.util.FastList;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
 import javolution.util.FastTable;
+import javolution.util.Index;
 import javolution.xml.XMLBinding;
 import javolution.xml.XMLObjectReader;
 import javolution.xml.XMLObjectWriter;
@@ -38,9 +40,16 @@ import javolution.xml.XMLObjectWriter;
  */
 final class PerfXML extends Javolution implements Runnable {
 
-    private static final int OBJECT_SIZE = 1000; // Nbr of tables per object.
+    private static final int ITERATIONS = 1000; // The nbr of iterations.
 
-    private static final int BYTE_BUFFER_SIZE = 1400 * OBJECT_SIZE;
+    private static final int OBJECT_SIZE = 1; // Nbr of tables per object.
+
+    private static final int BUFFER_SIZE = 1400 * OBJECT_SIZE;
+
+    private ByteArrayOutputStream _Stream = new ByteArrayOutputStream(
+            BUFFER_SIZE);
+
+    private ByteBuffer _Buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 
     /**
      * Executes benchmark.
@@ -52,50 +61,53 @@ final class PerfXML extends Javolution implements Runnable {
 
         println("");
         println("-- Java(TM) Serialization --");
-        setOutputStream(null);
-        for (int i=0; i < 10; i++) benchmarkJavaSerialization(); // Warming up.
-        setOutputStream(System.out);
-        benchmarkJavaSerialization();
+        benchmarkJavaSerialization(); // Warming up.
 
         println("");
         println("-- XML Serialization (I/O Stream) --");
-        setOutputStream(null);
-        for (int i=0; i < 10; i++) benchmarkXmlIoSerialization(); // Warming up.
-        setOutputStream(System.out);
-        benchmarkXmlIoSerialization();
+        benchmarkXmlIoSerialization(); // Warming up.
 
         println("");
         println("-- XML Serialization (NIO ByteBuffer) --");
-        setOutputStream(null);
-        for (int i=0; i < 10; i++) benchmarkXmlNioSerialization(); // Warming up.
-        setOutputStream(System.out);
-        benchmarkXmlNioSerialization();
+        benchmarkXmlNioSerialization(); // Warming up.
 
         println("");
     }
 
     private void benchmarkJavaSerialization() {
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream(
-                    BYTE_BUFFER_SIZE);
-            ObjectOutput oo = new ObjectOutputStream(out);
-            Object data = newData();
             print("Write Time: ");
-            startTime();
-            oo.writeObject(data);
-            oo.close();
-            println(endTime(1));
+            for (int i = 0; i < ITERATIONS; i++) {
+                ObjectOutput oo = new ObjectOutputStream(_Stream);
+                Object data = newData();
+                startTime();
+                oo.writeObject(data);
+                oo.close();
+                keepBestTime(1);
+                _Stream.reset();
+            }
+            println(endTime());
 
-            ByteArrayInputStream in = new ByteArrayInputStream(out
-                    .toByteArray());
-            ObjectInput oi = new ObjectInputStream(in);
             print("Read Time: ");
-            startTime();
-            Object readObject = oi.readObject();
-            oi.close();
-            println(endTime(1));
-            if (!data.equals(readObject)) 
+            for (int i = 0; i < ITERATIONS; i++) {
+                // Creates input.
+                ObjectOutput oo = new ObjectOutputStream(_Stream);
+                Object data = newData();
+                oo.writeObject(data);
+                oo.close();
+                ByteArrayInputStream in = new ByteArrayInputStream(_Stream
+                        .toByteArray());
+                _Stream.reset();
+
+                ObjectInput oi = new ObjectInputStream(in);
+                startTime();
+                Object readObject = oi.readObject();
+                oi.close();
+                keepBestTime(1);                
+                if (!data.equals(readObject))
                     throw new Error("SERIALIZATION ERROR");
+            }
+            println(endTime());
         } catch (UnsupportedOperationException e) {
             println("NOT SUPPORTED (J2SE 1.4+ build required)");
         } catch (Throwable e) {
@@ -107,30 +119,43 @@ final class PerfXML extends Javolution implements Runnable {
         XMLBinding binding = new XMLBinding();
         binding.setAlias(String.class, "String");
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream(
-                    BYTE_BUFFER_SIZE);
-            XMLObjectWriter ow = XMLObjectWriter.newInstance(out);
-            ow.setBinding(binding);
-            Object data = newData();
             print("Write Time: ");
-            startTime();
-            ow.write(data);
-            ow.close();
-            println(endTime(1));
-            //System.out.println(out); 
+            for (int i = 0; i < ITERATIONS; i++) {
+                XMLObjectWriter ow = XMLObjectWriter.newInstance(_Stream);
+                ow.setBinding(binding);
+                Object data = newData();
+                startTime();
+                ow.write(data);
+                ow.close();
+                keepBestTime(1);
+                _Stream.reset();
+            }
+            println(endTime());
 
-            ByteArrayInputStream in = new ByteArrayInputStream(out
-                    .toByteArray());
-           XMLObjectReader or = XMLObjectReader.newInstance(in);
-            or.setBinding(binding);
             print("Read Time: ");
-            startTime();
-            Object readObject = or.read();
-            or.close();
-            println(endTime(1));
-             //System.out.println(readObject); 
-            if (!data.equals(readObject)) 
-                throw new Error("SERIALIZATION ERROR");
+            for (int i = 0; i < ITERATIONS; i++) {
+                // Creates input.
+                XMLObjectWriter ow = XMLObjectWriter.newInstance(_Stream);
+                ow.setBinding(binding);
+                Object data = newData();
+                ow.write(data);
+                ow.close();
+                ByteArrayInputStream in = new ByteArrayInputStream(_Stream
+                        .toByteArray());
+                _Stream.reset();
+
+                XMLObjectReader or = XMLObjectReader.newInstance(in);
+                or.setBinding(binding);
+                startTime();
+                Object readObject = or.read();
+                or.close();
+                keepBestTime(1);
+                if (!data.equals(readObject))
+                    throw new Error("SERIALIZATION ERROR");
+            }
+
+            println(endTime());
+
         } catch (UnsupportedOperationException e) {
             println("NOT SUPPORTED (J2SE 1.4+ build required)");
         } catch (Throwable e) {
@@ -140,31 +165,50 @@ final class PerfXML extends Javolution implements Runnable {
 
     private void benchmarkXmlNioSerialization() {
         try {
-            ByteBuffer bb = ByteBuffer.allocateDirect(BYTE_BUFFER_SIZE);
-            XMLObjectWriter ow = XMLObjectWriter.newInstance(new UTF8ByteBufferWriter().setOutput(bb));
-            Object data = newData();
             print("Write Time: ");
-            startTime();
-            ow.write(data);
-            ow.close();
-            println(endTime(1));
-            
-            bb.flip();
-            XMLObjectReader or = XMLObjectReader.newInstance(new UTF8ByteBufferReader().setInput(bb));
+            for (int i = 0; i < ITERATIONS; i++) {
+                XMLObjectWriter ow = XMLObjectWriter
+                        .newInstance(new UTF8ByteBufferWriter()
+                                .setOutput(_Buffer));
+                Object data = newData();
+                startTime();
+                ow.write(data);
+                ow.close();
+                keepBestTime(1);
+                _Buffer.clear();
+            }
+            println(endTime());
+
             print("Read Time: ");
-            startTime();
-            Object readObject = or.read();
-            or.close();
-            println(endTime(1));
-            if (!data.equals(readObject)) 
-                throw new Error("SERIALIZATION ERROR");
+            for (int i = 0; i < ITERATIONS; i++) {
+                // Creates input.
+                XMLObjectWriter ow = XMLObjectWriter
+                        .newInstance(new UTF8ByteBufferWriter()
+                                .setOutput(_Buffer));
+                Object data = newData();
+                ow.write(data);
+                ow.close();
+                _Buffer.flip();
+
+                XMLObjectReader or = XMLObjectReader
+                        .newInstance(new UTF8ByteBufferReader()
+                                .setInput(_Buffer));
+                startTime();
+                Object readObject = or.read();
+                or.close();
+                keepBestTime(1);
+                if (!data.equals(readObject))
+                    throw new Error("SERIALIZATION ERROR");
+                _Buffer.clear();
+            }
+            println(endTime());
         } catch (UnsupportedOperationException e) {
             println("NOT SUPPORTED (J2SE 1.4+ build required)");
         } catch (Throwable e) {
             throw new JavolutionError(e);
         }
     }
-    
+
     private static Object newData() {
         FastTable v = new FastTable(OBJECT_SIZE);
         for (int i = 0; i < OBJECT_SIZE; i++) {
@@ -177,23 +221,22 @@ final class PerfXML extends Javolution implements Runnable {
             v.add(TextBuilder.newInstance().append(Long.MAX_VALUE));
             v.add(Text.valueOf(Long.MAX_VALUE, 16));
             FastMap fm = new FastMap();
-            fm.setKeyComparator(FastComparator.REHASH);
-            fm.setValueComparator(FastComparator.IDENTITY);
-            fm.put(new String("ONE"), Text.valueOf(1));
-            fm.put(new String("TWO"), Text.valueOf(2));
-            fm.put(new String("THREE"), Text.valueOf(3));
+            fm.setKeyComparator(FastComparator.IDENTITY);
+            fm.put(Index.valueOf(i), "INDEX+" + i);
+            fm.put(Index.valueOf(-i), "INDEX-" + i);
             v.add(fm);
             // Adds miscellaneous data.
             FastList fl = new FastList();
-            fl.add("FIRST");
-            fl.add("SECOND");
-            fl.add("THIRD");
-            fl.add("<...>");
+            fl.add("FIRST" + "(" + i + ")");
+            fl.add("SECOND" + "(" + i + ")");
+            fl.add("THIRD" + "(" + i + ")");
+            fl.add("<&'>>>");
             v.add(fl);
             FastSet fs = new FastSet();
-            fs.add("ALPHA");
-            fs.add("BETA");
-            fs.add("GAMMA");
+            fs.add(new Integer(MathLib.random(Integer.MIN_VALUE,
+                    Integer.MAX_VALUE)));
+            fs.add(new Long(MathLib.random(Long.MIN_VALUE, Long.MAX_VALUE)));
+            fs.add("".getClass());
             v.add(fs);
         }
         return v;

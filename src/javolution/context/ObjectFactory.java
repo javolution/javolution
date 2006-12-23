@@ -8,13 +8,10 @@
  */
 package javolution.context;
 
-import javolution.context.RealtimeObject.Factory;
 import javolution.lang.ClassInitializer;
 import javolution.lang.Configurable;
-import javolution.lang.Reflection;
 import javolution.util.FastTable;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
+import j2me.lang.ThreadLocal;
 import j2me.lang.UnsupportedOperationException;
 import j2mex.realtime.MemoryArea;
 
@@ -155,11 +152,20 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a context-local pool for this factory. 
      */
     public final ObjectPool/*<T>*/currentPool() {
-        Context ctx = Context.current();
-        ObjectPool pool = ctx._poolsShortcut[_index];
-        return (pool != null) && (pool._user != null) ? pool : ctx.getPool(
-                _index, true);
+        ObjectPool pool = (ObjectPool) _currentPool.get();
+        return  (pool._user != null) ? pool : activatePool();
     }
+    private ObjectPool activatePool() {
+        LocalPools pools = Context.current().getLocalPools();
+        ObjectPool pool = pools.getPool(this, true);
+        _currentPool.set(pool);
+        return pool;
+    }
+    private ThreadLocal _currentPool = new ThreadLocal() {
+        protected Object initialValue() {
+            return newHeapPool(); // Dummy.
+        }
+    };
 
     /**
      * Cleans-up this factory's objects for future reuse. 
@@ -193,7 +199,7 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a new stack pool for this factory.
      */
     protected ObjectPool newStackPool() {
-        return new StackPool(this);
+        return new StackPool();
     }
 
     /**
@@ -203,13 +209,14 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a new heap pool for this factory.
      */
     protected ObjectPool newHeapPool() {
-        return new HeapPool(this);
+        return new HeapPool();
     }
 
     /**
      * Returns the factory object of specified class.
      * 
-     * @return the corresponding factory or <code>null</code>.
+     * @return the corresponding factory.
+     * @throws IllegalArgumentException if not found.
      */
     static ObjectFactory getInstance(Class factoryClass) {
         // Ensures that enclosing class if any is initialized.
@@ -223,43 +230,14 @@ public abstract class ObjectFactory/*<T>*/{
             if (_Instances[i].getClass().equals(factoryClass))
                 return _Instances[i];
         }
-        return null;
+        throw new IllegalArgumentException("Factory class: " + factoryClass + " not found"
+                + ", possibly container class not initialized");
     }
 
     /**
      * This class represents the default heap pool. 
      */
-    private static final class HeapPool extends ObjectPool {
-
-        // Overrides format to use private constructor.
-        static final XMLFormat XML = new XMLFormat(new HeapPool(null)
-                .getClass()) {
-            public Object newInstance(Class cls, XMLFormat.InputElement xml)
-                    throws XMLStreamException {
-                Class factoryClass;
-                try {
-                    factoryClass = Reflection.getClass(xml
-                            .getAttribute("factory"));
-                } catch (ClassNotFoundException e) {
-                    throw new XMLStreamException(e);
-                }
-                Factory factory = (Factory) ObjectFactory
-                        .getInstance(factoryClass);
-                return new HeapPool(factory);
-            }
-
-            public void read(InputElement xml, Object obj)
-                    throws XMLStreamException {
-                final HeapPool pool = (HeapPool) obj;
-                ObjectPool.XML.read(xml, pool);
-            }
-
-            public void write(Object obj, OutputElement xml)
-                    throws XMLStreamException {
-                final HeapPool pool = (HeapPool) obj;
-                ObjectPool.XML.write(pool, xml);
-            }
-        };
+    private final class HeapPool extends ObjectPool {
 
         /**
          * Holds the objects in this pool. 
@@ -267,20 +245,9 @@ public abstract class ObjectFactory/*<T>*/{
         private final FastTable _objects = new FastTable();
 
         /**
-         * Holds the associated factory. 
-         */
-        private final ObjectFactory _factory;
-
-        /**
          * Default constructor.
          */
-        private HeapPool(ObjectFactory factory) {
-            _factory = factory;
-        }
-
-        // Implements ObjectPool abstract method.
-        public ObjectFactory getFactory() {
-            return _factory;
+        private HeapPool() {
         }
 
         // Implements ObjectPool abstract method.
@@ -291,19 +258,19 @@ public abstract class ObjectFactory/*<T>*/{
         // Implements ObjectPool abstract method.
         public void setSize(int size) {
             for (int i=getSize(); i < size; i++) {
-                _objects.addLast(_factory.create());
+                _objects.addLast(create());
             }
         }
         
         // Implements ObjectPool abstract method.
         public Object next() {
-            return _objects.isEmpty() ? _factory.create() : _objects
+            return _objects.isEmpty() ? create() : _objects
                     .removeLast();
         }
 
         // Implements ObjectPool abstract method.
         public void recycle(Object obj) {
-            _factory.cleanup(obj);
+            cleanup((Object/*{T}*/)obj);
             if (MemoryArea.getMemoryArea(obj) != MemoryArea.getMemoryArea(this))
                  return; // Do not recycle accross memory areas.
             _objects.addLast(obj);
@@ -326,47 +293,12 @@ public abstract class ObjectFactory/*<T>*/{
      * 
      * It implements Runnable to facilitate object creation in memory area.
      */
-    private static final class StackPool extends ObjectPool implements Runnable {
-
-        // Overrides format to use private constructor.
-        static final XMLFormat XML = new XMLFormat(new StackPool(null)
-                .getClass()) {
-            public Object newInstance(Class cls, XMLFormat.InputElement xml)
-                    throws XMLStreamException {
-                Class factoryClass;
-                try {
-                    factoryClass = Reflection.getClass(xml
-                            .getAttribute("factory"));
-                } catch (ClassNotFoundException e) {
-                    throw new XMLStreamException(e);
-                }
-                Factory factory = (Factory) ObjectFactory
-                        .getInstance(factoryClass);
-                return new StackPool(factory);
-            }
-
-            public void read(InputElement xml, Object obj)
-                    throws XMLStreamException {
-                final StackPool pool = (StackPool) obj;
-                ObjectPool.XML.read(xml, pool);
-            }
-
-            public void write(Object obj, OutputElement xml)
-                    throws XMLStreamException {
-                final StackPool pool = (StackPool) obj;
-                ObjectPool.XML.write(pool, xml);
-            }
-        };
+    private final class StackPool extends ObjectPool implements Runnable {
 
         /**
          * Holds the objects in this pool. 
          */
         private final FastTable _objects = new FastTable();
-
-        /**
-         * Holds the associated factory. 
-         */
-        private final ObjectFactory _factory;
 
         /**
          * Holds the current index. 
@@ -376,13 +308,7 @@ public abstract class ObjectFactory/*<T>*/{
         /**
          * Default constructor.
          */
-        private StackPool(ObjectFactory factory) {
-            _factory = factory;
-        }
-
-        // Implements ObjectPool abstract method.
-        public ObjectFactory getFactory() {
-            return _factory;
+        private StackPool() {
         }
 
         // Implements ObjectPool abstract method.
@@ -393,7 +319,7 @@ public abstract class ObjectFactory/*<T>*/{
         // Implements ObjectPool abstract method.
         public void setSize(int size) {
             for (int i=getSize(); i < size; i++) {
-                _objects.addLast(_factory.create());
+                _objects.addLast(create());
             }
         }
 
@@ -412,7 +338,7 @@ public abstract class ObjectFactory/*<T>*/{
 
         // Implements ObjectPool abstract method.
         public void recycle(Object obj) {
-            _factory.cleanup(obj);
+            cleanup((Object/*{T}*/)obj);
             for (int i = _index; --i >= 0;) {
                 if (_objects.get(i) == obj) { // Found it.
                     // Exchange it with the last used object and adjust index.
@@ -429,10 +355,10 @@ public abstract class ObjectFactory/*<T>*/{
         protected void recycleAll() {
             // Cleanups objects.
             for (int i = 0; i < _index; i++) {
-                if (!_factory._doCleanup)
+                if (!_doCleanup)
                     break;
                 Object obj = _objects.get(i);
-                _factory.cleanup(obj);
+                cleanup((Object/*{T}*/)obj);
             }
             _index = 0;
         }
@@ -445,7 +371,7 @@ public abstract class ObjectFactory/*<T>*/{
 
         // Implements Runnable for object creation in memory area.
         public void run() {
-            _tmpObject = _factory.create();
+            _tmpObject = create();
         }
 
         private Object _tmpObject;

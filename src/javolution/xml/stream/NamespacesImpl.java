@@ -166,39 +166,39 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
         final int index = _namespacesCount[_nesting];
         _prefixesWritten[index] = isWritten;
         final int prefixLength = prefix.length();
-        if ((_prefixesTmp[index] == null)
-                || (_prefixesTmp[index].array().length < prefixLength)) {
+        CharArray prefixTmp = _prefixesTmp[index]; 
+        if ((prefixTmp == null)
+                || (prefixTmp.array().length < prefixLength)) {
             MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
                 public void run() {
-                    _prefixesTmp[index] = new CharArray();
-                    _prefixesTmp[index].setArray(new char[prefixLength + 32]);
-                    _prefixesTmp[index].setOffset(0);
+                    _prefixesTmp[index] = new CharArray().setArray(new char[prefixLength + 32], 0, 0);
                 }
             });
+            prefixTmp = _prefixesTmp[index];
         }
         for (int i = 0; i < prefixLength; i++) {
-            _prefixesTmp[index].array()[i] = prefix.charAt(i);
+            prefixTmp.array()[i] = prefix.charAt(i);
         }
-        _prefixesTmp[index].setLength(prefixLength);
+        prefixTmp.setArray(prefixTmp.array(), 0, prefixLength);
 
         final int uriLength = uri.length();
-        if ((_namespacesTmp[index] == null)
-                || (_namespacesTmp[index].array().length < uriLength)) {
+        CharArray namespaceTmp = _namespacesTmp[index]; 
+        if ((namespaceTmp == null)
+                || (namespaceTmp.array().length < uriLength)) {
             MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
                 public void run() {
-                    _namespacesTmp[index] = new CharArray();
-                    _namespacesTmp[index].setArray(new char[uriLength + 32]);
-                    _namespacesTmp[index].setOffset(0);
+                    _namespacesTmp[index] = new CharArray().setArray(new char[uriLength + 32], 0, 0);
                 }
             });
+            namespaceTmp = _namespacesTmp[index];
         }
         for (int i = 0; i < uriLength; i++) {
-            _namespacesTmp[index].array()[i] = uri.charAt(i);
+            namespaceTmp.array()[i] = uri.charAt(i);
         }
-        _namespacesTmp[index].setLength(uriLength);
+        namespaceTmp.setArray(namespaceTmp.array(), 0, uriLength);
         
         // Sets the prefix using CharArray instances.
-        setPrefix(_prefixesTmp[index], _namespacesTmp[index]);
+        setPrefix(prefixTmp, namespaceTmp);
     }
 
     private CharArray[] _prefixesTmp = new CharArray[_prefixes.length];

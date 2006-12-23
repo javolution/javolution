@@ -8,9 +8,10 @@
  */
 package javolution.context;
 
-import j2mex.realtime.MemoryArea;
-import j2mex.realtime.RealtimeThread;
+import j2me.lang.ThreadLocal;
+import j2me.lang.UnsupportedOperationException;
 
+import javolution.context.ConcurrentExecutor.Status;
 import javolution.lang.Configurable;
 import javolution.lang.Reflection;
 
@@ -33,16 +34,15 @@ import javolution.lang.Reflection;
  *     thread allowed to exit the scope of the concurrent context 
  *     (internal synchronization).</p>
  *     
- * <p> Concurrent logics always execute within a {@link PoolContext}. 
- *     {@link RealtimeObject Realtime objects} made available outside of the 
- *     logic scope have therefore to be either {@link RealtimeObject#export 
- *     exported} (return value) or {@link RealtimeObject#preserve
- *     preserved} (static).</p>
+ * <p> Concurrent logics always execute within the same {@link Context} as 
+ *     the calling thread, in other words if the main thread runs in a 
+ *     {@link PoolContext}, concurrent executions are performed in the
+ *     same {@link PoolContext} as well.</p>
  *     
  * <p> Concurrent contexts are easy to use, and provide automatic 
  *     load-balancing between processors with almost no overhead. Here is
- *     an example of <b>concurrent/recursive/clean</b> (no garbage generated) 
- *     implementation of the Karatsuba multiplication for large integers:[code]
+ *     an example of <b>concurrent/recursive/clean</b> implementation of the 
+ *     Karatsuba multiplication for large integers:[code]
  *     import javolution.context.PoolContext.Reference;
  *     ...
  *     public LargeInteger multiply(LargeInteger that) {
@@ -50,65 +50,96 @@ import javolution.lang.Reflection;
  *             return multiply(that.longValue()); // Direct multiplication.
  *             
  *         } else { // Karatsuba multiplication in O(n^log2(3))
- *             int bitLength = this.bitLength();
- *             int n = (bitLength >> 1) + (bitLength & 1);
- *             // this = a + 2^n b,   that = c + 2^n d
- *             LargeInteger b = this.shiftRight(n);
- *             LargeInteger a = this.minus(b.shiftLeft(n));
- *             LargeInteger d = that.shiftRight(n);
- *             LargeInteger c = that.minus(d.shiftLeft(n));
- *             Reference<LargeInteger> ac = Reference.newInstance();
- *             Reference<LargeInteger> bd = Reference.newInstance();
- *             Reference<LargeInteger> abcd = Reference.newInstance();
- *             ConcurrentContext.enter();
- *             try { 
- *                 ConcurrentContext.execute(MULTIPLY, a, c, ac);
- *                 ConcurrentContext.execute(MULTIPLY, b, d, bd);
- *                 ConcurrentContext.execute(MULTIPLY, a.plus(b), c.plus(d), abcd);
+ *             PoolContext.enter();  // Avoids generating garbage (also faster).
+ *             try {
+ *                 int bitLength = this.bitLength();
+ *                 int n = (bitLength >> 1) + (bitLength & 1);
+ *                 
+ *                 // this = a + 2^n b,   that = c + 2^n d
+ *                 LargeInteger b = this.shiftRight(n);
+ *                 LargeInteger a = this.minus(b.shiftLeft(n));
+ *                 LargeInteger d = that.shiftRight(n);
+ *                 LargeInteger c = that.minus(d.shiftLeft(n));
+ *                 Reference<LargeInteger> ac = Reference.newInstance();
+ *                 Reference<LargeInteger> bd = Reference.newInstance();
+ *                 Reference<LargeInteger> abcd = Reference.newInstance();
+ *                 ConcurrentContext.enter();
+ *                 try { 
+ *                     ConcurrentContext.execute(MULTIPLY, a, c, ac);
+ *                     ConcurrentContext.execute(MULTIPLY, b, d, bd);
+ *                     ConcurrentContext.execute(MULTIPLY, a.plus(b), c.plus(d), abcd);
+ *                 } finally {
+ *                     ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
+ *                 }
+ *                 
+ *                 // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
+ *                 LargetInteger product = ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
+ *                 return product.export();
  *             } finally {
- *                 ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
- *             }
- *             // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
- *             return ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
+ *                 PoolContext.exit();
+ *             }    
  *         }
  *     }
  *     private static final Logic MULTIPLY = new Logic() {
- *         public void run(Object[] args) {
+ *         public void run() {
+ *             Object[] args = getArguments(); // Retrieves the arguments.
  *             LargeInteger left = (LargeInteger) args[0];
  *             LargeInteger right = (LargeInteger) args[1];
  *             Reference result = (Reference) args[2];
- *             result.set(left.times(right).export());  // Recursive.
+ *             result.set(left.times(right));  // Recursive.
  *         }
  *    };[/code]
  *    
- *    The concurrent logic may have direct access to the class members
- *    (to avoid passing arguments). For example:[code]
- *    import javolution.context.ConcurrentContex.Logic;
- *    ... 
- *    public class Foo {
- *        private Matrix<Complex> A, B;
- *        private Vector<Complex> x, y, Ax, By;
- *        
- *        // Returns z = A*x + B*y
- *       public Vector<Complex> getZ() {
- *           ConcurrentContext.enter();
- *           try {
- *               ConcurrentContext.execute(new Logic() {
- *                    public void run(Object[] arg0) {
- *                        Ax = A.times(x).export(); 
+ *    Here is a concurrent/recursive quick/merge sort using anonymous inner 
+ *    classes (same as in Javolution  
+ *    <a href="http://javolution.org/doc/benchmark.html">benchmark</a>):[code]
+ *    private void quickSort(final FastTable<? extends Comparable> table) {
+ *        final int size = table.size();
+ *        if (size < 100) { 
+ *            table.sort(); // Direct quick sort.
+ *        } else {
+ *            // Splits table in two and sort both part concurrently.
+ *            final FastTable<? extends Comparable> t1 = FastTable.newInstance();
+ *            final FastTable<? extends Comparable> t2 = FastTable.newInstance();
+ *            ConcurrentContext.enter();
+ *            try {
+ *                ConcurrentContext.execute(new Logic() {
+ *                    public void run() {
+ *                        t1.addAll(table.subList(0, size / 2));
+ *                        quickSort(t1); // Recursive.
  *                    }
  *                });
- *               ConcurrentContext.execute(new Logic() {
- *                    public void run(Object[] arg0) {
- *                        By = B.times(y).export(); 
+ *                ConcurrentContext.execute(new Logic() {
+ *                    public void run() {
+ *                        t2.addAll(table.subList(size / 2, size));
+ *                        quickSort(t2); // Recursive.
  *                    }
  *                });
- *           } finally {
- *               ConcurrentContext.exit();
- *               return Ax.plus(By);
+ *            } finally {
+ *                ConcurrentContext.exit();
+ *            }
+ *            // Merges results.
+ *            for (int i=0, i1=0, i2=0; i < size; i++) {
+ *                if (i1 >= t1.size()) {
+ *                    table.set(i, t2.get(i2++));
+ *                } else if (i2 >= t2.size()) {
+ *                    table.set(i, t1.get(i1++));
+ *                } else {
+ *                    Comparable o1 = t1.get(i1);
+ *                    Comparable o2 = t2.get(i2);
+ *                    if (o1.compareTo(o2) < 0) {
+ *                        table.set(i, o1);
+ *                        i1++;
+ *                    } else {
+ *                        table.set(i, o2);
+ *                        i2++;
+ *                    }
+ *                }
  *           }
- *       }   
- *   }[/code]</p>
+ *           FastTable.recycle(t1);  
+ *           FastTable.recycle(t2);
+ *        }
+ *     }[/code]</p>
  * 
  * <p> Finally, it should be noted that concurrent contexts ensure the same 
  *     behavior whether or not the execution is performed by the current
@@ -118,13 +149,21 @@ import javolution.lang.Reflection;
  *     to the current thread.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.7, January 1, 2006
+ * @version 4.1, December 1, 2006
  */
 public class ConcurrentContext extends Context {
 
     /**
-     * Holds the maximum number of concurrent thread allowed 
-     * (see <a href="{@docRoot}/overview-summary.html#configuration">
+     * Holds the context factory.
+     */
+    private static Factory FACTORY = new Factory() {
+        protected Object create() {
+            return new ConcurrentContext();
+        } 
+    };
+    /**
+     * Holds the default number of {@link ConcurrentExecutor concurrent 
+     * executors} (see <a href="{@docRoot}/overview-summary.html#configuration">
      * Javolution Configuration</a> for details).
      */
     public static final Configurable/*<Integer>*/ CONCURRENCY 
@@ -137,15 +176,30 @@ public class ConcurrentContext extends Context {
          = new LocalContext.Reference(new Boolean(true));
 
     /**
+     * Holds the thread-local arguments.
+     */
+    private static final ThreadLocal ARGUMENTS = new ThreadLocal();
+    
+    /**
      * Holds the class object (cannot use .class with j2me).
      */
     private static final Class CLASS = new ConcurrentContext().getClass();
 
     /**
-     * Holds the number of concurrent thread started in this context
-     * and not completed yet.
+     * Holds the default concurrent context.
      */
-    private int _activeCount;
+    private static transient ConcurrentContext _Default;
+
+    /**
+     * Holds the number of concurrent thread initiated (might not have 
+     * started yet).
+     */
+    private int _initiatedCount;
+
+    /**
+     * Holds the number of concurrent thread execution completed.
+     */
+    private int _completedCount;
 
     /**
      * Holds any error occuring during concurrent execution.
@@ -153,10 +207,10 @@ public class ConcurrentContext extends Context {
     private Throwable _error;
 
     /**
-     * Holds the concurrent threads or <code>null</code> to inherit from
-     * outer context.
+     * Holds this context executors or <code>null</code> to inherit 
+     * concurrent executors from outer concurrent context.
      */
-    private ConcurrentThread[] _threads;
+    private ConcurrentExecutor[] _executors;
 
     /**
      * Indicates if this context is enabled.
@@ -164,63 +218,92 @@ public class ConcurrentContext extends Context {
     private boolean _isEnabled;
 
     /**
-     * Default constructor. This context has no concurrent thread associated
-     * with. The concurrent threads are inherited from outer contexts.
-     * If this context is the top-most concurrent context, then new concurrent 
-     * threads are created and started the first time that this context is
-     * entered. The number of threads created is configurable (see <a href= 
-     * "{@docRoot}/overview-summary.html#configuration">Javolution Configuration
-     * </a> for details).
+     * Holds the inherited exectors. 
+     */
+    private ConcurrentExecutor[] _inheritedExecutors;
+
+    /**
+     * Creates a concurrent context inheriting its executors from 
+     * the outer concurrent context ({@link #getDefault() default} if none).
      */
     public ConcurrentContext() {
+        this(null);
     }
 
     /**
-     * Creates a concurrent context using the specified concurrent threads.
+     * Creates a concurrent context using the specified concurrent executors.
      * 
-     * @param threads the concurrent threads available for dispatching.
+     * @param executors the concurrent executors available for dispatching.
      */
-    public ConcurrentContext(ConcurrentThread[] threads) {
-        _threads = threads;
+    public ConcurrentContext(ConcurrentExecutor[] executors) {
+        _executors = executors;
+    }
+    
+    /**
+     * Returns the default concurrent context. 
+     * The number of executors for the default context is configurable 
+     * (see <a href= 
+     * "{@docRoot}/overview-summary.html#configuration">Javolution Configuration
+     * </a> for details).
+     * 
+     * @return the default concurrent context.
+     */
+    public static ConcurrentContext getDefault() {
+        if (_Default != null) return _Default;
+        synchronized (CLASS) { // Creates the default.
+            if (_Default != null) return _Default; // Synchronized check.
+            int concurrency = ((Integer)CONCURRENCY.get()).intValue();
+            ConcurrentThread[] executors = new ConcurrentThread[concurrency];
+            for (int i=0; i < concurrency; i++) {
+                executors[i] = new ConcurrentThread();
+                executors[i].start();
+            }
+            _Default = new ConcurrentContext(executors);
+            return _Default;
+        }
     }
 
     /**
-     * Returns the concurrent threads available to this concurrent 
-     * context (inherited from outer concurrent contexts unless specified 
-     * at construction). 
+     * Sets the default concurrent context.
      * 
-     * @return the concurrent threads available to this context or 
-     *         <code>null</code> if none (e.g. context created using 
-     *         default constructor and without outer concurrent context).
+     * @param ctx the new default concurrent context.
      */
-    public final ConcurrentThread[] getConcurrentThreads() {
-        if (_threads != null)
-            return _threads;
+    public static void setDefault(ConcurrentContext ctx) {
+        _Default = ctx;
+    }
+    
+    /**
+     * Returns the concurrent executors available to this concurrent 
+     * context (inherited from outer concurrent contexts).
+     * 
+     * @return the concurrent executors available to this context.
+     */
+    final ConcurrentExecutor[] getExecutors() {
+        if (_executors != null) return _executors;
         for (Context ctx = this.getOuter(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof ConcurrentContext) {
                 ConcurrentContext that = (ConcurrentContext) ctx;
-                if (that._threads != null)
-                    return that._threads;
+                if (that._executors != null)
+                    return that._executors;
             }
         }
-        return null;
+        return getDefault()._executors;
     }
 
     /**
-     * Terminates all the concurrent threads associated to this concurrent 
-     * context.
+     * Terminates the executors for this concurrent context (if any). 
      */
     public void clear() {
-        if (_threads != null) {
-            for (int i = 0; i < _threads.length; i++) {
-                _threads[i].terminate();
+        if (_executors != null) {
+            for (int i = 0; i < _executors.length; i++) {
+                _executors[i].terminate();
             }
-            _threads = null;
+            _executors = null;
         }
     }
 
     /**
-     * Returns the current concurrent context or <code>null<code> if the 
+     * Returns the current concurrent context or {@link #getDefault}  if the 
      * current thread has not been spawned from a concurrent context.  
      *
      * @return the current concurrent context.
@@ -232,28 +315,32 @@ public class ConcurrentContext extends Context {
                 return (ConcurrentContext) ctx;
             ctx = ctx.getOuter();
         }
-        return null;
+        return getDefault();
     }
 
     /**
-     * Enters a {@link ConcurrentContext}.
+     * Enters a {@link ConcurrentContext} possibly recycled.
      */
     public static void enter() {
-        Context.enter(ConcurrentContext.CLASS);
+        ConcurrentContext ctx = (ConcurrentContext) FACTORY.object();
+        ctx._isInternal = true;
+        Context.enter(ctx);
     }
+    private transient boolean _isInternal;
 
     /**
-     * Exits the current {@link ConcurrentContext}. This method blocks until all
-     * concurrent executions within the current context are completed.
-     * Errors and exceptions raised in concurrent threads are propagated here.
+     * Exits and recycles the current {@link ConcurrentContext}.
      *
-     * @throws j2me.lang.IllegalStateException if the current context 
-     *         is not an instance of ConcurrentContext. 
-     * @throws ConcurrentException propagates any error or exception raised
-     *         during the execution of a concurrent logic.
+     * @throws UnsupportedOperationException if the current context 
+     *         has not been entered using ConcurrentContext.enter() 
      */
     public static void exit() {
-        Context.exit(ConcurrentContext.CLASS);
+        ConcurrentContext ctx = (ConcurrentContext) Context.current();
+        if (!ctx._isInternal) throw new UnsupportedOperationException
+           ("The context to exit must be specified");
+        ctx._isInternal = false;
+        Context.exitNoCheck(ctx);
+        FACTORY.recycle(ctx);
     }
 
     /**
@@ -282,10 +369,8 @@ public class ConcurrentContext extends Context {
     }
 
     /**
-     * Executes the specified logic by a {@link ConcurrentThread} when possible.
-     * The specified logic is always executed within a {@link PoolContext}.
-     * It inherits the context stack, priority and memory area of the 
-     * dispatching thread. Any exception or error during execution is propagated
+     * Executes the specified logic by a {@link ConcurrentExecutor} if 
+     * one available. Any exception or error during execution is propagated
      * to the current thread upon {@link #exit} of the concurrent context.
      * 
      * @param  logic the logic to execute concurrently when possible.
@@ -294,21 +379,12 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx.executeByCurrentThread(logic, Logic.NO_ARG);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args0;
+        ctx.doExecute(logic, status);
     }
-
+ 
     /**
      * Executes the specified logic with the specified argument.
      * 
@@ -319,23 +395,12 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, arg0, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args1[0] = arg0;
-        ctx.executeByCurrentThread(logic, ctx._args1);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args1;
+        status._args[0] = arg0;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args1 = new Object[1];
 
     /**
      * Executes the specified logic with the specified two arguments.
@@ -349,24 +414,13 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0, Object arg1) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, arg0, arg1, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args2[0] = arg0;
-        ctx._args2[1] = arg1;
-        ctx.executeByCurrentThread(logic, ctx._args2);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args2;
+        status._args[0] = arg0;
+        status._args[1] = arg1;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args2 = new Object[2];
 
     /**
      * Executes the specified logic with the specified three arguments.
@@ -382,25 +436,14 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, arg0, arg1, arg2, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args3[0] = arg0;
-        ctx._args3[1] = arg1;
-        ctx._args3[2] = arg2;
-        ctx.executeByCurrentThread(logic, ctx._args3);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args3;
+        status._args[0] = arg0;
+        status._args[1] = arg1;
+        status._args[2] = arg2;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args3 = new Object[3];
 
     /**
      * Executes the specified logic with the specified four arguments.
@@ -417,27 +460,15 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i]
-                        .execute(logic, arg0, arg1, arg2, arg3, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args4[0] = arg0;
-        ctx._args4[1] = arg1;
-        ctx._args4[2] = arg2;
-        ctx._args4[3] = arg3;
-        ctx.executeByCurrentThread(logic, ctx._args4);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args4;
+        status._args[0] = arg0;
+        status._args[1] = arg1;
+        status._args[2] = arg2;
+        status._args[3] = arg3;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args4 = new Object[4];
 
     /**
      * Executes the specified logic with the specified five arguments.
@@ -455,28 +486,16 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, arg0, arg1, arg2, arg3, arg4,
-                        ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args5[0] = arg0;
-        ctx._args5[1] = arg1;
-        ctx._args5[2] = arg2;
-        ctx._args5[3] = arg3;
-        ctx._args5[4] = arg4;
-        ctx.executeByCurrentThread(logic, ctx._args5);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args5;
+        status._args[0] = arg0;
+        status._args[1] = arg1;
+        status._args[2] = arg2;
+        status._args[3] = arg3;
+        status._args[4] = arg4;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args5 = new Object[5];
 
     /**
      * Executes the specified logic with the specified six arguments.
@@ -495,54 +514,31 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4, Object arg5) {
         ConcurrentContext ctx = (ConcurrentContext) current();
-        if (ctx._isEnabled) {
-            ConcurrentThread[] threads = ctx.getConcurrentThreads();
-            MemoryArea area = RealtimeThread.getCurrentMemoryArea();
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].execute(logic, arg0, arg1, arg2, arg3, arg4,
-                        arg5, ctx, area)) {
-                    synchronized (ctx) {
-                        ctx._activeCount++;
-                        return;
-                    }
-                }
-            }
-        }
-        ctx._args6[0] = arg0;
-        ctx._args6[1] = arg1;
-        ctx._args6[2] = arg2;
-        ctx._args6[3] = arg3;
-        ctx._args6[4] = arg4;
-        ctx._args6[5] = arg5;
-        ctx.executeByCurrentThread(logic, ctx._args6);
+        StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
+        status._context = ctx;
+        status._args = status._args6;
+        status._args[0] = arg0;
+        status._args[1] = arg1;
+        status._args[2] = arg2;
+        status._args[3] = arg3;
+        status._args[4] = arg4;
+        status._args[5] = arg5;
+        ctx.doExecute(logic, status);
     }
-
-    private final Object[] _args6 = new Object[6];
 
     // Implements Context abstract method.
     protected void enterAction() {
-        _error = null;
-        _activeCount = 0;
         _isEnabled = ConcurrentContext.isEnabled();
-        if (getConcurrentThreads() == null) {
-            // No thread associated with or inherited (first time entered).
-            MemoryArea contextArea = MemoryArea.getMemoryArea(this);
-            contextArea.executeInArea(new Runnable() {
-                public void run() {
-                    _threads = new ConcurrentThread[((Integer)CONCURRENCY.get()).intValue()];
-                    for (int i = 0; i < _threads.length; i++) {
-                        _threads[i] = new ConcurrentThread();
-                        _threads[i].start();
-                    }
-                }
-            });
-        }
+       _inheritedExecutors = getExecutors();
+       _error = null;
+       _initiatedCount = 0;
+       _completedCount = 0;
     }
 
     // Implements Context abstract method.
     protected void exitAction() {
         synchronized (this) {
-            while (_activeCount > 0) {
+            while (_initiatedCount != _completedCount) {
                 try {
                     this.wait();
                 } catch (InterruptedException e) {
@@ -552,40 +548,31 @@ public class ConcurrentContext extends Context {
         }
         // Propagates any concurrent error to current thread.
         if (_error != null) {
-            if (_error instanceof ConcurrentException) 
-                throw (ConcurrentException)_error;
-            throw new ConcurrentException(_error);
+            if (_error instanceof RuntimeException) 
+                throw ((RuntimeException)_error);
+            if (_error instanceof Error) 
+                throw ((Error)_error);
+            throw new ConcurrentException(_error); // Wrapper.
         }
     }
 
-    /**
-     * Stores the first error occuring during a concurrent execution.
-     * 
-     * @param error an error raised while executing some concurrent logic.
-     */
-    synchronized void setError(Throwable error) {
-        if (_error == null) { // First error.
-            _error = error;
-        } // Else ignores subsequent errors.
-    }
-
-    synchronized void decreaseActiveCount() {
-        _activeCount--;
-        this.notify();
-    }
-
-    private void executeByCurrentThread(Logic logic, Object[] args) {
-        PoolContext.enter();
-        try {
-            logic.run(args);
-        } catch (Throwable error) {
-            setError(error);
-        } finally {
-            PoolContext.exit();
-            for (int i = 0; i < args.length;) {
-                args[i++] = null;
+    private void doExecute(Logic logic, StatusImpl status) {
+        if (_isEnabled) {
+            ConcurrentExecutor[] executors = _inheritedExecutors;
+            for (int i = 0; i < executors.length; i++) {
+               if (executors[i].execute(logic, status)) {
+                   _initiatedCount++;
+                   return; // Done.
+               }
             }
         }
+        try { // Current thread execution.
+           status.started();            
+           logic.run();
+           // Do not call status.complete() (current threads are not counted). 
+        } catch (Throwable error) {
+           status.error(error);
+        }        
     }
 
     /**
@@ -594,31 +581,28 @@ public class ConcurrentContext extends Context {
      */
     public static abstract class Logic implements Runnable {
 
+        
         /**
-         * Executes this logic with no arguments.
+         * Returns the arguments (if any) for this logic execution.
+         * 
+         * @return an array holding the arguments.
          */
-        public final void run() {
-            run(NO_ARG);
+        public Object[] getArguments() {
+            return (Object[])ARGUMENTS.get();
         }
 
-        private static final Object[] NO_ARG = new Object[0];
-
         /**
-         * Executes this logic with the specified arguments.
-         * 
-         * @param args the arguments. The number of arguments depends upon
-         *        the <code>ConcurrentContext.execute</code> method which 
-         *        has been called (e.g. if {@link ConcurrentContext#execute(
-         *        ConcurrentContext.Logic, Object, Object)},
-         *        has been called, then <code>(args.length == 2)</code>).
+         * Executes this logic, arguments (if any) can be retrieved using  
+         * the {@link #getArguments} method.
          */
-        public abstract void run(Object[] args);
+        public abstract void run();
+        
     }
 
     /**
      * Returns the maximum number of concurrent thread.
      * 
-     * @return <code>(Number of Processors) - 1</code>
+     * @return <code>(Number of Processors)</code>
      * @see javolution.context.ConcurrentThread
      */
     private static Integer concurrency() {
@@ -627,9 +611,61 @@ public class ConcurrentContext extends Context {
         if (availableProcessors != null) {
             Integer processors = (Integer) availableProcessors.invoke(Runtime
                     .getRuntime());
-            return new Integer(processors.intValue() - 1);
+            return new Integer(processors.intValue());
         } else {
-            return new Integer(0);
+            return new Integer(1);
+        }
+    }
+
+    /**
+     * Returns the maximum number of concurrent thread.
+     * 
+     * @return <code>(Number of Processors) - 1</code>
+     * @see javolution.context.ConcurrentThread
+     */
+    private static class StatusImpl extends RealtimeObject implements Status {
+        
+        private static StatusImpl.Factory FACTORY = new Factory() {
+            protected Object create() {
+                return new StatusImpl();
+            }
+            
+        };
+        volatile Object[] _args;
+        Object[] _args0= new Object[0];
+        Object[] _args1= new Object[1];
+        Object[] _args2= new Object[2];
+        Object[] _args3= new Object[3];
+        Object[] _args4= new Object[4];
+        Object[] _args5= new Object[5];
+        Object[] _args6= new Object[6];
+        ConcurrentContext _context;
+
+        public void started() {
+            ARGUMENTS.set(_args);
+            Context.setCurrent(_context);
+        }
+        
+        public void completed() {
+            _context.getLocalPools().deactivate();
+            synchronized (_context) {
+                _context._completedCount++;
+                _context.notify();
+            }
+
+            // Clears any external reference (allows GC).
+            for (int i=0; i < _args.length; i++) { 
+                _args[i] = null; // 
+            }
+            _context = null;
+        }
+
+        public void error(Throwable error) {
+            synchronized (_context) {
+                if (_context._error == null) {
+                    _context._error = error;
+                }
+            }
         }
     }
 }

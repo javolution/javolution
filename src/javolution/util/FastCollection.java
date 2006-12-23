@@ -52,31 +52,25 @@ import javolution.xml.stream.XMLStreamException;
  *         }
  *     }[/code]</p>
  *     
- * <p> Finally, {@link FastCollection} may use custom {@link #setValueComparator
+ * <p> Finally, {@link FastCollection} may use custom {@link #getValueComparator
  *     comparators} for element equality or ordering if the collection is 
  *     ordered (e.g. <code>FastTree</code>).
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, September 24, 2005
+ * @version 4.2, December 18, 2006
  */
 public abstract class FastCollection/*<E>*/extends RealtimeObject implements
         Collection/*<E>*/, Reusable, Serializable {
 
     /**
      * Holds the default XML representation for FastCollection instances.
-     * This representation is identical to {@link XMLBinding#COLLECTION_XML}
-     * except that it may include the value comparator for the collection
-     * (if different from {@link FastComparator#DEFAULT}).
+     * This representation is identical to {@link XMLBinding#COLLECTION_XML}.
      */
     protected static final XMLFormat/*<FastCollection>*/ XML = new XMLFormat(
             Javolution.j2meGetClass("javolution.util.FastCollection")) {
 
         public void read(InputElement xml, Object obj) throws XMLStreamException {
             FastCollection fc = (FastCollection) obj;
-            FastComparator comparator = (FastComparator) xml.get("Comparator");
-            if (comparator != null) {
-                fc.setValueComparator(comparator);
-            }
             while (xml.hasNext()) {
                 fc.add(xml.getNext());
             }
@@ -84,19 +78,11 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
         public void write(Object obj, OutputElement xml) throws XMLStreamException {
             FastCollection fc = (FastCollection) obj;
-            if (fc.getValueComparator() != FastComparator.DEFAULT) {
-                xml.add(fc.getValueComparator(), "Comparator");
-            }
             for (Record r=fc.head(), end=fc.tail(); (r=r.getNext())!=end;) {
                 xml.add(fc.valueOf(r));
             }
         }
     };
-
-    /**
-     * Holds the value comparator.  
-     */
-    private FastComparator _valueComp = FastComparator.DEFAULT;
 
     /**
      * Holds the unmodifiable view (allocated in the same memory area as 
@@ -188,26 +174,14 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     /**
-     * Sets the comparator to use for value equality or ordering if the 
-     * collection is ordered (e.g. <code>FastTree</code>).
-     *
-     * @param comparator the value comparator.
-     * @return <code>this</code>
-     */
-    public FastCollection/*<E>*/setValueComparator(FastComparator comparator) {
-        _valueComp = comparator;
-        return this;
-    }
-
-    /**
      * Returns the value comparator for this collection (default 
      * {@link FastComparator#DEFAULT}).
      *
      * @return the comparator to use for value equality (or ordering if 
      *        the collection is ordered)
      */
-    public FastComparator getValueComparator() {
-        return _valueComp;
+    public FastComparator/*<? super E>*/ getValueComparator() {
+        return FastComparator.DEFAULT;
     }
 
     /**
@@ -311,9 +285,21 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     private boolean addAll(FastCollection/*<? extends E>*/c) {
+        if (c instanceof FastTable)
+            return addAll((FastTable) c);
         boolean modified = false;
         for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
             if (this.add(c.valueOf(r))) {
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    private boolean addAll(FastTable/*<? extends E>*/c) {
+        boolean modified = false;
+        for (int i=0, n = c.size(); i < n;) { // Faster than direct iterators.
+            if (this.add(c.get(i++))) {
                 modified = true;
             }
         }
@@ -455,7 +441,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
      * Compares the specified object with this collection for equality.  Returns
      * <code>true</code> if and only both collection contains the same values
      * regardless of the order; unless this collection is a list instance 
-     * in which case both collection must be list with the same order. 
+     * in which case both collections must be list with the same order. 
      *
      * @param obj the object to be compared for equality with this collection.
      * @return <code>true</code> if the specified object is equal to this
@@ -470,25 +456,38 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     private boolean equalsList(Object obj) {
-        final FastComparator comp = this.getValueComparator();
         if (obj == this)
             return true;
-        if (obj instanceof List) {
-            List/*<?>*/list = (List) obj;
-            if (this.size() != list.size())
+        if (!(obj instanceof List)) 
+            return false;
+        if (obj instanceof FastCollection)
+            return equalsList((FastCollection)obj);
+        List that = (List) obj;
+        if (this.size() != that.size())
+            return false;
+        Iterator thatIterator = that.iterator();
+        final FastComparator comp = this.getValueComparator();
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
+            Object o1 = valueOf(r);
+            Object o2 = thatIterator.next();
+            if (!comp.areEqual(o1, o2))
                 return false;
-            Record r1 = this.head();
-            Iterator/*<?>*/i2 = list.iterator();
-            for (int i = this.size(); i-- != 0;) {
-                r1 = r1.getNext();
-                Object o1 = this.valueOf(r1);
-                Object o2 = i2.next();
-                if (!comp.areEqual(o1, o2))
-                    return false;
-            }
-            return true;
         }
-        return false;
+        return true;
+    }
+
+    private boolean equalsList(FastCollection that) {
+        if (this.size() != that.size())
+            return false;
+        Record t = that.head();
+        final FastComparator comp = this.getValueComparator();
+        for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
+            Object o1 = valueOf(r);
+            Object o2 = that.valueOf(t = t.getNext());
+            if (!comp.areEqual(o1, o2))
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -520,7 +519,6 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     // Implements Reusable.
     public void reset() {
-        _valueComp = FastComparator.DEFAULT;
         clear();
     }
 
@@ -599,12 +597,6 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
         // Forwards...
         public FastComparator getValueComparator() {
             return FastCollection.this.getValueComparator();
-        }
-
-        // Disallows...
-        public FastCollection setValueComparator(
-                FastComparator comparator) {
-            throw new UnsupportedOperationException("Unmodifiable");
         }
 
         // Disallows...

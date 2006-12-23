@@ -405,7 +405,7 @@ public abstract class XMLFormat/*<T>*/{
          * specified local name.
          *      
          * @param name the local name of the element to match.
-         * @param cls the class of the object to return.
+         * @param cls the class identifying the format of the object to return.
          * @return the next nested object or <code>null</code>.
          */
         public/*<T>*/Object/*{T}*/get(String name, Class/*<T>*/cls) 
@@ -434,7 +434,7 @@ public abstract class XMLFormat/*<T>*/{
          *      
          * @param localName the local name.
          * @param uri the namespace URI or <code>null</code>.
-         * @param cls the class of the object to return.
+         * @param cls the class identifying the format of the object to return.
          * @return the next nested object or <code>null</code>.
          */
         public/*<T>*/Object/*{T}*/get(String localName, String uri,
@@ -811,8 +811,9 @@ public abstract class XMLFormat/*<T>*/{
 
         /**
          * Adds the specified object as a named nested element of unknown type
-         * (<code>null</code> objects are ignored). The nested XML element
-         * may contain a class attribute identifying the object type.
+         * (<code>null</code> objects are ignored).
+         * The nested XML element contains a class attribute identifying
+         * the object type.
          *
          * @param obj the object added as nested element or <code>null</code>.
          * @param name the name of the nested element.
@@ -843,7 +844,7 @@ public abstract class XMLFormat/*<T>*/{
         /**
          * Adds the specified object as a fully qualified nested element of 
          * unknown type (<code>null</code> objects are ignored). 
-         * The nested XML element may contain a class attribute identifying
+         * The nested XML element contains a class attribute identifying
          * the object type.
          *
          * @param obj the object added as nested element or <code>null</code>.
@@ -876,11 +877,12 @@ public abstract class XMLFormat/*<T>*/{
 
         /**
          * Adds the specified object as a named nested element of specified  
-         * actual type (<code>null</code> objects are ignored). 
+         * actual type (<code>null</code> objects are ignored).
+         * The nested XML element does not contain any class attribute.
          *
          * @param obj the object added as nested element or <code>null</code>.
          * @param name the name of the nested element.
-         * @param cls the non-abstract class identifying the object.
+         * @param cls the class identifying the format of the specified object.
          */
         public/*<T>*/void add(Object/*{T}*/ obj, String name, Class/*<T>*/ cls)
                 throws XMLStreamException {
@@ -889,9 +891,6 @@ public abstract class XMLFormat/*<T>*/{
 
             // Writes start element.
             _writer.writeStartElement(toCsq(name));
-
-            // Writes class attribute.
-            _binding.writeClassAttribute(_writer, cls);
 
             // Check if reference is to be written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
@@ -908,11 +907,12 @@ public abstract class XMLFormat/*<T>*/{
         /**
          * Adds the specified object as a fully qualified nested element of
          * specified actual type (<code>null</code> objects are ignored). 
+         * The nested XML element does not contain any class attribute.
          *
          * @param obj the object added as nested element or <code>null</code>.
          * @param localName the local name of the nested element.
          * @param uri the namespace URI of the nested element.
-         * @param cls the non-abstract class identifying the object.
+         * @param cls the class identifying the format of the specified object.
          */
         public/*<T>*/void add(Object/*{T}*/obj, String localName, String uri,
                 Class/*<T>*/cls) throws XMLStreamException {
@@ -921,9 +921,6 @@ public abstract class XMLFormat/*<T>*/{
 
             // Writes start element.
             _writer.writeStartElement(toCsq(uri), toCsq(localName));
-
-            // Writes class attribute.
-            _binding.writeClassAttribute(_writer, cls);
 
             // Check if reference is to be written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
@@ -946,6 +943,16 @@ public abstract class XMLFormat/*<T>*/{
          */
         public void addText(CharSequence text) throws XMLStreamException {
             _writer.writeCharacters(text);
+        }
+        
+        /**
+         * Equivalent to {@link #addText(CharSequence)} 
+         * (for J2ME compatibility).
+         *
+         * @param text the element text content or an empty sequence if none.
+         */
+        public void addText(String text) throws XMLStreamException {
+            _writer.writeCharacters(toCsq(text));
         }
 
         /**

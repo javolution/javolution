@@ -8,6 +8,7 @@
  */
 package javolution.xml.stream;
 
+import j2me.lang.CharSequence;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Map;
@@ -112,9 +113,7 @@ final class EntitiesImpl implements Reusable {
         }
 
         // Searches user defined entities.
-        _tmp.setArray(buffer);
-        _tmp.setOffset(start + 1);
-        _tmp.setLength(length - 2);
+        _tmp.setArray(buffer, start + 1, length - 2);
         CharSequence replacementText = (_entitiesMapping != null) ?
                 (CharSequence) _entitiesMapping.get(_tmp) : null;
         if (replacementText == null)

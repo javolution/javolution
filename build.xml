@@ -7,7 +7,7 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="4.1" />
+        <property name="version" value="4.2" />
         <property name="release" value="0" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
@@ -325,14 +325,15 @@
 
     <!-- NETBEANS SUPPORT -->
     <target name="compile" depends="clean, _init_1.5, _compile, jar, doc" />
-    <target name="run" depends="compile">
+    <target name="run" depends="clean, _init_1.6, _compile">
         <java classpath="${bin}" classname="javolution.Javolution" fork="true">
+            <jvmarg value="-server" />
             <jvmarg value="-Xms512M" />
             <jvmarg value="-Xmx512M" />
             <arg value="perf" />
         </java>
     </target>
-    <target name="test" depends="compile">
+    <target name="test" depends="clean, _init_1.5, _compile">
         <java classpath="${bin}" classname="javolution.Javolution" fork="true">
             <arg value="test" />
         </java>

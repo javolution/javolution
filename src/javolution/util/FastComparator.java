@@ -23,7 +23,7 @@ import j2me.util.Comparator;
  *     classes.</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.4, September 20, 2005
+ * @version 4.2, December 18, 2006
  */
 public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         Serializable {
@@ -78,9 +78,9 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @see <a href="{@docRoot}/overview-summary.html#configuration">
      *      Javolution Configuration</a> 
      */
-    public static final FastComparator DEFAULT = new Default();
+    public static final FastComparator/*<Object>*/ DEFAULT = new Default();
 
-    private static final class Default extends FastComparator {
+    static final class Default extends FastComparator {
 
         public int hashCodeOf(Object obj) {
             return (_Rehash ? REHASH.hashCodeOf(obj) : obj.hashCode());
@@ -107,9 +107,9 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}. 
      */
-    public static final FastComparator DIRECT = new Direct();
+    public static final FastComparator/*<Object>*/ DIRECT = new Direct();
 
-    private static final class Direct extends FastComparator {
+    static final class Direct extends FastComparator {
         public int hashCodeOf(Object obj) {
             return obj.hashCode();
         }
@@ -135,9 +135,9 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * The {@link #compare} method throws {@link ClassCastException} if the
      * specified objects are not {@link Comparable}.
      */
-    public static final FastComparator REHASH = new Rehash();
+    public static final FastComparator/*<Object>*/ REHASH = new Rehash();
 
-    private static final class Rehash extends FastComparator {
+    static final class Rehash extends FastComparator {
         public int hashCodeOf(Object obj) {
             // Formula identical <code>java.util.HashMap</code> to ensures
             // similar behavior for ill-conditioned hashcode keys. 
@@ -169,9 +169,9 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}.
      */
-    public static final FastComparator IDENTITY = new Identity();
+    public static final FastComparator/*<Object>*/ IDENTITY = new Identity();
 
-    private static final class Identity extends FastComparator {
+    static final class Identity extends FastComparator {
         public int hashCodeOf(Object obj) {
             int h = System.identityHashCode(obj);
             if (!_Rehash)
@@ -204,9 +204,9 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * using the following formula (same as for <code>java.lang.String</code>):
      * <code>s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]</code>
      */
-    public static final FastComparator LEXICAL = new Lexical();
+    public static final FastComparator/*<CharSequence>*/ LEXICAL = new Lexical();
 
-    private static final class Lexical extends FastComparator {
+    static final class Lexical extends FastComparator {
 
         public int hashCodeOf(Object obj) {
             if ((obj instanceof String) || (obj instanceof Text))

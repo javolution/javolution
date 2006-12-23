@@ -65,7 +65,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * @param keyComparator the key comparator.
      * @return <code>this</code>
      */
-    public LocalMap /*<K,V>*/setKeyComparator(FastComparator keyComparator) {
+    public LocalMap /*<K,V>*/setKeyComparator(FastComparator/*<? super K>*/ keyComparator) {
         localMap().setKeyComparator(keyComparator);
         return this;
     }
@@ -76,7 +76,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * @param valueComparator the value comparator.
      * @return <code>this</code>
      */
-    public LocalMap/*<K,V>*/setValueComparator(FastComparator valueComparator) {
+    public LocalMap/*<K,V>*/setValueComparator(FastComparator/*<? super V>*/ valueComparator) {
         localMap().setValueComparator(valueComparator);
         return this;
     }

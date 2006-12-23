@@ -89,7 +89,7 @@ public final class Reflection {
                 throw new ClassNotFoundException("Cannot found class " + name);
         }
         synchronized (_NameToClass) {
-            _NameToClass.put(name.intern(), cls);
+            _NameToClass.put(name, cls);
         }
         return cls;
     }

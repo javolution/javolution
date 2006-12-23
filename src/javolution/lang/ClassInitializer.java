@@ -135,8 +135,8 @@ public class ClassInitializer {
     public static void initialize(Class cls) {
         try {
             Reflection.getClass(cls.getName());
-        } catch (ClassNotFoundException e) {
-            StandardLog.error(e); // Should not occur.
+        } catch (Throwable error) {
+            StandardLog.error(error);
         }
     }
 
@@ -150,6 +150,8 @@ public class ClassInitializer {
             Reflection.getClass(className);
         } catch (ClassNotFoundException e) {
             StandardLog.warning("Class + " + className + " not found");
+        } catch (Throwable error) {
+            StandardLog.error(error);
         }
     }
 
@@ -175,10 +177,8 @@ public class ClassInitializer {
                     String className = entryName.substring(0, entryName
                             .length() - 6);
                     className = className.replace('/', '.');
-                    Class cls = Reflection.getClass(className);
-                    if (cls != null) {
-                        StandardLog.finer(className + " initialized");
-                    }
+                    StandardLog.finer("Initialize " + className);
+                    ClassInitializer.initialize(className);
                 }
             }
         } catch (Exception e) {
@@ -223,15 +223,8 @@ public class ClassInitializer {
             if (name.endsWith(".class")) {
                 String className = prefix + "."
                         + name.substring(0, name.length() - 6);
-                Class cls = null;
-                try {
-                    cls = Reflection.getClass(className);
-                } catch (ClassNotFoundException e) {
-                    StandardLog.error(e);
-                }
-                if (cls != null) {
-                    StandardLog.finer(className + " initialized");
-                }
+                StandardLog.finer("Initialize " + className);
+                ClassInitializer.initialize(className);
             }
         }
     }

@@ -53,6 +53,11 @@ public final class CharArray implements CharSequence, Comparable {
     private int _length;
 
     /**
+     * Holds the string representation of this CharArray (if known).
+     */
+    private String _asString;
+
+    /**
      * Default constructor.
      */
     public CharArray() {
@@ -65,8 +70,8 @@ public final class CharArray implements CharSequence, Comparable {
      */
     public CharArray(String string) {
         _array = string.toCharArray();
-        _offset = 0;
         _length = string.length();
+        _asString = string;
     }
 
     /**
@@ -75,7 +80,6 @@ public final class CharArray implements CharSequence, Comparable {
      * @param csq the character sequence source.
      */
     public CharArray(CharSequence csq) {
-        _offset = 0;
         _length = csq.length();
         _array = new char[_length];
         for (int i=0; i < _length;) {
@@ -84,8 +88,10 @@ public final class CharArray implements CharSequence, Comparable {
     }
 
     /**
-     * Returns the underlying array.
-     *
+     * Returns the underlying array (read-only).
+     * The array returned should not be modified (unfortunately there is 
+     * no way to make an array immutable in Java).
+     * 
      * @return the underlying array.
      */
     public char[] array() {
@@ -112,30 +118,19 @@ public final class CharArray implements CharSequence, Comparable {
     }
 
     /**
-     * Sets the underlying array.
-     *
-     * @param array the new underlying array.
-     */
-    public void setArray(char[] array) {
-        _array = array;
-    }
-
-    /**
-     * Sets the length of the character sequence.
-     *
-     * @param length the new length.
-     */
-    public void setLength(int length) {
-        _length = length;
-    }
-
-    /**
-     * Sets the offset of the first character in the underlying array.
+     * Sets the underlying array of this CharArray.
      *
      * @param offset the new offset.
+     * @param array the new underlying array.
+     * @param length the new length.
+     * @return <code>this</code>
      */
-    public void setOffset(int offset) {
+    public CharArray setArray(char[] array, int offset, int length) {
+        _array = array;
         _offset = offset;
+        _length = length;
+        _asString = null;
+        return this;
     }
 
     /**
@@ -228,7 +223,10 @@ public final class CharArray implements CharSequence, Comparable {
      * @return the <code>java.lang.String</code> for this character sequence.
      */
     public String toString() {
-        return new String(_array, _offset, _length);
+        if (_asString == null) {
+            _asString = new String(_array, _offset, _length);
+        }
+        return _asString;
     }
 
     /**
@@ -239,6 +237,7 @@ public final class CharArray implements CharSequence, Comparable {
      * @return the hash code value.
      */
     public int hashCode() {
+        if (_asString != null) return _asString.hashCode();
         int h = 0;
         for (int i = 0, j = _offset; i < _length; i++) {
             h = 31 * h + _array[j++];
@@ -255,10 +254,10 @@ public final class CharArray implements CharSequence, Comparable {
      *         <code>false</code> otherwise.
      */
     public boolean equals(Object that) {
-        if (that instanceof CharArray) {
-            return equals((CharArray) that);
-        } else if (that instanceof String) { // J2ME: String not a CharSequence.
+        if (that instanceof String) { 
             return equals((String) that);
+        } else if (that instanceof CharArray) {
+            return equals((CharArray) that);
         } else if (that instanceof CharSequence) {
             return equals((CharSequence) that);
         } else {
@@ -287,6 +286,8 @@ public final class CharArray implements CharSequence, Comparable {
      *         <code>false</code> otherwise.
      */
     public boolean equals(CharArray that) {
+        if (this == that)
+            return true;
         if (that == null)
             return false;
         if (this._length != that._length)
@@ -301,12 +302,17 @@ public final class CharArray implements CharSequence, Comparable {
 
     /**
      * Compares this character array against the specified String.
+     * In case of equality, the CharArray keeps a reference to the 
+     * String for future comparisons.
      * 
      * @param  str the string  to compare with.
      * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
      */
     public boolean equals(String str) {
+        if (_asString != null) 
+            return (_asString == str) ? true : _asString.equals(str) ? 
+                    (_asString = str) == str : false;
         if (str == null)
             return false;
         if (_length != str.length())
@@ -315,6 +321,7 @@ public final class CharArray implements CharSequence, Comparable {
             if (_array[--j] != str.charAt(i))
                 return false;
         }
+        _asString = str;
         return true;
     }
 
@@ -329,7 +336,7 @@ public final class CharArray implements CharSequence, Comparable {
      *          <code>CharSequence</code>.
      */
     public int compareTo(Object seq) {
-        return FastComparator.LEXICAL.compare(this, seq);
+        return ((FastComparator)FastComparator.LEXICAL).compare(this, seq);
     }
 
     /**

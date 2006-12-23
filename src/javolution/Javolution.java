@@ -9,8 +9,9 @@
 package javolution;
 
 import j2me.lang.CharSequence;
+
 import java.io.PrintStream;
-import javolution.lang.Reflection;
+import javolution.context.LogContext;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
 
@@ -41,9 +42,6 @@ public class Javolution {
     protected Javolution() {
     }
 
-    public static volatile Text txt = new TextBuilder("-7deDED1234567890")
-            .toText();
-
     /**
      * The library {@link #main} method.
      * The archive <code>javolution.jar</code> is auto-executable.
@@ -56,10 +54,11 @@ public class Javolution {
      * @param  args the option arguments.
      * @throws Exception if a problem occurs.
      */
+    static Object tmp;
     public static void main(String[] args) throws Exception {
-        println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
-        println("Version " + VERSION + " (http://javolution.org)");
-        println("");
+        Out.println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
+        Out.println("Version " + VERSION + " (http://javolution.org)");
+        Out.println("");
         if (args.length > 0) {
             if (args[0].equals("version")) {
                 return;
@@ -71,11 +70,11 @@ public class Javolution {
                 return;
             }
         }
-        println("Usage: java -jar javolution.jar [arg]");
-        println("where arg is one of:");
-        println("    version (to show version information only)");
-        println("    test    (to perform self-tests)");
-        println("    perf    (to run benchmark)");
+        Out.println("Usage: java -jar javolution.jar [arg]");
+        Out.println("where arg is one of:");
+        Out.println("    version (to show version information only)");
+        Out.println("    test    (to perform self-tests)");
+        Out.println("    perf    (to run benchmark)");
     }
 
     /**
@@ -84,93 +83,110 @@ public class Javolution {
      * @throws Exception if a problem occurs.
      */
     private static void testing() throws Exception {
-        print("Testing...");
-        println("");
+        Out.print("Testing...");
+        Out.println("");
         // TBD
-        println("Success");
+        Out.println("Success");
     }
 
-    
     /**
      * Measures performance.
      */
     private static void benchmark() throws Exception {
-        println("Benchmark...");
-        println("");
+        LogContext.setDefault(LogContext.STANDARD); // Logs info messages to console. 
+        calibrate(); // Calculates timer offset.
+        
+        Out.println("Run benchmark... (shortest execution times are displayed)");
+        Out.println("");
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         //new PerfIO().run();
         new PerfContext().run();
         new PerfText().run();
-        new PerfUtil().run();
         new PerfStream().run();
         new PerfXML().run();
+        new PerfUtil().run();
 
-        println("");
-        println("More performance analysis in future versions...");
+        Out.println("More performance analysis in future versions...");
     }
+    
+    private static void calibrate() {
+        Javolution test = new Javolution();
+        for (int i=0; i < 1000; i++) {
+            test.startTime();
+            test.keepBestTime(1);
+        }
+        _TimerOffset = test._picoDuration / 1000;
+       
+    }
+    static long _TimerOffset = 0;
 
     /**
      * Prints an object to <code>System.out</code> and then terminates the line. 
      * 
      * @param obj the object to be displayed.
      */
-    public static void println(Object obj) {
-        if (Javolution.Out == null)
-            return;
-        Javolution.Out.println(obj);
+    public void println(Object obj) {
+        Out.println(obj);
     }
 
     /**
-     * Prints an object to <code>System.out</code> (no line termination). 
+     * Prints an object to current print stream. 
      * 
      * @param obj the object to be displayed.
      */
-    public static void print(Object obj) {
-        if (Javolution.Out == null)
-            return;
-        Javolution.Out.print(obj);
+    public void print(Object obj) {
+        Out.print(obj);
     }
 
     /**
-     * Runs garbage collector then starts measuring time.
+     * Starts timer.
      */
-    public static void startTime() {
-        System.gc();
-        try {
-            Thread.sleep(500); // Allows gc to do its work.
-        } catch (InterruptedException e) {
-            throw new JavolutionError(e);
-        }
+    public void startTime() {
+        if (_time != 0) throw new Error("Timer not reset");
         _time = nanoTime();
     }
 
     /**
      * Sets the output stream. 
      * 
-     * @param out the print stream or <code>null</code> to disable output.
+     * @param out the print stream.
      */
     public static void setOutputStream(PrintStream out) {
-        Javolution.Out = out;
+        Out = out;
     }
 
     /**
-     * Ends measuring time and display the execution time per iteration.
+     * Ends measuring time and keeps the best time.
      * 
      * @param iterations the number iterations performed since 
      *        {@link #startTime}.
      */
-    public static String endTime(int iterations) {
-        long nanoSeconds = nanoTime() - _time;
-        long picoDuration = nanoSeconds * 1000 / iterations;
+    public void keepBestTime(int iterations) {
+        long nanoSeconds = nanoTime() - _time - _TimerOffset;
+        long picoDuration = (nanoSeconds * 1000 / iterations);
+        if (picoDuration < _picoDuration) {
+            _picoDuration = picoDuration;
+        }
+        _time = 0;
+    }
+    private long _picoDuration = Long.MAX_VALUE;
+    
+    /**
+     * Ends measuring time and returns the best time.
+     * 
+     * @param iterations the number iterations performed since 
+     *        {@link #startTime}.
+     */
+    public String endTime() {
         long divisor;
         String unit;
-        if (picoDuration > 1000 * 1000 * 1000 * 1000L) { // 1 s
+        if (_picoDuration > 1000 * 1000 * 1000 * 1000L) { // 1 s
             unit = " s";
             divisor = 1000 * 1000 * 1000 * 1000L;
-        } else if (picoDuration > 1000 * 1000 * 1000L) {
+        } else if (_picoDuration > 1000 * 1000 * 1000L) {
             unit = " ms";
             divisor = 1000 * 1000 * 1000L;
-        } else if (picoDuration > 1000 * 1000L) {
+        } else if (_picoDuration > 1000 * 1000L) {
             unit = " us";
             divisor = 1000 * 1000L;
         } else {
@@ -178,28 +194,24 @@ public class Javolution {
             divisor = 1000L;
         }
         TextBuilder tb = TextBuilder.newInstance();
-        tb.append(picoDuration / divisor);
+        tb.append(_picoDuration / divisor);
         int fracDigits = 4 - tb.length(); // 4 digits precision.
         tb.append(".");
         for (int i = 0, j = 10; i < fracDigits; i++, j *= 10) {
-            tb.append((picoDuration * j / divisor) % 10);
+            tb.append((_picoDuration * j / divisor) % 10);
         }
+        _picoDuration = Long.MAX_VALUE;
         return tb.append(unit).toString();
     }
 
     private static long _time;
 
     private static long nanoTime() {
-        if (NANO_TIME_METHOD != null) { // JRE 1.5+
-            Long time = (Long) NANO_TIME_METHOD.invoke(null);
-            return time.longValue();
-        } else { // Use the less accurate time in milliseconds.
-            return System.currentTimeMillis() * 1000000;
-        }
+        /*@JVM-1.5+@        
+        if (true) return System.nanoTime();
+        /**/
+       return System.currentTimeMillis() * 1000000;
     }
-
-    private static final Reflection.Method NANO_TIME_METHOD = Reflection
-            .getMethod("java.lang.System.nanoTime()");
 
     //////////////////////////////////////
     // Utilities for Javolution use only.
@@ -216,17 +228,17 @@ public class Javolution {
             cls = Class.forName(name); // Caller class loader.
         } catch (ClassNotFoundException e0) { // Try context class loader.
             /*@JVM-1.4+@
-            try {
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                cls = Class.forName(name, true, cl);
-            } catch (ClassNotFoundException e1) { // Try system class loader.
-                ClassLoader cl = ClassLoader.getSystemClassLoader();
-                try {
-                    cls = Class.forName(name, true, cl);
-                } catch (ClassNotFoundException e) {
-                }
-            }
-            /**/
+             try {
+             ClassLoader cl = Thread.currentThread().getContextClassLoader();
+             cls = Class.forName(name, true, cl);
+             } catch (ClassNotFoundException e1) { // Try system class loader.
+             ClassLoader cl = ClassLoader.getSystemClassLoader();
+             try {
+             cls = Class.forName(name, true, cl);
+             } catch (ClassNotFoundException e) {
+             }
+             }
+             /**/
         }
         if (cls == null)
             throw new JavolutionError("Class " + name + " not found");

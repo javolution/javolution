@@ -31,7 +31,7 @@ import javolution.lang.Reusable;
  *     }[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, September 24, 2005
+ * @version 4.2, December 18, 2006
  */
 public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/, Reusable {
 
@@ -165,11 +165,20 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
         return _map.remove(o) != null;
     }
 
-    // Overrides.
-    public FastCollection/*<E>*/ setValueComparator(FastComparator comparator) {
-        super.setValueComparator(comparator);
+    /**
+     * Sets the comparator to use for value equality.
+     *
+     * @param comparator the value comparator.
+     * @return <code>this</code>
+     */
+    public FastSet/*<E>*/ setValueComparator(FastComparator/*<? super E>*/ comparator) {
         _map.setKeyComparator(comparator);
         return this;
+    }
+    
+    // Overrides.
+    public FastComparator/*<? super E>*/ getValueComparator() {
+        return _map.getKeyComparator();
     }
 
     // Implements Reusable.
@@ -181,9 +190,10 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
-        final int size = stream.readInt();
+        FastComparator cmp = (FastComparator) stream.readObject();
+        final int size = stream.readInt();        
         _map = new FastMap(size);
-        setValueComparator((FastComparator) stream.readObject());
+        this.setValueComparator(cmp);
         for (int i = size; i-- != 0;) {
             Object key = stream.readObject(); 
             _map.put(key, key);
@@ -192,8 +202,8 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Requires special handling during serialization process.
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeInt(size());
         stream.writeObject(getValueComparator());
+        stream.writeInt(size());
         for (FastMap.Entry e = _map.head(), end = _map.tail(); 
               (e = (FastMap.Entry) e.getNext()) != end;) {
             stream.writeObject(e.getKey());
@@ -220,5 +230,5 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
         _map.remove(((FastMap.Entry) record).getKey());
     }
 
-    private static final long serialVersionUID = 3257563997099275574L;
+    private static final long serialVersionUID = 1L;
 }

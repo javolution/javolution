@@ -19,10 +19,7 @@ import j2me.util.Iterator;
 import j2me.util.List;
 import j2me.util.ListIterator;
 import j2mex.realtime.MemoryArea;
-
 import java.util.NoSuchElementException;
-
-
 import javolution.context.PersistentContext;
 import javolution.context.RealtimeObject;
 import javolution.lang.Reusable;
@@ -52,7 +49,7 @@ import javolution.lang.Reusable;
  *     from its list, it is automatically restored to its pool.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.7, January 1, 2006
+ * @version 4.2, December 18, 2006
  */
 public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         List/*<E>*/ {
@@ -80,6 +77,11 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
      * Holds the node marking the end of the list (not included).
      */
     private transient Node/*<E>*/_tail = new Node();
+
+    /**
+     * Holds the value comparator.
+     */
+    private transient FastComparator/*<? super E>*/ _valueComparator = FastComparator.DEFAULT;
 
     /**
      * Holds the current size.
@@ -630,6 +632,22 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         _size = 0;
     }
 
+    /**
+     * Sets the comparator to use for value equality.
+     *
+     * @param comparator the value comparator.
+     * @return <code>this</code>
+     */
+    public FastList/*<E>*/ setValueComparator(FastComparator/*<? super E>*/ comparator) {
+        _valueComparator = comparator;
+        return this;
+    }
+    
+    // Overrides.
+    public FastComparator/*<? super E>*/ getValueComparator() {
+        return _valueComparator;
+    }
+    
     // Overrides  to return a list (JDK1.5+).
     public Collection/*List<E>*/unmodifiable() {
         return (Collection/*List<E>*/) super.unmodifiable();
@@ -638,12 +656,15 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
+        
+        // Initial setup.
         _head = new Node();
         _tail = new Node();
         _head._next = _tail;
         _tail._previous = _head;
-        final int size = stream.readInt();
+        
         setValueComparator((FastComparator) stream.readObject());
+        final int size = stream.readInt();
         for (int i = size; i-- != 0;) {
             addLast((Object/*{E}*/) stream.readObject());
         }
@@ -651,8 +672,8 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
 
     // Requires special handling during serialization process.
     private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeInt(_size);
         stream.writeObject(getValueComparator());
+        stream.writeInt(_size);
         Node node = _head;
         for (int i = _size; i-- != 0;) {
             node = node._next;
@@ -983,4 +1004,5 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
         }
     }
 
+    private static final long serialVersionUID = 1L;
 }

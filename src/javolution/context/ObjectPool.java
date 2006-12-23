@@ -8,10 +8,7 @@
  */
 package javolution.context;
 
-import javolution.Javolution;
 import javolution.JavolutionError;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This abstract class represents an object pool (context-local).</p>
@@ -27,35 +24,14 @@ import javolution.xml.stream.XMLStreamException;
 public abstract class ObjectPool/*<T>*/ {
 
     /**
-     * Holds the default XML representation for object pools.
-     * It holds the size of the pools and the factory class in order to 
-     * repopulate the pool during deserialization.
-     */
-    protected static final XMLFormat/*<ObjectPool>*/ XML = new XMLFormat(
-            Javolution.j2meGetClass("javolution.context.ObjectPool")) {
-
-        public void read(InputElement xml, Object obj) throws XMLStreamException {
-            final ObjectPool pool= (ObjectPool) obj;
-            int size = xml.getAttribute("size", 0);
-            pool.setSize(size);
-        }
-
-        public void write(Object obj, OutputElement xml) throws XMLStreamException {
-            final ObjectPool pool= (ObjectPool) obj;
-            xml.setAttribute("factory", pool.getFactory().getClass().toString());
-            xml.setAttribute("size", pool.getSize());
-        }
-    };
-
-    /**
      * Holds the current user of this pool.  
      */
-    Thread _user;
+    transient Thread _user;
 
     /**
      * Indicates if this pool is in use by this context or an inner context.  
      */
-    boolean _inUse;
+    transient boolean _inUse;
 
     /**
      * Default constructor.
@@ -71,13 +47,6 @@ public abstract class ObjectPool/*<T>*/ {
     public final Thread getUser() {
         return _user;
     }
-
-    /**
-     * Returns the factory producing element for this pool.
-     * 
-     * @return the pool's factory.  
-     */
-    public abstract ObjectFactory/*<T>*/ getFactory();
 
     /**
      * Indicates if this pool is currently active for the current thread.
@@ -161,9 +130,6 @@ public abstract class ObjectPool/*<T>*/ {
 
     /**
      * Removes all objects (used and new) from this pool.
-     * 
-     * <p> Note: This method is called upon {@link Context#clear 
-     *           clearing} of the context this pool belongs to.
      */
     protected abstract void clearAll();
 

@@ -16,6 +16,7 @@ import javolution.text.TextBuilder;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
+import javolution.util.Index;
 import javolution.xml.stream.XMLStreamException;
 
 /**
@@ -132,9 +133,9 @@ public class XMLReferenceResolver implements Reusable {
      */
     public boolean writeReference(Object obj, XMLFormat.OutputElement xml)
             throws XMLStreamException {
-        FastTable.Index id = (FastTable.Index) _objectToId.get(obj);
+        Index id = (Index) _objectToId.get(obj);
         if (id == null) { // New identifier.
-            id = FastTable.Index.getInstance(_counter++);
+            id = Index.valueOf(_counter++);
             _objectToId.put(obj, id);
             _tmp.clear().append(id.intValue());
             if (_idURI == null) {

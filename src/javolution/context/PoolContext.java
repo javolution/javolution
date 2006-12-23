@@ -8,7 +8,10 @@
  */
 package javolution.context;
 
+import j2me.lang.UnsupportedOperationException;
+import j2me.lang.ThreadLocal;
 import j2mex.realtime.MemoryArea;
+import javolution.Javolution;
 import javolution.JavolutionError;
 import javolution.text.Text;
 import javolution.util.FastTable;
@@ -17,13 +20,33 @@ import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents a pool context; it is used to recycle objects 
- *     transparently, reduce memory allocation and avoid garbage collection.</p>
+ *     transparently, reduce memory allocation and avoid garbage collection.
+ *     Pool contexts do not require any form of synchronization (internally or
+ *     externally) and result in faster execution time when many temporary 
+ *     objects are produced (they are recycled all at once).</p>
  *     
  * <p> Threads executing in a pool context may allocate objects from 
  *     the context's pools (also called "stack") through an 
  *     {@link ObjectFactory}. Allocated objects are recycled automatically 
  *     upon {@link PoolContext#exit exit}. This recycling is almost 
- *     instantaneous and has no impact on performance.</p>  
+ *     instantaneous (unlike garbage collection). For example:[code]
+ *     public class DenseVector<F extends Field<F>> extends Vector<F> {
+ *         ...
+ *         public F times(Vector<F> that) {
+ *             if (this.getDimension() != that.getDimension())
+ *                   throw new DimensionException();
+ *             PoolContext.enter(); // Marks thread-local stack/pool.
+ *             try {
+ *                 F sum = this.get(0).times(that.get(0));
+ *                 for (int i = 1, n = getDimension(); i < n; i++) {
+ *                     sum = sum.plus(this.get(i).times(that.get(i))); // Stack allocated objects 
+ *                 }
+ *                 return sum.export(); // Moves sum outside of the current marked stack.
+ *             } finally {
+ *                 PoolContext.exit(); // Resets the thread-local stack/pool (immediate).
+ *             }
+ *         }
+ *     }[/code]</p>
  *     
  * <p> Objects allocated within a pool context should not be directly 
  *     referenced outside of the context unless they are  
@@ -31,90 +54,99 @@ import javolution.xml.stream.XMLStreamException;
  *     or {@link RealtimeObject#preserve preserved} (e.g. shared static 
  *     instance). If this simple rule is followed, then pool context are
  *     completely safe. In fact, pool contexts promote the use of immutable
- *     objects (as their allocation cost is then negligible with no adverse 
- *     effect on garbarge collection) and often lead to safer, faster and
- *     more robust applications.</p>
+ *     objects (as their allocation cost is then negligible) and often lead 
+ *     to safer, faster and more robust applications.</p>
  *     
- * <p> Finally, the framework guarantees that all pool objects belongs to 
- *     the same memory area (the memory area where the pool context resides).
- *     In other words, pool contexts allocated in ImmortalMemory can safely 
- *     be used by <code>NoHeapRealtimeThread</code> executing in 
- *     <code>ScopedMemory</code>.</p>
+ * <p> Finally for RTSJ VM, the framework guarantees that all pool objects
+ *     belongs to the same memory area (the memory area where the pool context
+ *     resides). Pool contexts allocated in ImmortalMemory (e.g. static) can
+ *     safely be used by <code>NoHeapRealtimeThread</code> with Javolution 
+ *     doing the recycling (Note: ImmortalMemory is never garbage 
+ *     collected and ScopedMemory can only be used for temporary data).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.8, May 14, 2006
+ * @version 4.2, December 14, 2006
  */
 public class PoolContext extends Context {
 
     /**
-     * Holds the class object (cannot use .class with j2me).
+     * Holds the context factory.
      */
-    private static final Class CLASS = new PoolContext().getClass();
-
-    /**
-     * Holds the XML representation for pool contexts
-     * (holds sizes of associated pools).
-     */
-    protected static final XMLFormat/*<PoolContext>*/ XML = new XMLFormat(CLASS) {
-        public void read(InputElement xml, Object obj) throws XMLStreamException {
-            final PoolContext ctx = (PoolContext) obj;
-            FastTable pools = (FastTable) xml.get("pools");
-            ctx.setPools(pools);
-        }
-
-        public void write(Object obj, OutputElement xml) throws XMLStreamException {
-            final PoolContext ctx = (PoolContext) obj;
-            xml.add(ctx._pools, "pools");
+    private static Factory FACTORY = new Factory() {
+        protected Object create() {
+            return new PoolContext();
         }
     };
 
     /**
-     * Holds the pools held by this context.
+     * Indicates if pools are enabled.
      */
-    final ObjectPool[] _pools = new ObjectPool[ObjectFactory._Instances.length];
+    private static final LocalContext.Reference ENABLED 
+         = new LocalContext.Reference(new Boolean(true));
 
     /**
-     * Holds the pools currently in use. 
+     * Holds the XML format.
      */
-    private final ObjectPool[] _inUsePools = new ObjectPool[ObjectFactory._Instances.length];
+    final static XMLFormat XML = new XMLFormat(
+            Javolution.j2meGetClass("javolution.context.PoolContext")) {
+ 
+        public void read(InputElement xml, Object obj) throws XMLStreamException {
+            PoolContext ctx = (PoolContext)obj;
+            Class cls = ctx._allPools.getClass();
+            ctx._allPools.addAll((FastTable)xml.get("Pools", cls));            
+        }
+
+        public void write(Object obj, OutputElement xml) throws XMLStreamException {
+            PoolContext ctx = (PoolContext)obj;
+            Class cls = ctx._allPools.getClass();
+            xml.add(ctx._allPools, "Pools", cls);
+        }
+    };
 
     /**
-     * Holds the number of pools used.
+     * Holds the collection of thread-local pools (to recycle upon exit).
+     * There is a limited number of concurrent executors; and therefore 
+     * thread local pools. 
      */
-    private int _inUsePoolsLength;
+    private final FastTable _allPools = new FastTable();
+
+    /**
+     * Indicates if object pooling is enabled.
+     */
+    private boolean _isEnabled = true;
+
+    /**
+     * Holds the thread-local pools (for explicit object recycling).
+     */
+    private final ThreadLocal _localPools = new ThreadLocal() {
+        private Runnable _createLocalPools = new Runnable() {
+            public void run() {
+                LocalPools pools = new LocalPools(true);
+                pools._owner = Thread.currentThread();
+                _allPools.add(pools);
+            }
+        };
+
+        protected synchronized Object initialValue() {
+            // First try to reuse existing pool (e.g. deserialized context).
+            for (int i=0; i < _allPools.size(); i++) {
+                LocalPools pools = (LocalPools) _allPools.get(i);
+                if (pools._owner == null) {
+                    pools._owner = Thread.currentThread();
+                    return pools;
+                }
+            }
+            // Else create a new local pools in this context memory area.
+            MemoryArea.getMemoryArea(PoolContext.this).executeInArea(
+                    _createLocalPools);
+            return _allPools.getLast();
+        }
+    };
 
     /**
      * Default constructor.
      */
     public PoolContext() {
-    }
-
-    /**
-     * Returns the pools used by this pool context.
-     * 
-     * @return the pools.
-     */
-    public FastTable getPools() {
-        FastTable pools = FastTable.newInstance();
-        for (int i = ObjectFactory._Count; i > 0;) {
-            ObjectPool pool = _pools[--i];
-            if (pool != null) {
-                pools.add(pool);
-            }
-        }
-        return pools;
-    }
-    
-    /**
-     * Sets the pools for this pool context.
-     * 
-     * @param pools the context new pools.
-     */
-    public void setPools(FastTable pools) {
-        for (int i = 0;  i < pools.size(); i++) {
-            ObjectPool pool = (ObjectPool) pools.get(i);
-            _pools[pool.getFactory()._index] = pool;
-        }
     }
 
     /**
@@ -134,105 +166,96 @@ public class PoolContext extends Context {
     }
 
     /**
-     * Enters a {@link PoolContext} allocated in the same memory area
-     * as the memory area of the current context.
+     * Enables/disables {@link LocalContext local} object pooling.
+     * 
+     * @param enabled <code>true</code> if object pooling is locally enabled;
+     *        <code>false</code> otherwise.
+     */
+    public static void setEnabled(boolean enabled) {
+        ENABLED.set(enabled ? TRUE : FALSE);
+    }
+
+    private static final Boolean TRUE = new Boolean(true); // CLDC 1.0
+
+    private static final Boolean FALSE = new Boolean(false); // CLDC 1.0
+
+    /**
+     * Indicates if object pooling is {@link LocalContext locally} enabled
+     * (default <code>true</code>).
+     * 
+     * @return <code>true</code> if object pooling is locally enabled;
+     *         <code>false</code> otherwise.
+     */
+    public static boolean isEnabled() {
+        return ((Boolean) ENABLED.get()).booleanValue();
+    }
+
+    /**
+     * Enters a {@link PoolContext} possibly recycled.
      */
     public static void enter() {
-        Context.enter(PoolContext.CLASS);
+        PoolContext ctx = (PoolContext) FACTORY.object();
+        ctx._isInternal = true;
+        Context.enter(ctx);
     }
+    private transient boolean _isInternal;
 
     /**
-     * Exits the current {@link PoolContext}.
+     * Exits and recycles the current {@link PoolContext}.
      *
-     * @throws j2me.lang.IllegalStateException if the current context 
-     *         is not an instance of PoolContext. 
+     * @throws UnsupportedOperationException if the current context 
+     *         has not been entered using PoolContext.enter() (no parameter). 
      */
     public static void exit() {
-        Context.exit(PoolContext.CLASS);
+        PoolContext ctx = (PoolContext) Context.current();
+        if (!ctx._isInternal) throw new UnsupportedOperationException
+           ("The context to exit must be specified");
+        ctx._isInternal = false;
+        Context.exitNoCheck(ctx);
+        FACTORY.recycle(ctx);
     }
 
     /**
-     * Moves all objects belonging to this pool context to the heap.
+     * Clears this context (pool objects can then be garbage collected).
      */
     public void clear() {
-        super.clear();
-        for (int i = ObjectFactory._Count; i > 0;) {
-            ObjectPool pool = _pools[--i];
-            if (pool != null) {
-                pool.clearAll();
-            }
+        for (int i=0; i < _allPools.size(); i++) {
+            ((LocalPools) _allPools.get(i)).clear();
         }
-        _inUsePoolsLength = 0;
+    }
+
+    /**
+     * Returns the textual representation of this context (for each factory
+     * the size of the pool).
+     */
+    public Text toText() {
+        return _allPools.toText();
     }
 
     // Implements Context abstract method.
     protected void enterAction() {
         Context ctx = this.getOuter();
-        if (ctx != null) {
-            ctx.setPoolsActive(false);
-        }
-        _poolsShortcut = _pools;
+        ctx.getLocalPools().deactivate();
+        _isEnabled = ConcurrentContext.isEnabled();
     }
 
     // Implements Context abstract method.
     protected void exitAction() {
-        recyclePools();
-        Context ctx = this.getOuter();
-        if (ctx != null) {
-            ctx.setPoolsActive(true);
-        }
-    }
-
-    // Overrides. 
-    void setPoolsActive(boolean value) {
-        Thread user = value ? getOwner() : null;
-        for (int i = _inUsePoolsLength; i > 0;) {
-            _inUsePools[--i]._user = user;
+        if (_isEnabled) {
+           for (int i=0; i < _allPools.size(); i++) {
+               ((LocalPools) _allPools.get(i)).reset();
+           }
+        } else {
+            Context.ROOT.getLocalPools().deactivate();
         }
     }
 
     // Overrides.
-    ObjectPool getPool(int index, boolean activate) {
-        ObjectPool pool = _pools[index];
-        if (pool == null) {
-            _tmpIndex = index;
-            MemoryArea.getMemoryArea(this).executeInArea(NEW_POOL);
-            pool = _pools[index];
-        }
-        if (!pool._inUse) { // Marks it in use.
-            pool._inUse = true;
-            _inUsePools[_inUsePoolsLength++] = pool;
-        }
-        if (activate) {
-            pool._user = getOwner();
-        }
-        return pool;
+    final LocalPools getLocalPools() {
+        return _isEnabled ? (LocalPools) _localPools.get() :
+            Context.ROOT.getLocalPools();
     }
 
-    private int _tmpIndex;
-
-    private Runnable NEW_POOL = new Runnable() {
-        public void run() {
-            _pools[_tmpIndex] = ObjectFactory._Instances[_tmpIndex]
-                    .newStackPool();
-        }
-
-    };
-
-    /**
-     * Recycles pools.
-     */
-    void recyclePools() {
-        // Recycles pools and reset pools used.
-        for (int i = _inUsePoolsLength; i > 0;) {
-            ObjectPool pool = _inUsePools[--i];
-            pool.recycleAll();
-            pool._user = null;
-            pool._inUse = false;
-        }
-        _inUsePoolsLength = 0;
-    }
-    
     /**
      * <p> This class encapsulates a reference allocated on the current stack
      *     when executing in {@link PoolContext}. The reachability level of a
@@ -298,7 +321,7 @@ public class PoolContext extends Context {
         public static/*<T>*/Reference /*<T>*/newInstance() {
             return (Reference) FACTORY.object();
         }
-        
+
         /**
          * Recycles this reference immediately regardless if the current 
          * thread is in a pool context or a heap context. The value held
@@ -317,7 +340,7 @@ public class PoolContext extends Context {
         public Text toText() {
             return Text.valueOf(this.get());
         }
-        
+
         // Implements Reference interface.
         public Object/*{T}*/get() {
             return _value;
@@ -327,5 +350,6 @@ public class PoolContext extends Context {
         public void set(Object/*{T}*/value) {
             _value = value;
         }
-    }    
+    }
+
 }

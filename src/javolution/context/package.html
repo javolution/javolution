@@ -40,7 +40,9 @@
             }
             // Saves pool context (optional).
             OutputStream out = new FileOutputStream("bin/pool-" + getName() + ".xml");
-            XMLObjectWriter.newInstance(out).write(pool);
+            XMLObjectWriter writer = XMLObjectWriter.newInstance(out);
+            writer.write(pool);
+            writer.close();
         }
     }[/code]
     <i> Note: Worst case execution time can be decreased even further by using
@@ -381,31 +383,18 @@ Time = 7.708242</pre>
 
     <a name="FAQ-6"></a>
     <li><b>What performance gain can I expect by using a pool context?</b>
-    <p> Classes avoiding dynamic memory allocation are significantly faster.
-        For example, our {@link javolution.xml.stream.XMLStreamReader XMLStreamReader} and 
-        is <b>3-5x</b> faster than any conventional StAX parsers. To avoid synchronization 
-        issues, it is often easier to allocate new objects. Other techniques such 
-        as the "returnValue" parameter are particularly ugly and unsafe
-        as they require mutability. Javolution's real-time facility promotes the dynamic 
-        creation of immutable objects as these object creations are fast and have no adverse
-        effect on garbage collection. Basically, with pool contexts, <b> the CPU is 
+    <p> The more temporary objects you generate and the larger these objects,
+        the more beneficial are pool contexts. For example, the multiplication of 
+        complex matrices (<code>Matrix&lt;Complex&gt;) is several times faster 
+        when using pool context (allocating / collecting complex numbers
+        in large quantities stresses the garbage collector to the point that 
+        performance degrades significantly). By using pool contexts the
+        memory footprint (heap usage) is decreased significantly and <b> the CPU is 
         busy doing the "real thing" not "memory management"!</b></p>
-    <p> The cost of allocating on the heap is somewhat <b>proportional
-        to the size</b> of the object being allocated. By avoiding this
-        cost you can drastically increase the execution speed.<b> The largest objects
-        benefit the most.</b> For example, adding <code>LargeInteger</code> in a pool context
-        is at least <a href="http://jscience.org/doc/benchmark.html"><b>8x</b> faster</a> than adding 
-        <code>java.math.BigInteger</code>,
-        our {@link javolution.text.Text Text} class
-        can be <a href="http://javolution.org/doc/benchmark.html"><b>several orders of magnitude faster</b></a>
-        than <code>java.lang.String</code>.
-        Not surprising when you know that even "empty" <code>Strings</code> 
-        take 40 bytes of memory which have to be initialized and garbage collected!</p>
-    <p> Recycling objects is always more efficient than just recycling memory (aka GC).
-        Our {@link javolution.util.FastMap FastMap} is 
-        a complex object using preallocated linked lists. It is fast but costly
-        to build. Nevertheless, in a pool context it can be used as a throw-away map
-        because <b>the construction cost is then reduced to nothing!</b></p>
+    <p> Recycling thread-local objects is often more efficient than just recycling memory (aka GC).
+        Our {@link javolution.util.FastMap FastMap} is a complex object using preallocated
+        linked lists. It is fast but costly to build. Nevertheless, in a pool context it
+        can be used as a throw-away map because <b>the construction cost is then reduced to nothing!</b></p>
     </li><p></p>
 
     <a name="FAQ-7"></a>

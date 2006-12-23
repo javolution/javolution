@@ -10,10 +10,8 @@ package javolution.context;
 
 import j2mex.realtime.MemoryArea;
 import javolution.JavolutionError;
-import javolution.lang.Reflection;
 import javolution.text.Text;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
+import javolution.text.TextBuilder;
 
 /**
  * <p> This class provides a default implementation of the {@link Realtime} 
@@ -47,15 +45,15 @@ import javolution.xml.stream.XMLStreamException;
 public abstract class RealtimeObject implements Realtime {
 
     /**
-     * The pool this object belongs to or <code>null</code> if this object 
-     * has been created using a constructor (new keyword).  
-     */
-    private transient Pool _pool;
-
-    /**
      * Holds the next object in the pool (or null if object not in the pool).   
      */
     private transient RealtimeObject _next;
+
+    /**
+     * The pool this object belongs to or <code>null</code> if this object 
+     * has been created using a constructor (new keyword).  
+     */
+    private transient Factory.Pool _pool;
 
     /**
      * Holds the previous object in the pool (or null if object not in the pool).  
@@ -75,19 +73,20 @@ public abstract class RealtimeObject implements Realtime {
 
     /**
      * Indicates if this real-time object is a local object (belongs  
-     * to the current {@link PoolContext}).
+     * to the current stack). Local object can safely be recycled or 
+     * exported.
      * 
-     * @return <code>true</code> if this object is an object local to the 
-     *         current pool context; <code>false</code> if this object belongs
-     *         to the heap or to an outer pool context.
+     * @return <code>true</code> if this object belongs to the current 
+     *        thread stack; <code>false</code> otherwise (e.g. heap object).
      */
     public final boolean isLocal() {
-        if (_pool == null) return false;
-        if (!_pool._isStack) return false;
-        if (_pool._user == Thread.currentThread()) return true;
-        if ((_pool._user != null) || (!_pool._inUse)) 
-            throw new JavolutionError("Non Accessible Object");
-        return false;
+        if (_pool == null)
+            return false;
+        if (!_pool._inUse)
+            throw new JavolutionError("Reference to inner pool object detected");
+        if (!_pool._isStack)
+            return false;
+        return (_pool._user == Thread.currentThread());
     }
 
     /**
@@ -98,7 +97,9 @@ public abstract class RealtimeObject implements Realtime {
      * @return <code>toText().stringValue()</code>
      */
     public final String toString() {
-        return toText().stringValue();
+        return (this instanceof TextBuilder) ? // Shortcut. 
+        ((TextBuilder) this).stringValue()
+                : toText().stringValue();
     }
 
     /**
@@ -169,68 +170,70 @@ public abstract class RealtimeObject implements Realtime {
 
     // Implements Realtime interface.
     public boolean move(ObjectSpace os) {
+        if (_pool == null)
+            return false; // Heap object do not move.
+        if (!_pool._inUse)
+            throw new JavolutionError("Reference to inner pool object detected");
         if (os == ObjectSpace.OUTER) { // export()
-            if (!isLocal())
-                return false; // Not on the stack.
-            Pool outer = (Pool) PoolContext.current().getOuter().getPool(
-                    _pool._factory._index, false);
+            if (!_pool._isStack)
+                return false; // Heap object.
+            if (_pool._user == null)
+                return false; // Outer object.
+            if (_pool._user != Thread.currentThread()) // Different stack.
+                throw new JavolutionError(
+                        "Cannot export objects from another thread stack");
+            LocalPools outerPools = PoolContext.current().getOuter()
+                    .getLocalPools();
+            Factory.Pool outer = (Factory.Pool) outerPools.getPool(_pool
+                    .getFactory(), false);
             if (!outer._isStack) // Outer heap pool.
                 return move(ObjectSpace.HEAP);
             detach();
-            // Exchanges with outer.
-            synchronized (outer) { // Might be shared.
-                RealtimeObject outerObj = (RealtimeObject) outer.next();
-                outerObj.detach();
-                outerObj.insertBefore(_pool._activeTail); // Marks unused.
-                outerObj._pool = _pool;
-                insertBefore(outer._next); // Marks used.
-                _pool = outer;
-            }
+            RealtimeObject outerObj = (RealtimeObject) outer.next();
+            outerObj.detach();
+            outerObj.insertBefore(_pool._activeTail); // Marks unused.
+            outerObj._pool = _pool;
+            insertBefore(outer._next); // Marks used.
+            _pool = outer;
             return true;
 
         } else if (os == ObjectSpace.HEAP) { // moveHeap()
-            synchronized (this) { // Might not be local.
-                if ((_pool == null) || (!_pool._isStack))
-                    return false; // Already on the heap.
-                synchronized (_pool) { // Might be shared. 
-                    detach();
-                    _pool._size--; // Object removed from pool.
-                    _pool = null;
-                    _next = null;
-                    _previous = null;
-                    return true;
-                }
-            }
+            if (!_pool._isStack)
+                return false; // Heap object.
+            if ((_pool._user != null)
+                    && (_pool._user != Thread.currentThread())) // Different stack.
+                throw new JavolutionError(
+                        "Cannot move to the heap objects form another thread stack");
+            detach();
+            _pool._size--; // Object removed from pool.
+            _pool = null;
+            _next = null;
+            _previous = null;
+            return true;
 
         } else if (os == ObjectSpace.HOLD) { // preserve()
-            synchronized (this) { // Might not be local.
-                if ((_pool == null) || (!_pool._isStack))
-                    return false; // On the heap.
-                if (_preserved++ == 0) {
-                    synchronized (_pool) { // Might be shared.
-                        detach();
-                        insertBefore(_pool._holdTail);
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
+            if (!_pool._isStack)
+                return false; // Heap object.
+            if ((_pool._user != null)
+                    && (_pool._user != Thread.currentThread())) // Different stack.
+                throw new JavolutionError(
+                        "Cannot preserve objects from another thread stack");
+            if (_preserved++ == 0) {
+                detach();
+                insertBefore(_pool._holdTail);
+                return true;
+            } else {
+                return false;
             }
 
         } else if (os == ObjectSpace.STACK) { // unpreserve()
-            synchronized (this) { // Might not be local.
-                if ((_preserved != 0) && (--_preserved == 0)) {
-                    if (_pool != null) {
-                        synchronized (_pool) { // Might be shared.
-                            detach();
-                            insertBefore(_pool._next);
-                            _pool._next = this;
-                        }
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
+            if ((_preserved != 0) && (--_preserved == 0)) {
+                detach();
+                insertBefore(_pool._next);
+                _pool._next = this;
+                return true;
+            } else {
+                return false;
             }
 
             // Ignores others context space (possible extensions).            
@@ -271,7 +274,7 @@ public abstract class RealtimeObject implements Realtime {
         /**
          * Holds the last used pool from this factory.
          */
-        private Pool _cachedPool = new Pool(null, false);
+        private Pool _cachedPool = new Pool(false);
 
         /**
          * Default constructor.
@@ -287,10 +290,10 @@ public abstract class RealtimeObject implements Realtime {
                 return (Object/*{T}*/) (((pool._next = next._next) != null) ? next
                         : pool.allocate());
             }
-            _cachedPool = pool = (Pool) currentPool();
+            _cachedPool = pool = (Pool) (Object) currentPool(); // Weird but NetBean complains.
             return (Object/*{T}*/) pool.next();
         }
-
+        
         // Overrides.
         public void recycle(Object/*{T}*/obj) {
             Pool pool = ((RealtimeObject) obj)._pool;
@@ -298,238 +301,193 @@ public abstract class RealtimeObject implements Realtime {
                 currentPool().recycle(obj);
             } else {
                 pool.recycle(obj);
-            } 
+            }
         }
 
         // Overrides.
         protected ObjectPool newStackPool() {
-            return new Pool(this, true);
+            return new Pool(true);
         }
 
         // Overrides.
         protected ObjectPool newHeapPool() {
-            return new Pool(this, false);
+            return new Pool(false);
         }
-    }
 
-    /**
-     * This inner class represents a stack pool of {@link RealtimeObject}.
-     * 
-     * It implements Runnable for object creation in memory area.
-     */
-    private static final class Pool extends ObjectPool implements Runnable {
+        private final class Pool extends ObjectPool implements Runnable {
 
-        // Overrides format to use private constructor.
-        static final XMLFormat XML = new XMLFormat(new Pool(null, false)
-                .getClass()) {
-            public Object newInstance(Class cls, XMLFormat.InputElement xml)
-                    throws XMLStreamException {
-                Class factoryClass;
-                try {
-                    factoryClass = Reflection.getClass(xml
-                            .getAttribute("factory"));
-                } catch (ClassNotFoundException e) {
-                    throw new XMLStreamException(e);
-                }
-                Factory factory = (Factory) ObjectFactory
-                        .getInstance(factoryClass);
-                boolean isShared = xml.getAttribute("isStack", false);
-                return new Pool(factory, isShared);
+            /**
+             * Holds the next object to return.
+             */
+            private RealtimeObject _next;
+
+            /**
+             * Indicates if stack pool.
+             */
+            private final boolean _isStack;
+
+            /**
+             * Holds the memory area of this pool. 
+             */
+            private final MemoryArea _memoryArea;
+
+            /**
+             * Holds number of objects held by this pool. 
+             */
+            private int _size;
+
+            /**
+             * Holds the head object.
+             */
+            private final RealtimeObject _activeHead;
+
+            /**
+             * Holds the tail object.
+             */
+            private final RealtimeObject _activeTail;
+
+            /**
+             * Holds the objects on hold
+             */
+            private final RealtimeObject _holdHead;
+
+            /**
+             * Holds the objects on hold
+             */
+            private final RealtimeObject _holdTail;
+
+            /**
+             * Creates a stack of heap pool.
+             * 
+             * @param isStack indicates if this is a stack.
+             */
+            private Pool(boolean isStack) {
+                _isStack = isStack;
+                _memoryArea = MemoryArea.getMemoryArea(this);
+
+                _activeHead = new Bound();
+                _activeTail = new Bound();
+                _activeHead._next = _activeTail;
+                _activeTail._previous = _activeHead;
+
+                _holdHead = new Bound();
+                _holdTail = new Bound();
+                _holdHead._next = _holdTail;
+                _holdTail._previous = _holdHead;
+
+                _next = _activeTail;
             }
 
-            public void read(InputElement xml, Object obj)
-                    throws XMLStreamException {
-                final Pool pool = (Pool) obj;
-                ObjectPool.XML.read(xml, pool);
+            ObjectFactory getFactory() {
+                return Factory.this;
             }
 
-            public void write(Object obj, OutputElement xml)
-                    throws XMLStreamException {
-                final Pool pool = (Pool) obj;
-                xml.setAttribute("isStack", pool._isStack);
-                ObjectPool.XML.write(pool, xml);
+            // Implements ObjectPool abstract method.
+            public int getSize() {
+                return _size;
             }
-        };
 
-        /**
-         * Holds the factory. 
-         */
-        private final Factory _factory;
-
-        /**
-         * Holds the memory area of this pool. 
-         */
-        private final MemoryArea _memoryArea;
-
-        /**
-         * Holds number of objects held by this pool. 
-         */
-        private int _size;
-
-        /**
-         * Holds the head object.
-         */
-        private final RealtimeObject _activeHead;
-
-        /**
-         * Holds the tail object.
-         */
-        private final RealtimeObject _activeTail;
-
-        /**
-         * Holds the objects on hold
-         */
-        private final RealtimeObject _holdHead;
-
-        /**
-         * Holds the objects on hold
-         */
-        private final RealtimeObject _holdTail;
-
-        /**
-         * Holds the next object to return.
-         */
-        private RealtimeObject _next;
-
-        /**
-         * Indicates if stack pool.
-         */
-        private final boolean _isStack;
-
-        /**
-         * Default constructor.
-         */
-        private Pool(Factory factory, boolean isStack) {
-            _factory = factory;
-            _isStack = isStack;
-            _memoryArea = MemoryArea.getMemoryArea(this);
-
-            _activeHead = new Bound();
-            _activeTail = new Bound();
-            _activeHead._next = _activeTail;
-            _activeTail._previous = _activeHead;
-
-            _holdHead = new Bound();
-            _holdTail = new Bound();
-            _holdHead._next = _holdTail;
-            _holdTail._previous = _holdHead;
-
-            _next = _activeTail;
-        }
-
-        // Implements ObjectPool abstract method.
-        public ObjectFactory getFactory() {
-            return _factory;
-        }
-
-        // Implements ObjectPool abstract method.
-        public int getSize() {
-            return _size;
-        }
-
-        // Implements ObjectPool abstract method.
-        public void setSize(int size) {
-            for (int i = _size; i < size; i++) {
-                RealtimeObject obj = (RealtimeObject) _factory.create();
-                _size++;
-                if (_isStack) {
-                    obj.insertBefore(_activeTail);
+            // Implements ObjectPool abstract method.
+            public void setSize(int size) {
+                for (;_size < size; _size++) {
+                    RealtimeObject obj = (RealtimeObject) create();
+                    obj.insertBefore(_next); // Available immediately. 
+                    _next = _next._previous;
                     obj._pool = Pool.this;
-                } else {
-                    obj.insertBefore(_holdTail);                        
                 }
             }
-        }
 
-        // Implements ObjectPool abstract method.
-        public Object next() {
-            final RealtimeObject next = _next;
-            return ((_next = next._next)!= null) ? next : allocate();
-        }
-
-        private Object allocate() {
-            _next = _activeTail; // Avoids null for _next.
-            if (_isStack) {
-                _memoryArea.executeInArea(this);
-                return _activeTail._previous;
-            } else { // Heap.
-                if (_size != 0) removeUse(); // Avoids keeping reference to used objects. 
-                return _factory.create();
+            // Implements ObjectPool abstract method.
+            public Object next() {
+                final RealtimeObject next = _next;
+                return ((_next = next._next) != null) ? next : allocate();
             }
-        }
 
-        // Removes the oldest pool object used and never recycled.
-        private void removeUse() {
-            RealtimeObject rtObj = _activeHead._next;
-            if (rtObj == _activeTail) 
-                throw new JavolutionError("Non empty pool with size zero");
-            rtObj.detach();
-            rtObj._next = null;
-            rtObj._previous = null;
-            rtObj._pool = null;
-            _size--;
-        }
-
-        // Implements Runnable for object creation in memory area.
-        public void run() {
-            RealtimeObject obj = (RealtimeObject) _factory.create();
-            _size++;
-            obj.insertBefore(_activeTail);
-            obj._pool = Pool.this;
-        }
-
-        // Implements ObjectPool abstract method.
-        public void recycle(Object obj) {
-            if (_factory.doCleanup()) {
-                _factory.cleanup(obj);
+            private Object allocate() {
+                _next = _activeTail; // Avoids null for _next.
+                if (_isStack) {
+                    _memoryArea.executeInArea(this);
+                    return _activeTail._previous;
+                } else { // Heap.
+                    if (_size != 0)
+                        removeUse(); // Avoids keeping reference to used objects. 
+                    return create();
+                } 
             }
-            RealtimeObject rtObj = (RealtimeObject) obj;
-            Pool pool = rtObj._pool;
-            if (pool == this) {
+
+            // Removes the oldest pool object used and never recycled.
+            private void removeUse() {
+                RealtimeObject rtObj = _activeHead._next;
+                if (rtObj == _activeTail)
+                    throw new JavolutionError("Empty pool with non-zero size");
                 rtObj.detach();
-                rtObj.insertBefore(_next);
-                _next = _next._previous;
-                return;
+                rtObj._next = null;
+                rtObj._previous = null;
+                rtObj._pool = null;
+                _size--;
             }
-            if (pool == null) { // Heap object.
-                if (MemoryArea.getMemoryArea(rtObj) != _memoryArea)
-                    return; // Do not recycle accross memory areas.
-                rtObj.insertBefore(_next);
-                rtObj._pool = this;
-                _next = _next._previous;
+
+            // Implements Runnable for object creation in memory area.
+            public void run() {
+                RealtimeObject obj = (RealtimeObject) create();
                 _size++;
-                return;
+                obj.insertBefore(_activeTail);
+                obj._pool = Pool.this;
             }
-            throw new IllegalArgumentException(
-                "Cannot recycle object belonging to a different context");
-        }
 
-        // Implements ObjectPool abstract method.
-        protected void recycleAll() {
-            // Cleanups objects.
-            for (RealtimeObject rt = _activeHead._next; rt != _next;) {
-                if (!_factory.doCleanup())
-                    break;
-                _factory.cleanup(rt);
-                rt = rt._next;
+            // Implements ObjectPool abstract method.
+            public void recycle(Object obj) {
+                if (doCleanup()) {
+                    cleanup((Object/*{T}*/)obj);
+                }
+                RealtimeObject rtObj = (RealtimeObject) obj;
+                Pool pool = rtObj._pool;
+                if (pool == this) {
+                    rtObj.detach();
+                    rtObj.insertBefore(_next);
+                    _next = _next._previous;
+                    return;
+                }
+                if (pool == null) { // Heap object.
+                    if (MemoryArea.getMemoryArea(rtObj) != _memoryArea)
+                        return; // Do not recycle accross memory areas.
+                    rtObj.insertBefore(_next);
+                    rtObj._pool = this;
+                    _next = _next._previous;
+                    _size++;
+                    return;
+                }
+                throw new IllegalArgumentException(
+                        "Cannot recycle object belonging to a different context");
             }
-            _next = _activeHead._next;
+
+            // Implements ObjectPool abstract method.
+            protected void recycleAll() {
+                // Cleanups objects.
+                for (RealtimeObject rt = _activeHead._next; rt != _next;) {
+                    if (!doCleanup())
+                        break;
+                    cleanup((Object/*{T}*/)rt);
+                    rt = rt._next;
+                }
+                _next = _activeHead._next;
+            }
+
+            // Implements ObjectPool abstract method.
+            protected void clearAll() {
+                _activeHead._next = _activeTail;
+                _activeTail._previous = _activeHead;
+                _holdHead._next = _holdTail;
+                _holdTail._previous = _holdHead;
+            }
+
         }
 
-        // Implements ObjectPool abstract method.
-        protected void clearAll() {
-            _activeHead._next = _activeTail;
-            _activeTail._previous = _activeHead;
-            _holdHead._next = _holdTail;
-            _holdTail._previous = _holdHead;
+        /**
+         * This inner class represents internal linked list bounds
+         * (to avoid testing for null when inserting/removing). 
+         */
+        private static final class Bound extends RealtimeObject {
         }
-
-    }
-
-    /**
-     * This inner class represents internal linked list bounds
-     * (to avoid testing for null when inserting/removing). 
-     */
-    private static final class Bound extends RealtimeObject {
     }
 }

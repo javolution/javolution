@@ -10,7 +10,6 @@ package javolution.text;
 
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
-import j2me.lang.StringBuilder;
 import j2mex.realtime.MemoryArea;
 
 import javolution.context.Realtime;
@@ -444,7 +443,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Appends the textual representation of the specified <code>boolean</code>
-     * (equivalent to <code>TypeFormat.format(b, this)</code>).
+     * argument.
      *
      * @param  b the <code>boolean</code> to format.
      * @return <code>this</code>
@@ -456,7 +455,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Appends the decimal representation of the specified <code>int</code>
-     * (equivalent to <code>TypeFormat.format(i, this)</code>).
+     * argument.
      *
      * @param  i the <code>int</code> to format.
      * @return <code>this</code>
@@ -512,7 +511,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Appends the decimal representation of the specified <code>long</code>
-     * (equivalent to <code>TypeFormat.format(l, this)</code>).
+     * argument.
      *
      * @param  l the <code>long</code> to format.
      * @return <code>this</code>
@@ -556,10 +555,10 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @return <code>this</code>
      */
     public final TextBuilder append(long l, int radix) {
-        if (radix == 10) 
+        if (radix == 10)
             return append(l); // Faster version.
-        if (radix < 2 || radix > 36) 
-            throw new IllegalArgumentException("radix: " + radix);        
+        if (radix < 2 || radix > 36)
+            throw new IllegalArgumentException("radix: " + radix);
         if (l < 0) {
             append('-');
         } else {
@@ -580,25 +579,27 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Appends the textual representation of the specified <code>float</code>
-     * (equivalent to <code>append(f, 10, abs(value) > 1E7, false)</code>).
+     * (equivalent to 
+     * <code>append(f, 10, (abs(f) &gt;= 1E7) || (abs(f) &lt; 0.001), false)</code>).
      *
      * @param  f the <code>float</code> to format.
      * @return <code>this</code>
-     /*@JVM-1.1+@
+     * @JVM-1.1+@
      public final TextBuilder append(float f) {
-     return append(f, 10, MathLib.abs(f) > 1E7, false);
+     return append(f, 10, (MathLib.abs(f) >= 1E7) || (MathLib.abs(f) < 0.001), false);
      }
      /**/
 
     /**
      * Appends the textual representation of the specified <code>double</code>
-     * (equivalent to <code>append(d, 17, abs(value) > 1E7, false)</code>).
+     * (equivalent to 
+     * <code>append(d, 17, (abs(d) &gt;= 1E7) || (abs(d) &lt; 0.001), false)</code>).
      *
      * @param  d the <code>double</code> to format.
      * @return <code>this</code>
-     /*@JVM-1.1+@
+     * @JVM-1.1+@
      public final TextBuilder append(double d) {
-     return append(d, 17, MathLib.abs(d) > 1E7, false);
+     return append(d, 17, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false);
      }
      /**/
 
@@ -614,67 +615,67 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  showZero <code>true</code> if trailing fractional zeros are 
      *         represented; <code>false</code> otherwise.
      * @return <code>this</code>
-     * @throws IllegalArgumentException if <code>((digits > 19) || 
-     *         (digits <= 0))</code>)
-     /*@JVM-1.1+@
-    public final TextBuilder append(double d, int digits,
-            boolean scientific, boolean showZero)  {
-        if ((digits > 19) || (digits <= 0))
-            throw new IllegalArgumentException("digits: " + digits);
-        if (d != d)  // NaN
-            return append("NaN");
-        if (d < 0) { // Works with positive number.
-            d = -d;
-            append('-');
-        }
-        if (d == Double.POSITIVE_INFINITY) // Infinity.
-            return append("Infinity");
-        if (d == 0.0) { // Zero.
-            if (digits == 1)
-                return append("0.");
-            if (!showZero)
-                return append("0.0");
-            append("0.0");
-            for (int i = 2; i < digits; i++) {
-                append('0');
-            }
-            return this;
-        }
-        
-        // Find the exponent e such as: value == x.xxx * 10^e
-        int e = MathLib.floorLog10(d);
-        long m = MathLib.toLongPow10(d, digits - e - 1);
-        
-        // Formats.
-        if (scientific || (e < 0) || (e >= digits)) {
-            // Scientific notation has to be used ("x.xxxEyy").
-            long pow10 = LONG_POW_10[digits - 1];
-            int i = (int) (m / pow10); // Single digit.
-            append(DIGIT_TO_CHAR[i]);
-            long fraction = m - pow10 * i; 
-            appendFraction(fraction, digits - 1, showZero);
-            append('E');
-            append(e);
-        } else { // Dot within the string ("xxxx.xxxxx").
-            long pow10 = LONG_POW_10[digits - e - 1];
-            long l = m / pow10;
-            append(l);
-            long fraction = m - pow10 * l; 
-            appendFraction(fraction, digits - e - 1, showZero);
-        }
-        return this;
-    }
-    
-    private static final long[] LONG_POW_10 = new long[19];
-    static {
-        long pow = 1;
-        for (int i = 0; i < 19; i++) {
-            LONG_POW_10[i] = pow;
-            pow *= 10;
-        }
-    }
-    /**/
-    
+     * @throws IllegalArgumentException if <code>((digits &gt; 19) || 
+     *         (digits &lt;= 0))</code>)
+     * @JVM-1.1+@
+     public final TextBuilder append(double d, int digits,
+     boolean scientific, boolean showZero)  {
+     if ((digits > 19) || (digits <= 0))
+     throw new IllegalArgumentException("digits: " + digits);
+     if (d != d)  // NaN
+     return append("NaN");
+     if (d < 0) { // Work with positive number.
+     d = -d;
+     append('-');
+     }
+     if (d == Double.POSITIVE_INFINITY) // Infinity.
+     return append("Infinity");
+     if (d == 0.0) { // Zero.
+     if (digits == 1)
+     return append("0.");
+     if (!showZero)
+     return append("0.0");
+     append("0.0");
+     for (int i = 2; i < digits; i++) {
+     append('0');
+     }
+     return this;
+     }
+     
+     // Find the exponent e such as: value == x.xxx * 10^e
+     int e = MathLib.floorLog10(d);
+     long m = MathLib.toLongPow10(d, digits - e - 1);
+     
+     // Formats.
+     if (scientific || (e >= digits)) {
+     // Scientific notation has to be used ("x.xxxEyy").
+     long pow10 = POW10_LONG[digits - 1];
+     int i = (int) (m / pow10); // Single digit.
+     append(DIGIT_TO_CHAR[i]);
+     m = m - pow10 * i; 
+     appendFraction(m, digits - 1, showZero);
+     append('E');
+     append(e);
+     } else { // Dot within the string ("xxxx.xxxxx").
+     if (e < 0) {
+     append('0');
+     } else {
+     long pow10 = POW10_LONG[digits - e - 1];
+     long l = m / pow10;
+     append(l);
+     m = m - pow10 * l; 
+     }
+     appendFraction(m, digits - e - 1, showZero);
+     }
+     return this;
+     }     
+     private static final long[] POW10_LONG = new long[] { 1L, 10L, 100L, 1000L,
+     10000L, 100000L, 1000000L, 10000000L, 100000000L, 1000000000L,
+     10000000000L, 100000000000L, 1000000000000L, 10000000000000L,
+     100000000000000L, 1000000000000000L, 10000000000000000L,
+     100000000000000000L, 1000000000000000000L };
+     /**/
+
     final void appendFraction(long l, int digits, boolean showZero) {
         append('.');
         int length = MathLib.digitLength(l);
@@ -682,9 +683,22 @@ public class TextBuilder extends RealtimeObject implements Appendable,
             append('0');
             return;
         }
+        for (int i = length; i < digits; i++) {
+            append('0');
+        }
         append(l);
+        if (!showZero) {
+            int trailingZeros = 0;
+            while (true) {
+                char c = charAt(_length - trailingZeros - 1);
+                if (c != '0')
+                    break;
+                trailingZeros++;
+            }
+            this.setLength(_length - trailingZeros);
+        }
     }
-    
+
     /**
      * Inserts the specified character sequence at the specified location.
      *
@@ -768,6 +782,21 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     }
 
     /**
+     * Returns the <code>String</code> value holds by this {@link TextBuilder}.
+     *
+     * @return the <code>java.lang.String</code> for this text builder.
+     */
+    public final String stringValue() {
+        char[] data = new char[_length];
+        for (int i=0, n = _length >> D0; i < n; i++) {
+            
+            
+        }
+        this.getChars(0, _length, data, 0);
+        return new String(data, 0, _length);
+    }
+
+    /**
      * Resets this text builder for reuse (equivalent to {@link #clear}).
      */
     public final void reset() {
@@ -826,11 +855,11 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * string buffer (only for text builder with length less than 32).
      *
      * @param sb the string builder.
-     */
+     * @JVM-1.5+@
     final void appendTo(StringBuilder sb) {
         sb.append(_chars0, 0, _length);
     }
-
+    /**/
 
     /**
      * Indicates if this text builder has the same character content as the 
@@ -841,6 +870,24 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      *        same character content as this text; <code>false</code> otherwise.
      */
     public final boolean contentEquals(CharSequence csq) {
+        if (csq.length() != _length)
+            return false;
+        for (int i = 0; i < _length;) {
+            if (this.charAt(i) != csq.charAt(i++))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Equivalent to {@link #contentEquals(CharSequence)} 
+     * (for J2ME compability).
+     *
+     * @param csq the string character sequence to compare with.
+     * @return <code>true</code> if the specified string has the 
+     *        same character content as this text; <code>false</code> otherwise.
+     */
+    public final boolean contentEquals(String csq) {
         if (csq.length() != _length)
             return false;
         for (int i = 0; i < _length;) {

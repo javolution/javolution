@@ -293,9 +293,10 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             throw new IllegalStateException("Reader not closed or reset");
         _reader = reader;
         try { // Reads prolog (if there)
-            _readCount = _reader.read(_readBuffer, _startOffset,
-                    _readBuffer.length - _startOffset)
-                    + _startOffset;
+            int readCount = reader.read(_readBuffer, _startOffset,
+                    _readBuffer.length - _startOffset);
+            _readCount = (readCount >= 0) ? readCount + _startOffset
+                    : _startOffset;
             if ((_readCount >= 5) && (_readBuffer[0] == '<')
                     && (_readBuffer[1] == '?') && (_readBuffer[2] == 'x')
                     && (_readBuffer[3] == 'm') && (_readBuffer[4] == 'l')
@@ -391,10 +392,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             if ((_readIndex >= _readCount) && isEndOfStream())
                 return _eventType; // END_DOCUMENT or CHARACTERS.
             char c = _readBuffer[_readIndex++];
-            if (c == '&')
-                c = replaceEntity();
-            if (c < 0x20)
-                c = handleEndOfLine(c);
+            if (c <= '&')
+                c = (c == '&') ? replaceEntity()
+                        : (c < ' ') ? handleEndOfLine(c) : c;
             _data[_index++] = c;
 
             // Main processing.
@@ -407,12 +407,14 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 break;
 
             case STATE_CHARACTERS:
-                while (true) { // Read character data all at once.
+                while (true) { // Read characters data all at once.
 
                     if (c == '<') {
                         int length = _index - _start - 1;
                         if (_charactersPending) {
-                            _text.setLength(_text.length() + length); // Coalescing.
+                            _text.setArray(_data, _text.offset(), _text
+                                    .length()
+                                    + length); // Coalescing.
                         } else {
                             _text = newSeq(_start, length);
                             _charactersPending = true;
@@ -427,10 +429,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     if ((_readIndex >= _readCount) && isEndOfStream())
                         return _eventType;
                     c = _readBuffer[_readIndex++];
-                    if (c == '&')
-                        c = replaceEntity();
-                    if (c < 0x20)
-                        c = handleEndOfLine(c);
+                    if (c <= '&')
+                        c = (c == '&') ? replaceEntity()
+                                : (c < ' ') ? handleEndOfLine(c) : c;
                     _data[_index++] = c;
                 }
                 break;
@@ -445,7 +446,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                         int length = _index - _start;
                         if (length > 0) { // Not empty.
                             if (_charactersPending) {
-                                _text.setLength(_text.length() + length); // Coalescing.
+                                _text.setArray(_data, _text.offset(), _text
+                                        .length()
+                                        + length); // Coalescing.
                             } else {
                                 _text = newSeq(_start, length);
                                 _charactersPending = true;
@@ -459,7 +462,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     if (_readIndex >= _readCount)
                         reloadBuffer();
                     c = _readBuffer[_readIndex++];
-                    if (c < 0x20)
+                    if (c < ' ')
                         c = handleEndOfLine(c);
                     _data[_index++] = c;
                 }
@@ -562,7 +565,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     if (_readIndex >= _readCount)
                         reloadBuffer();
                     c = _readBuffer[_readIndex++];
-                    if (c < 0x20)
+                    if (c < ' ')
                         c = handleEndOfLine(c);
                     _data[_index++] = c;
                 }
@@ -582,23 +585,25 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             case STATE_OPEN_TAGxREAD_ELEM_NAME:
                 while (true) { // Read element name all at once.
 
-                    if (c == '>') {
-                        _qName = newSeq(_start, --_index - _start);
-                        _state = STATE_DEFAULT;
-                        processStartTag();
-                        _isEmpty = false;
-                        return _eventType = START_ELEMENT;
-                    } else if (c == '/') {
-                        _qName = newSeq(_start, --_index - _start);
-                        _start = _index;
-                        _state = STATE_OPEN_TAGxEMPTY_TAG;
-                        break;
-                    } else if (c == ':') {
-                        _prefixSep = _index - 1;
-                    } else if (c <= ' ') {
-                        _qName = newSeq(_start, --_index - _start);
-                        _state = STATE_OPEN_TAGxELEM_NAME_READ;
-                        break;
+                    if (c < '@') { // Else avoid multiple checks.
+                        if (c == '>') {
+                            _qName = newSeq(_start, --_index - _start);
+                            _state = STATE_DEFAULT;
+                            processStartTag();
+                            _isEmpty = false;
+                            return _eventType = START_ELEMENT;
+                        } else if (c == '/') {
+                            _qName = newSeq(_start, --_index - _start);
+                            _start = _index;
+                            _state = STATE_OPEN_TAGxEMPTY_TAG;
+                            break;
+                        } else if (c == ':') {
+                            _prefixSep = _index - 1;
+                        } else if (c <= ' ') {
+                            _qName = newSeq(_start, --_index - _start);
+                            _state = STATE_OPEN_TAGxELEM_NAME_READ;
+                            break;
+                        }
                     }
 
                     if (_readIndex >= _readCount)
@@ -626,16 +631,18 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             case STATE_OPEN_TAGxREAD_ATTR_NAME:
                 while (true) { // Read attribute name all at once.
 
-                    if (c <= ' ') {
-                        _attrQName = newSeq(_start, --_index - _start);
-                        _state = STATE_OPEN_TAGxATTR_NAME_READ;
-                        break;
-                    } else if (c == '=') {
-                        _attrQName = newSeq(_start, --_index - _start);
-                        _state = STATE_OPEN_TAGxEQUAL_READ;
-                        break;
-                    } else if (c == ':') {
-                        _attrPrefixSep = _index - 1;
+                    if (c < '@') { // Else avoid multiple checks.
+                        if (c <= ' ') {
+                            _attrQName = newSeq(_start, --_index - _start);
+                            _state = STATE_OPEN_TAGxATTR_NAME_READ;
+                            break;
+                        } else if (c == '=') {
+                            _attrQName = newSeq(_start, --_index - _start);
+                            _state = STATE_OPEN_TAGxEQUAL_READ;
+                            break;
+                        } else if (c == ':') {
+                            _attrPrefixSep = _index - 1;
+                        }
                     }
 
                     if (_readIndex >= _readCount)
@@ -720,17 +727,19 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             case STATE_CLOSE_TAGxREAD_ELEM_NAME:
                 while (true) { // Element name can be read all at once.
 
-                    if (c == '>') {
-                        _qName = newSeq(_start, --_index - _start);
-                        _state = STATE_DEFAULT;
-                        processEndTag();
-                        return _eventType = END_ELEMENT;
-                    } else if (c == ':') {
-                        _prefixSep = _index - 1;
-                    } else if (c <= ' ') {
-                        _qName = newSeq(_start, --_index - _start);
-                        _state = STATE_CLOSE_TAGxELEM_NAME_READ;
-                        break;
+                    if (c < '@') { // Else avoid multiple checks.
+                        if (c == '>') {
+                            _qName = newSeq(_start, --_index - _start);
+                            _state = STATE_DEFAULT;
+                            processEndTag();
+                            return _eventType = END_ELEMENT;
+                        } else if (c == ':') {
+                            _prefixSep = _index - 1;
+                        } else if (c <= ' ') {
+                            _qName = newSeq(_start, --_index - _start);
+                            _state = STATE_CLOSE_TAGxELEM_NAME_READ;
+                            break;
+                        }
                     }
 
                     if (_readIndex >= _readCount)
@@ -837,7 +846,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             if (_state == STATE_CHARACTERS) { // Flushes trailing characters.
                 int length = _index - _start - 1;
                 if (_charactersPending) {
-                    _text.setLength(_text.length() + length); // Coalescing.
+                    _text.setArray(_data, _text.offset(), _text.length()
+                            + length); // Coalescing.
                 } else {
                     _text = newSeq(_start, length);
                 }
@@ -885,32 +895,36 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
      *         replacement took place.
      */
     private char replaceEntity() throws XMLStreamException {
-        if ((_state != STATE_COMMENT) && (_state != STATE_PI)
-                && (_state != STATE_CDATA)) { // (&2.4)
-            int start = _index; // Index of first replacement character.
-            _data[_index++] = '&';
-            while (true) {
-                if (_readIndex >= _readCount)
-                    reloadBuffer();
-                char c = _data[_index++] = _readBuffer[_readIndex++];
-                if (c == ';') { // Escape terminator.
-                    while (start + _entities.getMaxLength() >= _data.length)
-                        increaseDataBuffer();
-                    _index = start
-                            + _entities.replaceEntity(_data, start, _index
-                                    - start);
+        if ((_state == STATE_COMMENT) || (_state == STATE_PI)
+                || (_state == STATE_CDATA))
+            return '&'; // (&2.4)
 
-                    // Reads the next character.
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    return _readBuffer[_readIndex++];
-                } else if (c <= ' ') {
-                    throw new XMLStreamException("';' expected", _location);
-                }
-            }
-        } else {
-            return '&';
+        int start = _index; // Index of first replacement character.
+        _data[_index++] = '&';
+        while (true) {
+            if (_readIndex >= _readCount)
+                reloadBuffer();
+            char c = _data[_index++] = _readBuffer[_readIndex++];
+            if (c == ';')
+                break;
+            if (c <= ' ')
+                throw new XMLStreamException("';' expected", _location);
         }
+        // Ensures that the replacement string holds in the data buffer.
+        while (start + _entities.getMaxLength() >= _data.length)
+            increaseDataBuffer();
+
+        // Replaces the entity.
+        int length = _entities.replaceEntity(_data, start, _index - start);
+
+        // Returns the next character after entity unless ampersand.
+        _index = start + length;
+
+        // Local character reading block.
+        if (_readIndex >= _readCount)
+            reloadBuffer();
+        char c = _readBuffer[_readIndex++];
+        return (c == '&') ? (c = replaceEntity()) : c;
     }
 
     /**
@@ -995,9 +1009,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     private CharArray newSeq(int offset, int length) {
         CharArray seq = (_seqsIndex < _seqsCapacity) ? _seqs[_seqsIndex++]
                 : newSeq2();
-        seq.setOffset(offset);
-        seq.setLength(length);
-        return seq;
+        return seq.setArray(_data, offset, length);
     }
 
     private CharArray newSeq2() {
@@ -1013,7 +1025,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 _seqs = tmp;
             }
             CharArray seq = new CharArray();
-            seq.setArray(_data);
             _seqs[_seqsCapacity++] = seq;
         }
     };
@@ -1041,10 +1052,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 _data = tmp;
             }
         });
-        // Updates the buffer of existing CharArray instances.
-        for (int i = 0; i < _seqsCapacity; i++) {
-            _seqs[i].setArray(_data);
-        }
     }
 
     // Increases statck.
@@ -1071,7 +1078,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         int _line;
 
         int _charactersRead;
-        
+
         public int getLineNumber() {
             return _line + 1;
         }
@@ -1137,7 +1144,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 if (text == null) {
                     text = getText();
                 } else { // Merge (adjacent text, comments and PI are not kept).
-                    text.setLength(text.length() + getText().length());
+                    text.setArray(_data, text.offset(), text.length()
+                            + getText().length());
                 }
             } else if (eventType == XMLStreamConstants.PROCESSING_INSTRUCTION
                     || eventType == XMLStreamConstants.COMMENT) {

@@ -88,6 +88,11 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
     private String _indentation;
 
     /** 
+     * Holds current indentation level.
+     */
+    private int _indentationLevel;
+
+    /** 
      * Holds automatic empty elements  property.
      */
     private boolean _automaticEmptyElements;
@@ -231,6 +236,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         _autoNSCount = 0;
         _encoding = null;
         _indentation = null;
+        _indentationLevel = 0;
         _index = 0;
         _isElementOpen = false;
         _isEmptyElement = false;
@@ -304,6 +310,15 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             }
             closeOpenTag();
         }
+        if ((_indentation != null) && (_indentationLevel != _nesting - 1)) {
+                 // Do not indent if no change in indentation level
+                 // to avoid interfering with text only elements.
+             write('\n');
+             for (int i = 1; i < _nesting; i++) {
+                  writeStr(_indentation);
+             }
+        }
+        
         write('<');
         write('/');
         writeTB(_qNames[_nesting--]);
@@ -560,7 +575,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             closeOpenTag();
         if (_indentation != null) {
             write('\n');
-            for (int i = 0; i < _nesting; i++) {
+            _indentationLevel = _nesting;
+            for (int i = 0; i < _indentationLevel; i++) {
                 writeStr(_indentation);
             }
         }
@@ -725,8 +741,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
 
     private final void writeEsc(char c) throws XMLStreamException {
         if ((c >= '?')
-                || ((c >= ' ') && (c != '<') && (c != '>') 
-                        && (c != '"') && (c != '&'))) { // Most common case.
+                || ((c >= ' ') && (c != '<') && (c != '>') && (c != '"') && (c != '&'))) { // Most common case.
             write(c);
         } else {
             writeEsc2(c);
@@ -779,7 +794,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             writeStrImmediate(str);
         }
     }
-    
+
     private void writeStrImmediate(String str) throws XMLStreamException {
         flushBuffer();
         try {
@@ -822,8 +837,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             // Inline writeEsc(char)
             char c = str.charAt(i++);
             if ((c >= '?')
-                    || ((c >= ' ') && (c != '<') && (c != '>') 
-                            && (c != '"') && (c != '&'))) { // Most common case.
+                    || ((c >= ' ') && (c != '<') && (c != '>') && (c != '"') && (c != '&'))) { // Most common case.
                 // Inline write(char)
                 _buffer[_index++] = c;
                 if (_index == BUFFER_LENGTH) {
@@ -840,8 +854,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             // Inline writeEsc(char)
             char c = csq.charAt(i++);
             if ((c >= '?')
-                    || ((c >= ' ') && (c != '<') && (c != '>') 
-                            && (c != '"') && (c != '&'))) { // Most common case.
+                    || ((c >= ' ') && (c != '<') && (c != '>') && (c != '"') && (c != '&'))) { // Most common case.
                 // Inline write(char)
                 _buffer[_index++] = c;
                 if (_index == BUFFER_LENGTH) {

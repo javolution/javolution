@@ -32,6 +32,8 @@ final class PerfUtil extends Javolution implements Runnable {
 
     private static final int MAX_COLLECTION_SIZE = 10000;
 
+    private static final int ITERATIONS = 100;
+
     private final Object[] _objects = new Object[MAX_COLLECTION_SIZE];
 
     /** 
@@ -53,66 +55,30 @@ final class PerfUtil extends Javolution implements Runnable {
         }
 
         println("-- FastTable versus ArrayList -- ");
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkFastTable();
-        setOutputStream(System.out);
-        benchmarkFastTable();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkArrayList();
-        setOutputStream(System.out);
         benchmarkArrayList();
 
         println("-- FastList versus LinkedList -- ");
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkFastList();
-        setOutputStream(System.out);
-        benchmarkFastList();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkLinkedList();
-        setOutputStream(System.out);
         benchmarkLinkedList();
         println("");
 
         println("-- FastMap versus HashMap  --");
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkFastMap();
-        setOutputStream(System.out);
-        benchmarkFastMap();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkHashMap();
-        setOutputStream(System.out);
-        benchmarkHashMap();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkLinkedHashMap();
-        setOutputStream(System.out);
         benchmarkLinkedHashMap();
         println("");
 
         println("-- FastMap.setShared(true) versus ConcurrentHashMap  --");
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkSharedFastMap();
-        setOutputStream(System.out);
         benchmarkSharedFastMap();
         /*@JVM-1.5+@
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkConcurrentHashMap();
-        setOutputStream(System.out);
-        benchmarkConcurrentHashMap();
+         benchmarkConcurrentHashMap();
+         /**/
         println("");
-        /**/
 
         println("-- FastSet versus HashSet --");
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkFastSet();
-        setOutputStream(System.out);
-        benchmarkFastSet();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
         benchmarkHashSet();
-        setOutputStream(System.out);
-        benchmarkHashSet();
-        setOutputStream(null); // Warming up, to avoid measuring JIT.
-        benchmarkLinkedHashSet();
-        setOutputStream(System.out);
         benchmarkLinkedHashSet();
         println("");
 
@@ -123,49 +89,61 @@ final class PerfUtil extends Javolution implements Runnable {
         println(list.getClass());
 
         for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list = new FastTable();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list = new FastTable();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list.clear();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list.clear();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = list.iterator(); i.hasNext();) {
-                    if (i.next() == list)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
-
-            if (list instanceof RandomAccess) {
-                print(", get(int): ");
+            for (int n = 0; n < ITERATIONS; n++) {
                 startTime();
-                for (int j = 0; j < nbrIterations * 10; j++) {
-                    for (int i = list.size(); --i > 0;) {
-                        if (list.get(i) == list)
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = list.iterator(); i.hasNext();) {
+                        if (i.next() == list)
                             throw new Error();
                     }
                 }
-                print(endTime(nbrIterations * size * 10));
+                keepBestTime(size * iterations);
+            }
+            print(endTime());
+
+            if (list instanceof RandomAccess) {
+                print(", get(int): ");
+                for (int n = 0; n < ITERATIONS; n++) {
+                    startTime();
+                    for (int j = 0; j < iterations; j++) {
+                        for (int i = list.size(); --i > 0;) {
+                            if (list.get(i) == list)
+                                throw new Error();
+                        }
+                    }
+                    keepBestTime(size * iterations);
+                }
+                print(endTime());
             }
 
             println("");
@@ -177,63 +155,79 @@ final class PerfUtil extends Javolution implements Runnable {
         FastList list = new FastList();
         println(list.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list = new FastList();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list = new FastList();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list.clear();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list.clear();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = list.iterator(); i.hasNext();) {
-                    if (i.next() == list)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
-
-            print(", iteration (node): ");
-            FastList fl = (FastList) list;
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastList.Node n = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ fl.head(),
-                        end = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ fl.tail();
-                        (n = (FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/ n.getNext()) != end;) {
-                    if (n.getValue() == list)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
-
-            if (list instanceof RandomAccess) {
-                print(", get(int): ");
+            for (int n = 0; n < ITERATIONS; n++) {
                 startTime();
-                for (int j = 0; j < nbrIterations * 10; j++) {
-                    for (int i = list.size(); --i > 0;) {
-                        if (list.get(i) == list)
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = list.iterator(); i.hasNext();) {
+                        if (i.next() == list)
                             throw new Error();
                     }
                 }
-                print(endTime(nbrIterations * size * 10));
+                keepBestTime(size * iterations);
+            }
+            print(endTime());
+
+            print(", iteration (node): ");
+            FastList fl = (FastList) list;
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (FastList.Node nn = (FastList.Node) /*CAST UNNECESSARY WITH JDK1.5*/fl
+                            .head(), end = (FastList.Node) /*CAST UNNECESSARY WITH JDK1.5*/fl
+                            .tail(); (nn = (FastList.Node) /*CAST UNNECESSARY WITH JDK1.5*/nn
+                            .getNext()) != end;) {
+                        if (nn.getValue() == list)
+                            throw new Error();
+                    }
+                }
+                keepBestTime(size * iterations);
+            }
+            print(endTime());
+
+            if (list instanceof RandomAccess) {
+                print(", get(int): ");
+                for (int n = 0; n < ITERATIONS; n++) {
+                    startTime();
+                    for (int j = 0; j < iterations; j++) {
+                        for (int i = list.size(); --i > 0;) {
+                            if (list.get(i) == list)
+                                throw new Error();
+                        }
+                    }
+                    keepBestTime(size * iterations);
+                }
+                print(endTime());
             }
 
             println("");
@@ -247,50 +241,62 @@ final class PerfUtil extends Javolution implements Runnable {
             return; // J2ME Target.
         println(list.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list = new ArrayList();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list = new ArrayList();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list.clear();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list.clear();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = list.iterator(); i.hasNext();) {
-                    if (i.next() == list)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
-
-            if (list instanceof RandomAccess) {
-                print(", get(int): ");
+            for (int n = 0; n < ITERATIONS; n++) {
                 startTime();
-                for (int j = 0; j < nbrIterations * 10; j++) {
-                    for (int i = list.size(); --i > 0;) {
-                        if (list.get(i) == list)
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = list.iterator(); i.hasNext();) {
+                        if (i.next() == list)
                             throw new Error();
                     }
                 }
-                print(endTime(nbrIterations * size * 10));
+                keepBestTime(size * iterations);
+            }
+            print(endTime());
+
+            if (list instanceof RandomAccess) {
+                print(", get(int): ");
+                for (int n = 0; n < ITERATIONS; n++) {
+                    startTime();
+                    for (int j = 0; j < iterations; j++) {
+                        for (int i = list.size(); --i > 0;) {
+                            if (list.get(i) == list)
+                                throw new Error();
+                        }
+                    }
+                    keepBestTime(size * iterations);
+                }
+                print(endTime());
             }
 
             println("");
@@ -304,50 +310,62 @@ final class PerfUtil extends Javolution implements Runnable {
             return; // J2ME Target.
         println(list.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list = new LinkedList();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list = new LinkedList();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                list.clear();
-                for (int i = 0; i < size;) {
-                    list.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    list.clear();
+                    for (int i = 0; i < size;) {
+                        list.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = list.iterator(); i.hasNext();) {
-                    if (i.next() == list)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
-
-            if (list instanceof RandomAccess) {
-                print(", get(int): ");
+            for (int n = 0; n < ITERATIONS; n++) {
                 startTime();
-                for (int j = 0; j < nbrIterations * 10; j++) {
-                    for (int i = list.size(); --i > 0;) {
-                        if (list.get(i) == list)
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = list.iterator(); i.hasNext();) {
+                        if (i.next() == list)
                             throw new Error();
                     }
                 }
-                print(endTime(nbrIterations * size * 10));
+                keepBestTime(size * iterations);
+            }
+            print(endTime());
+
+            if (list instanceof RandomAccess) {
+                print(", get(int): ");
+                for (int n = 0; n < ITERATIONS; n++) {
+                    startTime();
+                    for (int j = 0; j < iterations; j++) {
+                        for (int i = list.size(); --i > 0;) {
+                            if (list.get(i) == list)
+                                throw new Error();
+                        }
+                    }
+                    keepBestTime(size * iterations);
+                }
+                print(endTime());
             }
 
             println("");
@@ -359,60 +377,75 @@ final class PerfUtil extends Javolution implements Runnable {
         FastMap map = new FastMap();
         println(map.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", put (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map = new FastMap();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map = new FastMap();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", put (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map.clear();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map.clear();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", get: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) != "")
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (map.get(_objects[i++]) != "")
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                    if (i.next() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                        if (i.next() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             print(", iteration (entry): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastMap.Entry e = map.head(), end = map.tail(); 
-                     (e = (FastMap.Entry)/*CAST UNNECESSARY WITH JDK1.5*/ e.getNext()) != end;) { 
-                    if (e.getValue() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (FastMap.Entry e = map.head(), end = map.tail(); (e = (FastMap.Entry) /*CAST UNNECESSARY WITH JDK1.5*/e
+                            .getNext()) != end;) {
+                        if (e.getValue() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -426,49 +459,61 @@ final class PerfUtil extends Javolution implements Runnable {
             return; // J2ME Target.
         println(map.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", put (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map = new HashMap();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map = new HashMap();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", put (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map.clear();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map.clear();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", get: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) != "")
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (map.get(_objects[i++]) != "")
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                    if (i.next() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                        if (i.next() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -479,60 +524,75 @@ final class PerfUtil extends Javolution implements Runnable {
         FastMap map = new FastMap().setShared(true);
         println("Shared FastMap");
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", put (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map = new FastMap().setShared(true);
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map = new FastMap().setShared(true);
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", put (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map.clear();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map.clear();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", get: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) != "")
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (map.get(_objects[i++]) != "")
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                    if (i.next() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                        if (i.next() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             print(", iteration (entry): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastMap.Entry e = map.head(), end = map.tail(); 
-                     (e = (FastMap.Entry)/*CAST UNNECESSARY WITH JDK1.5*/ e.getNext()) != end;) { 
-                    if (e.getValue() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (FastMap.Entry e = map.head(), end = map.tail(); (e = (FastMap.Entry) /*CAST UNNECESSARY WITH JDK1.5*/e
+                            .getNext()) != end;) {
+                        if (e.getValue() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -541,109 +601,125 @@ final class PerfUtil extends Javolution implements Runnable {
     }
 
     /*@JVM-1.5+@
-    private void benchmarkConcurrentHashMap() {
-        java.util.concurrent.ConcurrentHashMap map = new java.util.concurrent.ConcurrentHashMap();
-        println(map.getClass());
+     private void benchmarkConcurrentHashMap() {
+     java.util.concurrent.ConcurrentHashMap map = new java.util.concurrent.ConcurrentHashMap();
+     println(map.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
-            print("    Size: " + size);
+     for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
+     final int iterations = 10 * MAX_COLLECTION_SIZE / size;
+     print("    Size: " + size);
 
-            print(", put (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map = new java.util.concurrent.ConcurrentHashMap();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
-                }
-            }
-            print(endTime(nbrIterations * size));
+     print(", put (new): ");
+     for (int n=0; n < 10; n++) { startTime();
+     for (int j = 0; j < iterations; j++) {
+     map = new java.util.concurrent.ConcurrentHashMap();
+     for (int i = 0; i < size;) {
+     map.put(_objects[i++], "");
+     }
+     }
+     keepBestTime(size * iterations);
+     } print(endTime());
 
-            print(", put (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map.clear();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
-                }
-            }
-            print(endTime(nbrIterations * size));
+     print(", put (recycled): ");
+     for (int n=0; n < 10; n++) { startTime();
+     for (int j = 0; j < iterations; j++) {
+     map.clear();
+     for (int i = 0; i < size;) {
+     map.put(_objects[i++], "");
+     }
+     }
+     keepBestTime(size * iterations);
+     } print(endTime());
 
-            print(", get: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) != "")
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size));
+     print(", get: ");
+     for (int n=0; n < 10; n++) { startTime();
+     for (int j = 0; j < iterations; j++) {
+     for (int i = 0; i < size;) {
+     if (map.get(_objects[i++]) != "")
+     throw new Error();
+     }
+     }
+     keepBestTime(size * iterations);
+     } print(endTime());
 
-            print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                    if (i.next() == map)
-                        throw new Error();
-                }
-            }
-            print(endTime(nbrIterations * size * 10));
+     print(", iteration (iterator): ");
+     for (int n=0; n < 10; n++) { startTime();
+     for (int j = 0; j < iterations; j++) {
+     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+     if (i.next() == map)
+     throw new Error();
+     }
+     }
+     keepBestTime(size * iterations);
+     } print(endTime());
 
-            println("");
-        }
-        println("");
-    }
-    /**/
-    
+     println("");
+     }
+     println("");
+     }
+     /**/
+
     private void benchmarkLinkedHashMap() {
         LinkedHashMap map = new LinkedHashMap();
         if (!map.getClass().getName().equals("java.util.LinkedHashMap"))
             return; // J2ME Target.
         println(map.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", put (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map = new LinkedHashMap();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map = new LinkedHashMap();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", put (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                map.clear();
-                for (int i = 0; i < size;) {
-                    map.put(_objects[i++], "");
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    map.clear();
+                    for (int i = 0; i < size;) {
+                        map.put(_objects[i++], "");
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", get: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (map.get(_objects[i++]) != "")
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (map.get(_objects[i++]) != "")
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                    if (i.next() == map)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+                        if (i.next() == map)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -654,60 +730,75 @@ final class PerfUtil extends Javolution implements Runnable {
         FastSet set = new FastSet();
         println(set.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set = new FastSet();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set = new FastSet();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set.clear();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set.clear();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", contain: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (!set.contains(_objects[i++]))
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (!set.contains(_objects[i++]))
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = set.iterator(); i.hasNext();) {
-                    if (i.next() == set)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = set.iterator(); i.hasNext();) {
+                        if (i.next() == set)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             print(", iteration (record): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (FastSet.Record r = set.head(), end = set
-                        .tail(); (r = r.getNext()) != end;) {
-                    if (set.valueOf(r) == set)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (FastSet.Record r = set.head(), end = set.tail(); (r = r
+                            .getNext()) != end;) {
+                        if (set.valueOf(r) == set)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -721,49 +812,61 @@ final class PerfUtil extends Javolution implements Runnable {
             return; // J2ME Target.
         println(set.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set = new HashSet();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set = new HashSet();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set.clear();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set.clear();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", contain: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (!set.contains(_objects[i++]))
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (!set.contains(_objects[i++]))
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = set.iterator(); i.hasNext();) {
-                    if (i.next() == set)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = set.iterator(); i.hasNext();) {
+                        if (i.next() == set)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }
@@ -777,49 +880,61 @@ final class PerfUtil extends Javolution implements Runnable {
             return; // J2ME Target.
         println(set.getClass());
 
-        for (int size = 10;  size <= MAX_COLLECTION_SIZE; size *= 10) {
-            final int nbrIterations = 100 * MAX_COLLECTION_SIZE / size;
+        for (int size = 10; size <= MAX_COLLECTION_SIZE; size *= 10) {
+            final int iterations = 10 * MAX_COLLECTION_SIZE / size;
             print("    Size: " + size);
 
             print(", add (new): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set = new LinkedHashSet();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set = new LinkedHashSet();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", add (recycled): ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                set.clear();
-                for (int i = 0; i < size;) {
-                    set.add(_objects[i++]);
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    set.clear();
+                    for (int i = 0; i < size;) {
+                        set.add(_objects[i++]);
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", contain: ");
-            startTime();
-            for (int j = 0; j < nbrIterations; j++) {
-                for (int i = 0; i < size;) {
-                    if (!set.contains(_objects[i++]))
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (int i = 0; i < size;) {
+                        if (!set.contains(_objects[i++]))
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size));
+            print(endTime());
 
             print(", iteration (iterator): ");
-            startTime();
-            for (int j = 0; j < nbrIterations * 10; j++) {
-                for (Iterator i = set.iterator(); i.hasNext();) {
-                    if (i.next() == set)
-                        throw new Error();
+            for (int n = 0; n < ITERATIONS; n++) {
+                startTime();
+                for (int j = 0; j < iterations; j++) {
+                    for (Iterator i = set.iterator(); i.hasNext();) {
+                        if (i.next() == set)
+                            throw new Error();
+                    }
                 }
+                keepBestTime(size * iterations);
             }
-            print(endTime(nbrIterations * size * 10));
+            print(endTime());
 
             println("");
         }

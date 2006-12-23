@@ -8,6 +8,7 @@
  */
 package javolution.context;
 import j2me.io.Serializable;
+import j2me.lang.UnsupportedOperationException;
 import javolution.util.FastMap;
 
 /**
@@ -39,9 +40,13 @@ import javolution.util.FastMap;
 public class LocalContext extends Context {
 
     /**
-     * Holds the class object (cannot use .class with j2me).
+     * Holds the context factory.
      */
-    private static final Class CLASS = new LocalContext().getClass();
+    private static Factory FACTORY = new Factory() {
+        protected Object create() {
+            return new LocalContext();
+        } 
+    };
 
     /**
      * Holds any reference associated to this context (reference to 
@@ -70,28 +75,28 @@ public class LocalContext extends Context {
     }
 
     /**
-     * Enters a {@link LocalContext}.
+     * Enters a {@link LocalContext} possibly recycled.
      */
     public static void enter() {
-        Context.enter(LocalContext.CLASS);
+        LocalContext ctx = (LocalContext) FACTORY.object();
+        ctx._isInternal = true;
+        Context.enter(ctx);
     }
+    private transient boolean _isInternal;
 
     /**
-     * Exits the current {@link LocalContext}.
+     * Exits and recycles the current {@link LocalContext}.
      *
-     * @throws j2me.lang.IllegalStateException if the current context 
-     *         is not an instance of LocalContext. 
+     * @throws UnsupportedOperationException if the current context 
+     *         has not been entered using LocalContext.enter() (no parameter). 
      */
     public static void exit() {
-        Context.exit(LocalContext.CLASS);
-    }
-
-    /**
-     * Removes all local settings for this context.
-     */
-    public void clear() {
-        super.clear();
-        _references.clear();
+        LocalContext ctx = (LocalContext) Context.current();
+        if (!ctx._isInternal) throw new UnsupportedOperationException
+           ("The context to exit must be specified");
+        ctx._isInternal = false;
+        Context.exitNoCheck(ctx);
+        FACTORY.recycle(ctx);
     }
 
     // Implements Context abstract method.
