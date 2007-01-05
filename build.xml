@@ -8,7 +8,7 @@
         <tstamp />
         <property name="library" value="javolution" />
         <property name="version" value="4.2" />
-        <property name="release" value="0" />
+        <property name="release" value="1" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />

@@ -155,13 +155,13 @@ public abstract class ObjectFactory/*<T>*/{
         ObjectPool pool = (ObjectPool) _currentPool.get();
         return  (pool._user != null) ? pool : activatePool();
     }
-    private ObjectPool activatePool() {
+    final ObjectPool activatePool() {
         LocalPools pools = Context.current().getLocalPools();
         ObjectPool pool = pools.getPool(this, true);
         _currentPool.set(pool);
         return pool;
     }
-    private ThreadLocal _currentPool = new ThreadLocal() {
+    final ThreadLocal _currentPool = new ThreadLocal() {
         protected Object initialValue() {
             return newHeapPool(); // Dummy.
         }

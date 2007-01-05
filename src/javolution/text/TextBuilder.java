@@ -591,15 +591,17 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      /**/
 
     /**
-     * Appends the textual representation of the specified <code>double</code>
-     * (equivalent to 
-     * <code>append(d, 17, (abs(d) &gt;= 1E7) || (abs(d) &lt; 0.001), false)</code>).
-     *
+     * Appends the textual representation of the specified <code>double</code>;
+     * the number of digits is 17 or 16 when the 16 digits representation 
+     * can be parsed back to the same <code>double</code> (mimic the standard
+     * library formatting).
+     * 
      * @param  d the <code>double</code> to format.
-     * @return <code>this</code>
+     * @return <code>append(d, -1, (MathLib.abs(d) >= 1E7) ||
+     *        (MathLib.abs(d) < 0.001), false)</code>
      * @JVM-1.1+@
      public final TextBuilder append(double d) {
-     return append(d, 17, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false);
+     return append(d, -1, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false);
      }
      /**/
 
@@ -608,74 +610,92 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * according to the specified formatting arguments.
      *
      * @param  d the <code>double</code> value.
-     * @param  digits the number of significative digits (excludes exponent).
+     * @param  digits the number of significative digits (excludes exponent) or
+     *         <code>-1</code> to mimic the standard library (16 or 17 digits).
      * @param  scientific <code>true</code> to forces the use of the scientific 
      *         notation (e.g. <code>1.23E3</code>); <code>false</code> 
      *         otherwise. 
      * @param  showZero <code>true</code> if trailing fractional zeros are 
      *         represented; <code>false</code> otherwise.
      * @return <code>this</code>
-     * @throws IllegalArgumentException if <code>((digits &gt; 19) || 
-     *         (digits &lt;= 0))</code>)
+     * @throws IllegalArgumentException if <code>(digits &gt; 19)</code>)
      * @JVM-1.1+@
-     public final TextBuilder append(double d, int digits,
-     boolean scientific, boolean showZero)  {
-     if ((digits > 19) || (digits <= 0))
-     throw new IllegalArgumentException("digits: " + digits);
-     if (d != d)  // NaN
-     return append("NaN");
-     if (d < 0) { // Work with positive number.
-     d = -d;
-     append('-');
-     }
-     if (d == Double.POSITIVE_INFINITY) // Infinity.
-     return append("Infinity");
-     if (d == 0.0) { // Zero.
-     if (digits == 1)
-     return append("0.");
-     if (!showZero)
-     return append("0.0");
-     append("0.0");
-     for (int i = 2; i < digits; i++) {
-     append('0');
-     }
-     return this;
-     }
-     
-     // Find the exponent e such as: value == x.xxx * 10^e
-     int e = MathLib.floorLog10(d);
-     long m = MathLib.toLongPow10(d, digits - e - 1);
-     
-     // Formats.
-     if (scientific || (e >= digits)) {
-     // Scientific notation has to be used ("x.xxxEyy").
-     long pow10 = POW10_LONG[digits - 1];
-     int i = (int) (m / pow10); // Single digit.
-     append(DIGIT_TO_CHAR[i]);
-     m = m - pow10 * i; 
-     appendFraction(m, digits - 1, showZero);
-     append('E');
-     append(e);
-     } else { // Dot within the string ("xxxx.xxxxx").
-     if (e < 0) {
-     append('0');
-     } else {
-     long pow10 = POW10_LONG[digits - e - 1];
-     long l = m / pow10;
-     append(l);
-     m = m - pow10 * l; 
-     }
-     appendFraction(m, digits - e - 1, showZero);
-     }
-     return this;
-     }     
-     private static final long[] POW10_LONG = new long[] { 1L, 10L, 100L, 1000L,
+   public final TextBuilder append(double d, int digits,
+            boolean scientific, boolean showZero)  {
+        if (digits > 19)
+            throw new IllegalArgumentException("digits: " + digits);
+        if (d != d)  // NaN
+            return append("NaN");
+        if (d < 0) { // Work with positive number.
+            d = -d;
+            append('-');
+        }
+        if (d == Double.POSITIVE_INFINITY) // Infinity.
+            return append("Infinity");
+        if (d == 0.0) { // Zero.
+            if (digits == 1)
+                return append("0.");
+            if (!showZero)
+                return append("0.0");
+            append("0.0");
+            for (int i = 2; i < digits; i++) {
+                append('0');
+            }
+            return this;
+        }
+        
+        // Find the exponent e such as: value == x.xxx * 10^e
+        int e = MathLib.floorLog10(d);
+        
+        long m;
+        if (digits < 0) { // Use 16 or 17 digits.
+            // Try 17 digits.
+            long m17 = MathLib.toLongPow10(d, (17 - 1) - e);
+            // Check if we can use 16 digits.
+            long m16 = m17 / 10;
+            double dd = MathLib.toDoublePow10(m16, e - 16 + 1);
+            if (dd == d) { // 16 digits is enough.
+                digits = 16;
+                m = m16;
+            } else { // We cannot remove the last digit.
+                digits = 17;
+                m = m17;
+            }
+        } else { // Use the specified number of digits.
+            m = MathLib.toLongPow10(d, (digits - 1) - e);
+        }
+        
+        // Formats.
+        if (scientific || (e >= digits)) {
+            // Scientific notation has to be used ("x.xxxEyy").
+            long pow10 = POW10_LONG[digits - 1];
+            int i = (int) (m / pow10); // Single digit.
+            append(DIGIT_TO_CHAR[i]);
+            m = m - pow10 * i;
+            appendFraction(m, digits - 1, showZero);
+            append('E');
+            append(e);
+        } else { // Dot within the string ("xxxx.xxxxx").
+            if (e < 0) {
+                append('0');
+            } else {
+                long pow10 = POW10_LONG[digits - e - 1];
+                long l = m / pow10;
+                append(l);
+                m = m - pow10 * l;
+            }
+            appendFraction(m, digits - e - 1, showZero);
+        }
+        return this;
+    }
+         private static final long[] POW10_LONG = new long[] { 1L, 10L, 100L, 1000L,
      10000L, 100000L, 1000000L, 10000000L, 100000000L, 1000000000L,
      10000000000L, 100000000000L, 1000000000000L, 10000000000000L,
      100000000000000L, 1000000000000000L, 10000000000000000L,
      100000000000000000L, 1000000000000000000L };
      /**/
 
+    
     final void appendFraction(long l, int digits, boolean showZero) {
         append('.');
         int length = MathLib.digitLength(l);
@@ -686,8 +706,10 @@ public class TextBuilder extends RealtimeObject implements Appendable,
         for (int i = length; i < digits; i++) {
             append('0');
         }
-        append(l);
-        if (!showZero) {
+        if (l != 0) {
+            append(l);
+        }
+        if (!showZero) { // Remove trailing zeros.
             int trailingZeros = 0;
             while (true) {
                 char c = charAt(_length - trailingZeros - 1);
@@ -698,7 +720,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
             this.setLength(_length - trailingZeros);
         }
     }
-
+    
     /**
      * Inserts the specified character sequence at the specified location.
      *

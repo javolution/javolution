@@ -254,7 +254,7 @@ public class FastMap/*<K,V>*/extends RealtimeObject implements Map/*<K,V>*/,
     public FastMap(String id) {
         this();
         new PersistentContext.Reference(id, this) {
-            protected void notifyValueChange() {
+            protected void notifyChange() {
                 FastMap.this.clear();
                 FastMap.this.putAll((FastMap) this.get());
             }

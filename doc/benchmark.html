@@ -213,6 +213,24 @@ run:
 </FONT>
 
      [java] More performance analysis in future versions...
-
 </PRE>
+
+<H2><A name="FAQ">FAQ:</A></H2>
+<OL>
+    <A name="FAQ-1"></A>
+    <LI><B> Although it looks nice, I see that some of your collection classes 
+          like <CODE>FastTable</CODE> actually take more time than their Java 6 counterparts.</B>
+    <P> Some classes are faster, others are slower (e.g. ArrayList.get(int) is faster
+        with -server option, slower without).</P>
+    <P> Overall, there is no significative difference in <B>average</B> execution time. 
+        The main advantage of Javolution collections is that they are 
+        time-deterministic (the maximum execution time is very close to 
+        the minimum execution time) and RTSJ safe.</P>
+    <P> They have also some nice characteristics such as thread-safe without
+        synchronization, support for custom key/value comparators, 
+        direct record iterations (faster than iterators), recyclable, 
+        no adverse effect on GC (fragmentation or heap allocation), etc.</P> 
+    <P></P>
+</OL>
+
 </BODY></HTML>

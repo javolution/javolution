@@ -3,6 +3,22 @@
 <h2><a name="FAQ">FAQ:</a></h2>
 <ol>
     <a name="FAQ-1"></a>
+    <li><b> Is parsing/formatting of floating-points numbers (e.g. <code>double</code>)
+            equivalent to standard String/Double methods?</b>
+    <p> With Javolution 4.1, <code>double</code> formatting/parsing is lossless 
+        and functionally the same as with the standard library. Parsing a character 
+        sequence will always result in the same number whether it is performed with
+        {@link javolution.text.TypeFormat TypeFormat} or using <code>Double.parseDouble(String))</code>.
+        When formatting a <code>double</code> number, the number of digits output 
+        is adjustable. The default (if the number of digits is unspecified) is <code>17</code> 
+        or <code>16</code> when the the 16 digits representation  can be parsed back to
+        the same <code>double</code> (mimic the standard library formatting).</p>
+    <p> Javolution parsing/formatting do not generate garbage and has no adverse
+        effect on GC. Better, it does not force the user to create intermediate <code>String</code>
+        objects, any <code>CharSequence/Appendable</code> can be used! Serial parsing is also supported 
+        (cursor parameter).</p>
+    <p></p>
+    <a name="FAQ-2"></a>
     <li><b> I'm accumulating a large string, and all I want to do is 
 append to the end of the current string, which is the better class to use, 
 Text or TextBuilder? Bearing in mind that speed is important, but I also want 

@@ -330,7 +330,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 4.2.0 - December 22, 2006</SPAN></DIV>
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 4.2.1 - January 2, 2007</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -338,10 +338,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-4.2.0-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.2.1-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-4.2.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.2.1-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -724,15 +724,23 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
-         <LI CLASS="simplespacer_body"><IMG SRC="css/img/new.gif"><B>December 22, 2006: Javolution 4.2</B><BR>
+         <LI CLASS="simplespacer_body"><B>December 22, 2006: Javolution 4.2</B><BR>
          <UL>
+            <LI> Removed static "caches" for current contexts/pools, slight 
+                 impact on performance (e.g. small objects creation) but better 
+                 scalability on multi-cores CPUs [4.2.1]</LI>
+            <LI> Default <A HREF="api/javolution/text/TypeFormat.html">formatting</A>
+                 of <code>double</code> numbers uses a variable number 
+                 of digits (17 or 16 if the conversion is lossless). In other words, 
+                 <code>TypeFormat.format(0.2, appendable)</code> is now <code>"0.2"</code> [4.2.1] </LI>
+            <LI> Fixed race condition in <A HREF="api/javolution/context/ConcurrentContext.html">ConcurrentContext</A> [4.2.1] </LI>
             <LI> Updated <A HREF="doc/benchmark.html">benchmark</A> to display 
-                 the shortest time instead of the average time.</LI>
-            <LI> Fixed pending bugs (plus numerous optimizations).</LI>
+                 the shortest time instead of the average time [4.2.0]</LI>
+            <LI> Fixed pending bugs (plus numerous optimizations) [4.2.0] </LI>
             <LI> Simplified <A HREF="api/javolution/context/Context.html">context</A> support (<code>PoolContext</code>, <code>ConcurrentContext</code>...)</LI>
-            <LI> New interface <code>ConcurrentExecutor</code> for concurrency.</LI>
+            <LI> New interface <code>ConcurrentExecutor</code> for concurrency [4.2.0]</LI>
             <LI> Added <A HREF="api/javolution/util/Index.html">Index</A> class
-                 (facilitates mapping between primitive types and <code>Object</code>).</LI>
+                 (facilitates mapping between primitive types and <code>Object</code>) [4.2.0]</LI>
          </UL>            
          </LI>
 
@@ -817,7 +825,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : December 22, 2006<BR>
+      Revision      : January 2, 2007<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

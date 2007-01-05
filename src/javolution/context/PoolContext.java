@@ -234,20 +234,24 @@ public class PoolContext extends Context {
 
     // Implements Context abstract method.
     protected void enterAction() {
-        Context ctx = this.getOuter();
-        ctx.getLocalPools().deactivate();
-        _isEnabled = ConcurrentContext.isEnabled();
+        Context outer = this.getOuter();
+        outer.getLocalPools().deactivatePools();
+        this.getLocalPools().activatePools();
     }
 
     // Implements Context abstract method.
     protected void exitAction() {
+        // Resets all pools (the are not used any more).
         if (_isEnabled) {
            for (int i=0; i < _allPools.size(); i++) {
                ((LocalPools) _allPools.get(i)).reset();
            }
-        } else {
-            Context.ROOT.getLocalPools().deactivate();
         }
+
+        this.getLocalPools().deactivatePools();
+        Context outer = this.getOuter();
+        outer.getLocalPools().activatePools();
+
     }
 
     // Overrides.

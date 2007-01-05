@@ -152,7 +152,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     public FastTable(String id) {
         this();
         new PersistentContext.Reference(id, this) {
-            protected void notifyValueChange() {
+            protected void notifyChange() {
                 FastTable.this.clear();
                 FastTable.this.addAll((FastList) this.get());
             }

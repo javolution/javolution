@@ -41,6 +41,7 @@ public abstract class ObjectPool/*<T>*/ {
 
     /**
      * Returns the current user of this pool or <code>null</code> if none.
+     * If the user is the current thread, then this pool is the current pool.
      * 
      * @return the pool current user.  
      */

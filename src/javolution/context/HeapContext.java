@@ -111,14 +111,16 @@ public class HeapContext extends Context {
 
     // Implements Context abstract method.
     protected void enterAction() {
-        Context ctx = this.getOuter();
-        ctx.getLocalPools().deactivate();
+        Context outer = this.getOuter();
+        outer.getLocalPools().deactivatePools();
+        this.getLocalPools().activatePools();
     }
 
     // Implements Context abstract method.
     protected void exitAction() {
-        Context ctx = this.getOuter();
-        ctx.getLocalPools().deactivate(); // Only for current thread.
+        this.getLocalPools().deactivatePools();
+        Context outer = this.getOuter();
+        outer.getLocalPools().activatePools();
     }
 
     final LocalPools getLocalPools() {

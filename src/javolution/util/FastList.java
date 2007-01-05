@@ -106,7 +106,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     public FastList(String id) {
         this();
         new PersistentContext.Reference(id, this) {
-            protected void notifyValueChange() {
+            protected void notifyChange() {
                 FastList.this.clear();
                 FastList.this.addAll((FastList) this.get());
             }

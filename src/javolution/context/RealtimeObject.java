@@ -84,7 +84,7 @@ public abstract class RealtimeObject implements Realtime {
             return false;
         if (!_pool._inUse)
             throw new JavolutionError("Reference to inner pool object detected");
-        if (!_pool._isStack)
+        if (!_pool._isStack) // Heap.
             return false;
         return (_pool._user == Thread.currentThread());
     }
@@ -186,11 +186,12 @@ public abstract class RealtimeObject implements Realtime {
                     .getLocalPools();
             Factory.Pool outer = (Factory.Pool) outerPools.getPool(_pool
                     .getFactory(), false);
-            if (!outer._isStack) // Outer heap pool.
-                return move(ObjectSpace.HEAP);
+            // Exchanges with outer pool.
             detach();
             RealtimeObject outerObj = (RealtimeObject) outer.next();
-            outerObj.detach();
+            if (outerObj._pool != null) {
+                outerObj.detach();
+            }
             outerObj.insertBefore(_pool._activeTail); // Marks unused.
             outerObj._pool = _pool;
             insertBefore(outer._next); // Marks used.
@@ -272,11 +273,6 @@ public abstract class RealtimeObject implements Realtime {
             ObjectFactory/*<T>*/{
 
         /**
-         * Holds the last used pool from this factory.
-         */
-        private Pool _cachedPool = new Pool(false);
-
-        /**
          * Default constructor.
          */
         protected Factory() {
@@ -284,16 +280,11 @@ public abstract class RealtimeObject implements Realtime {
 
         // Overrides.
         public final Object/*{T}*/object() {
-            Pool pool = _cachedPool;
-            if (pool._user == Thread.currentThread()) { // Inline next()
-                final RealtimeObject next = pool._next;
-                return (Object/*{T}*/) (((pool._next = next._next) != null) ? next
-                        : pool.allocate());
-            }
-            _cachedPool = pool = (Pool) (Object) currentPool(); // Weird but NetBean complains.
-            return (Object/*{T}*/) pool.next();
+            final Pool pool = (Pool) _currentPool.get();
+            return (Object/*{T}*/) ((pool._user != null) ? pool.next()
+                    : activatePool().next());
         }
-        
+
         // Overrides.
         public void recycle(Object/*{T}*/obj) {
             Pool pool = ((RealtimeObject) obj)._pool;
@@ -389,7 +380,7 @@ public abstract class RealtimeObject implements Realtime {
 
             // Implements ObjectPool abstract method.
             public void setSize(int size) {
-                for (;_size < size; _size++) {
+                for (; _size < size; _size++) {
                     RealtimeObject obj = (RealtimeObject) create();
                     obj.insertBefore(_next); // Available immediately. 
                     _next = _next._previous;
@@ -412,7 +403,7 @@ public abstract class RealtimeObject implements Realtime {
                     if (_size != 0)
                         removeUse(); // Avoids keeping reference to used objects. 
                     return create();
-                } 
+                }
             }
 
             // Removes the oldest pool object used and never recycled.
@@ -438,7 +429,7 @@ public abstract class RealtimeObject implements Realtime {
             // Implements ObjectPool abstract method.
             public void recycle(Object obj) {
                 if (doCleanup()) {
-                    cleanup((Object/*{T}*/)obj);
+                    cleanup((Object/*{T}*/) obj);
                 }
                 RealtimeObject rtObj = (RealtimeObject) obj;
                 Pool pool = rtObj._pool;
@@ -467,7 +458,7 @@ public abstract class RealtimeObject implements Realtime {
                 for (RealtimeObject rt = _activeHead._next; rt != _next;) {
                     if (!doCleanup())
                         break;
-                    cleanup((Object/*{T}*/)rt);
+                    cleanup((Object/*{T}*/) rt);
                     rt = rt._next;
                 }
                 _next = _activeHead._next;
@@ -479,6 +470,12 @@ public abstract class RealtimeObject implements Realtime {
                 _activeTail._previous = _activeHead;
                 _holdHead._next = _holdTail;
                 _holdTail._previous = _holdHead;
+            }
+
+            // For debugging.
+            public String toString() {
+                return _isStack ? "Stack for " : "Heap for "
+                        + Factory.this.getClass() + " (Size: " + _size + ")";
             }
 
         }

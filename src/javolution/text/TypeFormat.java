@@ -19,10 +19,21 @@ import java.io.IOException;
  *     <code>Appendable</code>.</p>
  *
  * <p> Methods from this class <b>do not create temporary objects</b>,
- *     are typically faster than standard library methods (about 3x, 
- *     ref. <a href="http://javolution.org/doc/benchmark.html">benchmark</a>)
- *     and conversions are always exact (lossless) even for floating point
- *     numbers (e.g. <code>parseDouble(format(d, appendable)) == d</code>).</p>
+ *     are typically faster than standard library methods (see 
+ *     <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).</p>
+ *     
+ * <p> The number of digits when formatting floating point numbers can be 
+ *     specified. The default setting for <code>double</code> is 17 digits 
+ *     or even 16 digits when the conversion is lossless back and forth
+ *     (mimic the standard library formatting). For example:[code]
+ *         TypeFormat.format(0.2, a) = "0.2" // 17 or 16 digits (as long as lossless conversion), remove trailing zeros.
+ *         TypeFormat.format(0.2, 17, false, false, a) = "0.20000000000000001" // Closest 17 digits number.
+ *         TypeFormat.format(0.2, 19, false, false, a) = "0.2000000000000000111" // Closest 19 digits.
+ *         TypeFormat.format(0.2, 4, false, false, a) = "0.2" // Fixed-point notation, remove trailing zeros.
+ *         TypeFormat.format(0.2, 4, false, true, a) = "0.2000" // Fixed-point notation, fixed number of digits.
+ *         TypeFormat.format(0.2, 4, true, false, a) = "2.0E-1" // Scientific notation, remove trailing zeros.  
+ *         TypeFormat.format(0.2, 4, true, true, a) = "2.000E-1" // Scientific notation, fixed number of digits.
+ *         [/code]</p>        
  *
  * <p> For non-primitive objects, formatting is typically performed using 
  *     specialized {@link TextFormat} instances.</p>
@@ -1366,7 +1377,7 @@ public final class TypeFormat {
      /**/
 
     /**
-     * Formats the specified <code>double</code> value.
+     * Formats the specified <code>double</code> value (16 or 17 digits output).
      *
      * @param  d the <code>double</code> value.
      * @param  a the <code>Appendable</code> to append.
@@ -1391,7 +1402,8 @@ public final class TypeFormat {
      * specified formatting arguments.
      *
      * @param  d the <code>double</code> value.
-     * @param  digits the number of significative digits (excludes exponent).
+     * @param  digits the number of significative digits (excludes exponent) or
+     *         <code>-1</code> to mimic the standard library (16 or 17 digits).
      * @param  scientific <code>true</code> to forces the use of the scientific 
      *         notation (e.g. <code>1.23E3</code>); <code>false</code> 
      *         otherwise. 
@@ -1399,8 +1411,7 @@ public final class TypeFormat {
      *         represented; <code>false</code> otherwise.
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if <code>((digits &gt; 19) || 
-     *         (digits &lt;= 0))</code>)
+     * @throws IllegalArgumentException if <code>(digits &gt; 19)</code>)
      * @throws IOException if an I/O exception occurs.
      * @see    TextBuilder#append(double, int, boolean, boolean)
      *@JVM-1.1+@

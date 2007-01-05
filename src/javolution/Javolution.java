@@ -54,7 +54,6 @@ public class Javolution {
      * @param  args the option arguments.
      * @throws Exception if a problem occurs.
      */
-    static Object tmp;
     public static void main(String[] args) throws Exception {
         Out.println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
         Out.println("Version " + VERSION + " (http://javolution.org)");

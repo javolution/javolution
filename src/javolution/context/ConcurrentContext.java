@@ -82,10 +82,9 @@ import javolution.lang.Reflection;
  *     }
  *     private static final Logic MULTIPLY = new Logic() {
  *         public void run() {
- *             Object[] args = getArguments(); // Retrieves the arguments.
- *             LargeInteger left = (LargeInteger) args[0];
- *             LargeInteger right = (LargeInteger) args[1];
- *             Reference result = (Reference) args[2];
+ *             LargeInteger left = getArgument(0);
+ *             LargeInteger right = getArgument(1);
+ *             Reference<LargeInteger> result = getArgument(2);
  *             result.set(left.times(right));  // Recursive.
  *         }
  *    };[/code]
@@ -139,7 +138,7 @@ import javolution.lang.Reflection;
  *           FastTable.recycle(t1);  
  *           FastTable.recycle(t2);
  *        }
- *     }[/code]</p>
+ *     }[/code]
  * 
  * <p> Finally, it should be noted that concurrent contexts ensure the same 
  *     behavior whether or not the execution is performed by the current
@@ -159,36 +158,37 @@ public class ConcurrentContext extends Context {
     private static Factory FACTORY = new Factory() {
         protected Object create() {
             return new ConcurrentContext();
-        } 
+        }
     };
+
     /**
      * Holds the default number of {@link ConcurrentExecutor concurrent 
      * executors} (see <a href="{@docRoot}/overview-summary.html#configuration">
      * Javolution Configuration</a> for details).
      */
-    public static final Configurable/*<Integer>*/ CONCURRENCY 
-        = new Configurable(concurrency());
+    public static final Configurable/*<Integer>*/CONCURRENCY = new Configurable(
+            concurrency());
 
     /**
      * Indicates if local concurrency is enabled.
      */
-    private static final LocalContext.Reference ENABLED 
-         = new LocalContext.Reference(new Boolean(true));
+    private static final LocalContext.Reference ENABLED = new LocalContext.Reference(
+            new Boolean(true));
 
     /**
      * Holds the thread-local arguments.
      */
     private static final ThreadLocal ARGUMENTS = new ThreadLocal();
-    
+
     /**
      * Holds the class object (cannot use .class with j2me).
      */
     private static final Class CLASS = new ConcurrentContext().getClass();
 
     /**
-     * Holds the default concurrent context.
+     * Holds the default executors.
      */
-    private static transient ConcurrentContext _Default;
+    private static transient ConcurrentExecutor[] _DefaultExecutors;
 
     /**
      * Holds the number of concurrent thread initiated (might not have 
@@ -224,7 +224,8 @@ public class ConcurrentContext extends Context {
 
     /**
      * Creates a concurrent context inheriting its executors from 
-     * the outer concurrent context ({@link #getDefault() default} if none).
+     * the outer concurrent context (or the {@link #getDefaultExecutors() default
+     * executors} if none).
      */
     public ConcurrentContext() {
         this(null);
@@ -238,40 +239,41 @@ public class ConcurrentContext extends Context {
     public ConcurrentContext(ConcurrentExecutor[] executors) {
         _executors = executors;
     }
-    
+
     /**
-     * Returns the default concurrent context. 
-     * The number of executors for the default context is configurable 
+     * Returns the default executors. The number of executors is configurable 
      * (see <a href= 
      * "{@docRoot}/overview-summary.html#configuration">Javolution Configuration
      * </a> for details).
      * 
-     * @return the default concurrent context.
+     * @return the default concurrent executors.
      */
-    public static ConcurrentContext getDefault() {
-        if (_Default != null) return _Default;
+    public static ConcurrentExecutor[] getDefaultExecutors() {
+        if (_DefaultExecutors != null)
+            return _DefaultExecutors;
         synchronized (CLASS) { // Creates the default.
-            if (_Default != null) return _Default; // Synchronized check.
-            int concurrency = ((Integer)CONCURRENCY.get()).intValue();
+            if (_DefaultExecutors != null)
+                return _DefaultExecutors; // Synchronized check.
+            int concurrency = ((Integer) CONCURRENCY.get()).intValue();
             ConcurrentThread[] executors = new ConcurrentThread[concurrency];
-            for (int i=0; i < concurrency; i++) {
+            for (int i = 0; i < concurrency; i++) {
                 executors[i] = new ConcurrentThread();
                 executors[i].start();
             }
-            _Default = new ConcurrentContext(executors);
-            return _Default;
+            _DefaultExecutors = executors;
+            return _DefaultExecutors;
         }
     }
 
     /**
-     * Sets the default concurrent context.
+     * Sets the default concurrent executors.
      * 
-     * @param ctx the new default concurrent context.
+     * @param executors the new default concurrent executors.
      */
-    public static void setDefault(ConcurrentContext ctx) {
-        _Default = ctx;
+    public static void setDefaultExecutors(ConcurrentExecutor[] executors) {
+        _DefaultExecutors = executors;
     }
-    
+
     /**
      * Returns the concurrent executors available to this concurrent 
      * context (inherited from outer concurrent contexts).
@@ -279,7 +281,8 @@ public class ConcurrentContext extends Context {
      * @return the concurrent executors available to this context.
      */
     final ConcurrentExecutor[] getExecutors() {
-        if (_executors != null) return _executors;
+        if (_executors != null)
+            return _executors;
         for (Context ctx = this.getOuter(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof ConcurrentContext) {
                 ConcurrentContext that = (ConcurrentContext) ctx;
@@ -287,7 +290,7 @@ public class ConcurrentContext extends Context {
                     return that._executors;
             }
         }
-        return getDefault()._executors;
+        return getDefaultExecutors();
     }
 
     /**
@@ -303,7 +306,7 @@ public class ConcurrentContext extends Context {
     }
 
     /**
-     * Returns the current concurrent context or {@link #getDefault}  if the 
+     * Returns the current concurrent context or <code>null</code> if the 
      * current thread has not been spawned from a concurrent context.  
      *
      * @return the current concurrent context.
@@ -315,7 +318,7 @@ public class ConcurrentContext extends Context {
                 return (ConcurrentContext) ctx;
             ctx = ctx.getOuter();
         }
-        return getDefault();
+        return null;
     }
 
     /**
@@ -326,6 +329,7 @@ public class ConcurrentContext extends Context {
         ctx._isInternal = true;
         Context.enter(ctx);
     }
+
     private transient boolean _isInternal;
 
     /**
@@ -336,8 +340,9 @@ public class ConcurrentContext extends Context {
      */
     public static void exit() {
         ConcurrentContext ctx = (ConcurrentContext) Context.current();
-        if (!ctx._isInternal) throw new UnsupportedOperationException
-           ("The context to exit must be specified");
+        if (!ctx._isInternal)
+            throw new UnsupportedOperationException(
+                    "The context to exit must be specified");
         ctx._isInternal = false;
         Context.exitNoCheck(ctx);
         FACTORY.recycle(ctx);
@@ -379,12 +384,18 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args0;
-        ctx.doExecute(logic, status);
-    }
  
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
+    }
+
     /**
      * Executes the specified logic with the specified argument.
      * 
@@ -395,11 +406,17 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args1;
         status._args[0] = arg0;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     /**
@@ -414,12 +431,18 @@ public class ConcurrentContext extends Context {
      */
     public static void execute(Logic logic, Object arg0, Object arg1) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args2;
         status._args[0] = arg0;
         status._args[1] = arg1;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     /**
@@ -436,13 +459,19 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args3;
         status._args[0] = arg0;
         status._args[1] = arg1;
         status._args[2] = arg2;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     /**
@@ -460,14 +489,20 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args4;
         status._args[0] = arg0;
         status._args[1] = arg1;
         status._args[2] = arg2;
         status._args[3] = arg3;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     /**
@@ -486,15 +521,21 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args5;
         status._args[0] = arg0;
         status._args[1] = arg1;
         status._args[2] = arg2;
         status._args[3] = arg3;
         status._args[4] = arg4;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     /**
@@ -514,8 +555,8 @@ public class ConcurrentContext extends Context {
     public static void execute(Logic logic, Object arg0, Object arg1,
             Object arg2, Object arg3, Object arg4, Object arg5) {
         ConcurrentContext ctx = (ConcurrentContext) current();
+        
         StatusImpl status = (StatusImpl) StatusImpl.FACTORY.object();
-        status._context = ctx;
         status._args = status._args6;
         status._args[0] = arg0;
         status._args[1] = arg1;
@@ -523,16 +564,22 @@ public class ConcurrentContext extends Context {
         status._args[3] = arg3;
         status._args[4] = arg4;
         status._args[5] = arg5;
-        ctx.doExecute(logic, status);
+ 
+        if ((ctx != null) && (ctx.doExecute(logic, status)))
+                return; // Concurrent execution.
+        // Else current thread execution.
+        ARGUMENTS.set(status._args);
+        logic.run();
+        StatusImpl.FACTORY.recycle(status);
     }
 
     // Implements Context abstract method.
     protected void enterAction() {
         _isEnabled = ConcurrentContext.isEnabled();
-       _inheritedExecutors = getExecutors();
-       _error = null;
-       _initiatedCount = 0;
-       _completedCount = 0;
+        _inheritedExecutors = getExecutors();
+        _error = null;
+        _initiatedCount = 0;
+        _completedCount = 0;
     }
 
     // Implements Context abstract method.
@@ -548,47 +595,50 @@ public class ConcurrentContext extends Context {
         }
         // Propagates any concurrent error to current thread.
         if (_error != null) {
-            if (_error instanceof RuntimeException) 
-                throw ((RuntimeException)_error);
-            if (_error instanceof Error) 
-                throw ((Error)_error);
+            if (_error instanceof RuntimeException)
+                throw ((RuntimeException) _error);
+            if (_error instanceof Error)
+                throw ((Error) _error);
             throw new ConcurrentException(_error); // Wrapper.
         }
     }
-
-    private void doExecute(Logic logic, StatusImpl status) {
+   
+    private boolean doExecute(Logic logic, StatusImpl status) {
         if (_isEnabled) {
+            status._context = this;
             ConcurrentExecutor[] executors = _inheritedExecutors;
             for (int i = 0; i < executors.length; i++) {
-               if (executors[i].execute(logic, status)) {
-                   _initiatedCount++;
-                   return; // Done.
-               }
+                if (executors[i].execute(logic, status)) {
+                    _initiatedCount++;
+                    return true; // Done.
+                }
             }
         }
-        try { // Current thread execution.
-           status.started();            
-           logic.run();
-           // Do not call status.complete() (current threads are not counted). 
-        } catch (Throwable error) {
-           status.error(error);
-        }        
+        return false;
     }
-
+    
     /**
      * <p> This abstract class represents some parameterized code which may be
      *     executed concurrently.</p>
      */
     public static abstract class Logic implements Runnable {
 
-        
         /**
          * Returns the arguments (if any) for this logic execution.
          * 
          * @return an array holding the arguments.
          */
         public Object[] getArguments() {
-            return (Object[])ARGUMENTS.get();
+            return (Object[]) ARGUMENTS.get();
+        }
+
+        /**
+         * Returns the specified arguments for this logic execution.
+         * 
+         * @return an array holding the arguments.
+         */
+        public/*<T>*/Object/*{T}*/getArgument(int i) {
+            return (Object/*{T}*/) ((Object[]) ARGUMENTS.get())[i];
         }
 
         /**
@@ -596,7 +646,7 @@ public class ConcurrentContext extends Context {
          * the {@link #getArguments} method.
          */
         public abstract void run();
-        
+
     }
 
     /**
@@ -624,40 +674,49 @@ public class ConcurrentContext extends Context {
      * @see javolution.context.ConcurrentThread
      */
     private static class StatusImpl extends RealtimeObject implements Status {
-        
+
         private static StatusImpl.Factory FACTORY = new Factory() {
             protected Object create() {
                 return new StatusImpl();
             }
-            
+            protected void cleanup(Object status) {
+                ((StatusImpl)status).reset();
+            }
+
         };
+
         volatile Object[] _args;
-        Object[] _args0= new Object[0];
-        Object[] _args1= new Object[1];
-        Object[] _args2= new Object[2];
-        Object[] _args3= new Object[3];
-        Object[] _args4= new Object[4];
-        Object[] _args5= new Object[5];
-        Object[] _args6= new Object[6];
+
+        Object[] _args0 = new Object[0];
+
+        Object[] _args1 = new Object[1];
+
+        Object[] _args2 = new Object[2];
+
+        Object[] _args3 = new Object[3];
+
+        Object[] _args4 = new Object[4];
+
+        Object[] _args5 = new Object[5];
+
+        Object[] _args6 = new Object[6];
+
         ConcurrentContext _context;
 
         public void started() {
             ARGUMENTS.set(_args);
             Context.setCurrent(_context);
+            _context.getLocalPools().activatePools();
         }
-        
+
         public void completed() {
-            _context.getLocalPools().deactivate();
+            _context.getLocalPools().deactivatePools();
+ 
+            // Must be last (as the status may be reused after).
             synchronized (_context) {
                 _context._completedCount++;
                 _context.notify();
             }
-
-            // Clears any external reference (allows GC).
-            for (int i=0; i < _args.length; i++) { 
-                _args[i] = null; // 
-            }
-            _context = null;
         }
 
         public void error(Throwable error) {
@@ -666,6 +725,13 @@ public class ConcurrentContext extends Context {
                     _context._error = error;
                 }
             }
+        }
+
+        void reset() {
+            for (int i = 0; i < _args.length; i++) {
+                _args[i] = null; // 
+            }
+            _context = null;
         }
     }
 }

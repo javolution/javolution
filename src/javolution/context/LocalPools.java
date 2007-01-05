@@ -66,14 +66,10 @@ final class LocalPools {
     private final ObjectPool[] _pools = new ObjectPool[ObjectFactory._Instances.length];
 
     /**
-     * Holds the pools currently in use.
+     * Holds the pools currently in use (might not be the current pools if owner
+     * has entered an inner pool/heap context).
      */
     private final FastTable _inUsePools = new FastTable();
-
-    /**
-     * Holds the pools currently activated.
-     */
-    private final FastTable _activatedPools = new FastTable();
 
     /**
      * Holds the owner of this pool (unique) <code>null</code> if no owner yet
@@ -100,9 +96,8 @@ final class LocalPools {
      * Returns the pool form the specified factory.
      * 
      * @param factory the factory of the pool to return.
-     * @param activate <code>true</code> if the pool returned is activated 
-     *        as the current pool for thread owner; <code>false</code>
-     *        otherwise.
+     * @param activate <code>true</code> if this pool is the current pool
+     *        for the thread owner; <code>false</code> otherwise.
      * @return the pool for the specified factory.       
      */
     ObjectPool getPool(final ObjectFactory factory, boolean activate) {
@@ -123,7 +118,6 @@ final class LocalPools {
         }
         if (activate) {
             pool._user = _owner;
-            _activatedPools.add(pool);
         }
         return pool;
     }
@@ -141,20 +135,28 @@ final class LocalPools {
             }
         }
         _inUsePools.clear();
-        _activatedPools.clear();
     }
 
     /**
-     * Deactivates pools (not the current pools anymore).
+     * Sets the current user of this pool.
      */
-    void deactivate() {
-        for (int i =0, n = _activatedPools.size(); i < n;) {
-            ObjectPool pool = (ObjectPool) _activatedPools.get(i++);
+    void deactivatePools() {
+        for (int i =0, n = _inUsePools.size(); i < n;) {
+            ObjectPool pool = (ObjectPool) _inUsePools.get(i++);
             pool._user = null;
         }
-        _activatedPools.clear();
     }
 
+    /**
+     * Sets the current user of this pool.
+     */
+    void activatePools() {
+        for (int i =0, n = _inUsePools.size(); i < n;) {
+            ObjectPool pool = (ObjectPool) _inUsePools.get(i++);
+            pool._user = _owner;
+        }
+    }
+    
     /**
      * Recycles all the pools which have been used and deactivates them.
      */
@@ -166,7 +168,6 @@ final class LocalPools {
             pool._inUse = false;
         }
         _inUsePools.clear();
-        _activatedPools.clear();
     }
     
     /**

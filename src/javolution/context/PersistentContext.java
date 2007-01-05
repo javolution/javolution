@@ -16,8 +16,8 @@ import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents a context persistent accross multiple program 
- *     executions. It is typically used to hold persistent 
- *     {@link Reference references}.</p>  
+ *     executions. It is typically used to hold  
+ *     {@link Reference persistent references}.</p>  
  *     
  * <p> How this context is loaded/saved is application specific. 
  *     Although, the simplest way is to use Javolution XML serialization 
@@ -26,19 +26,17 @@ import javolution.xml.stream.XMLStreamException;
  *      import javolution.xml.XMLObjectWriter;
  *      public void main(String[]) {
  *           // Loads persistent context (typically at start-up).
- *           PersistentContext ctx = new XMLObjectReader().setInput(
- *               new FileInputStream("C:/persistent.xml")).read(PersistentContext.class);
- *           PersistentContext.setInstance(ctx);
+ *           XMLObjectReader reader = XMLObjectReader.newInstance(new FileInputStream("C:/persistent.xml"));
+ *           PersistentContext.setCurrent(reader.read(PersistentContext.class));
  *           ...
- *           
+ *           ...
  *           // Saves persistent context for future execution.
- *           new XMLObjectWriter().setInput(
- *               new FileOutputStream("C:/persistent.xml")).write(
- *                   PersistentContext.getInstance(), PersistentContext.class);
+ *           XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream("C:/persistent.xml"));
+ *           writer.write(PersistentContext.current(), PersistentContext.class);
  *      }[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, September 4, 2006
+ * @version 4.2, December 31, 2006
  */
 public class PersistentContext extends Context {
 
@@ -83,46 +81,45 @@ public class PersistentContext extends Context {
     }
 
     /**
-     * Returns the persistent instance (singleton). 
-     * 
-     * @return the persistent instance.
-     */
-    public PersistentContext getInstance() {
-        return _PersistentContext;
-    }
-
-    /**
      * Sets the persistent instance. 
      * 
      * @param ctx the persistent instance.
      */
-    public void setInstance(PersistentContext ctx) {
+    public static void setCurrent(PersistentContext ctx) {
         _PersistentContext = ctx;
         synchronized (Reference.INSTANCES) {
              for (FastMap.Entry e = Reference.INSTANCES.head(), end = Reference.INSTANCES.tail();
                    (e = (FastMap.Entry) e.getNext())!= end;) {
-                 Reference ref = (Reference) e.getValue();
-                 ref.set(ctx._idToValue.get(ref._id));
+                 Reference reference = (Reference) e.getValue();
+                 if (ctx._idToValue.containsKey(reference._id)) {
+                     reference.set(ctx._idToValue.get(reference._id));
+                 }
              }
         }
     }
 
     /**
-     * Returns the current persistent context.  
+     * Returns the persistent context instance (singleton).  
      *
-     * @return <code>PersistentContext.getInstance()</code>
+     * @return the persistent context instance.
      */
     public static/*PersistentContext*/Context current() {
         return _PersistentContext;
     }
 
-    // Implements Context abstract method.
+    /**
+     * Throws <code>UnsupportedOperationException</code> persistent context
+     * are global to all threads (singleton).  
+     */
     protected void enterAction() {
         throw new j2me.lang.UnsupportedOperationException(
                 "Cannot enter persistent context (already in)");
     }
 
-    // Implements Context abstract method.
+    /**
+     * Throws <code>UnsupportedOperationException</code> persistent context
+     * are global to all threads (singleton).  
+     */
     protected void exitAction() {
         throw new j2me.lang.UnsupportedOperationException(
                 "Cannot exit persistent context (always in)");
@@ -137,7 +134,7 @@ public class PersistentContext extends Context {
      *         // Provides a constructor for persistent maps.
      *         public FastMap(String id) {
      *             new PersistentContext<Map<K, V>.Reference(id, this) {
-     *                  protected void notifyValueChange() {
+     *                  protected void notifyChange() {
      *                      FastMap.this.clear();
      *                      FastMap.this.putAll(this.get());
      *                  }
@@ -219,7 +216,7 @@ public class PersistentContext extends Context {
         // Implements Reference interface.
         public void set(Object/*{T}*/value) {
             _value = value;
-            notifyValueChange();
+            notifyChange();
         }
 
         /**
@@ -291,8 +288,7 @@ public class PersistentContext extends Context {
          * a new persistent context has been loaded).
          * The default implementation does nothing.
          */
-        protected void notifyValueChange() {
+        protected void notifyChange() {
         }
-
     }
 }

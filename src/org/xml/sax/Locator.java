@@ -1,7 +1,7 @@
 // SAX locator interface for document events.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: Locator.java,v 1.12 2006-12-23 04:27:07 dautelle Exp $
+// $Id: Locator.java,v 1.13 2007-01-05 00:50:29 dautelle Exp $
 
 package org.xml.sax;
 
