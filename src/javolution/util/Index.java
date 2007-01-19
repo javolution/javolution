@@ -61,8 +61,10 @@ public final class Index implements Record, Immutable, Serializable {
 
     /**
      * Holds the default XML representation for indexes.
+     * This presentation consists of a <code>"value"</code> attribute 
+     * holding the index <code>int</code> value.
      */
-    static final XMLFormat/*<Index>*/XML = new XMLFormat(new Index(0)
+    protected static final XMLFormat/*<Index>*/XML = new XMLFormat(new Index(0)
             .getClass()) {
 
         public boolean isReferenceable() {
@@ -111,8 +113,8 @@ public final class Index implements Record, Immutable, Serializable {
 
     /**
      * Returns the unique index for the specified <code>int</code> value 
-     * (creating it as well as all its previous indices if they do not 
-     * exist). 
+     * (creating it as well as the indices toward {@link #ZERO zero} 
+     *  if they do not exist). 
      * 
      * @param i the index value.
      * @return the corresponding unique index.

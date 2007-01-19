@@ -66,7 +66,7 @@ import javolution.xml.stream.XMLStreamException;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton
- * @version 3.6, November 6, 2005
+ * @version 4.2, January 11, 2007
  */
 public abstract class Text extends RealtimeObject implements CharSequence,
         Comparable, Serializable, Immutable {
@@ -150,17 +150,18 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @see    Realtime#toText
      */
     public static Text valueOf(Object obj) {
-        if (obj instanceof Realtime) 
+        if (obj instanceof Realtime) {
             return ((Realtime) obj).toText();
-        if (obj instanceof String) 
+        } else if (obj instanceof String) {
             return StringWrapper.newInstance((String) obj);
-        if (obj instanceof CharSequence) {
+        } else if (obj instanceof CharSequence) {
             final CharSequence csq = (CharSequence) obj;
             return Text.valueOf(csq, 0, csq.length());
-        }
-        if (obj != null) 
+        } else if (obj != null) {
             return StringWrapper.newInstance(obj.toString());
-        return NULL;        
+        } else {
+            return NULL;
+        }
     }
 
     /**
@@ -176,8 +177,8 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public static Text valueOf(CharSequence csq, int start, int end) {
         if ((start < 0) || (end < 0) || (start > end) || (end > csq.length()))
             throw new IndexOutOfBoundsException();
-        if (csq instanceof TextBuilder) 
-            return valueOf((TextBuilder)csq, start, end);
+        if (csq instanceof TextBuilder)
+            return valueOf((TextBuilder) csq, start, end);
         final int length = end - start;
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance(length);
@@ -192,19 +193,30 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             return text;
         }
     }
-    // Optimization to avoid dynamic dispatching when converting from TextBuilder.
-    static Text valueOf(TextBuilder csq, int start, int end) { 
+
+    // Optimized version for TextBuilder.
+    static Text valueOf(TextBuilder tb, int start, int end) {
         final int length = end - start;
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance(length);
-            for (int i = 0; i < length;) {
-                text._data[i] = csq.charAt(start + i++);
+            if ((start & TextBuilder.M0) + length <= TextBuilder.C0) {
+                // Single block copy.
+                char[] chars = tb.charsAt(start);
+                System.arraycopy(chars, start & TextBuilder.M0, text._data, 0,
+                        length);
+            } else { // Crossing of block boundary.
+                for (int i = 0; i < length;) {
+                    text._data[i] = tb.charAt(start + i++);
+                }
             }
             return text;
-        } else {
-            final int middle = start + (length >> 1);
-            Composite text = Composite.newInstance(Text.valueOf(csq, start,
-                    middle), Text.valueOf(csq, middle, end));
+        } else { // Cut on the middle on a block boundary if possible.
+            int middle = (start + (length >> 1));
+            if ((middle & ~TextBuilder.M0) > start) {
+                middle &= ~TextBuilder.M0;
+            }
+            Composite text = Composite.newInstance(Text.valueOf(tb, start,
+                    middle), Text.valueOf(tb, middle, end));
             return text;
         }
     }
@@ -356,11 +368,11 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return the corresponding text instance.
      /*@JVM-1.1+@
      public static Text valueOf(float f) {
-        TextBuilder tmp = TextBuilder.newInstance();
-        tmp.append(f);
-        Text txt = tmp.toText();
-        TextBuilder.recycle(tmp);
-        return txt;
+     TextBuilder tmp = TextBuilder.newInstance();
+     tmp.append(f);
+     Text txt = tmp.toText();
+     TextBuilder.recycle(tmp);
+     return txt;
      }
      /**/
 
@@ -372,14 +384,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return the corresponding text instance.
      /*@JVM-1.1+@
      public static Text valueOf(double d) {
-        TextBuilder tmp = TextBuilder.newInstance();
-        tmp.append(d);
-        Text txt = tmp.toText();
-        TextBuilder.recycle(tmp);
-        return txt;
+     TextBuilder tmp = TextBuilder.newInstance();
+     tmp.append(d);
+     Text txt = tmp.toText();
+     TextBuilder.recycle(tmp);
+     return txt;
      }
      /**/
-
 
     /**
      * Returns the length of this text.
@@ -415,26 +426,37 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             return that;
         } else if (that._count == 0) {
             return this;
-        } else if (((that._count << 1) < this._count)
-                && (this instanceof Composite)) { // this too large, break up?
-            Composite thisComposite = (Composite) this;
-            if (thisComposite._head._count > thisComposite._tail._count) {
-                return Composite.newInstance(thisComposite._head,
-                        thisComposite._tail.concat(that));
-            } else {
-                return Composite.newInstance(this, that);
-            }
-        } else if (((this._count << 1) < that._count)
-                && (that instanceof Composite)) { // that too large, break up?
+        } else {
+            return this.concat(that, (Factory.Pool) Composite.FACTORY
+                    .currentPool());
+        }
+    }
+
+    private final Text concat(Text that, Factory.Pool pool) {
+        // All Text instances are maintained balanced:
+        //   (head < tail * 2) & (tail < head * 2)
+        if (((this._count << 1) < that._count) && (that instanceof Composite)) {
+            // this too small, returns (this + that/2) + (that/2) 
             Composite thatComposite = (Composite) that;
-            if (thatComposite._head._count < thatComposite._tail._count) {
-                return Composite.newInstance(this.concat(thatComposite._head),
-                        thatComposite._tail);
-            } else {
-                return Composite.newInstance(this, that);
+            if (thatComposite._head._count > thatComposite._tail._count) {
+                // Rotates to concatenate with smaller part.
+                thatComposite = thatComposite.rightRotation(pool);
             }
-        } else { // 
-            return Composite.newInstance(this, that);
+            return Composite.newInstance(
+                    this.concat(thatComposite._head, pool),
+                    thatComposite._tail, pool);
+        } else if (((that._count << 1) < this._count)
+                && (this instanceof Composite)) {
+            // that too small, returns (this/2) + (this/2 concat that)
+            Composite thisComposite = (Composite) this;
+            if (thisComposite._tail._count > thisComposite._head._count) {
+                // Rotates to concatenate with smaller part.
+                thisComposite = thisComposite.leftRotation(pool);
+            }
+            return Composite.newInstance(thisComposite._head,
+                    thisComposite._tail.concat(that, pool), pool);
+        } else { // this and that balanced (or not composite).
+            return Composite.newInstance(this, that, pool);
         }
     }
 
@@ -823,7 +845,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *          <code>CharSequence</code> or a <code>String</code>.
      */
     public final int compareTo(Object csq) {
-        return ((FastComparator)FastComparator.LEXICAL).compare(this, csq);
+        return ((FastComparator) FastComparator.LEXICAL).compare(this, csq);
     }
 
     /**
@@ -1181,7 +1203,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         /**
          * Holds the default size for primitive blocks of characters.
          */
-        private static final int BLOCK_SIZE = 32;
+        private static final int BLOCK_SIZE = 1 << TextBuilder.D0;
 
         /**
          * Holds the associated factory.
@@ -1210,7 +1232,11 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * @param the length of this primitive text.
          */
         private static Primitive newInstance(int length) {
-            Primitive text = (Primitive) FACTORY.object();
+            return newInstance(length, (Factory.Pool) FACTORY.currentPool());
+        }
+
+        private static Primitive newInstance(int length, Factory.Pool pool) {
+            Primitive text = (Primitive) pool.next();
             text._count = length;
             text._hashCode = 0;
             return text;
@@ -1333,12 +1359,55 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * @return the corresponding composite text. 
          */
         private static Composite newInstance(Text head, Text tail) {
-            Composite text = (Composite) FACTORY.object();
+            return newInstance(head, tail, (Factory.Pool) FACTORY.currentPool());
+        }
+
+        private static Composite newInstance(Text head, Text tail,
+                Factory.Pool pool) {
+            Composite text = (Composite) pool.next();
             text._hashCode = 0;
             text._count = head._count + tail._count;
             text._head = head;
             text._tail = tail;
             return text;
+        }
+
+        /**
+         * Returns the right rotation of this composite.
+         * The resulting text is still balanced if head > tail.
+         * 
+         * @param pool the current pool.
+         * @return the same text with a different structure.
+         */
+        private Composite rightRotation(Factory.Pool pool) {
+            // See: http://en.wikipedia.org/wiki/Tree_rotation
+            if (!(this._head instanceof Composite))
+                return this; // Cannot rotate.
+            Composite P = (Composite) this._head;
+            Text A = P._head;
+            Text B = P._tail;
+            Text C = this._tail;
+            return Composite.newInstance(A, Composite.newInstance(B, C, pool),
+                    pool);
+        }
+
+        /**
+         * Returns the left rotation of this composite.
+         * The resulting text is still balanced if tail > head.
+         * 
+         * @param pool the current pool.
+         * @return the same text with a different structure.
+         */
+        private Composite leftRotation(Factory.Pool pool) {
+            // See: http://en.wikipedia.org/wiki/Tree_rotation
+            if (!(this._tail instanceof Composite))
+                return this; // Cannot rotate.
+            Composite Q = (Composite) this._tail;
+            Text B = Q._head;
+            Text C = Q._tail;
+            Text A = this._head;
+            return Composite.newInstance(Composite.newInstance(A, B, pool), C,
+                    pool);
         }
 
         // Implements abstract method.

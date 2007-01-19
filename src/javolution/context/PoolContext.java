@@ -170,6 +170,7 @@ public class PoolContext extends Context {
      * 
      * @param enabled <code>true</code> if object pooling is locally enabled;
      *        <code>false</code> otherwise.
+     * @see  #enter
      */
     public static void setEnabled(boolean enabled) {
         ENABLED.set(enabled ? TRUE : FALSE);
@@ -185,6 +186,7 @@ public class PoolContext extends Context {
      * 
      * @return <code>true</code> if object pooling is locally enabled;
      *         <code>false</code> otherwise.
+     * @see  #enter
      */
     public static boolean isEnabled() {
         return ((Boolean) ENABLED.get()).booleanValue();
@@ -192,10 +194,13 @@ public class PoolContext extends Context {
 
     /**
      * Enters a {@link PoolContext} possibly recycled.
+     * The new pool context is enabled/disabled based upon 
+     * the local {@link #isEnabled()} status.
      */
     public static void enter() {
         PoolContext ctx = (PoolContext) FACTORY.object();
         ctx._isInternal = true;
+        ctx._isEnabled = PoolContext.isEnabled();
         Context.enter(ctx);
     }
     private transient boolean _isInternal;

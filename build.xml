@@ -8,7 +8,7 @@
         <tstamp />
         <property name="library" value="javolution" />
         <property name="version" value="4.2" />
-        <property name="release" value="1" />
+        <property name="release" value="3" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />
@@ -100,6 +100,10 @@
         <delete file="${tmp}/javolution/lang/Enum.java" />
     	
         <!-- Return Types (more specialized return type)-->
+        <replace dir="${tmp}/javolution" includes="**/RealtimeObject.java">
+            <replacetoken><![CDATA[ObjectPool/*Pool*/]]></replacetoken>
+            <replacevalue><![CDATA[ Pool ]]></replacevalue>
+        </replace>
         <replace dir="${tmp}/javolution" includes="**/TextBuilder.java">
             <replacetoken><![CDATA[Appendable/*TextBuilder*/]]></replacetoken>
             <replacevalue><![CDATA[ TextBuilder ]]></replacevalue>

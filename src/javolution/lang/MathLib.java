@@ -14,10 +14,11 @@ import java.util.Random;
  * <p> This utility class ensures cross-platform portability of the math 
  *     library. Functions not supported by the platform are emulated.
  *     Developers may replace the current implementation with native
- *     implementations for faster execution.<p> 
+ *     implementations for faster execution (unlike 
+ *     <code>java.lang.Math</code> this class can be customized).<p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 1.1, November 6, 2004
+ * @version 4.2, January 6, 2007
  */
 public final class MathLib {
 
@@ -877,6 +878,13 @@ public final class MathLib {
      * @return <code>x<sup>y</sup></code>
      * @JVM-1.1+@
      public static double pow(double x, double y) {
+     /**/
+    /* @JVM-1.4+@ // Use java.lang.Math value. 
+     if (true) return Math.pow(x, y);
+     /**/
+    /* @JVM-1.1+@ // Else (J2ME) use close approximation (+/- LSB)
+     if ((x < 0) && (y == (int)y)) return 
+     (((int)y) & 1) == 0 ? pow(-x, y) : -pow(-x, y);
      return MathLib.exp(y * MathLib.log(x));
      }
      /**/

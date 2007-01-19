@@ -279,14 +279,19 @@ public abstract class RealtimeObject implements Realtime {
         }
 
         // Overrides.
-        public final Object/*{T}*/object() {
-            final Pool pool = (Pool) _currentPool.get();
-            return (Object/*{T}*/) ((pool._user != null) ? pool.next()
-                    : activatePool().next());
+        public final ObjectPool/*Pool*/currentPool() {
+            Pool pool = (Pool) _currentPool.get();
+            return (pool._user != null) ? pool : (Pool) activatePool();
         }
 
         // Overrides.
-        public void recycle(Object/*{T}*/obj) {
+        public final Object/*{T}*/object() {
+            final Pool pool = (Pool) _currentPool.get();
+            return ((pool._user != null) ? pool.next() : activatePool().next());
+        }
+
+        // Overrides.
+        public final void recycle(Object/*{T}*/obj) {
             Pool pool = ((RealtimeObject) obj)._pool;
             if (pool == null) {
                 currentPool().recycle(obj);
@@ -296,16 +301,20 @@ public abstract class RealtimeObject implements Realtime {
         }
 
         // Overrides.
-        protected ObjectPool newStackPool() {
+        protected ObjectPool/*Pool*/newStackPool() {
             return new Pool(true);
         }
 
         // Overrides.
-        protected ObjectPool newHeapPool() {
+        protected ObjectPool/*Pool*/newHeapPool() {
             return new Pool(false);
         }
 
-        private final class Pool extends ObjectPool implements Runnable {
+        /**
+         * This class holds the specialized pool for {@link RealtimeObject} 
+         * instances.
+         */
+        public final class Pool extends ObjectPool/*<T>*/{
 
             /**
              * Holds the next object to return.
@@ -389,22 +398,32 @@ public abstract class RealtimeObject implements Realtime {
             }
 
             // Implements ObjectPool abstract method.
-            public Object next() {
+            public Object/*{T}*/next() {
                 final RealtimeObject next = _next;
-                return ((_next = next._next) != null) ? next : allocate();
+                return ((_next = next._next) != null) ? (Object/*{T}*/) next
+                        : allocate();
             }
 
-            private Object allocate() {
+            private Object/*{T}*/allocate() {
                 _next = _activeTail; // Avoids null for _next.
                 if (_isStack) {
-                    _memoryArea.executeInArea(this);
-                    return _activeTail._previous;
+                    _memoryArea.executeInArea(_allocate);
+                    return (Object/*{T}*/) _activeTail._previous;
                 } else { // Heap.
                     if (_size != 0)
                         removeUse(); // Avoids keeping reference to used objects. 
                     return create();
                 }
             }
+
+            private final Runnable _allocate = new Runnable() {
+                public void run() {
+                    RealtimeObject obj = (RealtimeObject) create();
+                    _size++;
+                    obj.insertBefore(_activeTail);
+                    obj._pool = Pool.this;
+                }
+            };
 
             // Removes the oldest pool object used and never recycled.
             private void removeUse() {
@@ -418,18 +437,10 @@ public abstract class RealtimeObject implements Realtime {
                 _size--;
             }
 
-            // Implements Runnable for object creation in memory area.
-            public void run() {
-                RealtimeObject obj = (RealtimeObject) create();
-                _size++;
-                obj.insertBefore(_activeTail);
-                obj._pool = Pool.this;
-            }
-
             // Implements ObjectPool abstract method.
-            public void recycle(Object obj) {
+            public void recycle(Object/*{T}*/obj) {
                 if (doCleanup()) {
-                    cleanup((Object/*{T}*/) obj);
+                    cleanup(obj);
                 }
                 RealtimeObject rtObj = (RealtimeObject) obj;
                 Pool pool = rtObj._pool;
@@ -474,10 +485,10 @@ public abstract class RealtimeObject implements Realtime {
 
             // For debugging.
             public String toString() {
-                return _isStack ? "Stack for " : "Heap for "
-                        + Factory.this.getClass() + " (Size: " + _size + ")";
+                String str = _isStack ? "Stack Pool for " : "Heap Pool for ";
+                return str + Factory.this.getClass() + " (Size: " + _size + ")";
             }
-
+            
         }
 
         /**

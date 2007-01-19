@@ -51,11 +51,11 @@ public abstract class ObjectFactory/*<T>*/{
      * (see <a href="{@docRoot}/overview-summary.html#configuration">
      * Javolution Configuration</a> for details).
      */
-    public static final Configurable/*<Integer>*/ COUNT = new Configurable(
+    public static final Configurable/*<Integer>*/ MAX_COUNT = new Configurable(
             new Integer(256)) {
         protected void notifyChange() {
             synchronized (LOCK) {
-                final int newCount = ((Integer)COUNT.get()).intValue();
+                final int newCount = ((Integer)MAX_COUNT.get()).intValue();
                 if (_Count >= newCount)
                     throw new j2me.lang.UnsupportedOperationException(
                             "Already " + _Count
@@ -78,7 +78,7 @@ public abstract class ObjectFactory/*<T>*/{
     /**
      * Holds the factory instances.
      */
-    static ObjectFactory[] _Instances = new ObjectFactory[((Integer)COUNT.get()).intValue()];
+    static ObjectFactory[] _Instances = new ObjectFactory[((Integer)MAX_COUNT.get()).intValue()];
 
     /**
      * Holds the current number of instances.
@@ -151,11 +151,11 @@ public abstract class ObjectFactory/*<T>*/{
      * 
      * @return a context-local pool for this factory. 
      */
-    public final ObjectPool/*<T>*/currentPool() {
-        ObjectPool pool = (ObjectPool) _currentPool.get();
+    public ObjectPool/*<T>*/currentPool() {
+        ObjectPool/*<T>*/ pool = (ObjectPool/*<T>*/) _currentPool.get();
         return  (pool._user != null) ? pool : activatePool();
     }
-    final ObjectPool activatePool() {
+    final ObjectPool/*<T>*/ activatePool() {
         LocalPools pools = Context.current().getLocalPools();
         ObjectPool pool = pools.getPool(this, true);
         _currentPool.set(pool);
@@ -173,7 +173,15 @@ public abstract class ObjectFactory/*<T>*/{
      * dispose of system resources or to clear references to external
      * objects potentially on the heap (it allows these external objects to
      * be garbage collected immediately and therefore reduces the memory 
-     * footprint).
+     * footprint). For example:[code]
+     *     static ObjectFactory<ArrayList> ARRAY_LIST_FACTORY = new ObjectFactory<ArrayList>() { 
+     *         protected ArrayList create() {
+     *             return new ArrayList();
+     *         }
+     *         protected void cleanup(ArrayList obj) {
+     *             obj.clear(); // Clears external references.
+     *         }
+     *     };[/code]
      *
      * @param  obj the factory object being recycled.
      */
@@ -188,7 +196,7 @@ public abstract class ObjectFactory/*<T>*/{
      *         {@link #cleanup} has been called at least once; 
      *         <code>false</code> otherwise.
      */
-    protected final boolean doCleanup() {
+    final boolean doCleanup() {
         return _doCleanup;
     }
 

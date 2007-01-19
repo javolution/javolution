@@ -168,7 +168,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     /**
      * Holds the parser state.
      */
-    private int _state = STATE_DEFAULT;
+    private int _state = STATE_CHARACTERS;
 
     /**
      * Holds the current text.
@@ -304,6 +304,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 next(); // Processing instruction.
                 _prolog = this.getPIData();
                 _index = _prolog.offset() + _prolog.length(); // Keep prolog.
+                _start = _index; // Default state.
                 _eventType = START_DOCUMENT; // Resets to START_DOCUMENT.
             }
         } catch (IOException e) {
@@ -401,28 +402,24 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             //
             switch (_state) {
 
-            case STATE_DEFAULT:
-                _start = _index - 1; // Resets start position.
-                _state = (c == '<') ? STATE_MARKUP : STATE_CHARACTERS;
-                break;
-
             case STATE_CHARACTERS:
                 while (true) { // Read characters data all at once.
 
                     if (c == '<') {
                         int length = _index - _start - 1;
-                        if (_charactersPending) {
-                            _text.setArray(_data, _text.offset(), _text
-                                    .length()
-                                    + length); // Coalescing.
-                        } else {
-                            _text = newSeq(_start, length);
-                            _charactersPending = true;
-                        }
-                        _start = _index - 1; // Keeps '<' as part of markup.
+                        if (length > 0) {
+                            if (_charactersPending) {
+                               _text.setArray(_data, _text.offset(), _text
+                                      .length()
+                                      + length); // Coalescing.
+                            } else {
+                               _text = newSeq(_start, length);
+                               _charactersPending = true;
+                           }
+                           _start = _index - 1; // Keeps '<' as part of markup.
+                        }   
                         _state = STATE_MARKUP;
                         break;
-
                     }
 
                     // Local character reading block.
@@ -454,7 +451,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                                 _charactersPending = true;
                             }
                         }
-                        _state = STATE_DEFAULT;
+                        _start = _index;
+                        _state = STATE_CHARACTERS;
                         break;
                     }
 
@@ -472,7 +470,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 if (c == '>') {
                     _text = newSeq(_start, _index - _start);
                     _index = _start; // Do not keep DTD.
-                    _state = STATE_DEFAULT;
+                    _state = STATE_CHARACTERS;
                     return _eventType = DTD;
                 } else if (c == '[') {
                     _state = STATE_DTD_INTERNAL;
@@ -556,7 +554,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                             && (_data[_index - 3] == '-')) {
                         _index -= 3; // Removes -->
                         _text = newSeq(_start, _index - _start);
-                        _state = STATE_DEFAULT;
+                        _state = STATE_CHARACTERS;
                         _index = _start; // Do not keep comments.
                         return _eventType = COMMENT;
                     }
@@ -575,7 +573,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                         && (_data[_index - 2] == '?')) {
                     _index -= 2; // Removes ?>
                     _text = newSeq(_start, _index - _start);
-                    _state = STATE_DEFAULT;
+                    _state = STATE_CHARACTERS;
                     _index = _start; // Do not keep processing instructions.
                     return _eventType = PROCESSING_INSTRUCTION;
                 }
@@ -588,7 +586,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     if (c < '@') { // Else avoid multiple checks.
                         if (c == '>') {
                             _qName = newSeq(_start, --_index - _start);
-                            _state = STATE_DEFAULT;
+                            _start = _index;
+                            _state = STATE_CHARACTERS;
                             processStartTag();
                             _isEmpty = false;
                             return _eventType = START_ELEMENT;
@@ -614,8 +613,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
 
             case STATE_OPEN_TAGxELEM_NAME_READ:
                 if (c == '>') {
-                    --_index;
-                    _state = STATE_DEFAULT;
+                    _start = --_index;
+                    _state = STATE_CHARACTERS;
                     processStartTag();
                     _isEmpty = false;
                     return _eventType = START_ELEMENT;
@@ -714,8 +713,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
 
             case STATE_OPEN_TAGxEMPTY_TAG:
                 if (c == '>') {
-                    --_index;
-                    _state = STATE_DEFAULT;
+                    _start = --_index;
+                    _state = STATE_CHARACTERS;
                     processStartTag();
                     _isEmpty = true;
                     return _eventType = START_ELEMENT;
@@ -730,7 +729,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     if (c < '@') { // Else avoid multiple checks.
                         if (c == '>') {
                             _qName = newSeq(_start, --_index - _start);
-                            _state = STATE_DEFAULT;
+                            _start = _index;
+                            _state = STATE_CHARACTERS;
                             processEndTag();
                             return _eventType = END_ELEMENT;
                         } else if (c == ':') {
@@ -750,8 +750,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
 
             case STATE_CLOSE_TAGxELEM_NAME_READ:
                 if (c == '>') {
-                    --_index;
-                    _state = STATE_DEFAULT;
+                    _start = --_index;
+                    _state = STATE_CHARACTERS;
                     processEndTag();
                     return _eventType = END_ELEMENT;
                 } else if (c > ' ') {
@@ -767,8 +767,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     }
 
     // Defines parsing states (keep values close together to avoid lookup).
-    private static final int STATE_DEFAULT = 0;
-
     private static final int STATE_CHARACTERS = 1;
 
     private static final int STATE_MARKUP = 2;
@@ -818,7 +816,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         try {
             _readCount = _reader.read(_readBuffer, 0, _readBuffer.length);
             if ((_readCount <= 0)
-                    && ((_nesting != 0) || ((_state != STATE_DEFAULT) && (_state != STATE_CHARACTERS))))
+                    && ((_nesting != 0) || (_state != STATE_CHARACTERS)))
                 throw new XMLStreamException("Unexpected end of document",
                         _location);
         } catch (IOException e) {
@@ -843,8 +841,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             if (_eventType == END_DOCUMENT)
                 throw new XMLStreamException(
                         "End document has already been reached");
-            if (_state == STATE_CHARACTERS) { // Flushes trailing characters.
-                int length = _index - _start - 1;
+            int length = _index - _start - 1;
+            if ((_state == STATE_CHARACTERS) && (length > 0)) { // Flushes trailing characters.
                 if (_charactersPending) {
                     _text.setArray(_data, _text.offset(), _text.length()
                             + length); // Coalescing.
@@ -852,10 +850,10 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                     _text = newSeq(_start, length);
                 }
                 _eventType = CHARACTERS;
-                _state = STATE_DEFAULT;
+                _state = STATE_CHARACTERS;
             } else {
                 _eventType = END_DOCUMENT;
-                _state = STATE_DEFAULT;
+                _state = STATE_CHARACTERS;
             }
             return true;
         }
@@ -1001,7 +999,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         _seqsIndex = 0;
         _start = 0;
         _startOffset = 0;
-        _state = STATE_DEFAULT;
+        _state = STATE_CHARACTERS;
         _utf8StreamReader.reset();
     }
 

@@ -322,11 +322,14 @@ public class ConcurrentContext extends Context {
     }
 
     /**
-     * Enters a {@link ConcurrentContext} possibly recycled.
+     * Enters a {@link ConcurrentContext} possibly recycled. 
+     * The new concurrent context is enabled/disabled based upon 
+     * the local {@link #isEnabled()} status.
      */
     public static void enter() {
         ConcurrentContext ctx = (ConcurrentContext) FACTORY.object();
         ctx._isInternal = true;
+        ctx._isEnabled = ConcurrentContext.isEnabled();
         Context.enter(ctx);
     }
 
@@ -353,6 +356,7 @@ public class ConcurrentContext extends Context {
      * 
      * @param enabled <code>true</code> if concurrency is locally enabled;
      *        <code>false</code> otherwise.
+     * @see  #enter
      */
     public static void setEnabled(boolean enabled) {
         ENABLED.set(enabled ? TRUE : FALSE);
@@ -368,6 +372,7 @@ public class ConcurrentContext extends Context {
      * 
      * @return <code>true</code> if concurrency is locally enabled;
      *         <code>false</code> otherwise.
+     * @see  #enter
      */
     public static boolean isEnabled() {
         return ((Boolean) ENABLED.get()).booleanValue();
@@ -575,7 +580,6 @@ public class ConcurrentContext extends Context {
 
     // Implements Context abstract method.
     protected void enterAction() {
-        _isEnabled = ConcurrentContext.isEnabled();
         _inheritedExecutors = getExecutors();
         _error = null;
         _initiatedCount = 0;

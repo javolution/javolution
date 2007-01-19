@@ -14,8 +14,8 @@ import javolution.context.PoolContext;
 import javolution.context.RealtimeObject;
 import javolution.context.ConcurrentContext.Logic;
 import javolution.lang.MathLib;
+import javolution.util.FastComparator;
 import javolution.util.FastTable;
-import j2me.lang.Comparable;
 
 /**
  * <p> This class holds {@link javolution.context} benchmark.</p>
@@ -49,7 +49,7 @@ final class PerfContext extends Javolution implements Runnable {
         println("-- Concurrent Context --");
         print("Quick Sort " + N + " elements - Concurrency disabled: ");
         ConcurrentContext.setEnabled(false);
-        for (int i=0; i < 100; i++) {
+        for (int i=0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
             quickSort(table);
@@ -60,7 +60,7 @@ final class PerfContext extends Javolution implements Runnable {
         print("Quick Sort " + N + " elements - Concurrency ("
                 + ConcurrentContext.CONCURRENCY.get() + ") enabled: ");
         ConcurrentContext.setEnabled(true);
-        for (int i=0; i < 100; i++) {
+        for (int i=0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
             quickSort(table);
@@ -81,7 +81,8 @@ final class PerfContext extends Javolution implements Runnable {
 
     private void quickSort(final FastTable table) {
         final int size = table.size();
-        if (size < 100) { 
+        if (size < 100) {
+            table.setValueComparator(INTEGER_COMPARATOR);
             table.sort();
         } else {
             final FastTable t1 = FastTable.newInstance();
@@ -110,9 +111,9 @@ final class PerfContext extends Javolution implements Runnable {
                  } else if (i2 >= t2.size()) {
                      table.set(i, t1.get(i1++));
                  } else {
-                     Comparable o1 = (Comparable) t1.get(i1);
-                     Comparable o2 = (Comparable) t2.get(i2);
-                     if (o1.compareTo(o2) < 0) {
+                     Integer o1 = (Integer) t1.get(i1);
+                     Integer o2 = (Integer) t2.get(i2);
+                     if (o1.intValue() < o2.intValue()) {
                          table.set(i, o1);
                          i1++;
                      } else {
@@ -125,6 +126,23 @@ final class PerfContext extends Javolution implements Runnable {
             FastTable.recycle(t2);
         }
     }
+    
+    // For J2ME compability.
+    private static final FastComparator INTEGER_COMPARATOR = new FastComparator() {
+
+        public boolean areEqual(Object o1, Object o2) {
+            return ((Integer)o1).intValue() == ((Integer)o2).intValue();
+        }
+
+        public int compare(Object o1, Object o2) {
+            return ((Integer)o2).intValue() - ((Integer)o1).intValue();
+        }
+
+        public int hashCodeOf(Object obj) {
+            return ((Integer)obj).intValue();
+        }        
+    };
+    
  
     private void benchmarkSmallObjects() {
 

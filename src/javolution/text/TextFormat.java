@@ -120,9 +120,10 @@ public abstract class TextFormat/*<T>*/{
     }
 
     /**
-     * This class represents a parsing cursor over a character sequence.
-     * A cursor location may start and end at any predefined location within 
-     * the character sequence iterated over.
+     * This class represents a parsing cursor over a character sequence
+     * (or subsequence). A cursor location may start and end at any predefined
+     * location within the character sequence iterated over (equivalent to
+     * parsing a subsequence of the character sequence input). 
      */
     public static class Cursor extends ParsePosition {
 
@@ -170,6 +171,7 @@ public abstract class TextFormat/*<T>*/{
             Cursor cursor = (Cursor) FACTORY.object();
             cursor._start = cursor._index = start;
             cursor._end = end;
+            cursor.setErrorIndex(-1);
             return cursor;
         }
 
@@ -212,7 +214,19 @@ public abstract class TextFormat/*<T>*/{
         }
 
         /**
-         * Sets the cursor index.
+         * Returns the error index of this cursor if 
+         * {@link #setErrorIndex set}; otherwise returns the current 
+         * {@link #getIndex index}.
+         * 
+         * @return the error index.
+         */
+        public final int getErrorIndex() {
+            int errorIndex = this.getErrorIndex();
+            return errorIndex >= 0 ? errorIndex : _index;
+        }
+
+        /**
+         * Sets the cursor current index.
          * 
          * @param i the index of the next character to parse.
          * @throws IllegalArgumentException 
@@ -225,9 +239,36 @@ public abstract class TextFormat/*<T>*/{
         }
 
         /**
-         * Indicates if this cursor has reached the end index.
+         * Sets this cursor start index.
          * 
-         * @return <code>this.getIndex() >= this.getEndIndex()</code>
+         * @param start the start index.
+         */
+        public final void setStartIndex(int start) {
+            _start = start;
+        }
+
+        /**
+         * Sets this cursor end index.
+         * 
+         * @param end the end index.
+         */
+        public final void setEndIndex(int end) {
+            _end = end;
+        }
+
+        /**
+         * Sets this cursor error index.
+         * 
+         * @param errorIndex the error index.
+         */
+        public final void setErrorIndex(int errorIndex) {
+            super.setErrorIndex(errorIndex);
+        }
+
+        /**
+         * Indicates if this cursor has not reached the end index.
+         * 
+         * @return <code>this.getIndex() &lt; this.getEndIndex()</code>
          */
         public final boolean hasNext() {
             return _index < _end;
@@ -369,5 +410,28 @@ public abstract class TextFormat/*<T>*/{
         public String toString() {
             return String.valueOf(_index);
         }
+        
+        /**
+         * Indicates if this cursor is equals to the specified object.
+         * 
+         * @return <code>true</code> if the specified object is a cursor 
+         *         at the same index; <code>false</code> otherwise.
+         */
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (!(obj instanceof Cursor))
+                return false;
+            return _index == ((Cursor)obj)._index;
+        }
+
+        /**
+         * Returns the hash code for this cursor.
+         * 
+         * @return the hash code value for this object
+         */
+        public int hashCode() {
+            return _index;
+        }
+        
     }
 }

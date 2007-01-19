@@ -8,7 +8,6 @@
  */
 package javolution.context;
 
-import j2me.io.Serializable;
 import j2me.lang.Comparable;
 import javolution.util.FastMap;
 import javolution.xml.XMLFormat;
@@ -169,7 +168,7 @@ public class PersistentContext extends Context {
      * @version 4.0, September 4, 2006
      */
     public static class Reference /*<T>*/implements
-            javolution.lang.Reference/*<T>*/, Serializable {
+            javolution.lang.Reference/*<T>*/ {
 
         /**
          * Holds the instances.

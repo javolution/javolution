@@ -51,11 +51,11 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     // with charAt(i) = char[(i>>R3)&M3][(i>>R2)&M2][(i>>R1)&M1][(i>>R0)&M0]
     // 
 
-    private static final int D0 = 5;
+    static final int D0 = 5;
 
-    private static final int M0 = (1 << D0) - 1;
+    static final int M0 = (1 << D0) - 1;
 
-    private static final int C0 = 1 << D0; // capacity chars0
+    static final int C0 = 1 << D0; // capacity chars0
 
     private static final int D1 = D0 + 2;
 
@@ -166,23 +166,21 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     /**
      * Returns the character at the specified index.
      *
-     * @param  index the index of the character.
+     * @param  i the index of the character.
      * @return the character at the specified index.
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *         (index >= this.length())</code>.
+     * @throws IndexOutOfBoundsException if <code>(i < 0) || (i >= this.length())</code>.
      */
-    public final char charAt(int index) { // Short to be inlined.
-        return (index < C0) && (index < _length) ? _chars0[index]
-                : charAt2(index);
+    public final char charAt(int i) {
+        return charsAt(i)[i & M0];
     }
-
-    private final char charAt2(int i) {
-        if (i >= _length)
-            throw new IndexOutOfBoundsException("index: " + i);
-        return (i < C1) ? _chars1[(i >> R1)][i & M0]
-                : (i < C2) ? _chars2[(i >> R2)][(i >> R1) & M1][i & M0]
-                        : _chars3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1][i
-                                & M0];
+    
+    // Returns character block.
+    final char[] charsAt(int i) { 
+        if ((i < 0) || (i >= _length))
+            throw new IndexOutOfBoundsException();
+        return (i < C0) ? _chars0 : (i < C1) ? _chars1[(i >> R1)]
+                : (i < C2) ? _chars2[(i >> R2)][(i >> R1) & M1]
+                        : _chars3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
     }
 
     /**
@@ -204,7 +202,12 @@ public class TextBuilder extends RealtimeObject implements Appendable,
                 || ((dstBegin + srcEnd - srcBegin) > dst.length))
             throw new IndexOutOfBoundsException();
         for (int i = srcBegin, j = dstBegin; i < srcEnd;) {
-            dst[j++] = charAt(i++);
+            char[] chars0 = charsAt(i); // Gets character block.
+            int i0 = i & M0;
+            int length = MathLib.min(C0 - i0, srcEnd - i);
+            System.arraycopy(chars0, i0, dst, j, length);
+            i += length;
+            j += length; 
         }
     }
 
@@ -219,16 +222,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     public final void setCharAt(int index, char c) {
         if ((index < 0) || (index >= _length))
             throw new IndexOutOfBoundsException("index: " + index);
-        if (index < C0) {
-            _chars0[index] = c;
-        } else if (index < C1) {
-            _chars1[(index >> R1)][index & M0] = c;
-        } else if (index < C2) {
-            _chars2[(index >> R2)][(index >> R1) & M1][index & M0] = c;
-        } else {
-            _chars3[(index >> R3)][(index >> R2) & M2][(index >> R1) & M1][index
-                    & M0] = c;
-        }
+        charsAt(index)[index & M0] = c;
     }
 
     /**
@@ -620,82 +614,81 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @return <code>this</code>
      * @throws IllegalArgumentException if <code>(digits &gt; 19)</code>)
      * @JVM-1.1+@
-   public final TextBuilder append(double d, int digits,
-            boolean scientific, boolean showZero)  {
-        if (digits > 19)
-            throw new IllegalArgumentException("digits: " + digits);
-        if (d != d)  // NaN
-            return append("NaN");
-        if (d < 0) { // Work with positive number.
-            d = -d;
-            append('-');
-        }
-        if (d == Double.POSITIVE_INFINITY) // Infinity.
-            return append("Infinity");
-        if (d == 0.0) { // Zero.
-            if (digits == 1)
-                return append("0.");
-            if (!showZero)
-                return append("0.0");
-            append("0.0");
-            for (int i = 2; i < digits; i++) {
-                append('0');
-            }
-            return this;
-        }
-        
-        // Find the exponent e such as: value == x.xxx * 10^e
-        int e = MathLib.floorLog10(d);
-        
-        long m;
-        if (digits < 0) { // Use 16 or 17 digits.
-            // Try 17 digits.
-            long m17 = MathLib.toLongPow10(d, (17 - 1) - e);
-            // Check if we can use 16 digits.
-            long m16 = m17 / 10;
-            double dd = MathLib.toDoublePow10(m16, e - 16 + 1);
-            if (dd == d) { // 16 digits is enough.
-                digits = 16;
-                m = m16;
-            } else { // We cannot remove the last digit.
-                digits = 17;
-                m = m17;
-            }
-        } else { // Use the specified number of digits.
-            m = MathLib.toLongPow10(d, (digits - 1) - e);
-        }
-        
-        // Formats.
-        if (scientific || (e >= digits)) {
-            // Scientific notation has to be used ("x.xxxEyy").
-            long pow10 = POW10_LONG[digits - 1];
-            int i = (int) (m / pow10); // Single digit.
-            append(DIGIT_TO_CHAR[i]);
-            m = m - pow10 * i;
-            appendFraction(m, digits - 1, showZero);
-            append('E');
-            append(e);
-        } else { // Dot within the string ("xxxx.xxxxx").
-            if (e < 0) {
-                append('0');
-            } else {
-                long pow10 = POW10_LONG[digits - e - 1];
-                long l = m / pow10;
-                append(l);
-                m = m - pow10 * l;
-            }
-            appendFraction(m, digits - e - 1, showZero);
-        }
-        return this;
-    }
-         private static final long[] POW10_LONG = new long[] { 1L, 10L, 100L, 1000L,
+     public final TextBuilder append(double d, int digits,
+     boolean scientific, boolean showZero)  {
+     if (digits > 19)
+     throw new IllegalArgumentException("digits: " + digits);
+     if (d != d)  // NaN
+     return append("NaN");
+     if (d < 0) { // Work with positive number.
+     d = -d;
+     append('-');
+     }
+     if (d == Double.POSITIVE_INFINITY) // Infinity.
+     return append("Infinity");
+     if (d == 0.0) { // Zero.
+     if (digits == 1)
+     return append("0.");
+     if (!showZero)
+     return append("0.0");
+     append("0.0");
+     for (int i = 2; i < digits; i++) {
+     append('0');
+     }
+     return this;
+     }
+     
+     // Find the exponent e such as: value == x.xxx * 10^e
+     int e = MathLib.floorLog10(d);
+     
+     long m;
+     if (digits < 0) { // Use 16 or 17 digits.
+     // Try 17 digits.
+     long m17 = MathLib.toLongPow10(d, (17 - 1) - e);
+     // Check if we can use 16 digits.
+     long m16 = m17 / 10;
+     double dd = MathLib.toDoublePow10(m16, e - 16 + 1);
+     if (dd == d) { // 16 digits is enough.
+     digits = 16;
+     m = m16;
+     } else { // We cannot remove the last digit.
+     digits = 17;
+     m = m17;
+     }
+     } else { // Use the specified number of digits.
+     m = MathLib.toLongPow10(d, (digits - 1) - e);
+     }
+     
+     // Formats.
+     if (scientific || (e >= digits)) {
+     // Scientific notation has to be used ("x.xxxEyy").
+     long pow10 = POW10_LONG[digits - 1];
+     int i = (int) (m / pow10); // Single digit.
+     append(DIGIT_TO_CHAR[i]);
+     m = m - pow10 * i;
+     appendFraction(m, digits - 1, showZero);
+     append('E');
+     append(e);
+     } else { // Dot within the string ("xxxx.xxxxx").
+     if (e < 0) {
+     append('0');
+     } else {
+     long pow10 = POW10_LONG[digits - e - 1];
+     long l = m / pow10;
+     append(l);
+     m = m - pow10 * l;
+     }
+     appendFraction(m, digits - e - 1, showZero);
+     }
+     return this;
+     }
+     private static final long[] POW10_LONG = new long[] { 1L, 10L, 100L, 1000L,
      10000L, 100000L, 1000000L, 10000000L, 100000000L, 1000000000L,
      10000000000L, 100000000000L, 1000000000000L, 10000000000000L,
      100000000000000L, 1000000000000000L, 10000000000000000L,
      100000000000000000L, 1000000000000000000L };
      /**/
 
-    
     final void appendFraction(long l, int digits, boolean showZero) {
         append('.');
         int length = MathLib.digitLength(l);
@@ -720,7 +713,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
             this.setLength(_length - trailingZeros);
         }
     }
-    
+
     /**
      * Inserts the specified character sequence at the specified location.
      *
@@ -800,7 +793,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @return the corresponding {@link Text} instance.
      */
     public final Text toText() {
-        return Text.valueOf(this, 0, this.length());
+        return Text.valueOf(this, 0, _length);
     }
 
     /**
@@ -810,10 +803,6 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      */
     public final String stringValue() {
         char[] data = new char[_length];
-        for (int i=0, n = _length >> D0; i < n; i++) {
-            
-            
-        }
         this.getChars(0, _length, data, 0);
         return new String(data, 0, _length);
     }
@@ -878,10 +867,10 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      *
      * @param sb the string builder.
      * @JVM-1.5+@
-    final void appendTo(StringBuilder sb) {
-        sb.append(_chars0, 0, _length);
-    }
-    /**/
+     final void appendTo(StringBuilder sb) {
+     sb.append(_chars0, 0, _length);
+     }
+     /**/
 
     /**
      * Indicates if this text builder has the same character content as the 
@@ -894,9 +883,13 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     public final boolean contentEquals(CharSequence csq) {
         if (csq.length() != _length)
             return false;
+        char[] chars = charsAt(0); // Gets character block.
         for (int i = 0; i < _length;) {
-            if (this.charAt(i) != csq.charAt(i++))
+            if (chars[i & M0] != csq.charAt(i++))
                 return false;
+            if ((i & M0) == 0) { // Changes character block.
+                chars = charsAt(i);
+            }
         }
         return true;
     }
@@ -912,9 +905,13 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     public final boolean contentEquals(String csq) {
         if (csq.length() != _length)
             return false;
+        char[] chars = charsAt(0); // Gets character block.
         for (int i = 0; i < _length;) {
-            if (this.charAt(i) != csq.charAt(i++))
+            if (chars[i & M0]  != csq.charAt(i++))
                 return false;
+            if ((i & M0) == 0) { // Changes character block.
+                chars = charsAt(i);
+            }
         }
         return true;
     }

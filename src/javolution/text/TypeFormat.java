@@ -18,7 +18,7 @@ import java.io.IOException;
  *     into primitive types and to format primitive types into any 
  *     <code>Appendable</code>.</p>
  *
- * <p> Methods from this class <b>do not create temporary objects</b>,
+ * <p> Methods from this class <b>do not create temporary objects</b> and
  *     are typically faster than standard library methods (see 
  *     <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).</p>
  *     

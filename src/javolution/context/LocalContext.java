@@ -7,7 +7,6 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.context;
-import j2me.io.Serializable;
 import j2me.lang.UnsupportedOperationException;
 import javolution.util.FastMap;
 
@@ -136,7 +135,7 @@ public class LocalContext extends Context {
      *     {@link ConcurrentThread concurrent threads} spawned from within the 
      *     same {@link LocalContext}.</p>
      */
-    public static class Reference/*<T>*/implements javolution.lang.Reference/*<T>*/, Serializable {
+    public static class Reference/*<T>*/implements javolution.lang.Reference/*<T>*/ {
 
         /**
          * Holds the default value for this reference.

@@ -330,7 +330,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 4.2.1 - January 2, 2007</SPAN></DIV>
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 4.2.3 - January 18, 2007</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -338,10 +338,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-4.2.1-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.2.3-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-4.2.1-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-4.2.3-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -726,8 +726,13 @@ body {
       <UL>
          <LI CLASS="simplespacer_body"><B>December 22, 2006: Javolution 4.2</B><BR>
          <UL>
+            <LI> Faster conversions from 
+                 <A HREF="api/javolution/text/TextBuilder.html">TextBuilder</A> to
+                 <A HREF="api/javolution/text/Text.html">Text</A> [4.2.3]</LI>
+            <LI> Optimized self-balancing tree structure for 
+                 <A HREF="api/javolution/text/Text.html">Text</A> [4.2.2]</LI>
             <LI> Removed static "caches" for current contexts/pools, slight 
-                 impact on performance (e.g. small objects creation) but better 
+                 impact on performance (e.g. small objects stack allocation); but better 
                  scalability on multi-cores CPUs [4.2.1]</LI>
             <LI> Default <A HREF="api/javolution/text/TypeFormat.html">formatting</A>
                  of <code>double</code> numbers uses a variable number 
@@ -810,22 +815,22 @@ body {
       </UL></TD>
       </TR>
    </TABLE>
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="6"
+   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="10"
           WIDTH="92%">
       <TR>
-      <TD CLASS="simplespacer_body style14">
-      <A HREF="http://www.opensource.org/"><IMG HEIGHT="60" BORDER="0" SRC="css/img/osi-certified-72x60.gif" WIDTH="72"></A></DIV>
-      </TD>
       <TD CLASS="simplespacer_body style14" >
-      <A HREF="http://javolution.dev.java.net/"><IMG HEIGHT="47" BORDER="0" SRC="css/img/javanet.gif" WIDTH="170"></A> 
+      <A HREF="http://javolution.dev.java.net/"><IMG BORDER="0" SRC="css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A> 
       </TD>
       <TD CLASS="simplespacer_body style14">
       <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
       </TD>
       <TD CLASS="simplespacer_body style14">
+      <A HREF="http://www.jcp.org/"><IMG BORDER="0" SRC="css/img/JCPlogoEC.jpg" WIDTH="125" HEIGHT="71"></A></DIV>
+      </TD>
+      <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : January 2, 2007<BR>
+      Revision      : January 18, 2007<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
