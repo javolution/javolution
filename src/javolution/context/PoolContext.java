@@ -252,11 +252,9 @@ public class PoolContext extends Context {
                ((LocalPools) _allPools.get(i)).reset();
            }
         }
-
         this.getLocalPools().deactivatePools();
         Context outer = this.getOuter();
         outer.getLocalPools().activatePools();
-
     }
 
     // Overrides.

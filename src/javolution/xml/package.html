@@ -26,7 +26,7 @@
          or any interface (e.g. <code>Serializable</code>) to be implemented.</li>
     <li> The XML mapping can be defined for a top class (or interface) and is automatically 
          inherited by all sub-classes (or all implementing classes).</li>
-    <li> Supports document cross-references (to avoid expanding objects already formatted).</li>
+    <li> Supports object references (to avoid expanding objects already formatted).</li>
     </ul>
 </p>
 
@@ -99,9 +99,9 @@
       <Area isVisible="true">
           <Paint type="Color" rgb="#F3EBC6">
           <Geometry type="Polygon">
-              <Point x="123" y="-34">
-              <Point x="-43" y="-34">
-              <Point x="-12" y="123">
+              <Vertex x="123" y="-34">
+              <Vertex x="-43" y="-34">
+              <Vertex x="-12" y="123">
           </Geometry>
       </Area>[/code]
    
@@ -234,21 +234,21 @@
                 public void write(Polygon polygon, XMLOutputElement xml) {
                     xml.setAttibutes("count", _vertices.length);
                     for (int i=0; i < _vertices.length; i++) {
-                        xml.add(_vertices[i], "Point", Point.class);
+                        xml.add(_vertices[i], "Vertex", Point.class);
                     }
                 }
                 public void read(XMLInputElement xml, Polygon polygon) {
                     int count = xml.getAttributes("count", 0);
                     polygon._vertices = new Point[count];
                     for (int i=0; i < count; i++) {
-                        _vertices[i] = xml.get("Point", Point.class);
+                        _vertices[i] = xml.get("Vertex", Point.class);
                     }
                 }
             };
         }
         Polygon[] polygons = new Polygon[] {p1, p2, p1};
         ...
-        TextBuilder xml = new TextBuilder();
+        TextBuilder xml = TextBuilder.newInstance();
         AppendableWriter out = new AppendableWriter().setOutput(xml)
         XMLObjectWriter writer = XMLObjectWriter.newInstance(out).setBinding(binding);
         writer.setXMLReferenceResolver(new XMLReferenceResolver()); // Enables cross-references.
@@ -259,14 +259,14 @@
     Prints the following (noticed that the first polygon and last one are being shared).[code]
       <Polygons length="3">
           <Polygon id="0" count="3">
-              <Point x="123" y="-34"/>  
-              <Point x="-43" y="-34"/>
-              <Point x="-12" y="123"/>
+              <Vertex x="123" y="-34"/>  
+              <Vertex x="-43" y="-34"/>
+              <Vertex x="-12" y="123"/>
           </Polygon>
           <Polygon id="1" count="3">
-              <Point x="-43" y="-34"/>
-              <Point x="123" y="-34"/>
-              <Point x="-12" y="123"/>
+              <Vertex x="-43" y="-34"/>
+              <Vertex x="123" y="-34"/>
+              <Vertex x="-12" y="123"/>
           </Polygon>
           <Polygon ref="0"/>
       </Polygons>[/code] 

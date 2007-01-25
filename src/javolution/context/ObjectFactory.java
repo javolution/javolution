@@ -132,7 +132,7 @@ public abstract class ObjectFactory/*<T>*/{
      * @return a recycled, pre-allocated or new factory object.
      */
     public Object/*{T}*/object() {
-        return currentPool().next();
+        return currentPool().next(); 
     }
 
     /**
@@ -155,17 +155,19 @@ public abstract class ObjectFactory/*<T>*/{
         ObjectPool/*<T>*/ pool = (ObjectPool/*<T>*/) _currentPool.get();
         return  (pool._user != null) ? pool : activatePool();
     }
-    final ObjectPool/*<T>*/ activatePool() {
+    
+    private final ObjectPool/*<T>*/ activatePool() {
         LocalPools pools = Context.current().getLocalPools();
         ObjectPool pool = pools.getPool(this, true);
         _currentPool.set(pool);
         return pool;
     }
+
     final ThreadLocal _currentPool = new ThreadLocal() {
         protected Object initialValue() {
-            return newHeapPool(); // Dummy.
+            return newHeapPool(); 
         }
-    };
+    };    
 
     /**
      * Cleans-up this factory's objects for future reuse. 

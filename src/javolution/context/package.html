@@ -283,25 +283,27 @@ Time = 7.708242</pre>
         protected char[] create() { return new char[1024]; }
     };
         
-    // Immediate recycling of temporary variables.
-    //
+    // Immediate recycling of local variables (increases cache performance by reusing the same objects).
     public class LargeInteger extends RealtimeObject {
         private static Factory<LargeInteger> FACTORY = new Factory<LargeInteger>() {...};
         ...
         public LargeInteger gcd(LargeInteger that) {
-            LargeInteger a = this.abs();
-            LargeInteger b = that.abs();
-            while (!b.isZero()) {
-                LargeInteger tmp = a.divide(b); // Returns always a new object.
-                LargeInteger c = tmp.getRemainder();
-                FACTORY.recycle(tmp); // Immediate recycling.
-                if ((a != this) && (a != that) && // a is not a current input,
-                        (a != b) && (a != c)) // nor a persistent object,
-                    FACTORY.recycle(a); // it is then safe to recycle.
-                a = b;
-                b = c;
+            PoolContext.enter(); // Starts local stack allocation.
+            try {
+                LargeInteger a = this.abs();
+                LargeInteger b = that.abs();
+                while (!b.isZero()) {
+                    LargeInteger tmp = a.divide(b); 
+                    LargeInteger c = tmp.getRemainder();
+                    if (tmp.isLocal()) FACTORY.recycle(tmp); // Immediate recycling.
+                    if (a.isLocal()) FACTORY.recycle(a); // Immediate recycling.
+                    a = b;
+                    b = c;
+                }
+                return a.export();
+            } finally {
+                PoolContext.exit(); // Ends local stack allocation.
             }
-            return a;
         }
     }[/code]</p>
     </li><p></p>

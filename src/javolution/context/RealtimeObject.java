@@ -279,15 +279,12 @@ public abstract class RealtimeObject implements Realtime {
         }
 
         // Overrides.
-        public final ObjectPool/*Pool*/currentPool() {
-            Pool pool = (Pool) _currentPool.get();
-            return (pool._user != null) ? pool : (Pool) activatePool();
-        }
-
-        // Overrides.
         public final Object/*{T}*/object() {
-            final Pool pool = (Pool) _currentPool.get();
-            return ((pool._user != null) ? pool.next() : activatePool().next());
+            // Sligthly faster for the last pool activated 
+            // (most likely in the cpu cache or from high priority thread).
+            final Pool pool = _lastActivated;
+            return (pool._user == Thread.currentThread()) ? pool.next()
+                    : currentPool().next();
         }
 
         // Overrides.
@@ -299,6 +296,22 @@ public abstract class RealtimeObject implements Realtime {
                 pool.recycle(obj);
             }
         }
+
+        // Overrides.
+        public final ObjectPool/*Pool*/currentPool() {
+            final Pool pool = (Pool) _currentPool.get();
+            return (pool._user != null) ? pool : activatePool();
+        }
+
+        private final Pool activatePool() {
+            LocalPools pools = Context.current().getLocalPools();
+            Pool pool = (Pool) pools.getPool(this, true);
+            _currentPool.set(pool);
+            _lastActivated = pool;
+            return pool;
+        }
+
+        private Pool _lastActivated = (Pool) newHeapPool(); // Dummy to avoid null. 
 
         // Overrides.
         protected ObjectPool/*Pool*/newStackPool() {
@@ -406,14 +419,17 @@ public abstract class RealtimeObject implements Realtime {
 
             private Object/*{T}*/allocate() {
                 _next = _activeTail; // Avoids null for _next.
-                if (_isStack) {
-                    _memoryArea.executeInArea(_allocate);
-                    return (Object/*{T}*/) _activeTail._previous;
-                } else { // Heap.
-                    if (_size != 0)
-                        removeUse(); // Avoids keeping reference to used objects. 
-                    return create();
-                }
+                if (_isStack)
+                    return stackAllocate();
+                // Heap.
+                if (_size != 0)
+                    removeUse(); // Avoids keeping reference to used objects. 
+                return create();
+            }
+
+            private Object/*{T}*/stackAllocate() {
+                _memoryArea.executeInArea(_allocate);
+                return (Object/*{T}*/) _activeTail._previous;
             }
 
             private final Runnable _allocate = new Runnable() {
@@ -425,7 +441,7 @@ public abstract class RealtimeObject implements Realtime {
                 }
             };
 
-            // Removes the oldest pool object used and never recycled.
+            // Removes the oldest heap pool object used and never recycled.
             private void removeUse() {
                 RealtimeObject rtObj = _activeHead._next;
                 if (rtObj == _activeTail)
@@ -488,7 +504,7 @@ public abstract class RealtimeObject implements Realtime {
                 String str = _isStack ? "Stack Pool for " : "Heap Pool for ";
                 return str + Factory.this.getClass() + " (Size: " + _size + ")";
             }
-            
+
         }
 
         /**
