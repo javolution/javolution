@@ -47,7 +47,7 @@ public final class MathLib {
         // or equal to Integer.MAX_VALUE (otherwise we would have exited before).
         final int interval = 1 + max - min; // Positive.
         if (interval <= 0)
-            throw new Error("Interval error"); // In case.
+            throw new Error("Interval [" + min + ".." + max + "] error"); // In case.
         return MathLib.abs(next % interval) + min;
     }
 

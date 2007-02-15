@@ -1347,7 +1347,7 @@ public final class TypeFormat {
     public static Appendable format(long l, int radix, Appendable a)
             throws IOException {
         if (a instanceof TextBuilder)
-            return ((TextBuilder) a).append(l);
+            return ((TextBuilder) a).append(l, radix);
         TextBuilder tmp = TextBuilder.newInstance();
         tmp.append(l, radix);
         appendTo(a, tmp);

@@ -64,7 +64,7 @@ final class AttributesImpl implements Attributes, Reusable {
     // Implements Attributes.
     public CharArray getURI(int index) {
         return (index >= 0 && index < _length) ? _namespaces
-                .getNamespaceURI(_prefixes[index]) : null;
+                .getNamespaceURINullAllowed(_prefixes[index]) : null;
     }
 
     // Implements Attributes.
@@ -101,7 +101,7 @@ final class AttributesImpl implements Attributes, Reusable {
                     "null namespace URI is not allowed");
         for (int i = 0; i < _length; i++) {
             if (_localNames[i].equals(localName)) {
-                CharArray ns = _namespaces.getNamespaceURI(_prefixes[i]);
+                CharArray ns = _namespaces.getNamespaceURINullAllowed(_prefixes[i]);
                 if ((ns != null) && ns.equals(uri))
                     return i;
             }

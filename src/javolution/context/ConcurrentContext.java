@@ -73,7 +73,7 @@ import javolution.lang.Reflection;
  *                 }
  *                 
  *                 // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
- *                 LargetInteger product = ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
+ *                 LargeInteger product = ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
  *                 return product.export();
  *             } finally {
  *                 PoolContext.exit();

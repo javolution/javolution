@@ -51,11 +51,11 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     // with charAt(i) = char[(i>>R3)&M3][(i>>R2)&M2][(i>>R1)&M1][(i>>R0)&M0]
     // 
 
-    static final int D0 = 5;
+    private static final int D0 = 5;
 
-    static final int M0 = (1 << D0) - 1;
+    private static final int M0 = (1 << D0) - 1;
 
-    static final int C0 = 1 << D0; // capacity chars0
+    private static final int C0 = 1 << D0; // capacity chars0
 
     private static final int D1 = D0 + 2;
 
@@ -171,13 +171,13 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @throws IndexOutOfBoundsException if <code>(i < 0) || (i >= this.length())</code>.
      */
     public final char charAt(int i) {
+        if ((i < 0) || (i >= _length))
+            throw new IndexOutOfBoundsException();
         return charsAt(i)[i & M0];
     }
     
     // Returns character block.
     final char[] charsAt(int i) { 
-        if ((i < 0) || (i >= _length))
-            throw new IndexOutOfBoundsException();
         return (i < C0) ? _chars0 : (i < C1) ? _chars1[(i >> R1)]
                 : (i < C2) ? _chars2[(i >> R2)][(i >> R1) & M1]
                         : _chars3[(i >> R3)][(i >> R2) & M2][(i >> R1) & M1];
@@ -197,9 +197,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      */
     public final void getChars(int srcBegin, int srcEnd, char[] dst,
             int dstBegin) {
-        if ((srcBegin < 0) || (dstBegin < 0) || (srcBegin > srcEnd)
-                || (srcEnd > this.length())
-                || ((dstBegin + srcEnd - srcBegin) > dst.length))
+        if ((srcBegin < 0) || (srcBegin > srcEnd) || (srcEnd > this._length))
             throw new IndexOutOfBoundsException();
         for (int i = srcBegin, j = dstBegin; i < srcEnd;) {
             char[] chars0 = charsAt(i); // Gets character block.

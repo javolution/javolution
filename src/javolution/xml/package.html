@@ -97,11 +97,11 @@
  
     Here is an example of valid XML representation for an area:[code]
       <Area isVisible="true">
-          <Paint type="Color" rgb="#F3EBC6">
+          <Paint type="Color" rgb="#F3EBC6" />
           <Geometry type="Polygon">
-              <Vertex x="123" y="-34">
-              <Vertex x="-43" y="-34">
-              <Vertex x="-12" y="123">
+              <Vertex x="123" y="-34" />
+              <Vertex x="-43" y="-34" />
+              <Vertex x="-12" y="123" />
           </Geometry>
       </Area>[/code]
    
@@ -259,14 +259,14 @@
     Prints the following (noticed that the first polygon and last one are being shared).[code]
       <Polygons length="3">
           <Polygon id="0" count="3">
-              <Vertex x="123" y="-34"/>  
-              <Vertex x="-43" y="-34"/>
-              <Vertex x="-12" y="123"/>
+              <Vertex x="123" y="-34" />  
+              <Vertex x="-43" y="-34" />
+              <Vertex x="-12" y="123" />
           </Polygon>
           <Polygon id="1" count="3">
-              <Vertex x="-43" y="-34"/>
-              <Vertex x="123" y="-34"/>
-              <Vertex x="-12" y="123"/>
+              <Vertex x="-43" y="-34" />
+              <Vertex x="123" y="-34" />
+              <Vertex x="-12" y="123" />
           </Polygon>
           <Polygon ref="0"/>
       </Polygons>[/code] 

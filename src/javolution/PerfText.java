@@ -273,7 +273,7 @@ final class PerfText extends Javolution implements Runnable {
             for (int j = COUNT; --j >= 0;) {
                 txt = txt.concat(TEXT);
             }
-            keepBestTime(COUNT);
+            keepBestTime(COUNT);            
         }
         println(endTime());
 

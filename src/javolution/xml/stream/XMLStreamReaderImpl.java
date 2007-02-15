@@ -838,22 +838,22 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         if (_readIndex >= _readCount)
             reloadBuffer();
         if (_readCount <= 0) {
+            // _state == STATE_CHARACTERS (otherwise reloadBuffer() exception)
             if (_eventType == END_DOCUMENT)
                 throw new XMLStreamException(
                         "End document has already been reached");
-            int length = _index - _start - 1;
-            if ((_state == STATE_CHARACTERS) && (length > 0)) { // Flushes trailing characters.
+            int length = _index - _start;
+            if (length > 0) { // Flushes trailing characters.
                 if (_charactersPending) {
                     _text.setArray(_data, _text.offset(), _text.length()
                             + length); // Coalescing.
                 } else {
                     _text = newSeq(_start, length);
                 }
+                _start = _index;
                 _eventType = CHARACTERS;
-                _state = STATE_CHARACTERS;
             } else {
                 _eventType = END_DOCUMENT;
-                _state = STATE_CHARACTERS;
             }
             return true;
         }
@@ -1202,7 +1202,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         if (_eventType != XMLStreamConstants.START_ELEMENT)
             throw illegalState("Not a start element");
         CharArray prefix = _attributes.getPrefix(index);
-        return (prefix == null) ? null : _namespaces.getNamespaceURI(prefix);
+        return _namespaces.getNamespaceURINullAllowed(prefix);
     }
 
     public CharArray getAttributePrefix(int index) {
@@ -1292,11 +1292,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     }
 
     public CharArray getNamespaceURI() {
-        if ((_eventType != XMLStreamConstants.START_ELEMENT)
-                && (_eventType != XMLStreamConstants.END_ELEMENT))
-            throw illegalState("Not a start or end element");
-        CharArray prefix = getPrefix();
-        return (prefix != null) ? getNamespaceURI(prefix) : null;
+        return _namespaces.getNamespaceURINullAllowed(getPrefix());
     }
 
     public CharArray getPrefix() {

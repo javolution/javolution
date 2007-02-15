@@ -66,7 +66,7 @@ import javolution.xml.stream.XMLStreamException;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton
- * @version 4.2, January 11, 2007
+ * @version 4.2, February 14, 2007
  */
 public abstract class Text extends RealtimeObject implements CharSequence,
         Comparable, Serializable, Immutable {
@@ -76,17 +76,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      */
     private static final FastMap INTERN_INSTANCES = new FastMap()
             .setKeyComparator(FastComparator.LEXICAL);
-
-    private static String _tmpString;
-
-    private static final Runnable INTERN_STRING = new Runnable() {
-        public void run() {
-            StringWrapper txt = new StringWrapper();
-            txt._count = _tmpString.length();
-            txt._string = _tmpString;
-            INTERN_INSTANCES.put(_tmpString, txt);
-        }
-    };
 
     /**
      * Holds an empty character sequence.
@@ -130,11 +119,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     int _count;
 
     /**
-     * Holds the hash code or <code>0</code> if unknown.
-     */
-    int _hashCode;
-
-    /**
      * Default constructor.
      */
     private Text() {
@@ -150,73 +134,25 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @see    Realtime#toText
      */
     public static Text valueOf(Object obj) {
-        if (obj instanceof Realtime) {
+        if (obj instanceof Realtime)
             return ((Realtime) obj).toText();
-        } else if (obj instanceof String) {
-            return StringWrapper.newInstance((String) obj);
-        } else if (obj instanceof CharSequence) {
-            final CharSequence csq = (CharSequence) obj;
-            return Text.valueOf(csq, 0, csq.length());
-        } else if (obj != null) {
-            return StringWrapper.newInstance(obj.toString());
-        } else {
-            return NULL;
-        }
+        if (obj != null)
+            return Text.valueOf(obj.toString());
+        return NULL;
     }
 
-    /**
-     * Returns the text that contains the specified subsequence of characters.
-     *   
-     * @param  csq the character sequence source.
-     * @param  start the index of the first character.
-     * @param  end the index after the last character.
-     * @return the corresponding text instance.
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > csq.length())</code>
-     */
-    public static Text valueOf(CharSequence csq, int start, int end) {
-        if ((start < 0) || (end < 0) || (start > end) || (end > csq.length()))
-            throw new IndexOutOfBoundsException();
-        if (csq instanceof TextBuilder)
-            return valueOf((TextBuilder) csq, start, end);
-        final int length = end - start;
-        if (length <= Primitive.BLOCK_SIZE) {
+    // Converts String to Text.
+    private static Text valueOf(String str) {
+        int length = str.length();
+        if (str.length() <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance(length);
-            for (int i = 0; i < length;) {
-                text._data[i] = csq.charAt(start + i++);
-            }
+            str.getChars(0, length, text._data, 0);
             return text;
-        } else {
-            final int middle = start + (length >> 1);
-            Composite text = Composite.newInstance(Text.valueOf(csq, start,
-                    middle), Text.valueOf(csq, middle, end));
-            return text;
-        }
-    }
-
-    // Optimized version for TextBuilder.
-    static Text valueOf(TextBuilder tb, int start, int end) {
-        final int length = end - start;
-        if (length <= Primitive.BLOCK_SIZE) {
-            Primitive text = Primitive.newInstance(length);
-            if ((start & TextBuilder.M0) + length <= TextBuilder.C0) {
-                // Single block copy.
-                char[] chars = tb.charsAt(start);
-                System.arraycopy(chars, start & TextBuilder.M0, text._data, 0,
-                        length);
-            } else { // Crossing of block boundary.
-                for (int i = 0; i < length;) {
-                    text._data[i] = tb.charAt(start + i++);
-                }
-            }
-            return text;
-        } else { // Cut on the middle on a block boundary if possible.
-            int middle = (start + (length >> 1));
-            if ((middle & ~TextBuilder.M0) > start) {
-                middle &= ~TextBuilder.M0;
-            }
-            Composite text = Composite.newInstance(Text.valueOf(tb, start,
-                    middle), Text.valueOf(tb, middle, end));
+        } else { // Splits on a block boundary.
+            int half = ((length + Primitive.BLOCK_SIZE) >> 1)
+                    & Primitive.BLOCK_MASK;
+            Composite text = Composite.newInstance(Text.valueOf(str.substring(
+                    0, half)), Text.valueOf(str.substring(half, length)));
             return text;
         }
     }
@@ -248,15 +184,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             throw new IndexOutOfBoundsException();
         if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance(length);
-            for (int i = 0; i < length;) {
-                text._data[i] = chars[offset + i++];
-            }
+            System.arraycopy(chars, offset, text._data, 0, length);
             return text;
-        } else {
-            final int middle = offset + (length >> 1);
+        } else { // Splits on a block boundary.
+            int half = ((length + Primitive.BLOCK_SIZE) >> 1)
+                    & Primitive.BLOCK_MASK;
             Composite text = Composite.newInstance(Text.valueOf(chars, offset,
-                    middle - offset), Text.valueOf(chars, middle, offset
-                    + length - middle));
+                    half), Text.valueOf(chars, offset + half, length - half));
             return text;
         }
     }
@@ -422,41 +356,40 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return <code>this + that</code>
      */
     public final Text concat(Text that) {
-        if (this._count == 0) {
-            return that;
-        } else if (that._count == 0) {
-            return this;
-        } else {
-            return this.concat(that, (Factory.Pool) Composite.FACTORY
-                    .currentPool());
-        }
-    }
-
-    private final Text concat(Text that, Factory.Pool pool) {
         // All Text instances are maintained balanced:
         //   (head < tail * 2) & (tail < head * 2)
-        if (((this._count << 1) < that._count) && (that instanceof Composite)) {
+
+        final int length = this._count + that._count;
+        if (length <= Primitive.BLOCK_SIZE) { // Merges to primitive.
+            Primitive text = Primitive.newInstance(length);
+            this.getChars(0, this._count, text._data, 0);
+            that.getChars(0, that._count, text._data, this._count);
+            return text;
+
+        } else if (((this._count << 1) < that._count)
+                && (that instanceof Composite)) {
             // this too small, returns (this + that/2) + (that/2) 
             Composite thatComposite = (Composite) that;
             if (thatComposite._head._count > thatComposite._tail._count) {
                 // Rotates to concatenate with smaller part.
-                thatComposite = thatComposite.rightRotation(pool);
+                thatComposite = thatComposite.rightRotation();
             }
-            return Composite.newInstance(
-                    this.concat(thatComposite._head, pool),
-                    thatComposite._tail, pool);
+            return Composite.newInstance(this.concat(thatComposite._head),
+                    thatComposite._tail);
+
         } else if (((that._count << 1) < this._count)
                 && (this instanceof Composite)) {
             // that too small, returns (this/2) + (this/2 concat that)
             Composite thisComposite = (Composite) this;
             if (thisComposite._tail._count > thisComposite._head._count) {
                 // Rotates to concatenate with smaller part.
-                thisComposite = thisComposite.leftRotation(pool);
+                thisComposite = thisComposite.leftRotation();
             }
             return Composite.newInstance(thisComposite._head,
-                    thisComposite._tail.concat(that, pool), pool);
+                    thisComposite._tail.concat(that));
+
         } else { // this and that balanced (or not composite).
-            return Composite.newInstance(this, that, pool);
+            return Composite.newInstance(this, that);
         }
     }
 
@@ -483,10 +416,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *            (index > this.length())</code>
      */
     public final Text insert(int index, Text txt) {
-        // Concatenates the smallest part first.
-        return ((index << 1) < _count) ? this.subtext(0, index).concat(txt)
-                .concat(this.subtext(index)) : this.subtext(0, index).concat(
-                txt.concat(this.subtext(index)));
+        return this.subtext(0, index).concat(txt).concat(this.subtext(index));
     }
 
     /**
@@ -499,6 +429,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *         (start > end) || (end > this.length()</code>
      */
     public final Text delete(int start, int end) {
+        if (start > end) throw new IndexOutOfBoundsException();
         return this.subtext(0, start).concat(this.subtext(end));
     }
 
@@ -721,9 +652,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      */
     public static Text intern(final CharSequence csq) {
         Text text = (Text) INTERN_INSTANCES.get(csq); // Thread-Safe - No entry removed.
-        if (text != null)
-            return text;
-        return Text.intern(csq.toString());
+        return (text != null) ? text : Text.internImpl(csq);
     }
 
     /**
@@ -734,18 +663,20 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      */
     public static Text intern(final String str) {
         Text text = (Text) INTERN_INSTANCES.get(str); // Thread-Safe - No entry removed.
-        if (text != null)
-            return text;
-        synchronized (INTERN_INSTANCES) {
-            // Synchronized check to ensure unicity.
-            text = (Text) INTERN_INSTANCES.get(str);
-            if (text != null)
-                return text;
-            _tmpString = str;
-            MemoryArea.getMemoryArea(INTERN_INSTANCES).executeInArea(
-                    INTERN_STRING);
-        }
-        return (Text) INTERN_INSTANCES.get(str);
+        return (text != null) ? text : Text.internImpl(str);
+    }
+
+    private static synchronized Text internImpl(final Object obj) {
+        if (INTERN_INSTANCES.containsKey(obj)) // Synchronized check.
+            return (Text) INTERN_INSTANCES.get(obj);
+        MemoryArea.getMemoryArea(INTERN_INSTANCES).executeInArea(
+                new Runnable() {
+                    public void run() {
+                        Text txt = (Text) Text.valueOf(obj).moveHeap();
+                        INTERN_INSTANCES.put(txt, txt);
+                    }
+                });
+        return (Text) INTERN_INSTANCES.get(obj);
     }
 
     /**
@@ -825,14 +756,12 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * @return the hash code value.
      */
     public final int hashCode() {
-        if (_hashCode != 0)
-            return _hashCode;
-        int h = _hashCode;
+        int h = 0;
         final int length = this.length();
         for (int i = 0; i < length;) {
             h = 31 * h + charAt(i++);
         }
-        return _hashCode = h;
+        return h;
     }
 
     /**
@@ -859,14 +788,20 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     }
 
     /**
-     * Returns a compact copy of this text allocated on the stack when 
-     * executing in a {@link javolution.context.PoolContext PoolContext}.
-     *
-     * @return a local compact copy of this text.
+     * Converts the characters of this text to lower case.
+     * 
+     * @return the text in lower case.
+     * @see Character#toLowerCase(char) 
      */
-    public final Text copy() {
-        return Text.valueOf(this, 0, _count);
-    }
+    public abstract Text toLowerCase();
+
+    /**
+     * Converts the characters of this text to upper case.
+     * 
+     * @return the text in lower case.
+     * @see Character#toUpperCase(char) 
+     */
+    public abstract Text toUpperCase();
 
     /**
      * Returns the depth of the internal tree used to represent this text.
@@ -934,22 +869,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *         (start > end) || (end > this.length())</code>
      */
     public abstract void getChars(int start, int end, char dest[], int destPos);
-
-    /**
-     * Converts the characters of this text to lower case.
-     * 
-     * @return the text in lower case.
-     * @see Character#toLowerCase(char) 
-     */
-    public abstract Text toLowerCase();
-
-    /**
-     * Converts the characters of this text to upper case.
-     * 
-     * @return the text in lower case.
-     * @see Character#toUpperCase(char) 
-     */
-    public abstract Text toUpperCase();
 
     /**
      * Returns the <code>String</code> value  corresponding to this text.
@@ -1192,6 +1111,28 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         return -1;
     }
 
+    /**
+     * Converts a text builder to a text instance.
+     * 
+     * @param  start the index of the first character inclusive.
+     * @param  end the index of the last character exclusive.
+     * @return the corresponding text instance.
+     */
+    static Text valueOf(TextBuilder tb, int start, int end) {
+        final int length = end - start;
+        if (length <= Primitive.BLOCK_SIZE) {
+            Primitive text = Primitive.newInstance(length);
+            tb.getChars(start, end, text._data, 0);
+            return text;
+        } else { // Splits on a block boundary.
+            int half = ((length + Primitive.BLOCK_SIZE) >> 1)
+                    & Primitive.BLOCK_MASK;
+            Composite text = Composite.newInstance(Text.valueOf(tb, start,
+                    start + half), Text.valueOf(tb, start + half, end));
+            return text;
+        }
+    }
+
     //
     ////////////////////////////////////////////////////////////////////////////
 
@@ -1203,7 +1144,12 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         /**
          * Holds the default size for primitive blocks of characters.
          */
-        private static final int BLOCK_SIZE = 1 << TextBuilder.D0;
+        private static final int BLOCK_SIZE = 1 << 5;
+
+        /**
+         * Holds the mask used to ensure a block boundary cesures.
+         */
+        private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
 
         /**
          * Holds the associated factory.
@@ -1232,13 +1178,8 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * @param the length of this primitive text.
          */
         private static Primitive newInstance(int length) {
-            return newInstance(length, (Factory.Pool) FACTORY.currentPool());
-        }
-
-        private static Primitive newInstance(int length, Factory.Pool pool) {
-            Primitive text = (Primitive) pool.next();
+            Primitive text = (Primitive) FACTORY.object();
             text._count = length;
-            text._hashCode = 0;
             return text;
         }
 
@@ -1274,26 +1215,16 @@ public abstract class Text extends RealtimeObject implements CharSequence,
 
         // Implements abstract method.
         public Text subtext(int start, int end) {
-            if ((start == 0) && (end == _count))
-                return this;
             if ((start < 0) || (start > end) || (end > _count))
                 throw new IndexOutOfBoundsException();
+            if ((start == 0) && (end == _count))
+                return this;
             if (start == end)
                 return Text.EMPTY;
-            Primitive text = Primitive.newInstance(end - start);
-            for (int i = start, j = 0; i < end;) {
-                text._data[j++] = _data[i++];
-            }
+            int length = end - start;
+            Primitive text = Primitive.newInstance(length);
+            System.arraycopy(_data, start, text._data, 0, length);
             return text;
-        }
-
-        // Implements abstract method.
-        public void getChars(int start, int end, char dest[], int destPos) {
-            if ((end > _count) || (end < start))
-                throw new IndexOutOfBoundsException();
-            for (int i = start, j = destPos; i < end;) {
-                dest[j++] = _data[i++];
-            }
         }
 
         // Implements abstract method.
@@ -1312,6 +1243,13 @@ public abstract class Text extends RealtimeObject implements CharSequence,
                 text._data[i] = Character.toUpperCase(_data[i++]);
             }
             return text;
+        }
+
+        // Implements abstract method.
+        public void getChars(int start, int end, char dest[], int destPos) {
+            if ((start < 0) || (end > _count) || (start > end))
+                throw new IndexOutOfBoundsException();
+            System.arraycopy(_data, start, dest, destPos, end - start);
         }
 
         // Implements abstract method.
@@ -1359,13 +1297,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * @return the corresponding composite text. 
          */
         private static Composite newInstance(Text head, Text tail) {
-            return newInstance(head, tail, (Factory.Pool) FACTORY.currentPool());
-        }
-
-        private static Composite newInstance(Text head, Text tail,
-                Factory.Pool pool) {
-            Composite text = (Composite) pool.next();
-            text._hashCode = 0;
+            Composite text = (Composite) FACTORY.object();
             text._count = head._count + tail._count;
             text._head = head;
             text._tail = tail;
@@ -1376,10 +1308,9 @@ public abstract class Text extends RealtimeObject implements CharSequence,
          * Returns the right rotation of this composite.
          * The resulting text is still balanced if head > tail.
          * 
-         * @param pool the current pool.
          * @return the same text with a different structure.
          */
-        private Composite rightRotation(Factory.Pool pool) {
+        private Composite rightRotation() {
             // See: http://en.wikipedia.org/wiki/Tree_rotation
             if (!(this._head instanceof Composite))
                 return this; // Cannot rotate.
@@ -1387,18 +1318,16 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             Text A = P._head;
             Text B = P._tail;
             Text C = this._tail;
-            return Composite.newInstance(A, Composite.newInstance(B, C, pool),
-                    pool);
+            return Composite.newInstance(A, Composite.newInstance(B, C));
         }
 
         /**
          * Returns the left rotation of this composite.
          * The resulting text is still balanced if tail > head.
          * 
-         * @param pool the current pool.
          * @return the same text with a different structure.
          */
-        private Composite leftRotation(Factory.Pool pool) {
+        private Composite leftRotation() {
             // See: http://en.wikipedia.org/wiki/Tree_rotation
             if (!(this._tail instanceof Composite))
                 return this; // Cannot rotate.
@@ -1406,8 +1335,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
             Text B = Q._head;
             Text C = Q._tail;
             Text A = this._head;
-            return Composite.newInstance(Composite.newInstance(A, B, pool), C,
-                    pool);
+            return Composite.newInstance(Composite.newInstance(A, B), C);
         }
 
         // Implements abstract method.
@@ -1473,12 +1401,14 @@ public abstract class Text extends RealtimeObject implements CharSequence,
 
         // Implements abstract method.
         public Text toLowerCase() {
-            return newInstance(_head.toLowerCase(), _tail.toLowerCase());
+            return Composite.newInstance(_head.toLowerCase(), _tail
+                    .toLowerCase());
         }
 
         // Implements abstract method.
         public Text toUpperCase() {
-            return newInstance(_head.toUpperCase(), _tail.toUpperCase());
+            return Composite.newInstance(_head.toUpperCase(), _tail
+                    .toUpperCase());
         }
 
         // Implements abstract method.
@@ -1499,121 +1429,4 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         }
     }
 
-    /**
-     * This class represents a String Wrapper.
-     */
-    private static final class StringWrapper extends Text {
-
-        /**
-         * Holds the associated factory.
-         */
-        private static final Factory FACTORY = new Factory() {
-
-            public Object create() {
-                return new StringWrapper();
-            }
-        };
-
-        /**
-         * Holds the string.
-         */
-        private String _string;
-
-        /**
-         * Holds the offset.
-         */
-        private int _offset;
-
-        /**
-         * Default constructor.
-         */
-        private StringWrapper() {
-        }
-
-        /**
-         * Returns a new/recycled text wrapping the specified string.
-         * 
-         * @param str the string to wrap.
-         * @return the corresponding text instance. 
-         */
-        private static StringWrapper newInstance(String str) {
-            StringWrapper text = (StringWrapper) FACTORY.object();
-            text._count = str.length();
-            text._hashCode = 0;
-            text._string = str;
-            text._offset = 0;
-            return text;
-        }
-
-        // Implements abstract method.
-        public int depth() {
-            return 0;
-        }
-
-        // Implements abstract method.
-        public char charAt(int index) {
-            if ((index >= _count) || (index < 0))
-                throw new IndexOutOfBoundsException();
-            return _string.charAt(_offset + index);
-        }
-
-        // Implements abstract method.
-        public int indexOf(char c, int fromIndex) {
-            for (int i = Math.max(fromIndex, 0); i < _count; i++) {
-                if (_string.charAt(_offset + i) == c)
-                    return i;
-            }
-            return -1;
-        }
-
-        // Implements abstract method.
-        public int lastIndexOf(char c, int fromIndex) {
-            for (int i = Math.min(fromIndex, _count - 1); i >= 0; i--) {
-                if (_string.charAt(_offset + i) == c)
-                    return i;
-            }
-            return -1;
-        }
-
-        // Implements abstract method.
-        public Text subtext(int start, int end) {
-            if ((start == 0) && (end == _count))
-                return this;
-            if ((start < 0) || (start > end) || (end > _count))
-                throw new IndexOutOfBoundsException();
-            if (start == end)
-                return Text.EMPTY;
-            StringWrapper text = (StringWrapper) FACTORY.object();
-            text._count = end - start;
-            text._hashCode = 0;
-            text._string = _string;
-            text._offset = _offset + start;
-            return text;
-        }
-
-        // Implements abstract method.
-        public void getChars(int start, int end, char dest[], int destPos) {
-            if ((end > _count) || (end < start) || (start < 0))
-                throw new IndexOutOfBoundsException();
-            _string.getChars(start + _offset, end + _offset, dest, destPos);
-        }
-
-        // Implements abstract method.
-        public Text toLowerCase() {
-            return copy().toLowerCase(); // To avoid dynamic heap allocation.
-        }
-
-        // Implements abstract method.
-        public Text toUpperCase() {
-            return copy().toUpperCase(); // To avoid dynamic heap allocation.
-        }
-
-        // Implements abstract method.
-        public String stringValue() {
-            if ((_offset == 0) && (_count == _string.length()))
-                return _string;
-            return _string.substring(_offset, _offset + _count);
-        }
-
-    }
 }

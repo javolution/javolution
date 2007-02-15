@@ -97,7 +97,10 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
     public CharArray getNamespaceURI(CharSequence prefix) {
         if (prefix == null) 
             throw new IllegalArgumentException("null prefix not allowed");
-        if (prefix.length() == 0)
+        return getNamespaceURINullAllowed(prefix);
+    }
+    CharArray getNamespaceURINullAllowed(CharSequence prefix) {
+        if ((prefix == null) || (prefix.length() == 0))
             return _defaultNamespace;
         final int count = _namespacesCount[_nesting];
         for (int i = count; --i >= 0;) {
