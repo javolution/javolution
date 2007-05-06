@@ -1,11 +1,8 @@
 package javolution.util;
 
-import javolution.Javolution;
 import javolution.lang.Configurable;
 import javolution.text.Text;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
-import j2me.io.Serializable;
+import javolution.xml.XMLSerializable;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
 import j2me.util.Comparator;
@@ -26,37 +23,7 @@ import j2me.util.Comparator;
  * @version 4.2, December 18, 2006
  */
 public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
-        Serializable {
-
-    /**
-     * Holds the default XML representation for FastComparator instances
-     * (format ensures unicity of predefined comparator).
-     */
-    protected static final XMLFormat/*<FastComparator>*/ XML = new XMLFormat(
-            Javolution.j2meGetClass("javolution.util.FastComparator")) {
-
-        public Object newInstance(Class cls, javolution.xml.XMLFormat.InputElement xml) throws XMLStreamException {
-            if (cls == FastComparator.DEFAULT.getClass())
-                return FastComparator.DEFAULT;
-            if (cls == FastComparator.DIRECT.getClass())
-                return FastComparator.DIRECT;
-            if (cls == FastComparator.IDENTITY.getClass())
-                return FastComparator.IDENTITY;
-            if (cls == FastComparator.LEXICAL.getClass())
-                return FastComparator.LEXICAL;
-            if (cls == FastComparator.REHASH.getClass())
-                return FastComparator.REHASH;
-            return super.newInstance(cls, xml);
-        }
-
-        public void read(InputElement xml, Object obj) throws XMLStreamException {
-            // Do nothing.
-        }
-
-        public void write(Object obj, OutputElement xml) throws XMLStreamException {
-            // Do nothing.
-        }
-    };
+        XMLSerializable {
 
     /**
      * Indicates if the system hash code should be rehashed 

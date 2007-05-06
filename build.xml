@@ -7,8 +7,8 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="4.2" />
-        <property name="release" value="5" />
+        <property name="version" value="5.0" />
+        <property name="release" value="0" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />
@@ -140,6 +140,10 @@
         <replace dir="${tmp}/javolution" includes="**/PoolContext.java">
             <replacetoken><![CDATA[/*PoolContext*/Context ]]></replacetoken>
             <replacevalue><![CDATA[ PoolContext ]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/SecurityContext.java">
+            <replacetoken><![CDATA[/*SecurityContext*/Context ]]></replacetoken>
+            <replacevalue><![CDATA[ SecurityContext ]]></replacevalue>
         </replace>
         <!-- In Struct class -->
         <replace dir="${tmp}/javolution" includes="**/Struct.java">

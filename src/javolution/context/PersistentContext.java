@@ -9,9 +9,8 @@
 package javolution.context;
 
 import j2me.lang.Comparable;
+import j2me.util.Map;
 import javolution.util.FastMap;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents a context persistent accross multiple program 
@@ -40,11 +39,6 @@ import javolution.xml.stream.XMLStreamException;
 public class PersistentContext extends Context {
 
     /**
-     * Holds the class object (cannot use .class with j2me).
-     */
-    private static final Class CLASS = new PersistentContext().getClass();;
-
-    /**
      * Holds the single instance.
      */
     private static PersistentContext _PersistentContext = new PersistentContext();
@@ -53,25 +47,6 @@ public class PersistentContext extends Context {
      * Holds current id to value mapping.
      */
     private final FastMap _idToValue = new FastMap();
-
-    /**
-     * Holds the XML representation for persistent contexts
-     * (holds persistent reference mapping).
-     */
-    protected static final XMLFormat/*<PersistentContext>*/XML = new XMLFormat(
-            CLASS) {
-        public void read(InputElement xml, Object obj)
-                throws XMLStreamException {
-            final PersistentContext ctx = (PersistentContext) obj;
-            ctx._idToValue.putAll((FastMap) xml.get("References"));
-        }
-
-        public void write(Object obj, OutputElement xml)
-                throws XMLStreamException {
-            final PersistentContext ctx = (PersistentContext) obj;
-            xml.add(ctx._idToValue, "References");
-        }
-    };
 
     /**
      * Default constructor.
@@ -104,6 +79,15 @@ public class PersistentContext extends Context {
      */
     public static/*PersistentContext*/Context current() {
         return _PersistentContext;
+    }
+
+    /**
+     * Returns the ID to value mapping for this persistent context.  
+     *
+     * @return the persistent value indexed by identifiers.
+     */
+    public Map/*<String, Object>*/ getIdToValue() {
+        return _idToValue;
     }
 
     /**

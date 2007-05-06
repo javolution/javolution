@@ -11,7 +11,7 @@ package javolution.util;
 import j2me.lang.IllegalStateException;
 import j2me.util.Iterator;
 import j2me.util.NoSuchElementException;
-import javolution.context.RealtimeObject;
+import javolution.context.ObjectFactory;
 import javolution.util.FastCollection.Record;
 
 /**
@@ -20,14 +20,14 @@ import javolution.util.FastCollection.Record;
  *     or inserted at arbitrary position (appending/prepending is fine).</p>
  *     
  * <p> Iterators are allocated on the stack when executing in a 
- *     {@link PoolContext javolution.context.PoolContext}.</p>
+ *     {@link StackContext javolution.context.StackContext}.</p>
  *          
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, March 17, 2005
  */
-final class FastIterator extends RealtimeObject implements Iterator {
+final class FastIterator implements Iterator {
 
-    private static final Factory FACTORY = new Factory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             return new FastIterator();
         }

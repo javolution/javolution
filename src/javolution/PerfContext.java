@@ -8,10 +8,10 @@
  */
 package javolution;
 
+import javolution.context.ArrayFactory;
 import javolution.context.ConcurrentContext;
 import javolution.context.ObjectFactory;
-import javolution.context.PoolContext;
-import javolution.context.RealtimeObject;
+import javolution.context.StackContext;
 import javolution.context.ConcurrentContext.Logic;
 import javolution.lang.MathLib;
 import javolution.util.FastComparator;
@@ -25,7 +25,7 @@ import javolution.util.FastTable;
  */
 final class PerfContext extends Javolution implements Runnable {
 
-    Object[] _objects = new Object[1000]; // Larger arrays result in really 
+    Object[] _objects = new Object[1000]; // Larger arrays would result in  
                                           // poor heap performance (full GC ?)
     /** 
      * Executes benchmark.
@@ -36,20 +36,21 @@ final class PerfContext extends Javolution implements Runnable {
         println("//////////////////////////////////");
         println("");
 
+       
         benchmarkConcurrency();
         benchmarkSmallObjects();
-        benchmarkHeapArrays();
-        benchmarkStackArrays();
+        benchmarkArrays();
         println("");
     }
 
     private static final int N = 10000;
+
     private void benchmarkConcurrency() {
- 
+
         println("-- Concurrent Context --");
         print("Quick Sort " + N + " elements - Concurrency disabled: ");
         ConcurrentContext.setEnabled(false);
-        for (int i=0; i < 1000; i++) {
+        for (int i = 0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
             quickSort(table);
@@ -60,7 +61,7 @@ final class PerfContext extends Javolution implements Runnable {
         print("Quick Sort " + N + " elements - Concurrency ("
                 + ConcurrentContext.CONCURRENCY.get() + ") enabled: ");
         ConcurrentContext.setEnabled(true);
-        for (int i=0; i < 1000; i++) {
+        for (int i = 0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
             quickSort(table);
@@ -73,8 +74,9 @@ final class PerfContext extends Javolution implements Runnable {
 
     private FastTable randomTable() {
         FastTable table = new FastTable(N);
-        for (int i=0; i < N; i++) {
-            table.add(new Integer(MathLib.random(Integer.MIN_VALUE, Integer.MAX_VALUE)));
+        for (int i = 0; i < N; i++) {
+            table.add(new Integer(MathLib.random(Integer.MIN_VALUE,
+                    Integer.MAX_VALUE)));
         }
         return table;
     }
@@ -105,75 +107,91 @@ final class PerfContext extends Javolution implements Runnable {
                 ConcurrentContext.exit();
             }
             // Merges results.
-            for (int i=0, i1=0, i2=0; i < size; i++) {
-                 if (i1 >= t1.size()) {
-                     table.set(i, t2.get(i2++));
-                 } else if (i2 >= t2.size()) {
-                     table.set(i, t1.get(i1++));
-                 } else {
-                     Integer o1 = (Integer) t1.get(i1);
-                     Integer o2 = (Integer) t2.get(i2);
-                     if (o1.intValue() < o2.intValue()) {
-                         table.set(i, o1);
-                         i1++;
-                     } else {
-                         table.set(i, o2);
-                         i2++;
-                     }
-                 }
+            for (int i = 0, i1 = 0, i2 = 0; i < size; i++) {
+                if (i1 >= t1.size()) {
+                    table.set(i, t2.get(i2++));
+                } else if (i2 >= t2.size()) {
+                    table.set(i, t1.get(i1++));
+                } else {
+                    Integer o1 = (Integer) t1.get(i1);
+                    Integer o2 = (Integer) t2.get(i2);
+                    if (o1.intValue() < o2.intValue()) {
+                        table.set(i, o1);
+                        i1++;
+                    } else {
+                        table.set(i, o2);
+                        i2++;
+                    }
+                }
             }
             FastTable.recycle(t1);
             FastTable.recycle(t2);
         }
     }
-    
+
     // For J2ME compability.
     private static final FastComparator INTEGER_COMPARATOR = new FastComparator() {
 
         public boolean areEqual(Object o1, Object o2) {
-            return ((Integer)o1).intValue() == ((Integer)o2).intValue();
+            return ((Integer) o1).intValue() == ((Integer) o2).intValue();
         }
 
         public int compare(Object o1, Object o2) {
-            return ((Integer)o2).intValue() - ((Integer)o1).intValue();
+            return ((Integer) o2).intValue() - ((Integer) o1).intValue();
         }
 
         public int hashCodeOf(Object obj) {
-            return ((Integer)obj).intValue();
-        }        
+            return ((Integer) obj).intValue();
+        }
     };
-    
- 
+
     private void benchmarkSmallObjects() {
+        final int N = 1000000;
+        final int M = 1000;
 
-        println("-- Heap versus Stack Allocation (Pool-Context) --");
-        print("Small object heap creation: ");
-        
-        for (int i = 0; i < 100000; i++) {
+        println("-- Heap versus Stack Allocation (StackContext) --");
+        print("Small objects (XYZ.plus(XYZ)) (heap): ");
+        {
             startTime();
-            for (int j = 0; j < _objects.length;) {
-                _objects[j++] = new SmallObject();
+            for (int i = 0; i < N; i++) {
+                XYZHeap c0 = new XYZHeap(0.0, 0.0, 0.0);
+                XYZHeap c1 = new XYZHeap(-1.0, 1.0, 0.0);
+                for (int j = 0; j < M; j++) { // Fibonacci sequence.
+                    XYZHeap cn = c1.plus(c0);
+                    c0 = c1;
+                    c1 = cn;
+                }
+                if (c0.x != -c0.y)
+                    throw new Error();
             }
-            keepBestTime(_objects.length);
+            keepBestTime(M * N);
+            println(endTime());
         }
-        println(endTime());
 
-        print("Small object stack creation: ");
-        for (int i = 0; i < 100000; i++) {
+        print("Small objects (XYZ.plus(XYZ)) (stack): ");
+        {
             startTime();
-            PoolContext.enter();
-            for (int j = 0; j < _objects.length;) {
-                _objects[j++] = SmallObject.FACTORY.object();
+            for (int i = 0; i < N; i++) {
+                StackContext.enter();
+                XYZStack c0 = XYZStack.valueOf(0.0, 0.0, 0.0);
+                XYZStack c1 = XYZStack.valueOf(-1.0, 1.0, 0.0);
+                for (int j = 0; j < M; j++) { // Fibonacci sequence.
+                    XYZStack cn = c1.plus(c0);
+                    c0 = c1;
+                    c1 = cn;
+                }
+                if (c0.x != -c0.y)
+                    throw new Error();
+                StackContext.exit();
             }
-            PoolContext.exit();
-            keepBestTime(_objects.length);
+            keepBestTime(M * N);
+            println(endTime());
         }
-        println(endTime());
 
     }
 
-    private void benchmarkHeapArrays() {
-        print("char[256] heap creation: ");
+    private void benchmarkArrays() {
+        print("char[256] on Heap: ");
         for (int i = 0; i < 1000; i++) {
             startTime();
             for (int j = 0; j < _objects.length;) {
@@ -183,7 +201,19 @@ final class PerfContext extends Javolution implements Runnable {
         }
         println(endTime());
 
-        print("char[512] heap creation: ");
+        print("char[256] on Stack: ");
+        for (int i = 0; i < 1000; i++) {
+            startTime();
+            StackContext.enter();
+            for (int j = 0; j < _objects.length;) {
+                _objects[j++] = ArrayFactory.CHARS_FACTORY.array(256);
+            }
+            StackContext.exit();
+            keepBestTime(_objects.length);
+        }
+        println(endTime());
+
+        print("char[512] on Heap: ");
         for (int i = 0; i < 1000; i++) {
             startTime();
             for (int j = 0; j < _objects.length;) {
@@ -193,57 +223,52 @@ final class PerfContext extends Javolution implements Runnable {
         }
         println(endTime());
 
-    }
-
-    private void benchmarkStackArrays() {
-        print("char[256] stack creation: ");
+        print("char[512] on Stack: ");
         for (int i = 0; i < 1000; i++) {
             startTime();
-            PoolContext.enter();
+            StackContext.enter();
             for (int j = 0; j < _objects.length;) {
-                _objects[j++] = CHAR256_FACTORY.object();
+                _objects[j++] = ArrayFactory.CHARS_FACTORY.array(512);
             }
-            PoolContext.exit();
-            keepBestTime(_objects.length);
-        }
-        println(endTime());
-
-        print("char[512] stack creation: ");
-        for (int i = 0; i < 1000; i++) {
-            startTime();
-            PoolContext.enter();
-            for (int j = 0; j < _objects.length;) {
-                _objects[j++] = CHAR512_FACTORY.object();
-            }
-            PoolContext.exit();
+            StackContext.exit();
             keepBestTime(_objects.length);
         }
         println(endTime());
     }
 
-    private static final class SmallObject extends RealtimeObject {
-        long longValue;
+    static final class XYZHeap {
+        final double x, y, z;     
 
-        int intValue;
+        public XYZHeap(double x, double y, double z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
 
-        SmallObject refValue;
+        public XYZHeap plus(XYZHeap that) {
+            return new XYZHeap(this.x + that.x, this.y + that.y, this.z + that.z);
+        }
+    }
 
-        static final Factory FACTORY = new Factory() {
-            public Object create() {
-                return new SmallObject();
+    static final class XYZStack {
+        static ObjectFactory FACTORY = new ObjectFactory() {
+            protected Object create() {
+                return new XYZStack();
             }
         };
-    }
 
-    private static final ObjectFactory CHAR256_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[256];
-        }
-    };
+        double x, y, z;
 
-    private static final ObjectFactory CHAR512_FACTORY = new ObjectFactory() {
-        public Object create() {
-            return new char[512];
+        public static XYZStack valueOf(double x, double y, double z) {
+            XYZStack c = (XYZStack) FACTORY.object();
+            c.x = x;
+            c.y = y;
+            c.z = z;
+            return c;
         }
-    };
+
+        public XYZStack plus(XYZStack that) {
+            return valueOf(this.x + that.x, this.y + that.y, this.z + that.z);
+        }
+    } 
 }

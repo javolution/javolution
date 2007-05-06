@@ -14,15 +14,12 @@ import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
 import j2me.util.Collection;
 import j2me.util.Set;
+import javolution.context.ObjectFactory;
 import javolution.lang.Reusable;
 
 /**
  * <p> This class represents a set collection backed by a {@link FastMap};
  *     smooth capacity increase and no rehashing ever performed.</p>
- * 
- * <p> Instances of this class can directly be allocated from the current
- *     thread stack using the {@link #newInstance} factory method
- *     (e.g. for throw-away set to avoid the creation cost).</p>  
  * 
  * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
  *     thread-safe fast iterations without using iterators. For example:[code]
@@ -38,7 +35,7 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
     /**
      * Holds the set factory.
      */
-    private static final Factory FACTORY = new Factory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
 
         public Object create() {
             return new FastSet();
@@ -106,8 +103,8 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} set instance
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}).
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}).
      *
      * @return a new, preallocated or recycled set instance.
      */
@@ -117,8 +114,8 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     /**
      * Recycles a set {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}). 
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}). 
      */
     public static void recycle(FastSet instance) {
         FACTORY.recycle(instance);
@@ -183,7 +180,6 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
 
     // Implements Reusable.
     public void reset() {
-        super.reset();
         _map.reset();
     }
 

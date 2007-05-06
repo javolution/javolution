@@ -131,25 +131,19 @@ public abstract class XMLFormat/*<T>*/{
     final Class _class;
 
     /**
-     * Creates an unmmapped format which can be used to define
-     * custom {@link XMLBinding}.
-     */
-    protected XMLFormat() {
-        _class = null;
-    }
-
-    /**
-     * Creates a default XML format for instances of the specified 
-     * class/interface (should be statically allocated).
+     * Creates a XML format mapped to the specified class. If the specified 
+     * class is <code>null</code> then the format is left unmapped (e.g. 
+     * dynamic format used by custom {@link XMLBinding binding} instances).
      * 
-     * @param cls the root class/interface for this XML format.
+     * @param cls the root class/interface to associate to this XML format
+     *        or <code>null</code> if this format is not mapped.
      * @throws IllegalArgumentException if the specified class is already 
-     *         statically bounded to another format.
+     *         bound to another format.
      */
     protected XMLFormat(Class/*<T>*/cls) {
-        if (cls == null)
-            throw new NullPointerException();
         _class = cls;
+        if (cls == null)
+            return; // Dynamic format.
         synchronized (_ClassToFormat) {
             // Check if statically bounded.
             if (_ClassToFormat.containsKey(cls))
@@ -1166,4 +1160,12 @@ public abstract class XMLFormat/*<T>*/{
         return Javolution.j2meToCharSeq(str);
     }
 
+    /**
+     * Creates an unmapped XML format.
+     * 
+     * @deprecated <code>XMLFormat(null) should be used instead.
+     */
+    protected XMLFormat() {
+        this(null);
+    }
 }

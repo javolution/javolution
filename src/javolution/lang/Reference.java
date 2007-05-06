@@ -21,9 +21,9 @@ package javolution.lang;
  *          Reachable only within the scope of the 
  *          {@link javolution.context.LocalContext LocalContext}
  *          where it has been set.</li>
- *     <li> {@link javolution.context.PoolContext.Reference PoolContext.Reference} :
+ *     <li> {@link javolution.context.AllocatorContext.Reference AllocatorContext.Reference} :
  *          Reachable only within the scope of the  
- *          {@link javolution.context.PoolContext PoolContext}
+ *          {@link javolution.context.AllocatorContext Allocator}
  *          where it has been created (factory produced).</li>
  *     </ul></p>
  * 

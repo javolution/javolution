@@ -21,8 +21,8 @@ import j2me.util.List;
 import j2me.util.ListIterator;
 import j2me.util.RandomAccess;
 import j2mex.realtime.MemoryArea;
+import javolution.context.ObjectFactory;
 import javolution.context.PersistentContext;
-import javolution.context.RealtimeObject;
 import javolution.lang.Reusable;
 
 /**
@@ -65,7 +65,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Holds the factory for this fast table.
      */
-    private static final Factory FACTORY = new Factory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
         public Object create() {
             return new FastTable();
         }
@@ -186,8 +186,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} table instance
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}).
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}).
      *
      * @return a new, preallocated or recycled table instance.
      */
@@ -197,8 +197,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     /**
      * Recycles a table {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}). 
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}). 
      */
     public static void recycle(FastTable instance) {
         FACTORY.recycle(instance);
@@ -349,6 +349,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     private static final Object[] NULL_BLOCK = (Object[]) new Object[C0];    
 
+    // Implements Reusable interface.
+    public void reset() {
+        clear();
+        this.setValueComparator(FastComparator.DEFAULT);
+    }
+    
     /**
      * Inserts all of the values in the specified collection into this
      * table at the specified position. Shifts the value currently at that
@@ -494,7 +500,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Returns an iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -512,7 +518,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Returns a list iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -530,7 +536,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Returns a list iterator from the specified position
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * The list iterator being returned does not support insertion/deletion.
      * 
      * @param index the index of first value to be returned from the
@@ -559,7 +565,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * Returns a view of the portion of this list between the specified
      * indexes (instance of {@link FastList} allocated from the "stack" when
-     * executing in a {@link javolution.context.PoolContext PoolContext}).
+     * executing in a {@link javolution.context.StackContext StackContext}).
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 
@@ -654,7 +660,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
 
     /**
-     * Sets the comparator to use for value equality.
+     * Sets the comparator to use for value equality or comparison if the 
+     * collection is ordered (see {@link #sort()}).
      *
      * @param comparator the value comparator.
      * @return <code>this</code>
@@ -751,15 +758,15 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
                 } else {
                     if (_elems3 == null) {
-                        _elems3 = (Object/*{E}*/[][][][]) new Object[D3][][][];
+                        _elems3 = (Object/*{E}*/[][][][]) new Object[1 << D3][][][];
                     }
                     if (_elems3[(c >> R3)] == null) {
-                        _elems3[(c >> R3)] = (Object/*{E}*/[][][]) new Object[D2][][];
+                        _elems3[(c >> R3)] = (Object/*{E}*/[][][]) new Object[1 << D2][][];
                     }
                     if (_elems3[(c >> R3)][(c >> R2) & M2] == null) {
-                        _elems3[(c >> R3)][(c >> R2) & M2] = (Object/*{E}*/[][]) new Object[D1][];
+                        _elems3[(c >> R3)][(c >> R2) & M2] = (Object/*{E}*/[][]) new Object[1 << D1][];
                     }
-                    _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (Object/*{E}*/[]) new Object[D0];
+                    _elems3[(c >> R3)][(c >> R2) & M2][(c >> R1) & M1] = (Object/*{E}*/[]) new Object[1 << D0];
                 }
             }
         });
@@ -787,10 +794,9 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     /**
      * This inner class implements a fast table iterator.
      */
-    private static final class FastTableIterator extends RealtimeObject
-            implements ListIterator {
+    private static final class FastTableIterator implements ListIterator {
 
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
             protected Object create() {
                 return new FastTableIterator();
             }
@@ -873,7 +879,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     private static final class SubTable extends FastCollection implements List,
             RandomAccess {
 
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
             protected Object create() {
                 return new SubTable();
             }

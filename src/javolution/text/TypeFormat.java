@@ -901,6 +901,8 @@ public final class TypeFormat {
      }
      if (cursor != null)
      cursor.setIndex(i);
+     else if (i < length)
+     throw new NumberFormatException("Incomplete parsing");    
      return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
      }
      
@@ -982,6 +984,8 @@ public final class TypeFormat {
      }
      if (cursor != null)
      cursor.setIndex(i);
+     else if (i < length)
+     throw new NumberFormatException("Incomplete parsing");    
      return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
      }
 
@@ -1063,6 +1067,8 @@ public final class TypeFormat {
      }
      if (cursor != null)
      cursor.setIndex(i);
+     else if (i < length)
+     throw new NumberFormatException("Incomplete parsing");    
      return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
      }
      
@@ -1144,6 +1150,8 @@ public final class TypeFormat {
      }
      if (cursor != null)
      cursor.setIndex(i);
+     else if (i < length)
+     throw new NumberFormatException("Incomplete parsing");    
      return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
      }
      
@@ -1225,6 +1233,8 @@ public final class TypeFormat {
      }
      if (cursor != null)
      cursor.setIndex(i);
+     else if (i < length)
+     throw new NumberFormatException("Incomplete parsing");    
      return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
      }
      

@@ -33,7 +33,7 @@
 <p> The default XML mapping for a class and its sub-classes is typically defined using 
     a <code>static final</code> {@link javolution.xml.XMLFormat XMLFormat} instance. 
     For example:[code]
-      public abstract class Graphic {
+      public abstract class Graphic implements XMLSerializable {
           private boolean _isVisible;
           private Paint _paint; // null if none.
           private Stroke _stroke; // null if none.
@@ -42,13 +42,13 @@
           // Default XML format with name associations (members identified by an unique name).
           // See XMLFormat for examples of positional associations.
           protected static final XMLFormat<Graphic> XML = new XMLFormat<Graphic>(Graphic.class) {
-               public void write(Graphic g, XMLOutputElement xml) {
+               public void write(Graphic g, OutputElement xml) {
                    xml.setAttribute("isVisible", g._isVisible); 
                    xml.add(g._paint, "Paint");
                    xml.add(g._stroke, "Stroke");
                    xml.add(g._transform, "Transform");
                }
-               public void read(XMLInputElement xml, Graphic g) {
+               public void read(InputElement xml, Graphic g) {
                    g._isVisible = xml.getAttribute("isVisible", true);
                    g._paint = xml.get("Paint");
                    g._stroke = xml.get("Stroke");
@@ -62,11 +62,11 @@
         
           // Adds geometry to format.
           protected static final XMLFormat<Area> XML = new XMLFormat<Area>(Area.class) {
-              public void write(Area area, XMLOutputElement xml) {
+              public void write(Area area, OutputElement xml) {
                   Graphic.XML.write(area, xml); // Calls parent write.
                   xml.add(area._geometry, "Geometry");
               }
-              public void read(XMLInputElement xml, Area area) {
+              public void read(InputElement xml, Area area) {
                   Graphic.XML.read(xml, area); // Calls parent read.
                   area._geometry = xml.get("Geometry");
               }
@@ -116,10 +116,10 @@
       </tr>
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, XMLOutputElement xml) {
+    public void write(Foo foo, OutputElement xml) {
         xml.setAttribute("text", foo.text); 
     }
-    public void read(XMLInputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) {
         foo.text = xml.getAttribute("text", "");
     }
 };[/code]</td>
@@ -131,10 +131,10 @@
       
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, XMLOutputElement xml) {
+    public void write(Foo foo, OutputElement xml) {
         xml.add(foo.text); 
     }
-    public void read(XMLInputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) {
         foo.text = xml.getNext();
     }
 };[/code]</td>
@@ -148,11 +148,11 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, XMLOutputElement xml) {
+    public void write(Foo foo, OutputElement xml) {
         xml.addText(foo.text);
         // or xml.getStreamWriter().writeCDATA(foo.text) to use CDATA block. 
     }
-    public void read(XMLInputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) {
         foo.text = xml.getText().toString(); // Content of a text-only element.
     }
 };[/code]</td>
@@ -164,10 +164,10 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, XMLOutputElement xml) {
+    public void write(Foo foo, OutputElement xml) {
         xml.add(foo.text, "Text"); 
     }
-    public void read(XMLInputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) {
         foo.text = xml.get("Text");
     }
 };[/code]</td>
@@ -181,10 +181,10 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, XMLOutputElement xml) {
+    public void write(Foo foo, OutputElement xml) {
         xml.add(foo.text, "Text", String.class); 
     }
-    public void read(XMLInputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) {
         foo.text = xml.get("Text", String.class);
     }
 };[/code]</td>
@@ -203,19 +203,20 @@
     public no-arg constructor, instances can be created using factory methods, 
     private constructors (with constructor parameters set from the XML element) or even retrieved from a collection 
     (if the object is shared or unique). For example:[code]
-        public final class Point { 
-            protected static final XMLFormat<Point> XML = new XMLFormat<Point>(Point.class) {
+        public final class Point implements XMLSerializable { 
+            // Default XMLFormat can be private as the class cannot be extended.
+            static final XMLFormat<Point> XML = new XMLFormat<Point>(Point.class) {
                 public boolean isReferencable() {
                     return false; // Always manipulates by value.
                 }
-                public Point newInstance(Class<Point> cls, XMLInputElement xml) {
+                public Point newInstance(Class<Point> cls, InputElement xml) {
                     return Point.valueOf(xml.getAttribute("x", 0), xml.getAttribute("y", 0)); 
                 }
-                public void write(Point point, XMLOutputElement xml) {
+                public void write(Point point, OutputElement xml) {
                     xml.setAttribute("x", point._x);
                     xml.setAttribute("y", point._y);
                 }
-                public void read(XMLInputElement xml, Point point) {
+                public void read(InputElement xml, Point point) {
                     // Do nothing immutable.
                 }
             };
@@ -228,16 +229,16 @@
 
 <p> Document cross-references are supported, including circular references. 
     Let's take for example:[code]
-        public class Polygon implements Shape { 
+        public class Polygon implements Shape, XMLSerializable { 
             private Point[] _vertices;
             static final XMLFormat<Polygon> XML = new XMLFormat<Polygon>(Polygon.class) {
-                public void write(Polygon polygon, XMLOutputElement xml) {
+                public void write(Polygon polygon, OutputElement xml) {
                     xml.setAttibutes("count", _vertices.length);
                     for (int i=0; i < _vertices.length; i++) {
                         xml.add(_vertices[i], "Vertex", Point.class);
                     }
                 }
-                public void read(XMLInputElement xml, Polygon polygon) {
+                public void read(InputElement xml, Polygon polygon) {
                     int count = xml.getAttributes("count", 0);
                     polygon._vertices = new Point[count];
                     for (int i=0; i < count; i++) {
@@ -250,7 +251,7 @@
         ...
         TextBuilder xml = TextBuilder.newInstance();
         AppendableWriter out = new AppendableWriter().setOutput(xml)
-        XMLObjectWriter writer = XMLObjectWriter.newInstance(out).setBinding(binding);
+        XMLObjectWriter writer = XMLObjectWriter.newInstance(out);
         writer.setXMLReferenceResolver(new XMLReferenceResolver()); // Enables cross-references.
         writer.write(polygons, "Polygons", Polygon[].class); 
         writer.close();

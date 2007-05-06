@@ -9,12 +9,10 @@
 package javolution.util;
 
 import j2me.io.ObjectStreamException;
-import j2me.io.Serializable;
 import j2mex.realtime.MemoryArea;
 import javolution.lang.Immutable;
 import javolution.util.FastCollection.Record;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
+import javolution.xml.XMLSerializable;
 
 /**
  * This class represents a unique index object. Instances of this class 
@@ -36,7 +34,7 @@ import javolution.xml.stream.XMLStreamException;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, December 18, 2006
  */
-public final class Index implements Record, Immutable, Serializable {
+public final class Index implements Record, Immutable, XMLSerializable {
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -58,34 +56,6 @@ public final class Index implements Record, Immutable, Serializable {
     static {
         NEGATIVE.add(ZERO);
     }
-
-    /**
-     * Holds the default XML representation for indexes.
-     * This presentation consists of a <code>"value"</code> attribute 
-     * holding the index <code>int</code> value.
-     */
-    protected static final XMLFormat/*<Index>*/XML = new XMLFormat(new Index(0)
-            .getClass()) {
-
-        public boolean isReferenceable() {
-            return false; // Always by value (immutable). 
-        }
-
-        public Object newInstance(Class cls, InputElement xml)
-                throws XMLStreamException {
-            return Index.valueOf(xml.getAttribute("value", 0));
-        }
-
-        public void read(InputElement xml, Object obj)
-                throws XMLStreamException {
-            // Do nothing.
-        }
-
-        public void write(Object obj, OutputElement xml)
-                throws XMLStreamException {
-            xml.setAttribute("value", ((Index) obj).intValue());
-        }
-    };
 
     /**
      * Holds the index position.

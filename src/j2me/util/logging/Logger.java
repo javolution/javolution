@@ -58,5 +58,12 @@ public class Logger {
     public void exiting(String sourceClass, String sourceMethod) {
     }
     
+    public void log(Level level,
+            String msg) {        
+    }
     
+    public void log(Level level,
+            String msg,
+            Throwable thrown) {        
+    }
 }

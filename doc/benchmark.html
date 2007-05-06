@@ -29,11 +29,11 @@ java version "1.6.0_01-ea"
 Java(TM) SE Runtime Environment (build 1.6.0_01-ea-b01)
 Java HotSpot(TM) Client VM (build 1.6.0_01-ea-b01, mixed mode, sharing)
 
-<B>C:\javolution-4.2>ant run</B>
+<B>C:\javolution-5.0>ant run</B>
       ...
 run:
      [java] Javolution - Java(TM) Solution for Real-Time and Embedded Systems
-     [java] Version 4.2.0 (J2SE 1.6+) December 22 2006 (http://javolution.org)
+     [java] Version 5.0.0 (J2SE 1.6+) May 6 2007 (http://javolution.org)
 
      [java] Run benchmark... (shortest execution times are displayed)
 
@@ -42,16 +42,16 @@ run:
      [java] //////////////////////////////////
 
      [java] -- Concurrent Context --
-     [java] Quick Sort 10000 elements - Concurrency disabled: 8.989 ms
-     [java] Quick Sort 10000 elements - Concurrency (2) enabled: 4.869 ms
+     [java] Quick Sort 10000 elements - Concurrency disabled: 8.513 ms
+     [java] Quick Sort 10000 elements - Concurrency (2) enabled: 4.665 ms
 
-     [java] -- Heap versus Stack Allocation (Pool-Context) --
-<FONT COLOR="999999">     [java] Small object heap creation: 29.14 ns</FONT>
-     [java] Small object stack creation: 25.05 ns
-<FONT COLOR="999999">     [java] char[256] heap creation: 396.4 ns</FONT>
-<FONT COLOR="999999">     [java] char[512] heap creation: 722.4 ns</FONT>
-     [java] char[256] stack creation: 45.53 ns
-     [java] char[512] stack creation: 48.61 ns
+     [java] -- Heap versus Stack Allocation (StackContext) --
+<FONT COLOR="999999">     [java] Small objects (XYZ.plus(XYZ)) (heap): 27.40 ns</FONT>
+     [java] Small objects (XYZ.plus(XYZ)) (stack): 25.65 ns
+<FONT COLOR="999999">     [java] char[256] on Heap: 342.2 ns</FONT>
+     [java] char[256] on Stack: 29.33 ns
+<FONT COLOR="999999">     [java] char[512] on Heap: 630.8 ns</FONT>
+     [java] char[512] on Stack: 34.08 ns
 
      [java] //////////////////////////////
      [java] // Package: javolution.text //
@@ -59,13 +59,13 @@ run:
 
      [java] -- Primitive types formatting --
 
-<FONT COLOR="999999">     [java] StringBuffer.append(int): 129.6 ns</FONT>
+<FONT COLOR="999999">     [java] StringBuilder.append(int): 129.6 ns</FONT>
      [java] TextBuilder.append(int): 106.5 ns
-<FONT COLOR="999999">     [java] StringBuffer.append(long): 648.1 ns</FONT>
+<FONT COLOR="999999">     [java] StringBuilder.append(long): 648.1 ns</FONT>
      [java] TextBuilder.append(long): 476.2 ns
-<FONT COLOR="999999">     [java] StringBuffer.append(float): 538.4 ns</FONT>
+<FONT COLOR="999999">     [java] StringBuilder.append(float): 538.4 ns</FONT>
      [java] TextBuilder.append(float): 612.9 ns
-<FONT COLOR="999999">     [java] StringBuffer.append(double): 2.558 us</FONT>
+<FONT COLOR="999999">     [java] StringBuilder.append(double): 2.558 us</FONT>
      [java] TextBuilder.append(double): 747.6 ns
 
      [java] -- Primitive types parsing --
@@ -79,21 +79,21 @@ run:
 <FONT COLOR="999999">     [java] Double.parseDouble(String): 3.059 us</FONT>
      [java] TypeFormat.parseDouble(String): 959.2 ns
 
-     [java] -- String/StringBuffer versus Text --
+     [java] -- String/StringBuilder versus Text --
 
      [java] "Concatenates this line 1000 times (resulting in a text of about 80,000 characters)"
 <FONT COLOR="999999">     [java] String "+" operator: 295.7 us</FONT>
-<FONT COLOR="999999">     [java] StringBuffer "append" : 309.8 ns</FONT>
+<FONT COLOR="999999">     [java] StringBuilder "append" : 309.8 ns</FONT>
      [java] Text "concat" (heap): 232.4 ns
      [java] Text "concat" (stack): 144.4 ns
 
      [java] Inserts one character at random locations 1,000 times to the 80,000 characters text.
-<FONT COLOR="999999">     [java] StringBuffer insert: 54.64 us</FONT>
+<FONT COLOR="999999">     [java] StringBuilder insert: 54.64 us</FONT>
      [java] Text insert (heap): 2.078 us
      [java] Text insert (stack): 1.647 us
 
      [java] Delete 1,000 times one character at random location from the 80,000 characters text.
-<FONT COLOR="999999">     [java] StringBuffer delete: 36.37 us</FONT>
+<FONT COLOR="999999">     [java] StringBuilder delete: 36.37 us</FONT>
      [java] Text delete (heap): 1.609 us
      [java] Text delete (stack): 1.371 us
 

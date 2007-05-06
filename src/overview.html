@@ -37,9 +37,11 @@ Here are few important configuration parameters with their default values:
       (see <a href="javolution/context/ConcurrentContext.html">ConcurrentContext</a>)</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ObjectFactory#MAX_COUNT}</code></td>
-      <td style="vertical-align: top;">256</td>
-      <td style="vertical-align: top;">The maximum number of <a href="javolution/context/ObjectFactory.html">ObjectFactory</a></td>
+      <td style="vertical-align: top;">{@link javolution.context.ObjectQueue#QUEUES_ENABLED}</code></td>
+      <td style="vertical-align: top;">true</td>
+      <td style="vertical-align: top;">Indicates if object queueing is enabled, when disabled 
+                                       <a href="javolution/context/ObjectFactory.html">ObjectFactory</a>  
+                                       allocates new objects on demand (no recycling)</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">{@link javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE}</td>

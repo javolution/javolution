@@ -8,19 +8,16 @@
  */
 package javolution.text;
 
-import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2me.lang.Comparable;
 import j2mex.realtime.MemoryArea;
-
-import javolution.Javolution;
-import javolution.context.Realtime;
-import javolution.context.RealtimeObject;
-import javolution.lang.Immutable;
+import javolution.context.HeapContext;
+import javolution.context.ObjectFactory;
+import javolution.lang.Realtime;
+import javolution.lang.ValueType;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
+import javolution.xml.XMLSerializable;
 
 /**
  * <p> This class represents an immutable character sequence with extremely
@@ -47,7 +44,7 @@ import javolution.xml.stream.XMLStreamException;
  *          it gently increases without incurring expensive resize/copy 
  *          operations).</li>
  *     <li> Real-time compliant (instances allocated on the "stack" when 
- *          executing in a {@link javolution.context.PoolContext PoolContext}).</li>
+ *          executing in a {@link javolution.context.StackContext StackContext}).</li>
  *     </ul></p>
  * <p> As for any <code>CharSequence</code>, parsing of primitive types can
  *     be achieved using the {@link javolution.text.TypeFormat} utility class.</p>
@@ -68,8 +65,8 @@ import javolution.xml.stream.XMLStreamException;
  * @author Wilfried Middleton
  * @version 4.2, February 14, 2007
  */
-public abstract class Text extends RealtimeObject implements CharSequence,
-        Comparable, Serializable, Immutable {
+public abstract class Text implements CharSequence,
+        Comparable, XMLSerializable, ValueType, Realtime {
 
     /**
      * Holds the texts interned in ImmortalMemory
@@ -86,32 +83,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      * Holds the <code>"null"</code> character sequence.
      */
     public static final Text NULL = Text.intern("null");
-
-    /**
-     * Holds the default XML representation for Text instances. 
-     * This representation consists of a <code>"value"</code> attribute 
-     * holding the characters.
-     */
-    protected static final XMLFormat/*<Text>*/XML = new XMLFormat(Javolution
-            .j2meGetClass("javolution.text.Text")) {
-
-        public Object newInstance(Class cls,
-                javolution.xml.XMLFormat.InputElement xml)
-                throws XMLStreamException {
-            CharSequence csq = xml.getAttribute("value");
-            return csq != null ? Text.valueOf(csq) : Text.EMPTY;
-        }
-
-        public void read(InputElement xml, Object obj)
-                throws XMLStreamException {
-            // Do nothing.
-        }
-
-        public void write(Object obj, OutputElement xml)
-                throws XMLStreamException {
-            xml.setAttribute("value", (Text) obj);
-        }
-    };
 
     /**
      * Holds the total number of characters.
@@ -131,7 +102,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      *
      * @param  obj the object to represent as text.
      * @return the textual representation of the specified object.
-     * @see    Realtime#toText
      */
     public static Text valueOf(Object obj) {
         if (obj instanceof Realtime)
@@ -144,7 +114,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     // Converts String to Text.
     private static Text valueOf(String str) {
         int length = str.length();
-        if (str.length() <= Primitive.BLOCK_SIZE) {
+        if (length <= Primitive.BLOCK_SIZE) {
             Primitive text = Primitive.newInstance(length);
             str.getChars(0, length, text._data, 0);
             return text;
@@ -191,6 +161,28 @@ public abstract class Text extends RealtimeObject implements CharSequence,
                     & Primitive.BLOCK_MASK;
             Composite text = Composite.newInstance(Text.valueOf(chars, offset,
                     half), Text.valueOf(chars, offset + half, length - half));
+            return text;
+        }
+    }
+
+    /**
+     * Converts a text builder to a text instance.
+     * 
+     * @param  start the index of the first character inclusive.
+     * @param  end the index of the last character exclusive.
+     * @return the corresponding text instance.
+     */
+    static Text valueOf(TextBuilder tb, int start, int end) {
+        final int length = end - start;
+        if (length <= Primitive.BLOCK_SIZE) {
+            Primitive text = Primitive.newInstance(length);
+            tb.getChars(start, end, text._data, 0);
+            return text;
+        } else { // Splits on a block boundary.
+            int half = ((length + Primitive.BLOCK_SIZE) >> 1)
+                    & Primitive.BLOCK_MASK;
+            Composite text = Composite.newInstance(Text.valueOf(tb, start,
+                    start + half), Text.valueOf(tb, start + half, end));
             return text;
         }
     }
@@ -652,7 +644,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
      */
     public static Text intern(final CharSequence csq) {
         Text text = (Text) INTERN_INSTANCES.get(csq); // Thread-Safe - No entry removed.
-        return (text != null) ? text : Text.internImpl(csq);
+        return (text != null) ? text : Text.internImpl(csq.toString());
     }
 
     /**
@@ -666,17 +658,20 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         return (text != null) ? text : Text.internImpl(str);
     }
 
-    private static synchronized Text internImpl(final Object obj) {
-        if (INTERN_INSTANCES.containsKey(obj)) // Synchronized check.
-            return (Text) INTERN_INSTANCES.get(obj);
-        MemoryArea.getMemoryArea(INTERN_INSTANCES).executeInArea(
-                new Runnable() {
+    private static synchronized Text internImpl(final String str) {
+        if (!INTERN_INSTANCES.containsKey(str)) { // Synchronized check.
+            HeapContext.enter(); // Standard allocation mechanism.
+            try {
+                MemoryArea.getMemoryArea(INTERN_INSTANCES).executeInArea(new Runnable() {
                     public void run() {
-                        Text txt = (Text) Text.valueOf(obj).moveHeap();
+                        Text txt = (Text) Text.valueOf(str);
                         INTERN_INSTANCES.put(txt, txt);
-                    }
-                });
-        return (Text) INTERN_INSTANCES.get(obj);
+                    }});
+            } finally {
+                HeapContext.exit();
+            }
+        }
+        return (Text) INTERN_INSTANCES.get(str);
     }
 
     /**
@@ -779,7 +774,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
 
     /**
      * Returns <code>this</code> (implements 
-     * {@link javolution.context.Realtime Realtime} interface).
+     * {@link javolution.lang.ValueType Realtime} interface).
      *
      * @return <code>this</code>
      */
@@ -871,11 +866,11 @@ public abstract class Text extends RealtimeObject implements CharSequence,
     public abstract void getChars(int start, int end, char dest[], int destPos);
 
     /**
-     * Returns the <code>String</code> value  corresponding to this text.
+     * Returns the <code>String</code> representation of this text.
      *
      * @return the <code>java.lang.String</code> for this text.
      */
-    public abstract String stringValue();
+    public abstract String toString();
 
     //////////////////////////////////////////////////////////////////
     // Wilfried add-ons (methods provided by Microsoft .Net in C#)
@@ -1111,28 +1106,6 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         return -1;
     }
 
-    /**
-     * Converts a text builder to a text instance.
-     * 
-     * @param  start the index of the first character inclusive.
-     * @param  end the index of the last character exclusive.
-     * @return the corresponding text instance.
-     */
-    static Text valueOf(TextBuilder tb, int start, int end) {
-        final int length = end - start;
-        if (length <= Primitive.BLOCK_SIZE) {
-            Primitive text = Primitive.newInstance(length);
-            tb.getChars(start, end, text._data, 0);
-            return text;
-        } else { // Splits on a block boundary.
-            int half = ((length + Primitive.BLOCK_SIZE) >> 1)
-                    & Primitive.BLOCK_MASK;
-            Composite text = Composite.newInstance(Text.valueOf(tb, start,
-                    start + half), Text.valueOf(tb, start + half, end));
-            return text;
-        }
-    }
-
     //
     ////////////////////////////////////////////////////////////////////////////
 
@@ -1154,7 +1127,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         /**
          * Holds the associated factory.
          */
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
 
             public Object create() {
                 return new Primitive();
@@ -1253,9 +1226,17 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         }
 
         // Implements abstract method.
-        public String stringValue() {
+        public String toString() {
             return new String(_data, 0, _count);
         }
+
+        // Implements abstract method.
+        public Object/*{Text}*/ copy() {
+            Primitive text = newInstance(_count);
+            System.arraycopy(_data, 0, text._data, 0, _count);
+            return text;
+        }
+        
     }
 
     /**
@@ -1266,7 +1247,7 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         /**
          * Holds the associtate factory.
          */
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
 
             public Object create() {
                 return new Composite();
@@ -1412,21 +1393,17 @@ public abstract class Text extends RealtimeObject implements CharSequence,
         }
 
         // Implements abstract method.
-        public String stringValue() {
+        public String toString() {
             char[] data = new char[_count];
             this.getChars(0, _count, data, 0);
             return new String(data, 0, _count);
         }
 
-        // Overrides.
-        public boolean move(ObjectSpace os) {
-            if (super.move(os)) {
-                _head.move(os);
-                _tail.move(os);
-                return true;
-            }
-            return false;
+        // Implements abstract method.
+        public Object/*{Text}*/ copy() {
+            return Composite.newInstance((Text)_head.copy(), (Text)_tail.copy());
         }
+     
     }
 
 }

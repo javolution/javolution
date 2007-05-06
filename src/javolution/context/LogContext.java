@@ -9,6 +9,7 @@
 package javolution.context;
 
 import javolution.util.StandardLog;
+import j2me.lang.UnsupportedOperationException;
 import j2me.lang.CharSequence;
 
 /**
@@ -22,15 +23,7 @@ import j2me.lang.CharSequence;
  *     changes the default logging for all threads:[code]
  *     // Logging disabled by default.
  *     LogContext.setDefault(LogContext.NULL); 
- *     [/code]
- *     and/or perform custom logging for particular objects/threads:[code]
- *     LogContext.enter(LogContext.SYSTEM);
- *     try {
- *        LogContext.info("Writes this message to System.out");
- *        ...       
- *     } finally {
- *        LogContext.exit(LogContext.SYSTEM);
- *     }[/code]</p>
+ *     [/code]</p>
  *     
  * <p> Applications may extend this base class to address specific logging
  *     requirements. For example:[code]
@@ -82,7 +75,12 @@ public abstract class LogContext extends Context {
      * The info/warning/error events are mapped to the info/warning/severe 
      * log levels respectively.
      */
-    public static final StandardLog STANDARD = new StandardLog();
+    public static final StandardLog STANDARD = new StandardLog() {
+        protected void enterAction() {
+            throw new UnsupportedOperationException(
+                "Shared context (static) cannot be directly entered");
+        }
+    };
 
     /**
      * Holds a context ignoring logging events.
@@ -103,14 +101,14 @@ public abstract class LogContext extends Context {
     public static final LogContext SYSTEM_ERR = new SystemErrLog();
 
     /**
-     * Holds the default logging contexts.
+     * Holds the default logging context.
      */
-    private static volatile LogContext Default = STANDARD;
+    private static volatile LogContext _Default = STANDARD;
 
     /**
      * Default constructor.
      */
-    public LogContext() {
+    protected LogContext() {
     }
 
     /**
@@ -124,26 +122,26 @@ public abstract class LogContext extends Context {
             if (ctx instanceof LogContext)
                 return (LogContext) ctx;
         }
-        return LogContext.Default;
+        return LogContext._Default;
     }
 
     /**
      * Returns the default logging context for new threads 
      * ({@link #STANDARD} when not explicitly {@link #setDefault set}).
      * 
-     * @return the default logging contexts.
+     * @return the default logging context.
      */
     public static LogContext getDefault() {
-        return LogContext.Default;
+        return LogContext._Default;
     }
 
     /**
      * Sets the specified logging context as default.
      * 
-     * @param defaultLog the default logging context.
+     * @param context the default security context.
      */
-    public static void setDefault(LogContext defaultLog) {
-        LogContext.Default = defaultLog;
+    public static void setDefault(LogContext context) {
+        LogContext._Default = context;
     }
 
     /**
@@ -183,13 +181,23 @@ public abstract class LogContext extends Context {
      * context. 
      * 
      * @param error the error being logged.
-     * @param message the supplementary message or <code>null</code> if none.
+     * @param message the supplementary message.
      */
     public static void error(Throwable error, CharSequence message) {
         LogContext logContext = (LogContext) LogContext.current();
         logContext.logError(error, message);
     }
 
+    /**
+     * Logs the specified error message to the current logging
+     * context. 
+     * 
+     * @param message the error message.
+     */
+    public static void error(CharSequence message) {
+        LogContext logContext = (LogContext) LogContext.current();
+        logContext.logError(null, message);
+    }
     /**
      * Indicates if informative messages are logged.
      * 
@@ -231,7 +239,7 @@ public abstract class LogContext extends Context {
     /**
      * Logs the specified error.
      * 
-     * @param error the error being logged.
+     * @param error the error being logged or <code>null</code> if none.
      * @param message the associated message or <code>null</code> if none.
      */
     public abstract void logError(Throwable error, CharSequence message);
@@ -249,8 +257,13 @@ public abstract class LogContext extends Context {
     /**
      * This class represents a non-logging context.
      */
-    private static class NullLog extends LogContext {
+    private static final class NullLog extends LogContext {
 
+        protected void enterAction() {
+            throw new UnsupportedOperationException(
+                "Shared context (static) cannot be directly entered");
+        }
+        
         public boolean isInfoLogged() {
             return false;
         }
@@ -281,6 +294,11 @@ public abstract class LogContext extends Context {
      */
     private static class SystemLog extends LogContext {
 
+        protected void enterAction() {
+            throw new UnsupportedOperationException(
+                "Shared context (static) cannot be directly entered");
+        }
+
         public boolean isInfoLogged() {
             return true;
         }
@@ -304,21 +322,7 @@ public abstract class LogContext extends Context {
         }
 
         public void logError(Throwable error, CharSequence message) {
-            System.err.print("[error] ");
-            System.err.print(error.getClass().getName());
-            if (message != null) {
-                System.err.print(" - ");
-                System.err.println(message);
-            } else {
-                String errorMessage = error.getMessage();
-                if (errorMessage != null) {
-                    System.err.print(" - ");
-                    System.err.println(errorMessage);
-                } else {
-                    System.err.println();
-                }
-            }
-            error.printStackTrace();
+            SYSTEM_ERR.logError(error, message);
         }
     }
 
@@ -326,6 +330,11 @@ public abstract class LogContext extends Context {
      * This class represents the system error logging context.
      */
     private static class SystemErrLog extends LogContext {
+
+        protected void enterAction() {
+            throw new UnsupportedOperationException(
+                "Shared context (static) cannot be directly entered");
+        }
 
         public boolean isInfoLogged() {
             return false;
@@ -350,20 +359,17 @@ public abstract class LogContext extends Context {
 
         public void logError(Throwable error, CharSequence message) {
             System.err.print("[error] ");
-            System.err.print(error.getClass().getName());
-            if (message != null) {
-                System.err.print(" - ");
-                System.err.println(message);
-            } else {
-                String errorMessage = error.getMessage();
-                if (errorMessage != null) {
-                    System.err.print(" - ");
-                    System.err.println(errorMessage);
-                } else {
-                    System.err.println();
-                }
+            if (error != null) {
+                 System.err.print(error.getClass().getName());
+                 System.err.print(" - ");
             }
-            error.printStackTrace();
+            String description = (message != null) ?
+                message.toString() : (error != null) ? error.getMessage() : "";
+            System.err.println(description);
+            System.err.println();
+            if (error != null) {
+                error.printStackTrace();
+            }
         }
     }
 }

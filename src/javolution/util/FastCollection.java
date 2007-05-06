@@ -13,18 +13,11 @@ import j2me.util.Iterator;
 import j2me.util.List;
 import j2me.util.ListIterator;
 import j2me.util.Set;
-import j2me.io.Serializable;
 import j2me.lang.UnsupportedOperationException;
 import j2mex.realtime.MemoryArea;
-
-import javolution.Javolution;
-import javolution.context.Realtime;
-import javolution.context.RealtimeObject;
-import javolution.lang.Reusable;
+import javolution.lang.Realtime;
 import javolution.text.Text;
-import javolution.xml.XMLBinding;
-import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
+import javolution.xml.XMLSerializable;
 
 /**
  * <p> This class represents collections which can quickly be iterated over 
@@ -59,30 +52,8 @@ import javolution.xml.stream.XMLStreamException;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, December 18, 2006
  */
-public abstract class FastCollection/*<E>*/extends RealtimeObject implements
-        Collection/*<E>*/, Reusable, Serializable {
-
-    /**
-     * Holds the default XML representation for FastCollection instances.
-     * This representation is identical to {@link XMLBinding#COLLECTION_XML}.
-     */
-    protected static final XMLFormat/*<FastCollection>*/ XML = new XMLFormat(
-            Javolution.j2meGetClass("javolution.util.FastCollection")) {
-
-        public void read(InputElement xml, Object obj) throws XMLStreamException {
-            FastCollection fc = (FastCollection) obj;
-            while (xml.hasNext()) {
-                fc.add(xml.getNext());
-            }
-        }
-
-        public void write(Object obj, OutputElement xml) throws XMLStreamException {
-            FastCollection fc = (FastCollection) obj;
-            for (Record r=fc.head(), end=fc.tail(); (r=r.getNext())!=end;) {
-                xml.add(fc.valueOf(r));
-            }
-        }
-    };
+public abstract class FastCollection/*<E>*/ implements
+        Collection/*<E>*/, XMLSerializable, Realtime {
 
     /**
      * Holds the unmodifiable view (allocated in the same memory area as 
@@ -165,7 +136,7 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     /**
      * Returns an iterator over the elements in this collection 
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this collection's elements.
      */
@@ -438,6 +409,17 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
     }
 
     /**
+     * Returns the <code>String</code> representation of this 
+     * {@link FastCollection}.
+     *
+     * @return <code>toText().toString()</code>
+     */
+    public final String toString() {
+        return toText().toString();
+    }
+
+
+    /**
      * Compares the specified object with this collection for equality.  Returns
      * <code>true</code> if and only both collection contains the same values
      * regardless of the order; unless this collection is a list instance 
@@ -517,25 +499,6 @@ public abstract class FastCollection/*<E>*/extends RealtimeObject implements
 
     }
 
-    // Implements Reusable.
-    public void reset() {
-        clear();
-    }
-
-    // Overrides.
-    public boolean move(ObjectSpace os) {
-        if (super.move(os)) {
-            for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
-                Object obj = valueOf(r);
-                if (obj instanceof Realtime) {
-                    ((Realtime)obj).move(os);
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-    
     /**
      * This interface represents the collection records which can directly be
      * iterated over.

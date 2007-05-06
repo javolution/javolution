@@ -149,19 +149,15 @@ public final class AppendableWriter extends Writer implements Reusable {
 
     /**
      * Flushes the stream.
-     *
-     * @throws IOException if an I/O error occurs.
      */
-    public void flush() throws IOException {
+    public void flush() {
         // Do nothing (no buffer).
     }
 
     /**
      * Closes and {@link #reset resets} this writer for reuse.
-     *
-     * @throws IOException if an I/O error occurs
      */
-    public void close() throws IOException {
+    public void close() {
         if (_output != null) {
             reset();
         }

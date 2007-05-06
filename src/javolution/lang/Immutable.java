@@ -32,6 +32,6 @@ package javolution.lang;
  */
 public interface Immutable {
 
-   // Tagging interface, no method.
+    // No method (tagging interface).
     
 }

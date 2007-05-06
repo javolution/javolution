@@ -278,12 +278,12 @@ public class StandardLog extends LogContext {
 
     // Implements LogContext abstract method.
     public void logError(Throwable error, CharSequence message) {
-        String msg = (message == null) ? error.getMessage() : message
-                .toString();
-        msg = (msg == null) ? error.getClass().getName() : error.getClass()
-                .getName()
-                + " - " + msg;
-        _logger.severe(msg);
+        String description = (message != null) ? message.toString() : "";
+        if (error != null) {
+            _logger.log(Level.SEVERE, description, error);
+        } else {
+            _logger.log(Level.SEVERE, description);            
+        }
     }
 
     private static CharSequence toCsq/**/(Object str) {

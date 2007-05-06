@@ -53,17 +53,17 @@ package javolution.lang;
  * <p> Reusable objects can also be allocated on the stack providing that
  *     their {@link javolution.context.ObjectFactory factory} cleanup 
  *     method calls the {@link #reset reset} method. For example:[code]
- *     public class Foo extends RealtimeObject implements Reusable {
- *         private static final Factory<Foo> FACTORY = new Factory<Foo>() {
- *             public Foo create() {
+ *     public class Foo implements Reusable {
+ *         private static final ObjectFactory<Foo> FACTORY = new ObjectFactory<Foo>() {
+ *             protected Foo create() {
  *                 return new Foo();
  *             }
- *             public void cleanup(Foo obj) {
+ *             protected void cleanup(Foo obj) {
  *                 obj.reset();
  *             }
  *         };
  *         public static Foo newInstance() {
- *             return FACTORY.object();
+ *             return FACTORY.object(); // On the "stack" when executing in a StackContext.
  *         } 
  *         ...
  *     }[/code]</p>

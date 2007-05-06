@@ -2,7 +2,7 @@
 // http://www.saxproject.org
 // Written by David Megginson
 // NO WARRANTY!  This class is in the Public Domain.
-// $Id: SAXNotRecognizedException.java,v 1.16 2007-02-15 06:36:37 dautelle Exp $
+// $Id: SAXNotRecognizedException.java,v 1.17 2007-05-06 11:55:07 dautelle Exp $
 
 package org.xml.sax;
 

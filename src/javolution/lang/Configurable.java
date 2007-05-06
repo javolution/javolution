@@ -9,50 +9,57 @@
 package javolution.lang;
 
 /**
- *  <p> This class centralizes run-time configuration parameters and 
- *      allows for custom (plug-in) configuration logic.</p>
+ *  <p> This class facilitates separation of concerns between the configuration
+ *      logic and the application code.</p>
+ *  
+ *  <p> Does your class need to know or has to assume that the configuration is
+ *      coming from system properties ??</p>
+ *      
+ *  <p> The response is obviously NO!</p>
+ *  
+ *  <p> Let's compare the following examples:[code]
+ *      class Document {
+ *          private static final Font DEFAULT_FONT
+ *              = Font.decode(System.getProperty("DEFAULT_FONT") != null ? System.getProperty("DEFAULT_FONT") : "Arial-BOLD-18");
+ *          ...
+ *      }[/code]
+ *      With the following (using this class):[code]
+ *      class Document {
+ *          public static final Configurable<Font> DEFAULT_FONT = new Configurable<Font>(new Font("Arial", Font.BOLD, 18));
+ *          ...
+ *      }[/code]
+ *      Not only the second example is cleaner, but the actual configuration 
+ *      data can come from anywhere (even remotely). Low level code does not 
+ *      need to know.</p>
+ *  
+ *  <p> Furthermore, with the second example the configurable data is 
+ *      automatically documented in the JavaDoc (public). Still only instances 
+ *      of {@link Logic} may set this data. There is no chance
+ *      for the user to modify the configuration by accident.</p>
  *  
  *  <p> Unlike system properties (or any static mapping), configuration 
  *      parameters may not be known until run-time or may change dynamically.
- *      For example, they may depend upon the current run-time platform, 
+ *      They may depend upon the current run-time platform, 
  *      the number of cpus, etc. Configuration parameters may also be retrieved
  *      from external resources such as databases, XML files, 
- *      external servers, system properties, etc.</p>
+ *      external servers, system properties, etc.[code]
+ *      class FastComparator  {     
+ *          public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE 
+ *              = new Configurable<Boolean>(isPoorSystemHash()); // Test system hashcode. 
+ *      ...
+ *      class ConcurrentContext {
+ *          public static final Configurable<Integer> MAX_CONCURRENCY 
+ *              = new Configurable<Integer>(Runtime.getRuntime().availableProcessors() - 1);
+ *                  // No algorithm parallelization on single-processor machines.
+ *     ...
+ *     class XMLInputFactory {    
+ *          public static final Configurable<Class> CLASS 
+ *              = new Configurable<Class>(XMLInputFactory.Default.class);
+ *                  // Default class implementation is a private class. 
+ *     ...
+ *     [/code]</p>
  *      
- *  <p> Regardless of the user configuration constraints, application classes
- *      need only to create static instances of this class and can be 
- *      {@link #notifyChange() notified} of any change. A 
- *      <code>"public static final"</code> modifier is recommended for 
- *      users to identify configurable parameters. For example:[code]
- *  ...
- *  class FastComparator  {     
- *      public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE 
- *            = new Configurable<Boolean>(isPoorSystemHash()); // Test system hashcode. 
- *  ...
- *  class ConcurrentContext {
- *      public static final Configurable<Integer> MAX_CONCURRENCY 
- *          = new Configurable<Integer>(Runtime.getRuntime().availableProcessors() - 1);
- *               // No algorithm parallelization on single-processor machines.
- *  ...
- *  class XMLInputFactory {    
- *      public static final Configurable<Class> CLASS 
- *           = new Configurable<Class>(XMLInputFactory.Default.class); 
- *  ...
- *  [/code]</p>
- *      
- *  <p> Configuration can only be performed through a configuration 
- *     {@link Logic logic} typically performed at start-up. For example:[code]
- *      private static final Runnable CONFIGURATION = new Configurable.Logic() {
- *          public void run() {
- *              configure(ConcurrentContext.MAX_CONCURRENCY, 0); // No concurrency.
- *              configure(XMLInputFactory.CLASS, MyXMLInputFactory.class);                     
- *          }
- *      };
- *           
- *      public static main(String[] ...) {
- *          CONFIGURATION.run();   
- *      }[/code]
- *      Reconfiguration is allowed at run-time as configurable can be 
+ *  <p> Reconfiguration is allowed at run-time as configurable can be 
  *      {@link Configurable#notifyChange() notified} of changes in their
  *      configuration values. Unlike system properties, configurable can be 
  *      used in applets or unsigned webstart applications.</p>

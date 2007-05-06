@@ -89,6 +89,7 @@ public class ConcurrentThread extends RealtimeThread implements
                 _status.error(error);
             } finally {
                 _status.completed();
+                ((AllocatorContext) AllocatorContext.current()).deactivate();              
                 _status = null;
                 _source = null;
                 _logic = null; // Last (ready).

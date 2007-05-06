@@ -76,7 +76,7 @@ Addendum to Sun(tm) Coding Standard - http://java.sun.com/docs/codeconv/
 
 12. Miscellaneous.
 
-    Consider surrounding code examples with [code] and [\code]
+    Consider surrounding code examples with [code] and [/code]
     (java source code and packages descriptions).
 
     /**
@@ -87,13 +87,13 @@ Addendum to Sun(tm) Coding Standard - http://java.sun.com/docs/codeconv/
      *     // Creates a matrix of complex elements.
      *     Complex[][] complexElements = ...;
      *     Matrix<Complex> M = Matrix.valueOf(complexElements);
-     * [code]</p>
+     * [/code]</p>
      */
 
     Rationale: Improve source code readability (avoid using escape sequences for 
     parameterized types). Allows for color coding of the examples by JavaDoc. 
 
-    Note: Feature not yet supported by JavaDoc. Post-processing JavaDoc 
+    Note: Feature is not yet directly supported by JavaDoc. Post-processing 
           utilities such as http://javolution.org/colapi.jar (public domain)
           can be used in the meantime.
 

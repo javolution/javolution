@@ -12,9 +12,9 @@ import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2mex.realtime.MemoryArea;
 
-import javolution.context.Realtime;
-import javolution.context.RealtimeObject;
+import javolution.context.ObjectFactory;
 import javolution.lang.MathLib;
+import javolution.lang.Realtime;
 import javolution.lang.Reusable;
 
 /**
@@ -31,13 +31,13 @@ import javolution.lang.Reusable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
  */
-public class TextBuilder extends RealtimeObject implements Appendable,
-        CharSequence, Reusable, Serializable {
+public class TextBuilder implements Appendable,
+        CharSequence, Reusable, Realtime, Serializable {
 
     /**
      * Holds the factory for this text builder.
      */
-    private static final Factory FACTORY = new Factory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
         public Object create() {
             return new TextBuilder();
         }
@@ -134,8 +134,8 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} text builder
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}).
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}).
      *
      * @return a new, preallocated or recycled text builder instance.
      */
@@ -147,8 +147,8 @@ public class TextBuilder extends RealtimeObject implements Appendable,
 
     /**
      * Recycles a text builder {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}). 
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}). 
      */
     public static void recycle(TextBuilder instance) {
         FACTORY.recycle(instance);
@@ -272,7 +272,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
         return this;
     }
 
-    private Appendable/*TextBuilder*/append2(char c) {
+    private TextBuilder append2(char c) {
         if (_length >= _capacity)
             increaseCapacity();
         final int i = _length++;
@@ -335,8 +335,6 @@ public class TextBuilder extends RealtimeObject implements Appendable,
             return append((String) obj);
         } else if (obj instanceof CharSequence) {
             return (TextBuilder) append((CharSequence) obj);
-        } else if (obj instanceof Realtime) {
-            return append(((Realtime) obj).toText());
         } else if (obj != null) {
             return append(obj.toString());
         } else {
@@ -353,13 +351,8 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @return <code>this</code>
      */
     public final TextBuilder append(String str) {
-        if (str == null)
-            return append("null");
-        final int length = str.length();
-        for (int i = 0; i < length;) {
-            append(str.charAt(i++));
-        }
-        return this;
+        return (str == null) ? append("null") : 
+            appendNoCheck(str, 0, str.length());
     }
 
     /**
@@ -372,16 +365,28 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * @param  end the index after the last character to append.
      * @return <code>this</code>
      * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > csq.length())</code>
+     *         || (start > end) || (end > str.length())</code>
      */
     public final TextBuilder append(String str, int start, int end) {
         if (str == null)
             return append("null");
         if ((start < 0) || (end < 0) || (start > end) || (end > str.length()))
             throw new IndexOutOfBoundsException();
-        for (int i = start; i < end;) {
-            append(str.charAt(i++));
+        return appendNoCheck(str, start, end);
+    } 
+    
+    private final TextBuilder appendNoCheck(String str, int start, int end) {
+        int newLength = _length + end - start; 
+        while (_capacity < newLength) {
+            increaseCapacity();
         }
+        for (int i = start, j = _length; i < end;) {
+            char[] chars = charsAt(j);
+            int inc = MathLib.min(C0 - (j & M0), end - i);
+            str.getChars(i, (i += inc), chars, j & M0);
+            j += inc;
+        }
+        _length = newLength;
         return this;
     }
 
@@ -390,16 +395,46 @@ public class TextBuilder extends RealtimeObject implements Appendable,
      * If the specified text is <code>null</code> this method 
      * is equivalent to <code>append("null")</code>. 
      *
-     * @param text the text to append or <code>null</code>.
+     * @param txt the text to append or <code>null</code>.
      * @return <code>this</code>
      */
-    public TextBuilder append(Text text) {
-        if (text == null)
+    public final TextBuilder append(Text txt) {
+        return (txt == null) ? append("null") : 
+            appendNoCheck(txt, 0, txt.length());
+    }
+
+    /**
+     * Appends a subsequence of the specified text.
+     * If the specified character sequence is <code>null</code> this method 
+     * is equivalent to <code>append("null")</code>. 
+     *
+     * @param  txt the text to append or <code>null</code>.
+     * @param  start the index of the first character to append.
+     * @param  end the index after the last character to append.
+     * @return <code>this</code>
+     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
+     *         || (start > end) || (end > txt.length())</code>
+     */
+    public final TextBuilder append(Text txt, int start, int end) {
+        if (txt == null)
             return append("null");
-        final int length = text.length();
-        for (int i = 0; i < length;) {
-            append(text.charAt(i++));
+        if ((start < 0) || (end < 0) || (start > end) || (end > txt.length()))
+            throw new IndexOutOfBoundsException();
+        return appendNoCheck(txt, start, end);
+    }
+
+    private final TextBuilder appendNoCheck(Text txt, int start, int end) {
+        int newLength = _length + end - start; 
+        while (_capacity < newLength) {
+            increaseCapacity();
         }
+        for (int i = start, j = _length; i < end;) {
+            char[] chars = charsAt(j);
+            int inc = MathLib.min(C0 - (j & M0), end - i);
+            txt.getChars(i, (i += inc), chars, j & M0);
+            j += inc;
+        }
+        _length = newLength;
         return this;
     }
 
@@ -786,7 +821,7 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     /**
      * Returns the {@link Text} corresponding to this {@link TextBuilder}
      * (allocated on the "stack" when executing in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return the corresponding {@link Text} instance.
      */
@@ -795,11 +830,12 @@ public class TextBuilder extends RealtimeObject implements Appendable,
     }
 
     /**
-     * Returns the <code>String</code> value holds by this {@link TextBuilder}.
+     * Returns the <code>String</code> representation of this 
+     * {@link TextBuilder}.
      *
      * @return the <code>java.lang.String</code> for this text builder.
      */
-    public final String stringValue() {
+    public final String toString() {
         char[] data = new char[_length];
         this.getChars(0, _length, data, 0);
         return new String(data, 0, _length);

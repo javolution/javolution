@@ -11,13 +11,18 @@ package javolution.xml;
 import java.io.IOException;
 import javolution.Javolution;
 import javolution.JavolutionError;
+import javolution.context.PersistentContext;
 import javolution.lang.ClassInitializer;
 import javolution.lang.Reflection;
 import javolution.lang.Reusable;
 import javolution.text.Appendable;
 import javolution.text.CharArray;
 import javolution.text.Text;
+import javolution.util.FastCollection;
+import javolution.util.FastComparator;
 import javolution.util.FastMap;
+import javolution.util.Index;
+import javolution.util.FastCollection.Record;
 import javolution.util.FastMap.Entry;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReaderImpl;
@@ -83,9 +88,9 @@ import j2me.util.Map;
  *     
  *     // XML binding overriding statically bounded formats.
  *     public MyBinding extends XMLBinding {
- *         // Non-static formats use the XMLFormat no-arg constructor.
- *         XMLFormat<String> _myStringFormat = new XMLFormat<String>() {...}
- *         XMLFormat<Collection> _myCollectionFormat = new XMLFormat<Collection>() {...}
+ *         // Non-static formats use unmapped XMLFormat instances.
+ *         XMLFormat<String> _myStringFormat = new XMLFormat<String>(null) {...}
+ *         XMLFormat<Collection> _myCollectionFormat = new XMLFormat<Collection>(null) {...}
  *         public <T> XMLFormat<T> getFormat(Class<T> cls) {
  *             if (String.class.equals(cls))
  *                  return _myStringFormat;
@@ -97,9 +102,8 @@ import j2me.util.Map;
  *     [/code]
  *      
  * <p> The default XML binding supports all static XML formats 
- *     (those created using {@link XMLFormat#XMLFormat(Class)} 
- *     constructor) which also include formats for the following
- *     non-Javolution types:<ul>
+ *     (static members of the classes being mapped) as well as the 
+ *     following types:<ul>
  *        <li><code>java.lang.Object</code> (empty element)</li>
  *        <li><code>java.lang.Class</code></li>
  *        <li><code>java.lang.String</code></li>
@@ -111,13 +115,10 @@ import j2me.util.Map;
  *            <code>Boolean, Integer ...</code>)</li>
  *        </ul></p>
  *     
- * <p> Finally, the XML binding itself defines a default {@link #XML XML} format
- *     allowing saving/retrieving of the binding from XML files.</p>  
- *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, September 4, 2006
+ * @version 4.0, April 9, 2007
  */
-public class XMLBinding implements Reusable {
+public class XMLBinding implements Reusable, XMLSerializable {
 
     /**
      * Holds the static mapping format.
@@ -133,7 +134,8 @@ public class XMLBinding implements Reusable {
      * Holds the XML representation of this binding (class/alias mapping 
      * and class attribute values).
      */
-    protected static XMLFormat XML = new XMLFormat() {
+    static final XMLFormat XML = new XMLFormat(Javolution
+            .j2meGetClass("javolution.xml.XMLBinding")) {
 
         public void read(InputElement xml, Object obj)
                 throws XMLStreamException {
@@ -818,6 +820,185 @@ public class XMLBinding implements Reusable {
      };
      /**/
 
+    ////////////////////////////////////////////////////////////////////////////
+    // JAVOLUTION XML FORMAT (HERE TO AVOID LOADING XML FRAMEWORK IF NOT USED)//
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * Holds the default XML representation for Text instances. 
+     * This representation consists of a <code>"value"</code> attribute 
+     * holding the characters.
+     */
+    static final XMLFormat/*<Text>*/TEXT_XML = new XMLFormat(Javolution
+            .j2meGetClass("javolution.text.Text")) {
+
+        public Object newInstance(Class cls,
+                javolution.xml.XMLFormat.InputElement xml)
+                throws XMLStreamException {
+            CharSequence csq = xml.getAttribute("value");
+            return csq != null ? Text.valueOf(csq) : Text.EMPTY;
+        }
+
+        public void read(InputElement xml, Object obj)
+                throws XMLStreamException {
+            // Do nothing.
+        }
+
+        public void write(Object obj, OutputElement xml)
+                throws XMLStreamException {
+            xml.setAttribute("value", (Text) obj);
+        }
+    };
+
+    /**
+     * Holds the default XML representation for FastMap instances.
+     * This representation is identical to {@link XMLBinding#MAP_XML}
+     * except that it may include the key/value comparators for the map
+     * (if different from {@link FastComparator#DEFAULT}) and the 
+     * {@link #isShared() "shared"} attribute.
+     */
+    static final XMLFormat/*<FastMap>*/ FASTMAP_XML = new XMLFormat(
+            new FastMap().getClass()) {
+
+        public void read(InputElement xml, Object obj)
+                throws XMLStreamException {
+            final FastMap fm = (FastMap) obj;
+            fm.setShared(xml.getAttribute("shared", false));
+            FastComparator keyComparator = (FastComparator) xml
+                    .get("KeyComparator");
+            if (keyComparator != null) {
+                fm.setKeyComparator(keyComparator);
+            }
+            FastComparator valueComparator = (FastComparator) xml
+                    .get("ValueComparator");
+            if (valueComparator != null) {
+                fm.setValueComparator(valueComparator);
+            }
+            while (xml.hasNext()) {
+                Object key = xml.get("Key");
+                Object value = xml.get("Value");
+                fm.put(key, value);
+            }
+        }
+
+        public void write(Object obj, OutputElement xml)
+                throws XMLStreamException {
+            final FastMap fm = (FastMap) obj;
+            if (fm.isShared()) {
+                xml.setAttribute("shared", true);
+            }
+            if (fm.getKeyComparator() != FastComparator.DEFAULT) {
+                xml.add(fm.getKeyComparator(), "KeyComparator");
+            }
+            if (fm.getValueComparator() != FastComparator.DEFAULT) {
+                xml.add(fm.getValueComparator(), "ValueComparator");
+            }
+            for (Entry e = fm.head(), end = fm.tail(); (e = (Entry) e.getNext()) != end;) {
+                xml.add(e.getKey(), "Key");
+                xml.add(e.getValue(), "Value");
+            }
+        }
+    };
+
+    /**
+     * Holds the default XML representation for FastCollection instances.
+     * This representation is identical to {@link XMLBinding#COLLECTION_XML}.
+     */
+    static final XMLFormat/*<FastCollection>*/ FASTCOLLECTION_XML = new XMLFormat(
+            Javolution.j2meGetClass("javolution.util.FastCollection")) {
+
+        public void read(InputElement xml, Object obj) throws XMLStreamException {
+            FastCollection fc = (FastCollection) obj;
+            while (xml.hasNext()) {
+                fc.add(xml.getNext());
+            }
+        }
+
+        public void write(Object obj, OutputElement xml) throws XMLStreamException {
+            FastCollection fc = (FastCollection) obj;
+            for (Record r=fc.head(), end=fc.tail(); (r=r.getNext())!=end;) {
+                xml.add(fc.valueOf(r));
+            }
+        }
+    };
+
+    /**
+     * Holds the default XML representation for FastComparator instances
+     * (format ensures unicity of predefined comparator).
+     */
+    static final XMLFormat/*<FastComparator>*/ FASTCOMPARATOR_XML = new XMLFormat(
+            Javolution.j2meGetClass("javolution.util.FastComparator")) {
+
+        public Object newInstance(Class cls, javolution.xml.XMLFormat.InputElement xml) throws XMLStreamException {
+            if (cls == FastComparator.DEFAULT.getClass())
+                return FastComparator.DEFAULT;
+            if (cls == FastComparator.DIRECT.getClass())
+                return FastComparator.DIRECT;
+            if (cls == FastComparator.IDENTITY.getClass())
+                return FastComparator.IDENTITY;
+            if (cls == FastComparator.LEXICAL.getClass())
+                return FastComparator.LEXICAL;
+            if (cls == FastComparator.REHASH.getClass())
+                return FastComparator.REHASH;
+            return super.newInstance(cls, xml);
+        }
+
+        public void read(InputElement xml, Object obj) throws XMLStreamException {
+            // Do nothing.
+        }
+
+        public void write(Object obj, OutputElement xml) throws XMLStreamException {
+            // Do nothing.
+        }
+    };
+
+    /**
+     * Holds the default XML representation for indexes.
+     * This presentation consists of a <code>"value"</code> attribute 
+     * holding the index <code>int</code> value.
+     */
+    static final XMLFormat/*<Index>*/INDEX_XML = new XMLFormat(Index.ZERO
+            .getClass()) {
+
+        public boolean isReferenceable() {
+            return false; // Always by value (immutable). 
+        }
+
+        public Object newInstance(Class cls, InputElement xml)
+                throws XMLStreamException {
+            return Index.valueOf(xml.getAttribute("value", 0));
+        }
+
+        public void read(InputElement xml, Object obj)
+                throws XMLStreamException {
+            // Do nothing.
+        }
+
+        public void write(Object obj, OutputElement xml)
+                throws XMLStreamException {
+            xml.setAttribute("value", ((Index) obj).intValue());
+        }
+    };
+
+    /**
+     * Holds the XML representation for persistent contexts
+     * (holds persistent reference mapping).
+     */
+    static final XMLFormat/*<PersistentContext>*/PERSISTENT_CONTEXT_XML = new XMLFormat(
+            new PersistentContext().getClass()) {
+        public void read(InputElement xml, Object obj)
+                throws XMLStreamException {
+            final PersistentContext ctx = (PersistentContext) obj;
+            ctx.getIdToValue().putAll((FastMap) xml.get("References"));
+        }
+
+        public void write(Object obj, OutputElement xml)
+                throws XMLStreamException {
+            final PersistentContext ctx = (PersistentContext) obj;
+            xml.add(ctx.getIdToValue(), "References");
+        }
+    };
+    
     private static CharSequence toCsq/**/(Object str) {
         return Javolution.j2meToCharSeq(str);
     }

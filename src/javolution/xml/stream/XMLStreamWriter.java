@@ -22,7 +22,7 @@ import j2me.lang.CharSequence;
  * <p> This writer does not require creating new <code>String</code> objects 
  *     during XML formatting. Attributes values can be held by a single/reusable
  *     {@link javolution.text.TextBuilder TextBuilder}  
- *     (or <code>StringBuilder</code>)instance to avoid adverse effects 
+ *     (or <code>StringBuilder</code>) instance to avoid adverse effects 
  *     on memory footprint (heap), garbage collection and performance.
  *     For example:[code]
  *     

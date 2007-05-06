@@ -80,6 +80,16 @@
    }[/code]        
     For more details, please read <a href="http://javolution.org/doc/Javolution-Collections.pdf">Javolution-Collection.pdf</a></P>.  
      
+<P> Temporary collection classes can be recycled (e.g. throw-away collections) to avoid the creation
+    cost). For example:[code]
+    static void removeDuplicate(List<Person> persons) {
+        FastSet<Person> tmp = FastSet.newInstance(); // Possibly recycled instance.
+        tmp.addAll(persons);
+        persons.clear();
+        persons.addAll(tmp);
+        FastSet.recycle(tmp); // Recycles the temporary instance.
+   }[/code]</p>  
+ 
 <P> Here is a summary of the collection classes with their defining characteristics:
        <TABLE border="1" summary="Fast Collections Classes">
             <CAPTION><EM><B>Javolution Collections Classes</B></EM></CAPTION>

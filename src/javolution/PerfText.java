@@ -8,7 +8,7 @@
  */
 package javolution;
 
-import javolution.context.PoolContext;
+import javolution.context.StackContext;
 import javolution.lang.MathLib;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
@@ -39,15 +39,17 @@ final class PerfText extends Javolution implements Runnable {
         println("//////////////////////////////");
         println("");
 
-        println("-- Primitive types formatting --");
-        println("");
         int n = 100000;
         int ii = MathLib.random(Integer.MIN_VALUE, Integer.MAX_VALUE);
         long ll = MathLib.random(Long.MIN_VALUE, Long.MAX_VALUE);
 
-        print("StringBuffer.append(int): ");
+        /*@JVM-1.5+@
+        println("-- Primitive types formatting --");
+        println("");
+
+        print("StringBuilder.append(int): ");
         for (int j=0; j < 10; j++) {
-            StringBuffer tmp = new StringBuffer();
+            StringBuilder tmp = new StringBuilder();
             startTime();
             for (int i = 0; i < n; i++) {
                 tmp.setLength(0);
@@ -56,6 +58,7 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(n);
         }
         println(endTime());
+        /**/
         
         print("TextBuilder.append(int): ");
         for (int j=0; j < 10; j++) {
@@ -69,9 +72,10 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
         
-        print("StringBuffer.append(long): ");
+        /*@JVM-1.5+@
+        print("StringBuilder.append(long): ");
         for (int j=0; j < 10; j++) {
-            StringBuffer tmp = new StringBuffer();
+            StringBuilder tmp = new StringBuilder();
             startTime();
             for (int i = 0; i < n; i++) {
                 tmp.setLength(0);
@@ -80,6 +84,7 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(n);
         }
         println(endTime());
+        /**/
         
         print("TextBuilder.append(long): ");
         for (int j=0; j < 10; j++) {
@@ -93,13 +98,13 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
         
-        /*@JVM-1.1+@
+        /*@JVM-1.5+@
         float ff = MathLib.random(-1.0f, 1.0f);
         double dd = MathLib.random(-1.0d, 1.0d);
         
-        print("StringBuffer.append(float): ");
+        print("StringBuilder.append(float): ");
         for (int j=0; j < 10; j++) {
-            StringBuffer tmp = new StringBuffer();
+            StringBuilder tmp = new StringBuilder();
             startTime();
             for (int i = 0; i < n; i++) {
                 tmp.setLength(0);
@@ -121,9 +126,9 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
         
-        print("StringBuffer.append(double): ");
+        print("StringBuilder.append(double): ");
         for (int j=0; j < 10; j++) {
-            StringBuffer tmp = new StringBuffer();
+            StringBuilder tmp = new StringBuilder();
             startTime();
             for (int i = 0; i < n; i++) {
                 tmp.setLength(0);
@@ -145,6 +150,7 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
         /**/
+        
         println("");
         
         println("-- Primitive types parsing --");
@@ -192,7 +198,7 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
         
-        /*@JVM-1.1+@
+        /*@JVM-1.5+@
         String fs = "" + ff;
         String ds = "" + dd;
 
@@ -235,10 +241,10 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(n);
         }
         println(endTime());
-        /**/
         println("");
+        /**/
         
-        println("-- String/StringBuffer versus Text --");
+        println("-- String/StringBuilder versus Text --");
         println("");
 
         println("\"" + STRING + "\"");
@@ -255,9 +261,10 @@ final class PerfText extends Javolution implements Runnable {
         }
         println(endTime());
 
-        print("StringBuffer \"append\" : ");
+        /*@JVM-1.5+@
+        print("StringBuilder \"append\" : ");
         for (int i = 0; i < 100; i++) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             startTime();
             for (int j = COUNT; --j >= 0;) {
                 sb.append(STRING);
@@ -265,6 +272,7 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(COUNT);
         }
         println(endTime());
+        /**/
 
         print("Text \"concat\" (heap): ");
         for (int i = 0; i < 100; i++) {
@@ -279,23 +287,24 @@ final class PerfText extends Javolution implements Runnable {
 
         print("Text \"concat\" (stack): ");
         for (int i = 0; i < 100; i++) {
-            PoolContext.enter();
+            StackContext.enter();
             Text txt = Text.EMPTY;
             startTime();
             for (int j = COUNT; --j >= 0;) {
                 txt = txt.concat(TEXT);
             }
             keepBestTime(COUNT);
-            PoolContext.exit();
+            StackContext.exit();
         }
         println(endTime());
 
         println("");
         println("Inserts one character at random locations 1,000 times to the 80,000 characters text.");
 
-        print("StringBuffer insert: ");
+        /*@JVM-1.5+@
+        print("StringBuilder insert: ");
         for (int i = 0; i < 100; i++) {
-            StringBuffer sb = new StringBuffer(str);
+            StringBuilder sb = new StringBuilder(str);
             startTime();
             for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.random(0, sb.length());
@@ -304,6 +313,7 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(COUNT);
         }
         println(endTime());
+        /**/
 
         print("Text insert (heap): ");
         for (int i = 0; i < 100; i++) {
@@ -319,7 +329,7 @@ final class PerfText extends Javolution implements Runnable {
 
         print("Text insert (stack): ");
         for (int i = 0; i < 100; i++) {
-            PoolContext.enter();
+            StackContext.enter();
             Text txt = Text.valueOf(str);
             startTime();
             for (int j = COUNT; --j >= 0;) {
@@ -327,16 +337,17 @@ final class PerfText extends Javolution implements Runnable {
                 txt = txt.insert(index, ONE_CHAR);
             }
             keepBestTime(COUNT);
-            PoolContext.exit();
+            StackContext.exit();
         }
         println(endTime());
 
         println("");
         println("Delete 1,000 times one character at random location from the 80,000 characters text.");
 
-        print("StringBuffer delete: ");
+        /*@JVM-1.5+@
+        print("StringBuilder delete: ");
         for (int i = 0; i < 100; i++) {
-            StringBuffer sb = new StringBuffer(str); 
+            StringBuilder sb = new StringBuilder(str); 
             startTime();
             for (int j = COUNT; --j >= 0;) {
                 int index = MathLib.random(0, sb.length() - 1);
@@ -345,6 +356,7 @@ final class PerfText extends Javolution implements Runnable {
             keepBestTime(COUNT);
         }
         println(endTime());
+        /**/
 
         print("Text delete (heap): ");
         for (int i = 0; i < 100; i++) {
@@ -360,7 +372,7 @@ final class PerfText extends Javolution implements Runnable {
 
         print("Text delete (stack): ");
         for (int i = 0; i < 100; i++) {
-            PoolContext.enter();
+            StackContext.enter();
             Text txt = Text.valueOf(str);
             startTime();
             for (int j = COUNT; --j >= 0;) {
@@ -368,7 +380,7 @@ final class PerfText extends Javolution implements Runnable {
                 txt = txt.delete(index, index + 1);
             }
             keepBestTime(COUNT);
-            PoolContext.exit();
+            StackContext.exit();
         }
         println(endTime());
 

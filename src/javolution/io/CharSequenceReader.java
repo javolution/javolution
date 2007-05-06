@@ -77,10 +77,8 @@ public final class CharSequenceReader extends Reader implements Reusable {
 
     /**
      * Closes and {@link #reset resets} this reader for reuse.
-     *
-     * @throws IOException if an I/O error occurs.
      */
-    public void close() throws IOException {
+    public void close() {
         if (_input != null) {
             reset();
         }

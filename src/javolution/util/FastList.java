@@ -20,8 +20,9 @@ import j2me.util.List;
 import j2me.util.ListIterator;
 import j2mex.realtime.MemoryArea;
 import java.util.NoSuchElementException;
+
+import javolution.context.ObjectFactory;
 import javolution.context.PersistentContext;
-import javolution.context.RealtimeObject;
 import javolution.lang.Reusable;
 
 /**
@@ -51,13 +52,13 @@ import javolution.lang.Reusable;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, December 18, 2006
  */
-public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
-        List/*<E>*/ {
+public class FastList/*<E>*/extends FastCollection/*<E>*/
+    implements List/*<E>*/, Reusable {
 
     /**
      * Holds the main list factory.
      */
-    private static final Factory FACTORY = new Factory() {
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
 
         public Object create() {
             return new FastList();
@@ -145,8 +146,8 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} list instance
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}).
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}).
      *
      * @return a new, preallocated or recycled list instance.
      */
@@ -156,8 +157,8 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
 
     /**
      * Recycles a list {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.PoolContext
-     * PoolContext}). 
+     * (on the stack when executing in a {@link javolution.context.StackContext
+     * StackContext}). 
      */
     public static void recycle(FastList instance) {
         FACTORY.recycle(instance);
@@ -339,7 +340,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns an iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -356,7 +357,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a list iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -373,7 +374,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a list iterator from the specified position
      * (allocated on the stack when executed in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * 
      * The specified index indicates the first value that would be returned by
      * an initial call to the <code>next</code> method.  An initial call to
@@ -405,7 +406,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * Returns a view of the portion of this list between the specified
      * indexes (allocated from the "stack" when executing in a 
-     * {@link javolution.context.PoolContext PoolContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 
@@ -756,10 +757,9 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     /**
      * This inner class implements a fast list iterator.
      */
-    private static final class FastListIterator extends RealtimeObject
-            implements ListIterator {
+    private static final class FastListIterator implements ListIterator {
 
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
             protected Object create() {
                 return new FastListIterator();
             }
@@ -852,7 +852,7 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     private static final class SubList extends FastCollection
         implements List, Serializable {
 
-        private static final Factory FACTORY = new Factory() {
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
             protected Object create() {
                 return new SubList();
             }
@@ -1005,4 +1005,10 @@ public class FastList/*<E>*/extends FastCollection/*<E>*/implements Reusable,
     }
 
     private static final long serialVersionUID = 1L;
+
+    // Implements Reusable interface.
+    public void reset() {
+        this.clear();
+        _valueComparator = FastComparator.DEFAULT;
+    }
 }

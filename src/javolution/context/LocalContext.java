@@ -41,7 +41,7 @@ public class LocalContext extends Context {
     /**
      * Holds the context factory.
      */
-    private static Factory FACTORY = new Factory() {
+    private static ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             return new LocalContext();
         } 

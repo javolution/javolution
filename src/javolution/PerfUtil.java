@@ -46,7 +46,7 @@ final class PerfUtil extends Javolution implements Runnable {
         println("//////////////////////////////");
         println("");
         println("(new)      : The collection is created (using the new keyword), populated, then discarded (throw-away collections).");
-        println("(recycled) : The collection is cleared, populated, then reused (static collections or throw-away collections in PoolContext).");
+        println("(recycled) : The collection is cleared, populated, then reused (static collections or throw-away collections in StackContext).");
         println("");
 
         // Creates objects collection.

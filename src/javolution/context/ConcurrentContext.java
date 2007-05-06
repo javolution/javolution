@@ -36,58 +36,57 @@ import javolution.lang.Reflection;
  *     
  * <p> Concurrent logics always execute within the same {@link Context} as 
  *     the calling thread, in other words if the main thread runs in a 
- *     {@link PoolContext}, concurrent executions are performed in the
- *     same {@link PoolContext} as well.</p>
+ *     {@link StackContext}, concurrent executions are performed in the
+ *     same {@link StackContext} as well.</p>
  *     
  * <p> Concurrent contexts are easy to use, and provide automatic 
  *     load-balancing between processors with almost no overhead. Here is
- *     an example of <b>concurrent/recursive/clean</b> implementation of the 
+ *     an example of <b>concurrent/recursive</b> implementation of the 
  *     Karatsuba multiplication for large integers:[code]
- *     import javolution.context.PoolContext.Reference;
+ *     import javolution.context.ConcurrentContext.Reference;
  *     ...
  *     public LargeInteger multiply(LargeInteger that) {
  *         if (that._size <= 1) {
  *             return multiply(that.longValue()); // Direct multiplication.
- *             
  *         } else { // Karatsuba multiplication in O(n^log2(3))
- *             PoolContext.enter();  // Avoids generating garbage (also faster).
- *             try {
- *                 int bitLength = this.bitLength();
- *                 int n = (bitLength >> 1) + (bitLength & 1);
+ *             int bitLength = this.bitLength();
+ *             int n = (bitLength >> 1) + (bitLength & 1);
  *                 
- *                 // this = a + 2^n b,   that = c + 2^n d
- *                 LargeInteger b = this.shiftRight(n);
- *                 LargeInteger a = this.minus(b.shiftLeft(n));
- *                 LargeInteger d = that.shiftRight(n);
- *                 LargeInteger c = that.minus(d.shiftLeft(n));
- *                 Reference<LargeInteger> ac = Reference.newInstance();
- *                 Reference<LargeInteger> bd = Reference.newInstance();
- *                 Reference<LargeInteger> abcd = Reference.newInstance();
- *                 ConcurrentContext.enter();
- *                 try { 
- *                     ConcurrentContext.execute(MULTIPLY, a, c, ac);
- *                     ConcurrentContext.execute(MULTIPLY, b, d, bd);
- *                     ConcurrentContext.execute(MULTIPLY, a.plus(b), c.plus(d), abcd);
- *                 } finally {
- *                     ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
- *                 }
- *                 
- *                 // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
- *                 LargeInteger product = ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
- *                 return product.export();
+ *             // this = a + 2^n b,   that = c + 2^n d
+ *             LargeInteger b = this.shiftRight(n);
+ *             LargeInteger a = this.minus(b.shiftLeft(n));
+ *             LargeInteger d = that.shiftRight(n);
+ *             LargeInteger c = that.minus(d.shiftLeft(n));
+ *             Multiply ac = Multiply.valueOf(a, c);
+ *             Multiply bd = Multiply.valueOf(b, d);
+ *             Multiply abcd = Multiply.valueOf(a.plus(b), c.plus(d));
+ *             ConcurrentContext.enter();
+ *             try { 
+ *                 ConcurrentContext.execute(ac);
+ *                 ConcurrentContext.execute(bd);
+ *                 ConcurrentContext.execute(abcd);
  *             } finally {
- *                 PoolContext.exit();
- *             }    
+ *                 ConcurrentContext.exit(); // Waits for all concurrent threads to complete.
+ *             }
+ *             // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
+ *             return  ac.get().plus(abcd.get().minus(ac.get()).minus(bd.get()).shiftLeft(n)).plus(bd.get().shiftLeft(2 * n));
  *         }
  *     }
- *     private static final Logic MULTIPLY = new Logic() {
- *         public void run() {
- *             LargeInteger left = getArgument(0);
- *             LargeInteger right = getArgument(1);
- *             Reference<LargeInteger> result = getArgument(2);
- *             result.set(left.times(right));  // Recursive.
+ *     private static class Multiply implements Runnable {
+ *         LargeInteger _left, _right, _result;
+ *         static Multiply valueOf(LargeInteger left, LargeInteger right) {
+ *             Multiply multiply = new Multiply(); // Or use an ObjectFactory (to allow stack allocation).
+ *             multiply._left = left;
+ *             multiply._right = right;
+ *             return multiply;
  *         }
- *    };[/code]
+ *         public void run() {
+ *             _result = _left.times(_right); // Recursive.
+ *         }
+ *         public LargeInteger get() {
+ *             return _result;
+ *         } 
+ *     };[/code]
  *    
  *    Here is a concurrent/recursive quick/merge sort using anonymous inner 
  *    classes (same as in Javolution  
@@ -134,9 +133,9 @@ import javolution.lang.Reflection;
  *                        i2++;
  *                    }
  *                }
- *           }
- *           FastTable.recycle(t1);  
- *           FastTable.recycle(t2);
+ *            }
+ *            FastTable.recycle(t1);  
+ *            FastTable.recycle(t2);
  *        }
  *     }[/code]
  * 
@@ -155,7 +154,7 @@ public class ConcurrentContext extends Context {
     /**
      * Holds the context factory.
      */
-    private static Factory FACTORY = new Factory() {
+    private static ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             return new ConcurrentContext();
         }
@@ -677,9 +676,9 @@ public class ConcurrentContext extends Context {
      * @return <code>(Number of Processors) - 1</code>
      * @see javolution.context.ConcurrentThread
      */
-    private static class StatusImpl extends RealtimeObject implements Status {
+    private static class StatusImpl implements Status {
 
-        private static StatusImpl.Factory FACTORY = new Factory() {
+        private static ObjectFactory FACTORY = new ObjectFactory() {
             protected Object create() {
                 return new StatusImpl();
             }
@@ -710,12 +709,9 @@ public class ConcurrentContext extends Context {
         public void started() {
             ARGUMENTS.set(_args);
             Context.setCurrent(_context);
-            _context.getLocalPools().activatePools();
         }
 
         public void completed() {
-            _context.getLocalPools().deactivatePools();
- 
             // Must be last (as the status may be reused after).
             synchronized (_context) {
                 _context._completedCount++;

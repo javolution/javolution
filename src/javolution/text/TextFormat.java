@@ -161,7 +161,7 @@ public abstract class TextFormat/*<T>*/{
         /**
          * Returns a new, preallocated or {@link #recycle recycled} cursor
          * instance (on the stack when executing in a {@link 
-         * javolution.context.PoolContext PoolContext}).
+         * javolution.context.StackContext StackContext}).
          * 
          * @param start the start index.
          * @param end the end index (index after the last character to be read).
@@ -178,7 +178,7 @@ public abstract class TextFormat/*<T>*/{
         /**
          * Recycles a cursor {@link #newInstance instance} immediately
          * (on the stack when executing in a {@link 
-         * javolution.context.PoolContext PoolContext}).
+         * javolution.context.StackContext StackContext}).
          * 
          * @param instance the cursor instance being recycled.
          */
