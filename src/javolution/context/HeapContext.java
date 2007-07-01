@@ -9,6 +9,7 @@
 package javolution.context;
 
 import j2me.lang.ThreadLocal;
+import javolution.JavolutionError;
 import javolution.lang.Configurable;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
@@ -78,7 +79,7 @@ public abstract class HeapContext extends AllocatorContext {
      * {@link ObjectQueue#QUEUES_ENABLED disabled}.
      */
     public static final Configurable/*<Class>*/CLASS = new Configurable/*<Class>*/(
-            new HeapContextImpl().getClass()) {
+            Default.CLASS) {
         protected void notifyChange() {
             _Default = (HeapContext) FACTORY.create();
         }
@@ -87,7 +88,7 @@ public abstract class HeapContext extends AllocatorContext {
     /**
      * Holds the default heap context.
      */
-    static HeapContext _Default = new HeapContextImpl();
+    static HeapContext _Default = new Default();
 
     /**
      * Holds the default implementation factory.
@@ -95,14 +96,15 @@ public abstract class HeapContext extends AllocatorContext {
     private static ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             Class cls = (Class) CLASS.get();
+            if (cls == Default.CLASS) 
+                return new Default(); 
             try {
                 return cls.newInstance();
             } catch (InstantiationException e) {
-                LogContext.error(e);
+                throw new JavolutionError(e);
             } catch (IllegalAccessException e) {
-                LogContext.error(e);
+                throw new JavolutionError(e);
             }
-            return new HeapContextImpl();
         }
     };
 
@@ -125,7 +127,12 @@ public abstract class HeapContext extends AllocatorContext {
     /**
      * Default implementation. 
      */
-    static final class HeapContextImpl extends HeapContext {
+    static final class Default extends HeapContext {
+
+        /**
+         * Holds the class identifier.
+         */
+        private static final Class CLASS = new Default().getClass();
 
         /**
          * Holds the thread-local factory to pool mapping (FastMap). 
@@ -148,7 +155,7 @@ public abstract class HeapContext extends AllocatorContext {
         /**
          * Default constructor.
          */
-        HeapContextImpl() {
+        Default() {
         }
 
         // Implements AllocatorContext abstract method.
@@ -180,23 +187,21 @@ public abstract class HeapContext extends AllocatorContext {
     // Holds heap pool implementation.
     private static final class Pool/*<T>*/extends ObjectQueue/*<T>*/{
         
-        private final ObjectFactory/*<T>*/_factory;
-
         private Pool(ObjectFactory/*<T>*/factory) {
-            _factory = factory;
+            super(factory);
             nextIndex = Integer.MAX_VALUE;
         }
         
         protected Object/*{T}*/allocate() {
-            if (size == 0) return _factory.create();
+            if (size == 0) return factory.create();
             Object/*{T}*/ obj = objects[--size];
             objects[size] = null;
             return obj;
         }
 
         protected void recycle(Object/*{T}*/object) {
-            if(_factory.doCleanup()) {
-                _factory.cleanup(object);
+            if(factory.doCleanup()) {
+                factory.cleanup(object);
             }
             if (size >= objects.length) {
                 resize();
@@ -205,7 +210,7 @@ public abstract class HeapContext extends AllocatorContext {
         }
         
         public String toString() {
-            return "Heap for " + _factory.getClass() + "(size: " + size + ")";
+            return "Heap for " + factory.getClass() + "(size: " + size + ")";
         }
 
     }

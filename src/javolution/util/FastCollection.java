@@ -397,15 +397,14 @@ public abstract class FastCollection/*<E>*/ implements
      * @return this collection textual representation.
      */
     public Text toText() {
-        final Text sep = Text.valueOf(", ");
-        Text text = Text.valueOf('[');
+        Text text = Text.valueOf("[");
         for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
-            text = text.concat(Text.valueOf(valueOf(r)));
+            text = text.plus(valueOf(r));
             if (r.getNext() != end) {
-                text = text.concat(sep);
+                text = text.plus(", ");
             }
         }
-        return text.concat(Text.valueOf(']'));
+        return text.plus("]");
     }
 
     /**

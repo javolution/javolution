@@ -7,7 +7,7 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="5.0" />
+        <property name="version" value="5.1" />
         <property name="release" value="0" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
@@ -184,6 +184,10 @@
             <replacetoken><![CDATA[Object/*{]]></replacetoken>
             <replacevalue><![CDATA[ ]]></replacevalue>
         </replace>
+        <replace dir="${tmp}/javolution" includes="**/StackContext.java">
+            <replacetoken><![CDATA[ValueType/*{]]></replacetoken>
+            <replacevalue><![CDATA[ ]]></replacevalue>
+        </replace>
         <replace dir="${tmp}/javolution" includes="**/*.java">
             <replacetoken><![CDATA[}*/]]></replacetoken>
             <replacevalue><![CDATA[ ]]></replacevalue>
@@ -265,7 +269,7 @@
                 </A>]]>
             </header>
             <bottom>
-                <![CDATA[<i>Copyright &#169; 2006 Javolution.</i>]]>
+                <![CDATA[<i>Copyright &#169; 2007 Javolution.</i>]]>
             </bottom>
             <packageset dir="${tmp}" defaultexcludes="yes">
                 <include name="javolution/**/*" />

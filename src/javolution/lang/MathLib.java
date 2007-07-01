@@ -386,7 +386,7 @@ public final class MathLib {
      *         (NaN, Infinity or overflow).
      * @JVM-1.1+@
      public static long toLongPow2(double d, int n) {
-     long bits = Double.doubleToRawLongBits(d);
+     long bits = Double.doubleToLongBits(d);
      boolean isNegative = (bits >> 63) != 0;
      int exp = ((int)(bits >> 52)) & 0x7FF;
      long m = bits & 0x000fffffffffffffL;
@@ -416,7 +416,7 @@ public final class MathLib {
      * @return <code>d * 10<sup>n</sup></code>.
      @JVM-1.1+@
      public static long toLongPow10(double d, int n) {
-     long bits = Double.doubleToRawLongBits(d);
+     long bits = Double.doubleToLongBits(d);
      boolean isNegative = (bits >> 63) != 0;
      int exp = ((int)(bits >> 52)) & 0x7FF;
      long m = bits & 0x000fffffffffffffL;
@@ -537,7 +537,7 @@ public final class MathLib {
      * @JVM-1.1+@
      public static int floorLog2(double d) {
      if (d <= 0) throw new ArithmeticException("Negative number or zero");
-     long bits = Double.doubleToRawLongBits(d);
+     long bits = Double.doubleToLongBits(d);
      int exp = ((int)(bits >> 52)) & 0x7FF;
      if (exp == 0x7FF) throw new ArithmeticException("Infinity or NaN");
      if (exp == 0)  // Degenerated.

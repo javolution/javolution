@@ -39,109 +39,133 @@ public abstract class ArrayFactory/*<T>*/{
     /**
      * Holds factory for <code>boolean</code> arrays.
      */
-    public static final ArrayFactory/*<boolean[]>*/ BOOLEANS_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<boolean[]>*/BOOLEANS_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new boolean[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((boolean[])array).length);
-        }        
+            recycle(array, ((boolean[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>byte</code> arrays.
      */
-    public static final ArrayFactory/*<byte[]>*/ BYTES_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<byte[]>*/BYTES_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new byte[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((byte[])array).length);
-        }        
+            recycle(array, ((byte[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>char</code> arrays.
      */
-    public static final ArrayFactory/*<char[]>*/ CHARS_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<char[]>*/CHARS_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new char[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((char[])array).length);
-        }        
+            recycle(array, ((char[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>short</code> arrays.
      */
-    public static final ArrayFactory/*<short[]>*/ SHORTS_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<short[]>*/SHORTS_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new short[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((short[])array).length);
-        }        
+            recycle(array, ((short[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>int</code> arrays.
      */
-    public static final ArrayFactory/*<int[]>*/ INTS_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<int[]>*/INTS_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new int[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((int[])array).length);
-        }        
+            recycle(array, ((int[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>long</code> arrays.
      */
-    public static final ArrayFactory/*<long[]>*/ LONGS_FACTORY = new ArrayFactory() {
+    public static final ArrayFactory/*<long[]>*/LONGS_FACTORY = new ArrayFactory() {
         protected Object create(int size) {
             return new long[size];
         }
+
         public void recycle(Object array) {
-            recycle(array, ((long[])array).length);
-        }        
+            recycle(array, ((long[]) array).length);
+        }
     };
 
     /**
      * Holds factory for <code>float</code> arrays.
      */
     /*@JVM-1.5+@
-    public static final ArrayFactory
-    /*<float[]>*/
-        /*@JVM-1.5+@
-    FLOATS_FACTORY = new ArrayFactory() {
-        protected Object create(int size) {
-            return new float[size];
-        }
-        public void recycle(Object array) {
-            recycle(array, ((float[])array).length);
-        }        
-    };
-    /**/
+     public static final ArrayFactory
+     /*<float[]>*/
+    /*@JVM-1.5+@
+     FLOATS_FACTORY = new ArrayFactory() {
+     protected Object create(int size) {
+     return new float[size];
+     }
+     public void recycle(Object array) {
+     recycle(array, ((float[])array).length);
+     }        
+     };
+     /**/
 
     /**
      * Holds factory for <code>double</code> arrays.
      */
     /*@JVM-1.5+@
-    public static final ArrayFactory
-    /*<double[]>*/ 
+     public static final ArrayFactory
+     /*<double[]>*/
     /*@JVM-1.5+@
-    DOUBLES_FACTORY = new ArrayFactory() {
-        protected Object create(int size) {
-            return new double[size];
+     DOUBLES_FACTORY = new ArrayFactory() {
+     protected Object create(int size) {
+     return new double[size];
+     }
+     public void recycle(Object array) {
+     recycle(array, ((double[])array).length);
+     }        
+     };
+     /**/
+
+    /**
+     * Holds factory for arrays up to size 4.
+     */
+    private final ObjectFactory _factory4 = new ObjectFactory() {
+        protected Object create() {
+            return ArrayFactory.this.create(4);
         }
-        public void recycle(Object array) {
-            recycle(array, ((double[])array).length);
-        }        
     };
-    /**/
-    
+
+    /**
+     * Holds factory for arrays up to size 8.
+     */
+    private final ObjectFactory _factory8 = new ObjectFactory() {
+        protected Object create() {
+            return ArrayFactory.this.create(8);
+        }
+    };
+
     /**
      * Holds factory for arrays up to size 16.
      */
@@ -274,7 +298,14 @@ public abstract class ArrayFactory/*<T>*/{
      * @param capacity the minimum size of the array to be returned.
      * @return a recycled, pre-allocated or new factory array.
      */
-    public final Object/*{T}*/ array(int capacity) {
+    public final Object/*{T}*/array(int capacity) {
+        return (capacity <= 4) ? (Object/*{T}*/) _factory4.object()
+                : largeArray(capacity);
+    }
+
+    private final Object/*{T}*/largeArray(int capacity) {
+        if (capacity <= 8)
+            return (Object/*{T}*/) _factory8.object();
         if (capacity <= 16)
             return (Object/*{T}*/) _factory16.object();
         if (capacity <= 32)
@@ -309,11 +340,16 @@ public abstract class ArrayFactory/*<T>*/{
      * 
      * @param array the array to be recycled.
      */
-    public void recycle(Object/*{T}*/ array) {
-        recycle(array, ((Object[])array).length);
+    public void recycle(Object/*{T}*/array) {
+        recycle(array, ((Object[]) array).length);
     }
+
     final void recycle(Object array, int length) {
-        if (length <= 16) {
+        if (length <= 4) {
+            _factory4.recycle(array);
+        } else if (length <= 8) {
+            _factory8.recycle(array);
+        } else if (length <= 16) {
             _factory16.recycle(array);
         } else if (length <= 32) {
             _factory32.recycle(array);

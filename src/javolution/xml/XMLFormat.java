@@ -547,6 +547,23 @@ public abstract class XMLFormat/*<T>*/{
         }
 
         /**
+         * Returns the specified <code>char</code> attribute.
+         *
+         * @param  name the name of the attribute searched for.
+         * @param  defaultValue the value returned if the attribute is not found.
+         * @return the <code>char</code> value for the specified attribute or
+         *         the default value if the attribute is not found.
+         */
+        public char getAttribute(String name, char defaultValue)
+                throws XMLStreamException {
+            CharArray value = getAttribute(name);
+            if (value == null) return defaultValue;
+            if (value.length() != 1) throw new XMLStreamException(
+                    "Single character expected (read '" + value + "')");
+            return value.charAt(0);
+        }
+
+        /**
          * Returns the specified <code>int</code> attribute. This method handles
          * string formats that are used to represent octal and hexadecimal numbers.
          *
@@ -607,6 +624,7 @@ public abstract class XMLFormat/*<T>*/{
         ////////////////////////
         // Primitive Wrappers //
         ////////////////////////
+
         /**
          * Searches for the specified <code>Boolean</code> attribute.
          *
@@ -990,6 +1008,17 @@ public abstract class XMLFormat/*<T>*/{
         }
 
         private TextBuilder _tmpTextBuilder = new TextBuilder();
+
+        /**
+         * Sets the specified <code>char</code> attribute.
+         * 
+         * @param  name the attribute name.
+         * @param  value the <code>char</code> value for the specified attribute.
+         */
+        public void setAttribute(String name, char value)
+                throws XMLStreamException {
+            setAttribute(name, (TextBuilder) _tmpTextBuilder.clear().append(value));
+        }
 
         /**
          * Sets the specified <code>int</code> attribute.

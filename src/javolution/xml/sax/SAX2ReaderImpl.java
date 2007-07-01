@@ -249,66 +249,66 @@ public final class SAX2ReaderImpl implements XMLReader, Reusable {
 
         // Implements Attributes
         public int getLength() {
-            return _attributes.getLength();
+            return (_attributes != null ? _attributes.getLength() : 0);
         }
 
         // Implements Attributes
         public String getURI(int index) {
-            CharSequence chars = _attributes.getURI(index);
-            return (chars != null) ? chars.toString() : null;
+            CharSequence chars = (_attributes != null ? _attributes.getURI(index) : null);
+            return (chars != null ? chars.toString() : "");
         }
 
         // Implements Attributes
         public String getLocalName(int index) {
-            CharSequence chars = _attributes.getLocalName(index);
-            return (chars != null) ? chars.toString() : null;
+            CharSequence chars = (_attributes != null ? _attributes.getLocalName(index) : null);
+            return (chars != null ? chars.toString() : "");
         }
 
         // Implements Attributes
         public String getQName(int index) {
-            CharSequence chars = _attributes.getQName(index);
-            return (chars != null) ? chars.toString() : null;
+            CharSequence chars = (_attributes != null ? _attributes.getQName(index) : null);
+            return (chars != null ? chars.toString() : "");
         }
 
         // Implements Attributes
         public String getType(int index) {
-            return _attributes.getType(index).toString();
+            return (_attributes != null ? _attributes.getType(index).toString() : null);
         }
 
         // Implements Attributes
         public String getValue(int index) {
-            CharSequence chars = _attributes.getValue(index);
-            return (chars != null) ? chars.toString() : null;
+            CharSequence chars = (_attributes != null ? _attributes.getValue(index) : null);
+            return (chars != null ? chars.toString() : null);
         }
 
         // Implements Attributes
         public int getIndex(String uri, String localName) {
-            return _attributes.getIndex(toCharSequence(uri), toCharSequence(localName));
+            return (uri != null && localName != null && _attributes != null ? _attributes.getIndex(toCharSequence(uri), toCharSequence(localName)) : -1);
         }
 
         // Implements Attributes
         public int getIndex(String qName) {
-            return _attributes.getIndex(toCharSequence(qName));
+            return (qName != null && _attributes != null ? _attributes.getIndex(toCharSequence(qName)) : -1);
         }
 
         // Implements Attributes
         public String getType(String uri, String localName) {
-            return _attributes.getType(toCharSequence(uri), toCharSequence(localName)).toString();
+            return (uri != null && localName != null && _attributes != null ? _attributes.getType(toCharSequence(uri), toCharSequence(localName)).toString() : null);
         }
 
         // Implements Attributes
         public String getType(String qName) {
-            return _attributes.getType(toCharSequence(qName)).toString();
+            return (qName != null && _attributes != null ? _attributes.getType(toCharSequence(qName)).toString() : null);
         }
 
         // Implements Attributes
         public String getValue(String uri, String localName) {
-            return _attributes.getValue(toCharSequence(uri), toCharSequence(localName)).toString();
+            return (uri != null && localName != null && _attributes != null && _attributes.getValue(toCharSequence(uri), toCharSequence(localName)) != null ? _attributes.getValue(toCharSequence(uri), toCharSequence(localName)).toString() : null);
         }
 
         // Implements Attributes
         public String getValue(String qName) {
-            return _attributes.getValue(toCharSequence(qName)).toString();
+            return (qName != null && _attributes != null ? _attributes.getValue(toCharSequence(qName)).toString() : null);
         }
     }
 

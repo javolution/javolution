@@ -17,24 +17,10 @@ import j2me.lang.ThreadLocal;
  * <p> This class represents an execution context; they can be associated to 
  *     particular threads or objects.</p>
  *     
- * <p> This package provides few predefined contexts:<ul>
- *     <li>{@link LocalContext} - To define locally 
- *          scoped setting held by {@link LocalContext.Reference}</li>
- *     <li>{@link ConcurrentContext} - To take advantage of concurrent 
- *         algorithms on multi-processors systems.</li>
- *     <li>{@link StackContext} - To transparently reuse objects created using
- *          an {@link ObjectFactory} instead of a constructor.</li>
- *     <li>{@link LogContext} - For thread-based or object-based logging
- *         capability.
- *         <i>Note: <code>java.util.logging</code> provides class-based 
- *           logging (based upon class hierarchy).</i></li>
- *     <li>{@link PersistentContext} - To achieve persistency accross 
- *          multiple program execution.</li>
- *     <li>{@link SecurityContext} - To address application-level security 
- *         concerns.</li>
- *     </ul>           
- *     Context-aware applications may extend the context base class or any 
- *     predefined contexts in order to facilitate separation of concern.</p>
+ * <p> Context-aware applications may extend the context base class or any 
+ *     predefined contexts in order to facilitate <a 
+ *     href="package-summary.html#package_description">
+ *     separation of concerns</a>.</p>
  *     
  * <p> The scope of a {@link Context} should be surrounded by a <code>try, 
  *     finally</code> block statement to ensure correct behavior in case 
@@ -102,7 +88,6 @@ public abstract class Context implements XMLSerializable {
 
     /**
      * Returns the current context for the current thread. 
-     * {@link ConcurrentExecutor} have the same context as the calling thread.   
      *
      * @return the current context.
      */
@@ -115,7 +100,7 @@ public abstract class Context implements XMLSerializable {
      * context is the thread which {@link #enter(Context) entered}
      * the context and has not yet {@link #exit(Context) exited}.
      * A context can only have one owner at any given time, although
-     * contexts can be shared by multiple {@link ConcurrentExecutor}).
+     * contexts can be shared by {@link ConcurrentContext concurrent} threads.
      *
      * @return the thread owner of this context or <code>null</code>.
      */
@@ -190,8 +175,10 @@ public abstract class Context implements XMLSerializable {
     /**
      * Sets the current context, used by {@link ConcurrentContext}
      * exclusively.
+     * 
+     * @param context the concurrent context.
      */
-    static void setCurrent(ConcurrentContext context) {
+    protected static void setCurrent(ConcurrentContext context) {
         Context.CURRENT.set(context);
     }
     

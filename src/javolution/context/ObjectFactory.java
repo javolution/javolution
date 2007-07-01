@@ -33,7 +33,7 @@ import j2me.lang.ThreadLocal;
  * <p> For arrays of variable length {@link ArrayFactory} is recommended.</p>
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 14, 2007
+ * @version 5.0, May 6, 2007
  */
 public abstract class ObjectFactory/*<T>*/{
 
@@ -59,7 +59,7 @@ public abstract class ObjectFactory/*<T>*/{
         }
     };
 
-    private static final ObjectQueue NULL = new ObjectQueue() {
+    private static final ObjectQueue NULL = new ObjectQueue(null) {
 
         protected Object allocate() {
             return null;

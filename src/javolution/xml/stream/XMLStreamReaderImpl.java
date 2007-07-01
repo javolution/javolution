@@ -1421,6 +1421,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         int eventType = next();
         while (eventType == XMLStreamConstants.COMMENT
                 || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION
+                || eventType == XMLStreamConstants.DTD
                 || (eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace())) {
             eventType = next();
         }

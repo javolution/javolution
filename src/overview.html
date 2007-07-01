@@ -31,10 +31,10 @@ Here are few important configuration parameters with their default values:
       <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#CONCURRENCY}</td>
-      <td style="vertical-align: top;">(Number of Processors)</td>
-      <td style="vertical-align: top;">The default number of <a href="javolution/context/ConcurrentExecutor.html">ConcurrentExecutor</a>
-      (see <a href="javolution/context/ConcurrentContext.html">ConcurrentContext</a>)</td>
+      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}</td>
+      <td style="vertical-align: top;">(Number of Processors - 1)</td>
+      <td style="vertical-align: top;">The maximum number of worker threads usable by 
+      <a href="javolution/context/ConcurrentContext.html">ConcurrentContext</a> (none for single processors)</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">{@link javolution.context.ObjectQueue#QUEUES_ENABLED}</code></td>

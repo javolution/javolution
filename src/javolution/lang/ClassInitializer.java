@@ -19,14 +19,13 @@ import javolution.util.StandardLog;
  * <p> This utility class allows for initialization of all Java(tm) classes
  *     at startup to avoid initialization delays at an innapropriate time.</p>
  * <p> Initialization logs are available through 
- *     {@link javolution.context.LogContext LogContext}. For example:[code]
+ *     {@link javolution.context.LogContext LogContext}. Users might want to disable logging
+ *     when initializing all classes at start-up because of the presence of old classes 
+ *     (never used) for which initialization fails. For example:[code]
  *     public static main(String[] args) {
- *         LogContext.enter(LogContext.NULL); // Temporarely disables logging errors and warnings.
- *         try {
- *             ClassInitializer.initializeAll(); // Initializes bootstrap, extensions and classpath classes.
- *         } finally {
- *            LogContext.exit(LogContext.NULL);
- *         }
+ *         LogContext.setDefault(LogContext.NULL); // Temporarely disables logging errors and warnings.
+ *         ClassInitializer.initializeAll();  // Initializes bootstrap, extensions and classpath classes.
+ *         LogContext.setDefault(LogContext.STANDARD); // Goes back to standard logging context default.
  *         ...
  *     }[/code]</p>
  *    

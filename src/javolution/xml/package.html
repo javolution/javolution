@@ -42,13 +42,13 @@
           // Default XML format with name associations (members identified by an unique name).
           // See XMLFormat for examples of positional associations.
           protected static final XMLFormat<Graphic> XML = new XMLFormat<Graphic>(Graphic.class) {
-               public void write(Graphic g, OutputElement xml) {
+               public void write(Graphic g, OutputElement xml) throws XMLStreamException {
                    xml.setAttribute("isVisible", g._isVisible); 
                    xml.add(g._paint, "Paint");
                    xml.add(g._stroke, "Stroke");
                    xml.add(g._transform, "Transform");
                }
-               public void read(InputElement xml, Graphic g) {
+               public void read(InputElement xml, Graphic g) throws XMLStreamException {
                    g._isVisible = xml.getAttribute("isVisible", true);
                    g._paint = xml.get("Paint");
                    g._stroke = xml.get("Stroke");
@@ -62,11 +62,11 @@
         
           // Adds geometry to format.
           protected static final XMLFormat<Area> XML = new XMLFormat<Area>(Area.class) {
-              public void write(Area area, OutputElement xml) {
+              public void write(Area area, OutputElement xml) throws XMLStreamException {
                   Graphic.XML.write(area, xml); // Calls parent write.
                   xml.add(area._geometry, "Geometry");
               }
-              public void read(InputElement xml, Area area) {
+              public void read(InputElement xml, Area area) throws XMLStreamException {
                   Graphic.XML.read(xml, area); // Calls parent read.
                   area._geometry = xml.get("Geometry");
               }
@@ -116,10 +116,10 @@
       </tr>
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, OutputElement xml) {
+    public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.setAttribute("text", foo.text); 
     }
-    public void read(InputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.getAttribute("text", "");
     }
 };[/code]</td>
@@ -131,10 +131,10 @@
       
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, OutputElement xml) {
+    public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text); 
     }
-    public void read(InputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.getNext();
     }
 };[/code]</td>
@@ -148,11 +148,11 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, OutputElement xml) {
+    public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.addText(foo.text);
         // or xml.getStreamWriter().writeCDATA(foo.text) to use CDATA block. 
     }
-    public void read(InputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.getText().toString(); // Content of a text-only element.
     }
 };[/code]</td>
@@ -164,10 +164,10 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, OutputElement xml) {
+    public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text"); 
     }
-    public void read(InputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.get("Text");
     }
 };[/code]</td>
@@ -181,10 +181,10 @@
 
       <tr>
 <td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
-    public void write(Foo foo, OutputElement xml) {
+    public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text", String.class); 
     }
-    public void read(InputElement xml, Foo foo) {
+    public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.get("Text", String.class);
     }
 };[/code]</td>
@@ -209,14 +209,14 @@
                 public boolean isReferencable() {
                     return false; // Always manipulates by value.
                 }
-                public Point newInstance(Class<Point> cls, InputElement xml) {
+                public Point newInstance(Class<Point> cls, InputElement xml) throws XMLStreamException {
                     return Point.valueOf(xml.getAttribute("x", 0), xml.getAttribute("y", 0)); 
                 }
-                public void write(Point point, OutputElement xml) {
+                public void write(Point point, OutputElement xml) throws XMLStreamException {
                     xml.setAttribute("x", point._x);
                     xml.setAttribute("y", point._y);
                 }
-                public void read(InputElement xml, Point point) {
+                public void read(InputElement xml, Point point) throws XMLStreamException {
                     // Do nothing immutable.
                 }
             };
@@ -232,13 +232,13 @@
         public class Polygon implements Shape, XMLSerializable { 
             private Point[] _vertices;
             static final XMLFormat<Polygon> XML = new XMLFormat<Polygon>(Polygon.class) {
-                public void write(Polygon polygon, OutputElement xml) {
+                public void write(Polygon polygon, OutputElement xml) throws XMLStreamException {
                     xml.setAttibutes("count", _vertices.length);
                     for (int i=0; i < _vertices.length; i++) {
                         xml.add(_vertices[i], "Vertex", Point.class);
                     }
                 }
-                public void read(InputElement xml, Polygon polygon) {
+                public void read(InputElement xml, Polygon polygon) throws XMLStreamException {
                     int count = xml.getAttributes("count", 0);
                     polygon._vertices = new Point[count];
                     for (int i=0; i < count; i++) {

@@ -70,7 +70,7 @@ final class EntitiesImpl implements Reusable {
             int base = (c == 'x') ? 16 : 10;
             int i = (c == 'x') ? 3 : 2;
             int charValue = 0;
-            for (; i < length; i++) {
+            for (; i < length - 1; i++) {
                 c = buffer[start + i];
                 charValue *= base;
                 charValue += (c <= '9') ? (c - '0') : (c <= 'Z') ? c - 'A'

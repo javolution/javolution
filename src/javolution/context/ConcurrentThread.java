@@ -13,16 +13,15 @@ import j2mex.realtime.RealtimeThread;
 import javolution.lang.Reflection;
 
 /**
- * <p> This class represents the default {@link ConcurrentExecutor}
- *     implementation used by {@link ConcurrentContext}. Executions
+ * <p> This class represents the concurrent executors used by the default 
+ *     implementation of {@link ConcurrentContext}. Executions
  *     are performed in the same memory area and at the same priority
  *     as the calling thread.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.2, December 14, 2006
+ * @version 5.1, July 1, 2007
  */
-public class ConcurrentThread extends RealtimeThread implements
-        ConcurrentExecutor {
+class ConcurrentThread extends RealtimeThread {
 
     private volatile Runnable _logic;
 
@@ -30,7 +29,7 @@ public class ConcurrentThread extends RealtimeThread implements
 
     private int _priority;
 
-    private Status _status;
+    private ConcurrentContext.ConcurrentContextImpl _context;
 
     private boolean _terminate;
 
@@ -83,34 +82,32 @@ public class ConcurrentThread extends RealtimeThread implements
                 if (current.getPriority() != _priority) {
                     current.setPriority(_priority);
                 }
-                _status.started();
+                _context.started();
                 _memoryArea.executeInArea(_logic);
             } catch (Throwable error) {
-                _status.error(error);
+                _context.error(error);
             } finally {
-                _status.completed();
-                ((AllocatorContext) AllocatorContext.current()).deactivate();              
-                _status = null;
-                _source = null;
+                _context.completed();
                 _logic = null; // Last (ready).
             }
         }
     }
 
-    // Implements ConcurrentExecutor
-    public boolean execute(Runnable logic, Status status) {
+    /**
+     * Executes the specified logic by this thread if ready.
+     * 
+     * @param logic the logic to execute.
+     * @param context the concurrent context.
+     */
+    public boolean execute(Runnable logic, ConcurrentContext.ConcurrentContextImpl context) {
         if (_logic != null)
             return false; // Shortcut to avoid synchronizing.
         synchronized (this) {
             if (_logic != null)
                 return false; // Synchronized check.
             _memoryArea = RealtimeThread.getCurrentMemoryArea();
-            _source = currentThread();
-            if (_source instanceof ConcurrentThread) {
-                _source = ((ConcurrentThread) _source)._source;
-            }
-            _priority = _source.getPriority();
-            _status = status;
+            _priority = Thread.currentThread().getPriority();
+            _context = context;
             _logic = logic; // Must be last.
             this.notify();
             return true;

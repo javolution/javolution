@@ -139,6 +139,7 @@ src/j2me/lang/IllegalStateException.java -text
 src/j2me/lang/Iterable.java -text
 src/j2me/lang/NoSuchFieldException.java -text
 src/j2me/lang/NoSuchMethodException.java -text
+src/j2me/lang/Number.java -text
 src/j2me/lang/Readable.java -text
 src/j2me/lang/SecurityException.java -text
 src/j2me/lang/StringBuilder.java -text
@@ -216,7 +217,6 @@ src/javolution/context/AllocatorContext.java -text
 src/javolution/context/ArrayFactory.java -text
 src/javolution/context/ConcurrentContext.java -text
 src/javolution/context/ConcurrentException.java -text
-src/javolution/context/ConcurrentExecutor.java -text
 src/javolution/context/ConcurrentThread.java -text
 src/javolution/context/Context.java -text
 src/javolution/context/HeapContext.java -text

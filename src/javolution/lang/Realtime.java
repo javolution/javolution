@@ -48,7 +48,7 @@ import javolution.text.Text;
  *     {@link javolution.context.AllocatorContext allocators} (Javolution).</p>
  *    
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 17, 2006
+ * @version 5.0, May 6, 2007
  */
 public interface Realtime {
 

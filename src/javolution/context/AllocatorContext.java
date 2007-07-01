@@ -20,7 +20,7 @@ package javolution.context;
  *     recycled when buffers are swapped), etc.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 14, 2006
+ * @version 5.0, May 6, 2007
  */
 public abstract class AllocatorContext extends Context {
 
@@ -31,11 +31,16 @@ public abstract class AllocatorContext extends Context {
     }
 
     /**
+     * Holds the outer allocator.
+     */
+    private AllocatorContext _outerAllocator;
+
+    /**
      * Returns the current allocator context.
      *
      * @return the current allocator context.
      */
-    public static /*AllocatorContext*/Context current() {
+    public static/*AllocatorContext*/Context current() {
         for (Context ctx = Context.current(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof AllocatorContext)
                 return (AllocatorContext) ctx;
@@ -51,30 +56,41 @@ public abstract class AllocatorContext extends Context {
      */
     protected abstract ObjectQueue getQueue(ObjectFactory factory);
 
-   /**
-    * This method is called when an inner allocator context is entered
-    * by the current thread, when exiting this allocator context or 
-    * when a concurrent executor has completed its task using this 
-    * allocator context.
-    */
+    /**
+     * Returns the outer allocator (the allocator context superceeded by
+     * this context).
+     * 
+     * @return the outer allocator context or <code>null</code> if none.
+     */
+    protected final AllocatorContext getOuterAllocator() {
+        return _outerAllocator;
+    };
+
+    /**
+     * This method is called when an inner allocator context is entered
+     * by the current thread, when exiting this allocator context or 
+     * when a concurrent executor has completed its task using this 
+     * allocator context.
+     */
     protected abstract void deactivate();
-  
+
     // Implements Context abstract method.
     protected void enterAction() {
         // Find outer AllocatorContext.
-        AllocatorContext outer = HeapContext._Default;
+        _outerAllocator = HeapContext._Default;
         for (Context ctx = this.getOuter(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof AllocatorContext) {
-                outer = (AllocatorContext) ctx;
+                _outerAllocator = (AllocatorContext) ctx;
                 break;
             }
         }
-        outer.deactivate();
+        _outerAllocator.deactivate();
     }
 
     // Implements Context abstract method.
     protected void exitAction() {
         this.deactivate();
+        _outerAllocator = null;
     }
 
     /**
@@ -87,8 +103,7 @@ public abstract class AllocatorContext extends Context {
      * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
      * @version 5.0, April 14, 2007
      */
-    public static class Reference/*<T>*/ implements
-            javolution.lang.Reference/*<T>*/{
+    public static class Reference/*<T>*/implements javolution.lang.Reference/*<T>*/{
 
         /**
          * Holds the factory.

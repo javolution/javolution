@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2007 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -15,27 +15,33 @@ package javolution.lang;
  *     
  * <p> {@link Realtime} instances can be "explicitly" allocated on the  
  *     "stack" by executing within a {@link javolution.context.StackContext 
- *     StackContext} and creating new instances through {@link 
+ *     StackContext} and creating new instances with an  {@link 
  *     javolution.context.ObjectFactory ObjectFactory}. 
  *     It is the responsibility of the users to ensure 
- *     that "stack" objects are {@link #copy() copied} when referenced outside
- *     of the stack context. For example:[code]
+ *     that "stack" objects are {@link javolution.context.StackContext#outerCopy
+ *     copied out} when
+ *     referenced outside of the stack context. For example:[code]
  *     public final class Complex implements Realtime, ValueType { ... }
  *     ...
- *     Complex[] values = ...
- *     Complex sum = Complex.ZERO;
- *     StackContext.enter(); // Starts stack allocation.
- *     try {
- *         for (Complex c : values) {
- *             sum = sum.plus(c);
- *         } 
- *     } finally {
- *         StackContext.exit(); // Resets stacks.
- *         sum = sum.copy(); // Exports outside the stack.
- *     }[/code]</p> 
+ *     public Complex sumOf(Complex[] values) {
+ *         StackContext.enter(); // Starts stack allocation.
+ *         try {
+ *             Complex sum = Complex.ZERO;
+ *             for (Complex c : values) {
+ *                 sum = sum.plus(c);
+ *             }
+ *             return StackContext.outerCopy(sum); // Copies outside the stack.
+ *         } finally {
+ *             StackContext.exit(); // Resets stacks.
+ *         }
+ *     }[/code]</p>
+ *      
+ * <p> <b>Note:</b> "Stack" allocation is not the only optimization that a VM 
+ *     can do on {@link ValueType}. The VM might decide not to perform any 
+ *     allocation at all and store values directly in registers.</p> 
  *             
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 17, 2006
+ * @version 5.0, May 6, 2007
  */
 public interface ValueType extends Immutable {
 

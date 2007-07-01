@@ -9,12 +9,9 @@
 package javolution;
 
 import j2me.lang.CharSequence;
-
 import java.io.PrintStream;
 
 import javolution.context.LogContext;
-import javolution.context.ObjectQueue;
-import javolution.lang.Configurable;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
 
@@ -28,7 +25,8 @@ import javolution.text.TextBuilder;
  * @version 1.0, September 14, 2004
  */
 public class Javolution {
-
+    
+ 
     /**
      * Holds the version information.
      */
@@ -39,16 +37,8 @@ public class Javolution {
      */
     private static PrintStream Out = System.out;
 
-    /**
-     * Holds logic to disable object pooling.
-     */
-    public static final Configurable.Logic DISABLE_POOLING = new Configurable.Logic() {
-        public void run() {
-            configure(ObjectQueue.QUEUES_ENABLED, new Boolean(false));             
-        }
-    };
     
-         /**
+    /**
      * Default constructor.
      */
     protected Javolution() {
@@ -67,8 +57,6 @@ public class Javolution {
      * @throws Exception if a problem occurs.
      */
    public static void main(String[] args) throws Exception {
-        //DISABLE_POOLING.run();
-        
         Out.println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
         Out.println("Version " + VERSION + " (http://javolution.org)");
         Out.println("");

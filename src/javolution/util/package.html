@@ -32,8 +32,8 @@
     <LI>Used to implement most of {@link javolution.util.FastCollection FastCollection} base class methods 
         (including {@link javolution.util.FastCollection#iterator iterator()}).</LI>
     <LI>Support forward/backward iterations from the start (head) or from the end (tail)</LI>
-    <LI>Thread-Safe as long as the record sequence iterated over is not modified by another thread.
-        Objects can safely be append/prepend by other threads during iteration but not inserted/removed.
+    <LI>Thread-safe as long as objects are not inserted/removed during iterations. Objects can safely be 
+       append/prepend by the current thread or other threads.
         <i>(Note: {@link javolution.util.FastMap#setShared Shared FastMap} are always thread-safe even when entries are removed)</i>.</LI>
     <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible 
         with other platforms (J2ME, 1.4, GCJ).</LI>

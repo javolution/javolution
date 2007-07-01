@@ -287,6 +287,20 @@ public class TextBuilder implements Appendable,
     }
 
     /**
+     * Appends the textual representation of the specified object. 
+     * If the specified object is <code>null</code> this method 
+     * is equivalent to <code>append("null")</code>. 
+     *
+     * @param obj the object to represent or <code>null</code>.
+     * @return <code>this</code>
+     */
+    public final TextBuilder append(Object obj) {
+        if (obj instanceof String) 
+            return append((String) obj);
+        return append(Text.valueOf(obj));
+    }
+        
+    /**
      * Appends the specified character sequence. If the specified character
      * sequence is <code>null</code> this method is equivalent to
      * <code>append("null")</code>.
@@ -322,25 +336,6 @@ public class TextBuilder implements Appendable,
         return this;
     }
 
-    /**
-     * Appends the textual representation of the specified object. 
-     * If the specified object is <code>null</code> this method 
-     * is equivalent to <code>append("null")</code>. 
-     *
-     * @param obj the object to represent or <code>null</code>.
-     * @return <code>this</code>
-     */
-    public final TextBuilder append(Object obj) {
-        if (obj instanceof String) {
-            return append((String) obj);
-        } else if (obj instanceof CharSequence) {
-            return (TextBuilder) append((CharSequence) obj);
-        } else if (obj != null) {
-            return append(obj.toString());
-        } else {
-            return append("null");
-        }
-    }
 
     /**
      * Appends the specified string to this text builder. 
@@ -826,9 +821,10 @@ public class TextBuilder implements Appendable,
      * @return the corresponding {@link Text} instance.
      */
     public final Text toText() {
+        // TODO Avoids copying the arrays and makes it immutable ??
         return Text.valueOf(this, 0, _length);
     }
-
+    
     /**
      * Returns the <code>String</code> representation of this 
      * {@link TextBuilder}.

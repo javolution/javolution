@@ -12,7 +12,6 @@ import javolution.context.ArrayFactory;
 import javolution.context.ConcurrentContext;
 import javolution.context.ObjectFactory;
 import javolution.context.StackContext;
-import javolution.context.ConcurrentContext.Logic;
 import javolution.lang.MathLib;
 import javolution.util.FastComparator;
 import javolution.util.FastTable;
@@ -49,7 +48,7 @@ final class PerfContext extends Javolution implements Runnable {
 
         println("-- Concurrent Context --");
         print("Quick Sort " + N + " elements - Concurrency disabled: ");
-        ConcurrentContext.setEnabled(false);
+        ConcurrentContext.setConcurrency(0);
         for (int i = 0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
@@ -58,9 +57,10 @@ final class PerfContext extends Javolution implements Runnable {
         }
         println(endTime());
 
+        Integer concurrency = (Integer) ConcurrentContext.MAXIMUM_CONCURRENCY.get();
         print("Quick Sort " + N + " elements - Concurrency ("
-                + ConcurrentContext.CONCURRENCY.get() + ") enabled: ");
-        ConcurrentContext.setEnabled(true);
+                + concurrency + ") enabled: ");
+        ConcurrentContext.setConcurrency(concurrency.intValue());
         for (int i = 0; i < 1000; i++) {
             FastTable table = randomTable();
             startTime();
@@ -91,13 +91,13 @@ final class PerfContext extends Javolution implements Runnable {
             final FastTable t2 = FastTable.newInstance();
             ConcurrentContext.enter();
             try {
-                ConcurrentContext.execute(new Logic() {
+                ConcurrentContext.execute(new Runnable() {
                     public void run() {
                         t1.addAll(table.subList(0, size / 2));
                         quickSort(t1);
                     }
                 });
-                ConcurrentContext.execute(new Logic() {
+                ConcurrentContext.execute(new Runnable() {
                     public void run() {
                         t2.addAll(table.subList(size / 2, size));
                         quickSort(t2);

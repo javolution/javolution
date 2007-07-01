@@ -49,7 +49,7 @@ import java.io.IOException;
  *     utility class is recommended.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 3.7, January 14, 2006
+ * @version 5.0, June 12, 2007
  */
 public abstract class TextFormat/*<T>*/{
 
@@ -85,6 +85,22 @@ public abstract class TextFormat/*<T>*/{
     public abstract Object/*{T}*/parse(CharSequence csq, Cursor cursor);
 
     /**
+     * Formats the specified object into a {@link TextBuilder} (convenience 
+     * method which does not raise IOException). 
+     * 
+     * @param obj the object to format.
+     * @param dest the text builder destination.
+     * @return the specified text builder.
+     */
+    public final Appendable format(Object/*{T}*/obj, TextBuilder dest) {
+         try {
+            return format(obj, (Appendable)dest);
+        } catch (IOException e) {
+            throw new Error(); // Cannot happen.
+        }
+    }
+        
+    /**
      * Formats the specified object to a {@link Text} instance
      * (convenience method).
      * 
@@ -92,13 +108,11 @@ public abstract class TextFormat/*<T>*/{
      * @return the text representing the specified object.
      */
     public final Text format(Object/*{T}*/obj) {
-        try {
-            TextBuilder tb = TextBuilder.newInstance();
-            format(obj, tb);
-            return tb.toText();
-        } catch (IOException e) {
-            throw new Error(); // Should never happen.
-        }
+        TextBuilder tb = TextBuilder.newInstance();
+        format(obj, tb);
+        Text txt = tb.toText();
+        TextBuilder.recycle(tb);
+        return txt;
     }
 
     /**

@@ -284,10 +284,10 @@ body {
          <BR> </LI>
          <LI CLASS="simplespacer_body">All <B><I>Javolution</I></B>
          classes are <b>hard real-time compliant</b> and have highly deterministic
-         behavior (in the microsecond range). For applications based upon
-         the Real-Time Specification for Java (<A HREF="http://www.rtj.org/">RTSJ</A>)
-         normal threads and <code>NoHeapRealtimeThread</code> may share
-         objects preallocated/recycled in immortal memory.
+         behavior (in the microsecond range). Furthermore (unlike the standard 
+         library), <B><I>Javolution</I></B>  is 
+         (<A HREF="http://www.rtj.org/">RTSJ</A>) safe (no memory clash or 
+         memory leak when used with Java Real-Time extension).
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
          <A HREF="api/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
@@ -329,7 +329,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.0.0 - May 6, 2007</SPAN></DIV>
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.1.0 - July 2, 2007</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -337,10 +337,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-5.0.0-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-5.1.0-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-5.0.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-5.1.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -723,6 +723,19 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
+         <LI CLASS="simplespacer_body"><B>July 2, 2007: Javolution 5.1</B><BR>
+         <UL>
+         <LI> Simplified <A HREF="api/javolution/context/ConcurrentContext.html">concurrent contexts</A>
+              to accept any <code>Runnable</code> [5.1.0] </LI>
+         <LI> Enhanced documentation of <A HREF="api/javolution/lang/Configurable.html">Configurable</A> [5.1.0] </LI>
+         <LI> Optimization of <A HREF="api/javolution/text/Text.html">Text</A> (now final) [5.1.0] </LI>
+         <LI> Added <CODE>Text.print()</CODE> and <CODE>Text.println()</CODE> methods 
+              to output <A HREF="api/javolution/text/Text.html">Text</A> instances
+              without creating intermediate <CODE>String</CODE> instances [5.1.0] </LI>
+         <LI> Corrected error when parsing character references (XMLStreamReaderImpl) [5.1.0] </LI>
+         </UL>
+         <P></P>
+
          <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
          Major Relase! Here are the most important changes:<ul>     
          <LI> Separation of concerns: Two new 
@@ -738,9 +751,8 @@ body {
               immutable objects which can be referenced by copy and can always be allocated 
               on the "stack"!</LI>
          <LI> New <A HREF="api/javolution/context/ArrayFactory.html">ArrayFactory</A> to 
-              allocates/recycle variable sizes arrays. "Stack" allocation is independant
-              from the array's size and typically significantly faster than "heap" allocation
-              for arrays.</LI>
+              allocates/recycle variable sizes arrays. "Stack" allocation is independent
+              from the array's size and significantly faster than "heap" allocation.</LI>
          </UL>
          </LI>
          
@@ -839,7 +851,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : May 6, 2007<BR>
+      Revision      : July 2, 2007<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

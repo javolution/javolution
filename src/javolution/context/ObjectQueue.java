@@ -17,9 +17,9 @@ import javolution.lang.Configurable;
  *     {@link AllocatorContext#getQueue(ObjectFactory)}.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 14, 2007
+ * @version 5.0, May 6, 2007
  */
-public abstract class ObjectQueue/*<T>*/ {
+public abstract class ObjectQueue/*<T>*/{
 
     /**
      * Indicates if object queueing is enabled. Changing this parameter can only
@@ -35,18 +35,23 @@ public abstract class ObjectQueue/*<T>*/ {
      *         ...
      *     }[/code]
      */
-    public static final Configurable/*<Boolean>*/ QUEUES_ENABLED
-        = new Configurable/*<Boolean>*/(new Boolean(true)) {
+    public static final Configurable/*<Boolean>*/QUEUES_ENABLED = new Configurable/*<Boolean>*/(
+            new Boolean(true)) {
         protected void notifyChange() {
-            if (((Boolean)this.get()).booleanValue() != ObjectFactory.USE_QUEUES)
+            if (((Boolean) this.get()).booleanValue() != ObjectFactory.USE_QUEUES)
                 throw new JavolutionError(
-                    "Setting cannot be changed after intialization of the " +
-                    "ObjectFactory class (it must be done first)");
+                        "Setting cannot be changed after intialization of the "
+                                + "ObjectFactory class (it must be done first)");
         }
     };
-    
+
     /**
-     * Holds the current user of this pool.  
+     * Holds the factory used by this pool.  
+     */
+    protected final ObjectFactory/*<T>*/factory;
+
+    /**
+     * Holds the factory.  
      */
     protected Thread user;
 
@@ -61,14 +66,17 @@ public abstract class ObjectQueue/*<T>*/ {
     protected int nextIndex;
 
     /**
-     * Holds the size of this pool.  
+     * Holds the number of objects in this queue.  
      */
     protected int size;
 
     /**
-     * Default constructor.
+     * Creates a queue for the specified factory.
+     * 
+     * @param factory this queue's factory.
      */
-    protected ObjectQueue() {
+    protected ObjectQueue(ObjectFactory/*<T>*/factory) {
+        this.factory = factory;
     }
 
     /**
@@ -86,41 +94,72 @@ public abstract class ObjectQueue/*<T>*/ {
      * 
      * @return the next available object from this pool.
      */
-    public final Object/*{T}*/ next() {
+    public final Object/*{T}*/next() {
         return nextIndex < size ? objects[nextIndex++] : allocate();
+    }
+
+    /**
+     * Returns the number of elements in this queue.
+     * 
+     * @return this queue size.
+     */
+    public final int getSize() {
+        return size;
+    }
+
+    /**
+     * Sets the size of this queue, creating or removing objects as necessary.
+     * This method can be used to pre-allocate the queue at start-up.
+     * 
+     * @param newSize the new queue size.
+     */
+    public void setSize(int newSize) {
+        if (size < newSize) {
+            while (newSize > objects.length) {
+                resize();
+            }
+            for (int i = size; i < newSize;) {
+                objects[i++] = factory.create();
+            }
+        } else {
+            for (int i = newSize; i < size;) {
+                objects[i++] = null;
+            }
+        }
+        size = newSize;
     }
 
     /**
      * Clears this queue.
      */
-    protected void clear() {
-        for (int i=0; i < size;) {
+    public void clear() {
+        for (int i = 0; i < size;) {
             objects[i++] = null;
         }
         nextIndex = size = 0;
     }
 
     /**
-     * Resizes this queue (hopefully rare as pools should be kept small).
+     * Resizes this queue (hopefully rare as queues should be kept small).
      */
     protected void resize() {
         Object/*{T}*/[] tmp = (Object/*{T}*/[]) new Object[objects.length * 2];
         System.arraycopy(objects, 0, tmp, 0, size);
-        objects = tmp;   
+        objects = tmp;
     }
-    
+
     /**
      * Allocates a new object, this method is called when the queue is empty.
      * 
      * @return the allocated object.
      */
-    protected abstract Object/*{T}*/ allocate();
+    protected abstract Object/*{T}*/allocate();
 
     /**
      * Recycles the specified object to this queue.
      * 
      * @param object the object to recycle.
      */
-    protected abstract void recycle(Object/*{T}*/ object);
+    protected abstract void recycle(Object/*{T}*/object);
 
 }

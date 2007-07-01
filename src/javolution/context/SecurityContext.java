@@ -62,7 +62,7 @@ package javolution.context;
  *     context (<code>true</code> by default).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, April 18, 2007
+ * @version 5.0, May 6, 2007
  */
 public abstract class SecurityContext extends Context {
 
