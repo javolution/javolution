@@ -29,7 +29,7 @@ class ConcurrentThread extends RealtimeThread {
 
     private int _priority;
 
-    private ConcurrentContext.ConcurrentContextImpl _context;
+    private ConcurrentContext.Default _context;
 
     private boolean _terminate;
 
@@ -99,7 +99,7 @@ class ConcurrentThread extends RealtimeThread {
      * @param logic the logic to execute.
      * @param context the concurrent context.
      */
-    public boolean execute(Runnable logic, ConcurrentContext.ConcurrentContextImpl context) {
+    public boolean execute(Runnable logic, ConcurrentContext.Default context) {
         if (_logic != null)
             return false; // Shortcut to avoid synchronizing.
         synchronized (this) {

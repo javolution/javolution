@@ -19,8 +19,6 @@ import javolution.util.FastMap;
  *         LargeInteger.setModulus(m); // Performs integer operations modulo m.
  *         Length.showAs(NonSI.INCH); // Shows length in inches.
  *         RelativisticModel.select(); // Uses relativistic physical model.
- *         QuantityFormat.getInstance(); // Returns local format for quantities.
- *         XMLFormat.setFormat(Foo.class, myFormat); // Uses myFormat for instances of Foo.
  *     } finally {
  *         LocalContext.exit(); // Reverts to previous settings.
  *     }[/code]</p>   

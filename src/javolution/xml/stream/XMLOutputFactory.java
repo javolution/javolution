@@ -11,7 +11,9 @@ package javolution.xml.stream;
 import java.io.OutputStream;
 import java.io.Writer;
 
+import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
+import javolution.lang.Configurable;
 
 /**
  * <p> The class represents the factory for getting {@link XMLStreamWriter}
@@ -51,6 +53,12 @@ import javolution.context.ObjectFactory;
 public abstract class XMLOutputFactory {
 
     /**
+     * Holds the XMLOutputFactory default implementation (configurable).
+     */
+    public static final Configurable/*<Class>*/DEFAULT_IMPLEMENTATION = new Configurable/*<Class>*/(
+            Default.CLASS);
+
+    /**
      * Property used to set prefix defaulting on the output side
      * (type: <code>Boolean</code>, default: <code>FALSE</code>).
      */
@@ -79,19 +87,30 @@ public abstract class XMLOutputFactory {
      */
     public final static String AUTOMATIC_EMPTY_ELEMENTS = "javolution.xml.stream.automaticEmptyElements";
 
-     /**
+    /**
      * Default constructor.
      */
     protected XMLOutputFactory() {
     }
 
     /**
-     * Returns a new instance of the default factory which may be configurated
-     * by the user (see {@link #setProperty(String, Object)}).
+    /**
+     * Returns a new instance of the {@link #DEFAULT_IMPLEMENTATION default}
+     * output factory implementation which may be configurated by the user 
+     * (see {@link #setProperty(String, Object)}).
      * 
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
+        Class cls = DEFAULT_IMPLEMENTATION.getClass();
+        try { // Test if configuration override.
+            if (cls != Default.CLASS)
+                return (XMLOutputFactory) cls.newInstance();
+        } catch (InstantiationException e) {
+            LogContext.error(e);
+        } catch (IllegalAccessException e) {
+            LogContext.error(e);
+        }
         return new Default();
     }
 
@@ -160,6 +179,8 @@ public abstract class XMLOutputFactory {
      */
     private static final class Default extends XMLOutputFactory {
 
+        static final Class CLASS = new Default().getClass();
+
         // Property setting.
         private Boolean _isRepairingNamespaces = new Boolean(false);
 
@@ -198,15 +219,17 @@ public abstract class XMLOutputFactory {
             xmlWriter.setOutput(stream, encoding);
             return xmlWriter;
         }
-        
+
         private XMLStreamWriterImpl newWriter() {
             XMLStreamWriterImpl xmlWriter = (XMLStreamWriterImpl) XML_WRITER_FACTORY
-            .object();
+                    .object();
             xmlWriter._objectFactory = XML_WRITER_FACTORY;
-            xmlWriter.setRepairingNamespaces(_isRepairingNamespaces.booleanValue());
+            xmlWriter.setRepairingNamespaces(_isRepairingNamespaces
+                    .booleanValue());
             xmlWriter.setRepairingPrefix(_repairingPrefix);
             xmlWriter.setIndentation(_indentation);
-            xmlWriter.setAutomaticEmptyElements(_automaticEmptyElements.booleanValue());
+            xmlWriter.setAutomaticEmptyElements(_automaticEmptyElements
+                    .booleanValue());
             return xmlWriter;
         }
 

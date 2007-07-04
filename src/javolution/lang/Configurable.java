@@ -8,7 +8,8 @@
  */
 package javolution.lang;
 
-import javolution.text.Text;
+import javolution.context.SecurityContext;
+import javolution.text.TextFormat;
 
 /**
  *  <p> This class facilitates separation of concerns between the configuration
@@ -43,8 +44,8 @@ import javolution.text.Text;
  *      current values. For example:[code]
  *       public static final Configurable<String> AIRPORT_TABLE
  *            = new Configurable<String>("Airports");
- ...
- *       String sql = "SELECT * FROM " + AIRPORT_TABLE // AIRPORT_TABLE.get() superfluous 
+ *       ...
+ *       String sql = "SELECT * FROM " + AIRPORT_TABLE // AIRPORT_TABLE.get() is superfluous 
  *           + " WHERE State = '" + state  + "'";[/code]
  *      </p>
  *  
@@ -64,7 +65,7 @@ import javolution.text.Text;
  *                  // No algorithm parallelization on single-processor machines.
  *     ...
  *     class XMLInputFactory {    
- *          public static final Configurable<Class> CLASS 
+ *          public static final Configurable<Class> DEFAULT_IMPLEMENTATION 
  *              = new Configurable<Class>(XMLInputFactory.Default.class);
  *                  // Default class implementation is a private class. 
  *     ...
@@ -75,7 +76,8 @@ import javolution.text.Text;
  *      configuration values. Unlike system properties, configurable can be 
  *      used in applets or unsigned webstart applications.</p>
  *      
- *  <p> Here is an example of configurable logic for a web application.[code]
+ *  <p> Here is an example of configuration of a web application from 
+ *      a property file:[code]
  *      public class Configuration extends Configurable.Logic implements ServletContextListener {
  *          public void contextInitialized(ServletContextEvent sce) {
  *              try {
@@ -85,20 +87,9 @@ import javolution.text.Text;
  *                  Properties properties = new Properties();
  *                  properties.load(ctx.getResourceAsStream("WEB-INF/config/configuration.properties"));
  *               
- *                  // Configures the web application from property file.
- *                  String rehash = properties.get("REHASH"); 
- *                  if (rehash != null) { 
- *                      configure(FastComparator.REHASH, TypeFormat.parseBoolean(rehash));
- *                  }
- *                  String concurrency = properties.get("MAXIMUM_CONCURRENCY"); 
- *                  if (concurrency != null) { 
- *                      configure(ConcurrentContext.MAXIMUM_CONCURRENCY, TypeFormat.parseInt(concurrency));
- *                  }                
- *                  String xmlInputFactoryClass  = properties.get("XML_INPUT_FACTORY_CLASS"); 
- *                  if (xmlInputFactoryClass != null) { 
- *                      configure(XMLInputFactory.CLASS, Class.forName(xmlInputFactoryClass));
- *                  }  
- *                  ...              
+ *                  // Reads properties superceeding default values.
+ *                  Configurable.read(properties);
+ *                  
  *              } catch (Exception ex) {
  *                  LogContext.error(ex);
  *              }
@@ -109,14 +100,25 @@ import javolution.text.Text;
  *          <listener>
  *              <listener-class>mypackage.Configuration</listener-class>
  *           </listener>
- *      </web-app>[/code]</p>
+ *      </web-app>[/code]
+ *      The property file contains the full names of the configurables static
+ *      fields and the textual representation of their new values:[code]
+ *      # File configuration.properties
+ *      javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE = true
+ *      javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY = 0
+ *      javolution.xml.stream.XMLInputFactory#CLASS = com.foo.bar.XMLInputFactoryImpl
+ *      [/code]</p>
  *      
  * <p> Configuration settings are global (affect all threads). For thread-local
  *     environment settings {@link javolution.context.LocalContext.Reference 
  *     LocalContext.Reference} instances are recommended.</p>   
+ *     
+ * <p> <i>Note:</i> Any type for which a text format is 
+ *    {@link TextFormat#getInstance(Class) known} can be configured from 
+ *    <code>String</code> properties.</p>
  *       
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.1, July 2, 2007
+ * @version 5.1, July 4, 2007
  */
 public class Configurable/*<T>*/{
 
@@ -151,19 +153,71 @@ public class Configurable/*<T>*/{
     }
 
     /**
-     * Returns the text representation of the value of this configurable.
-     * 
-     * @return <code>Text.valueOf(this.get())</code>
-     */
-    public Text toText() {
-        return Text.valueOf(_value);
-    }
+     * Convenience method to read the specified properties (key/value mapping) 
+     * and reconfigures accordingly. The configurables are identified by their 
+     * field names (e.g. <code>
+     * "javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY"</code>).
+     * Conversion of <code>String</code> values is performed   
+     * using {@link javolution.text.TextFormat#getInstance(Class)}.   
+     *@JVM-1.1+@
+     public static void read(j2me.util.Map properties) {
+     j2me.util.Iterator i = properties.entrySet().iterator();
+     while (i.hasNext()) {
+     j2me.util.Map.Entry entry = (j2me.util.Map.Entry) i.next();
+     String key = String.valueOf(entry.getKey());
+     Object value = entry.getValue();
+     try {
+     int sep = key.indexOf('#');
+     if (sep < 0) // Not a configurable property.
+     continue; 
+     String className = key.substring(0, sep);
+     String fieldName = key.substring(sep + 1);
+
+     Class cls = Reflection.getClass(className);
+     Configurable cfg = (Configurable) cls.getDeclaredField(
+     fieldName).get(null);
+     Object previous = cfg.get();
+     if ((previous == null) || !(value instanceof String)) {
+     // No automatic conversion, use value directly.
+     LOGIC.configure(cfg, value);
+     continue;
+     }
+     String str = (String) value;
+     if (previous instanceof String) {
+     LOGIC.configure(cfg, value);
+     continue;
+     }
+
+     javolution.text.TextFormat format = javolution.text.TextFormat.getInstance(previous.getClass());
+     if (format != null) {
+     LOGIC.configure(cfg, format.parse(javolution.Javolution.j2meToCharSeq(str)));
+     continue;
+     }     
+     
+     javolution.context.LogContext.warning(javolution.text.Text.valueOf(
+     "No text format found for type "
+     + previous.getClass() + " (" + key + "), please register the text format" + 
+       " using TextFormat.setInstance(Class, TextFormat) static method"));
+
+     } catch (Exception ex) {
+     javolution.context.LogContext.warning(javolution.text.Text.valueOf("Cannot set property " + key
+     + "(" + ex.toString() + ")"));
+     }
+     }
+     }
+     /**/
+
+    static final Logic LOGIC = new Logic() {
+    }; // To access configuration setting. 
+
 
     /**
      * Notifies this configurable that its runtime value has been changed.
      * The default implementation does nothing. 
      */
     protected void notifyChange() {
+        LOGIC.getClass().getName();
+        // Do nothing.
     }
 
     /**
@@ -178,7 +232,9 @@ public class Configurable/*<T>*/{
      *     static class Configuration extends Configurable.Logic implements Runnable {
      *         public void run() {
      *             Properties properties = System.getProperties();
-     *             String concurrency = properties.get("MAXIMUM_CONCURRENCY"); 
+     *             // Properties could be loaded automatically if the property names 
+     *             // were the full names of the configurable fields (ref. Configurable.read(Map)).
+     *             String concurrency = properties.get("MAXIMUM_CONCURRENCY");
      *             if (concurrency != null) { 
      *                 configure(ConcurrentContext.MAXIMUM_CONCURRENCY, TypeFormat.parseInt(concurrency));
      *             }                
@@ -186,25 +242,44 @@ public class Configurable/*<T>*/{
      *         }
      *    }
      * }[/code]
+     * Applications can prevent configuration modifications through 
+     * {@link SecurityContext}. For example:[code]
+     *  SecurityContext policy = new SecurityContext {
+     *       public boolean isModifiable (Configurable cfg) {
+     *           return false;
+     *       }
+     *  }
+     *  SecurityContext.setDefault(policy); // Global setting.
+     *  [/code]
      */
     public static abstract class Logic {
 
         /**
          * Sets the run-time value of the specified configurable. If 
          * configurable value is different from the previous one, then  
-         * {@link Configurable#notifyChange()} is called.
+         * {@link Configurable#notifyChange()} is called. This method 
+         * raises <code>SecurityException</code> if the specified 
+         * configurable is not {@link SecurityContext#isModifiable(Configurable)
+         * modifiable}.
          * 
-         * @param configurable the configurable being configurated.
-         * @param value the new run-time value.
+         * @param  cfg the configurable being configurated.
+         * @param  value the new run-time value.
+         * @throws SecurityException if the specified configurable cannot 
+         *         be modified.
          */
-        protected final/*<T>*/void configure(Configurable/*<T>*/configurable,
+        protected final/*<T>*/void configure(Configurable/*<T>*/cfg,
                 Object/*{T}*/value) {
-            Object previous = configurable._value;
-            configurable._value = value;
+            SecurityContext policy = (SecurityContext) SecurityContext
+                    .current();
+            if (!policy.isModifiable(cfg))
+                throw new SecurityException(
+                        "Configurable modification disallowed by SecurityContext");
+            Object previous = cfg._value;
+            cfg._value = value;
             boolean change = (value == null) ? previous != null : !value
                     .equals(previous);
             if (change) {
-                configurable.notifyChange();
+                cfg.notifyChange();
             }
         }
     }

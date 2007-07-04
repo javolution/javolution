@@ -139,6 +139,16 @@ public abstract class AllocatorContext extends Context {
             return (Reference) FACTORY.object();
         }
 
+        /**
+         * Returns the string representation of the current value of 
+         * this reference.
+         * 
+         * @return <code>String.valueOf(this.get())</code>
+         */
+        public String toString() {
+            return String.valueOf(_value);
+        }
+
         // Implements Reference interface.
         public final Object/*{T}*/get() {
             return _value;

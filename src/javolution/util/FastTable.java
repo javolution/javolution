@@ -54,10 +54,15 @@ import javolution.lang.Reusable;
  *     
  *  <p> {@link FastTable} supports {@link #sort sorting} in place (quick sort) 
  *      using the {@link FastCollection#getValueComparator() value comparator}
- *      for the table (no object or array allocation when sorting).</p> 
+ *      for the table (no object or array allocation when sorting).</p>
+ *       
+ *  <p> The size of a {@link FastTable} can be {@link #setSize set} directly
+ *      and populated concurrently through the {@link #set(int, Object)} 
+ *      method (e.g. table shared by multiple threads each working on 
+ *      different index ranges).</p> 
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.2, December 18, 2006
+ * @version 5.1, July 2, 2007
  */
 public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         List/*<E>*/, Reusable, RandomAccess {
@@ -205,12 +210,19 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     }
 
     /**
-     * Returns the current capacity of this table.
+     * Sets the size of this table. If the specified size is greater than
+     * the current size then <code>null</code> elements are added; otherwise
+     * the last elements are removed until the desired size is reached.
      *
-     * @return this table's capacity.
+     * @param size the new size.
      */
-    protected final int getCapacity() {
-        return _capacity;
+    public void setSize(int size) {
+        while (_size < size) { // Adds null elements.
+            addLast(null);
+        }
+        while (_size > size) { // Removes last elements.
+            removeLast();
+        }
     }
 
     /**
@@ -729,6 +741,15 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         for (int i = 0; i < size; i++) {
             stream.writeObject(get(i));
         }
+    }
+
+    /**
+     * Returns the current capacity of this table.
+     *
+     * @return this table's capacity.
+     */
+    protected final int getCapacity() {
+        return _capacity;
     }
 
     /**

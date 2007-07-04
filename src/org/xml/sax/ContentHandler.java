@@ -2,7 +2,7 @@
 // http://www.saxproject.org
 // Written by David Megginson
 // NO WARRANTY!  This class is in the public domain.
-// $Id: ContentHandler.java,v 1.18 2007-07-01 05:11:10 dautelle Exp $
+// $Id: ContentHandler.java,v 1.19 2007-07-04 16:23:23 dautelle Exp $
 
 package org.xml.sax;
 

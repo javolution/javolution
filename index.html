@@ -204,8 +204,10 @@ body {
      <LI> <A HREF="api/javolution/io/Struct.html">Struct</A> and 
           <A HREF="api/javolution/io/Union.html">Union</A> base classes for
           direct interfacing with native applications (e.g. C/C++).</LI>
-     <LI> The world's fastest <A HREF="api/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
-          facility (independant benchmark).</LI>
+     <LI> World's fastest and first hard real-time <A HREF="api/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
+          facility.</LI>
+     <LI> Simple yet flexible <A HREF="api/javolution/lang/Configurable.html">configuration</A> management
+          of your application.</LI>
      </UL></TD>
       </TR>
    </TABLE>
@@ -286,7 +288,7 @@ body {
          classes are <b>hard real-time compliant</b> and have highly deterministic
          behavior (in the microsecond range). Furthermore (unlike the standard 
          library), <B><I>Javolution</I></B>  is 
-         (<A HREF="http://www.rtj.org/">RTSJ</A>) safe (no memory clash or 
+         <A HREF="http://www.rtj.org/">RTSJ</A> safe (no memory clash or 
          memory leak when used with Java Real-Time extension).
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
@@ -312,7 +314,7 @@ body {
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> runs on
          <b>any platform</b> from the simplest J2ME CLDC 1.0 with no garbage
-         collector to the latest J2EE 1.5 with parameterized types.
+         collector to the latest J2EE 5.0 with parameterized types.
          <BR> </LI>
          <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> is a pure
          Java Solution (no native code), small (less than 300 KBytes jar
@@ -329,7 +331,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.1.0 - July 2, 2007</SPAN></DIV>
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.1.0 - July 4, 2007</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -723,7 +725,7 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
-         <LI CLASS="simplespacer_body"><B>July 2, 2007: Javolution 5.1</B><BR>
+         <LI CLASS="simplespacer_body"><B>July 4, 2007: Javolution 5.1</B><BR>
          <UL>
          <LI> Simplified <A HREF="api/javolution/context/ConcurrentContext.html">concurrent contexts</A>
               to accept any <code>Runnable</code> [5.1.0] </LI>
@@ -733,6 +735,11 @@ body {
               to output <A HREF="api/javolution/text/Text.html">Text</A> instances
               without creating intermediate <CODE>String</CODE> instances [5.1.0] </LI>
          <LI> Corrected error when parsing character references (XMLStreamReaderImpl) [5.1.0] </LI>
+         <LI> Added method to force the size of a <A HREF="api/javolution/util/FastTable.html">FastTable</A> [5.1.0] </LI>
+         <LI> Added static method to set/get the <A HREF="api/javolution/text/TextFormat.html">TextFormat</A>
+              associated to any particular class/interface [5.1.0] </LI>
+         <LI> Any type for which the TextFormat is known can be represented 
+              as a <A HREF="api/javolution/xml/XMLFormat.html">XML attribute</A> [5.1.0] </LI>
          </UL>
          <P></P>
 
@@ -851,7 +858,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : July 2, 2007<BR>
+      Revision      : July 4, 2007<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

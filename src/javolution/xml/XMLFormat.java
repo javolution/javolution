@@ -13,7 +13,7 @@ import j2me.lang.CharSequence;
 import javolution.Javolution;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.text.TypeFormat;
+import javolution.text.TextFormat;
 import javolution.xml.sax.Attributes;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
@@ -104,9 +104,13 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *     FastTable table = reader.read("MyList", FastTable.class); 
  *     reader.close();[/code]
  *     </p>
+ *     
+ * <p> <i>Note:</i> Any type for which a text format is 
+ *    {@link TextFormat#getInstance(Class) known} can be represented as 
+ *    a XML attribute.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, September 4, 2006
+ * @version 5.1, July 4, 2007
  */
 public abstract class XMLFormat/*<T>*/{
 
@@ -621,114 +625,29 @@ public abstract class XMLFormat/*<T>*/{
          }
          /**/
 
-        ////////////////////////
-        // Primitive Wrappers //
-        ////////////////////////
-
         /**
-         * Searches for the specified <code>Boolean</code> attribute.
+         * Returns the attribute of same type as the specified
+         * default value. The default value 
+         * {@link javolution.text.TextFormat#getInstance TextFormat} is
+         * used to parse the attribute value.
          *
          * @param  name the name of the attribute.
          * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Boolean</code> value for the specified attribute or
+         * @return the parse value for the specified attribute or
          *         the default value if the attribute is not found.
          */
-        public Boolean getAttribute(String name, Boolean defaultValue)
+        public /*<T>*/ Object/*{T}*/ getAttribute(String name, Object/*{T}*/ defaultValue)
                 throws XMLStreamException {
             CharArray value = getAttribute(name);
-            return (value != null) ? value.toBoolean() ? TRUE : FALSE
-                    : defaultValue;
+            if (value == null)
+                return defaultValue;
+            // Parses attribute value.
+            Class type = defaultValue.getClass();
+            TextFormat format = TextFormat.getInstance(type);
+            if (format == null) throw new XMLStreamException(
+                    "No TextFormat instance for " + type);
+            return (Object/*{T}*/) format.parse(value);
         }
-
-        private static final Boolean TRUE = new Boolean(true);
-
-        private static final Boolean FALSE = new Boolean(false);
-
-        /**
-         * Searches for the specified <code>Byte</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Byte</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public Byte getAttribute(String name, Byte defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? new Byte(TypeFormat.parseByte(value))
-                    : defaultValue;
-        }
-
-        /**
-         * Searches for the specified <code>Short</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Short</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public Short getAttribute(String name, Short defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? new Short(TypeFormat.parseShort(value))
-                    : defaultValue;
-        }
-
-        /**
-         * Searches for the specified <code>Integer</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Integer</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public Integer getAttribute(String name, Integer defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? new Integer(value.toInt()) : defaultValue;
-        }
-
-        /**
-         * Searches for the specified <code>Long</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Long</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public Long getAttribute(String name, Long defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? new Long(value.toLong()) : defaultValue;
-        }
-
-        /**
-         * Searches for the specified <code>Float</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Float</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         /*@JVM-1.1+@
-         public Float getAttribute(String name, Float defaultValue) throws XMLStreamException {
-         CharArray value = getAttribute(name);
-         return (value != null) ? new Float(value.toFloat()) : defaultValue;
-         }
-         /**/
-
-        /**
-         * Searches for the specified <code>Double</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>Double</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         /*@JVM-1.1+@
-         public Double getAttribute(String name, Double defaultValue) throws XMLStreamException {
-         CharArray value = getAttribute(name);
-         return (value != null) ? new Double(value.toDouble()) : defaultValue;
-         }
-         /**/
 
         // Sets XML binding. 
         void setBinding(XMLBinding xmlBinding) {
@@ -1064,106 +983,25 @@ public abstract class XMLFormat/*<T>*/{
          }
          /**/
 
-        ////////////////////////
-        // Primitive Wrappers //
-        ////////////////////////
         /**
-         * Sets the specified <code>Boolean</code> attribute.
+         * Sets the specified attribute using its associated 
+         * {@link javolution.text.TextFormat#getInstance TextFormat}.
          * 
          * @param  name the name of the attribute.
          * @param  value the <code>Boolean</code> value for the specified attribute
          *         or <code>null</code> in which case the attribute is not set.
          */
-        public void setAttribute(String name, Boolean value)
+        public void setAttribute(String name, Object value)
                 throws XMLStreamException {
             if (value == null)
                 return;
-            setAttribute(name, value.booleanValue());
+            Class type = value.getClass();
+            TextFormat format = TextFormat.getInstance(type);
+            if (format == null) throw new XMLStreamException(
+                    "No TextFormat instance for " + type);
+            setAttribute(name, format.format(value, _tmpTextBuilder.clear()));
         }
-
-        /**
-         * Sets the specified <code>Byte</code> attribute.
-         * 
-         * @param  name the name of the attribute.
-         * @param  value the <code>Byte</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         */
-        public void setAttribute(String name, Byte value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            setAttribute(name, value.byteValue());
-        }
-
-        /**
-         * Sets the specified <code>Short</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  value the <code>Short</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         */
-        public void setAttribute(String name, Short value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            setAttribute(name, value.shortValue());
-        }
-
-        /**
-         * Sets the specified <code>Integer</code> attribute.
-         * 
-         * @param  name the name of the attribute.
-         * @param  value the <code>Integer</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         */
-        public void setAttribute(String name, Integer value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            setAttribute(name, value.intValue());
-        }
-
-        /**
-         * Sets the specified <code>Long</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  value the <code>Long</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         */
-        public void setAttribute(String name, Long value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            setAttribute(name, value.longValue());
-        }
-
-        /**
-         * Sets the specified <code>Float</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  value the <code>Float</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         /*@JVM-1.1+@
-         public void setAttribute(String name, Float value) throws XMLStreamException {
-         if (value == null)
-         return;
-         setAttribute(name, value.floatValue());
-         }
-         /**/
-
-        /**
-         * Sets the specified <code>Double</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  value the <code>Double</code> value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         /*@JVM-1.1+@
-         public void setAttribute(String name, Double value) throws XMLStreamException {
-         if (value == null)
-         return;
-         }
-         /**/
-
+ 
         // Sets XML binding. 
         void setBinding(XMLBinding xmlBinding) {
             _binding = xmlBinding;

@@ -10,7 +10,11 @@ package javolution.text;
 
 import j2me.lang.CharSequence;
 import j2me.text.ParsePosition;
+import javolution.Javolution;
 import javolution.context.ObjectFactory;
+import javolution.lang.ClassInitializer;
+import javolution.lang.Reflection;
+import javolution.util.FastMap;
 
 import java.io.IOException;
 
@@ -19,44 +23,114 @@ import java.io.IOException;
  *     it supports {@link CharSequence} and {@link javolution.text.Appendable} 
  *     interfaces for greater flexibility.</p>
  * 
- * <p> The default format (used by <code>valueOf(CharSequence)</code>,
- *     <code>toString()</code> or <code>toText()</code>) 
- *     can be {@link javolution.context.LocalContext locally scoped}.
+ * <p> It is possible to retrieve the format for any class for which the 
+ *     format has been registered (typically during class initialization).
  *     For example:[code]
  *     public class Complex extends RealtimeObject {
- *         public static final LocalContext.Reference<TextFormat<Complex>> FORMAT 
- *             = new LocalContext.Reference<TextFormat<Complex>>(new TextFormat<Complex>() {
- *                 ... // Default format (cartesien form).
- *             });
+ *         private static final TextFormat<Complex> CARTESIAN = ...;
+ *         static { // Sets default format to cartesian, users may change it later (e.g. polar).
+ *             TextFormat.setInstance(Complex.class, CARTESIAN);
+ *         }
  *         public Complex valueOf(CharSequence csq) {
- *             return FORMAT.get().parse(csq);
+ *             return TextFormat.getInstance(Complex.class).parse(csq);
  *         }
  *         public Text toText() {
- *             return FORMAT.get().format(this);
+ *             return TextFormat.getInstance(Complex.class).format(this);
  *         }
- *     }
- *     ...
- *     Matrix<Complex> M = ...;
- *     LocalContext.enter();
- *     try {
- *         Complex.FORMAT.set(POLAR); // Current thread displays complex numbers
- *         System.out.prinln(M);      // using the polar form.
- *     } finally {
- *         LocalContext.exit(); // Current thread reverts to previous format.
  *     }[/code]</p>
- *      
+ *     
  * <p> For parsing/formatting of primitive types, the {@link TypeFormat}
  *     utility class is recommended.</p>
- * 
+ *     
+ * <p> <i>Note:</i> The format behavior may depend upon  
+ *     {@link javolution.context.LocalContext local} settings in which 
+ *     case concurrent threads may parse differently!</p>
+ *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 5.0, June 12, 2007
+ * @version 5.1, July 4, 2007
  */
 public abstract class TextFormat/*<T>*/{
 
-    /*
+    /**
+     * Holds the class to format mapping.
+     */
+    private static final FastMap FORMATS = new FastMap().setShared(true);
+
+    /**
      * Default constructor.
      */
     protected TextFormat() {
+    }
+
+    /**
+     * Returns the text format for instances of specified type (class or 
+     * interface). The following types are always recognized:<code><ul>
+     *    <li>java.lang.Boolean</li>
+     *    <li>java.lang.Character</li>
+     *    <li>java.lang.Byte</li>
+     *    <li>java.lang.Short</li>
+     *    <li>java.lang.Integer</li>
+     *    <li>java.lang.Long</li>
+     *    <li>java.lang.Float</li>
+     *    <li>java.lang.Double</li>
+     *    <li>java.lang.Class</li>
+     * </ul></code>
+     * Users may register additional types using the {@link #setInstance 
+     * TextFormat.setInstance(Class, TextFormat)} static method. 
+     * For example:[code]
+     * TextFormat<Font> fontFormat = new TextFormat() {
+     *     public Appendable format(Font font, Appendable dest) throws IOException {
+     *         return dest.append(font.getName());
+     *     }
+     *     public Font parse(CharSequence csq, Cursor cursor) {
+     *         CharSequence fontName = csq.subSequence(cursor.getIndex(), cursor.getEndIndex());
+     *         cursor.increment(fontName.length());
+     *         return Font.decode(fontName.toString());
+     *     }
+     * });
+     * TextFormat.setInstance(Font.class, fontFormat); // Registers format for java.awt.Font
+     * [/code]
+     * 
+     * @param  cls the class for which the default format is returned.
+     * @return the format for instances of the specified class or 
+     *         <code>null</code> if unkown.
+     */
+    public static/*<T>*/TextFormat/*<T>*/getInstance(Class/*<T>*/cls) {
+        TextFormat format = (TextFormat) FORMATS.get(cls);
+        return (format != null) ? format : searchFormat(cls);
+    }
+
+    private static TextFormat searchFormat(Class cls) {
+        if (cls == null)
+            return null;
+        ClassInitializer.initialize(cls); // Ensures class static initializer are run.
+        TextFormat format = (TextFormat) FORMATS.get(cls);
+        return (format != null) ? format : searchFormat(superclassOf(cls));
+    }
+
+    private static Class superclassOf(Class cls) {
+        /*@JVM-1.4+@
+         if (true) return cls.getSuperclass();
+         /**/
+        return null;
+    }
+
+    /**
+     * Associates the specified format to the specified type (class or 
+     * interface).
+     * 
+     * @param  cls the class for which the default format is returned.
+     * @param format the format for instances of the specified calss class.
+     */
+    public static/*<T>*/void setInstance(Class/*<T>*/cls,
+            TextFormat/*<T>*/format) {
+
+        // The specified class is initialized prior to setting 
+        // the format to ensure that the default format (typically in the 
+        // class static initializer) does not override the new format.
+        ClassInitializer.initialize(cls);
+
+        FORMATS.put(cls, format); // Thread-safe (shared map).
     }
 
     /**
@@ -93,13 +167,13 @@ public abstract class TextFormat/*<T>*/{
      * @return the specified text builder.
      */
     public final Appendable format(Object/*{T}*/obj, TextBuilder dest) {
-         try {
-            return format(obj, (Appendable)dest);
+        try {
+            return format(obj, (Appendable) dest);
         } catch (IOException e) {
             throw new Error(); // Cannot happen.
         }
     }
-        
+
     /**
      * Formats the specified object to a {@link Text} instance
      * (convenience method).
@@ -424,7 +498,7 @@ public abstract class TextFormat/*<T>*/{
         public String toString() {
             return String.valueOf(_index);
         }
-        
+
         /**
          * Indicates if this cursor is equals to the specified object.
          * 
@@ -432,10 +506,11 @@ public abstract class TextFormat/*<T>*/{
          *         at the same index; <code>false</code> otherwise.
          */
         public boolean equals(Object obj) {
-            if (obj == null) return false;
+            if (obj == null)
+                return false;
             if (!(obj instanceof Cursor))
                 return false;
-            return _index == ((Cursor)obj)._index;
+            return _index == ((Cursor) obj)._index;
         }
 
         /**
@@ -446,6 +521,136 @@ public abstract class TextFormat/*<T>*/{
         public int hashCode() {
             return _index;
         }
-        
+
+    }
+
+    // Predefined formats.
+    static {
+        FORMATS.put(new Boolean(true).getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return TypeFormat.format(((Boolean) obj).booleanValue(), dest);
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Boolean(TypeFormat.parseBoolean(csq, cursor));
+            }
+
+        });
+        FORMATS.put(new Character(' ').getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return dest.append(((Character) obj).charValue());
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Character(cursor.next(csq));
+            }
+
+        });
+        FORMATS.put(new Byte((byte)0).getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return TypeFormat.format(((Byte) obj).byteValue(), dest);
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Byte(TypeFormat.parseByte(csq, 10, cursor));
+            }
+
+        });
+        FORMATS.put(new Short((short)0).getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return TypeFormat.format(((Short) obj).shortValue(), dest);
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Short(TypeFormat.parseShort(csq, 10, cursor));
+            }
+
+        });
+        FORMATS.put(new Integer(0).getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return TypeFormat.format(((Integer) obj).intValue(), dest);
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Integer(TypeFormat.parseInt(csq, 10, cursor));
+            }
+
+        });
+        FORMATS.put(new Long(0).getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return TypeFormat.format(((Long) obj).longValue(), dest);
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                return new Long(TypeFormat.parseLong(csq, 10, cursor));
+            }
+
+        });
+        FORMATS.put("".getClass().getClass(), new TextFormat() {
+
+            public Appendable format(Object obj, Appendable dest)
+                    throws IOException {
+                return dest.append(Javolution.j2meToCharSeq(((Class) obj)
+                        .getName()));
+            }
+
+            public Object parse(CharSequence csq, Cursor cursor) {
+                Text txt = Text.valueOf(csq.subSequence(cursor.getIndex(),
+                        cursor.getEndIndex()));
+                int index = txt.indexOfAny(CharSet.WHITESPACES);
+                int length = index < 0 ? txt.length() : index;
+                Text className = txt.subtext(0, length);
+                Class cls;
+                try {
+                    cls = Reflection.getClass(className);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalArgumentException("Class " + className
+                            + " Not Found");
+                }
+                cursor.increment(length);
+                return cls;
+            }
+
+        });
+
+        /*@JVM-1.1+@
+         FORMATS.put(new Float(0).getClass(), new TextFormat() {
+
+         public Appendable format(Object obj, Appendable dest)
+         throws IOException {
+         return TypeFormat.format(((Float) obj).floatValue(), dest);
+         }
+
+         public Object parse(CharSequence csq, Cursor cursor) {
+         return new Float(TypeFormat.parseFloat(csq, cursor));
+         }
+
+         });
+         FORMATS.put(new Double(0).getClass(), new TextFormat() {
+
+         public Appendable format(Object obj, Appendable dest)
+         throws IOException {
+         return TypeFormat.format(((Double) obj).doubleValue(), dest);
+         }
+
+         public Object parse(CharSequence csq, Cursor cursor) {
+         return new Double(TypeFormat.parseDouble(csq, cursor));
+         }
+
+         });
+         /**/
+
     }
 }

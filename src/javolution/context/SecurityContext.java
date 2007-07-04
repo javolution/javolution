@@ -8,6 +8,8 @@
  */
 package javolution.context;
 
+import javolution.lang.Configurable;
+
 /**
  * <p> This class represents a high-level security context (low level 
  *     security being addressed by the system security manager).</p>
@@ -45,24 +47,29 @@ package javolution.context;
  *          }
  *     }
  *     ...
- *     Policy myPolicy = new Policy();
- *     SecurityContext.enter(myPolicy);
- *     try {
+ *     Policy defaultPolicy = new Policy();
+ *     SecurityContext.setDefault(defaultPolicy); // Global setting.
+ *     ...
+ *     SecurityContext.enter(localPolicy); // Current thread overrides default policy  
+ *     try {                               // (if allowed, ref. SecurityContext.isReplaceable())
  *         ...
  *         DatabaseAccess.isReadAllowed(table);   
  *         ...
  *         FileAccess.isWriteAllowed(file);
  *         ...
  *     } finally {
- *         SecurityContext.exit(myPolicy);
+ *         SecurityContext.exit(localPolicy);
  *     }[/code]</p>    
  *     
- * <p> The only permission managed by the root {@link SecurityContext} class
- *     is the permission to {@link #isReplaceable replace} the current security
- *     context (<code>true</code> by default).</p>
+ * <p> The default permissions managed by the root {@link SecurityContext} class
+ *     are the permission to {@link #isReplaceable replace} the current security
+ *     context (<code>true</code> by default) and the permission to 
+ *     {@link #isModifiable modify} the application 
+ *     {@link javolution.lang.Configurable.Logic configuration} settings 
+ *     ((<code>true</code> by default also).</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, May 6, 2007
+ * @version 5.1, July 2, 2007
  */
 public abstract class SecurityContext extends Context {
 
@@ -145,6 +152,21 @@ public abstract class SecurityContext extends Context {
      *         <code>false</code> otherwise.
      */
     public boolean isReplaceable () {
+        return true;
+    }    
+
+    /**
+     * Indicates if this security context allows modification of the 
+     * {@link javolution.lang.Configurable.Logic configuration} settings 
+     * (default <code>true</code>). Applications may override this method
+     * to return <code>false</code> and prevent untrusted code to update the 
+     * some/all configuration parameters. 
+     * 
+     * @param  cfg the configurable to check if modifiable.
+     * @return <code>true</code> if the specified configurable can be modified;
+     *         <code>false</code> otherwise.
+     */
+    public boolean isModifiable (Configurable cfg) {
         return true;
     }    
 }

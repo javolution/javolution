@@ -168,19 +168,19 @@ public abstract class ConcurrentContext extends Context {
      * for concurrent threads. Alternative (RTSJ) implementations could also use 
      * <code>javax.realtime.NoHeapRealtimeThread</code>. 
      */
-    public static final Configurable/*<Class>*/CLASS 
-        = new Configurable/*<Class>*/(ConcurrentContextImpl.CLASS);
+    public static final Configurable/*<Class>*/CLASS = new Configurable/*<Class>*/(
+            Default.CLASS);
 
     /**
      * Holds the maximum number of concurrent executors
      * (see <a href="{@docRoot}/overview-summary.html#configuration">
-     * Javolution Configuration</a> for details).
+     * Javolution Configuration</a> for details). 
      */
     public static final Configurable/*<Integer>*/MAXIMUM_CONCURRENCY = new Configurable(
             new Integer(availableProcessors() - 1)) {
-         protected void notifyChange() { // The maximum concurrency is also the default concurrency. 
-              CONCURRENCY.setDefault(this.get());
-         }
+        protected void notifyChange() { // The maximum concurrency is also the default concurrency. 
+            CONCURRENCY.setDefault(this.get());
+        }
     };
 
     private static int availableProcessors() {
@@ -191,7 +191,7 @@ public abstract class ConcurrentContext extends Context {
                     .getRuntime());
             return processors.intValue();
         } else { // J2ME.
-            return 1; 
+            return 1;
         }
     }
 
@@ -201,8 +201,8 @@ public abstract class ConcurrentContext extends Context {
     private static ObjectFactory FACTORY = new ObjectFactory() {
         protected Object create() {
             Class cls = (Class) CLASS.get();
-            if (cls == ConcurrentContextImpl.CLASS) 
-                return new ConcurrentContextImpl(); 
+            if (cls == Default.CLASS)
+                return new Default();
             try {
                 return cls.newInstance();
             } catch (InstantiationException e) {
@@ -216,9 +216,9 @@ public abstract class ConcurrentContext extends Context {
     /**
      * Holds the current concurrency. 
      */
-    private static final LocalContext.Reference CONCURRENCY 
-         = new LocalContext.Reference(MAXIMUM_CONCURRENCY.get());
-    
+    private static final LocalContext.Reference CONCURRENCY = new LocalContext.Reference(
+            MAXIMUM_CONCURRENCY.get());
+
     /**
      * Default constructor.
      */
@@ -277,7 +277,8 @@ public abstract class ConcurrentContext extends Context {
      */
     public static void setConcurrency(int concurrency) {
         concurrency = MathLib.max(0, concurrency);
-        concurrency = MathLib.min(((Integer)MAXIMUM_CONCURRENCY.get()).intValue(), concurrency);
+        concurrency = MathLib.min(((Integer) MAXIMUM_CONCURRENCY.get())
+                .intValue(), concurrency);
         CONCURRENCY.set(new Integer(concurrency));
     }
 
@@ -316,34 +317,39 @@ public abstract class ConcurrentContext extends Context {
     /**
      * Default implementation using {@link ConcurrentThread} executors.
      */
-    static final class ConcurrentContextImpl extends ConcurrentContext {
-    
+    static final class Default extends ConcurrentContext {
+
         /**
          * Holds the class identifier.
          */
-        private static final Class CLASS = new ConcurrentContextImpl().getClass();
-        
+        private static final Class CLASS = new Default().getClass();
+
         /**
          * Holds the concurrent executors.
          */
-        private static ConcurrentThread[] _Executors;
+        private static ConcurrentThread[] _Executors = new ConcurrentThread[0];
 
         /**
          * Holds the executors creation logic (to be performed in 
-         * ImmortalMemory).
+         * ImmortalMemory). The number of executors can only be increased
+         * (typically through configuration).
          */
         private static final Runnable CREATE_EXECUTORS = new Runnable() {
             public synchronized void run() {
-                if (_Executors != null) return; // Already done.
                 int max = ((Integer) MAXIMUM_CONCURRENCY.get()).intValue();
-                _Executors = new ConcurrentThread[max];
-                for (int i = 0; i < max; i++) {
-                   _Executors[i] = new ConcurrentThread();
-                   _Executors[i].start();
-                }                
+                int count = _Executors.length;
+                if (count >= max) 
+                    return; // We have enough executors.
+                ConcurrentThread[] executors = new ConcurrentThread[max];
+                System.arraycopy(_Executors, 0, executors, 0, count);
+                for (int i = count; i < max; i++) {
+                    executors[i] = new ConcurrentThread();
+                    executors[i].start();
+                }
+                _Executors = executors;
             }
         };
-            
+
         /**
          * Holds the concurrency.
          */
@@ -363,7 +369,7 @@ public abstract class ConcurrentContext extends Context {
          * Holds the number of concurrent execution completed.
          */
         private int _completed;
-        
+
         // Implements ConcurrentContext abstract method.
         protected void executeAction(Runnable logic) {
             for (int i = _concurrency; --i >= 0;) {
@@ -375,16 +381,16 @@ public abstract class ConcurrentContext extends Context {
             // Execution by current thread.
             logic.run();
         }
-        
+
         // Implements Context abstract method.
         protected void enterAction() {
-            if (_Executors == null) { // 
-                MemoryArea.getMemoryArea(CLASS).executeInArea(CREATE_EXECUTORS);
-            }
             _error = null;
             _initiated = 0;
             _completed = 0;
             _concurrency = ConcurrentContext.getConcurrency();
+            if (_concurrency > _Executors.length) { // We need more executors.
+                MemoryArea.getMemoryArea(_Executors).executeInArea(CREATE_EXECUTORS);
+            }            
         }
 
         // Implements Context abstract method.
@@ -406,9 +412,8 @@ public abstract class ConcurrentContext extends Context {
                     throw ((Error) _error);
                 throw new ConcurrentException(_error); // Wrapper.
             }
-            
+
         }
-        
 
         // Called when a concurrent execution starts.
         void started() {
@@ -421,7 +426,7 @@ public abstract class ConcurrentContext extends Context {
                 _completed++;
                 this.notify();
             }
-            ((AllocatorContext) AllocatorContext.current()).deactivate();              
+            ((AllocatorContext) AllocatorContext.current()).deactivate();
         }
 
         // Called when an error occurs.
@@ -433,7 +438,7 @@ public abstract class ConcurrentContext extends Context {
             }
         }
     }
-    
+
     /**
      * @deprecated {@link Runnable} instances should be used instead .
      *             (see LargeInteger multiplication example on how to 
@@ -441,6 +446,5 @@ public abstract class ConcurrentContext extends Context {
      */
     public static abstract class Logic implements Runnable {
     }
-
 
 }

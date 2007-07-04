@@ -112,7 +112,7 @@ public final class TypeFormat {
      */
     public static boolean parseBoolean(CharSequence csq, Cursor cursor) {
         final int i = cursor.getIndex();
-        if ((cursor.getEndIndex() > i + 4)
+        if ((cursor.getEndIndex() >= i + 4)
                 && (csq.charAt(i) == 't' || csq.charAt(i) == 'T')
                 && (csq.charAt(i + 1) == 'r' || csq.charAt(i + 1) == 'R')
                 && (csq.charAt(i + 2) == 'u' || csq.charAt(i + 2) == 'U')
@@ -120,7 +120,7 @@ public final class TypeFormat {
             cursor.increment(4);
             return true;
         }
-        if ((cursor.getEndIndex() > i + 5)
+        if ((cursor.getEndIndex() >= i + 5)
                 && (csq.charAt(i) == 'f' || csq.charAt(i) == 'F')
                 && (csq.charAt(i + 1) == 'a' || csq.charAt(i + 1) == 'A')
                 && (csq.charAt(i + 2) == 'l' || csq.charAt(i + 2) == 'L')
@@ -129,8 +129,8 @@ public final class TypeFormat {
             cursor.increment(5);
             return false;
         }
-        throw new IllegalArgumentException("Cannot parse boolean at "
-                + cursor.getIndex());
+        throw new IllegalArgumentException("Cannot parse boolean " + 
+                csq.subSequence(cursor.getIndex(), cursor.getEndIndex()));
     }
 
     /**

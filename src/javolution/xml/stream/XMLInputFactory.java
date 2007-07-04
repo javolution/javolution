@@ -11,7 +11,9 @@ package javolution.xml.stream;
 import java.io.InputStream;
 import java.io.Reader;
 import j2me.util.Map;
+import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
+import javolution.lang.Configurable;
 
 /**
  * <p> The class represents the factory for getting {@link XMLStreamReader}
@@ -50,6 +52,12 @@ import javolution.context.ObjectFactory;
 public abstract class XMLInputFactory {
 
     /**
+     * Holds the XMLInputFactory default implementation (configurable).
+     */
+    public static final Configurable/*<Class>*/DEFAULT_IMPLEMENTATION 
+        = new Configurable/*<Class>*/(Default.CLASS);
+
+    /**
      * The property that requires the parser to coalesce adjacent character data
      * sections (type: <code>Boolean</code>, default: <code>FALSE</code>)
      */
@@ -77,12 +85,22 @@ public abstract class XMLInputFactory {
     }
 
     /**
-     * Returns a new instance of the default factory which may be configurated
-     * by the user (see {@link #setProperty(String, Object)}).
+     * Returns a new instance of the {@link #DEFAULT_IMPLEMENTATION default}
+     * input factory implementation which may be configurated by the user 
+     * (see {@link #setProperty(String, Object)}).
      * 
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
+        Class cls = DEFAULT_IMPLEMENTATION.getClass();
+        try { // Test if configuration override.
+            if (cls != Default.CLASS)
+                return (XMLInputFactory) cls.newInstance();
+        } catch (InstantiationException e) {
+            LogContext.error(e);
+        } catch (IllegalAccessException e) {
+            LogContext.error(e);
+        }
         return new Default();
     }
 
@@ -152,9 +170,11 @@ public abstract class XMLInputFactory {
     /**
      * This class represents the default factory implementation.
      */
-    private static class Default extends XMLInputFactory {
-        
-        Map _entities = null; 
+    private static final class Default extends XMLInputFactory {
+
+        static final Class CLASS = new Default().getClass();
+
+        Map _entities = null;
 
         // Implements XMLInputFactory abstract method.
         public XMLStreamReader createXMLStreamReader(Reader reader)
@@ -186,7 +206,7 @@ public abstract class XMLInputFactory {
             if (name.equals(IS_COALESCING)) {
                 // Do nothing, always coalescing.
             } else if (name.equals(ENTITIES)) {
-                 _entities = (Map) value;
+                _entities = (Map) value;
             } else {
                 throw new IllegalArgumentException("Property: " + name
                         + " not supported");
@@ -207,13 +227,12 @@ public abstract class XMLInputFactory {
 
         // Implements XMLInputFactory abstract method.
         public boolean isPropertySupported(String name) {
-            return name.equals(IS_COALESCING) ||
-               name.equals(ENTITIES);
+            return name.equals(IS_COALESCING) || name.equals(ENTITIES);
         }
-        
+
         private XMLStreamReaderImpl newReader() {
-            XMLStreamReaderImpl xmlReader 
-                = (XMLStreamReaderImpl) XML_READER_FACTORY.object();
+            XMLStreamReaderImpl xmlReader = (XMLStreamReaderImpl) XML_READER_FACTORY
+                    .object();
             if (_entities != null) {
                 xmlReader.setEntities(_entities);
             }

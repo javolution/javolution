@@ -11,6 +11,7 @@ package javolution.lang;
 import javolution.JavolutionError;
 import javolution.util.FastMap;
 import j2me.lang.CharSequence;
+import j2me.lang.ThreadLocal;
 
 /**
  * <p> This utility class greatly facilitates the use of reflection to invoke 
@@ -150,6 +151,7 @@ public final class Reflection {
         final Class _class;
 
         DefaultConstructor(Class cl) {
+            super(new Class[0]); // No arguments.
             _class = cl;
         }
 
@@ -178,6 +180,7 @@ public final class Reflection {
 
      public ReflectConstructor(java.lang.reflect.Constructor value,
      String signature) {
+     super(value.getParameterTypes());
      _value = value;
      _signature = signature;
      }
@@ -257,6 +260,7 @@ public final class Reflection {
      private final String _signature;
 
      public ReflectMethod(java.lang.reflect.Method value, String signature) {
+     super(value.getParameterTypes());
      _value = value;
      _signature = signature;
      }
@@ -399,9 +403,27 @@ public final class Reflection {
     public static abstract class Constructor {
 
         /**
-         * Default constructor.
+         * Holds the parameter types.
          */
-        public Constructor() {
+        private final Class[] _parameterTypes;
+
+        /**
+         * Creates a new constructor having the specified parameter types.
+         * 
+         * @param parameterTypes the parameters types.
+         */
+        protected Constructor(Class[] parameterTypes) {
+            _parameterTypes = parameterTypes;
+        }
+
+        /**
+         * Returns an array of <code>Class</code> objects that represents 
+         * the formal parameter types, in declaration order of this constructor.
+         * 
+         * @return the parameter types for this constructor.
+         */
+        public Class[] getParameterTypes() {
+            return _parameterTypes;
         }
 
         /**
@@ -409,7 +431,7 @@ public final class Reflection {
          * arguments.
          * 
          * @param args the constructor arguments. 
-         * @return the object being instantiated. 
+         * @return the object being instantiated.
          */
         protected abstract Object allocate(Object[] args);
 
@@ -419,10 +441,11 @@ public final class Reflection {
          * @return the object being instantiated. 
          */
         public final Object newInstance() {
-            return allocate(NO_ARG);
+            if (_parameterTypes.length != 0) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            return allocate(ARRAY_0);
         }
-
-        private static final Object[] NO_ARG = new Object[0];
 
         /**
          * Invokes this constructor with the specified single argument.
@@ -431,13 +454,15 @@ public final class Reflection {
          * @return the object being instantiated. 
          */
         public final Object newInstance(Object arg0) {
-            synchronized (this) {
-                array1[0] = arg0;
-                return allocate(array1);
-            }
+            if (_parameterTypes.length != 1) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_1.get();
+            args[0] = arg0;
+            Object result = allocate(args);
+            args[0] = null;
+            return result;            
         }
-
-        private final Object[] array1 = new Object[1];
 
         /**
          * Invokes this constructor with the specified two arguments.
@@ -447,14 +472,17 @@ public final class Reflection {
          * @return the object being instantiated. 
          */
         public final Object newInstance(Object arg0, Object arg1) {
-            synchronized (this) {
-                array2[0] = arg0;
-                array2[1] = arg1;
-                return allocate(array2);
-            }
+            if (_parameterTypes.length != 2) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_2.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            Object result = allocate(args);
+            args[0] = null;
+            args[1] = null;
+            return result;            
         }
-
-        private final Object[] array2 = new Object[2];
 
         /**
          * Invokes this constructor with the specified three arguments.
@@ -465,15 +493,19 @@ public final class Reflection {
          * @return the object being instantiated. 
          */
         public final Object newInstance(Object arg0, Object arg1, Object arg2) {
-            synchronized (this) {
-                array3[0] = arg0;
-                array3[1] = arg1;
-                array3[2] = arg2;
-                return allocate(array3);
-            }
+            if (_parameterTypes.length != 3) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_3.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            args[2] = arg2;
+            Object result = allocate(args);
+            args[0] = null;
+            args[1] = null;
+            args[2] = null;
+            return result;            
         }
-
-        private final Object[] array3 = new Object[3];
 
         /**
          * Invokes this constructor with the specified four arguments.
@@ -484,18 +516,23 @@ public final class Reflection {
          * @param arg3 the fourth argument. 
          * @return the object being instantiated. 
          */
-        public final Object newInstance(Object arg0, Object arg1, Object arg2,
-                Object arg3) {
-            synchronized (this) {
-                array4[0] = arg0;
-                array4[1] = arg1;
-                array4[2] = arg2;
-                array4[3] = arg3;
-                return allocate(array4);
-            }
+        public final Object newInstance(Object arg0, Object arg1, Object arg2, Object arg3) {
+            if (_parameterTypes.length != 4) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_4.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            args[2] = arg2;
+            args[3] = arg3;
+            Object result = allocate(args);
+            args[0] = null;
+            args[1] = null;
+            args[2] = null;
+            args[3] = null;
+            return result;            
         }
 
-        private final Object[] array4 = new Object[4];
     }
 
     /**
@@ -516,9 +553,27 @@ public final class Reflection {
     public static abstract class Method {
 
         /**
-         * Default constructor.
+         * Holds the parameter types.
          */
-        public Method() {
+        private final Class[] _parameterTypes;
+
+        /**
+         * Creates a new constructor having the specified parameter types.
+         * 
+         * @param parameterTypes the parameters types.
+         */
+        protected Method(Class[] parameterTypes) {
+            _parameterTypes = parameterTypes;
+        }
+
+        /**
+         * Returns an array of <code>Class</code> objects that represents 
+         * the formal parameter types, in declaration order of this constructor.
+         * 
+         * @return the parameter types for this constructor.
+         */
+        public Class[] getParameterTypes() {
+            return _parameterTypes;
         }
 
         /**
@@ -540,10 +595,8 @@ public final class Reflection {
          * @return the result of the invocation.
          */
         public final Object invoke(Object thisObject) {
-            return execute(thisObject, NO_ARG);
+            return execute(thisObject, ARRAY_0);
         }
-
-        private static final Object[] NO_ARG = new Object[0];
 
         /**
          * Invokes this method with the specified single argument
@@ -556,13 +609,15 @@ public final class Reflection {
          * @return the result of the invocation.
          */
         public final Object invoke(Object thisObject, Object arg0) {
-            synchronized (this) {
-                array1[0] = arg0;
-                return execute(thisObject, array1);
-            }
+            if (_parameterTypes.length != 1) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_1.get();
+            args[0] = arg0;
+            Object result = execute(thisObject, args);
+            args[0] = null;
+            return result;            
         }
-
-        private final Object[] array1 = new Object[1];
 
         /**
          * Invokes this method with the specified two arguments
@@ -578,14 +633,17 @@ public final class Reflection {
          *         invocation (see <code>Throwable.getCause()</code>). 
          */
         public final Object invoke(Object thisObject, Object arg0, Object arg1) {
-            synchronized (this) {
-                array2[0] = arg0;
-                array2[1] = arg1;
-                return execute(thisObject, array2);
-            }
+            if (_parameterTypes.length != 2) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_2.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            Object result = execute(thisObject, args);
+            args[0] = null;
+            args[1] = null;
+            return result;            
         }
-
-        private final Object[] array2 = new Object[2];
 
         /**
          * Invokes this method with the specified three arguments
@@ -601,15 +659,19 @@ public final class Reflection {
          */
         public final Object invoke(Object thisObject, Object arg0, Object arg1,
                 Object arg2) {
-            synchronized (this) {
-                array3[0] = arg0;
-                array3[1] = arg1;
-                array3[2] = arg2;
-                return execute(thisObject, array3);
-            }
+            if (_parameterTypes.length != 3) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_3.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            args[2] = arg2;
+            Object result = execute(thisObject, args);
+            args[0] = null;
+            args[1] = null;
+            args[2] = null;
+            return result;            
         }
-
-        private final Object[] array3 = new Object[3];
 
         /**
          * Invokes this method with the specified four arguments
@@ -626,16 +688,49 @@ public final class Reflection {
          */
         public final Object invoke(Object thisObject, Object arg0, Object arg1,
                 Object arg2, Object arg3) {
-            synchronized (this) {
-                array4[0] = arg0;
-                array4[1] = arg1;
-                array4[2] = arg2;
-                array4[3] = arg3;
-                return execute(thisObject, array4);
-            }
+            if (_parameterTypes.length != 3) 
+                throw new IllegalArgumentException(
+                        "Expected number of parameters is " + _parameterTypes.length);
+            Object[] args = (Object[])ARRAY_3.get();
+            args[0] = arg0;
+            args[1] = arg1;
+            args[2] = arg2;
+            args[3] = arg3;
+            Object result = execute(thisObject, args);
+            args[0] = null;
+            args[1] = null;
+            args[2] = null;
+            args[3] = null;
+            return result;            
         }
 
-        private final Object[] array4 = new Object[4];
     }
+    
+    // Holds array containers to avoid dynamic allocations.
 
+    private static final Object[] ARRAY_0 = new Object[0]; // Immutable.
+
+    private static final ThreadLocal ARRAY_1 = new ThreadLocal() {
+        protected Object initialValue() {
+            return new Object[1];
+        }
+    };
+
+    private static final ThreadLocal ARRAY_2 = new ThreadLocal() {
+        protected Object initialValue() {
+            return new Object[2];
+        }
+    };
+
+    private static final ThreadLocal ARRAY_3 = new ThreadLocal() {
+        protected Object initialValue() {
+            return new Object[3];
+        }
+    };
+
+    private static final ThreadLocal ARRAY_4 = new ThreadLocal() {
+        protected Object initialValue() {
+            return new Object[4];
+        }
+    };
 }
