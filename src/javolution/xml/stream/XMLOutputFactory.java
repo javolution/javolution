@@ -102,7 +102,7 @@ public abstract class XMLOutputFactory {
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
-        Class cls = DEFAULT_IMPLEMENTATION.getClass();
+        Class cls = (Class) DEFAULT_IMPLEMENTATION.get();
         try { // Test if configuration override.
             if (cls != Default.CLASS)
                 return (XMLOutputFactory) cls.newInstance();

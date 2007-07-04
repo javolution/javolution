@@ -1,7 +1,7 @@
 // SAX error handler.
 // http://www.saxproject.org
 // No warranty; no copyright -- use this as you will.
-// $Id: ErrorHandler.java,v 1.19 2007-07-04 16:23:23 dautelle Exp $
+// $Id: ErrorHandler.java,v 1.20 2007-07-04 17:09:35 dautelle Exp $
 
 package org.xml.sax;
 

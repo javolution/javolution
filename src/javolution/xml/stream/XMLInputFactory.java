@@ -92,7 +92,7 @@ public abstract class XMLInputFactory {
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
-        Class cls = DEFAULT_IMPLEMENTATION.getClass();
+        Class cls = (Class)DEFAULT_IMPLEMENTATION.get();
         try { // Test if configuration override.
             if (cls != Default.CLASS)
                 return (XMLInputFactory) cls.newInstance();
