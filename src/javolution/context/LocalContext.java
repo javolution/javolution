@@ -7,16 +7,15 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.context;
-import j2me.lang.UnsupportedOperationException;
 import javolution.util.FastMap;
 
 /**
- * <p> This class represents a local context; it is used to define locally 
- *     scoped setting through the use of {@link LocalContext.Reference} typically 
- *     wrapped within a static method. For example:[code]
+ * <p> This class represents a context to define locally scoped environment
+ *     settings. This settings are held by {@link LocalContext.Reference} 
+ *     and typically wrapped within a static method:[code]
  *     LocalContext.enter();
  *     try {
- *         LargeInteger.setModulus(m); // Performs integer operations modulo m.
+ *         ModuloInteger.setModulus(m); // Performs integer operations modulo m.
  *         Length.showAs(NonSI.INCH); // Shows length in inches.
  *         RelativisticModel.select(); // Uses relativistic physical model.
  *     } finally {
@@ -27,8 +26,8 @@ import javolution.util.FastMap;
  *     start-up (global setting) or within a local context (to avoid 
  *     impacting other threads).</p>
  *     
- * <p> Finally, local settings are inherited by {@link ConcurrentThread 
- *     concurrent threads} spawned while in a local context scope.</p> 
+ * <p> As for any context, local context settings are inherited during 
+ *     {@link ConcurrentContext concurrent} executions.</p> 
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.6, September 24, 2005
@@ -37,13 +36,9 @@ import javolution.util.FastMap;
 public class LocalContext extends Context {
 
     /**
-     * Holds the context factory.
+     * Holds this class (J2ME does not support LocalContext.class).
      */
-    private static ObjectFactory FACTORY = new ObjectFactory() {
-        protected Object create() {
-            return new LocalContext();
-        } 
-    };
+    private static Class CLASS = new LocalContext().getClass();
 
     /**
      * Holds any reference associated to this context (reference to 
@@ -58,42 +53,22 @@ public class LocalContext extends Context {
     }
 
     /**
-     * Returns the current local context or <code>null<code> if the current
-     * thread does not execute within a local context (global context).  
-     *
-     * @return the current local context.
-     */
-    public static/*LocalContext*/Context current() {
-        for (Context ctx = Context.current(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof LocalContext)
-                return (LocalContext) ctx;
-        }
-        return null;
-    }
-
-    /**
      * Enters a {@link LocalContext} possibly recycled.
+     * 
+     * @return the local context being entered.
      */
-    public static void enter() {
-        LocalContext ctx = (LocalContext) FACTORY.object();
-        ctx._isInternal = true;
-        Context.enter(ctx);
+    public static LocalContext enter() {
+        return (LocalContext) Context.enter(CLASS);
     }
-    private transient boolean _isInternal;
 
     /**
-     * Exits and recycles the current {@link LocalContext}.
-     *
-     * @throws UnsupportedOperationException if the current context 
-     *         has not been entered using LocalContext.enter() (no parameter). 
+     * Exits the current local context.
+     * 
+     * @return the local context being exited.
+     * @throws ClassCastException if the context is not a local context.
      */
-    public static void exit() {
-        LocalContext ctx = (LocalContext) Context.current();
-        if (!ctx._isInternal) throw new UnsupportedOperationException
-           ("The context to exit must be specified");
-        ctx._isInternal = false;
-        Context.exitNoCheck(ctx);
-        FACTORY.recycle(ctx);
+    public static /*LocalContext*/Context exit() {
+        return (LocalContext) Context.exit();
     }
 
     // Implements Context abstract method.
@@ -108,7 +83,7 @@ public class LocalContext extends Context {
     
     /**
      * <p> This class represents a reference whose setting is local to the current 
-     *     {@link LocalContext}; setting outside of any {@link LocalContext} scope 
+     *     {@link LocalContext}. Setting outside of any {@link LocalContext} scope 
      *     affects the reference default value (equivalent to {@link #setDefault}).
      *     For example:[code]
      *     public class Foo {
@@ -127,12 +102,7 @@ public class LocalContext extends Context {
      *     } finally {
      *        LocalContext.exit(); // Reverts to previous format.
      *     }[/code]</p>
-     *     
-     * <p> Accessing/setting a local reference is fast and does not require 
-     *     any form of synchronization. Local settings are inherited by 
-     *     {@link ConcurrentThread concurrent threads} spawned from within the 
-     *     same {@link LocalContext}.</p>
-     */
+     */     
     public static class Reference/*<T>*/implements javolution.lang.Reference/*<T>*/ {
 
         /**
@@ -175,7 +145,7 @@ public class LocalContext extends Context {
         }
 
         private Object/*{T}*/retrieveValue() {
-            for (Context ctx = Context.current(); ctx != null; ctx = ctx.getOuter()) {
+            for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
                 if (ctx instanceof LocalContext) {
                     LocalContext localContext = (LocalContext) ctx;
                     Object value = localContext._references.get(this);
@@ -195,7 +165,7 @@ public class LocalContext extends Context {
          *        the outer value.
          */
         public void set(Object/*{T}*/value) {
-            LocalContext ctx = (LocalContext) LocalContext.current();
+            LocalContext ctx = Reference.getLocalContext();
             if (ctx != null) {
                 FastMap references = ctx._references;
                 references.put(this, value);
@@ -222,7 +192,7 @@ public class LocalContext extends Context {
          *         inherited or not set).
          */
         public Object/*{T}*/getLocal() {
-            LocalContext ctx = (LocalContext) LocalContext.current();
+            LocalContext ctx = Reference.getLocalContext();
             return (ctx != null) ? (Object/*{T}*/) ctx._references.get(this)
                     : _defaultValue;
         }
@@ -244,6 +214,15 @@ public class LocalContext extends Context {
          */
         public String toString() {
             return String.valueOf(this.get());
+        }
+        
+        // Returns the local context if any.
+        private static LocalContext getLocalContext() {
+            for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
+                if (ctx instanceof LocalContext)
+                    return (LocalContext) ctx;
+            }
+            return null;
         }
     }
 }

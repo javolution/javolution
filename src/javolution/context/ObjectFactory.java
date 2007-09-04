@@ -7,6 +7,8 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.context;
+
+import javolution.util.FastMap;
 import j2me.lang.ThreadLocal;
 
 /**
@@ -31,18 +33,20 @@ import j2me.lang.ThreadLocal;
  *     [/code]</p>
  *     
  * <p> For arrays of variable length {@link ArrayFactory} is recommended.</p>
+ * 
+ * <p> For convenience, this class provides a static {@link #getInstance} method 
+ *     to retrieve a factory implementation for any given class.
+ *     For example:[code]
+ *        ObjectFactory<ArrayList> listFactory = ObjectFactory.getInstance(ArrayList.class);
+ *        ArrayList list = listFactory.object();
+ *        ... // Do something.
+ *        listFactory.recycle(list); // Optional.
+ *    [/code]</p> 
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, May 6, 2007
+ * @version 5.2, August 14, 2007
  */
 public abstract class ObjectFactory/*<T>*/{
-
-    /**
-     * Indicates if object queues are used. Runtime compiler should 
-     * be able to optimize generated code based upon this flag (static final).
-     */
-    static final boolean USE_QUEUES = ((Boolean) ObjectQueue.QUEUES_ENABLED.get())
-            .booleanValue();
 
     /**
      * Indicates if the objects products of this factory require
@@ -51,75 +55,111 @@ public abstract class ObjectFactory/*<T>*/{
     private boolean _doCleanup = true;
 
     /**
-     * Holds the thread-local queue for this factory (not always current).
-     */
-    private ThreadLocal _currentQueue = new ThreadLocal() {
-        protected Object initialValue() {
-            return NULL;
-        }
-    };
-
-    private static final ObjectQueue NULL = new ObjectQueue(null) {
-
-        protected Object allocate() {
-            return null;
-        }
-
-        protected void recycle(Object object) {
-        }
-
-    };
-
-    /**
      * Default constructor.
      */
     protected ObjectFactory() {
     }
 
     /**
+     * Returns a factory implementation producing instances of the specified
+     * class. By default this method returns a factory creating new objects 
+     * using the class public no-arg constructor (through reflection). 
+     * If that constructor is not accessible, the factory instance can be 
+     * {@link #setInstance set explicitly}:[code]
+     * class LogContext {
+     *     public static final Class<LogContext> NULL = Null.class;
+     *     ...
+     *     private static class Null extends LogContext ... // Private.
+     *     static {
+     *          // Allows Null instances to be factory produced (even so the class is not accessible).
+     *          ObjectFactory.setInstance(new ObjectFactory<Null> {
+     *              protected Null create() { return new Null() }},
+     *              Null.class);
+     *     }
+     *  }[/code]
+     *  
+     * @param forClass the class for which an object factory is returned.
+     * @return an object factory producing instances of the specified class.
+     */
+    public static/*<T>*/ObjectFactory/*<T>*/getInstance(Class/*<T>*/forClass) {
+        ObjectFactory factory = (ObjectFactory) Generic.CLASS_TO_FACTORY
+                .get(forClass);
+        return factory != null ? factory : Generic.newInstance(forClass);
+    }
+
+    /**
+     * Sets explicitely the factory to be used for the specified class 
+     * (see {@link #getInstance}).
+     * 
+     * @param factory the factory to use.
+     * @param forClass the associated class.
+     * @see #getInstance(Class)
+     */
+    public static/*<T>*/void setInstance(ObjectFactory/*<T>*/factory,
+            Class/*<T>*/forClass) {
+        Generic.CLASS_TO_FACTORY.put(forClass, factory);
+    }
+
+    /**
      * Returns a factory object possibly recycled or preallocated.
-     * This method is equivalent to <code>currentQueue().next()</code>.
+     * This method is equivalent to <code>currentAllocator().nextInQueue()</code>.
      * 
      * @return a recycled, pre-allocated or new factory object.
      */
     public final Object/*{T}*/object() {
-        if (!USE_QUEUES)
-            return create();
-        final ObjectQueue/*<T>*/queue = _queue;
-        return queue.user == Thread.currentThread() ? queue.next() 
-                : currentQueue().next();
+        final Allocator/*<T>*/ allocator = _allocator;
+        return allocator.user == Thread.currentThread() ? 
+             allocator.next() : currentAllocator().next();
     }
 
-    private ObjectQueue/*<T>*/_queue = NULL; // Hopefully in the cache.   
+    private Allocator/*<T>*/ _allocator = NULL_ALLOCATOR; // Hopefully in the cache.   
 
+    private static final Allocator NULL_ALLOCATOR = new Allocator() {
+		protected Object allocate() {
+			return null;
+		}
+		protected void recycle(Object object) {
+		}};
+    
     /**
-     * Recycles the specified object in the current queue of this factory.
-     * This method is equivalent to <code>currentQueue().recycle(obj)</code>.
+     * Recycles the specified object.
+     * This method is equivalent to <code>getAllocator().recycle(obj)</code>.
      * 
      * @param obj the object to be recycled.
      */
     public final void recycle(Object/*{T}*/obj) {
-        if (USE_QUEUES) {
-            currentQueue().recycle(obj);
-        }
+        currentAllocator().recycle(obj);
     }
 
     /**
-     * Returns this object queue for the current thread (equivalent 
-     * to <code>AllocatorContext.current().getQueue(this)</code>).
-     * The current queue is used only if queues are 
-     * {@link ObjectQueue#QUEUES_ENABLED enabled}.
+     * Returns the factory allocator for the current thread (equivalent 
+     * to <code>AllocatorContext.current().getAllocator(this)</code>).
      * 
      * @return the current object queue for this factory. 
      */
-    public final ObjectQueue/*<T>*/currentQueue() {
-        ObjectQueue/*<T>*/queue = (ObjectQueue/*<T>*/) _currentQueue.get();
-        if (queue.user != null)
-            return _queue = queue;
-        queue = ((AllocatorContext) AllocatorContext.current()).getQueue(this);
-        _currentQueue.set(queue);
-        return _queue = queue;
+    public final Allocator/*<T>*/currentAllocator() {
+
+        // Search thread-local value first.
+        Allocator allocator = (Allocator) _localAllocator.get();
+        if (allocator.user != null) // Active.
+            return _allocator = allocator;
+
+        // Retrieves allocator from current allocator context.
+        allocator = ((AllocatorContext) AllocatorContext.getCurrent()).getAllocator(this);
+
+        // Sets diverse shortcuts.
+        _localAllocator.set(allocator);
+        _allocator = allocator;
+
+        // Returns the queue.
+        return allocator;
     }
+
+    private ThreadLocal _localAllocator = new ThreadLocal() {
+        protected Object initialValue() {
+            return NULL_ALLOCATOR;
+        }
+    };
 
     /**
      * Constructs a new object for this factory (using the <code>new</code> 
@@ -162,4 +202,38 @@ public abstract class ObjectFactory/*<T>*/{
         return _doCleanup;
     }
 
+    // Generic implementation using public no-arg constructor (reflection).
+    private static class Generic extends ObjectFactory {
+        private static final FastMap CLASS_TO_FACTORY = new FastMap()
+                .setShared(true);
+
+        private final Class _class;
+
+        private Generic(Class cls) {
+            _class = cls;
+        }
+
+        private static Generic newInstance(Class cls) {
+            Generic generic = new Generic(cls);
+            CLASS_TO_FACTORY.put(cls, generic);
+            return generic;
+        }
+
+        protected Object create() {
+            try {
+                return _class.newInstance();
+            } catch (InstantiationException e) {
+                throw new Error(
+                        "Cannot instantiate no-arg constructor for "
+                                + _class.getName()
+                                + ", the factory should be set explicitly using ObjectFactory.setInstance");
+            } catch (IllegalAccessException e) {
+                throw new Error(
+                        "Cannot access no-arg constructor for "
+                                + _class.getName()
+                                + ", the factory should be set explicitly using ObjectFactory.setInstance");
+            }
+        }
+    }
+     
 }

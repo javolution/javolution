@@ -25,15 +25,15 @@ import j2me.util.logging.LogRecord;
  *     StandardLog remoteLog = new StandardLog(Logger.getLogger("remote"));
  *     StandardLog.enter(remoteLog); 
  *     try {
- *        StandardLog.fine("Current thread uses a remote logger");
- *        ...       
+ *         StandardLog.fine("Current thread uses a remote logger");
+ *         ...       
  *     } finally {
- *        StandardLog.exit(remoteLog); // Reverts to previous logging context.
+ *         StandardLog.exit(remoteLog); // Reverts to previous logging context.
  *     }[/code]</p>
  *     
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, November 16, 2005
+ * @version 5.1, August 1, 2007
  */
 public class StandardLog extends LogContext {
 
@@ -78,7 +78,7 @@ public class StandardLog extends LogContext {
      *        be logged;<code>false</code> otherwise.
      */
     public static boolean isLoggable(Level level) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             return ((StandardLog) log)._logger.isLoggable(level);
         } else if (level.intValue() >= Level.WARNING.intValue()) {
@@ -99,57 +99,41 @@ public class StandardLog extends LogContext {
      * @param record the LogRecord to be published.
      */
     public static void log(LogRecord record) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.log(record);
         } else {
             Throwable error = record.getThrown();
             if (error != null) {
-                log.logError(error, toCsq(record.getMessage()));
+                if (log.isErrorLogged()) { 
+                    log.logError(error, Javolution.j2meToCharSeq(record.getMessage()));
+                }
             } else if (record.getLevel().intValue() > Level.WARNING.intValue()) {
-                log.logWarning(toCsq(record.getMessage()));
+                if (log.isWarningLogged()) { 
+                    log.logWarning(Javolution.j2meToCharSeq(record.getMessage()));
+                }
             } else if (record.getLevel().intValue() > Level.INFO.intValue()) {
-                log.logInfo(toCsq(record.getMessage()));
+                if (log.isInfoLogged()) {
+                    log.logInfo(Javolution.j2meToCharSeq(record.getMessage()));
+                }
             }
         }
     }
 
     /**
      * Logs a {@link Level#SEVERE SEVERE} message. If the current logging 
-     * context is not a {@link StandardLog} a {@link LogContext#logWarning 
+     * context is not a {@link StandardLog} a {@link LogContext#warning 
      * warning} message is logged.
      * 
      * @param msg the severe message.
      */
     public static void severe(String msg) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.severe(msg);
-        } else {
-            log.logWarning(toCsq(msg));
+        } else if (log.isWarningLogged()) {
+            log.logWarning(Javolution.j2meToCharSeq(msg));
         }
-    }
-
-    /**
-     * Logs a {@link Level#WARNING WARNING} message.
-     * 
-     * @param msg the warning message.
-     * @see LogContext#logWarning(CharSequence)
-     */
-    public static void warning(String msg) {
-        LogContext log = (LogContext) LogContext.current();
-        log.logWarning(toCsq(msg));
-    }
-
-    /**
-     * Logs an {@link Level#INFO INFO} message.
-     * 
-     * @param msg the informative message.
-     * @see LogContext#logInfo(CharSequence)
-     */
-    public static void info(String msg) {
-        LogContext log = (LogContext) LogContext.current();
-        log.logInfo(toCsq(msg));
     }
 
     /**
@@ -159,7 +143,7 @@ public class StandardLog extends LogContext {
      * @param msg the config message.
      */
     public static void config(String msg) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.config(msg);
         }
@@ -172,7 +156,7 @@ public class StandardLog extends LogContext {
      * @param msg the fine message.
      */
     public static void fine(String msg) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.fine(msg);
         }
@@ -185,7 +169,7 @@ public class StandardLog extends LogContext {
      * @param msg the finer message.
      */
     public static void finer(String msg) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.finer(msg);
         }
@@ -198,7 +182,7 @@ public class StandardLog extends LogContext {
      * @param msg the finest message.
      */
     public static void finest(String msg) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.finest(msg);
         }
@@ -214,12 +198,12 @@ public class StandardLog extends LogContext {
      */
     public static void throwing(String sourceClass, String sourceMethod,
             Throwable thrown) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.throwing(sourceClass, sourceMethod,
                     thrown);
-        } else {
-            log.logError(thrown, null);
+        } else if (log.isErrorLogged()) {
+            log.logError(thrown, (CharSequence) null);
         }
     }
 
@@ -231,7 +215,7 @@ public class StandardLog extends LogContext {
      * @param sourceMethod name of method that is being entered.
      */
     public static void entering(String sourceClass, String sourceMethod) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.entering(sourceClass, sourceMethod);
         }
@@ -245,7 +229,7 @@ public class StandardLog extends LogContext {
      * @param sourceMethod name of method that is being returned.
      */
     public static void exiting(String sourceClass, String sourceMethod) {
-        LogContext log = (LogContext) LogContext.current();
+        LogContext log = (LogContext) LogContext.getCurrent();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.exiting(sourceClass, sourceMethod);
         }
@@ -286,7 +270,4 @@ public class StandardLog extends LogContext {
         }
     }
 
-    private static CharSequence toCsq/**/(Object str) {
-        return Javolution.j2meToCharSeq(str);
-    }
 }

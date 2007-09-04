@@ -7,44 +7,46 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.util;
+
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
 import j2me.io.Serializable;
+import j2me.lang.IllegalStateException;
 import j2me.lang.UnsupportedOperationException;
 import j2me.util.Collection;
 import j2me.util.Iterator;
 import j2me.util.Map;
+import j2me.util.NoSuchElementException;
 import j2me.util.Set;
 import j2mex.realtime.MemoryArea;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import javolution.JavolutionError;
+import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
 import javolution.context.PersistentContext;
+import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.lang.Reusable;
 import javolution.text.Text;
-import javolution.text.TextBuilder;
 import javolution.util.FastCollection.Record;
 import javolution.xml.XMLSerializable;
 
 /**
  * <p> This class represents a hash map with real-time behavior; 
- *     smooth capacity increase and no rehashing ever performed.</p>
+ *     smooth capacity increase and <i>thread-safe</i> {@link #get access}
+ *     without synchronization.</p>
  *     <img src="doc-files/map-put.png"/>
  *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys are inserted into the map (similar to 
- *     <code>java.util.LinkedHashMap</code> collection class).</p>
+ *     <code>java.util.LinkedHashMap</code> collection class). Access using
+ *     the {@link #get(Object) get(key)} is always thread-safe even when  
+ *     entries are removed. If the map is marked {@link #setShared(boolean)
+ *     shared} then all operations are thread-safe including iterations over the
+ *     map's collections.</p>
  *     
- * <p> {@link FastMap.Entry} can quickly be iterated over (forward or backward)
- *     without using iterators. For example:[code]
- *     FastMap<String, Thread> map = ...;
- *     for (FastMap.Entry<String, Thread> e = map.head(), end = map.tail(); (e = e.getNext()) != end;) {
- *          String key = e.getKey(); // No typecast necessary.
- *          Thread value = e.getValue(); // No typecast necessary.
- *     }[/code]</p>
- * 
  * <p> {@link FastMap} may use custom key comparators; the default comparator is
  *     either {@link FastComparator#DIRECT DIRECT} or 
  *     {@link FastComparator#REHASH REHASH} based upon the current <a href=
@@ -63,21 +65,13 @@ import javolution.xml.XMLSerializable;
  *     FastMap identityMap = new FastMap().setKeyComparator(FastComparator.IDENTITY);
  *     [/code]</p>
  * 
- * <p> {@link FastMap} marked {@link #setShared(boolean) shared} are 
- *     thread-safe without external synchronization and are often good 
- *     substitutes for <code>ConcurrentHashMap</code>. For example:[code]
- *     // Holds the units multiplication lookup table (persistent).
- *     static final FastMap<Unit, FastMap<Unit, Unit>> MULT_LOOKUP 
- *          = new FastMap<Unit, FastMap<Unit, Unit>>("mult-unit-lookup").setShared(true);
- *     
- *     // Fast and non-blocking (no synchronization necessary).     
- *     static Unit productOf(Unit left, Unit right) {
- *          FastMap<Unit, Unit> leftTable = MULT_LOOKUP.get(left);
- *          if (leftTable == null) return calculateProductOf(left, right);
- *          Unit result = leftTable.get(right);
- *          if (result == null) return calculateProductOf(left, right);
- *          return result; // Returns cache result.
- *    }[/code]</p>
+ * <p> {@link FastMap.Entry} can quickly be iterated over (forward or backward)
+ *     without using iterators. For example:[code]
+ *     FastMap<String, Thread> map = ...;
+ *     for (FastMap.Entry<String, Thread> e = map.head(), end = map.tail(); (e = e.getNext()) != end;) {
+ *          String key = e.getKey(); // No typecast necessary.
+ *          Thread value = e.getValue(); // No typecast necessary.
+ *     }[/code]</p>
  *     
  * <p> Finally, {@link FastMap} are {@link Reusable reusable}; they maintain an 
  *     internal pool of <code>Map.Entry</code> objects. When an entry is removed
@@ -85,41 +79,50 @@ import javolution.xml.XMLSerializable;
  *     is shared in which case the removed entry is candidate for garbage 
  *     collection as it cannot be safely recycled).</p>
  *     
+ * <p> <b>Implementation Note:</b> To maintain time-determinism, rehash/resize
+ *     is performed only when the map's size is small. For large maps 
+ *     (size > 512), the collection is divided into smaller sub-maps.</p>  
+ *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 4.2, December 18, 2006
+ * @version 5.2, September 3, 2007
  */
-public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
-        Reusable, XMLSerializable, Realtime {
+public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable,
+        XMLSerializable, Realtime {
+
+    // We do a full resize (and rehash) only when the capacity is less than C1.
+    // For large maps (size > 512), we dispatch to sub-maps.
+
+    private static final int B0 =  4; // Initial capacity in bits.
+
+    private static final int C0 = 1 << B0; // Initial capacity (16)
+
+    private static final int B1 = 10; // Entries array resize limit in bits.
+
+    private static final int C1 = 1 << B1; // Entries array resize limit (1024).
+
+    private static final int B2 = B1 - B0; // Sub-maps array length in bits.
+
+    private static final int C2 = 1 << B2; // Sub-maps array length (32).
 
     /**
-     * Holds table higher index rotation. 
+     * Holds the map's entries. 
      */
-    private static final int R0 = 5;
+    private transient Entry/*<K,V>*/[] _entries;
 
     /**
-     * Holds the table lower index mask. 
+     * Holds sub-maps (for large collection). 
      */
-    private static final int M0 = (1 << R0) - 1;
+    private transient FastMap[] _subMaps;
 
     /**
-     * Holds the map factory.
+     * Indicates if sub-maps are active.
      */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new FastMap();
-        }
-
-        public void cleanup(Object obj) {
-            ((FastMap) obj).reset();
-        }
-    };
+    private boolean _useSubMaps;
 
     /**
-     * Holds the map's hash table.
-     * Use two dimensional arrays to avoid large arrays allocations. 
+     * The hash shift (for sub-maps to discard bits already taken into account).
      */
-    private transient Entry/*<K,V>*/[][] _entries;
+    private int _keyShift;
 
     /**
      * Holds the head entry to which the first entry attaches.
@@ -159,11 +162,6 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     private transient Map/*<K,V>*/_unmodifiable;
 
     /**
-     * Holds a reference to a map having the old entries when resizing.
-     */
-    private transient FastMap/*<K,V>*/_oldEntries;
-
-    /**
      * Holds the key comparator.
      */
     private transient FastComparator _keyComparator = FastComparator.DEFAULT;
@@ -176,8 +174,8 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     /**
      * Holds comparator set to <code>null</code> when equivalent to direct.
      */
-    private transient FastComparator _keyComp 
-         = FastComparator._Rehash ? FastComparator.REHASH : null;
+    private transient FastComparator _keyComp = FastComparator._Rehash ? FastComparator.REHASH
+            : null;
 
     /**
      * Indicates if this map is shared (thread-safe).
@@ -219,22 +217,20 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     public FastMap(int capacity) {
         setup(capacity);
     }
+
     private void setup(int capacity) {
-        int tableLength = 1 << R0;
+        int tableLength = C0;
         while (tableLength < capacity) {
             tableLength <<= 1;
         }
-        _entries = (Entry/*<K,V>*/[][]) new Entry[tableLength >> R0][];
-        for (int i = 0; i < _entries.length;) {
-            _entries[i++] = (Entry/*<K,V>*/[]) new Entry[1 << R0];
-        }
+        _entries = (Entry/*<K,V>*/[]) new Entry[tableLength];
         _head = new Entry();
         _tail = new Entry();
         _head._next = _tail;
         _tail._previous = _head;
-        Entry/*<K,V>*/previous = _tail;
+        Entry previous = _tail;
         for (int i = 0; i++ < capacity;) {
-            Entry/*<K,V>*/newEntry = new Entry/*<K,V>*/();
+            Entry newEntry = new Entry();
             newEntry._previous = previous;
             previous._next = newEntry;
             previous = newEntry;
@@ -253,22 +249,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     }
 
     /**
-     * Creates a fast map having the specified entry table.
-     * 
-     * @param entries the entry table.
-     */
-    private FastMap(Entry/*<K,V>*/[][] entries) {
-        _head = new Entry();
-        _tail = new Entry();
-        _head._next = _tail;
-        _tail._previous = _head;
-        _entries = entries;
-    }
-
-    /**
-     * Returns a new, preallocated or {@link #recycle recycled} map instance
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}).
+     * Returns a potentially {@link #recycle recycled} map instance.
      *
      * @return a new, preallocated or recycled map instance.
      */
@@ -277,9 +258,9 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     }
 
     /**
-     * Recycles a map {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}). 
+     * Recycles the specified map instance.
+     * 
+     * @param instance the map instance to recycle.
      */
     public static void recycle(FastMap instance) {
         FACTORY.recycle(instance);
@@ -307,6 +288,10 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
 
     /**
      * Returns the number of key-value mappings in this {@link FastMap}.
+     * 
+     * <p>Note: If concurrent updates are performed, application should not 
+     *          rely upon the size during iterations. Iterators (which  
+     *          do not use the size) are safe.</p> 
      * 
      * @return this map's size.
      */
@@ -350,6 +335,8 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
 
     /**
      * Returns the value to which this map associates the specified key.
+     * This method is always thread-safe regardless whether or not the map 
+     * is marked {@link #isShared() shared}.
      * 
      * @param key the key whose associated value is to be returned.
      * @return the value to which this map maps the specified key, or
@@ -364,6 +351,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
 
     /**
      * Returns the entry with the specified key.
+     * This method is always thread-safe without synchronization.
      * 
      * @param key the key whose associated entry is to be returned.
      * @return the entry for the specified key or <code>null</code> if none.
@@ -371,6 +359,22 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     public final Entry/*<K,V>*/getEntry(Object key) {
         return getEntry(key, (_keyComp == null) ? key.hashCode() : _keyComp
                 .hashCodeOf(key));
+    }
+
+    private final Entry getEntry(Object key, int keyHash) {
+        int hash = keyHash >> _keyShift;
+        if (_useSubMaps) // Forwards to sub-maps (divide size by C2).
+            return _subMaps[hash & (C2 - 1)].getEntry(key, keyHash);
+        final Entry[] entries = _entries; // Atomic.
+        while (true) {
+            Entry entry = entries[hash++ & (entries.length - 1)];
+            if (entry == null) return null;
+            if ((key == entry._key)
+                    || ((keyHash == entry._keyHash) && 
+                 (_keyComp == null ? key.equals(entry._key) : _keyComp.areEqual(
+                            key, entry._key))))
+                return entry;
+        }
     }
 
     /**
@@ -396,7 +400,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
             entry._value = value;
             return prevValue;
         }
-        if (_isShared) // Synchronization only when shared and entry not found.
+        if (_isShared) // Synchronization only when entry not found.
             return putShared(key, value, keyHash);
         addEntry(keyHash, key, value);
         return null;
@@ -414,6 +418,123 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         return prevValue;
     }
 
+    private void addEntry(int hash, Object/*{K}*/key, Object/*{V}*/value) {
+        if (_tail._next == null) {
+            createNewEntries();
+        }
+        final Entry newTail = _tail._next;
+
+        // Setups entry parameters.
+        _tail._key = key;
+        _tail._value = value;
+        _tail._keyHash = hash;
+
+        mapEntry(_tail);
+
+        // Moves tail forward (must be last).
+        _tail = newTail;
+    }
+
+    private void createNewEntries() { // Increase the number of entries.
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                Entry/*<K,V>*/newEntry0 = new Entry/*<K,V>*/();
+                newEntry0._previous = _tail;
+                _tail._next = newEntry0;
+
+                Entry/*<K,V>*/newEntry1 = new Entry/*<K,V>*/();
+                newEntry1._previous = newEntry0;
+                newEntry0._next = newEntry1;
+
+                Entry/*<K,V>*/newEntry2 = new Entry/*<K,V>*/();
+                newEntry2._previous = newEntry1;
+                newEntry1._next = newEntry2;
+
+                Entry/*<K,V>*/newEntry3 = new Entry/*<K,V>*/();
+                newEntry3._previous = newEntry2;
+                newEntry2._next = newEntry3;
+            }
+        });
+    }
+
+    private void mapEntry(Entry entry) {
+        _size++;
+        int hash = entry._keyHash >> _keyShift;
+        if (_useSubMaps) { // Forwards to sub-maps.
+            _subMaps[hash & (C2 - 1)].mapEntry(entry);
+            return;
+        }
+        // Direct entry mapping.
+        while (true) {
+            final int index = hash++ & (_entries.length - 1);
+            Entry e = _entries[index];
+            if (e == null) { // Found slot.
+                _entries[index] = entry;
+                break;
+            }
+        }
+        if (_size > (_entries.length >> 1)) { // Table more than half empty.
+            resizeTable();
+        }
+    }
+
+    private void resizeTable() {
+        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            public void run() {
+                final int tableLength = _entries.length << 1;
+                if (tableLength > C1) { // Lets' try using sub-maps instead.
+                    if (_subMaps == null) { // Creates sub-maps.
+                        _subMaps = new FastMap[C2];
+                        for (int i = 0; i < C2; i++) {
+                            FastMap subMap = new FastMap(0);
+                            subMap._keyShift = B2 + _keyShift;
+                            _subMaps[i] = subMap;
+                        }
+                    }
+                    // Copies the current entries to sub-maps. 
+                    // We still keep the entry in the main table (used as cache).
+                    boolean wellDistributed = true;
+                    for (int i = 0; i < _entries.length;) {
+                        Entry entry = _entries[i++];
+                        if (entry == null)
+                            continue;
+                        int hash = entry._keyHash >> _keyShift;
+                        FastMap subMap = _subMaps[hash & (C2 - 1)];
+                        if (subMap._size >= (_size >> 1)) { // Bad distribution.
+                            wellDistributed = false;
+                            break;
+                        }
+                        subMap.mapEntry(entry);
+                    }
+                    if (wellDistributed) {
+                        _useSubMaps = true;
+                        return;
+                    }
+                    LogContext.warning("Uneven hash distribution");
+                    _subMaps = null; // Discards sub-maps.
+                }
+                // Small enough to resize (or uneven hash code distribution).                
+                Entry[] newEntries = new Entry[tableLength];
+                for (int i = 0; i < _entries.length;) {
+                    Entry entry = _entries[i++];
+                    if (entry == null)
+                        continue;
+                    int hash = entry._keyHash >> _keyShift;
+                    while (true) {
+                        final int index = hash & (tableLength - 1);
+                        Entry e = newEntries[index];
+                        if (e == null) { // Found slot.
+                            newEntries[index] = entry;
+                            break;
+                        }
+                        hash++;
+                    }
+                }
+                _entries = newEntries; // Replaces (atomic).
+            }
+        });
+    }
+
     /**
      * Copies all of the mappings from the specified map to this map.
      * 
@@ -422,17 +543,9 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      *         or the specified map contains <code>null</code> keys.
      */
     public final void putAll(Map/*<? extends K, ? extends V>*/map) {
-        if (map instanceof FastMap) { // Optimization.
-            FastMap/*<? extends K, ? extends V>*/fm = (FastMap/*<? extends K, ? extends V>*/) map;
-            for (Entry/*<? extends K, ? extends V>*/e = fm._head, end = fm._tail; (e = e._next) != end;) {
-                put(e._key, e._value);
-            }
-        } else {
-            for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-                Map.Entry/*<? extends K, ? extends V>*/e = (Map.Entry/*<? extends K, ? extends V>*/) i
-                        .next();
-                put(e.getKey(), e.getValue());
-            }
+        for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+            Map.Entry/*<K,V>*/e = (Map.Entry/*<K,V>*/) i.next();
+            put(e.getKey(), e.getValue());
         }
     }
 
@@ -459,7 +572,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         Entry/*<K,V>*/entry = getEntry(key, keyHash);
         if (entry == null)
             return null;
-        if (_isShared) // Synchronization only if shared and entry found.
+        if (_isShared) // Synchronization only if entry found.
             return removeShared(key, keyHash);
         Object/*{V}*/prevValue = entry._value;
         removeEntry(entry);
@@ -467,13 +580,75 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     }
 
     private synchronized Object/*{V}*/removeShared(Object key, int keyHash) {
-        Entry/*<K,V>*/entry = getEntry(key, keyHash); // Avoid removing twice.
+        Entry/*<K,V>*/entry = getEntry(key, keyHash); // Avoids removing twice.
         if (entry == null)
             return null;
-        // Detach only, entry cannot be recycled.
+        Object/*{V}*/prevValue = entry._value;
+        removeEntry(entry);
+        return prevValue;
+    }
+
+    private final void removeEntry(Entry entry) {
+
+        // Detaches from list.
+        entry._previous._next = entry._next;
+        entry._next._previous = entry._previous;
+
+        // Removes from tables.
+        unmapEntry(entry);
+
+        if (!_isShared) { // Re-insert at the end (for reuse).
+            // Clears value and key (only if not shared).
+            entry._key = null;
+            entry._value = null;
+
+            final Entry next = _tail._next;
+            entry._previous = _tail;
+            entry._next = next;
+            _tail._next = entry;
+            if (next != null) {
+                next._previous = entry;
+            }
+        }
+    }
+
+    private void unmapEntry(Entry entry) {
         _size--;
-        entry.detach();
-        return entry._value;
+        if (_useSubMaps) { // Forwards to sub-maps.
+            _subMaps[(entry._keyHash >> _keyShift) & (C2 - 1)]
+                    .unmapEntry(entry);
+            return;
+        } else { // Fills the slot where the entry actually is .
+            pack(FastMap.indexOf(entry, _entries, _keyShift));
+        }
+    }
+
+    // This is the most difficult part. When clearing the slot we cannot just 
+    // set it to null; we have to pack to ensure that entries not in their own
+    // slot are still reachable. Interestingly, packing is thread-safe
+    // with regard to concurrent "get". In other words, removing an entry 
+    // does not break our unsynchronized get (during packing we might have
+    // duplicate entries in the table which is ok).
+    private void pack(int slot) {
+        final int mask = _entries.length - 1;
+        int i = slot;
+        while (true) {
+            Entry entry = _entries[++i & mask];
+            if (entry == null) { // Done.
+                _entries[slot & mask] = null;
+                return;
+            }
+            int entrySlot = FastMap.slotOf(entry, _entries, _keyShift);
+            int distToSlot = (i & mask) - entrySlot; 
+            if (distToSlot < 0) // Modulo operation.
+                distToSlot += _entries.length;
+            if ((i - slot) > distToSlot)
+                continue; // Entry's slot below the packing slot.
+            // Moves entry to avoid breaking reachability.
+            _entries[slot & mask] = entry;
+            // Now pack the previous slot of the entry moved.
+            slot = i;
+        }
     }
 
     /**
@@ -514,10 +689,11 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      * @param keyComparator the key comparator.
      * @return <code>this</code>
      */
-    public FastMap/*<K,V>*/setKeyComparator(FastComparator/*<? super K>*/ keyComparator) {
+    public FastMap/*<K,V>*/setKeyComparator(
+            FastComparator/*<? super K>*/keyComparator) {
         _keyComparator = keyComparator;
-        _keyComp = (keyComparator instanceof FastComparator.Default) ? 
-                (FastComparator._Rehash ? FastComparator.REHASH : null)
+        _keyComp = (keyComparator instanceof FastComparator.Default) ? (FastComparator._Rehash ? FastComparator.REHASH
+                : null)
                 : (keyComparator instanceof FastComparator.Direct) ? null
                         : keyComparator;
         return this;
@@ -528,7 +704,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      * 
      * @return the key comparator.
      */
-    public FastComparator/*<? super K>*/ getKeyComparator() {
+    public FastComparator/*<? super K>*/getKeyComparator() {
         return _keyComparator;
     }
 
@@ -538,7 +714,8 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      * @param valueComparator the value comparator.
      * @return <code>this</code>
      */
-    public FastMap/*<K,V>*/setValueComparator(FastComparator/*<? super V>*/ valueComparator) {
+    public FastMap/*<K,V>*/setValueComparator(
+            FastComparator/*<? super V>*/valueComparator) {
         _valueComparator = valueComparator;
         return this;
     }
@@ -548,7 +725,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      * 
      * @return the value comparator.
      */
-    public FastComparator/*<? super V>*/ getValueComparator() {
+    public FastComparator/*<? super V>*/getValueComparator() {
         return _valueComparator;
     }
 
@@ -567,29 +744,49 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
             clearShared();
             return;
         }
-        // Clears all keys, values and buckets linked lists.
-        for (Entry/*<K,V>*/e = _head, end = _tail; (e = e._next) != end;) {
+        // Clears keys, values and recycle entries.
+        for (Entry e = _head, end = _tail; (e = e._next) != end;) {
             e._key = null;
             e._value = null;
-            final Entry/*<K,V>*/[][] table = e._table;
-            final int keyHash = e._keyHash;
-            table[(keyHash >> R0) & (table.length - 1)][keyHash & M0] = null;
         }
-        _tail = _head._next;
-        _size = 0;
-
-        // Discards old entries.
-        _oldEntries = null;
+        _tail = _head._next; // Reuse linked list of entries.       
+       
+        clearTables();
     }
-
-    private synchronized void clearShared() {
-        for (Entry/*<K,V>*/e = _head, end = _tail; (e = e._next) != end;) {
-            final Entry/*<K,V>*/[][] table = e._table;
-            table[(e._keyHash >> R0) & (table.length - 1)][e._keyHash & M0] = null;
+    
+    private void clearTables() { 
+        if (_useSubMaps) {
+            for (int i = 0; i < C2;) {
+                _subMaps[i++].clearTables();
+            }
+            _useSubMaps = false;
         }
-        _head._next = _tail; // Does not modify current linked list.
-        _tail._previous = _head; //
-        _oldEntries = null;
+        // We use brute force.
+        for (int i = 0; i < _entries.length;) {
+            int count = MathLib.min(_entries.length - i, C1);
+            System.arraycopy(NULL_ENTRIES, 0, _entries, i, count);
+            i += count;
+        }        
+        _size = 0;
+    }
+    private static final Entry[] NULL_ENTRIES = new Entry[C1];
+    
+    private synchronized void clearShared() {
+        // We do not modify the linked list of entries (e.g. key, values) 
+        // Concurrent iterations can still proceed unaffected.
+        // The linked list fragment is detached from the map and will be 
+        // garbage collected once all concurrent iterations complete.
+        _head._next = _tail;
+        _tail._previous = _head;
+
+        // We also detach the entry table and sub-maps.
+        _entries = (Entry/*<K,V>*/[]) new Entry[C0];
+        if (_useSubMaps) {
+            _useSubMaps = false;
+            for (int i = 0; i < C2;) {
+                _subMaps[i++] = new FastMap(0);
+            }
+        }
         _size = 0;
     }
 
@@ -649,55 +846,67 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
     /**
      * Prints the current statistics on this map.
      * This method may help identify poorly defined hash functions.
-     * An average collision of less than <code>50%</code> is typically 
-     * acceptable.
+     * The average distance should be 0 (most of the entries are in their 
+     * slots or close). 
      *  
      * @param out the stream to use for output (e.g. <code>System.out</code>)
      */
     public void printStatistics(PrintStream out) {
-        int maxOccupancy = 0;
-        int totalCollisions = 0;
-        int size = 0;
+        long sum = this.getSumDistance();
+        int max = this.getMaximumDistance();
+        int avgDistance = _size != 0 ? (int) (sum / _size) : 0;
+        synchronized (out) {
+            out.print("SIZE: " + _size);
+            out.print(", TABLE LENGTH: " + _entries.length);
+            out.print(", USE SUB-MAPS: " + _useSubMaps);
+            out.print(", IS SHARED: " + _isShared);
+            out.print(", AVG DISTANCE: " + avgDistance);
+            out.print(", MAX DISTANCE: " + max);
+            out.println();
+        }
+    }
+
+    private int getMaximumDistance() {
+        int max = 0;
+        if (_useSubMaps) {
+            for (int i = 0; i < C2; i++) {
+                int subMapMax = _subMaps[i].getMaximumDistance();
+                max = MathLib.max(max, subMapMax);
+            }
+            return max;
+        }
         for (int i = 0; i < _entries.length; i++) {
-            for (int j = 0; j < _entries[i].length; j++) {
-                Entry entry = _entries[i][j];
-                int occupancy = 0;
-                while (entry != null) {
-                    occupancy++;
-                    if (occupancy > maxOccupancy) {
-                        maxOccupancy = occupancy;
-                    }
-                    if (occupancy > 1) {
-                        totalCollisions++;
-                    }
-                    entry = entry._beside;
-                    size++;
+            Entry entry = _entries[i];
+            if (entry != null) {
+                int distanceToSlot = i - FastMap.slotOf(entry, _entries, _keyShift);
+                if (distanceToSlot < 0)
+                    distanceToSlot += _entries.length;
+                if (distanceToSlot > max) {
+                    max = distanceToSlot;
                 }
             }
         }
-        TextBuilder percentCollisions = TextBuilder.newInstance();
-        if (size != 0) {
-            percentCollisions.append((100 * totalCollisions) / size);
-            percentCollisions.append('%');
-        } else {
-            percentCollisions.append("N/A");
+        return max;
+    }
+
+    private long getSumDistance() {
+        long sum = 0;
+        if (_useSubMaps) {
+            for (int i = 0; i < C2; i++) {
+                sum += _subMaps[i].getSumDistance();
+            }
+            return sum;
         }
-        synchronized (out) {
-            out.print("SIZE: " + size);
-            out
-                    .print(", TABLE LENGTH: " + _entries.length
-                            * _entries[0].length);
-            out.print(", AVG COLLISIONS: " + percentCollisions);
-            out.print(", MAX SLOT OCCUPANCY: " + maxOccupancy);
-            out.print(", KEY COMPARATOR: "
-                    + ((_keyComp == null) ? FastComparator.DIRECT : _keyComp));
-            out.print(", SHARED: " + _isShared);
-            out.println();
-            if (_oldEntries != null) {
-                out.print(" + ");
-                _oldEntries.printStatistics(out);
+        for (int i = 0; i < _entries.length; i++) {
+            Entry entry = _entries[i];
+            if (entry != null) {
+                int distanceToSlot = i - FastMap.slotOf(entry, _entries, _keyShift);
+                if (distanceToSlot < 0)
+                    distanceToSlot += _entries.length;
+                sum += distanceToSlot;
             }
         }
+        return sum;
     }
 
     /**
@@ -720,7 +929,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
                 public void run() {
                     _values = new Values();
                 }
-            }); 
+            });
         }
         return _values;
     }
@@ -750,9 +959,73 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         public void delete(Record record) {
             FastMap.this.remove(((Entry) record).getKey());
         }
-        
-        public  FastComparator getValueComparator() {
+
+        public FastComparator getValueComparator() {
             return _valueComparator;
+        }
+
+        public Iterator iterator() {
+            return ValueIterator.valueOf(FastMap.this);
+        }
+    }
+
+    // Value iterator optimization.
+    private static final class ValueIterator implements Iterator {
+
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
+            protected Object create() {
+                return new ValueIterator();
+            }
+
+            protected void cleanup(Object obj) {
+                ValueIterator iterator = (ValueIterator) obj;
+                iterator._map = null;
+                iterator._current = null;
+                iterator._next = null;
+                iterator._tail = null;
+            }
+        };
+
+        private FastMap _map;
+
+        private Entry _current;
+
+        private Entry _next;
+
+        private Entry _tail;
+
+        public static ValueIterator valueOf(FastMap map) {
+            ValueIterator iterator = (ValueIterator) ValueIterator.FACTORY
+                    .object();
+            iterator._map = map;
+            iterator._next = map._head._next;
+            iterator._tail = map._tail;
+            return iterator;
+        }
+
+        private ValueIterator() {
+        }
+
+        public boolean hasNext() {
+            return (_next != _tail);
+        }
+
+        public Object next() {
+            if (_next == _tail)
+                throw new NoSuchElementException();
+            _current = _next;
+            _next = _next._next;
+            return _current._value;
+        }
+
+        public void remove() {
+            if (_current != null) {
+                _next = _current._next;
+                _map.remove(_current._key);
+                _current = null;
+            } else {
+                throw new IllegalStateException();
+            }
         }
     }
 
@@ -776,7 +1049,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
                 public void run() {
                     _entrySet = new EntrySet();
                 }
-            }); 
+            });
         }
         return _entrySet;
     }
@@ -795,8 +1068,10 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
             if (obj instanceof Map.Entry) {
                 Map.Entry thatEntry = (Entry) obj;
                 Entry thisEntry = getEntry(thatEntry.getKey());
-                if (thisEntry == null) return false;
-                return _valueComparator.areEqual(thisEntry.getValue(), thatEntry.getValue());
+                if (thisEntry == null)
+                    return false;
+                return _valueComparator.areEqual(thisEntry.getValue(),
+                        thatEntry.getValue());
             } else {
                 return false;
             }
@@ -831,18 +1106,20 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         public void delete(Record record) {
             FastMap.this.remove(((Entry) record).getKey());
         }
-        
+
         public FastComparator getValueComparator() {
             return _entryComparator;
         }
+
         private final FastComparator _entryComparator = new FastComparator() {
 
             public boolean areEqual(Object o1, Object o2) {
                 if ((o1 instanceof Map.Entry) && (o2 instanceof Map.Entry)) {
                     Map.Entry e1 = (Map.Entry) o1;
                     Map.Entry e2 = (Map.Entry) o2;
-                    return _keyComparator.areEqual(e1.getKey(), e2.getKey()) &&
-                       _valueComparator.areEqual(e1.getValue(), e2.getValue());                    
+                    return _keyComparator.areEqual(e1.getKey(), e2.getKey())
+                            && _valueComparator.areEqual(e1.getValue(), e2
+                                    .getValue());
                 }
                 return (o1 == null) && (o2 == null);
             }
@@ -853,10 +1130,74 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
 
             public int hashCodeOf(Object obj) {
                 Map.Entry entry = (Map.Entry) obj;
-                return _keyComparator.hashCodeOf(entry.getKey()) +
-                   _valueComparator.hashCodeOf(entry.getValue());
+                return _keyComparator.hashCodeOf(entry.getKey())
+                        + _valueComparator.hashCodeOf(entry.getValue());
             }
         };
+
+        public Iterator iterator() {
+            return EntryIterator.valueOf(FastMap.this);
+        }
+    }
+
+    // Entry iterator optimization.
+    private static final class EntryIterator implements Iterator {
+
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
+            protected Object create() {
+                return new EntryIterator();
+            }
+
+            protected void cleanup(Object obj) {
+                EntryIterator iterator = (EntryIterator) obj;
+                iterator._map = null;
+                iterator._current = null;
+                iterator._next = null;
+                iterator._tail = null;
+            }
+        };
+
+        private FastMap _map;
+
+        private Entry _current;
+
+        private Entry _next;
+
+        private Entry _tail;
+
+        public static EntryIterator valueOf(FastMap map) {
+            EntryIterator iterator = (EntryIterator) EntryIterator.FACTORY
+                    .object();
+            iterator._map = map;
+            iterator._next = map._head._next;
+            iterator._tail = map._tail;
+            return iterator;
+        }
+
+        private EntryIterator() {
+        }
+
+        public boolean hasNext() {
+            return (_next != _tail);
+        }
+
+        public Object next() {
+            if (_next == _tail)
+                throw new NoSuchElementException();
+            _current = _next;
+            _next = _next._next;
+            return _current;
+        }
+
+        public void remove() {
+            if (_current != null) {
+                _next = _current._next;
+                _map.remove(_current._key);
+                _current = null;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
     }
 
     /**
@@ -864,7 +1205,8 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
      * map. The set is backed by the map, so changes to the map are reflected
      * in the set, and vice-versa. The set supports element removal, which 
      * removes the corresponding mapping from this map, via the 
-     * <code>Iterator.remove</code>, <code>Collection.remove</code>,<code>removeAll<f/code>,
+     * <code>Iterator.remove</code>,
+     <code>Collection.remove</code>,<code>removeAll<f/code>,
      * <code>retainAll</code>, and <code>clear</code> operations. It does
      * not support the <code>add</code> or <code>addAll</code> operations.
      * 
@@ -877,7 +1219,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
                 public void run() {
                     _keySet = new KeySet();
                 }
-            }); 
+            });
         }
         return _keySet;
     }
@@ -915,9 +1257,72 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         public void delete(Record record) {
             FastMap.this.remove(((Entry) record).getKey());
         }
-        
-        public  FastComparator getValueComparator() {
+
+        public FastComparator getValueComparator() {
             return _keyComparator;
+        }
+
+        public Iterator iterator() {
+            return KeyIterator.valueOf(FastMap.this);
+        }
+    }
+
+    // Entry iterator optimization.
+    private static final class KeyIterator implements Iterator {
+
+        private static final ObjectFactory FACTORY = new ObjectFactory() {
+            protected Object create() {
+                return new KeyIterator();
+            }
+
+            protected void cleanup(Object obj) {
+                KeyIterator iterator = (KeyIterator) obj;
+                iterator._map = null;
+                iterator._current = null;
+                iterator._next = null;
+                iterator._tail = null;
+            }
+        };
+
+        private FastMap _map;
+
+        private Entry _current;
+
+        private Entry _next;
+
+        private Entry _tail;
+
+        public static KeyIterator valueOf(FastMap map) {
+            KeyIterator iterator = (KeyIterator) KeyIterator.FACTORY.object();
+            iterator._map = map;
+            iterator._next = map._head._next;
+            iterator._tail = map._tail;
+            return iterator;
+        }
+
+        private KeyIterator() {
+        }
+
+        public boolean hasNext() {
+            return (_next != _tail);
+        }
+
+        public Object next() {
+            if (_next == _tail)
+                throw new NoSuchElementException();
+            _current = _next;
+            _next = _next._next;
+            return _current._key;
+        }
+
+        public void remove() {
+            if (_current != null) {
+                _next = _current._next;
+                _map.remove(_current._key);
+                _current = null;
+            } else {
+                throw new IllegalStateException();
+            }
         }
     }
 
@@ -938,191 +1343,10 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
                 public void run() {
                     _unmodifiable = new Unmodifiable();
                 }
-            }); 
+            });
         }
         return _unmodifiable;
     }
-
-    /**
-     * Returns the entry with the specified key and hash code.
-     * 
-     * @param key the key whose associated entry is to be returned.
-     * @param the associated hash code (need to be calculated only once).
-     * @return the entry for the specified key or <code>null</code> if none.
-     */
-    private final Entry/*<K,V>*/getEntry(Object key, int keyHash) {
-        final Entry/*<K,V>*/[][] entries = _entries;
-        Entry/*<K,V>*/entry = entries[(keyHash >> R0) & (entries.length - 1)][keyHash
-                & M0];
-        while (entry != null) {
-            if ((key == entry._key)
-                    || ((entry._keyHash == keyHash) && ((_keyComp == null) ? key
-                            .equals(entry._key)
-                            : _keyComp.areEqual(key, entry._key))))
-                return entry; // Found.
-            entry = entry._beside;
-        }
-        return (_oldEntries != null) ? _oldEntries.getEntry(key, keyHash)
-                : null;
-    }
-
-    /**
-     * Adds a new entry for the specified key and value.
-     * 
-     * @param hash the hash of the key, generated with {@link #keyHash}.
-     * @param key the entry's key.
-     * @param value the entry's value.
-     */
-    private void addEntry(int hash, Object/*{K}*/key, Object/*{V}*/value) {
-        // Updates size.
-        if ((_size++ >> R0) >= (_entries.length)) { // Check if entry table too small. 
-            increaseEntryTable();
-        }
-
-        if (_tail._next == null) {
-            increaseCapacity();
-        }
-        final Entry newTail = _tail._next;
-        // Setups entry parameters.
-        _tail._key = key;
-        _tail._value = value;
-        _tail._keyHash = hash;
-        _tail._table = _entries;
-
-        // Connects to bucket.
-        final int index = (hash >> R0) & (_entries.length - 1);
-        Entry[] tmp = _entries[index];
-        if (tmp == NULL_BLOCK) {
-            newBlock(index);
-            tmp = _entries[index];
-        }
-        Entry beside = tmp[hash & M0];
-        _tail._beside = beside;
-        tmp[hash & M0] = _tail;
-
-        // Moves tail forward.
-        _tail = newTail;
-    }
-
-    /**
-     * Removes the specified entry from the specified map.
-     * The entry is added to the internal pool.
-     * 
-     * @param entry the entry to be removed.
-     * @param the map from which the entry is removed.
-     */
-    private final void removeEntry(Entry entry) {
-
-        // Updates size.
-        _size--;
-
-        // Clears value and key.
-        entry._key = null;
-        entry._value = null;
-
-        // Detaches from list and bucket.
-        entry.detach();
-
-        // Re-inserts next tail.
-        final Entry next = _tail._next;
-        entry._previous = _tail;
-        entry._next = next;
-        _tail._next = entry;
-        if (next != null) {
-            next._previous = entry;
-        }
-    }
-
-    // Allocates a new block.
-    private void newBlock(final int index) {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-            public void run() {
-                _entries[index] = new Entry[1 << R0];
-            }
-        });
-    }
-
-    // Increases capacity (_tail._next == null)
-    private void increaseCapacity() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-            public void run() {
-                Entry/*<K,V>*/newEntry0 = new Entry/*<K,V>*/();
-                _tail._next = newEntry0;
-                newEntry0._previous = _tail;
-
-                Entry/*<K,V>*/newEntry1 = new Entry/*<K,V>*/();
-                newEntry0._next = newEntry1;
-                newEntry1._previous = newEntry0;
-
-                Entry/*<K,V>*/newEntry2 = new Entry/*<K,V>*/();
-                newEntry1._next = newEntry2;
-                newEntry2._previous = newEntry1;
-
-                Entry/*<K,V>*/newEntry3 = new Entry/*<K,V>*/();
-                newEntry2._next = newEntry3;
-                newEntry3._previous = newEntry2;
-            }
-        });
-    }
-
-    // Increases the table size, the table length is multiplied by 8.
-    // It still ensures that no more than half of the memory space is unused 
-    // (most space is being taken by the entries objects themselves).
-    private void increaseEntryTable() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-            public void run() {
-                final int newLength = _entries.length << 3;
-                FastMap/*<K,V>*/tmp;
-                if (newLength <= (1 << 3)) { //                
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 3][]); // 256
-                } else if (newLength <= (1 << 6)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 6][]); // 2048
-                } else if (newLength <= (1 << 9)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 9][]); // 16,384
-                } else if (newLength <= (1 << 12)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 12][]); // 131,072
-                } else if (newLength <= (1 << 15)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 15][]); // 1,048,576
-                } else if (newLength <= (1 << 18)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 18][]);
-                } else if (newLength <= (1 << 21)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 21][]);
-                } else if (newLength <= (1 << 24)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 24][]);
-                } else if (newLength <= (1 << 27)) {
-                    tmp = new FastMap/*<K,V>*/(new Entry[1 << 27][]);
-                } else { // Cannot increase.
-                    return;
-                }
-                for (int i = 0; i < tmp._entries.length;) {
-                    tmp._entries[i++] = NULL_BLOCK;
-                }
-
-                // Takes the entry from the new map.
-                final Entry[][] newEntries = tmp._entries;
-
-                // Setups what is going to be the old entries.
-                tmp._entries = _entries;
-                tmp._oldEntries = _oldEntries;
-                tmp._keyComp = _keyComp;
-                tmp._head = null;
-                tmp._tail = null;
-                tmp._size = -1;
-
-                // Swaps entries.
-                _oldEntries = tmp;
-                _entries = newEntries; // Use new larger entry table now.
-
-                // Done. We have now a much larger entry table. 
-                // Still, we keep reference to the old entries through oldEntries
-                // until the map is cleared.
-            }
-        });
-    }
-
-    private static final Entry[] NULL_BLOCK = new Entry[1 << R0];
-
-  
 
     // Implements Reusable.
     public void reset() {
@@ -1198,16 +1422,6 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         private Object/*{V}*/_value;
 
         /**
-         * Holds the next entry in the same bucket.
-         */
-        private Entry/*<K,V>*/_beside;
-
-        /**
-         * Holds the hash table this entry belongs to.
-         */
-        private Entry/*<K,V>*/[][] _table;
-
-        /**
          * Holds the key hash code.
          */
         private int _keyHash;
@@ -1277,9 +1491,9 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         public boolean equals(Object that) {
             if (that instanceof Map.Entry) {
                 Map.Entry entry = (Map.Entry) that;
-                return _key.equals(entry.getKey())
-                        && ((_value != null) ? _value.equals(entry.getValue())
-                                : (entry.getValue() == null));
+                return FastComparator.DEFAULT.areEqual(_key, entry.getKey())
+                        && FastComparator.DEFAULT.areEqual(_value, entry
+                                .getValue());
             } else {
                 return false;
             }
@@ -1291,29 +1505,8 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
          * @return this entry hash code.
          */
         public int hashCode() {
-            return _key.hashCode() ^ ((_value != null) ? _value.hashCode() : 0);
-        }
-
-        /**
-         * Detaches this entry from the entry table and list.
-         */
-        private final void detach() {
-            // Removes from list.
-            _previous._next = _next;
-            _next._previous = _previous;
-
-            // Removes from bucket.
-            final int index = (_keyHash >> R0) & (_table.length - 1);
-            final Entry/*<K,V>*/beside = _beside;
-            Entry/*<K,V>*/previous = _table[index][_keyHash & M0];
-            if (previous == this) { // First in bucket.
-                _table[index][_keyHash & M0] = beside;
-            } else {
-                while (previous._beside != this) {
-                    previous = previous._beside;
-                }
-                previous._beside = beside;
-            }
+            return ((_key != null) ? _key.hashCode() : 0)
+                    ^ ((_value != null) ? _value.hashCode() : 0);
         }
     }
 
@@ -1371,11 +1564,11 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
         }
 
         public Set keySet() {
-            return (Set) ((KeySet)FastMap.this.keySet()).unmodifiable();
+            return (Set) ((KeySet) FastMap.this.keySet()).unmodifiable();
         }
 
         public Collection values() {
-            return ((Values)FastMap.this.values()).unmodifiable();
+            return ((Values) FastMap.this.values()).unmodifiable();
         }
 
         public Set entrySet() {
@@ -1385,6 +1578,36 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/,
                             + "To iterate over unmodifiable map entries, applications may "
                             + "use the keySet() and values() fast collection views "
                             + "in conjonction.");
+        }
+    }
+
+    // Holds the map factory.
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
+
+        public Object create() {
+            return new FastMap();
+        }
+
+        public void cleanup(Object obj) {
+            ((FastMap) obj).reset();
+        }
+    };
+
+    // Returns the slot of the specified entry.
+    private static int slotOf(Entry entry, Entry[] entries, int keyShift) {
+        return (entry._keyHash >> keyShift) & (entries.length - 1);
+    }
+
+    // Returns the index of the specified entry. It can be different from
+    // its slot due to collision.
+    private static int indexOf(Entry entry, Entry[] entries, int keyShift) {
+        int index = slotOf(entry, entries, keyShift);
+        while (true) {
+            Entry e = entries[index];
+            if (e == entry) return index;
+            if (e == null) throw new JavolutionError( // Entry has been removed!
+                    "Concurrent maps should be marked shared");
+            index = (index + 1) & (entries.length - 1);
         }
     }
 

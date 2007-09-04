@@ -8,17 +8,15 @@
  */
 package javolution.context;
 
-import j2me.lang.UnsupportedOperationException;
 import j2mex.realtime.MemoryArea;
 
-import javolution.JavolutionError;
 import javolution.lang.Configurable;
 import javolution.lang.MathLib;
 import javolution.lang.Reflection;
 
 /**
- * <p> This class represents a concurrent context; it is used to accelerate 
- *     execution of concurrent algorithms on multi-processors systems.</p>
+ * <p> This class represents a context to take advantage of concurrent 
+ *     algorithms on multi-processors systems.</p>
  *     
  * <p> When a thread enters a concurrent context, it may performs concurrent
  *     executions by calling the {@link #execute(Runnable)} static method.
@@ -168,8 +166,8 @@ public abstract class ConcurrentContext extends Context {
      * for concurrent threads. Alternative (RTSJ) implementations could also use 
      * <code>javax.realtime.NoHeapRealtimeThread</code>. 
      */
-    public static final Configurable/*<Class>*/CLASS = new Configurable/*<Class>*/(
-            Default.CLASS);
+    public static final Configurable/*<Class<? extends ConcurrentContext>>*/
+        DEFAULT = new Configurable(Default.CLASS);
 
     /**
      * Holds the maximum number of concurrent executors
@@ -196,24 +194,6 @@ public abstract class ConcurrentContext extends Context {
     }
 
     /**
-     * Holds the default implementation factory.
-     */
-    private static ObjectFactory FACTORY = new ObjectFactory() {
-        protected Object create() {
-            Class cls = (Class) CLASS.get();
-            if (cls == Default.CLASS)
-                return new Default();
-            try {
-                return cls.newInstance();
-            } catch (InstantiationException e) {
-                throw new JavolutionError(e);
-            } catch (IllegalAccessException e) {
-                throw new JavolutionError(e);
-            }
-        }
-    };
-
-    /**
      * Holds the current concurrency. 
      */
     private static final LocalContext.Reference CONCURRENCY = new LocalContext.Reference(
@@ -226,46 +206,22 @@ public abstract class ConcurrentContext extends Context {
     }
 
     /**
-     * Returns the current concurrent context or <code>null</code> if the 
-     * current thread has not been spawned from a concurrent context.  
-     *
-     * @return the current concurrent context.
+     * Enters a concurrent context (instance of {@link #DEFAULT}). 
+     * 
+     * @return the concurrent context being entered.
      */
-    public static/*ConcurrentContext*/Context current() {
-        Context ctx = Context.current();
-        while (ctx != null) {
-            if (ctx instanceof ConcurrentContext)
-                return (ConcurrentContext) ctx;
-            ctx = ctx.getOuter();
-        }
-        return null;
+    public static ConcurrentContext enter() {
+        return (ConcurrentContext) Context.enter((Class) DEFAULT.get());
     }
 
     /**
-     * Enters a {@link ConcurrentContext} possibly recycled. 
+     * Exits the current concurrent context.
+     * 
+     * @return the concurrent context being exited.
+     * @throws ClassCastException if the context is not a concurrent context.
      */
-    public static void enter() {
-        ConcurrentContext ctx = (ConcurrentContext) FACTORY.object();
-        ctx._isInternal = true;
-        Context.enter(ctx);
-    }
-
-    private transient boolean _isInternal;
-
-    /**
-     * Exits and recycles the current {@link ConcurrentContext}.
-     *
-     * @throws UnsupportedOperationException if the current context 
-     *         has not been entered using ConcurrentContext.enter() 
-     */
-    public static void exit() {
-        ConcurrentContext ctx = (ConcurrentContext) Context.current();
-        if (!ctx._isInternal)
-            throw new UnsupportedOperationException(
-                    "The context to exit must be specified");
-        ctx._isInternal = false;
-        Context.exitNoCheck(ctx);
-        FACTORY.recycle(ctx);
+    public static /*ConcurrentContext*/Context exit() {
+        return (ConcurrentContext) Context.exit();
     }
 
     /**
@@ -303,7 +259,7 @@ public abstract class ConcurrentContext extends Context {
      *         {@link ConcurrentContext}.
      */
     public static void execute(Runnable logic) {
-        ConcurrentContext ctx = (ConcurrentContext) Context.current();
+        ConcurrentContext ctx = (ConcurrentContext) Context.getCurrent();
         ctx.executeAction(logic);
     }
 
@@ -319,11 +275,8 @@ public abstract class ConcurrentContext extends Context {
      */
     static final class Default extends ConcurrentContext {
 
-        /**
-         * Holds the class identifier.
-         */
         private static final Class CLASS = new Default().getClass();
-
+        
         /**
          * Holds the concurrent executors.
          */
@@ -370,17 +323,6 @@ public abstract class ConcurrentContext extends Context {
          */
         private int _completed;
 
-        // Implements ConcurrentContext abstract method.
-        protected void executeAction(Runnable logic) {
-            for (int i = _concurrency; --i >= 0;) {
-                if (_Executors[i].execute(logic, this)) {
-                    _initiated++;
-                    return; // Done concurrently.
-                }
-            }
-            // Execution by current thread.
-            logic.run();
-        }
 
         // Implements Context abstract method.
         protected void enterAction() {
@@ -391,6 +333,18 @@ public abstract class ConcurrentContext extends Context {
             if (_concurrency > _Executors.length) { // We need more executors.
                 MemoryArea.getMemoryArea(_Executors).executeInArea(CREATE_EXECUTORS);
             }            
+        }
+
+        // Implements ConcurrentContext abstract method.
+        protected void executeAction(Runnable logic) {
+            for (int i = _concurrency; --i >= 0;) {
+                if (_Executors[i].execute(logic, this)) {
+                    _initiated++;
+                    return; // Done concurrently.
+                }
+            }
+            // Execution by current thread.
+            logic.run();
         }
 
         // Implements Context abstract method.
@@ -426,7 +380,7 @@ public abstract class ConcurrentContext extends Context {
                 _completed++;
                 this.notify();
             }
-            ((AllocatorContext) AllocatorContext.current()).deactivate();
+            ((AllocatorContext) AllocatorContext.getCurrent()).deactivate();        
         }
 
         // Called when an error occurs.
@@ -439,12 +393,12 @@ public abstract class ConcurrentContext extends Context {
         }
     }
 
-    /**
-     * @deprecated {@link Runnable} instances should be used instead .
-     *             (see LargeInteger multiplication example on how to 
-     *             pass arguments).
-     */
-    public static abstract class Logic implements Runnable {
+    // Allows instances of private classes to be factory produced. 
+    static {
+        ObjectFactory.setInstance(new ObjectFactory() {
+            protected Object create() {
+                return new Default();
+            } }, Default.CLASS);
     }
 
 }

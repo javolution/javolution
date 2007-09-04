@@ -16,16 +16,19 @@ import j2me.util.zip.ZipEntry;
 import javolution.util.StandardLog;
 
 /**
- * <p> This utility class allows for initialization of all Java(tm) classes
+ * <p> This utility class allows for initialization of all classes
  *     at startup to avoid initialization delays at an innapropriate time.</p>
- * <p> Initialization logs are available through 
- *     {@link javolution.context.LogContext LogContext}. Users might want to disable logging
- *     when initializing all classes at start-up because of the presence of old classes 
- *     (never used) for which initialization fails. For example:[code]
+ *     
+ * <p> Note: Users might want to disable logging when initializing run-time 
+ *     classes  at start-up because of the presence of old classes (never used) 
+ *     in the jar files for which initialization fails. For example:[code]
  *     public static main(String[] args) {
- *         LogContext.setDefault(LogContext.NULL); // Temporarely disables logging errors and warnings.
- *         ClassInitializer.initializeAll();  // Initializes bootstrap, extensions and classpath classes.
- *         LogContext.setDefault(LogContext.STANDARD); // Goes back to standard logging context default.
+ *         LogContext.enter(LogContext.NULL); // Temporarely disables logging errors and warnings.
+ *         try { 
+ *             ClassInitializer.initializeAll();  // Initializes bootstrap, extensions and classpath classes.
+ *         } finally {
+ *             LogContext.exit(LogContext.NULL); // Goes back to default logging.
+ *         }
  *         ...
  *     }[/code]</p>
  *    

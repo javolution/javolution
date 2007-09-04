@@ -8,11 +8,16 @@
  */
 package javolution.text;
 
+import java.io.IOException;
+import java.io.Writer;
+
 import j2me.io.Serializable;
 import j2me.lang.CharSequence;
 import j2mex.realtime.MemoryArea;
 
+import javolution.JavolutionError;
 import javolution.context.ObjectFactory;
+import javolution.io.UTF8StreamWriter;
 import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.lang.Reusable;
@@ -879,6 +884,76 @@ public class TextBuilder implements Appendable,
                 return false;
         }
         return true;
+    }
+
+    /**
+     * Prints out this text builder to <code>System.out</code> (UTF-8 encoding).
+     * This method is equivalent to:[code]
+     *     synchronized(OUT) {
+     *         print(OUT);
+     *         OUT.flush();
+     *     }
+     *     ...
+     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
+     * [/code]
+     */
+    public void print() {
+        try {
+            synchronized (SYSTEM_OUT_WRITER) {
+                print(SYSTEM_OUT_WRITER);
+                SYSTEM_OUT_WRITER.flush();
+            }
+        } catch (IOException e) { // Should never happen.
+            throw new JavolutionError(e);
+        }
+    }
+
+    private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter()
+            .setOutput(System.out);
+
+    /**
+     * Prints out this text builder to <code>System.out</code> and then 
+     * terminates the line. This method is equivalent to:[code]
+     *     synchronized(OUT) {
+     *         println(OUT);
+     *         OUT.flush();
+     *     }
+     *     ...
+     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
+     * [/code]
+     */
+    public void println() {
+        try {
+            synchronized (SYSTEM_OUT_WRITER) {
+                println(SYSTEM_OUT_WRITER);
+                SYSTEM_OUT_WRITER.flush();
+            }
+        } catch (IOException e) { // Should never happen.
+            throw new JavolutionError(e);
+        }
+    }
+
+    /**
+     * Prints out this text builder to the specified writer.
+     * 
+     * @param writer the destination writer.
+     */
+    public void print(Writer writer) throws IOException {
+    	for (int i=0; i < _length; i += C0) {
+    		char[] chars = charsAt(i);
+    		writer.write(chars, 0, MathLib.min(C0, _length - i));
+    	}
+    }
+
+    /**
+     * Prints out this text builder to the specified writer and then terminates 
+     * the line.
+     * 
+     * @param writer the destination writer.
+     */
+    public void println(Writer writer) throws IOException {
+        print(writer);
+        writer.write('\n');
     }
 
     /**

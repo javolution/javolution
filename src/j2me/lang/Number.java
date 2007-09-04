@@ -14,10 +14,12 @@ public abstract class Number implements j2me.io.Serializable {
 
     public abstract long longValue();
 
+    /*@JVM-1.1+@
     public abstract float floatValue();
 
     public abstract double doubleValue();
-
+    */
+    
     public byte byteValue() {
         return (byte)intValue();
     }

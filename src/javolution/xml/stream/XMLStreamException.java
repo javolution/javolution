@@ -108,9 +108,9 @@ public class XMLStreamException extends Exception {
     }
 
     /**
-     * Returns the textual representation of this error.
+     * Returns the textual representation of this exception.
      * 
-     * @return the string representation of the error.
+     * @return the string representation of the exception.
      */
     public String toString() {
         String msg = super.toString();

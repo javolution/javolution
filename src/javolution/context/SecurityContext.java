@@ -7,7 +7,6 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.context;
-
 import javolution.lang.Configurable;
 
 /**
@@ -47,10 +46,8 @@ import javolution.lang.Configurable;
  *          }
  *     }
  *     ...
- *     Policy defaultPolicy = new Policy();
- *     SecurityContext.setDefault(defaultPolicy); // Global setting.
- *     ...
- *     SecurityContext.enter(localPolicy); // Current thread overrides default policy  
+ *     Policy localPolicy = new Policy();
+ *     SecurityContext.enter(localPolicy); // Current thread overrides default policy (configurable)  
  *     try {                               // (if allowed, ref. SecurityContext.isReplaceable())
  *         ...
  *         DatabaseAccess.isReadAllowed(table);   
@@ -58,27 +55,36 @@ import javolution.lang.Configurable;
  *         FileAccess.isWriteAllowed(file);
  *         ...
  *     } finally {
- *         SecurityContext.exit(localPolicy);
+ *         SecurityContext.exit();
  *     }[/code]</p>    
  *     
- * <p> The default permissions managed by the root {@link SecurityContext} class
+ * <p> The default permissions managed by the {@link #DEFAULT} implementation
  *     are the permission to {@link #isReplaceable replace} the current security
- *     context (<code>true</code> by default) and the permission to 
- *     {@link #isModifiable modify} the application 
- *     {@link javolution.lang.Configurable.Logic configuration} settings 
- *     ((<code>true</code> by default also).</p>
+ *     context by default) and the permission to {@link #isModifiable modify} 
+ *     all the application {@link javolution.lang.Configurable.Logic 
+ *     configuration} settings.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.1, July 2, 2007
+ * @version 5.2, August 5, 2007
  */
 public abstract class SecurityContext extends Context {
 
     /**
      * Holds the default security context.
      */
-    private static volatile SecurityContext _Default 
-        = new SecurityContext() { };
+    private static volatile SecurityContext _Default = new Default();
 
+    /**
+     * Holds the default security context implementation (configurable).
+     */
+    public static final Configurable/*<Class<? extends SecurityContext>>*/DEFAULT 
+        = new Configurable(_Default.getClass()) {
+        protected void notifyChange() {
+            _Default = (SecurityContext) ObjectFactory.getInstance((Class) get())
+            .object();
+        }
+    };
+    
     /**
      * Default constructor.
      */
@@ -86,13 +92,13 @@ public abstract class SecurityContext extends Context {
     }
 
     /**
-     * Returns the current security context (or {@link #getDefault()}
-     * if the current thread has not entered any security context).
+     * Returns the current security context. If the current thread has not 
+     * entered any security context then  {@link #getDefault()} is returned.
      *
      * @return the current security context.
      */
-    public static/*SecurityContext*/Context current() {
-        for (Context ctx = Context.current(); ctx != null; ctx = ctx.getOuter()) {
+    public static/*SecurityContext*/Context getCurrent() {
+        for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof SecurityContext)
                 return (SecurityContext) ctx;
         }
@@ -100,29 +106,14 @@ public abstract class SecurityContext extends Context {
     }
 
     /**
-     * Returns the default security context for new threads.
-     * 
-     * @return the default security context.
+     * Returns the default instance ({@link #DEFAULT} implementation).
+     *
+     * @return the default instance.
      */
     public static SecurityContext getDefault() {
         return SecurityContext._Default;
     }
-
-    /**
-     * Sets the specified security context as default (throws 
-     * {@link SecurityException} if the {@link #getDefault() default}
-     * security context is not {@link #isReplaceable replaceable}).
-     * 
-     * @param context the default security context.
-     * @throws SecurityException if the default security context is not 
-     *        replaceable.
-     */
-    public static void setDefault(SecurityContext context) throws SecurityException {
-        if (!SecurityContext._Default.isReplaceable()) 
-            throw new SecurityException("Default Security Context not Replaceable");
-        SecurityContext._Default = context;
-    }
-
+    
     // Implements Context abstract method.
     protected final void enterAction() {
         // Checks if the previous security context is replaceable.
@@ -143,10 +134,12 @@ public abstract class SecurityContext extends Context {
     }
 
     /**
-     * Indicates if this security context can be replaced by another one 
-     * (default <code>true</code>). Applications may override this method
-     * to return <code>false</code> and prevent untrusted code to override
-     * the current security policy. 
+     * Indicates if a new security context can be entered (default 
+     * <code>true</code>). Applications may return <code>false</code> and 
+     * prevent untrusted code to increase their privileges. Usually, 
+     * such security setting should also prevent reconfiguring of the 
+     * {@link #DEFAULT default} context by making {@link #DEFAULT} not 
+     * {@link #isModifiable modifiable}.
      * 
      * @return <code>true</code> if a new security context can be entered;
      *         <code>false</code> otherwise.
@@ -168,6 +161,20 @@ public abstract class SecurityContext extends Context {
      */
     public boolean isModifiable (Configurable cfg) {
         return true;
-    }    
+    }
+        
+    /**
+     * Default implementation. 
+     */
+    private static class Default extends SecurityContext {
+    }
+    
+    // Allows instances of private classes to be factory produced. 
+    static {
+        ObjectFactory.setInstance(new ObjectFactory() {
+            protected Object create() {
+                return new Default();
+            } }, _Default.getClass());
+    }
 }
 

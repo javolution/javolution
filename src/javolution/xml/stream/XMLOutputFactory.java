@@ -10,8 +10,6 @@ package javolution.xml.stream;
 
 import java.io.OutputStream;
 import java.io.Writer;
-
-import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
 import javolution.lang.Configurable;
 
@@ -55,8 +53,8 @@ public abstract class XMLOutputFactory {
     /**
      * Holds the XMLOutputFactory default implementation (configurable).
      */
-    public static final Configurable/*<Class>*/DEFAULT_IMPLEMENTATION = new Configurable/*<Class>*/(
-            Default.CLASS);
+    public static final Configurable/*<Class<? extends XMLOutputFactory>>*/DEFAULT 
+        = new Configurable/*<Class<? extends XMLOutputFactory>>*/(Default.CLASS);
 
     /**
      * Property used to set prefix defaulting on the output side
@@ -93,25 +91,18 @@ public abstract class XMLOutputFactory {
     protected XMLOutputFactory() {
     }
 
+
     /**
-    /**
-     * Returns a new instance of the {@link #DEFAULT_IMPLEMENTATION default}
-     * output factory implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}).
+     * Returns a new instance of the {@link #DEFAULT} output factory 
+     * implementation which may be configurated by the user 
+     * (see {@link #setProperty(String, Object)}). The output factory
+     * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
      * 
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
-        Class cls = (Class) DEFAULT_IMPLEMENTATION.get();
-        try { // Test if configuration override.
-            if (cls != Default.CLASS)
-                return (XMLOutputFactory) cls.newInstance();
-        } catch (InstantiationException e) {
-            LogContext.error(e);
-        } catch (IllegalAccessException e) {
-            LogContext.error(e);
-        }
-        return new Default();
+        Class cls = (Class) DEFAULT.get();
+        return (XMLOutputFactory) ObjectFactory.getInstance(cls).object();
     }
 
     /**
@@ -291,4 +282,11 @@ public abstract class XMLOutputFactory {
 
     };
 
+    // Allows instances of private classes to be factory produced. 
+    static {
+        ObjectFactory.setInstance(new ObjectFactory() {
+            protected Object create() {
+                return new Default();
+            } }, Default.CLASS);
+    }
 }

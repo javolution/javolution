@@ -11,7 +11,6 @@ package javolution.xml.stream;
 import java.io.InputStream;
 import java.io.Reader;
 import j2me.util.Map;
-import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
 import javolution.lang.Configurable;
 
@@ -54,8 +53,8 @@ public abstract class XMLInputFactory {
     /**
      * Holds the XMLInputFactory default implementation (configurable).
      */
-    public static final Configurable/*<Class>*/DEFAULT_IMPLEMENTATION 
-        = new Configurable/*<Class>*/(Default.CLASS);
+    public static final Configurable/*<Class<? extends XMLInputFactory>>*/
+        DEFAULT = new Configurable/*<Class<? extends XMLInputFactory>>*/(Default.CLASS);
 
     /**
      * The property that requires the parser to coalesce adjacent character data
@@ -85,23 +84,16 @@ public abstract class XMLInputFactory {
     }
 
     /**
-     * Returns a new instance of the {@link #DEFAULT_IMPLEMENTATION default}
-     * input factory implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}).
+     * Returns a new instance of the {@link #DEFAULT} input factory 
+     * implementation which may be configurated by the user 
+     * (see {@link #setProperty(String, Object)}). The input factory
+     * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
      * 
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
-        Class cls = (Class)DEFAULT_IMPLEMENTATION.get();
-        try { // Test if configuration override.
-            if (cls != Default.CLASS)
-                return (XMLInputFactory) cls.newInstance();
-        } catch (InstantiationException e) {
-            LogContext.error(e);
-        } catch (IllegalAccessException e) {
-            LogContext.error(e);
-        }
-        return new Default();
+        Class cls = (Class) DEFAULT.get();
+        return (XMLInputFactory) ObjectFactory.getInstance(cls).object();
     }
 
     /**
@@ -252,4 +244,10 @@ public abstract class XMLInputFactory {
         }
     };
 
-}
+    // Allows instances of private classes to be factory produced. 
+    static {
+        ObjectFactory.setInstance(new ObjectFactory() {
+            protected Object create() {
+                return new Default();
+            } }, Default.CLASS);
+    }}

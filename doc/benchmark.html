@@ -13,10 +13,8 @@
     </P>
 </H3>
 <HR>
-   The benchmark results below show the shortest execution time of numerous functions calls 
-   instead of the average. It should be noted that this method of measurement does 
-   not include the garbage collection time and <b>does not</b> advantage <I><B>J</B>avolution</I> classes 
-   which are time consistent (real-time) and do not stress the garbage collector.<BR><BR>
+   The benchmark results below use the new Javolution <A HREF="../api/javolution/testing/TimeContext.html">TimeContext</A>,
+   it shows the average execution time followed by the minimum time in parenthesis.<BR><BR>
    The benchmark can be executed with the command:<BR>
     <P><B><CODE>java -server -Xms512M -Xmx512M -jar javolution.jar perf</CODE></B><BR></P>
     
@@ -24,212 +22,107 @@
     
 <H3>Windows XP - Intel Pentium Dual Core - 2.9 GHz - 512M of RAM:</H3>
 <PRE>
-<B>C:\javolution-4.2>java -version</B>
-java version "1.6.0_01-ea"
-Java(TM) SE Runtime Environment (build 1.6.0_01-ea-b01)
-Java HotSpot(TM) Client VM (build 1.6.0_01-ea-b01, mixed mode, sharing)
+<B>C:\javolution-5.2>java -version</B>
+java version "1.6.0_01"
+Java(TM) SE Runtime Environment (build 1.6.0_01-b06)
+Java HotSpot(TM) Client VM (build 1.6.0_01-b06, mixed mode, sharing)
 
-<B>C:\javolution-5.0>ant run</B>
+<B>C:\javolution-5.2>ant run</B>
       ...
+
 run:
-     [java] Javolution - Java(TM) Solution for Real-Time and Embedded Systems
-     [java] Version 5.0.0 (J2SE 1.6+) May 6 2007 (http://javolution.org)
-
-     [java] Run benchmark... (shortest execution times are displayed)
-
-     [java] //////////////////////////////////
-     [java] // Package: javolution.context //
-     [java] //////////////////////////////////
-
-     [java] -- Concurrent Context --
-     [java] Quick Sort 10000 elements - Concurrency disabled: 8.513 ms
-     [java] Quick Sort 10000 elements - Concurrency (2) enabled: 4.665 ms
-
-     [java] -- Heap versus Stack Allocation (StackContext) --
-<FONT COLOR="999999">     [java] Small objects (XYZ.plus(XYZ)) (heap): 27.40 ns</FONT>
-     [java] Small objects (XYZ.plus(XYZ)) (stack): 25.65 ns
-<FONT COLOR="999999">     [java] char[256] on Heap: 342.2 ns</FONT>
-     [java] char[256] on Stack: 29.33 ns
-<FONT COLOR="999999">     [java] char[512] on Heap: 630.8 ns</FONT>
-     [java] char[512] on Stack: 34.08 ns
-
-     [java] //////////////////////////////
-     [java] // Package: javolution.text //
-     [java] //////////////////////////////
-
-     [java] -- Primitive types formatting --
-
-<FONT COLOR="999999">     [java] StringBuilder.append(int): 129.6 ns</FONT>
-     [java] TextBuilder.append(int): 106.5 ns
-<FONT COLOR="999999">     [java] StringBuilder.append(long): 648.1 ns</FONT>
-     [java] TextBuilder.append(long): 476.2 ns
-<FONT COLOR="999999">     [java] StringBuilder.append(float): 538.4 ns</FONT>
-     [java] TextBuilder.append(float): 612.9 ns
-<FONT COLOR="999999">     [java] StringBuilder.append(double): 2.558 us</FONT>
-     [java] TextBuilder.append(double): 747.6 ns
-
-     [java] -- Primitive types parsing --
-
-<FONT COLOR="999999">     [java] Integer.parseInt(String): 157.9 ns</FONT>
-     [java] TypeFormat.parseInt(String): 97.13 ns
-<FONT COLOR="999999">     [java] Long.parseLong(String): 508.3 ns</FONT>
-     [java] TypeFormat.parseLong(String): 291.8 ns
-<FONT COLOR="999999">     [java] Float.parseFloat(String): 458.6 ns</FONT>
-     [java] TypeFormat.parseFloat(String): 533.5 ns
-<FONT COLOR="999999">     [java] Double.parseDouble(String): 3.059 us</FONT>
-     [java] TypeFormat.parseDouble(String): 959.2 ns
-
-     [java] -- String/StringBuilder versus Text --
-
-     [java] "Concatenates this line 1000 times (resulting in a text of about 80,000 characters)"
-<FONT COLOR="999999">     [java] String "+" operator: 295.7 us</FONT>
-<FONT COLOR="999999">     [java] StringBuilder "append" : 309.8 ns</FONT>
-     [java] Text "concat" (heap): 232.4 ns
-     [java] Text "concat" (stack): 144.4 ns
-
-     [java] Inserts one character at random locations 1,000 times to the 80,000 characters text.
-<FONT COLOR="999999">     [java] StringBuilder insert: 54.64 us</FONT>
-     [java] Text insert (heap): 2.078 us
-     [java] Text insert (stack): 1.647 us
-
-     [java] Delete 1,000 times one character at random location from the 80,000 characters text.
-<FONT COLOR="999999">     [java] StringBuilder delete: 36.37 us</FONT>
-     [java] Text delete (heap): 1.609 us
-     [java] Text delete (stack): 1.371 us
-
-     [java] ////////////////////////////////////
-     [java] // Package: javolution.xml.stream //
-     [java] ////////////////////////////////////
-
-<FONT COLOR="999999">     [java] StAX XMLStreamWriter (namespace repairing disabled): 4.722 ms</FONT>
-     [java] Javolution XMLStreamWriter (namespace repairing disabled): 1.125 ms
-<FONT COLOR="999999">     [java] StAX XMLStreamWriter (namespace repairing enabled): 5.193 ms</FONT>
-     [java] Javolution XMLStreamWriter (namespace repairing enabled): 1.176 ms
-<FONT COLOR="999999">     [java] StAX XMLStreamReader: 2.061 ms</FONT>
-     [java] Javolution XMLStreamReader: 1.837 ms
-
-     [java] /////////////////////////////
-     [java] // Package: javolution.xml //
-     [java] /////////////////////////////
-
-<FONT COLOR="999999">     [java] -- Java(TM) Serialization --
-     [java] Write Time: 93.30 us
-     [java] Read Time: 260.0 us
-</FONT>
-     [java] -- XML Serialization (I/O Stream) --
-     [java] Write Time: 52.80 us
-     [java] Read Time: 81.01 us
-
-     [java] -- XML Serialization (NIO ByteBuffer) --
-     [java] Write Time: 53.07 us
-     [java] Read Time: 66.21 us
-
-     [java] //////////////////////////////
-     [java] // Package: javolution.util //
-     [java] //////////////////////////////
-
-     [java] (new)      : The collection is created (using the new keyword), populated, then discarded (throw-away collections).
-     [java] (recycled) : The collection is cleared, populated, then reused (static collections or throw-away collections in PoolContext).
-
-     [java] -- FastTable versus ArrayList -- 
-     [java] class javolution.util.FastTable
-     [java]     Size: 10, add (new): 33.03 ns, add (recycled): 25.96 ns, iteration (iterator): 17.04 ns, get(int): 10.46 ns
-     [java]     Size: 100, add (new): 28.03 ns, add (recycled): 24.42 ns, iteration (iterator): 10.62 ns, get(int): 10.16 ns
-     [java]     Size: 1000, add (new): 23.29 ns, add (recycled): 23.50 ns, iteration (iterator): 10.09 ns, get(int): 10.03 ns
-     [java]     Size: 10000, add (new): 25.55 ns, add (recycled): 26.26 ns, iteration (iterator): 13.06 ns, get(int): 15.31 ns
-
-<FONT COLOR="999999">     [java] class java.util.ArrayList
-     [java]     Size: 10, add (new): 19.15 ns, add (recycled): 21.03 ns, iteration (iterator): 14.00 ns, get(int): 5.073 ns
-     [java]     Size: 100, add (new): 32.46 ns, add (recycled): 18.68 ns, iteration (iterator): 9.696 ns, get(int): 4.559 ns
-     [java]     Size: 1000, add (new): 25.71 ns, add (recycled): 18.29 ns, iteration (iterator): 9.425 ns, get(int): 4.402 ns
-     [java]     Size: 10000, add (new): 26.52 ns, add (recycled): 18.54 ns, iteration (iterator): 9.400 ns, get(int): 4.391 ns
-</FONT>
-     [java] -- FastList versus LinkedList -- 
-     [java] class javolution.util.FastList
-     [java]     Size: 10, add (new): 44.97 ns, add (recycled): 24.59 ns, iteration (iterator): 10.68 ns, iteration (node): 3.461 ns
-     [java]     Size: 100, add (new): 28.90 ns, add (recycled): 22.05 ns, iteration (iterator): 7.436 ns, iteration (node): 3.332 ns
-     [java]     Size: 1000, add (new): 27.96 ns, add (recycled): 21.88 ns, iteration (iterator): 6.984 ns, iteration (node): 3.265 ns
-     [java]     Size: 10000, add (new): 28.05 ns, add (recycled): 26.01 ns, iteration (iterator): 7.182 ns, iteration (node): 4.422 ns
-
-<FONT COLOR="999999">     [java] class java.util.LinkedList
-     [java]     Size: 10, add (new): 31.83 ns, add (recycled): 32.22 ns, iteration (iterator): 11.29 ns
-     [java]     Size: 100, add (new): 23.96 ns, add (recycled): 32.10 ns, iteration (iterator): 8.570 ns
-     [java]     Size: 1000, add (new): 23.63 ns, add (recycled): 32.99 ns, iteration (iterator): 8.188 ns
-     [java]     Size: 10000, add (new): 23.86 ns, add (recycled): 35.93 ns, iteration (iterator): 8.157 ns
-</FONT>
-
-     [java] -- FastMap versus HashMap  --
-     [java] class javolution.util.FastMap
-     [java]     Size: 10, put (new): 93.41 ns, put (recycled): 62.37 ns, get: 27.59 ns, iteration (iterator): 13.50 ns, iteration (entry): 3.821 ns
-     [java]     Size: 100, put (new): 100.2 ns, put (recycled): 65.04 ns, get: 24.95 ns, iteration (iterator): 8.783 ns, iteration (entry): 3.036 ns
-     [java]     Size: 1000, put (new): 140.3 ns, put (recycled): 71.22 ns, get: 30.05 ns, iteration (iterator): 9.942 ns, iteration (entry): 5.584 ns
-     [java]     Size: 10000, put (new): 190.2 ns, put (recycled): 79.55 ns, get: 36.00 ns, iteration (iterator): 9.741 ns, iteration (entry): 6.542 ns
-
-<FONT COLOR="999999">     [java] class java.util.HashMap
-     [java]     Size: 10, put (new): 70.74 ns, put (recycled): 74.11 ns, get: 31.87 ns, iteration (iterator): 24.31 ns
-     [java]     Size: 100, put (new): 128.4 ns, put (recycled): 68.63 ns, get: 26.80 ns, iteration (iterator): 36.01 ns
-     [java]     Size: 1000, put (new): 121.7 ns, put (recycled): 71.59 ns, get: 30.12 ns, iteration (iterator): 33.23 ns
-     [java]     Size: 10000, put (new): 123.4 ns, put (recycled): 78.69 ns, get: 42.09 ns, iteration (iterator): 40.42 ns
-
-     [java] class java.util.LinkedHashMap
-     [java]     Size: 10, put (new): 80.30 ns, put (recycled): 78.54 ns, get: 31.92 ns, iteration (iterator): 18.33 ns
-     [java]     Size: 100, put (new): 111.1 ns, put (recycled): 80.62 ns, get: 32.08 ns, iteration (iterator): 15.15 ns
-     [java]     Size: 1000, put (new): 105.7 ns, put (recycled): 82.26 ns, get: 35.65 ns, iteration (iterator): 14.84 ns
-     [java]     Size: 10000, put (new): 106.7 ns, put (recycled): 88.92 ns, get: 45.80 ns, iteration (iterator): 10.78 ns
-</FONT>
-
-     [java] -- FastMap.setShared(true) versus ConcurrentHashMap  --
-     [java] Shared FastMap
-     [java]     Size: 10, put (new): 125.2 ns, put (recycled): 108.4 ns, get: 28.27 ns, iteration (iterator): 12.29 ns, iteration (entry): 3.438 ns
-     [java]     Size: 100, put (new): 144.1 ns, put (recycled): 109.7 ns, get: 29.05 ns, iteration (iterator): 8.786 ns, iteration (entry): 3.047 ns
-     [java]     Size: 1000, put (new): 216.6 ns, put (recycled): 117.3 ns, get: 33.12 ns, iteration (iterator): 9.551 ns, iteration (entry): 6.204 ns
-     [java]     Size: 10000, put (new): 306.4 ns, put (recycled): 124.9 ns, get: 38.27 ns, iteration (iterator): 9.509 ns, iteration (entry): 6.173 ns
-
-<FONT COLOR="999999">     [java] class java.util.concurrent.ConcurrentHashMap
-     [java]     Size: 10, put (new): 308.3 ns, put (recycled): 142.2 ns, get: 56.51 ns, iteration (iterator): 43.80 ns
-     [java]     Size: 100, put (new): 233.3 ns, put (recycled): 131.8 ns, get: 56.97 ns, iteration (iterator): 45.22 ns
-     [java]     Size: 1000, put (new): 203.0 ns, put (recycled): 133.2 ns, get: 61.59 ns, iteration (iterator): 43.76 ns
-     [java]     Size: 10000, put (new): 199.1 ns, put (recycled): 138.7 ns, get: 70.52 ns, iteration (iterator): 40.41 ns
-</FONT>
-
-     [java] -- FastSet versus HashSet --
-     [java] class javolution.util.FastSet
-     [java]     Size: 10, add (new): 92.42 ns, add (recycled): 60.89 ns, contain: 27.60 ns, iteration (iterator): 15.73 ns, iteration (record): 8.082 ns
-     [java]     Size: 100, add (new): 106.1 ns, add (recycled): 70.89 ns, contain: 26.24 ns, iteration (iterator): 9.741 ns, iteration (record): 7.090 ns
-     [java]     Size: 1000, add (new): 146.2 ns, add (recycled): 77.35 ns, contain: 30.83 ns, iteration (iterator): 10.19 ns, iteration (record): 7.093 ns
-     [java]     Size: 10000, add (new): 196.2 ns, add (recycled): 84.98 ns, contain: 36.23 ns, iteration (iterator): 10.11 ns, iteration (record): 7.034 ns
-
-<FONT COLOR="999999">     [java] class java.util.HashSet
-     [java]     Size: 10, add (new): 71.22 ns, add (recycled): 73.24 ns, contain: 27.17 ns, iteration (iterator): 20.86 ns
-     [java]     Size: 100, add (new): 128.2 ns, add (recycled): 75.22 ns, contain: 28.37 ns, iteration (iterator): 30.05 ns
-     [java]     Size: 1000, add (new): 122.6 ns, add (recycled): 77.82 ns, contain: 32.08 ns, iteration (iterator): 29.71 ns
-     [java]     Size: 10000, add (new): 123.8 ns, add (recycled): 85.15 ns, contain: 37.90 ns, iteration (iterator): 30.72 ns
-
-     [java] class java.util.LinkedHashSet
-     [java]     Size: 10, add (new): 85.85 ns, add (recycled): 84.03 ns, contain: 27.06 ns, iteration (iterator): 16.60 ns
-     [java]     Size: 100, add (new): 114.3 ns, add (recycled): 87.37 ns, contain: 26.03 ns, iteration (iterator): 14.24 ns
-     [java]     Size: 1000, add (new): 108.1 ns, add (recycled): 88.75 ns, contain: 29.96 ns, iteration (iterator): 14.12 ns
-     [java]     Size: 10000, add (new): 109.4 ns, add (recycled): 95.79 ns, contain: 36.07 ns, iteration (iterator): 14.56 ns
-</FONT>
-
-     [java] More performance analysis in future versions...
+     [java] [info] Javolution - Java(TM) Solution for Real-Time and Embedded Systems
+     [java] [info] Version 5.2.2 (J2SE 1.6+) September 3 2007 (http://javolution.org)
+     [java] [info] 
+     [java] [info] Load Configurable Parameters from System.getProperties()...
+     [java] [info] 
+     [java] [info] -------------------------------------------------
+     [java] [info] -- Test Suite for package javolution.context.* --
+     [java] [info] -------------------------------------------------
+     [java] [test] ConcurrentContext - Quick Sort (size: 10000, concurrency: 0): 10.0 ms (minimum 7.82 ms)
+     [java] [test] ConcurrentContext - Quick Sort (size: 10000, concurrency: 1): 5.26 ms (minimum 4.52 ms)
+     [java] [info] 
+     [java] [test] HeapContext (default) - Create 1000 small objects: 30.3 ns (minimum 23.4 ns)
+     [java] [test] StackContext            Create 1000 small objects: 28.6 ns (minimum 25.7 ns)
+     [java] [info] 
+     [java] [test] HeapContext (default)            - new char[4096]: 6.95 us (minimum 4.46 us)
+     [java] [test] Recycled - ArrayFactory.CHARS_FACTORY.array(4096): 2.01 us (minimum 1.67 us)
+     [java] [info] 
+     [java] [info] ----------------------------------------------
+     [java] [info] -- Test Suite for javolution.util.* classes --
+     [java] [info] ----------------------------------------------
+     [java] [info] Collections/Maps of 256 elements (configurable "javolution.UtilTestSuite#SIZE")
+     [java] [info] 
+     [java] [info]  - Add elements to collection -
+     [java] [test] New javolution.util.FastTable.add(element)                  : 39.7 ns (minimum 36.0 ns)
+<FONT COLOR="999999">     [java] [test] New java.util.ArrayList.add(element)                        : 43.4 ns (minimum 38.1 ns)</FONT>
+     [java] [test] New javolution.util.FastList.add(element)                   : 53.2 ns (minimum 46.9 ns)
+<FONT COLOR="999999">     [java] [test] New java.util.LinkedList.add(element)                       : 49.1 ns (minimum 46.9 ns)</FONT>
+     [java] [test] New javolution.util.FastSet.add(element)                    : 170 ns (minimum 153 ns)
+<FONT COLOR="999999">     [java] [test] New java.util.HashSet.add(element)                          : 149 ns (minimum 138 ns)</FONT>
+     [java] [test] Recycled javolution.util.FastTable.add(element)             : 30.5 ns (minimum 28.3 ns)
+<FONT COLOR="999999">     [java] [test] Recycled java.util.ArrayList.add(element)                   : 28.4 ns (minimum 27.2 ns)</FONT>
+     [java] [test] Recycled javolution.util.FastList.add(element)              : 38.6 ns (minimum 37.1 ns)
+<FONT COLOR="999999">     [java] [test] Recycled java.util.LinkedList.add(element)                  : 50.7 ns (minimum 46.9 ns)</FONT>
+     [java] [test] Recycled javolution.util.FastSet.add(element)               : 124 ns (minimum 110 ns)
+<FONT COLOR="999999">     [java] [test] Recycled java.util.HashSet.add(element)                     : 113 ns (minimum 109 ns)</FONT>
+     [java] [info] 
+     [java] [info]  - Iterate over collections -
+     [java] [test] Iterates over javolution.util.FastTable                     : 15.1 ns (minimum 13.0 ns)
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.ArrayList                           : 22.4 ns (minimum 20.7 ns)</FONT>
+     [java] [test] Iterates over javolution.util.FastList                      : 27.4 ns (minimum 25.0 ns)
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.LinkedList                          : 39.0 ns (minimum 36.0 ns)</FONT>
+     [java] [test] Iterates over javolution.util.FastSet                       : 35.2 ns (minimum 32.7 ns)
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.HashSet                             : 49.9 ns (minimum 46.9 ns)</FONT>
+     [java] [info] 
+     [java] [info]  - Put new key/value pairs to map instance -
+     [java] [test] New javolution.util.FastMap.put(key, value)                 : 135 ns (minimum 128 ns)
+<FONT COLOR="999999">     [java] [test] New java.util.HashMap.put(key, value)                       : 132 ns (minimum 125 ns)</FONT>
+<FONT COLOR="999999">     [java] [test] New java.util.LinkedHashMap.put(key, value)                 : 158 ns (minimum 146 ns)</FONT>
+     [java] [test] New javolution.UtilTestSuite$SharedFastMap.put(key, value)  : 174 ns (minimum 164 ns)
+<FONT COLOR="999999">     [java] [test] New java.util.concurrent.ConcurrentHashMap.put(key, value)  : 222 ns (minimum 204 ns)</FONT>
+     [java] [test] Recycled javolution.util.FastMap.put(key, value)            : 88.2 ns (minimum 82.9 ns)
+<FONT COLOR="999999">     [java] [test] Recycled java.util.HashMap.put(key, value)                  : 98.3 ns (minimum 94.9 ns)</FONT>
+<FONT COLOR="999999">     [java] [test] Recycled java.util.LinkedHashMap.put(key, value)            : 130 ns (minimum 126 ns)</FONT>
+     [java] [info] 
+     [java] [info]  - Retrieves map value from key - 
+     [java] [test] javolution.util.FastMap.get(key):                           : 30.7 ns (minimum 28.3 ns)
+<FONT COLOR="999999">     [java] [test] java.util.HashMap.get(key):                                 : 29.9 ns (minimum 28.3 ns)</FONT>
+<FONT COLOR="999999">     [java] [test] java.util.LinkedHashMap.get(key):                           : 74.9 ns (minimum 72.0 ns)</FONT>
+     [java] [test] javolution.UtilTestSuite$SharedFastMap.get(key):            : 74.2 ns (minimum 72.0 ns)
+<FONT COLOR="999999">     [java] [test] java.util.concurrent.ConcurrentHashMap.get(key):            : 78.6 ns (minimum 75.2 ns)</FONT>
+     [java] [info] 
+     [java] [info]  - Iterates over map entries - 
+     [java] [test] Iterates over javolution.util.FastMap                       : 15.0 ns (minimum 13.0 ns)
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.HashMap                             : 32.7 ns (minimum 30.5 ns)</FONT>
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.LinkedHashMap                       : 30.9 ns (minimum 28.3 ns)</FONT>
+     [java] [test] Iterates over javolution.UtilTestSuite$SharedFastMap        : 35.2 ns (minimum 32.7 ns)
+<FONT COLOR="999999">     [java] [test] Iterates over java.util.concurrent.ConcurrentHashMap        : 48.3 ns (minimum 43.6 ns)</FONT>
+     [java] [info] 
+     [java] [info]  - Direct collection/map iterations (no iterator) - 
+     [java] [test] javolution.util.FastTable.get(i)                            : 10.8 ns (minimum 8.72 ns)
+<FONT COLOR="999999">     [java] [test] java.util.ArrayList.get(i)                                  : 8.95 ns (minimum 7.63 ns)</FONT>
+     [java] [test] javolution.util.FastList.Node.getNext()                     : 10.9 ns (minimum 9.82 ns)
+     [java] [test] javolution.util.FastMap.Entry.getNext()                     : 10.9 ns (minimum 9.82 ns)
+     [java] [info] 
+     [java] [info] More tests coming soon...
 </PRE>
 
 <H2><A name="FAQ">FAQ:</A></H2>
 <OL>
     <A name="FAQ-1"></A>
     <LI><B> Although it looks nice, I see that some of your collection classes 
-          like <CODE>FastTable</CODE> actually take more time than their Java 6 counterparts.</B>
-    <P> Some classes are faster, others are slower (e.g. ArrayList.get(int) is faster
-        with -server option, slower without).</P>
+          are not always faster than their Java 6 counterparts.</B>
+    <P> Some classes are faster, others are slower (for example <code>ArrayList.get(int)</code> is faster
+        with the <code>-server</code> option, slower without it).</P>
     <P> Overall, there is no significative difference in <B>average</B> execution time. 
         The main advantage of Javolution collections is that they are 
         time-deterministic (the maximum execution time is very close to 
-        the minimum execution time) and RTSJ safe.</P>
-    <P> They have also some nice characteristics such as thread-safe without
+        the minimum execution time) and they are RTSJ-Safe.</P>
+    <P> They have some additional characteristics such as thread-safe without
         synchronization, support for custom key/value comparators, 
         direct record iterations (faster than iterators), recyclable, 
-        no adverse effect on GC (fragmentation or heap allocation), etc.</P> 
+        reduced impact on GC (fragmentation or large arrays allocations), etc.</P> 
     <P></P>
 </OL>
 

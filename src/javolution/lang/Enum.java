@@ -15,8 +15,8 @@ import j2mex.realtime.MemoryArea;
 import javolution.util.FastMap;
 
 /**
- * <p> This class is equivalent to <code>j2me.lang.Enum</code> 
- *     and is moved (refactored) to the <code>j2me.lang</code> system 
+ * <p> This class is equivalent to <code>java.lang.Enum</code> 
+ *     and is moved (refactored) to the <code>java.lang</code> system 
  *     package for applications targetting the J2SE 5.0+ run-time.</p>
  *    
  * <p> This is a clean-room implementation of the Enum base class.</p>

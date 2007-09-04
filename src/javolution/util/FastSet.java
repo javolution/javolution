@@ -13,6 +13,7 @@ import java.io.IOException;
 import j2me.io.ObjectInputStream;
 import j2me.io.ObjectOutputStream;
 import j2me.util.Collection;
+import j2me.util.Iterator;
 import j2me.util.Set;
 import javolution.context.ObjectFactory;
 import javolution.lang.Reusable;
@@ -140,6 +141,17 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
      */
     public final boolean add(Object/*{E}*/ value) {
         return _map.put(value, value) == null;
+    }
+
+    /**
+     * Returns an iterator over the elements in this set 
+     * (allocated on the stack when executed in a 
+     * {@link javolution.context.StackContext StackContext}).
+     *
+     * @return an iterator over this set values.
+     */
+    public Iterator/*<E>*/iterator() {
+        return _map.keySet().iterator();
     }
 
     // Overrides to return a set (JDK1.5+).

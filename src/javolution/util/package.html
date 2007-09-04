@@ -65,6 +65,15 @@
         }
     }[/code]</P>
 
+<P> Collection/maps of primitive types can be created using the
+    {@link javolution.util.Index Index} class. It avoids the overhead 
+    of wrapping primitives types (for reasonably small <code>int</code> values).
+    For example:[code]
+    public class SparseVector<F> {
+        FastMap<Index, F> _elements = new FastMap<Index, F>();
+        ...
+   }[/code] </P>
+
 <P> Although all collections capacity increases smoothly (no resizing/copy or rehashing ever performed),
     it is nevertheless possible to specify an initial capacity; in which case, all necessary storage
     is allocated at creation. For <a href="http://www.rtj.org/">RTSJ</a> VMs, all 
@@ -154,11 +163,11 @@
            but <b>J</b>avolution FastTable does not, why?</b>
     <p> FastTable (or any <b>J</b>avolution collection/map) <b>do support concurrent modifications</b>
     as long as these are not insertions at an arbitrary position or deletions <i>(Note: Shared FastMap 
-    <b>does</b> support concurrent deletions)</i>.
+    <b>does</b> support concurrent deletions)</i>. 
     In other words you can safely iterate (using iterators or not) through a FastList, FastMap 
     (entries, keys values), FastTable, etc. while new elements/entries are being added 
     (by you or another thread). You can also export a {@link javolution.util.FastCollection#unmodifiable() read-only}
-     view over your collection  and still add more elements to it.</p>
+     view over your collection and still add more elements to it.</p>
     
     <p><i> Disallowing concurrent modifications (standard java util) has proven to be a performance 
     killer for many (forcing users to work with copies of their whole collections). Furthermore the additional checks required
@@ -218,5 +227,18 @@
           Otherwise, the code has a data race.</p>
            
     </li>
+    
+    <li><b>Are all <b>J</b>avolution collection thread-safe?</b>
+    <p> Collections/Maps are thread-safe with regard to access (no need to
+        synchronize reading even if the collection is modified concurrently).
+        But the modifications themselves require either the collection/map to be
+        marked shared or synchronization to be used.</p></li>
+    
+    <li><b>What is the overhead in term of performance when <code>FastMap.setShared</code>
+           is set to <code>true</code>?</b>
+    <p> Marking the map shared avoid synchronizing when possible (e.g. put when
+        entry already exists or remove when entry does not exist), if a new entry
+        is created and added, synchronization is performed internally. In all
+        cases there is no impact on reading (never synchronized).</p></li>
 </ol>
 </BODY>

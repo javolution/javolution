@@ -236,7 +236,7 @@ public abstract class XMLFormat/*<T>*/{
     /**
      * This class represents an input XML element (unmarshalling).
      */
-    protected static final class InputElement {
+    public static final class InputElement {
 
         /**
          * Holds the stream reader.
@@ -671,7 +671,7 @@ public abstract class XMLFormat/*<T>*/{
     /**
      * This class represents an output XML element (marshalling).
      */
-    protected static class OutputElement {
+    public static final class OutputElement {
 
         /**
          * Holds the stream writer.

@@ -9,7 +9,6 @@
 package javolution.context;
 
 import j2me.lang.ThreadLocal;
-import javolution.JavolutionError;
 import javolution.lang.Configurable;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
@@ -17,17 +16,16 @@ import javolution.util.FastTable;
 
 /**
  * <p> This class represents a stack {@link AllocatorContext allocator context};
- *     it is used to allocate objects from thread-local pools or 
- *     <code>ScopedMemory</code> (RTSJ).</p>
+ *     (using thread-local pools or RTSJ <code>ScopedMemory</code>).</p>
  *       
  * <p> Stacks allocations reduce heap memory allocation and often result in 
  *     faster execution time for almost all objects but the smallest one.</p>
  *     
  * <p> Stack allocated objects should never be assigned to static members 
- *     (see {@link HeapContext}). Also, methods entering/exiting stack contexts
- *     should ensure that stack allocated objects do not escape from their 
- *     context scope. If necessary, stack objects can be exported using 
- *     {@link #outerExecute} or {@link #outerCopy}. For  example:[code]
+ *     (see {@link ImmortalContext}). Also, methods entering/exiting stack 
+ *     contexts should ensure that stack allocated objects do not escape from
+ *     their context scope. If necessary, stack objects can be exported using 
+ *     {@link #outerExecute} or {@link #outerCopy}:[code]
  *     public class LargeInteger implements ValueType, Realtime {
  *         public LargeInteger sqrt() {
  *             StackContext.enter(); 
@@ -47,12 +45,11 @@ import javolution.util.FastTable;
  *     
  * <p> It should be noted that future versions of the JVM may provide some 
  *     limited support for stack allocation through escape analysis.
- *     Users can turn-off stack allocation by 
- *     {@link ObjectQueue#QUEUES_ENABLED disabling} objects' queues and revert
- *     to the standard JVM behavior.</p>
+ *     Users may always {@link #DISABLED turn-off} stack allocation to
+ *     revert to standard heap allocation.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, May 6, 2007
+ * @version 5.2, August 19, 2007
  */
 public abstract class StackContext extends AllocatorContext {
 
@@ -61,242 +58,239 @@ public abstract class StackContext extends AllocatorContext {
      * pools. RTSJ alternative implementations could use 
      * <code>ScopedMemory</code> for their stack allocations.
      */
-    public static final Configurable/*<Class>*/CLASS 
-        = new Configurable/*<Class>*/(Default.CLASS);
+    public static final Configurable/*<Class<? extends StackContext>>*/DEFAULT = new Configurable(
+            Default.CLASS);
 
     /**
-     * Holds the default implementation factory.
+     * Indicates if stack allocations are globally disabled.
      */
-    private static ObjectFactory FACTORY = new ObjectFactory() {
-        protected Object create() {
-            Class cls = (Class) CLASS.get();
-            if (cls == Default.CLASS) 
-                return new Default(); 
-            try {
-                return cls.newInstance();
-            } catch (InstantiationException e) {
-                throw new JavolutionError(e);
-            } catch (IllegalAccessException e) {
-                throw new JavolutionError(e);
-            }
-        }
-    };
+    public static final Configurable/*<Boolean>*/DISABLED = new Configurable/*<Boolean>*/(
+            new Boolean(false));
 
     /**
-     * Enters a new {@link StackContext} potentially recycled.
+     * Indicates if this stack context is disabled.
      */
-    public static void enter() {
-        StackContext ctx = (StackContext) FACTORY.object();
-        Context.enter(ctx);
+    private boolean _isDisabled = false;
+
+    /**
+     * Enters the {@link #DEFAULT} stack context.
+     * 
+     * @return the statck context being entered.
+     */
+    public static StackContext enter() {
+        StackContext ctx =(StackContext) Context.enter((Class) DEFAULT.get());
+        ctx._isDisabled = ((Boolean)DISABLED.get()).booleanValue();
+        return ctx;
     }
 
     /**
-     * Exits and recycled the current {@link StackContext}.
+     * Exits the current stack context.
+     * 
+     * @return the stack context being exited.
+     * @throws ClassCastException if the context is not a stack context.
      */
-    public static void exit() {
-        StackContext ctx = (StackContext) Context.current();
-        Context.exitNoCheck(ctx);
-        FACTORY.recycle(ctx);
+    public static/*StackContext*/Context exit() {
+        return (StackContext) Context.exit();
     }
 
     /**
-     * Performs a copy of the specified value using the 
-     * {@link #getOuterAllocator() outer allocator}.
+     * Performs a copy of the specified value allocated outside of the 
+     * current stack context.
      * 
      * @param value the value to be copied.
      * @return a copy allocated using the outer allocator.
-     * @see #outerExecute(Runnable)
      */
-    public static/*<T extends ValueType>*/ValueType/*{T}*/outerCopy(ValueType/*{T}*/value) {
-        CopyLogic logic = (CopyLogic) CopyLogic.FACTORY.object();
-        logic._value = value;
-        ((StackContext) AllocatorContext.current()).executeInOuter(logic);
-        Object copy = logic._copy;
-        logic._value = null;
-        logic._copy = null;
+    public static/*<T extends ValueType>*/ValueType/*{T}*/outerCopy(
+            ValueType/*{T}*/value) {
+        StackContext ctx = (StackContext) AllocatorContext.getCurrent();
+        boolean isDisabled = ctx.isDisabled();
+        ctx.setDisabled(true);
+        Object copy = value.copy();
+        ctx.setDisabled(isDisabled);
         return (ValueType/*{T}*/) copy;
     }
 
-    private static class CopyLogic implements Runnable {
-        private static ObjectFactory FACTORY = new ObjectFactory() {
-            protected Object create() {
-                return new CopyLogic();
-            }
-        };
-
-        ValueType _value;
-
-        Object _copy;
-
-        public void run() {
-            _copy = _value.copy();
-        }
-    }
-
     /**
-     * Executes the specified logic within the  
-     * {@link #getOuterAllocator() outer allocator}.
+     * Executes the specified logic outside of the current stack context.
      * 
-     * @see #outerCopy
+     * @param logic the logic to be executed outside of the current stack 
+     *        context.
      */
     public static void outerExecute(Runnable logic) {
-        ((StackContext) AllocatorContext.current()).executeInOuter(logic);
+        StackContext ctx = (StackContext) AllocatorContext.getCurrent();
+        boolean isDisabled = ctx.isDisabled();
+        ctx.setDisabled(true);
+        logic.run();
+        ctx.setDisabled(isDisabled);
     }
 
     /**
-     * Executes the specified logic within the outer allocator context.
+     * Indicates if this stack context is disabled.  When disabled, allocation 
+     * are performed using the outer {@link AllocatorContext}.
      */
-    public abstract void executeInOuter(Runnable logic);
+    public final boolean isDisabled() {
+        return _isDisabled;
+    }
+
+    /**
+     * Enables/disables this stack context. 
+     * 
+     * @param isDisabled <code>true</code> if disabled; <code>false</code>
+     *        otherwise.
+     */
+    public final void setDisabled(boolean isDisabled) {
+    	if (isDisabled == _isDisabled) return; // No change.
+    	if (isDisabled) {
+    		deactivate();
+    	} else {
+    		getOuter().getAllocatorContext().deactivate();
+    	}
+        _isDisabled = isDisabled;
+    }
 
     /**
      * Default implementation. 
      */
-    static final class Default extends StackContext {
+    private static final class Default extends StackContext {
 
-        /**
-         * Holds the class identifier.
-         */
         private static final Class CLASS = new Default().getClass();
 
-        /**
-         * Holds the thread-local factory to pool mapping (FastMap). 
-         */
-        private final ThreadLocal _factoryToPool = new ThreadLocal() {
+        private final ThreadLocal _factoryToAllocator = new ThreadLocal() {
             protected Object initialValue() {
                 return new FastMap();
             }
         };
-
-        /**
-         * Holds the thread-local active pools (FastTable). 
-         */
-        private final ThreadLocal _activePools = new ThreadLocal() {
+        
+        private final ThreadLocal _activeAllocators = new ThreadLocal() {
             protected Object initialValue() {
                 return new FastTable();
             }
         };
-
-        /**
-         * Holds the pools used by this context (for all threads). 
-         */
-        private final FastTable _usedPools = new FastTable();
-
-        /**
-         * Indicates if outer execution is performed.
-         */
-        private boolean _outerExecution;
-
-        /**
-         * Default constructor.
-         */
-        Default() {
-        }
-
-        // Implements AllocatorContext abstract method.
-        protected ObjectQueue getQueue(final ObjectFactory factory) {
-            if (_outerExecution)
-                return getOuterAllocator().getQueue(factory);
-            final FastMap factoryToPool = (FastMap) _factoryToPool.get();
-            Pool pool = (Pool) factoryToPool.get(factory);
-            if (pool == null) {
-                pool = new Pool(factory);
-                factoryToPool.put(factory, pool);
-            }
-            if (pool.user == null) { // Activate.
-                pool.user = Thread.currentThread();
-                FastTable activePools = (FastTable) _activePools.get();
-                activePools.add(pool);
-                if (!pool._inUse) {
-                    pool._inUse = true;
-                    synchronized (this) { // TBD: Avoid synchronizing.
-                        _usedPools.add(pool);
-                    }
-                }
-            }
-            return pool;
-        }
-
-        // Implements AllocatorContext abstract method.
+        
+        // All allocators which have been used by the owner  
+        // (no synchronization required).
+        private final FastTable _ownerUsedAllocators = new FastTable(); 
+        
+        // All allocators which have been used by the concurrent threads 
+        // (synchronization required).
+        private final FastTable _nonOwnerUsedAllocators = new FastTable(); 
+        
+        
         protected void deactivate() {
-            FastTable activePools = (FastTable) _activePools.get();
-            for (int i = 0, n = activePools.size(); i < n;) {
-                ((Pool) activePools.get(i++)).user = null;
+            FastTable allocators = (FastTable) _activeAllocators.get();
+            for (int i = 0, n = allocators.size(); i < n;) {
+                ((Allocator) allocators.get(i++)).user = null;
             }
-            activePools.clear();
+            allocators.clear();
         }
 
-        // Overrides.
+        protected Allocator getAllocator(ObjectFactory factory) {
+        	if (isDisabled()) // Forwards to outer. 
+        		return getOuter().getAllocatorContext().getAllocator(factory);
+        	
+            FastMap factoryToAllocator = (FastMap) _factoryToAllocator.get();
+            StackAllocator allocator = (StackAllocator) factoryToAllocator.get(factory);
+            if (allocator == null) {
+                allocator = new StackAllocator(factory);
+                factoryToAllocator.put(factory, allocator);
+            }
+            if (allocator.user == null) { // Activate.
+                allocator.user = Thread.currentThread();
+                FastTable activeAllocators = (FastTable) _activeAllocators.get();
+                activeAllocators.add(allocator);
+            }
+            if (!allocator._inUse) { // Add to lists of allocators used.
+            	allocator._inUse = true;
+            	if (Thread.currentThread() == getOwner()) {
+            		_ownerUsedAllocators.add(allocator);
+            	} else {            	
+            	   synchronized (_nonOwnerUsedAllocators) {
+                  		_nonOwnerUsedAllocators.add(allocator);           	            		   
+            	   }            		 
+            	}
+            }	            
+            return allocator;
+        }
+
+        protected void enterAction() {
+            getOuter().getAllocatorContext().deactivate();
+        }
+
         protected void exitAction() {
-            for (int i = 0, n = _usedPools.size(); i < n;) {
-                ((Pool) _usedPools.get(i++)).reset();
+            this.deactivate();
+            
+            // Resets all allocators used.
+            for (int i=0; i < _ownerUsedAllocators.size(); i++) {
+            	StackAllocator allocator = (StackAllocator) _ownerUsedAllocators.get(i);
+            	allocator.reset();
             }
-            _usedPools.clear();
-        }
-
-        // Implements StackContext abstract method.
-        public void executeInOuter(Runnable logic) {
-            deactivate();
-            _outerExecution = true;
-            logic.run();
-            deactivate();
-            _outerExecution = false;
+            _ownerUsedAllocators.clear();
+            for (int i=0; i < _nonOwnerUsedAllocators.size(); i++) {
+            	StackAllocator allocator = (StackAllocator) _nonOwnerUsedAllocators.get(i);
+            	allocator.reset();
+            }
+            _nonOwnerUsedAllocators.clear();            
         }
     }
+    
+    // Holds stack allocator implementation.
+    private static final class StackAllocator extends Allocator {
 
-    // Holds stack pool implementation.
-    private static final class Pool/*<T>*/extends ObjectQueue/*<T>*/{
+    	  private final ObjectFactory _factory;
+    	  
+    	  private boolean _inUse;
+    	  
+    	  private int _queueLimit;
+    	  
+    	  public StackAllocator(ObjectFactory factory) {
+    		   this._factory = factory;
+    		   keepInQueue = true;
+    	  }
+    	      	  
+          protected Object allocate() {
+        	  if (_queueLimit >= queue.length) resize();
+              Object obj = _factory.create();
+              queue[_queueLimit++] = obj;
+        	  return obj;
+          }
 
-        private boolean _inUse;
-
-        private Pool(ObjectFactory/*<T>*/factory) {
-            super(factory);
-        }
-
-        protected Object/*{T}*/allocate() {
-            Object/*{T}*/obj = factory.create();
-            if (size >= objects.length) {
-                resize();
-            }
-            objects[size] = obj;
-            nextIndex = ++size;
-            return obj;
-        }
-
-        protected void recycle(Object/*{T}*/object) {
-            // Cleanup if necessary.
-            if (factory.doCleanup()) {
-                factory.cleanup(object);
-            }
-
-            // Searches for object.
-            for (int i = nextIndex; --i >= 0;) {
-                if (objects[i] == object) { // Found it.
-                    objects[i] = objects[--nextIndex];
-                    objects[nextIndex] = object;
-                    return;
+          protected void recycle(Object object) {
+               if (_factory.doCleanup()) {
+                   _factory.cleanup(object);
                 }
-            }
-            throw new IllegalArgumentException("Object not on the stack");
-        }
+               for (int i= queueSize; i < _queueLimit; i++) {
+               	if (queue[i] == object) { // Found it.
+               		 queue[i] = queue[queueSize];
+               		 queue[queueSize++] = object;
+               		 return;
+               	}
+               }
+               throw new j2me.lang.UnsupportedOperationException(
+            		   "Cannot recycle to the stack an object " +
+               		"which has not been allocated from the stack");
+           }
 
-        // Resets the pool.
-        private void reset() {
-            // Cleanup if necessary.
-            if (factory.doCleanup()) {
-                for (int i = 0; i < nextIndex;) {
-                    Object/*{T}*/obj = objects[i++];
-                    factory.cleanup(obj);
-                }
-            }
-            nextIndex = 0;
-            _inUse = false;
-            user = null; // Deactivates.
-        }
+          protected void reset() {
+        	  _inUse = false;
+        	  while (_factory.doCleanup() && (queueSize != _queueLimit)) {
+        	       Object obj = queue[queueSize++];
+                   _factory.cleanup(obj);
+              }
+              queueSize = _queueLimit;
+          }
 
         public String toString() {
-            return "Stack for " + factory.getClass() + "(size: " + size + ")";
+            return "Stack allocator for " + _factory.getClass();
         }
-
     }
 
+
+    // Allows instances of private classes to be factory produced. 
+    static {
+        ObjectFactory.setInstance(new ObjectFactory() {
+            protected Object create() {
+                return new Default();
+            }
+        }, Default.CLASS);
+    }
 }

@@ -859,7 +859,7 @@ public final class TypeFormat {
      if (tmp < decimal)
      throw new NumberFormatException("Too many digits - Overflow");
      decimal = tmp;
-     } else if (c == '.') {
+     } else if ((c == '.') && (decimalPoint < 0)) {
      decimalPoint = i;
      } else {
      break; // Done.
@@ -942,7 +942,7 @@ public final class TypeFormat {
      if (tmp < decimal)
      throw new NumberFormatException("Too many digits - Overflow");
      decimal = tmp;
-     } else if (c == '.') {
+     } else if ((c == '.') && (decimalPoint < 0)) {
      decimalPoint = i;
      } else {
      break; // Done.
@@ -1025,7 +1025,7 @@ public final class TypeFormat {
      if (tmp < decimal)
      throw new NumberFormatException("Too many digits - Overflow");
      decimal = tmp;
-     } else if (c == '.') {
+     } else if ((c == '.') && (decimalPoint < 0)) {
      decimalPoint = i;
      } else {
      break; // Done.
@@ -1108,7 +1108,7 @@ public final class TypeFormat {
      if (tmp < decimal)
      throw new NumberFormatException("Too many digits - Overflow");
      decimal = tmp;
-     } else if (c == '.') {
+     } else if ((c == '.') && (decimalPoint < 0)) {
      decimalPoint = i;
      } else {
      break; // Done.
@@ -1191,7 +1191,7 @@ public final class TypeFormat {
      if (tmp < decimal)
      throw new NumberFormatException("Too many digits - Overflow");
      decimal = tmp;
-     } else if (c == '.') {
+     } else if ((c == '.') && (decimalPoint < 0)) {
      decimalPoint = i;
      } else {
      break; // Done.

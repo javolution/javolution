@@ -9,11 +9,11 @@
 package javolution;
 
 import j2me.lang.CharSequence;
-import java.io.PrintStream;
 
 import javolution.context.LogContext;
+import javolution.testing.TestContext;
+import javolution.testing.TimeContext;
 import javolution.text.Text;
-import javolution.text.TextBuilder;
 
 /**
  * <p> This class contains the library {@link #main} method for
@@ -26,18 +26,11 @@ import javolution.text.TextBuilder;
  */
 public class Javolution {
     
- 
     /**
      * Holds the version information.
      */
     public final static String VERSION = "@VERSION@";
 
-    /**
-     * Holds the current output stream (default System.out).
-     */
-    private static PrintStream Out = System.out;
-
-    
     /**
      * Default constructor.
      */
@@ -52,171 +45,66 @@ public class Javolution {
      *    java -jar javolution.jar test <i>(perform self-tests)</i>
      *    java -jar javolution.jar perf <i>(run benchmark)</i>
      * [/code]
+     * Configurable are read from system properties.
+     * 
      *
      * @param  args the option arguments.
      * @throws Exception if a problem occurs.
      */
-   public static void main(String[] args) throws Exception {
-        Out.println("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
-        Out.println("Version " + VERSION + " (http://javolution.org)");
-        Out.println("");
-        if (args.length > 0) {
-            if (args[0].equals("version")) {
-                return;
-            } else if (args[0].equals("test")) {
-                testing();
-                return;
-            } else if (args[0].equals("perf")) {
-                benchmark();
-                return;
+    public static void main(String[] args) throws Exception {
+        LogContext.enter(LogContext.SYSTEM_OUT); // Output results to System.out
+        try {
+            LogContext.info("Javolution - Java(TM) Solution for Real-Time and Embedded Systems");
+            LogContext.info("Version " + VERSION + " (http://javolution.org)");
+            LogContext.info("");
+            if (args.length > 0) {
+                if (args[0].equals("version")) {
+                    return;
+                } else if (args[0].equals("test")) {
+                    builtInTests();
+                    return;
+                } else if (args[0].equals("perf")) {
+                    TimeContext.enter();
+                    try {
+                        builtInTests();
+                    } finally {
+                        TimeContext.exit();
+                    }
+                    return;
+                }
             }
+            LogContext.info("Usage: java -jar javolution.jar [arg]");
+            LogContext.info("where arg is one of:");
+            LogContext.info("    version (to show version information only)");
+            LogContext.info("    test    (to perform self-tests)");
+            LogContext.info("    perf    (to run benchmark)");
+        } finally {
+            LogContext.exit();
         }
-        Out.println("Usage: java -jar javolution.jar [arg]");
-        Out.println("where arg is one of:");
-        Out.println("    version (to show version information only)");
-        Out.println("    test    (to perform self-tests)");
-        Out.println("    perf    (to run benchmark)");
     }
 
     /**
-     * Performs simple tests.
-     * 
-     * @throws Exception if a problem occurs.
+     * Performs Built-In-Tests.
      */
-    private static void testing() throws Exception {
-        Out.print("Testing...");
-        Out.println("");
-        // TBD
-        Out.println("Success");
-    }
+    private static void builtInTests() {
 
-    /**
-     * Measures performance.
-     */
-    private static void benchmark() throws Exception {
-        LogContext.setDefault(LogContext.STANDARD); // Logs info messages to console. 
-        calibrate(); // Calculates timer offset.
+        /*@JVM-1.4+@
+         LogContext.info("Load Configurable Parameters from System.getProperties()...");
+         javolution.lang.Configurable.read(System.getProperties());
+         LogContext.info("");
+         /**/
         
-        Out.println("Run benchmark... (shortest execution times are displayed)");
-        Out.println("");
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-        //new PerfIO().run();
-        new PerfContext().run();
-        new PerfText().run();
-        new PerfStream().run();
-        new PerfXML().run();
-        new PerfUtil().run();
+        new ContextTestSuite().run();
+        new UtilTestSuite().run();
+        
+        TestContext.info("More tests coming soon...");
 
-        Out.println("More performance analysis in future versions...");
-    }
-    
-    private static void calibrate() {
-        Javolution test = new Javolution();
-        for (int i=0; i < 1000; i++) {
-            test.startTime();
-            test.keepBestTime(1);
-        }
-        _TimerOffset = test._picoDuration / 1000;
-       
-    }
-    static long _TimerOffset = 0;
-
-    /**
-     * Prints an object to <code>System.out</code> and then terminates the line. 
-     * 
-     * @param obj the object to be displayed.
-     */
-    public void println(Object obj) {
-        Out.println(obj);
     }
 
-    /**
-     * Prints an object to current print stream. 
-     * 
-     * @param obj the object to be displayed.
-     */
-    public void print(Object obj) {
-        Out.print(obj);
-    }
-
-    /**
-     * Starts timer.
-     */
-    public void startTime() {
-        if (_time != 0) throw new Error("Timer not reset");
-        _time = nanoTime();
-    }
-
-    /**
-     * Sets the output stream. 
-     * 
-     * @param out the print stream.
-     */
-    public static void setOutputStream(PrintStream out) {
-        Out = out;
-    }
-
-    /**
-     * Ends measuring time and keeps the best time.
-     * 
-     * @param iterations the number iterations performed since 
-     *        {@link #startTime}.
-     */
-    public void keepBestTime(int iterations) {
-        long nanoSeconds = nanoTime() - _time - _TimerOffset;
-        long picoDuration = (nanoSeconds * 1000 / iterations);
-        if (picoDuration < _picoDuration) {
-            _picoDuration = picoDuration;
-        }
-        _time = 0;
-    }
-    private long _picoDuration = Long.MAX_VALUE;
-    
-    /**
-     * Ends measuring time and returns the best time.
-     * 
-     * @param iterations the number iterations performed since 
-     *        {@link #startTime}.
-     */
-    public String endTime() {
-        long divisor;
-        String unit;
-        if (_picoDuration > 1000 * 1000 * 1000 * 1000L) { // 1 s
-            unit = " s";
-            divisor = 1000 * 1000 * 1000 * 1000L;
-        } else if (_picoDuration > 1000 * 1000 * 1000L) {
-            unit = " ms";
-            divisor = 1000 * 1000 * 1000L;
-        } else if (_picoDuration > 1000 * 1000L) {
-            unit = " us";
-            divisor = 1000 * 1000L;
-        } else {
-            unit = " ns";
-            divisor = 1000L;
-        }
-        TextBuilder tb = TextBuilder.newInstance();
-        tb.append(_picoDuration / divisor);
-        int fracDigits = 4 - tb.length(); // 4 digits precision.
-        tb.append(".");
-        for (int i = 0, j = 10; i < fracDigits; i++, j *= 10) {
-            tb.append((_picoDuration * j / divisor) % 10);
-        }
-        _picoDuration = Long.MAX_VALUE;
-        return tb.append(unit).toString();
-    }
-
-    private static long _time;
-
-    private static long nanoTime() {
-        /*@JVM-1.5+@        
-        if (true) return System.nanoTime();
-        /**/
-       return System.currentTimeMillis() * 1000000;
-    }
-
-    //////////////////////////////////////
-    // Utilities for Javolution use only.
-    //
+    ///////////////////////////////////////////////
+    // Utilities for J2ME Backward Compatibility //
+    ///////////////////////////////////////////////
 
     /**
      * Returns the class having the specified name; for 
@@ -254,7 +142,9 @@ public class Javolution {
      * @return <code>this</code> or a text wrapper.
      */
     public static CharSequence j2meToCharSeq(Object str) {
-        return (str instanceof CharSequence) ? (CharSequence) str
-                : (str == null) ? null : Text.valueOf((String) str);
+        /*@JVM-1.4+@
+        if (true) return (CharSequence) str;
+        /**/
+        return Text.valueOf(str);
     }
 }

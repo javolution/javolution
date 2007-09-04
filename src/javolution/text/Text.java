@@ -64,9 +64,12 @@ import javolution.xml.XMLSerializable;
  *     
  * <p><i> Implementation Note: To avoid expensive copy operations , 
  *        {@link Text} instances are broken down into smaller immutable 
- *        sequences (they form a minimal-depth binary tree). 
- *        Internal copies are then performed in <code>O[Log(n)]</code>
- *        instead of <code>O[n]</code>).</i></p>
+ *        sequences, they form a minimal-depth binary tree.
+ *        The tree is maintained balanced automatically through <a 
+ *        href="http://en.wikipedia.org/wiki/Tree_rotation">tree rotations</a>. 
+ *        Insertion/deletions are performed in <code>O[Log(n)]</code>
+ *        instead of <code>O[n]</code> for 
+ *        <code>StringBuffer/StringBuilder</code>.</i></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton

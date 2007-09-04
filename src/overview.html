@@ -34,14 +34,14 @@ Here are few important configuration parameters with their default values:
       <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}</td>
       <td style="vertical-align: top;">(Number of Processors - 1)</td>
       <td style="vertical-align: top;">The maximum number of worker threads usable by 
-      <a href="javolution/context/ConcurrentContext.html">ConcurrentContext</a> (none for single processors)</td>
+                                       {@link javolution.context.ConcurrentContext ConcurrentContext}(none for single processors)</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ObjectQueue#QUEUES_ENABLED}</code></td>
-      <td style="vertical-align: top;">true</td>
-      <td style="vertical-align: top;">Indicates if object queueing is enabled, when disabled 
-                                       <a href="javolution/context/ObjectFactory.html">ObjectFactory</a>  
-                                       allocates new objects on demand (no recycling)</td>
+      <td style="vertical-align: top;">{@link javolution.context.StackContext#DISABLED}</code></td>
+      <td style="vertical-align: top;">false</td>
+      <td style="vertical-align: top;">Indicates if stack allocation is disabled, when disabled 
+                                       {@link javolution.context.StackContext#enter entering} a 
+                                       {@link javolution.context.StackContext StackContext} has no effect.</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">{@link javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE}</td>
@@ -49,7 +49,7 @@ Here are few important configuration parameters with their default values:
                                        based upon the run-time platform<br> 
                                        (small test performed at start-up)</td>
       <td style="vertical-align: top;">Indicates if the system hash code requires rehashing 
-                                       (see <a href="javolution/util/FastMap.html">FastMap</a>)</td>
+                                       (see {@link javolution.util.FastMap FastMap})</td>
     </tr>
   </tbody>
 </table>

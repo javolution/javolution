@@ -30,7 +30,7 @@ import javolution.util.FastMap;
  *           ...
  *           // Saves persistent context for future execution.
  *           XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream("C:/persistent.xml"));
- *           writer.write(PersistentContext.current(), PersistentContext.class);
+ *           writer.write(PersistentContext.getCurrent(), PersistentContext.class);
  *      }[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -77,7 +77,7 @@ public class PersistentContext extends Context {
      *
      * @return the persistent context instance.
      */
-    public static/*PersistentContext*/Context current() {
+    public static/*PersistentContext*/Context getCurrent() {
         return _PersistentContext;
     }
 

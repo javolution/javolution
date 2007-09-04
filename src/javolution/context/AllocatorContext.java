@@ -8,21 +8,40 @@
  */
 package javolution.context;
 
+import javolution.lang.Configurable;
+
 /**
- * <p> This class represents an allocator context; it defines 
- *     the allocation policy of {@link ObjectFactory} products.
- *     For example, {@link HeapContext} allocates from the heap while
- *     {@link StackContext} allocates from thread-local objects's queues
- *     or <code>ScopedMemory</code> (RTSJ).</p>
- *      
- * <p> Custom allocator contexts may use aging pools (where objects sufficiently 
- *     old are recycled), switchable spaces (objects from a particular frame are 
- *     recycled when buffers are swapped), etc.</p>
- *
+ * <p> This class represents an allocator context; it defines the 
+ *     the allocation policy of {@link ObjectFactory} products.</p>
+ *     
+ * <p> The {@link #DEFAULT default} implementation is an instance of
+ *     {@link HeapContext} context.</p>
+ *     
+ * <p> Specializations may allocate from local stacks ({@link StackContext}),
+ *     specific memory areas (e.g. {@link ImmortalContext}), aging pools (where
+ *     objects sufficiently old are recycled), switchable spaces (objects from
+ *     a particular frame are recycled when buffers are swapped), etc.</p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.0, May 6, 2007
+ * @version 5.2, August 19, 2007
  */
 public abstract class AllocatorContext extends Context {
+
+    /**
+     * Holds the default allocator context instance.
+     */
+    private static volatile AllocatorContext _Default = new HeapContext();
+    
+    /**
+     * Holds the default implementation ({@link HeapContext} instance).
+     */
+    public static final Configurable/*<Class<? extends AllocatorContext>>*/
+    DEFAULT = new Configurable(_Default.getClass()) {
+        protected void notifyChange() {
+            _Default = (AllocatorContext) ObjectFactory.getInstance(
+                    (Class) get()).object();
+        }
+    };
 
     /**
      * Default constructor.
@@ -31,68 +50,43 @@ public abstract class AllocatorContext extends Context {
     }
 
     /**
-     * Holds the outer allocator.
-     */
-    private AllocatorContext _outerAllocator;
-
-    /**
-     * Returns the current allocator context.
+     * Returns the current allocator context. If the current thread has 
+     * not entered an allocator context (e.g. new thread) then 
+     * {@link #getDefault()} is returned.
      *
      * @return the current allocator context.
      */
-    public static/*AllocatorContext*/Context current() {
-        for (Context ctx = Context.current(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof AllocatorContext)
-                return (AllocatorContext) ctx;
-        }
-        return HeapContext._Default;
+    public static/*AllocatorContext*/Context getCurrent() {
+        return Context.getCurrent().getAllocatorContext();
     }
-
+ 
     /**
-     * Returns the current queue for the specified factory in this context.
+     * Returns the default instance ({@link #DEFAULT} implementation).
      * 
-     * @param factory the factory responsible for the object fabrication.
-     * @return the queue of ready to use objects.
+     * @return the default instance.
      */
-    protected abstract ObjectQueue getQueue(ObjectFactory factory);
-
+    public static AllocatorContext getDefault() {
+        return AllocatorContext._Default;
+    }    
+    
     /**
-     * Returns the outer allocator (the allocator context superceeded by
-     * this context).
+     * Returns the allocator for the specified factory in this context.
      * 
-     * @return the outer allocator context or <code>null</code> if none.
+     * @param factory the factory for which the allocator is returned.
+     * @return the allocator producing instances of the specified factory.
      */
-    protected final AllocatorContext getOuterAllocator() {
-        return _outerAllocator;
-    };
+    protected abstract Allocator getAllocator(ObjectFactory factory);
 
     /**
-     * This method is called when an inner allocator context is entered
-     * by the current thread, when exiting this allocator context or 
-     * when a concurrent executor has completed its task using this 
-     * allocator context.
+     * Deactivates the {@link Allocator allocators} belonging to this context
+     * for the current thread. This method is typically called when an inner 
+     * allocator context is entered by the current thread, when exiting an 
+     * allocator context or when a concurrent executor has completed its task
+     * within this allocator context. Deactivated allocators have no
+     * {@link Allocator#user user} (<code>null</code>).
      */
     protected abstract void deactivate();
-
-    // Implements Context abstract method.
-    protected void enterAction() {
-        // Find outer AllocatorContext.
-        _outerAllocator = HeapContext._Default;
-        for (Context ctx = this.getOuter(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof AllocatorContext) {
-                _outerAllocator = (AllocatorContext) ctx;
-                break;
-            }
-        }
-        _outerAllocator.deactivate();
-    }
-
-    // Implements Context abstract method.
-    protected void exitAction() {
-        this.deactivate();
-        _outerAllocator = null;
-    }
-
+    
     /**
      * <p> This class represents a {@link javolution.lang.Reference reference}
      *     allocated from the current {@link AllocatorContext}. 
@@ -159,5 +153,4 @@ public abstract class AllocatorContext extends Context {
             _value = value;
         }
     }
-
 }

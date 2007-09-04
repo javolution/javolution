@@ -9,11 +9,9 @@
 package javolution.context;
 
 /**
- * <p> This class holds factories to produces arrays of variable length;
- *     it allows for object recycling, pre-allocation and 
- *     {@link StackContext stack} allocations.</p> 
- *     
- * <p> For example:[code]
+ * <p> This class holds factories to produces arrays of variable length.
+ *     It allows for object recycling, pre-allocation and {@link StackContext
+ *     stack} allocations:[code]
  *     // Primitive types.
  *     char[] buffer = ArrayFactory.CHARS_FACTORY.array(1024); // Possibly recycled.
  *     for (int i = reader.read(buffer, 0, buffer.length); i > 0;) {

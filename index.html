@@ -199,6 +199,8 @@ body {
           <A HREF="api/javolution/xml/stream/package-summary.html#package_description">xml</A> base classes.</LI>
      <LI> <A HREF="api/javolution/context/package-summary.html#package_description">Context</A> programming
           in order to achieve true separation of concerns (logging, performance, etc).</LI>
+     <LI> A <A HREF="api/javolution/testing/package-summary.html#package_description">testing</A> framework 
+          addressing not only unit tests but also performance and regression tests as well.</LI>
      <LI> Straightforward and low-level parallel computing capabilities 
           with <A HREF="api/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
      <LI> <A HREF="api/javolution/io/Struct.html">Struct</A> and 
@@ -331,7 +333,7 @@ body {
       <TR>
       <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
       <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.1.0 - July 4, 2007</SPAN></DIV>
+         CLASS="style16"><IMG SRC="css/img/new.gif">Javolution Version 5.2.2 - September 3, 2007</SPAN></DIV>
       </TD>
       <TR>
       <TD BGCOLOR="#F4F4F2">
@@ -339,10 +341,10 @@ body {
                                                         BORDER="0"
                                                         SRC="css/img/browseapi.jpg"
                                                         WIDTH="198"></A> 
-         <A HREF="javolution-5.1.0-src.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-5.2.2-src.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getsource.jpg"
                                                  WIDTH="194"></A> 
-         <A HREF="javolution-5.1.0-bin.zip"><IMG HEIGHT="51" BORDER="0"
+         <A HREF="javolution-5.2.2-bin.zip"><IMG HEIGHT="51" BORDER="0"
                                                  SRC="css/img/getlibrary.jpg"
                                                  WIDTH="198"></A></DIV></TD>
       </TR>
@@ -543,7 +545,7 @@ body {
           WIDTH="89%">
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top"><SPAN CLASS="style13">Runtime
-      Environment:</SPAN> <B>Any </B> (J2ME CLDC, J2SE, J2EE, GCJ)<BR> 
+      Environment:</SPAN> <B>Any </B> (J2ME CLDC, J2SE, J2EE, GCJ, <a href="http://www.excelsior-usa.com/jet.html">Excelsior JET</a>)<BR> 
       <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including 
       <A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</A>)<BR>
       <SPAN CLASS="style13">Build tool: </SPAN><A
@@ -725,6 +727,20 @@ body {
       <TR>
       <TD CLASS="simplespacer_body style14" VALIGN="top">
       <UL>
+         <LI CLASS="simplespacer_body"><B>August 19, 2007: Javolution 5.2</B><BR>
+         <UL>
+         <LI> Enhanced <A HREF="api/javolution/util/FastMap.html">FastMap</A> and 
+              <A HREF="api/javolution/util/FastTable.html">FastTable</A> implementation
+              (with an impressive <A HREF="doc/benchmark.html">performance</A>) [5.2.2] </LI>
+         <LI> Corrected class loading circularity issue (AllocatorContext) [5.2.1] </LI>
+         <LI> New <A HREF="api/javolution/testing/package-summary.html#package_description">testing</A> package to facilitate testing and code benchmark [5.2.0] </LI>
+         <LI> Added convenience method to retrieve an ObjectFactory implementation for any class 
+             (<A HREF="api/javolution/context/ObjectFactory.html#getInstance(java.lang.Class)">ObjectFactory.getInstance(Class)</A>) [5.2.0] </LI>
+         <LI> Default context implementations (e.g. LogContext, StackContext, HeapContext) are now 
+              <A HREF="api/javolution/lang/Configurable.html">configurable</A> [5.2.0] </LI>
+         </UL>
+         <P></P>
+
          <LI CLASS="simplespacer_body"><B>July 4, 2007: Javolution 5.1</B><BR>
          <UL>
          <LI> Simplified <A HREF="api/javolution/context/ConcurrentContext.html">concurrent contexts</A>
@@ -858,7 +874,7 @@ body {
       <TD CLASS="simplespacer_body style14">
       Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
       Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : July 4, 2007<BR>
+      Revision      : September 3, 2007<BR>
       </TR>
    </TABLE>
    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

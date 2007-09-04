@@ -55,18 +55,18 @@ import javolution.text.TextFormat;
  *      the number of cpus, etc. Configuration parameters may also be retrieved
  *      from external resources such as databases, XML files, 
  *      external servers, system properties, etc.[code]
- *      class FastComparator  {     
+ *      public abstract class FastComparator<T> implements Comparator<T>, Serializable  {     
  *          public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE 
  *              = new Configurable<Boolean>(isPoorSystemHash()); // Test system hashcode. 
  *      ...
- *      class ConcurrentContext {
+ *      public abstract class ConcurrentContext extends Context {
  *          public static final Configurable<Integer> MAXIMUM_CONCURRENCY 
  *              = new Configurable<Integer>(Runtime.getRuntime().availableProcessors() - 1);
  *                  // No algorithm parallelization on single-processor machines.
  *     ...
- *     class XMLInputFactory {    
- *          public static final Configurable<Class> DEFAULT_IMPLEMENTATION 
- *              = new Configurable<Class>(XMLInputFactory.Default.class);
+ *     public abstract class XMLInputFactory {    
+ *          public static final Configurable<Class<? extends XMLInputFactory>> DEFAULT 
+ *              = new Configurable<Class<? extends XMLInputFactory>>(XMLInputFactory.Default.class);
  *                  // Default class implementation is a private class. 
  *     ...
  *     [/code]</p>
@@ -106,7 +106,7 @@ import javolution.text.TextFormat;
  *      # File configuration.properties
  *      javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE = true
  *      javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY = 0
- *      javolution.xml.stream.XMLInputFactory#CLASS = com.foo.bar.XMLInputFactoryImpl
+ *      javolution.xml.stream.XMLInputFactory#DEFAULT = com.foo.bar.XMLInputFactoryImpl
  *      [/code]</p>
  *      
  * <p> Configuration settings are global (affect all threads). For thread-local
@@ -139,7 +139,7 @@ public class Configurable/*<T>*/{
      * 
      *  @return the current value.
      */
-    public Object/*{T}*/get() {
+    public final Object/*{T}*/get() {
         return _value;
     }
 
@@ -170,10 +170,13 @@ public class Configurable/*<T>*/{
      int sep = key.indexOf('#');
      if (sep < 0) // Not a configurable property.
      continue; 
+     
+     // Found a configurable property being superseded.
+     javolution.context.LogContext.info("Configure " + key + " to " + value);      
      String className = key.substring(0, sep);
      String fieldName = key.substring(sep + 1);
 
-     Class cls = Reflection.getClass(className);
+     Class cls = Reflection.getClass(className);     
      Configurable cfg = (Configurable) cls.getDeclaredField(
      fieldName).get(null);
      Object previous = cfg.get();
@@ -210,14 +213,13 @@ public class Configurable/*<T>*/{
     static final Logic LOGIC = new Logic() {
     }; // To access configuration setting. 
 
-
+    
     /**
      * Notifies this configurable that its runtime value has been changed.
      * The default implementation does nothing. 
      */
     protected void notifyChange() {
-        LOGIC.getClass().getName();
-        // Do nothing.
+        // Does nothing.
     }
 
     /**
@@ -244,12 +246,13 @@ public class Configurable/*<T>*/{
      * }[/code]
      * Applications can prevent configuration modifications through 
      * {@link SecurityContext}. For example:[code]
-     *  SecurityContext policy = new SecurityContext {
+     *  public class MyPolicy extends SecurityContext {
      *       public boolean isModifiable (Configurable cfg) {
      *           return false;
      *       }
      *  }
-     *  SecurityContext.setDefault(policy); // Global setting.
+     *  ...
+     *  configure(SecurityContext.DEFAULT, MyPolicy.class); // Global setting.
      *  [/code]
      */
     public static abstract class Logic {
@@ -270,7 +273,7 @@ public class Configurable/*<T>*/{
         protected final/*<T>*/void configure(Configurable/*<T>*/cfg,
                 Object/*{T}*/value) {
             SecurityContext policy = (SecurityContext) SecurityContext
-                    .current();
+                    .getCurrent();
             if (!policy.isModifiable(cfg))
                 throw new SecurityException(
                         "Configurable modification disallowed by SecurityContext");
