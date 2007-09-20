@@ -118,7 +118,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     /**
      * Holds the current element nesting.
      */
-    private int _nesting;
+    private int _depth;
 
     /**
      * Holds qualified name (include prefix).
@@ -311,7 +311,26 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             throw new XMLStreamException(e);
         }
     }
-
+   
+    /** 
+     * Returns the current depth of the element. Outside the root element, 
+     * the depth is 0. The depth is incremented by 1 when a start tag is
+     * reached. The depth is decremented AFTER the end tag event was observed.
+     * [code]
+     * <!-- outside -->     0
+     * <root>               1
+     *    sometext          1
+     *    <foobar>          2
+     *    </foobar>         2
+     * </root>              1
+     * <!-- outside -->     0 [/code]
+     * 
+     * @return the nesting depth.
+     */
+    public int getDepth() {
+        return _depth;
+    }
+    
     /**
      * Returns the qualified name of the current event.
      * 
@@ -381,7 +400,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             }
         } else if (_eventType == END_ELEMENT) {
             _namespaces.pop();
-            CharArray startElem = _elemStack[_nesting--];
+            CharArray startElem = _elemStack[_depth--];
             _start = _index = startElem.offset();
             while (_seqs[--_seqsIndex] != startElem) { // Recycles CharArray instances.
             }
@@ -816,7 +835,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         try {
             _readCount = _reader.read(_readBuffer, 0, _readBuffer.length);
             if ((_readCount <= 0)
-                    && ((_nesting != 0) || (_state != STATE_CHARACTERS)))
+                    && ((_depth != 0) || (_state != STATE_CHARACTERS)))
                 throw new XMLStreamException("Unexpected end of document",
                         _location);
         } catch (IOException e) {
@@ -961,16 +980,16 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     }
 
     private void processEndTag() throws XMLStreamException {
-        if (!_qName.equals(_elemStack[_nesting]))
+        if (!_qName.equals(_elemStack[_depth]))
             throw new XMLStreamException("Unexpected end tag for " + _qName,
                     _location);
     }
 
     private void processStartTag() throws XMLStreamException {
-        if (++_nesting >= _elemStack.length) {
+        if (++_depth >= _elemStack.length) {
             increaseStack();
         }
-        _elemStack[_nesting] = _qName;
+        _elemStack[_depth] = _qName;
         _namespaces.push();
     }
 
@@ -994,7 +1013,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         _prolog = null;
         _readCount = 0;
         _reader = null;
-        _nesting = 0;
+        _depth = 0;
         _readIndex = 0;
         _seqsIndex = 0;
         _start = 0;
@@ -1263,7 +1282,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         if ((_eventType != XMLStreamConstants.START_ELEMENT)
                 && (_eventType != XMLStreamConstants.END_ELEMENT))
             throw illegalState("Not a start or end element");
-        return _namespaces._namespacesCount[_nesting];
+        return _namespaces._namespacesCount[_depth];
     }
 
     public CharArray getNamespacePrefix(int index) {

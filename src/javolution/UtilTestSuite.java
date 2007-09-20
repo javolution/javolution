@@ -34,8 +34,8 @@ import javolution.util.FastList.Node;
  */
 public final class UtilTestSuite extends TestSuite {
 
-    public static final Configurable/*<Integer>*/
-    SIZE = new Configurable(new Integer(256));
+    public static final Configurable/*<Integer>*/ SIZE 
+        = new Configurable(new Integer(256));
 
     private static final int PADDING = 60;
 
@@ -95,6 +95,14 @@ public final class UtilTestSuite extends TestSuite {
         /*@JVM-1.4+@ TestContext.test(new MapGet(java.util.LinkedHashMap.class, size)); /**/
         TestContext.test(new MapGet(SharedFastMap.class, size));
         /*@JVM-1.5+@ TestContext.test(new MapGet(java.util.concurrent.ConcurrentHashMap.class, size)); /**/
+        TestContext.info("");
+
+        TestContext.info(" - Removes keys from map - ");
+        TestContext.test(new MapRemove(FastMap.class, size));
+        /*@JVM-1.4+@ TestContext.test(new MapRemove(java.util.HashMap.class, size)); /**/
+        /*@JVM-1.4+@ TestContext.test(new MapRemove(java.util.LinkedHashMap.class, size)); /**/
+        TestContext.test(new MapRemove(SharedFastMap.class, size));
+        /*@JVM-1.5+@ TestContext.test(new MapRemove(java.util.concurrent.ConcurrentHashMap.class, size)); /**/
         TestContext.info("");
 
         TestContext.info(" - Iterates over map entries - ");
@@ -302,6 +310,49 @@ public final class UtilTestSuite extends TestSuite {
 
     }
 
+    public static class MapRemove extends TestCase {
+
+        private final Class _class;
+
+        private final int _size;
+
+        private Map _map;
+
+        private Object _last;
+
+        public MapRemove(Class clazz, int size) {
+            _class = clazz;
+            _size = size;
+            _map = (Map) UtilTestSuite.newInstanceOf(clazz);
+        }
+
+        public CharSequence getDescription() {
+            return TextBuilder.newInstance().append(_class.getName()).append(
+                    ".remove(key):").toText().padRight(PADDING);
+        }
+
+        public void prepare() {
+            for (int i = 0; i < _size;) {
+                _map.put(Index.valueOf(i), Index.valueOf(++i));
+            }
+        }
+        public void execute() {
+            for (int i = 0; i < _size;) {
+                _last = _map.remove(Index.valueOf(i++));
+            }
+        }
+
+        public int count() {
+            return _size;
+        }
+
+        public void validate() {
+            TestContext.assertEquals(Index.valueOf(_size), _last);
+            TestContext.assertTrue(_map.size() == 0);            
+        }
+
+    }
+
     public static class MapIteration extends TestCase {
 
         private final Class _class;
@@ -365,7 +416,8 @@ public final class UtilTestSuite extends TestSuite {
         public void execute() {
             Object obj = Index.valueOf(_size - 1);
             for (int i = 0; i < _size; i++) {
-                if (_list.get(i) == obj) return; // Last one.                
+                if (_list.get(i) == obj)
+                    return; // Last one.                
             }
             throw new Error();
         }
@@ -398,14 +450,15 @@ public final class UtilTestSuite extends TestSuite {
 
         public CharSequence getDescription() {
             return TextBuilder.newInstance().append(
-                    "javolution.util.FastTable.get(i)").toText()
-                    .padRight(PADDING);
+                    "javolution.util.FastTable.get(i)").toText().padRight(
+                    PADDING);
         }
 
         public void execute() {
             Object obj = Index.valueOf(_size - 1);
             for (int i = 0; i < _size; i++) {
-                if (_list.get(i) == obj) return; // Last one.                
+                if (_list.get(i) == obj)
+                    return; // Last one.                
             }
             throw new Error();
         }
@@ -446,7 +499,8 @@ public final class UtilTestSuite extends TestSuite {
             Object obj = Index.valueOf(_size - 1);
             for (Node n = (Node) _list.head(), m = (Node) _list.tail(); (n = (Node) n
                     .getNext()) != m;) {
-                if (n.getValue() == obj) return; // Last one.
+                if (n.getValue() == obj)
+                    return; // Last one.
             }
             throw new Error();
         }
@@ -489,10 +543,11 @@ public final class UtilTestSuite extends TestSuite {
         }
 
         public void execute() {
-            Object obj = Index.valueOf(_size - 1);      
+            Object obj = Index.valueOf(_size - 1);
             for (Entry e = _map.head(), n = _map.tail(); (e = (Entry) e
                     .getNext()) != n;) {
-                if (e.getKey() == obj) return; // Last one.
+                if (e.getKey() == obj)
+                    return; // Last one.
             }
             throw new Error();
         }

@@ -49,6 +49,10 @@ import javolution.lang.Reusable;
  *     internal pools of {@link Node nodes} objects. When a node is removed
  *     from its list, it is automatically restored to its pool.</p>
  * 
+ * <p> Custom list implementations may override the {@link #newNode} method 
+ *     in order to return their own {@link Node} implementation (with 
+ *     additional fields for example).</p>
+ *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, December 18, 2006
  */
@@ -72,12 +76,12 @@ implements List/*<E>*/, Reusable {
     /**
      * Holds the node marking the beginning of the list (not included).
      */
-    private transient Node/*<E>*/_head = new Node();
+    private transient Node/*<E>*/_head = newNode();
 
     /**
      * Holds the node marking the end of the list (not included).
      */
-    private transient Node/*<E>*/_tail = new Node();
+    private transient Node/*<E>*/_tail = newNode();
 
     /**
      * Holds the value comparator.
@@ -126,7 +130,7 @@ implements List/*<E>*/, Reusable {
         _tail._previous = _head;
         Node/*<E>*/previous = _tail;
         for (int i = 0; i++ < capacity;) {
-            Node/*<E>*/newNode = new Node/*<E>*/();
+            Node/*<E>*/newNode = newNode();
             newNode._previous = previous;
             previous._next = newNode;
             previous = newNode;
@@ -627,6 +631,16 @@ implements List/*<E>*/, Reusable {
         return (Collection/*List<E>*/) super.unmodifiable();
     }
 
+    /**
+     * Returns a new node for this list; this method can be overriden by 
+     * custom list implementation. 
+     *
+     * @return a new node.
+     */
+    protected Node/*<E>*/newNode() {
+        return new Node();
+    }
+
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {
@@ -659,19 +673,19 @@ implements List/*<E>*/, Reusable {
     private void increaseCapacity() {
         MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
             public void run() {
-                Node/*<E>*/newNode0 = new Node/*<E>*/();
+                Node/*<E>*/newNode0 = newNode();
                 _tail._next = newNode0;
                 newNode0._previous = _tail;
 
-                Node/*<E>*/newNode1 = new Node/*<E>*/();
+                Node/*<E>*/newNode1 = newNode();
                 newNode0._next = newNode1;
                 newNode1._previous = newNode0;
 
-                Node/*<E>*/newNode2 = new Node/*<E>*/();
+                Node/*<E>*/newNode2 = newNode();
                 newNode1._next = newNode2;
                 newNode2._previous = newNode1;
 
-                Node/*<E>*/newNode3 = new Node/*<E>*/();
+                Node/*<E>*/newNode3 = newNode();
                 newNode2._next = newNode3;
                 newNode3._previous = newNode2;
             }
@@ -681,8 +695,18 @@ implements List/*<E>*/, Reusable {
     /**
      * This class represents a {@link FastList} node; it allows for direct 
      * iteration over the list {@link #getValue values}.
+     * Custom {@link FastList} may use a derived implementation.
+     * For example:[code]
+     *    static class MyList<E,X> extends FastList<E> {
+     *        protected MyNode newNode() {
+     *            return new MyNode();
+     *        }
+     *        class MyNode extends Node<E> {
+     *            X xxx; // Additional node field (e.g. cross references).
+     *        }        
+     *    }[/code]
      */
-    public static final class Node/*<E>*/implements Record, Serializable {
+    public static class Node/*<E>*/implements Record, Serializable {
 
         /**
          * Holds the next node.
@@ -702,7 +726,7 @@ implements List/*<E>*/, Reusable {
         /**
          * Default constructor.
          */
-        private Node() {
+        protected Node() {
         }
 
         /**

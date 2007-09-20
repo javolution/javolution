@@ -7,8 +7,8 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="5.1" />
-        <property name="release" value="0" />
+        <property name="version" value="5.2" />
+        <property name="release" value="4" />
         <property name="src" value="src" />
         <property name="bin" value="bin" />
         <property name="tmp" value="tmp" />
@@ -121,29 +121,53 @@
             <replacevalue><![CDATA[ List<E> ]]></replacevalue>
         </replace>
         <!-- In context classes -->
+        <replace dir="${tmp}/javolution" includes="**/Context.java">
+            <replacetoken><![CDATA[/*T*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ T]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/AllocatorContext.java">
+            <replacetoken><![CDATA[/*AllocatorContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ AllocatorContext]]></replacevalue>
+        </replace>
         <replace dir="${tmp}/javolution" includes="**/ConcurrentContext.java">
-            <replacetoken><![CDATA[/*ConcurrentContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ ConcurrentContext ]]></replacevalue>
+            <replacetoken><![CDATA[/*ConcurrentContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ ConcurrentContext]]></replacevalue>
         </replace>
         <replace dir="${tmp}/javolution" includes="**/HeapContext.java">
-            <replacetoken><![CDATA[/*HeapContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ HeapContext ]]></replacevalue>
+            <replacetoken><![CDATA[/*HeapContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ HeapContext]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/ImmortalContext.java">
+            <replacetoken><![CDATA[/*ImmortalContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ ImmortalContext]]></replacevalue>
         </replace>
         <replace dir="${tmp}/javolution" includes="**/LocalContext.java">
-            <replacetoken><![CDATA[/*LocalContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ LocalContext ]]></replacevalue>
+            <replacetoken><![CDATA[/*LocalContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ LocalContext]]></replacevalue>
         </replace>
         <replace dir="${tmp}/javolution" includes="**/LogContext.java">
-            <replacetoken><![CDATA[/*LogContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ LogContext ]]></replacevalue>
+            <replacetoken><![CDATA[/*LogContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ LogContext]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution" includes="**/PoolContext.java">
-            <replacetoken><![CDATA[/*PoolContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ PoolContext ]]></replacevalue>
+        <replace dir="${tmp}/javolution" includes="**/PersistentContext.java">
+            <replacetoken><![CDATA[/*PersistentContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ PersistentContext]]></replacevalue>
         </replace>
         <replace dir="${tmp}/javolution" includes="**/SecurityContext.java">
-            <replacetoken><![CDATA[/*SecurityContext*/Context ]]></replacetoken>
-            <replacevalue><![CDATA[ SecurityContext ]]></replacevalue>
+            <replacetoken><![CDATA[/*SecurityContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ SecurityContext]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/StackContext.java">
+            <replacetoken><![CDATA[/*StackContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ StackContext]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/TestContext.java">
+            <replacetoken><![CDATA[/*TestContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ TestContext]]></replacevalue>
+        </replace>
+        <replace dir="${tmp}/javolution" includes="**/TimeContext.java">
+            <replacetoken><![CDATA[/*TimeContext*/Context]]></replacetoken>
+            <replacevalue><![CDATA[ TimeContext]]></replacevalue>
         </replace>
         <!-- In Struct class -->
         <replace dir="${tmp}/javolution" includes="**/Struct.java">
@@ -170,14 +194,6 @@
         <replace dir="${tmp}/javolution" includes="**/FastList.java">
             <replacetoken><![CDATA[Record/*Node<E>*/]]></replacetoken>
             <replacevalue><![CDATA[Node<E>]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[(FastMap.Entry)/*CAST UNNECESSARY WITH JDK1.5*/]]></replacetoken>
-            <replacevalue><![CDATA[(FastMap.Entry)]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[(FastList.Node)/*CAST UNNECESSARY WITH JDK1.5*/]]></replacetoken>
-            <replacevalue><![CDATA[(FastList.Node)]]></replacevalue>
         </replace>
         <!-- Types from parameterized class. -->
         <replace dir="${tmp}/javolution" includes="**/*.java">
@@ -269,7 +285,7 @@
                 </A>]]>
             </header>
             <bottom>
-                <![CDATA[<i>Copyright &#169; 2007 Javolution.</i>]]>
+                <![CDATA[<i>Copyright &#169; 2005 - 2007 Javolution.</i>]]>
             </bottom>
             <packageset dir="${tmp}" defaultexcludes="yes">
                 <include name="javolution/**/*" />

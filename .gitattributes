@@ -45,6 +45,7 @@ css/img/thesolution.gif -text
 css/img/ventrobanner.jpg -text
 css/index.css -text svneol=unset#application/octet-stream
 css/javadoc.css -text svneol=unset#application/octet-stream
+doc/AIAA-2007-6184.pdf -text
 doc/Javolution-Collections.pdf -text
 doc/Man33955.pdf -text
 doc/benchmark.html -text
@@ -305,6 +306,8 @@ src/javolution/xml/stream/XMLStreamReaderImpl.java -text
 src/javolution/xml/stream/XMLStreamWriter.java -text
 src/javolution/xml/stream/XMLStreamWriterImpl.java -text
 src/javolution/xml/stream/package.html -text
+src/javolution/xml/ws/WebServiceClient.java -text
+src/javolution/xml/ws/package.html -text
 src/org/xml/sax/AttributeList.java -text
 src/org/xml/sax/Attributes.java -text
 src/org/xml/sax/ContentHandler.java -text

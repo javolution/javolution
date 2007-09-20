@@ -290,7 +290,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     public final Object/*{E}*/removeLast() {
         if (_size == 0)
             throw new NoSuchElementException();
-        _size -= ONE_VOLATILE; // Prevents compiler reordering.
+        _size--; // No need for volatile, removal are not thread-safe.
         final Object/*{E}*/[] low = _high[_size >> B1];
         final Object/*{E}*/previous = low[_size & M1];
         low[_size & M1] = null;
@@ -299,13 +299,12 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
 
     // Overrides.
     public final void clear() {
-        final int prevSize = _size;
-        _size = ONE_VOLATILE - 1; // Prevents compiler reordering.
-        for (int i = 0; i < prevSize; i += C1) {
-            final int count = MathLib.min(prevSize - i, C1);
+        for (int i = 0; i < _size; i += C1) {
+            final int count = MathLib.min(_size - i, C1);
             final Object/*{E}*/[] low = _high[i >> B1];
             System.arraycopy(NULL_BLOCK, 0, low, 0, count);
         }
+        _size = 0; // No need for volatile, removal are not thread-safe.
     }
 
     private static final Object[] NULL_BLOCK = (Object[]) new Object[C1];
@@ -342,7 +341,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         for (int i = index, n = index + shift; i < n; i++) {
             _high[i >> B1][i & M1] = valuesIterator.next();
         }
-        _size += shift * ONE_VOLATILE; // Increases size last.
+        _size += shift * ONE_VOLATILE; // Increases size last (thread-safe)
         return shift != 0;
     }
 
@@ -365,7 +364,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             throw new IndexOutOfBoundsException("index: " + index);
         shiftRight(index, 1);
         _high[index >> B1][index & M1] = value;
-        _size += ONE_VOLATILE; // Increases size last.
+        _size += ONE_VOLATILE; // Increases size last (thread-safe).
     }
 
     /**
@@ -384,8 +383,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
      */
     public final Object/*{E}*/remove(int index) {
         final Object/*{E}*/previous = get(index);
-        _size -= ONE_VOLATILE; // Decreases size first.        
         shiftLeft(index + 1, 1);
+        _size--; // No need for volatile, removal are not thread-safe.
         _high[_size >> B1][_size & M1] = null; // Deallocates for GC.
         return previous;
     }
@@ -407,8 +406,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
                 || (toIndex > _size))
             throw new IndexOutOfBoundsException();
         final int shift = toIndex - fromIndex;
-        _size -= shift * ONE_VOLATILE; // Decreases size first.        
         shiftLeft(fromIndex, shift);
+        _size -= shift; // No need for volatile, removal are not thread-safe.        
         for (int i = _size, n = _size + shift; i < n; i++) {
             _high[i >> B1][i & M1] = null; // Deallocates for GC.
         }
@@ -885,8 +884,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         public Object next() {
             if (_nextIndex == _end)
                 throw new NoSuchElementException();
-            return _nextIndex < C1 ? _low[_nextIndex++] : 
-                _high[_nextIndex >> B1][_nextIndex++ & M1];
+            final int i = _currentIndex = _nextIndex++;
+            return i < C1 ? _low[i] : _high[i >> B1][i & M1];
         }
 
         public int nextIndex() {

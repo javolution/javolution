@@ -147,6 +147,19 @@ public abstract class ArrayFactory/*<T>*/{
      /**/
 
     /**
+     * Holds factory for generic <code>Object</code> arrays.
+     */
+    public static final ArrayFactory/*<Object[]>*/OBJECTS_FACTORY = new ArrayFactory() {
+        protected Object create(int size) {
+            return new Object[size];
+        }
+
+        public void recycle(Object array) {
+            recycle(array, ((Object[]) array).length);
+        }
+    };
+
+    /**
      * Holds factory for arrays up to size 4.
      */
     private final ObjectFactory _factory4 = new ObjectFactory() {

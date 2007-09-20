@@ -31,7 +31,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * Javolution Configuration</a> for details).
      */
     public static final Configurable/*<Boolean>*/ REHASH_SYSTEM_HASHCODE 
-         = new Configurable(isPoorSystemHash()) {
+         = new Configurable(new Boolean(isPoorSystemHash())) {
         protected void notifyChange() {
             _Rehash = ((Boolean)get()).booleanValue();
         }
@@ -39,6 +39,18 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
     static boolean _Rehash 
          = ((Boolean)REHASH_SYSTEM_HASHCODE.get()).booleanValue();
 
+    private static boolean isPoorSystemHash() {
+        boolean[] dist = new boolean[64]; // Length power of 2.
+        for (int i = 0; i < dist.length; i++) {
+            dist[new Object().hashCode() & (dist.length - 1)] = true;
+        }
+        int occupied = 0;
+        for (int i = 0; i < dist.length;) {
+            occupied += dist[i++] ? 1 : 0; // Count occupied slots.
+        }
+        return occupied < (dist.length >> 2); // Less than 16 slots on 64.
+    }
+    
     /**
      * Holds the default object comparator; rehash is performed if the 
      * system hash code (platform dependent) is not evenly distributed.
@@ -90,7 +102,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         }
 
         public String toString() {
-            return "direct";
+            return "Direct";
         }
 
     };
@@ -124,9 +136,40 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         }
 
         public String toString() {
-            return "rehash";
+            return "Rehash";
         }
 
+    };
+
+    /**
+     * Holds a fast comparator for <code>java.lang.String</code>. Hashcodes 
+     * are calculated by taking a sample of few characters instead of 
+     * the whole string.
+     */
+    public static final FastComparator/*<String>*/ STRING = new StringComparator();
+
+    static final class StringComparator extends FastComparator {
+        public int hashCodeOf(Object obj) {
+            final String str = (String)obj;
+            final int length = str.length();
+            if (length == 0) return 0;
+            return str.charAt(0) + str.charAt(length) * 31 +
+                str.charAt(length << 1) * 1009 + 
+                str.charAt(length << 2) * 27583 +
+                str.charAt((length << 1) + (length << 2)) * 73408859;
+        }
+
+        public boolean areEqual(Object o1, Object o2) {
+            return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
+        }
+
+        public int compare(Object o1, Object o2) {
+            return ((String) o1).compareTo((String)o2);
+        }
+
+        public String toString() {
+            return "String";
+        }
     };
 
     /**
@@ -306,22 +349,4 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      */
     public abstract int compare(Object/*{T}*/o1, Object/*{T}*/o2);
 
-    /**
-     * Test the system hash code.
-     * 
-     * @return <code>true</code> if the system hash code is not evenly 
-     *         distributed; <code>false<code> otherwise.
-     */
-    private static Boolean isPoorSystemHash() {
-        boolean[] dist = new boolean[32]; // Length power of 2.
-        for (int i = 0; i < dist.length; i++) {
-            dist[new Object().hashCode() & (dist.length - 1)] = true;
-        }
-        int holes = 0;
-        for (int i = 0; i < dist.length; i++) {
-            if (!dist[i])
-                holes++; // Count holes.
-        }
-        return new Boolean(holes > (dist.length >> 1));
-    }
 }

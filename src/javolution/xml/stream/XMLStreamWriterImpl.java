@@ -529,6 +529,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
 	// Implements XMLStreamWriter interface.
 	public void writeCharacters(char[] text, int start, int length)
 			throws XMLStreamException {
+        if (_isElementOpen) 
+            closeOpenTag();
 		for (int i = start, end = start + length; i < end;) {
 			writeEsc(text[i++]);
 		}

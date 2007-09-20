@@ -21,7 +21,7 @@ import j2me.util.List;
  *                TestContext.test(appendInt);
  *                ...
  *           }
- *           TestCase appendInt = new TestCase("TextBuilder.append(int)") {
+ *           TestCase appendInt = new TestCase() {
  *                TextBuilder tmp = new TextBuilder();
  *                int i;
  *                public void prepare() {
@@ -35,9 +35,12 @@ import j2me.util.List;
  *                    TextContext.assertEquals(String.valueOf(i), tmp.toString());
  *                    ... // We may also validate min, max, zero boundary cases here.
  *                }
+ *                public CharSequence getDescription() {
+ *                    return "TextBuilder.append(int)";
+ *                }
  *           };
  *           ...
- *      }[code]</p>
+ *      }[/code]</p>
  *  <p> Test suites can be run in the current logging context or within 
  *      specialized {@link TestContext test contexts}:[code] 
  *         
