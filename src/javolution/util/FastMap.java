@@ -98,12 +98,20 @@ import javolution.xml.XMLSerializable;
  *             String label = labels.get(this); // No synchronization.
  *             return label != null ? label : makeLabel();
  *         }
- *    }[/code]</p>        
- *      
+ *    }[/code]</p>
+ *            
+ * <p> <b>Implementation Note:</b> To maintain time-determinism, rehash/resize
+ *     is performed only when the map's size is small (see chart). For large 
+ *     maps (size > 512), the collection is divided recursively into (64) 
+ *     smaller sub-maps. The cost of the dispatching (based upon hashcode 
+ *     value) has been measured to be at most 20% of the access time 
+ *     (and most often way less).</p>
+ *            
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 5.2, September 11, 2007
  */
-public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable, Realtime {
+public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable,
+        XMLSerializable, Realtime {
 
     // We do a full resize (and rehash) only when the capacity is less than C1.
     // For large maps we dispatch to sub-maps.
@@ -237,7 +245,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      */
     public FastMap(int capacity) {
         setKeyComparator(FastComparator.DEFAULT);
-        setValueComparator(FastComparator.DEFAULT);               
+        setValueComparator(FastComparator.DEFAULT);
         setup(capacity);
     }
 
@@ -325,11 +333,11 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      * @return this map's size.
      */
     public final int size() {
-        if (!_useSubMaps) 
+        if (!_useSubMaps)
             return _entryCount;
         int sum = 0;
-        for (int i=0; i < _subMaps.length;) {
-            sum += _subMaps[i++].size(); 
+        for (int i = 0; i < _subMaps.length;) {
+            sum += _subMaps[i++].size();
         }
         return sum;
     }
@@ -391,8 +399,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      * @return the entry for the specified key or <code>null</code> if none.
      */
     public final Entry/*<K,V>*/getEntry(Object key) {
-        return getEntry(key, _isDirectKeyComparator ? 
-                key.hashCode() : _keyComparator.hashCodeOf(key));
+        return getEntry(key, _isDirectKeyComparator ? key.hashCode()
+                : _keyComparator.hashCodeOf(key));
     }
 
     private final Entry getEntry(Object key, int keyHash) {
@@ -404,13 +412,16 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
             if (entry == null)
                 return null;
             if ((key == entry._key)
-                    || ((keyHash == entry._keyHash) && _keyComparator.areEqual(key, entry._key)))
-                return entry;                        
+                    || ((keyHash == entry._keyHash) && (_isDirectKeyComparator ? key
+                            .equals(entry._key)
+                            : _keyComparator.areEqual(key, entry._key))))
+                return entry;
         }
     }
 
     private final FastMap getSubMap(int keyHash) {
-        return _useSubMaps ? _subMaps[keyHash & (C2 - 1)].getSubMap(keyHash >> B2) : this;    
+        return _useSubMaps ? _subMaps[keyHash & (C2 - 1)]
+                .getSubMap(keyHash >> B2) : this;
     }
 
     /**
@@ -428,29 +439,32 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final Object/*{V}*/put(Object/*{K}*/key, Object/*{V}*/value) {
-        return (Object/*{V}*/) put(key, value,
-                _isDirectKeyComparator ? 
-                        key.hashCode() : _keyComparator.hashCodeOf(key), _isShared, false);
-    } 
+        return (Object/*{V}*/) put(key, value, _isDirectKeyComparator ? key
+                .hashCode() : _keyComparator.hashCodeOf(key), _isShared, false);
+    }
 
-    private final Object put(Object key, Object value, int keyHash, boolean concurrent, boolean noReplace) {
+    private final Object put(Object key, Object value, int keyHash,
+            boolean concurrent, boolean noReplace) {
         final FastMap map = getSubMap(keyHash);
         final Entry[] entries = map._entries; // Atomic.
         final int mask = entries.length - 1;
         int slot = -1;
         for (int i = keyHash >> map._keyShift;; i++) {
             Entry entry = entries[i & mask];
-            if (entry == null) { 
+            if (entry == null) {
                 slot = slot < 0 ? i & mask : slot;
                 break;
             } else if (entry == Entry.NULL) {
                 slot = slot < 0 ? i & mask : slot;
             } else if ((key == entry._key)
-                    || ((keyHash == entry._keyHash) && _keyComparator.areEqual(key, entry._key))) {
-                if (noReplace) return entry._value;
+                    || ((keyHash == entry._keyHash) && (_isDirectKeyComparator ? key
+                            .equals(entry._key)
+                            : _keyComparator.areEqual(key, entry._key)))) {
+                if (noReplace)
+                    return entry._value;
                 Object prevValue = entry._value;
                 entry._value = value;
-                return prevValue;                
+                return prevValue;
             }
         }
 
@@ -468,7 +482,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         entry._keyHash = keyHash;
         if (entry._next == null) {
             createNewEntries();
-        }    
+        }
         entries[slot] = entry;
         map._entryCount += ONE_VOLATILE; // Prevents reordering.
         _tail = _tail._next;
@@ -476,14 +490,14 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         if (map._entryCount + map._nullCount > (entries.length >> 1)) { // Table more than half empty.
             map.resizeTable(_isShared);
         }
-        return null; 
+        return null;
     }
 
     private void createNewEntries() { // Increase the number of entries.
         MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
             public void run() {
                 Entry previous = _tail;
-                for (int i=0; i < 8; i++) { // Creates 8 entries at a time.
+                for (int i = 0; i < 8; i++) { // Creates 8 entries at a time.
                     Entry/*<K,V>*/newEntry = newEntry();
                     newEntry._previous = previous;
                     previous._next = newEntry;
@@ -509,7 +523,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
                         copyEntries(_entries, tmp, _entries.length);
                         _entries = tmp;
                     } else { // We need a temporary buffer.
-                        Object[] tmp = (Object[]) ArrayFactory.OBJECTS_FACTORY.array(_entries.length);
+                        Object[] tmp = (Object[]) ArrayFactory.OBJECTS_FACTORY
+                                .array(_entries.length);
                         System.arraycopy(_entries, 0, tmp, 0, _entries.length);
                         FastMap.reset(_entries); // Ok not shared. 
                         copyEntries(tmp, _entries, _entries.length);
@@ -530,19 +545,20 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
 
                 // No choice but to use sub-maps.
                 if (_subMaps == null) { // Creates sub-maps.
-                    _subMaps = newSubMaps(tableLength >> B2);
+                    _subMaps = newSubMaps(tableLength >> (B2 - 1));
                 }
-                
+
                 // Copies the current entries to sub-maps. 
                 for (int i = 0; i < _entries.length;) {
                     Entry entry = _entries[i++];
                     if ((entry == null) || (entry == Entry.NULL))
-                        continue;                   
-                    FastMap subMap =_subMaps[(entry._keyHash >> _keyShift) & (C2 - 1)];
+                        continue;
+                    FastMap subMap = _subMaps[(entry._keyHash >> _keyShift)
+                            & (C2 - 1)];
                     subMap.mapEntry(entry);
                     if (((subMap._entryCount + subMap._nullCount) << 1) >= subMap._entries.length) {
                         // Serious problem submap already full, don't use submap just resize.
-                        LogContext.warning("Unevenly distributed hash code");
+                        LogContext.warning("Unevenly distributed hash code - Degraded Preformance");
                         Entry[] tmp = new Entry[tableLength];
                         copyEntries(_entries, tmp, _entries.length);
                         _entries = tmp;
@@ -551,7 +567,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
                     }
                 }
                 _useSubMaps = ONE_VOLATILE == 1 ? true : false; // Prevents reordering.   
-            }});
+            }
+        });
     }
 
     private FastMap[] newSubMaps(int capacity) {
@@ -584,7 +601,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
             Entry entry = (Entry) from[i++];
             if ((entry == null) || (entry == Entry.NULL))
                 continue;
-                for (int j = entry._keyHash >> _keyShift;; j++) {
+            for (int j = entry._keyHash >> _keyShift;; j++) {
                 Entry tmp = to[j & mask];
                 if (tmp == null) {
                     to[j & mask] = entry;
@@ -627,9 +644,10 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      *         previously associated <code>null</code> with the specified key.
      * @throws NullPointerException if the key is <code>null</code>.
      */
-    public final Object/*{V}*/putIfAbsent(Object/*{K}*/key, Object/*{V}*/value) {
-        return ( Object/*{V}*/) put(key, value, _isDirectKeyComparator ? 
-                key.hashCode() : _keyComparator.hashCodeOf(key), _isShared, true);
+    public final Object/*{V}*/putIfAbsent(Object/*{K}*/key,
+            Object/*{V}*/value) {
+        return (Object/*{V}*/) put(key, value, _isDirectKeyComparator ? key
+                .hashCode() : _keyComparator.hashCodeOf(key), _isShared, true);
     }
 
     /**
@@ -650,22 +668,25 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      * @throws NullPointerException if the key is <code>null</code>.
      */
     public final Object/*{V}*/remove(Object key) {
-        return (Object/*{V}*/) remove(key, _isDirectKeyComparator ? 
-                key.hashCode() : _keyComparator.hashCodeOf(key), _isShared);
+        return (Object/*{V}*/) remove(key, _isDirectKeyComparator ? key
+                .hashCode() : _keyComparator.hashCodeOf(key), _isShared);
     }
-    
+
     private final Object remove(Object key, int keyHash, boolean concurrent) {
         final FastMap map = getSubMap(keyHash);
         final Entry[] entries = map._entries; // Atomic.
         final int mask = entries.length - 1;
         for (int i = keyHash >> map._keyShift;; i++) {
             Entry entry = entries[i & mask];
-            if (entry == null) return null; // No entry.
+            if (entry == null)
+                return null; // No entry.
             if ((key == entry._key)
-                    || ((keyHash == entry._keyHash) && _keyComparator.areEqual(key, entry._key))) {
+                    || ((keyHash == entry._keyHash) && (_isDirectKeyComparator ? key
+                            .equals(entry._key)
+                            : _keyComparator.areEqual(key, entry._key)))) {
                 // Found the entry.
                 if (concurrent) {
-                    synchronized (this) { 
+                    synchronized (this) {
                         return remove(key, keyHash, false);
                     }
                 }
@@ -691,7 +712,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
                     if (next != null) {
                         next._previous = entry;
                     }
-                }                
+                }
                 return prevValue;
             }
         }
@@ -739,7 +760,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
             FastComparator/*<? super K>*/keyComparator) {
         _keyComparator = keyComparator;
         _isDirectKeyComparator = (keyComparator instanceof FastComparator.Direct)
-           || ((_keyComparator instanceof FastComparator.Default) && !FastComparator._Rehash);
+                || ((_keyComparator instanceof FastComparator.Default) && !FastComparator._Rehash);
         return this;
     }
 
@@ -827,7 +848,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
                 }
                 _entryCount = 0;
                 _nullCount = 0;
-            }});
+            }
+        });
     }
 
     /**
@@ -929,16 +951,16 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         } else {
             return _entries.length;
         }
-    }    
-    
+    }
+
     private int getCapacity() {
         int capacity = 0;
-        for (Entry e=_head; (e = e._next) != null;) {
+        for (Entry e = _head; (e = e._next) != null;) {
             capacity++;
         }
         return capacity - 1;
-    }    
-    
+    }
+
     private int getMaximumDistance() {
         int max = 0;
         if (_useSubMaps) {
@@ -951,7 +973,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         for (int i = 0; i < _entries.length; i++) {
             Entry entry = _entries[i];
             if ((entry != null) && (entry != Entry.NULL)) {
-                int slot = (entry._keyHash >> _keyShift) & (_entries.length - 1);
+                int slot = (entry._keyHash >> _keyShift)
+                        & (_entries.length - 1);
                 int distanceToSlot = i - slot;
                 if (distanceToSlot < 0)
                     distanceToSlot += _entries.length;
@@ -974,7 +997,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         for (int i = 0; i < _entries.length; i++) {
             Entry entry = _entries[i];
             if ((entry != null) && (entry != Entry.NULL)) {
-                int slot = (entry._keyHash >> _keyShift) & (_entries.length - 1);
+                int slot = (entry._keyHash >> _keyShift)
+                        & (_entries.length - 1);
                 int distanceToSlot = i - slot;
                 if (distanceToSlot < 0)
                     distanceToSlot += _entries.length;
@@ -1084,7 +1108,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
 
         public static ValueIterator valueOf(FastMap map) {
             ValueIterator iterator = (ValueIterator) ValueIterator.FACTORY
-            .object();
+                    .object();
             iterator._map = map;
             iterator._next = map._head._next;
             iterator._tail = map._tail;
@@ -1206,8 +1230,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
                     Map.Entry e1 = (Map.Entry) o1;
                     Map.Entry e2 = (Map.Entry) o2;
                     return _keyComparator.areEqual(e1.getKey(), e2.getKey())
-                    && _valueComparator.areEqual(e1.getValue(), e2
-                            .getValue());
+                            && _valueComparator.areEqual(e1.getValue(), e2
+                                    .getValue());
                 }
                 return (o1 == null) && (o2 == null);
             }
@@ -1219,7 +1243,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
             public int hashCodeOf(Object obj) {
                 Map.Entry entry = (Map.Entry) obj;
                 return _keyComparator.hashCodeOf(entry.getKey())
-                + _valueComparator.hashCodeOf(entry.getValue());
+                        + _valueComparator.hashCodeOf(entry.getValue());
             }
         };
 
@@ -1255,7 +1279,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
 
         public static EntryIterator valueOf(FastMap map) {
             EntryIterator iterator = (EntryIterator) EntryIterator.FACTORY
-            .object();
+                    .object();
             iterator._map = map;
             iterator._next = map._head._next;
             iterator._tail = map._tail;
@@ -1453,7 +1477,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
      *         is not found.
      */
     private void readObject(ObjectInputStream stream) throws IOException,
-    ClassNotFoundException {
+            ClassNotFoundException {
         setKeyComparator((FastComparator) stream.readObject());
         setValueComparator((FastComparator) stream.readObject());
         setShared(stream.readBoolean());
@@ -1594,8 +1618,8 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
             if (that instanceof Map.Entry) {
                 Map.Entry entry = (Map.Entry) that;
                 return FastComparator.DEFAULT.areEqual(_key, entry.getKey())
-                && FastComparator.DEFAULT.areEqual(_value, entry
-                        .getValue());
+                        && FastComparator.DEFAULT.areEqual(_value, entry
+                                .getValue());
             } else {
                 return false;
             }
@@ -1608,7 +1632,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
          */
         public int hashCode() {
             return ((_key != null) ? _key.hashCode() : 0)
-            ^ ((_value != null) ? _value.hashCode() : 0);
+                    ^ ((_value != null) ? _value.hashCode() : 0);
         }
     }
 
@@ -1676,10 +1700,10 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
         public Set entrySet() {
             throw new UnsupportedOperationException(
                     "Direct view over unmodifiable map entries is not supported "
-                    + " (to prevent access to Entry.setValue(Object) method). "
-                    + "To iterate over unmodifiable map entries, applications may "
-                    + "use the keySet() and values() fast collection views "
-                    + "in conjonction.");
+                            + " (to prevent access to Entry.setValue(Object) method). "
+                            + "To iterate over unmodifiable map entries, applications may "
+                            + "use the keySet() and values() fast collection views "
+                            + "in conjonction.");
         }
     }
 
@@ -1697,12 +1721,13 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable, XMLSerializable,
 
     // Reset the specified table.
     private static void reset(Object[] entries) {
-        for (int i=0; i < entries.length;) {
+        for (int i = 0; i < entries.length;) {
             int count = MathLib.min(entries.length - i, C1);
             System.arraycopy(NULL_ENTRIES, 0, entries, i, count);
             i += count;
-        }        
+        }
     }
+
     private static final Entry[] NULL_ENTRIES = new Entry[C1];
 
     static volatile int ONE_VOLATILE = 1; // To prevent reordering.

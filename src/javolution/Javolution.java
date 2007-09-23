@@ -14,7 +14,6 @@ import javolution.context.LogContext;
 import javolution.testing.TestContext;
 import javolution.testing.TimeContext;
 import javolution.text.Text;
-import javolution.util.FastMap;
 
 /**
  * <p> This class contains the library {@link #main} method for

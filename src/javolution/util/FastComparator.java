@@ -153,10 +153,10 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
             final String str = (String)obj;
             final int length = str.length();
             if (length == 0) return 0;
-            return str.charAt(0) + str.charAt(length) * 31 +
-                str.charAt(length << 1) * 1009 + 
-                str.charAt(length << 2) * 27583 +
-                str.charAt((length << 1) + (length << 2)) * 73408859;
+            return str.charAt(0) + str.charAt(length - 1) * 31 +
+                str.charAt(length >> 1) * 1009 + 
+                str.charAt(length >> 2) * 27583 +
+                str.charAt(length - 1 - (length >> 2)) * 73408859;
         }
 
         public boolean areEqual(Object o1, Object o2) {
