@@ -1,0 +1,49 @@
+<body>
+<H2><B><I><SPAN CLASS="style0">J</SPAN><SPAN CLASS="style1">avolution</I></B></SPAN> - Java<SUP>TM</SUP> Solution for Real-Time and Embedded Systems.</H2>
+
+<a name="license"></a>
+<h3><b>License:</b></h3>
+<p> Permission to use, copy, modify, and distribute this software is freely granted, 
+    provided that copyright notices are preserved (the full license text can be found 
+    <a href="../../../LICENSE.txt">here</a>).</p>
+<p> <b><i>Javolution</i></b>'s users are encouraged to show their support with the
+    <a href="http://javolution.org"><img src="../../../css/img/javolution.png"></a> button.</p>
+
+<a name="overview"></a>
+<h3><b>Overview:</b></h3>
+Although Java<sup>TM</sup> has been very successful on the server-side; It has few shortcomings limiting
+its adoption for others domains such as real-time, embedded or high-performance applications.
+For these, the <b><i>Javolution</i></b> library provides important "pieces" missing
+from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platform even more attractive.
+
+<a name="configuration"></a>
+<h3><b>Configuration:</b></h3>
+<b><i>Javolution</i></b>'s default configuration should satisfy most applications. 
+Nonetheless, it is possible to change these defaults at run-time (see 
+{@link javolution.lang.Configurable Configurable} for details).
+Here are few important configuration parameters with their default values:
+<p></p>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 1000px;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Configurable</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Javolution Default</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}</td>
+      <td style="vertical-align: top;">(Number of Processors - 1)</td>
+      <td style="vertical-align: top;">The maximum number of worker threads usable by 
+                                       {@link javolution.context.ConcurrentContext ConcurrentContext}(none for single processors)</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE}</td>
+      <td style="vertical-align: top;"><code>true</code> or <code>false</code><br>
+                                       based upon the run-time platform<br> 
+                                       (small test performed at start-up)</td>
+      <td style="vertical-align: top;">Indicates if the system hash code requires rehashing 
+                                       (see <a href="javolution/util/FastMap.html">FastMap</a>)</td>
+    </tr>
+  </tbody>
+</table>
+</body>

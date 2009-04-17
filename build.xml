@@ -7,49 +7,51 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="5.2" />
-        <property name="release" value="5" />
-        <property name="src" value="src" />
-        <property name="bin" value="bin" />
-        <property name="tmp" value="tmp" />
-        <property name="api" value="api" />
-        <property name="debug" value="false" />
-        <property name="optimize" value="true" />
+        <property name="version" value="5.3" />
+        <property name="release" value="0" />
+        <property name="jarpath" value="target/${library}-${version}.${release}" />
+        <property name="javaGenerated" value="target/generated-sources/main/java" />
+        <property name="javaSource" value="src/main/java" />
+        <property name="javadocSource" value="src/main/javadoc" />
+        <property name="bin" value="target/classes" />
+        <property name="api" value="target/site/apidocs" />
+        <property name="debug" value="on" />
+        <property name="compile.debuglevel" value="source,lines,vars" />
         <property name="encoding" value="UTF-8" />
-        <property name="lite" value="false" />
-    	<condition property="isLite">
-    	     <equals arg1="${lite}" arg2="true"/>
-        </condition>
-        <mkdir dir="${tmp}" />
     </target>
 
     <target name="clean" depends="_init">
         <delete dir="${bin}" />
         <delete dir="${api}" />
-        <delete dir="${tmp}" />
-        <delete file="${library}.jar" />
-        <delete file="${library}-${version}.${release}-src.zip" />
-        <delete file="${library}-${version}.${release}-bin.zip" />
+        <delete dir="${javaGenerated}" />
+        <delete file="${jarpath}.jar" />
+        <delete file="${jarpath}-src.zip" />
+        <delete file="${jarpath}-bin.zip" />
     </target>
 
-    <target name="_init_1.0" depends="_init">
-        <property name="vm" value="CLDC 1.0+" />
+    <target name="_init_j2me">
+        <property name="vm" value="J2ME" />
         <property name="source" value="1.3" />
         <property name="target" value="1.1" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}/j2me">
+            <fileset dir="${javaSource}/_templates/java" />
         </copy>
-    </target>
-
-    <target name="_init_1.1">
-        <property name="vm" value="CLDC 1.1+" />
-        <property name="source" value="1.3" />
-        <property name="target" value="1.1" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <filter token="JVM-1.1+" value="*/" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}/j2mex">
+            <fileset dir="${javaSource}/_templates/javax" />
+        </copy>
+        <copy todir="${javaGenerated}/javolution" >
+            <fileset dir="${javaSource}/_templates/javolution" />
+        </copy>
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.java]]></replacetoken>
+            <replacevalue><![CDATA[j2me]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.javolution]]></replacetoken>
+            <replacevalue><![CDATA[javolution]]></replacevalue>
+        </replace>
+        <copy todir="${javaGenerated}/org/xml" filtering="false">
+            <fileset dir="${javaSource}/org/xml" />
         </copy>
     </target>
 
@@ -57,227 +59,170 @@
         <property name="vm" value="J2SE 1.4+" />
         <property name="source" value="1.4" />
         <property name="target" value="1.4" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <filter token="JVM-1.1+" value="*/" />
         <filter token="JVM-1.4+" value="*/" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}" filtering="true">
+            <fileset dir="${javaSource}/_templates" />
         </copy>
-    	<antcall target="_remove_j2me_classes" />
-        </target>
-
-    <target name="_remove_j2me_classes">
-    	<delete dir="${tmp}/org/xml/" />
-    	<delete dir="${tmp}/j2me/" />
-    	<delete dir="${tmp}/j2mex/" />
-        <copy todir="${tmp}/javax/realtime">
-            <fileset dir="${src}/j2mex/realtime" />
-        </copy>
-        <replace dir="${tmp}/javolution" token="j2me." value="java." includes="**/*.java" />
-        <replace dir="${tmp}" token="j2mex." value="javax." includes="**/*.java" />
-        <replace dir="${tmp}" token="toCsq(" value="(" includes="**/*.java" />
+        <delete dir="${javaGenerated}/java/" />
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.]]></replacetoken>
+            <replacevalue><![CDATA[]]></replacevalue>
+        </replace>
     </target>
 
     <target name="_init_1.5">
         <property name="vm" value="J2SE 1.5+" />
         <property name="source" value="1.5" />
         <property name="target" value="1.5" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <filter token="JVM-1.1+" value="*/" />
         <filter token="JVM-1.4+" value="*/" />
         <filter token="JVM-1.5+" value="*/" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}" filtering="true">
+            <fileset dir="${javaSource}/_templates" />
         </copy>
-    	<antcall target="_remove_j2me_classes" />
-    	<antcall target="_make_classes_parameterized" />
-     </target>
-
-     <target name="_make_classes_parameterized">
-        <replace dir="${tmp}" token="javolution.text.Appendable" value="java.lang.Appendable" includes="**/*.java" />
-        <replace dir="${tmp}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java" />
-        <delete file="${tmp}/javolution/text/Appendable.java" />
-        <delete file="${tmp}/javolution/lang/Enum.java" />
-    	
-        <!-- Return Types (more specialized return type)-->
-        <replace dir="${tmp}/javolution" includes="**/RealtimeObject.java">
-            <replacetoken><![CDATA[ObjectPool/*Pool*/]]></replacetoken>
-            <replacevalue><![CDATA[ Pool ]]></replacevalue>
+        <delete dir="${javaGenerated}/java/" />
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.]]></replacetoken>
+            <replacevalue><![CDATA[]]></replacevalue>
         </replace>
-        <replace dir="${tmp}/javolution" includes="**/TextBuilder.java">
-            <replacetoken><![CDATA[Appendable/*TextBuilder*/]]></replacetoken>
-            <replacevalue><![CDATA[ TextBuilder ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/FastSet.java">
-            <replacetoken><![CDATA[Collection/*Set<E>*/]]></replacetoken>
-            <replacevalue><![CDATA[ Set<E> ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/FastTable.java">
-            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
-            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/FastList.java">
-            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
-            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
-        </replace>
-        <!-- In context classes -->
-        <replace dir="${tmp}/javolution" includes="**/Context.java">
-            <replacetoken><![CDATA[/*T*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ T]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/AllocatorContext.java">
-            <replacetoken><![CDATA[/*AllocatorContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ AllocatorContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/ConcurrentContext.java">
-            <replacetoken><![CDATA[/*ConcurrentContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ ConcurrentContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/HeapContext.java">
-            <replacetoken><![CDATA[/*HeapContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ HeapContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/ImmortalContext.java">
-            <replacetoken><![CDATA[/*ImmortalContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ ImmortalContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/LocalContext.java">
-            <replacetoken><![CDATA[/*LocalContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ LocalContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/LogContext.java">
-            <replacetoken><![CDATA[/*LogContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ LogContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/PersistentContext.java">
-            <replacetoken><![CDATA[/*PersistentContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ PersistentContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/SecurityContext.java">
-            <replacetoken><![CDATA[/*SecurityContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ SecurityContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/StackContext.java">
-            <replacetoken><![CDATA[/*StackContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ StackContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/TestContext.java">
-            <replacetoken><![CDATA[/*TestContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ TestContext]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/TimeContext.java">
-            <replacetoken><![CDATA[/*TimeContext*/Context]]></replacetoken>
-            <replacevalue><![CDATA[ TimeContext]]></replacevalue>
-        </replace>
-        <!-- In Struct class -->
-        <replace dir="${tmp}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/* <S extends Struct> S*/Struct]]></replacetoken>
-            <replacevalue><![CDATA[ <S extends Struct> S ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/*S*/Struct]]></replacetoken>
-            <replacevalue><![CDATA[ S ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/* <M extends Member> M*/Member]]></replacetoken>
-            <replacevalue><![CDATA[ <M extends Member> M ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/*M*/Member]]></replacetoken>
-            <replacevalue><![CDATA[ M ]]></replacevalue>
-        </replace>        
-        <!-- In Generic Collections -->
-        <replace dir="${tmp}/javolution" includes="**/FastMap.java">
-            <replacetoken><![CDATA[Record/*Entry<K,V>*/]]></replacetoken>
-            <replacevalue><![CDATA[Entry<K,V>]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/FastList.java">
-            <replacetoken><![CDATA[Record/*Node<E>*/]]></replacetoken>
-            <replacevalue><![CDATA[Node<E>]]></replacevalue>
-        </replace>
-        <!-- Types from parameterized class. -->
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[Object/*{]]></replacetoken>
-            <replacevalue><![CDATA[ ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/StackContext.java">
-            <replacetoken><![CDATA[ValueType/*{]]></replacetoken>
-            <replacevalue><![CDATA[ ]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[}*/]]></replacetoken>
-            <replacevalue><![CDATA[ ]]></replacevalue>
-        </replace>
-        <!-- Variable length arguments, replace [] with ... -->
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[[]/*...*/]]></replacetoken>
-            <replacevalue><![CDATA[...]]></replacevalue>
-        </replace>
-        <!-- Parameterized types-->
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[/*<]]></replacetoken>
-            <replacevalue><![CDATA[ <]]></replacevalue>
-        </replace>
-        <replace dir="${tmp}/javolution" includes="**/*.java">
-            <replacetoken><![CDATA[>*/]]></replacetoken>
-            <replacevalue><![CDATA[> ]]></replacevalue>
-        </replace>
+        <antcall target="_make_classes_parameterized" />
     </target>
 
     <target name="_init_1.6">
         <property name="vm" value="J2SE 1.6+" />
         <property name="source" value="1.6" />
         <property name="target" value="1.6" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <filter token="JVM-1.1+" value="*/" />
         <filter token="JVM-1.4+" value="*/" />
         <filter token="JVM-1.5+" value="*/" />
         <filter token="JVM-1.6+" value="*/" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}" filtering="true">
+            <fileset dir="${javaSource}/_templates" />
         </copy>
-    	<antcall target="_remove_j2me_classes" />
-    	<antcall target="_make_classes_parameterized" />
+        <delete dir="${javaGenerated}/java/" />
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.]]></replacetoken>
+            <replacevalue><![CDATA[]]></replacevalue>
+        </replace>
+        <antcall target="_make_classes_parameterized" />
     </target>
 
     <target name="_init_gcj">
         <property name="vm" value="GCJ" />
         <property name="source" value="1.4" />
         <property name="target" value="1.4" />
-        <filter token="VERSION" value="${version}.${release} (${vm}) ${TODAY}" />
-        <filter token="JVM-1.1+" value="*/" />
         <filter token="JVM-1.4+" value="*/" />
-        <copy todir="${tmp}" filtering="true">
-            <fileset dir="${src}" />
+        <copy todir="${javaGenerated}" filtering="true">
+            <fileset dir="${javaSource}/_templates" />
         </copy>
-    	<antcall target="_remove_j2me" />
-		<!-- Need to put back org.xml.sax (removed by _remove_j2me) -->
-        <copy todir="${tmp/org/xml/}" filtering="false">
-            <fileset dir="${src}/org/xml/" />
+        <delete dir="${javaGenerated}/java/" />
+        <replace dir="${javaGenerated}" includes="**/*.java">
+            <replacetoken><![CDATA[_templates.]]></replacetoken>
+            <replacevalue><![CDATA[]]></replacevalue>
+        </replace>
+        <copy todir="${javaGenerated}/org/xml" filtering="false">
+            <fileset dir="${javaSource}/org/xml" />
         </copy>
+    </target>
+
+   <target name="_setVersion">
+        <replace file="${javaGenerated}/javolution/Javolution.java" token="@VERSION@" value="${version}.${release} (${vm}) ${TODAY}" />
+    </target>
+
+    <target name="_make_classes_parameterized">
+     	<!-- Replace Javolution Enum with Java Enum -->
+        <replace dir="${javaGenerated}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java" />
+        <delete file="${javaGenerated}/javolution/lang/Enum.java" />
+    	
+     	<!-- Remove javolution.text.Appendable (replaced by java.lang.Appendable) -->
+        <delete file="${javaGenerated}/javolution/text/Appendable.java" />
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[javolution.text.Appendable]]></replacetoken>
+            <replacevalue><![CDATA[java.lang.Appendable]]></replacevalue>
+        </replace>
+
+        <!-- Return Types (more specialized return type)-->
+        <replace dir="${javaGenerated}/javolution" includes="**/TextBuilder.java">
+            <replacetoken><![CDATA[Appendable/*TextBuilder*/]]></replacetoken>
+            <replacevalue><![CDATA[ TextBuilder ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/FastSet.java">
+            <replacetoken><![CDATA[Collection/*Set<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ Set<E> ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/FastTable.java">
+            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/FastList.java">
+            <replacetoken><![CDATA[Collection/*List<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[ List<E> ]]></replacevalue>
+        </replace>
+        <!-- In Struct class -->
+        <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/* <S extends Struct> S*/Struct]]></replacetoken>
+            <replacevalue><![CDATA[ <S extends Struct> S ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*S*/Struct]]></replacetoken>
+            <replacevalue><![CDATA[ S ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/* <M extends Member> M*/Member]]></replacetoken>
+            <replacevalue><![CDATA[ <M extends Member> M ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/*M*/Member]]></replacetoken>
+            <replacevalue><![CDATA[ M ]]></replacevalue>
+        </replace>
+        <!-- In Generic Collections -->
+        <replace dir="${javaGenerated}/javolution" includes="**/FastMap.java">
+            <replacetoken><![CDATA[Record/*Entry<K,V>*/]]></replacetoken>
+            <replacevalue><![CDATA[Entry<K,V>]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/FastList.java">
+            <replacetoken><![CDATA[Record/*Node<E>*/]]></replacetoken>
+            <replacevalue><![CDATA[Node<E>]]></replacevalue>
+        </replace>
+        <!-- Types from parameterized class. -->
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[Object/*{]]></replacetoken>
+            <replacevalue><![CDATA[ ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/AllocatorContext.java">
+            <replacetoken><![CDATA[ValueType/*{]]></replacetoken>
+            <replacevalue><![CDATA[ ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[}*/]]></replacetoken>
+            <replacevalue><![CDATA[ ]]></replacevalue>
+        </replace>
+        <!-- Variable length arguments, replace [] with ... -->
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[[]/*...*/]]></replacetoken>
+            <replacevalue><![CDATA[...]]></replacevalue>
+        </replace>
+        <!-- Parameterized types-->
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[/*<]]></replacetoken>
+            <replacevalue><![CDATA[ <]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/*.java">
+            <replacetoken><![CDATA[>*/]]></replacetoken>
+            <replacevalue><![CDATA[> ]]></replacevalue>
+        </replace>
     </target>
 
     <target name="_compile" depends="_init">
         <mkdir dir="${bin}" />
-        <!-- Compile everything in tmp directory -->
-        <javac srcdir="${tmp}" destdir="${bin}" classpath="${bin}" target="${target}" source="${source}" debug="${debug}" optimize="${optimize}" encoding="${encoding}" />
-        <!-- Copies resources if any -->
-        <copy todir="${bin}">
-            <fileset dir="${src}">
-                <include name="**/res-files/*" />
-            </fileset>
-        </copy>
+        <!-- Compile everything in java generated directory -->
+        <javac srcdir="${javaGenerated}" destdir="${bin}" classpath="${bin}" target="${target}" source="${source}" debug="${debug}" debuglevel="${compile.debuglevel}" encoding="${encoding}" />
     </target>
 
     <target name="doc" depends="_init">
-        <mkdir dir="${api}" />
-        <!-- Overwrite doc-files with original documents  -->
-        <copy todir="${tmp}" overwrite="true">
-            <fileset dir="${src}">
-                <include name="**/doc-files/*" />
-            </fileset>
+        <!-- Copies javadoc resources to generated classes directory  -->
+        <copy todir="${javaGenerated}" overwrite="true">
+            <fileset dir="${javadocSource}" />
         </copy>
-        <javadoc sourcepath="${tmp}" destdir="${api}" windowtitle="Javolution v${version} API" overview="src/overview.html" author="true" version="true" classpath="${bin}" charset="${encoding}" encoding="${encoding}" docencoding="${encoding}" stylesheetfile="css/javadoc.css" splitindex="true">
+        <javadoc sourcepath="${javaGenerated}" classpath="${bin}" packagenames="javolution.*" excludepackagenames="javolution" destdir="${api}" windowtitle="Javolution v${version} API" overview="${javadocSource}/overview.html" author="true" version="true" charset="${encoding}" encoding="${encoding}" docencoding="${encoding}" stylesheetfile="${javadocSource}/stylesheet.css" splitindex="true">
             <header>
                 <![CDATA[<A HREF="http://javolution.org">
                 <SPAN CLASS="style0">J</SPAN>
@@ -285,21 +230,16 @@
                 </A>]]>
             </header>
             <bottom>
-                <![CDATA[<i>Copyright &#169; 2005 - 2007 Javolution.</i>]]>
+                <![CDATA[<i>Copyright &#169; 2005 - 2009 Javolution.</i>]]>
             </bottom>
-            <packageset dir="${tmp}" defaultexcludes="yes">
-                <include name="javolution/**/*" />
-                <exclude name="**/doc-files/**" />
-                <exclude name="**/res-files/**" />
-            </packageset>
         </javadoc>
-    	<java classname="Colapi" classpath="colapi.jar">
-    	   <arg value="${basedir}/${api}" />
-    	</java>
+        <java classname="Colapi" classpath="colapi.jar">
+            <arg value="${basedir}/${api}" />
+        </java>
     </target>
 
-	<target name="jar" depends="_init">
-        <jar jarfile="${library}.jar" basedir="${bin}" update="false">
+    <target name="jar" depends="_init">
+        <jar jarfile="${jarpath}.jar" basedir="${bin}" update="false">
             <manifest>
                 <attribute name="Main-Class" value="javolution.Javolution" />
                 <attribute name="Specification-Title" value="Javolution" />
@@ -314,56 +254,65 @@
     </target>
 
     <target name="_zip" depends="_init">
-        <zip destfile="${library}-${version}.${release}-src.zip" update="false">
-            <zipfileset dir="." prefix="${library}-${version}" includes="src/**/*, doc/**/*, css/**/*, index.html, build.xml, colapi.jar" />
+        <zip destfile="${jarpath}-src.zip" update="false">
+            <zipfileset dir="." prefix="${library}" includes="src/**/*, pom.xml, LICENSE.txt, index.html, css/**/*, build.xml, colapi.jar" />
         </zip>
-        <zip destfile="${library}-${version}.${release}-bin.zip" update="false">
-            <zipfileset dir="." prefix="${library}-${version}" includes="doc/license.txt, css/**/*, ${api}/**/*, index.html, ${library}.jar" />
+        <zip destfile="${jarpath}-bin.zip" update="false">
+            <zipfileset dir="." prefix="${library}" includes="${jarpath}.jar, pom.xml, LICENSE.txt, index.html, css/**/*, build.xml, colapi.jar, target/site/**/*" />
         </zip>
     </target>
 
-    <target name="1.0" depends="clean, _init_1.0, _compile, doc, jar, _zip" />
-    <target name="1.1" depends="clean, _init_1.1, _compile, doc, jar, _zip" />
-    <target name="1.4" depends="clean, _init_1.4, _compile, doc, jar, _zip" />
-    <target name="1.5" depends="clean, _init_1.5, _compile, doc, jar, _zip" />
-    <target name="1.6" depends="clean, _init_1.6, _compile, doc, jar, _zip" />
-    <target name="gcj" depends="clean, _init_gcj, _compile, doc, jar, _zip">
+    <target name="j2me" depends="clean, _init_j2me, _setVersion, _compile, doc, jar, _zip" />
+    <target name="gcj" depends="clean, _init_gcj, _setVersion, _compile, doc, jar, _zip">
         <echo>Build shared library ${library}.so</echo>
         <exec executable="gcj">
-            <arg line='-shared -o ${library}.so ${library}.jar' />
+            <arg line='-shared -o ${jarpath}.so ${jarpath}.jar' />
         </exec>
         <echo>Build executable ${library}.exe</echo>
         <exec executable="gcj">
-            <arg line='--main=javolution.Javolution -o ${library}.exe ${library}.jar' />
+            <arg line='--main=javolution.Javolution -o ${jarpath}.exe ${jarpath}.jar' />
         </exec>
-        <zip destfile="${library}-${version}.${release}-bin.zip" update="true">
-            <zipfileset dir="." prefix="${library}-${version}" includes="${library}.so, ${library}.exe" />
-        </zip>
     </target>
+    <target name="1.4" depends="clean, _init_1.4, _setVersion, _compile, doc, jar, _zip" />
+    <target name="1.5" depends="clean, _init_1.5, _setVersion, _compile, doc, jar, _zip" />
+    <target name="1.6" depends="clean, _init_1.6, _setVersion, _compile, doc, jar, _zip" />
     <target name="no-args">
         <echo>Please select one of the following targets:</echo>
-        <echo>    1.0 (CLDC 1.0+)</echo>
-        <echo>    1.1 (CLDC 1.1+)</echo>
+        <echo>    j2me (J2ME CLDC 1.1+)</echo>
+        <echo>    gcj (GNU Compiler for Java - GCC 3.2)</echo>
         <echo>    1.4 (J2SE 1.4+)</echo>
         <echo>    1.5 (J2SE 1.5+)</echo>
         <echo>    1.6 (J2SE 1.6+)</echo>
-        <echo>    gcj (Gnu Compiler for Java)</echo>
-    	<fail/>
+        <echo>    test (executes built-in tests in TestContext)</echo>
+        <echo>    time (executes built-in tests in TimeContext)</echo>
+        <echo>(use -Ddebug=off to turn off debug information)</echo>
+        <fail message="No target specified"/>
     </target>
 
-    <!-- NETBEANS SUPPORT -->
     <target name="compile" depends="clean, _init_1.5, _compile, jar, doc" />
-    <target name="run" depends="clean, _init_1.6, _compile">
+
+    <target name="test" depends="clean, _init_1.6, _compile">
         <java classpath="${bin}" classname="javolution.Javolution" fork="true">
             <jvmarg value="-server" />
             <jvmarg value="-Xms512M" />
             <jvmarg value="-Xmx512M" />
-            <arg value="perf" />
-        </java>
-    </target>
-    <target name="test" depends="clean, _init_1.5, _compile">
-        <java classpath="${bin}" classname="javolution.Javolution" fork="true">
+            <jvmarg value="-XX:+UseConcMarkSweepGC" />
+            <jvmarg value="-XX:CompileThreshold=1" />
             <arg value="test" />
         </java>
     </target>
+
+    <target name="time" depends="clean, _init_1.6, _compile">
+        <java classpath="${bin}" classname="javolution.Javolution" fork="true">
+            <jvmarg value="-server" />
+            <jvmarg value="-Xms512M" />
+            <jvmarg value="-Xmx512M" />
+            <jvmarg value="-XX:+UseConcMarkSweepGC" />
+            <jvmarg value="-XX:CompileThreshold=1" />
+            <arg value="time" />
+        </java>
+    </target>
+
+    <target name="maven" depends="_init, _init_1.5, _setVersion" />
+
 </project>

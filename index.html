@@ -1,13 +1,13 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
+    "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 
-<!--[if gte IE 5.5000]>
-<script language="JavaScript">
-function correctPNG() // The following script correctly handles the PNG transparency in IE 5.5 or higher.
-   {
-   for(var i=0; i<document.images.length; i++)
-      {
+    <!--[if gte IE 5.5000]>
+    <script language="JavaScript">
+    function correctPNG() // The following script correctly handles the PNG transparency in IE 5.5 or higher.
+       {
+       for(var i=0; i<document.images.length; i++)
+          {
 	  var img = document.images[i]
 	  var imgName = img.src.toUpperCase()
 	  if (imgName.substring(imgName.length-3, imgName.length) == "PNG")
@@ -26,882 +26,897 @@ function correctPNG() // The following script correctly handles the PNG transpar
 		 img.outerHTML = strNewHTML
 		 i = i-1
 	     }
-      }
-   }
-window.attachEvent("onload", correctPNG);
-</script>
-<![endif]-->
-<HEAD>
-   <TITLE>Javolution</TITLE>
-   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-   <META NAME="description" CONTENT="Java library for real-Time, embedded and high-performance applications.">
-   <META NAME="keywords" CONTENT="java, real-time, embedded, safety critical, xml, sax2 parser, j2me, cldc, library, open-source, free, fast">
-   <STYLE TYPE="text/css">
-<!--
-body {
-	background-image:  url(css/img/bg.jpg);
-	margin-left: 0px;
-	margin-top: 0px;
-	margin-right: 0px;
-	margin-bottom: 0px;
-}
--->
-   </STYLE> 
-    
-   <LINK HREF="css/index.css" TYPE="text/css" REL="stylesheet">
-   <STYLE TYPE="text/css"> 
+          }
+       }
+    window.attachEvent("onload", correctPNG);
+    </script>
+    <![endif]-->
+    <HEAD>
+        <TITLE>Javolution</TITLE>
+        <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+        <META NAME="description" CONTENT="Java library for real-Time, embedded and high-performance applications.">
+        <META NAME="keywords" CONTENT="java, real-time, embedded, safety critical, xml, sax2 parser, j2me, cldc, library, open-source, free, fast">
+        <STYLE TYPE="text/css">
+            <!--
+            body {
+                background-image:  url(css/img/bg.jpg);
+                margin-left: 0px;
+                margin-top: 0px;
+                margin-right: 0px;
+                margin-bottom: 0px;
+            }
+            -->
+        </STYLE>
 
-<!--
-.style2 {color: #484444}
-.style3 {color: #666666}
-.style4 {font-size: 11px; color: #C7630D; text-decoration: none; font-family: Verdana;}
-.style5 {color: #FFFFFF}
-.style9 {font-size: 12px; color: #6C890C; text-decoration: none; font-family: Verdana;}
-.style10 {
-	font-size: 11px;
-	color: #455724;
-}
-.style13 {color: #C0590C; font-weight: bold; }
-.style14 {font-size: 11px}
-.style15 {font-family: "Courier New"}
-.style16 {
-	font-size: 12px;
-	color: #FFFFFF;
-}
--->
-   </STYLE> 
-</HEAD>
-<BODY>
-<TABLE ALIGN="center" HEIGHT="1257" BORDER="0" CELLSPACING="0"
-       CELLPADDING="0" WIDTH="707">
-   <TR>
-   <TD WIDTH="26">
-   <IMG HEIGHT="100%" SRC="css/img/bg_left.png" WIDTH="26"></TD>
-   <TD VALIGN="top" BACKGROUND="css/img/bg_collumb.jpg" WIDTH="675">
-   <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/header_bg.jpg"
-          CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="37">
-      <IMG HEIGHT="85" SRC="css/img/header_leftcollumn.jpg" WIDTH="8"></TD>
-      <TD VALIGN="top" WIDTH="619">
-      <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="596">
-         <TR>
-         <TD VALIGN="top" WIDTH="19%">
-         <IMG HEIGHT="58" SRC="css/img/javolution_log.gif" WIDTH="101"></TD>
-         <TD WIDTH="4%">
-         <IMG HEIGHT="85" SRC="css/img/seperator.jpg" WIDTH="1"></TD>
-         <TD VALIGN="top" WIDTH="77%">
-         <IMG HEIGHT="51" SRC="css/img/thesolution.gif" WIDTH="401"></TD>
-         </TR>
-      </TABLE></TD>
-      <TD WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="85"
-                              SRC="css/img/header_rightcollumn.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-   <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/detailler_bg.jpg"
-          CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="10">
-      <IMG HEIGHT="48" SRC="css/img/detailler_leftcollumn.jpg" WIDTH="8">
-      </TD>
-      <TD VALIGN="top" WIDTH="656">
-      <DIV ALIGN="center"><SPAN CLASS="detaillerclass">Because real-time
-         programming requires a time-predictable standard library.</SPAN></DIV>
-      </TD>
-      <TD WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="48"
-                              SRC="css/img/detailler_rightcollumn.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-   <TABLE CLASS="quotetable" ALIGN="center" HEIGHT="43" BORDER="0"
-          CELLSPACING="1" CELLPADDING="12" WIDTH="633">
-      <TR>
-      <TD WIDTH="607">
-      <DIV CLASS="simplespacer" ALIGN="right"> 
-         <DIV ALIGN="center"><SPAN CLASS="quotetext"><I>&quot;The ability
-            to simplify means to eliminate the unnecessary so that the
-            necessary may speak.&quot;</I><B><BR> <SPAN CLASS="style2">&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;<B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B></B><B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B><B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B>Hans
-            Hofmann</SPAN><SPAN CLASS="style3">, </SPAN></B></SPAN><SPAN
-               CLASS="style4"><SPAN CLASS="style3">Introduction to the
-            Bootstrap, 1993</SPAN></SPAN> 
-         </DIV> 
-      </DIV></TD>
-      </TR>
-   </TABLE>
-   <BR> 
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
+        <LINK HREF="css/index.css" TYPE="text/css" REL="stylesheet">
+        <STYLE TYPE="text/css">
+
+            <!--
+            .style2 {color: #484444}
+            .style3 {color: #666666}
+            .style4 {font-size: 11px; color: #C7630D; text-decoration: none; font-family: Verdana;}
+            .style5 {color: #FFFFFF}
+            .style9 {font-size: 12px; color: #6C890C; text-decoration: none; font-family: Verdana;}
+            .style10 {
+                font-size: 11px;
+                color: #455724;
+            }
+            .style13 {color: #C0590C; font-weight: bold; }
+            .style14 {font-size: 11px}
+            .style15 {font-family: "Courier New"}
+            .style16 {
+                font-size: 12px;
+                color: #FFFFFF;
+            }
+            -->
+        </STYLE>
+    </HEAD>
+    <BODY>
+        <TABLE ALIGN="center" HEIGHT="1257" BORDER="0" CELLSPACING="0"
+               CELLPADDING="0" WIDTH="707">
             <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                <TD WIDTH="26">
+                    <IMG HEIGHT="100%" SRC="css/img/bg_left.png" WIDTH="26"></TD>
+                <TD VALIGN="top" BACKGROUND="css/img/bg_collumb.jpg" WIDTH="675">
+                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/header_bg.jpg"
+                           CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="37">
+                                <IMG HEIGHT="85" SRC="css/img/header_leftcollumn.jpg" WIDTH="8"></TD>
+                            <TD VALIGN="top" WIDTH="619">
+                                <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="596">
+                                    <TR>
+                                        <TD VALIGN="top" WIDTH="19%">
+                                            <IMG HEIGHT="58" SRC="css/img/javolution_log.gif" WIDTH="101"></TD>
+                                        <TD WIDTH="4%">
+                                            <IMG HEIGHT="85" SRC="css/img/seperator.jpg" WIDTH="1"></TD>
+                                        <TD VALIGN="top" WIDTH="77%">
+                                            <IMG HEIGHT="51" SRC="css/img/thesolution.gif" WIDTH="401"></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="85"
+                                                        SRC="css/img/header_rightcollumn.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/detailler_bg.jpg"
+                           CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="10">
+                                <IMG HEIGHT="48" SRC="css/img/detailler_leftcollumn.jpg" WIDTH="8">
+                            </TD>
+                            <TD VALIGN="top" WIDTH="656">
+                                <DIV ALIGN="center"><SPAN CLASS="detaillerclass">Because real-time
+                                        programming requires a time-predictable standard library.</SPAN></DIV>
+                            </TD>
+                            <TD WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="48"
+                                                        SRC="css/img/detailler_rightcollumn.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE CLASS="quotetable" ALIGN="center" HEIGHT="43" BORDER="0"
+                           CELLSPACING="1" CELLPADDING="12" WIDTH="633">
+                        <TR>
+                            <TD WIDTH="607">
+                                <DIV CLASS="simplespacer" ALIGN="right">
+                                    <DIV ALIGN="center"><SPAN CLASS="quotetext"><I>&quot;The ability
+                                                to simplify means to eliminate the unnecessary so that the
+                                                necessary may speak.&quot;</I><B><BR> <SPAN CLASS="style2">&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;<B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B></B><B>&nbsp;<B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B></B><B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B><B><B><B>&nbsp;</B><B></B></B></B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B><B>&nbsp;</B>Hans
+                                                    Hofmann</SPAN><SPAN CLASS="style3">, </SPAN></B></SPAN><SPAN
+                                            CLASS="style4"><SPAN CLASS="style3">Introduction to the
+                                                Bootstrap, 1993</SPAN></SPAN>
+                                    </DIV>
+                                </DIV></TD>
+                        </TR>
+                    </TABLE>
+                    <BR>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_ajavarevolution.jpg" WIDTH="222">
+                                        </TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Javolution - A Java(TM) Revolution -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="98%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">
+                                <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
+                                That being accomplished through:
+                                <UL>
+                                    <LI> High <A HREF="doc/benchmark.html">performance</A> and time-deterministic (real-time)
+                                        <A HREF="target/site/apidocs/javolution/util/package-summary.html#package_description">util</A> /
+                                        <A HREF="target/site/apidocs/javolution/lang/package-summary.html#package_description">lang</A> /
+                                        <A HREF="target/site/apidocs/javolution/text/package-summary.html#package_description">text</A> /
+                                        <A HREF="target/site/apidocs/javolution/io/package-summary.html#package_description">io</A> /
+                                        <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">xml</A> base classes.</LI>
+                                    <LI> <A HREF="target/site/apidocs/javolution/context/package-summary.html#package_description">Context</A> programming
+                                        in order to achieve true separation of concerns (logging, performance, etc).</LI>
+                                    <LI> A <A HREF="target/site/apidocs/javolution/testing/package-summary.html#package_description">testing</A> framework
+                                        addressing not only unit tests but also performance and regression tests as well.</LI>
+                                    <LI> Straightforward and low-level parallel computing capabilities
+                                        with <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
+                                    <LI> <A HREF="target/site/apidocs/javolution/io/Struct.html">Struct</A> and
+                                        <A HREF="target/site/apidocs/javolution/io/Union.html">Union</A> base classes for
+                                        direct interfacing with native applications (e.g. C/C++).</LI>
+                                    <LI> World's fastest and first hard real-time <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
+                                        facility.</LI>
+                                    <LI> Simple yet flexible <A HREF="target/site/apidocs/javolution/lang/Configurable.html">configuration</A> management
+                                        of your application.</LI>
+                                </UL></TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_topten.jpg" WIDTH="370"></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Top 10 Reasons -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="96%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">
+                                <OL>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
+                                        are simple to use, even simpler than most JDK classes.
+                                        You don't need to guess the capacity of a
+                                        <A HREF="target/site/apidocs/javolution/text/TextBuilder.html">TextBuilder</A>,
+                                        <A HREF="target/site/apidocs/javolution/util/FastTable.html">FastTable</A> or a
+                                        <A HREF="target/site/apidocs/javolution/util/FastMap.html">FastMap</A>, their
+                                        size expand gently without ever incurring expensive resize/copy or rehash
+                                        operations (unlike <code>StringBuilder</code>, <code>ArrayList</code>  or <code>HashMap</code>).
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body">Developers may achieve true separation of
+                                        concerns (e.g. logging, configuration) through <A HREF="target/site/apidocs/javolution/context/package-summary.html#package_description">Context Programming</A>
+                                        or by using classes such as <A HREF="target/site/apidocs/javolution/lang/Configurable.html">Configurable</A>.</LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
+                                        are fast, very fast (e.g. <A HREF="target/site/apidocs/javolution/text/Text.html">Text</A>
+                                        insertion/deletion in <code>O[Log(n)]</code> instead of <code>O[n]</code> for standard
+                                        <code>StringBuffer/StringBuilder</code>).
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body">All <B><I>Javolution</I></B>
+                                        classes are <b>hard real-time compliant</b> and have highly deterministic
+                                        behavior (in the microsecond range). Furthermore (unlike the standard
+                                        library), <B><I>Javolution</I></B>  is
+                                        <A HREF="http://www.rtsj.org/">RTSJ</A> safe (no memory clash or
+                                        memory leak when used with Java Real-Time extension).
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
+                                        <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
+                                        to take advantage of multi-processors systems.
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>'s real-time collection classes
+                                        (<A HREF="target/site/apidocs/javolution/util/FastMap.html">map</A>,
+                                        <A HREF="target/site/apidocs/javolution/util/FastList.html">list</A>,
+                                        <A HREF="target/site/apidocs/javolution/util/FastTable.html">table</A> and
+                                        <A HREF="target/site/apidocs/javolution/util/FastSet.html">set</A>)
+                                        can be used in place of most standard collection classes and provide
+                                        numerous additional <A HREF="target/site/apidocs/javolution/util/package-summary.html#package_description">capabilities</A>.<BR> </LI>
+                                    <LI CLASS="simplespacer_body">Any Java class can be
+                                        serialized/deserialized in
+                                        <A HREF="target/site/apidocs/javolution/xml/XMLFormat.html">XML format</A> <b>in any
+                                            form you may want</b>, also no need to implement Serializable or for the
+                                        platform to support serialization</LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>
+                                        provides <A HREF="target/site/apidocs/javolution/io/Struct.html">Struct</A> and
+                                        <A HREF="target/site/apidocs/javolution/io/Union.html">Union</A> classes for
+                                        direct interoperability with C/C++ applications.
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> runs on
+                                        <b>most platforms</b> from the simplest J2ME CLDC 1.1
+                                        to the latest J2EE 5.0 with parameterized types.
+                                        <BR> </LI>
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> is a pure
+                                        Java Solution (no native code), small (less than 300 KBytes jar
+                                        file) and free; permission to use, copy, modify, and distribute
+                                        this software is freely granted, provided that copyright notices are preserved
+                                        (<A HREF="LICENSE.txt">BSD License</A>). </LI>
+                                </OL></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Version -->
+                    <TABLE CLASS="quotetable" ALIGN="center" BORDER="0" CELLSPACING="0"
+                           CELLPADDING="0" WIDTH="89%">
+                        <TR>
+                            <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
+                                <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
+                                        CLASS="style16"><IMG SRC="css/img/new.gif"> Javolution Version 5.3.1 - April 13, 2009 <i>(maven integrated)</i> </SPAN></DIV>
+                            </TD>
+                        <TR>
+                            <TD BGCOLOR="#F4F4F2">
+                                <DIV ALIGN="center"><A HREF="target/site/apidocs/index.html"><IMG HEIGHT="51"
+                                                                                                  BORDER="0"
+                                                                                                  SRC="css/img/browseapi.jpg"
+                                                                                                  WIDTH="198"></A>
+                                    <A HREF="target/javolution-5.3.1-project.zip"><IMG HEIGHT="51" BORDER="0"
+                                                                                       SRC="css/img/getsource.jpg"
+                                                                                       WIDTH="194"></A>
+                                    <A HREF="target/javolution-5.3.1-bin.zip"><IMG HEIGHT="51" BORDER="0"
+                                                                                   SRC="css/img/getlibrary.jpg"
+                                                                                   WIDTH="198"></A></DIV></TD>
+                        </TR>
+                    </TABLE>
+                    <BR>
+
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_usage.jpg" WIDTH="48"></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Usage -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="89%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">
+                                The simplest way to use <B><I>Javolution</I></B> is through Maven
+                            with the following dependency in your POM.xml
+                        <pre>      &lt;dependency&gt;
+          &lt;groupId&gt;javolution&lt;/groupId&gt;
+          &lt;artifactId&gt;javolution&lt;/artifactId&gt;
+          &lt;version&gt;5.3.1&lt;/version&gt;
+      &lt;/dependency&gt;  </pre>
+      The latest <B><I>Javolution</I></B> artifact is deployed to the <A HREF="https://maven2-repository.dev.java.net/">java.net repository</A>
+                        </TD></TR>
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">The standard binary distribution (above) targets the
+                                J2SE 1.5+ platform and can be directly built from the project source
+                                and <A HREF="http://maven.apache.org/">Maven</A>. For others platforms, the library should be
+                                rebuilt from the sources using the provided
+                                <A HREF="http://ant.apache.org/">Ant</A> script. Here is a summary of
+                                the platforms supported:
+                                <BR>
+                                <BR></TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE CLASS="quotetable2" ALIGN="center" BORDER="0" CELLSPACING="0"
+                           CELLPADDING="7" WIDTH="604">
+                        <TR BACKGROUND="css/img/detailler_bg.jpg">
+                            <TD WIDTH="80">
+                                <DIV CLASS="style9" ALIGN="center">Ant Target
+                                </DIV></TD>
+                            <TD WIDTH="88">
+                                <DIV CLASS="style9" ALIGN="center">Platform
+                                </DIV></TD>
+                            <TD WIDTH="392"><SPAN CLASS="style9">Description</SPAN></TD>
+                        </TR>
+                        <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">j2me
+                                </DIV></TD>
+                            <TD CLASS="style9">J2ME - CLDC 1.1+ </TD>
+                            <TD CLASS="style9">For mobile and other embedded devices.
+                                <BR> J2SE interfaces are in the j2me.* package. </TD>
+                        </TR>
+                        <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">gcj
+                                </DIV></TD>
+                            <TD CLASS="style9"><A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for
+                                    Java</A></TD>
+                            <TD CLASS="style9">J2SE interfaces are in the regular java.* package.
+                                <BR> Includes org.xml.sax.* classes.
+                                <BR> Generates a native dynamic library ( javolution.so ). </TD>
+                        </TR>
+                        <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">1.4
+                                </DIV></TD>
+                            <TD CLASS="style9">J2SE 1.4+ </TD>
+                            <TD CLASS="style9">J2SE interfaces are in the regular java.* package. </TD>
+                        </TR>
+                        <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">1.5
+                                </DIV></TD>
+                            <TD CLASS="style9">J2SE 1.5+ </TD>
+                            <TD CLASS="style9">Parameterization of relevant classes (e.g. <A HREF="target/site/apidocs/javolution/util/package-summary.html#package_description">collections</A>)
+                                <BR> javolution.lang.Appendable and javolution.lang.Enum are moved to
+                                the java.lang.* package. </TD>
+                        </TR>
+                        <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">1.6
+                                </DIV></TD>
+                            <TD CLASS="style9">J2SE 1.6+ </TD>
+                            <TD CLASS="style9">Includes comparative test of Javolution StAX-Like reader/writer with standard StAX</TD>
+                        </TR>
+                        <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">test
+                                </DIV></TD>
+                            <TD CLASS="style9">J2SE 1.6+ </TD>
+                            <TD CLASS="style9">Executes built-in tests in TestContext (validation)</TD>
+                        </TR>
+                        <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
+                            <TD>
+                                <DIV CLASS="style9" ALIGN="center">time
+                                </DIV></TD>
+                            <TD CLASS="style9">J2SE 1.6+ </TD>
+                            <TD CLASS="style9">Executes built-in tests in TimeContext (performance)</TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="90%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">Once built, the library can be used as a normal
+                                library (no bootclasspath necessary). The library is also
+                                self-executable (for benchmarking purpose).
+                                <A HREF="doc/benchmark.html">Here</A> are the benchmark results on Windows.</TD>
+                        </TR>
+                    </TABLE>
+
+                    <a name="TOOLS"></a>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_tools.jpg" WIDTH="43"></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Tools -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="89%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top"><SPAN CLASS="style13">Runtime
+                                    Environment:</SPAN> <B>Any </B> (J2ME CLDC, J2SE, J2EE, GCJ, <a href="http://www.excelsior-usa.com/jet.html">Excelsior JET</a>)<BR>
+                                <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including
+                                <A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</A>)<BR>
+                                <SPAN CLASS="style13">Build tool: </SPAN><A
+                                    HREF="http://jakarta.apache.org/ant/">Apache Ant<BR> </A><SPAN
+                                    CLASS="style13">Collaborative Tool:</SPAN>
+                                <A HREF="http://javolution.dev.java.net/">java.net</A> (code
+                                development, comments, issues, bug reporting).<BR>
+                                <SPAN CLASS="style13">Style Guide:</SPAN>
+                                <A HREF="doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
+                                <SPAN CLASS="style13">Preferred Environment:</SPAN>
+                                <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding)
+                                and <A HREF="http://www.netbeans.org/">NetBeans</A> <BR>
+                                <SPAN CLASS="style13">Plug-In:</SPAN>
+                                <A HREF="http://javolution.org/javoclipse-1_0_48.zip">JavoClipse (v1.0.48)</A>
+                                - Eclipse plug-in to generate <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">xml formats</A>
+                                from source code.<BR>
+                                <I>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    (questions/comments can be sent directly to the javoclipse
+                                    <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">mailing list</A>)</I><BR>
+                                <SPAN CLASS="style13">Others:</SPAN>
+                                <A HREF="http://javolution.org/colapi/index.html">Colapi</A> - Maven Plugin to format/colorize Java code in API documentation.</TD>
+                        </TR>
+                    </TABLE>
+                    <BR>
+                    <a name="LINKS"></a>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_links.jpg" WIDTH="46"></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- Links -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="90%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">Articles related to
+                                <B><I>Javolution</I></B> (previously known as: <B>J.A.D.E. J</B>ava
+                                <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment):
+                                <UL>
+                                    <LI><IMG SRC="css/img/new.gif">
+                                        <A href="http://www.javaworld.com/javaworld/jw-04-2008/jw-04-realtime.html">Realistically Real-Time<SUP>TM</SUP></A>
+                                        JavaWorld article on Javolution and multi-core processors.</LI>
+                                    <LI>
+                                        <A href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java<SUP>TM</SUP></A> paper presented
+                                        to <A HREF="http://www.aiaa.org/">AIAA</A> Space 2007 conference.</LI>
+                                    <LI>
+                                        <A HREF="http://javolution.org/doc/Man33955.pdf">Validating Java for Safety-Critical Applications</A>
+                                        (<A HREF="http://www.aiaa.org/">AIAA</A> Space 2005 Conference).</LI>
+                                    <LI>
+                                        <A HREF="http://javolution.org/doc/Javolution-Collections.pdf">Collection Classes for Real-Time
+                                            and High-Performance Applications (pdf)</A><BR>
+                                        Introduction to <B><I>Javolution</I></B>
+                                        <A href="https://rtsj.dev.java.net/">RTSJ-Compliant</A> Collections Classes.</LI>
+                                    <LI><A HREF="http://www.sys-con.com/story/?storyid=45500&DE=1">
+                                            Turbo-Charging Java for Real-Time Applications</A><BR> (July 2004
+                                        issue of <B>Java Developer Journal</B>)</LI>
+                                    <LI><a href="http://www.ddj.com/184404483">Dr Dobb's: J.A.D.E.</a>
+                                        article published in the 2001 February issue of Dr Dobb's Journal. </LI>
+                                </UL>Known projects using <B><I>Javolution</I></B>:
+                                <UL>
+                                    <LI><A HREF="http://jscience.org/">
+                                            <FONT COLOR="#B60606" FAMILY="Verdana">J</FONT><FONT COLOR="#506474" FAMILY="Verdana">Science</FONT></A> - Java Tools and Libraries for the Advancement of Sciences.</LI>
+                                    <LI><A HREF="http://www.glimworm.com//">Glimworm</A> -  I.T. Firefly CMS Product</LI>
+                                    <LI><A HREF="http://almworks.com/">ALMWorks</A> - Bug-tracking systems, Deskzilla and JIRA Client.</LI>
+                                    <LI><A HREF="http://www.ofbiz.org/">Open For Business</A> - Open source enterprise automation software project.</LI>
+                                    <LI><A HREF="http://sourceforge.net/projects/radlab/">RADlab> - Similator for radiation detection and measurement experiments.</LI>
+                                    <LI><A HREF="http://www.jgame.org/">jgame</A> - Real-time and embedded gaming API.</LI>
+                                    <LI><A HREF="http://www.matheclipse.org/me/">MathEclipse</A> - A symbolic mathematics engine written in Java.</LI>
+                                    <LI><A HREF="http://www.intermedia.sa.it/lia/jroboop/">JRoboOp</A> - Java package for robotics simulation with visualization of a 3D robot model.</LI>
+                                    <LI><A HREF="http://www.jmulti.de/">JMulTi</A> - Time Series Analysis with Java.</LI>
+                                    <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
+                                    <LI><A HREF="http://oval.sourceforge.net/">OVal</A> - Object Validation Framework.</LI>
+                                </UL><I> (Let us know if your project uses <B>Javolution</B>
+                                    and you would like it to be listed here)
+                                    <BR>
+                                    <BR></I><B><I>Javolution</I></B>'s users can also show their
+                                support with the "Powered By Javolution" button:<BR>
+                                <BR>
+                                <IMG HEIGHT="32" SRC="css/img/javolution.png" WIDTH="144">
+                                <BR>
+                                <BR> (e.g. <SPAN CLASS="style15">&lt;a
+                                    href="http://javolution.org"&gt;&lt;img
+                                    src="javolution.png"&gt;&lt;/a&gt;</SPAN>);<BR> this is of course
+                                purely optional. </TD>
+                        </TR>
+                    </TABLE>
+
+                    <a name="HISTORY"></a>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
+                        <TR>
+                            <TD WIDTH="28">
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
+                            <TD WIDTH="639">
+                                <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                       WIDTH="100%">
+                                    <TR>
+                                        <TD HEIGHT="9">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                    </TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    </TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_history.jpg" WIDTH="55"></TD>
+                                    </TR>
+                                    <TR>
+                                        <TD VALIGN="top">
+                                            <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
+                                                   WIDTH="100%">
+                                                <TR>
+                                                    <TD WIDTH="15%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
+                                                             WIDTH="97"></TD>
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
+                                                        WIDTH="76%">&nbsp;</TD>
+                                                    <TD WIDTH="9%">
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
+                                                             WIDTH="122"></TD>
+                                                </TR>
+                                            </TABLE></TD>
+                                    </TR>
+                                </TABLE></TD>
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
+                                                        WIDTH="8"></DIV></TD>
+                        </TR>
+                    </TABLE>
+
+                    <!-- History -->
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
+                           WIDTH="98%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">
+                                <UL>
+                                    <LI CLASS="simplespacer_body"><B>March 30, 2009: Javolution 5.3</B><BR>
+                                        <UL>
+                                            <LI> Javolution now available from the <A HREF="https://maven2-repository.dev.java.net/">java.net repository</A> [5.3.1] </LI>
+                                            <LI> Full <A HREF="http://maven.apache.org/">Maven</A> integration. [5.3.0] </LI>
+                                            <LI> Reworked the complete <A HREF="target/site/apidocs/javolution/testing/package-summary.html#package_description">testing</A> framework (for real-time applications) [5.3.0] </LI>
+                                            <LI> Added <A HREF="target/site/apidocs/javolution/util/FastBitSet.html">FastBitSet</A> [5.3.0] </LI>
+                                            <LI> Added <A HREF="target/site/apidocs/javolution/context/PoolContext.html">PoolContext</A> [5.3.0] </LI>
+                                            <LI> <A HREF="target/site/apidocs/javolution/context/ObjectFactory.html">ObjectFactory</A> automatically
+                                                reset <A HREF="target/site/apidocs/javolution/lang/Reusable.html">Reusable</A> instances when recycled
+                                                (no need to override cleanup) [5.3.0] </LI>
+                                            <LI> Improved <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">ConcurrentContext</A> performance [5.3.0] </LI>
+                                            <LI> J2ME support now requires CLDC 1.1 - The J2ME build command is: <i>ant j2me</i> [5.3.0] </LI>
+                                        </UL>
+                                        <P></P>
+
+                                    <LI CLASS="simplespacer_body"><B>August 19, 2007: Javolution 5.2</B><BR>
+                                        <UL>
+                                            <LI> <a href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java</A> paper presented
+                                                to AIAA Space 2007 conference </LI>
+                                            <LI> Added the <A HREF="target/site/apidocs/javolution/xml/ws/WebServiceClient.html">WebServiceClient</A>
+                                                base class (no WSDL file required) [5.2.4] </LI>
+                                            <LI> New <A HREF="target/site/apidocs/javolution/testing/package-summary.html#package_description">testing</A> package to facilitate testing and code benchmark [5.2.0] </LI>
+                                            <LI> Added convenience method to retrieve an ObjectFactory implementation for any class
+                                                (<A HREF="target/site/apidocs/javolution/context/ObjectFactory.html#getInstance(java.lang.Class)">ObjectFactory.getInstance(Class)</A>) [5.2.0] </LI>
+                                            <LI> Default context implementations (e.g. LogContext, StackContext, HeapContext) are now
+                                                <A HREF="target/site/apidocs/javolution/lang/Configurable.html">configurable</A> [5.2.0] </LI>
+                                        </UL>
+                                        <P></P>
+
+                                    <LI CLASS="simplespacer_body"><B>July 4, 2007: Javolution 5.1</B><BR>
+                                        <UL>
+                                            <LI> Simplified <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">concurrent contexts</A>
+                                                to accept any <code>Runnable</code> [5.1.0] </LI>
+                                            <LI> Added <CODE>Text.print()</CODE> and <CODE>Text.println()</CODE> methods
+                                                to output <A HREF="target/site/apidocs/javolution/text/Text.html">Text</A> instances
+                                                without creating intermediate <CODE>String</CODE> instances [5.1.0] </LI>
+                                            <LI> Added method to force the size of a <A HREF="target/site/apidocs/javolution/util/FastTable.html">FastTable</A> [5.1.0] </LI>
+                                            <LI> Added static method to set/get the <A HREF="target/site/apidocs/javolution/text/TextFormat.html">TextFormat</A>
+                                                associated to any particular class/interface [5.1.0] </LI>
+                                            <LI> Any type for which the TextFormat is known can be represented
+                                                as a <A HREF="target/site/apidocs/javolution/xml/XMLFormat.html">XML attribute</A> [5.1.0] </LI>
+                                        </UL>
+                                        <P></P>
+
+                                    <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
+                                        Major Relase! Here are the most important changes:<ul>
+                                            <LI> Separation of concerns: Two new
+                                                <A HREF="target/site/apidocs/javolution/context/Context.html">contexts</A> have been added, the
+                                                <A HREF="target/site/apidocs/javolution/context/AllocatorContext.html">AllocatorContext</A>
+                                                and the <A HREF="target/site/apidocs/javolution/context/SecurityContext.html">SecurityContext</A>.</LI>
+                                            <LI> The <code>PoolContext</code> (too generic) has been replaced by the
+                                                <A HREF="target/site/apidocs/javolution/context/StackContext.html">StackContext</A> whose
+                                                implementation can be based on thread-local queues (default) or <code>ScopedMemory</code> (RTSJ).</LI>
+                                            <LI> The <code>RealtimeObject</code> base class is superceeded by
+                                                the <A HREF="target/site/apidocs/javolution/lang/Realtime.html">Realtime</A> interface.</LI>
+                                            <LI> New <A HREF="target/site/apidocs/javolution/lang/ValueType.html">ValueType</A> interface for
+                                                immutable objects which can be referenced by copy and can always be allocated
+                                                on the "stack"!</LI>
+                                            <LI> New <A HREF="target/site/apidocs/javolution/context/ArrayFactory.html">ArrayFactory</A> to
+                                                allocates/recycle variable sizes arrays. "Stack" allocation is independent
+                                                from the array's size and significantly faster than "heap" allocation.</LI>
+                                        </UL>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B>December 22, 2006: Javolution 4.2</B><BR>
+                                        <UL>
+                                            <LI> Added <A HREF="target/site/apidocs/javolution/xml/XMLSerializable.html">XMLSerializable</A>
+                                                tagging interface [4.2.8]</LI>
+                                            <LI> New interface <code>ConcurrentExecutor</code> for concurrency [4.2.0]</LI>
+                                            <LI> Added <A HREF="target/site/apidocs/javolution/util/Index.html">Index</A> class
+                                                (facilitates mapping between primitive types and <code>Object</code>) [4.2.0]</LI>
+                                        </UL>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B>November 30, 2006: Javolution 4.1</B><BR>
+                                        Lossless formatting/parsing of floating point numbers in
+                                        <A HREF="target/site/apidocs/javolution/text/TypeFormat.html">TypeFormat</A> [4.1.0] <BR>
+                                        Immediate recycling capability for
+                                        <A HREF="target/site/apidocs/javolution/lang/Reusable.html">reusable</A> classes (e.g.
+                                        collections, TextBuilder, ...) [4.1.0]
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B>September 18, 2006: Javolution 4.0</B><BR>
+                                        Classes renamed as per coding standard (e.g. XmlFormat => XMLFormat) [4.0.0] <BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> May 1, 2006: Javolution 3.7</B><BR>
+                                        <I><B>J</B>avolution</I> is now the first library to be fully integrated with
+                                        the RTSJ Memory Model. If any container (collection, context, etc.)
+                                        is allocated in a non-heap memory area and its capacity increases,
+                                        the extension part is allocated in the same memory area
+                                        (see also <A HREF="target/site/apidocs/javolution/lang/Reusable.html">Reusable</A>) [3.7.0] <BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> September 26, 2005: Javolution 3.6 </B><BR>
+                                        Added <A HREF="target/site/apidocs/javolution/util/StandardLog.html">StandardLog</A>
+                                        class to leverage <code>java.util.logging</code> capabilities [3.6.9] [3.6.10]<BR>
+                                        <A HREF="target/site/apidocs/javolution/lang/ClassInitializer.html">Class initialization</A> at start-up
+                                        to avoid initialization delays at runtime [3.6.7] [3.6.8]<BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> August 29, 2005: Javolution 3.5 </B><BR>
+                                        <i>New and improved</i> <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">XML Serialization/Deserialization</A><BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> July 4, 2005: Javolution 3.4 </B><BR>
+                                        Smoother capacity increase for <A HREF="target/site/apidocs/javolution/util/FastMap.html">FastMap</A> [3.4.0]<BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> June 24, 2005: Javolution 3.3 </B><BR>
+                                        Completed library parameterization.
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> May 4, 2005: Javolution 3.2 </B><BR>
+                                        Improved <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">XML serialization/deserialization</A>
+                                        (added support for name-based associations) [3.2.0]<BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> March 12, 2005: Javolution 3.1</B><BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> March 3, 2005: Javolution 3.0</B><BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2</B><BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> December 19, 2004: Javolution 2.1</B><BR>
+                                    </LI>
+
+                                    <LI CLASS="simplespacer_body"><B> October 4, 2004: Javolution 1.0</B><BR>
+                                        Spin-off of <A HREF="http://jade.dautelle.com">Java Addition
+                                            to Default Environment</A> [1.0.0] </LI>
+                                </UL></TD>
+                        </TR>
+                    </TABLE>
+                    <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="10"
+                           WIDTH="92%">
+                        <TR>
+                            <TD CLASS="simplespacer_body style14" >
+                                <A HREF="http://javolution.dev.java.net/"><IMG BORDER="0" SRC="css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A>
+                            </TD>
+                            <TD CLASS="simplespacer_body style14">
+                                <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
+                            </TD>
+                            <TD CLASS="simplespacer_body style14">
+                                <A HREF="http://www.jcp.org/"><IMG BORDER="0" SRC="css/img/JCPlogoEC.jpg" WIDTH="125" HEIGHT="71"></A></DIV>
             </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_ajavarevolution.jpg" WIDTH="222">
-         </TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-
-<!-- Javolution - A Java(TM) Revolution -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="98%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">
-      <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
-     That being accomplished through:
-     <UL>
-     <LI> High <A HREF="doc/benchmark.html">performance</A> and time-deterministic (real-time) 
-          <A HREF="api/javolution/util/package-summary.html#package_description">util</A> / 
-          <A HREF="api/javolution/lang/package-summary.html#package_description">lang</A> /
-          <A HREF="api/javolution/text/package-summary.html#package_description">text</A> /
-          <A HREF="api/javolution/io/package-summary.html#package_description">io</A> /
-          <A HREF="api/javolution/xml/stream/package-summary.html#package_description">xml</A> base classes.</LI>
-     <LI> <A HREF="api/javolution/context/package-summary.html#package_description">Context</A> programming
-          in order to achieve true separation of concerns (logging, performance, etc).</LI>
-     <LI> A <A HREF="api/javolution/testing/package-summary.html#package_description">testing</A> framework 
-          addressing not only unit tests but also performance and regression tests as well.</LI>
-     <LI> Straightforward and low-level parallel computing capabilities 
-          with <A HREF="api/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
-     <LI> <A HREF="api/javolution/io/Struct.html">Struct</A> and 
-          <A HREF="api/javolution/io/Union.html">Union</A> base classes for
-          direct interfacing with native applications (e.g. C/C++).</LI>
-     <LI> World's fastest and first hard real-time <A HREF="api/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
-          facility.</LI>
-     <LI> Simple yet flexible <A HREF="api/javolution/lang/Configurable.html">configuration</A> management
-          of your application.</LI>
-     </UL></TD>
-      </TR>
-   </TABLE>
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
-            </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_topten.jpg" WIDTH="370"></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-   
-<!-- Top 10 Reasons -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="96%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">
-      <OL>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
-         are simple to use, even simpler than most JDK classes. 
-         You don't need to guess the capacity of a 
-         <A HREF="api/javolution/text/TextBuilder.html">TextBuilder</A>,
-         <A HREF="api/javolution/util/FastTable.html">FastTable</A> or a 
-         <A HREF="api/javolution/util/FastMap.html">FastMap</A>, their
-         size expand gently without ever incurring expensive resize/copy or rehash
-         operations (unlike <code>StringBuilder</code>, <code>ArrayList</code>  or <code>HashMap</code>). 
-         <BR> </LI>
-         <LI CLASS="simplespacer_body">Developers may achieve true separation of 
-         concerns (e.g. logging, configuration) through <A HREF="api/javolution/context/package-summary.html#package_description">Context Programming</A>
-         or by using classes such as <A HREF="api/javolution/lang/Configurable.html">Configurable</A>.</LI>         
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
-         are fast, very fast (e.g. <A HREF="api/javolution/text/Text.html">Text</A> 
-         insertion/deletion in <code>O[Log(n)]</code> instead of <code>O[n]</code> for standard 
-         <code>StringBuffer/StringBuilder</code>).
-         <BR> </LI>
-         <LI CLASS="simplespacer_body">All <B><I>Javolution</I></B>
-         classes are <b>hard real-time compliant</b> and have highly deterministic
-         behavior (in the microsecond range). Furthermore (unlike the standard 
-         library), <B><I>Javolution</I></B>  is 
-         <A HREF="http://www.rtsj.org/">RTSJ</A> safe (no memory clash or 
-         memory leak when used with Java Real-Time extension).
-         <BR> </LI>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
-         <A HREF="api/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
-         to take advantage of multi-processors systems.
-         <BR> </LI>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>'s real-time collection classes 
-         (<A HREF="api/javolution/util/FastMap.html">map</A>, 
-         <A HREF="api/javolution/util/FastList.html">list</A>, 
-         <A HREF="api/javolution/util/FastTable.html">table</A> and 
-         <A HREF="api/javolution/util/FastSet.html">set</A>) 
-         can be used in place of most standard collection classes and provide 
-         numerous additional <A HREF="api/javolution/util/package-summary.html#package_description">capabilities</A>.<BR> </LI>
-         <LI CLASS="simplespacer_body">Any Java class can be
-         serialized/deserialized in 
-         <A HREF="api/javolution/xml/XMLFormat.html">XML format</A> <b>in any
-         form you may want</b>, also no need to implement Serializable or for the
-         platform to support serialization</LI>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> 
-         provides <A HREF="api/javolution/io/Struct.html">Struct</A> and 
-         <A HREF="api/javolution/io/Union.html">Union</A> classes for
-         direct interoperability with C/C++ applications.
-         <BR> </LI>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> runs on
-         <b>any platform</b> from the simplest J2ME CLDC 1.0 with no garbage
-         collector to the latest J2EE 5.0 with parameterized types.
-         <BR> </LI>
-         <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> is a pure
-         Java Solution (no native code), small (less than 300 KBytes jar
-         file) and free; permission to use, copy, modify, and distribute
-         this software is freely granted, provided that copyright notices are preserved 
-         (<A HREF="doc/license.txt">BSD License</A>). </LI>
-      </OL></TD>
-      </TR>
-   </TABLE>
-   
-<!-- Version -->
-   <TABLE CLASS="quotetable" ALIGN="center" BORDER="0" CELLSPACING="0"
-          CELLPADDING="0" WIDTH="89%">
-      <TR>
-      <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
-      <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-         CLASS="style16">Javolution Version 5.2.5 - September 23, 2007</SPAN></DIV>
-      </TD>
-      <TR>
-      <TD BGCOLOR="#F4F4F2">
-      <DIV ALIGN="center"><A HREF="api/index.html"><IMG HEIGHT="51"
-                                                        BORDER="0"
-                                                        SRC="css/img/browseapi.jpg"
-                                                        WIDTH="198"></A> 
-         <A HREF="javolution-5.2.5-src.zip"><IMG HEIGHT="51" BORDER="0"
-                                                 SRC="css/img/getsource.jpg"
-                                                 WIDTH="194"></A> 
-         <A HREF="javolution-5.2.5-bin.zip"><IMG HEIGHT="51" BORDER="0"
-                                                 SRC="css/img/getlibrary.jpg"
-                                                 WIDTH="198"></A></DIV></TD>
-      </TR>
-   </TABLE>
-   <BR> 
-
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
-            </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_usage.jpg" WIDTH="48"></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-
-<!-- Usage -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="89%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">The standard binary distribution (above) targets the
-      J2SE 1.5+ platform. For others platforms, the library should be
-      rebuilt from the sources using the provided 
-      <A HREF="http://ant.apache.org/">Ant</A> script. Here is a summary of
-      the platforms supported: 
-      <BR> 
-      <BR></TD>
-      </TR>
-   </TABLE>
-   <TABLE CLASS="quotetable2" ALIGN="center" BORDER="0" CELLSPACING="0"
-          CELLPADDING="7" WIDTH="604">
-      <TR BACKGROUND="css/img/detailler_bg.jpg">
-      <TD WIDTH="80">
-      <DIV CLASS="style9" ALIGN="center">Ant Target 
-      </DIV></TD>
-      <TD WIDTH="88">
-      <DIV CLASS="style9" ALIGN="center">Platform 
-      </DIV></TD>
-      <TD WIDTH="392"><SPAN CLASS="style9">Description</SPAN></TD>
-      </TR>
-      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">1.0 
-      </DIV></TD>
-      <TD CLASS="style9">CLDC 1.0+ </TD>
-      <TD CLASS="style9">The library is built without floating point support. 
-      <BR> J2SE interfaces are in the j2me.* package. </TD>
-      </TR>
-      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">1.1 
-      </DIV></TD>
-      <TD CLASS="style9">CLDC 1.1+ </TD>
-      <TD CLASS="style9">The library includes floating point support. 
-      <BR> J2SE interfaces are in the j2me.* package. </TD>
-      </TR>
-      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">1.4 
-      </DIV></TD>
-      <TD CLASS="style9">J2SE 1.4+ </TD>
-      <TD CLASS="style9">J2SE interfaces are in the regular java.* package. </TD>
-      </TR>
-      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">1.5 
-      </DIV></TD>
-      <TD CLASS="style9">J2SE 1.5+ </TD>
-      <TD CLASS="style9">Parameterization of relevant classes (e.g. <A HREF="api/javolution/util/package-summary.html#package_description">collections</A>)
-      <BR> javolution.lang.Appendable and javolution.lang.Enum are moved to
-      the java.lang.* package. </TD>
-      </TR>
-      <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">1.6
-      </DIV></TD>
-      <TD CLASS="style9">J2SE 1.6+ </TD>
-      <TD CLASS="style9">Includes performance comparison with standard StAX</TD>
-      </TR>
-      <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
-      <TD>
-      <DIV CLASS="style9" ALIGN="center">gcj 
-      </DIV></TD>
-      <TD CLASS="style9"><A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for
-      Java</A></TD>
-      <TD CLASS="style9">J2SE interfaces are in the regular java.* package. 
-      <BR> Includes org.xml.sax.* classes. 
-      <BR> Generates a native dynamic library ( javolution.so ). </TD>
-      </TR>
-   </TABLE>
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="90%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">Once built, the library can be used as a normal
-      library (no bootclasspath necessary). The library is also
-      self-executable for versioning, testing and benchmark purpose. 
-      <H4 CLASS="style10">java -jar javolution.jar version (shows version
-      information) 
-      <BR> java -jar javolution.jar test (performs self-tests) 
-      <BR> java -jar javolution.jar perf (runs benchmark) </H4><I><A
-         HREF="doc/benchmark.html">Here</A> are the benchmark results on Windows platforms.</I> </TD>
-      </TR>
-   </TABLE>
-
-   <a name="TOOLS"></a>
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
-            </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_tools.jpg" WIDTH="43"></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-
-<!-- Tools -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="89%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top"><SPAN CLASS="style13">Runtime
-      Environment:</SPAN> <B>Any </B> (J2ME CLDC, J2SE, J2EE, GCJ, <a href="http://www.excelsior-usa.com/jet.html">Excelsior JET</a>)<BR> 
-      <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including 
-      <A HREF="http://www.gnu.org/software/gcc/java/">GNU Compiler for Java</A>)<BR>
-      <SPAN CLASS="style13">Build tool: </SPAN><A
-         HREF="http://jakarta.apache.org/ant/">Apache Ant<BR> </A><SPAN
-         CLASS="style13">Collaborative Tool:</SPAN> 
-      <A HREF="http://javolution.dev.java.net/">java.net</A> (code
-      development, comments, issues, bug reporting).<BR> 
-      <SPAN CLASS="style13">Style Guide:</SPAN> 
-      <A HREF="doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
-      <SPAN CLASS="style13">Preferred Environment:</SPAN> 
-      <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding) 
-      and <A HREF="http://www.netbeans.org/">NetBeans</A> <BR>
-      <SPAN CLASS="style13">Plug-In:</SPAN>
-      <A HREF="http://javolution.org/javoclipse-1_0_48.zip">JavoClipse (v1.0.48)</A> 
-          - Eclipse plug-in to generate <A HREF="api/javolution/xml/package-summary.html#package_description">xml formats</A> 
-          from source code.<BR>
-      <I>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-         (questions/comments can be sent directly to the javoclipse 
-         <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">mailing list</A>)</I><BR>
-      <SPAN CLASS="style13">Others:</SPAN> 
-      <A HREF="http://javolution.org/colapi.jar">colapi.jar</A> - Tool to format/colorize Java code in API documentation.</TD>
-      </TR>
-   </TABLE>
-   <BR>
-   <a name="LINKS"></a>
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
-            </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_links.jpg" WIDTH="46"></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-
-<!-- Links -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="90%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">Articles related to 
-      <B><I>Javolution</I></B> (previously known as: <B>J.A.D.E. J</B>ava 
-      <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment): 
-      <UL>
-         <LI><IMG SRC="css/img/new.gif">
-         <A href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java<SUP>TM</SUP></A> paper presented 
-          to <A HREF="http://www.aiaa.org/">AIAA</A> Space 2007 conference (Long Beach CA).</LI>
-         <LI>
-         <A HREF="http://javolution.org/doc/Man33955.pdf">Validating Java for Safety-Critical Applications</A> 
-         (<A HREF="http://www.aiaa.org/">AIAA</A> Space 2005 Conference).</LI>
-         <LI>
-         <A HREF="http://javolution.org/doc/Javolution-Collections.pdf">Collection Classes for Real-Time 
-         and High-Performance Applications (pdf)</A><BR>
-         Introduction to <B><I>Javolution</I></B>  
-         <A href="https://rtsj.dev.java.net/">RTSJ-Compliant</A> Collections Classes.</LI>
-         <LI><A HREF="http://www.sys-con.com/story/?storyid=45500&DE=1">
-         Turbo-Charging Java for Real-Time Applications</A><BR> (July 2004
-         issue of <B>Java Developer Journal</B>)</LI>
-         <LI><a href="http://www.ddj.com/184404483">Dr Dobb's: J.A.D.E.</a>
-               article published in the 2001 February issue of Dr Dobb's Journal. </LI>
-      </UL>Known projects using <B><I>Javolution</I></B>: 
-      <UL>
-         <LI><A HREF="http://jscience.org/">
-         <FONT COLOR="#B60606" FAMILY="Verdana">J</FONT><FONT COLOR="#506474" FAMILY="Verdana">Science</FONT></A> - Java Tools and Libraries for the Advancement of Sciences.</LI>
-         <LI><A HREF="http://www.ofbiz.org/">Open For Business</A> - Open source enterprise automation software project.</LI>
-         <LI><A HREF="http://www.jgame.org/">jgame</A> - Real-time and embedded gaming API.</LI>
-         <LI><A HREF="http://www.matheclipse.org/me/">MathEclipse</A> - A symbolic mathematics engine written in Java.</LI>
-         <LI><A HREF="http://www.intermedia.sa.it/lia/jroboop/">JRoboOp</A> - Java package for robotics simulation with visualization of a 3D robot model.</LI>
-         <LI><A HREF="http://www.jmulti.de/">JMulTi</A> - Time Series Analysis with Java.</LI>
-         <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
-         <LI><A HREF="http://oval.sourceforge.net/">OVal</A> - Object Validation Framework.</LI>
-      </UL><I> (Let us know if your project uses <B>Javolution</B>
-      and you would like it to be listed here) 
-      <BR> 
-      <BR></I><B><I>Javolution</I></B>'s users can also show their
-      support with the "Powered By Javolution" button:<BR> 
-      <BR> 
-      <IMG HEIGHT="32" SRC="css/img/javolution.png" WIDTH="144"> 
-      <BR> 
-      <BR> (e.g. <SPAN CLASS="style15">&lt;a
-      href="http://javolution.org"&gt;&lt;img
-      src="javolution.png"&gt;&lt;/a&gt;</SPAN>);<BR> this is of course
-      purely optional. </TD>
-      </TR>
-   </TABLE>
-   
-   <a name="HISTORY"></a>
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
-      <TR>
-      <TD WIDTH="28">
-      <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
-      <TD WIDTH="639">
-      <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-             WIDTH="100%">
-         <TR>
-         <TD HEIGHT="9">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
-            </TD>
-            <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
-            </TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
-         <IMG HEIGHT="28" SRC="css/img/a_history.jpg" WIDTH="55"></TD>
-         </TR>
-         <TR>
-         <TD VALIGN="top">
-         <TABLE CLASS="smallguy" BORDER="0" CELLSPACING="0" CELLPADDING="0"
-                WIDTH="100%">
-            <TR>
-            <TD WIDTH="15%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
-                 WIDTH="97"></TD>
-            <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
-                WIDTH="76%">&nbsp;</TD>
-            <TD WIDTH="9%">
-            <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
-                 WIDTH="122"></TD>
-            </TR>
-         </TABLE></TD>
-         </TR>
-      </TABLE></TD>
-      <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
-      <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
-                              WIDTH="8"></DIV></TD>
-      </TR>
-   </TABLE>
-
-<!-- History -->
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
-          WIDTH="98%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" VALIGN="top">
-      <UL>
-         <LI CLASS="simplespacer_body"><B>August 19, 2007: Javolution 5.2</B><BR>
-         <UL>
-         <LI> Corrected  <A HREF="api/javolution/util/FastComparator.html#STRING">FastComparator.STRING</A> 
-              for fast hash code calculation of <code>java.lang.String</code> [5.2.5] </LI>
-         <LI> <a href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java</A> paper presented 
-              to AIAA Space 2007 conference </LI>
-         <LI> Added the <A HREF="api/javolution/xml/ws/WebServiceClient.html">WebServiceClient</A> 
-              base class (no WSDL file required) [5.2.4] </LI>
-         <LI> Corrected issues in FastTable and FastMap [5.2.3] [5.2.4] </LI>
-         <LI> Support for custom <A HREF="api/javolution/util/FastMap.Entry.html">FastMap.Entry</A> 
-              and custom <A HREF="api/javolution/util/FastList.Node.html">FastList.Node</A> [5.2.2] </LI>
-         <LI> Enhanced <A HREF="api/javolution/util/FastMap.html">FastMap</A> and 
-              <A HREF="api/javolution/util/FastTable.html">FastTable</A> implementation
-              (with an impressive <A HREF="doc/benchmark.html">performance</A>) [5.2.2] </LI>
-         <LI> Corrected class loading circularity issue (AllocatorContext) [5.2.1] </LI>
-         <LI> New <A HREF="api/javolution/testing/package-summary.html#package_description">testing</A> package to facilitate testing and code benchmark [5.2.0] </LI>
-         <LI> Added convenience method to retrieve an ObjectFactory implementation for any class 
-             (<A HREF="api/javolution/context/ObjectFactory.html#getInstance(java.lang.Class)">ObjectFactory.getInstance(Class)</A>) [5.2.0] </LI>
-         <LI> Default context implementations (e.g. LogContext, StackContext, HeapContext) are now 
-              <A HREF="api/javolution/lang/Configurable.html">configurable</A> [5.2.0] </LI>
-         </UL>
-         <P></P>
-
-         <LI CLASS="simplespacer_body"><B>July 4, 2007: Javolution 5.1</B><BR>
-         <UL>
-         <LI> Simplified <A HREF="api/javolution/context/ConcurrentContext.html">concurrent contexts</A>
-              to accept any <code>Runnable</code> [5.1.0] </LI>
-         <LI> Enhanced documentation of <A HREF="api/javolution/lang/Configurable.html">Configurable</A> [5.1.0] </LI>
-         <LI> Optimization of <A HREF="api/javolution/text/Text.html">Text</A> (now final) [5.1.0] </LI>
-         <LI> Added <CODE>Text.print()</CODE> and <CODE>Text.println()</CODE> methods 
-              to output <A HREF="api/javolution/text/Text.html">Text</A> instances
-              without creating intermediate <CODE>String</CODE> instances [5.1.0] </LI>
-         <LI> Corrected error when parsing character references (XMLStreamReaderImpl) [5.1.0] </LI>
-         <LI> Added method to force the size of a <A HREF="api/javolution/util/FastTable.html">FastTable</A> [5.1.0] </LI>
-         <LI> Added static method to set/get the <A HREF="api/javolution/text/TextFormat.html">TextFormat</A>
-              associated to any particular class/interface [5.1.0] </LI>
-         <LI> Any type for which the TextFormat is known can be represented 
-              as a <A HREF="api/javolution/xml/XMLFormat.html">XML attribute</A> [5.1.0] </LI>
-         </UL>
-         <P></P>
-
-         <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
-         Major Relase! Here are the most important changes:<ul>     
-         <LI> Separation of concerns: Two new 
-         <A HREF="api/javolution/context/Context.html">contexts</A> have been added, the 
-         <A HREF="api/javolution/context/AllocatorContext.html">AllocatorContext</A>
-         and the <A HREF="api/javolution/context/SecurityContext.html">SecurityContext</A>.</LI>
-         <LI> The <code>PoolContext</code> (too generic) has been replaced by the
-         <A HREF="api/javolution/context/StackContext.html">StackContext</A> whose
-         implementation can be based on thread-local queues (default) or <code>ScopedMemory</code> (RTSJ).</LI>
-         <LI> The <code>RealtimeObject</code> base class is superceeded by 
-             the <A HREF="api/javolution/lang/Realtime.html">Realtime</A> interface.</LI>
-         <LI> New <A HREF="api/javolution/lang/ValueType.html">ValueType</A> interface for 
-              immutable objects which can be referenced by copy and can always be allocated 
-              on the "stack"!</LI>
-         <LI> New <A HREF="api/javolution/context/ArrayFactory.html">ArrayFactory</A> to 
-              allocates/recycle variable sizes arrays. "Stack" allocation is independent
-              from the array's size and significantly faster than "heap" allocation.</LI>
-         </UL>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B>December 22, 2006: Javolution 4.2</B><BR>
-         <UL>
-            <LI> Added <A HREF="api/javolution/xml/XMLSerializable.html">XMLSerializable</A> 
-                 tagging interface [4.2.8]</LI>
-            <LI> Fixed support for very large tables [4.2.7]</LI>
-            <LI> Optimized self-balancing tree structure for 
-                 <A HREF="api/javolution/text/Text.html">Text</A> [4.2.2]</LI>
-            <LI> Simplified <A HREF="api/javolution/context/Context.html">context</A> support (<code>PoolContext</code>, <code>ConcurrentContext</code>...)</LI>
-            <LI> New interface <code>ConcurrentExecutor</code> for concurrency [4.2.0]</LI>
-            <LI> Added <A HREF="api/javolution/util/Index.html">Index</A> class
-                 (facilitates mapping between primitive types and <code>Object</code>) [4.2.0]</LI>
-         </UL>            
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B>November 30, 2006: Javolution 4.1</B><BR>
-         Lossless formatting/parsing of floating point numbers in
-         <A HREF="api/javolution/text/TypeFormat.html">TypeFormat</A> [4.1.0] <BR>
-         Immediate recycling capability for
-         <A HREF="api/javolution/lang/Reusable.html">reusable</A> classes (e.g.
-         collections, TextBuilder, ...) [4.1.0]
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B>September 18, 2006: Javolution 4.0</B><BR>
-         Classes renamed as per coding standard (e.g. XmlFormat => XMLFormat) [4.0.0] <BR>
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B> May 1, 2006: Javolution 3.7</B><BR>
-         Added sorting capabilities (quick sort) to <A HREF="api/javolution/util/FastTable.html">FastTable</A> [3.7.8]<BR>
-         Shared <A HREF="api/javolution/util/FastMap.html">FastMap</A> are now valid to 
-         substitute to <code>ConcurrentHashMap</code> 
-         (see <A HREF="api/javolution/util/package-summary.html#FAQ">util FAQ</A>) [3.7.7]<BR>
-         <I><B>J</B>avolution</I> is now the first library to be fully integrated with 
-         the RTSJ Memory Model. If any container (collection, context, etc.) 
-         is allocated in a non-heap memory area and its capacity increases,
-         the extension part is allocated in the same memory area
-         (see also <A HREF="api/javolution/lang/Reusable.html">Reusable</A>) [3.7.0] <BR>
-         </LI>
-          
-         <LI CLASS="simplespacer_body"><B> September 26, 2005: Javolution 3.6 </B><BR>
-         Added <A HREF="api/javolution/util/StandardLog.html">StandardLog</A>
-         class to leverage <code>java.util.logging</code> capabilities [3.6.9] [3.6.10]<BR>
-         <A HREF="api/javolution/lang/ClassInitializer.html">Class initialization</A> at start-up
-         to avoid initialization delays at runtime [3.6.7] [3.6.8]<BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> August 29, 2005: Javolution 3.5 </B><BR>
-         <i>New and improved</i> <A HREF="api/javolution/xml/package-summary.html#package_description">XML Serialization/Deserialization</A><BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> July 4, 2005: Javolution 3.4 </B><BR>
-         Smoother capacity increase for <A HREF="api/javolution/util/FastMap.html">FastMap</A> [3.4.0]<BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> June 24, 2005: Javolution 3.3 </B><BR>
-         Completed library parameterization.
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> May 4, 2005: Javolution 3.2 </B><BR>
-         Improved <A HREF="api/javolution/xml/package-summary.html#package_description">XML serialization/deserialization</A>
-         (added support for name-based associations) [3.2.0]<BR>
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B> March 12, 2005: Javolution 3.1</B><BR>
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B> March 3, 2005: Javolution 3.0</B><BR>
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B> February 4, 2005: Javolution 2.2</B><BR>
-         </LI>
-
-         <LI CLASS="simplespacer_body"><B> December 19, 2004: Javolution 2.1</B><BR>
-         </LI>
-         
-         <LI CLASS="simplespacer_body"><B> October 4, 2004: Javolution 1.0</B><BR>
-         Spin-off of <A HREF="http://jade.dautelle.com">Java Addition
-         to Default Environment</A> [1.0.0] </LI>
-      </UL></TD>
-      </TR>
-   </TABLE>
-   <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="10"
-          WIDTH="92%">
-      <TR>
-      <TD CLASS="simplespacer_body style14" >
-      <A HREF="http://javolution.dev.java.net/"><IMG BORDER="0" SRC="css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A> 
-      </TD>
-      <TD CLASS="simplespacer_body style14">
-      <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
-      </TD>
-      <TD CLASS="simplespacer_body style14">
-      <A HREF="http://www.jcp.org/"><IMG BORDER="0" SRC="css/img/JCPlogoEC.jpg" WIDTH="125" HEIGHT="71"></A></DIV>
-      </TD>
-      <TD CLASS="simplespacer_body style14">
-      Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR> 
-      Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-      Revision      : September 23, 2007<BR>
-      </TR>
-   </TABLE>
-   <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
-      <TR>
-      <TD>
-      <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
-            HEIGHT="31" BORDER="0" SRC="css/img/ventrobanner.jpg"
-            WIDTH="590"></A><BR>
-      <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A>
+            <TD CLASS="simplespacer_body style14">
+                Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR>
+                Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
+                Revision      : April 13, 2009<BR>
+        </TR>
+</TABLE>
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
+    <TR>
+        <TD>
+            <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
+                        HEIGHT="31" BORDER="0" SRC="css/img/ventrobanner.jpg"
+                        WIDTH="590"></A><BR>
+                <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A>
             </DIV>
-      </TD>
-      </TR>
-   </TABLE>
-   <BR> </TD>
-   <TD WIDTH="10">
-   <IMG HEIGHT="100%" SRC="css/img/bg_right.png" WIDTH="15"></TD>
-   </TR>
+        </TD>
+    </TR>
+</TABLE>
+<BR> </TD>
+<TD WIDTH="10">
+    <IMG HEIGHT="100%" SRC="css/img/bg_right.png" WIDTH="15"></TD>
+</TR>
 </TABLE>
 </BODY>
 </HTML>
