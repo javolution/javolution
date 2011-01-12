@@ -21,9 +21,9 @@ import _templates.javolution.xml.XMLSerializable;
  *     classes.</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.2, December 18, 2006
+ * @version 5.3, April 23, 2009
  */
-public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
+public abstract class FastComparator/*<T>*/ implements Comparator/*<T>*/,
         XMLSerializable {
 
     /**
@@ -31,15 +31,14 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * (see <a href="{@docRoot}/overview-summary.html#configuration">
      * Javolution Configuration</a> for details).
      */
-    public static final Configurable/*<Boolean>*/REHASH_SYSTEM_HASHCODE = new Configurable(
+    public static final Configurable/*<Boolean>*/ REHASH_SYSTEM_HASHCODE = new Configurable(
             new Boolean(isPoorSystemHash())) {
-        protected void notifyChange() {
-            _Rehash = ((Boolean) get()).booleanValue();
+
+        protected void notifyChange(Object oldValue, Object newValue) {
+            _Rehash = ((Boolean) newValue).booleanValue();
         }
     };
-
-    private static boolean _Rehash = ((Boolean) REHASH_SYSTEM_HASHCODE.get())
-            .booleanValue();
+    private static boolean _Rehash = ((Boolean) REHASH_SYSTEM_HASHCODE.get()).booleanValue();
 
     private static boolean isPoorSystemHash() {
         boolean[] dist = new boolean[64]; // Length power of 2.
@@ -52,7 +51,6 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         }
         return occupied < (dist.length >> 2); // Less than 16 slots on 64.
     }
-
     /**
      * Holds the default object comparator; rehash is performed if the 
      * system hash code (platform dependent) is not evenly distributed.
@@ -60,19 +58,19 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @see <a href="{@docRoot}/overview-summary.html#configuration">
      *      Javolution Configuration</a> 
      */
-    public static final FastComparator/*<Object>*/DEFAULT = new Default/*<Object>*/();
+    public static final FastComparator/*<Object>*/ DEFAULT = new Default/*<Object>*/();
 
-    private static final class Default/*<T>*/extends FastComparator/*<T>*/{
+    private static final class Default/*<T>*/ extends FastComparator/*<T>*/ {
 
-        public int hashCodeOf(Object/*{T}*/obj) {
-            return (_Rehash ? REHASH.hashCodeOf(obj) : obj.hashCode());
+        public int hashCodeOf(Object/*{T}*/ obj) {
+            return (obj == null) ? 0 : (_Rehash ? REHASH.hashCodeOf(obj) : obj.hashCode());
         }
 
-        public boolean areEqual(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public boolean areEqual(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
-        public int compare(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public int compare(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return ((Comparable) o1).compareTo(o2);
         }
 
@@ -83,9 +81,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         public Object readResolve() throws ObjectStreamException {
             return DEFAULT;
         }
-
     };
-
     /**
      * Holds the direct object comparator; no rehash is performed.
      * Two objects o1 and o2 are considered {@link #areEqual equal} if and
@@ -93,18 +89,19 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}. 
      */
-    public static final FastComparator/*<Object>*/DIRECT = new Direct/*<Object>*/();
+    public static final FastComparator/*<Object>*/ DIRECT = new Direct/*<Object>*/();
 
-    private static final class Direct/*<T>*/extends FastComparator/*<T>*/{
-        public int hashCodeOf(Object/*{T}*/obj) {
-            return obj.hashCode();
+    private static final class Direct/*<T>*/ extends FastComparator/*<T>*/ {
+
+        public int hashCodeOf(Object/*{T}*/ obj) {
+            return (obj == null) ? 0 : obj.hashCode();
         }
 
-        public boolean areEqual(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public boolean areEqual(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
-        public int compare(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public int compare(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return ((Comparable) o1).compareTo(o2);
         }
 
@@ -116,7 +113,6 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
             return DIRECT;
         }
     };
-
     /**
      * Holds the comparator for objects with uneven hash distribution; objects
      * hashcodes are rehashed. Two objects o1 and o2 are considered 
@@ -124,12 +120,15 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * The {@link #compare} method throws {@link ClassCastException} if the
      * specified objects are not {@link Comparable}.
      */
-    public static final FastComparator/*<Object>*/REHASH = new Rehash/*<Object>*/();
+    public static final FastComparator/*<Object>*/ REHASH = new Rehash/*<Object>*/();
 
-    private static final class Rehash/*<T>*/extends FastComparator/*<T>*/{
-        public int hashCodeOf(Object/*{T}*/obj) {
+    private static final class Rehash/*<T>*/ extends FastComparator/*<T>*/ {
+
+        public int hashCodeOf(Object/*{T}*/ obj) {
+            if (obj == null)
+                return 0;
             // Formula identical <code>java.util.HashMap</code> to ensures
-            // similar behavior for ill-conditioned hashcode keys. 
+            // similar behavior for ill-conditioned hashcode keys.
             int h = obj.hashCode();
             h += ~(h << 9);
             h ^= (h >>> 14);
@@ -137,11 +136,11 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
             return h ^ (h >>> 10);
         }
 
-        public boolean areEqual(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public boolean areEqual(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
-        public int compare(Object/*{T}*/o1, Object/*{T}*/o2) {
+        public int compare(Object/*{T}*/ o1, Object/*{T}*/ o2) {
             return ((Comparable) o1).compareTo(o2);
         }
 
@@ -152,25 +151,27 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         public Object readResolve() throws ObjectStreamException {
             return REHASH;
         }
-
     };
-
     /**
      * Holds a fast comparator for <code>java.lang.String</code>. Hashcodes 
      * are calculated by taking a sample of few characters instead of 
      * the whole string.
      */
-    public static final FastComparator/*<String>*/STRING = new StringComparator();
+    public static final FastComparator/*<String>*/ STRING = new StringComparator();
 
     private static final class StringComparator extends FastComparator {
+
         public int hashCodeOf(Object obj) {
+            if (obj == null)
+                return 0;
             final String str = (String) obj;
             final int length = str.length();
             if (length == 0)
                 return 0;
-            return str.charAt(0) + str.charAt(length - 1) * 31
-                    + str.charAt(length >> 1) * 1009 + str.charAt(length >> 2)
-                    * 27583 + str.charAt(length - 1 - (length >> 2)) * 73408859;
+            return str.charAt(0) + str.charAt(length - 1) * 31 +
+                    str.charAt(length >> 1) * 1009 +
+                    str.charAt(length >> 2) * 27583 +
+                    str.charAt(length - 1 - (length >> 2)) * 73408859;
         }
 
         public boolean areEqual(Object o1, Object o2) {
@@ -189,7 +190,6 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
             return STRING;
         }
     };
-
     /**
      * Holds the identity comparator; poorly distributed system hashcodes are
      * rehashed. Two objects o1 and o2 are considered {@link #areEqual equal} 
@@ -197,9 +197,10 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}.
      */
-    public static final FastComparator/*<Object>*/IDENTITY = new Identity();
+    public static final FastComparator/*<Object>*/ IDENTITY = new Identity();
 
     private static final class Identity extends FastComparator {
+
         public int hashCodeOf(Object obj) {
             int h = System.identityHashCode(obj);
             if (!_Rehash)
@@ -226,9 +227,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
         public Object readResolve() throws ObjectStreamException {
             return IDENTITY;
         }
-        
     };
-
     /**
      * Holds a lexicographic comparator for any {@link CharSequence} or 
      * {@link String} instances. 
@@ -237,11 +236,13 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * using the following formula (same as for <code>java.lang.String</code>):
      * <code>s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]</code>
      */
-    public static final FastComparator/*<CharSequence>*/LEXICAL = new Lexical();
+    public static final FastComparator/*<CharSequence>*/ LEXICAL = new Lexical();
 
     private static final class Lexical extends FastComparator {
 
         public int hashCodeOf(Object obj) {
+            if (obj == null)
+                return 0;
             if ((obj instanceof String) || (obj instanceof Text))
                 return obj.hashCode();
             CharSequence chars = (CharSequence) obj;
@@ -306,9 +307,8 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
                 while (n-- != 0) {
                     char c1 = seq1.charAt(i);
                     char c2 = seq2.charAt(i++);
-                    if (c1 != c2) {
+                    if (c1 != c2)
                         return c1 - c2;
-                    }
                 }
                 return seq1.length() - seq2.length();
             }
@@ -323,9 +323,8 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
             while (n-- != 0) {
                 char c1 = seq1.charAt(i);
                 char c2 = seq2.charAt(i++);
-                if (c1 != c2) {
+                if (c1 != c2)
                     return c1 - c2;
-                }
             }
             return seq1.length() - seq2.length();
         }
@@ -346,10 +345,8 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * 
      * @param  obj the object to return the hashcode for.
      * @return the hashcode for the specified object.
-     * @throws NullPointerException if the specified object is 
-     *         <code>null</code>.
      */
-    public abstract int hashCodeOf(Object/*{T}*/obj);
+    public abstract int hashCodeOf(Object/*{T}*/ obj);
 
     /**
      * Indicates if the specified objects can be considered equal.
@@ -359,7 +356,7 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-    public abstract boolean areEqual(Object/*{T}*/o1, Object/*{T}*/o2);
+    public abstract boolean areEqual(Object/*{T}*/ o1, Object/*{T}*/ o2);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
@@ -373,6 +370,5 @@ public abstract class FastComparator/*<T>*/implements Comparator/*<T>*/,
      * @throws NullPointerException if any of the specified object is 
      *         <code>null</code>.
      */
-    public abstract int compare(Object/*{T}*/o1, Object/*{T}*/o2);
-
+    public abstract int compare(Object/*{T}*/ o1, Object/*{T}*/ o2);
 }

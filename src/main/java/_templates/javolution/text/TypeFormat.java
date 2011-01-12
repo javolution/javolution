@@ -70,7 +70,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static boolean parseBoolean(String str) {
-        return parseBoolean(_templates.javolution.Javolution.j2meToCharSeq(str));
+        return parseBoolean(j2meToCharSeq(str));
     }
 
     /**
@@ -218,7 +218,7 @@ public final class TypeFormat {
      * Equivalent to {@link #parseInt(CharSequence)} (for J2ME compatibility).
      */
     public static int parseInt(String str) {
-        return parseInt(_templates.javolution.Javolution.j2meToCharSeq(str));
+        return parseInt(j2meToCharSeq(str));
     }
 
     /**
@@ -240,7 +240,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static int parseInt(String str, int radix) {
-        return parseInt(_templates.javolution.Javolution.j2meToCharSeq(str), radix);
+        return parseInt(j2meToCharSeq(str), radix);
     }
 
     /**
@@ -305,7 +305,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static long parseLong(String str) {
-        return parseLong(_templates.javolution.Javolution.j2meToCharSeq(str), 10);
+        return parseLong(j2meToCharSeq(str), 10);
     }
 
     /**
@@ -327,7 +327,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static long parseLong(String str, int radix) {
-        return parseLong(_templates.javolution.Javolution.j2meToCharSeq(str), radix);
+        return parseLong(j2meToCharSeq(str), radix);
     }
 
     /**
@@ -389,7 +389,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static float parseFloat(String str) {
-        return parseFloat(_templates.javolution.Javolution.j2meToCharSeq(str));
+        return parseFloat(j2meToCharSeq(str));
     }
 
     /**
@@ -425,7 +425,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static double parseDouble(String str) {
-        return parseDouble(_templates.javolution.Javolution.j2meToCharSeq(str));
+        return parseDouble(j2meToCharSeq(str));
     }
 
     /**
@@ -464,6 +464,10 @@ public final class TypeFormat {
                     : Double.POSITIVE_INFINITY;
         }
 
+        // At least one digit or a '.' required.
+        if (((c < '0') || (c > '9')) && (c != '.'))
+             throw new NumberFormatException("Digit or '.' required");
+   
         // Reads decimal and fraction (both merged to a long).
         long decimal = 0;
         int decimalPoint = -1;
@@ -494,6 +498,8 @@ public final class TypeFormat {
             boolean isNegativeExp = (c == '-');
             if ((isNegativeExp || (c == '+')) && (++i < end))
                 c = csq.charAt(i);
+            if ((c < '0') || (c > '9')) // At least one digit required.  
+                throw new NumberFormatException("Invalid exponent");
             while (true) {
                 int digit = c - '0';
                 if ((digit >= 0) && (digit < 10)) {
@@ -545,8 +551,8 @@ public final class TypeFormat {
     public static Appendable format(boolean b, Appendable a) throws IOException {
         return b ? a.append(TRUE) : a.append(FALSE);
     }
-    private static final CharSequence TRUE = _templates.javolution.Javolution.j2meToCharSeq("true");
-    private static final CharSequence FALSE = _templates.javolution.Javolution.j2meToCharSeq("false");
+    private static final CharSequence TRUE = j2meToCharSeq("true");
+    private static final CharSequence FALSE = j2meToCharSeq("false");
 
     /**
      * Formats the specified <code>int</code> and appends the resulting
@@ -704,4 +710,13 @@ public final class TypeFormat {
         if (inc != endIndex)
             throw new NumberFormatException("Extraneous character: '" + csq.charAt(inc) + "'");
     }
+
+    // For J2ME Compatibility.
+    static CharSequence j2meToCharSeq(Object str) {
+        /*@JVM-1.4+@
+        if (true) return (CharSequence) str;
+        /**/
+        return str == null ? null : Text.valueOf(str);
+    }
+
 }

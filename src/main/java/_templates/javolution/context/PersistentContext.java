@@ -11,6 +11,8 @@ package _templates.javolution.context;
 import _templates.java.lang.Comparable;
 import _templates.java.util.Map;
 import _templates.javolution.util.FastMap;
+import _templates.javolution.xml.XMLFormat;
+import _templates.javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents a context persistent accross multiple program 
@@ -25,12 +27,14 @@ import _templates.javolution.util.FastMap;
  *      public void main(String[]) {
  *           // Loads persistent context (typically at start-up).
  *           XMLObjectReader reader = XMLObjectReader.newInstance(new FileInputStream("C:/persistent.xml"));
- *           PersistentContext.setCurrent(reader.read(PersistentContext.class));
+ *           PersistentContext.setCurrentPersistentContext(reader.read());
+ *           reader.close();
  *           ...
  *           ...
  *           // Saves persistent context for future execution.
  *           XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream("C:/persistent.xml"));
- *           writer.write(PersistentContext.getCurrent(), PersistentContext.class);
+ *           writer.write(PersistentContext.getCurrentPersistentContext());
+ *           writer.close();
  *      }[/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -58,7 +62,7 @@ public class PersistentContext extends Context {
      * 
      * @param ctx the persistent instance.
      */
-    public static void setCurrent(PersistentContext ctx) {
+    public static void setCurrentPersistentContext(PersistentContext ctx) {
         _PersistentContext = ctx;
         synchronized (Reference.INSTANCES) {
             for (FastMap.Entry e = Reference.INSTANCES.head(), end = Reference.INSTANCES.tail();
@@ -75,7 +79,7 @@ public class PersistentContext extends Context {
      *
      * @return the persistent context instance.
      */
-    public static/*PersistentContext*/ Context getCurrent() {
+    public static PersistentContext getCurrentPersistentContext() {
         return _PersistentContext;
     }
 
@@ -125,7 +129,7 @@ public class PersistentContext extends Context {
      *     ...
      *     // Persistent lookup table for units multiplications.
      *     static FastMap<Unit, FastMap<Unit, Unit>> UNITS_MULT_LOOKUP 
-     *          =  new FastMap<Unit, FastMap<Unit, Unit>>("UNITS_MULT_LOOKUP").setShared(true);
+     *          =  new FastMap<Unit, FastMap<Unit, Unit>>("UNITS_MULT_LOOKUP").shared();
      *    [/code]</p>
      *    
      * <p> Persistent references may also be used to hold optimum configuration 
@@ -181,8 +185,11 @@ public class PersistentContext extends Context {
                     throw new IllegalArgumentException("Identifier " + id + " already in use");
                 INSTANCES.put(id, this);
             }
-            if (_PersistentContext._idToValue.containsKey(id))
+            if (_PersistentContext._idToValue.containsKey(id)) {
                 set((Object/*{T}*/) _PersistentContext._idToValue.get(id));
+            } else {
+                _PersistentContext._idToValue.put(id, defaultValue);
+            }
         }
 
         // Implements Reference interface.
@@ -260,4 +267,24 @@ public class PersistentContext extends Context {
         protected void notifyChange() {
         }
     }
+
+    /**
+     * Holds the XML representation for persistent contexts
+     * (holds persistent reference mapping).
+     */
+    static final XMLFormat PERSISTENT_CONTEXT_XML = new XMLFormat(
+            PersistentContext.class) {
+        public void read(InputElement xml, Object obj)
+                throws XMLStreamException {
+            final PersistentContext ctx = (PersistentContext) obj;
+            ctx.getIdToValue().putAll((FastMap) xml.get("References"));
+        }
+
+        public void write(Object obj, OutputElement xml)
+                throws XMLStreamException {
+            final PersistentContext ctx = (PersistentContext) obj;
+            xml.add(ctx.getIdToValue(), "References");
+        }
+    };
+
 }

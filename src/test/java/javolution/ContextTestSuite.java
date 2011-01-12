@@ -6,20 +6,19 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package _templates.javolution;
+package javolution;
 
-import _templates.javolution.context.ArrayFactory;
-import _templates.javolution.context.ConcurrentContext;
-import _templates.javolution.context.LocalContext;
-import _templates.javolution.context.ObjectFactory;
-import _templates.javolution.context.StackContext;
-import _templates.javolution.lang.MathLib;
-import _templates.javolution.testing.TestCase;
-import _templates.javolution.testing.TestContext;
-import _templates.javolution.testing.TestSuite;
-import _templates.javolution.util.FastTable;
-import _templates.javolution.util.Index;
-
+import javolution.context.ArrayFactory;
+import javolution.context.ConcurrentContext;
+import javolution.context.LocalContext;
+import javolution.context.ObjectFactory;
+import javolution.context.StackContext;
+import javolution.lang.MathLib;
+import javolution.testing.TestCase;
+import javolution.testing.TestContext;
+import javolution.testing.TestSuite;
+import javolution.util.FastTable;
+import javolution.util.Index;
 
 /**
  * <p> This class holds the test cases for the {@link javolution.context 
@@ -43,7 +42,9 @@ public final class ContextTestSuite extends TestSuite {
     class Concurrency extends TestCase {
 
         final int _size;
+
         final int _concurrency;
+
         FastTable _table;
 
         public Concurrency(int size, int concurrency) {
@@ -136,7 +137,9 @@ public final class ContextTestSuite extends TestSuite {
     class SmallObjectAllocation extends TestCase {
 
         final int N = 1000;
+
         boolean _useStack;
+
         XYZ c0, c1;
 
         public SmallObjectAllocation(boolean useStack) {
@@ -144,8 +147,8 @@ public final class ContextTestSuite extends TestSuite {
         }
 
         public String getName() {
-            return (!_useStack ? "HeapContext (default)" : "StackContext") +
-                    ", small object creation";
+            return (!_useStack ? "HeapContext (default)" : "StackContext")
+                    + ", small object creation";
         }
 
         public void setUp() {
@@ -185,7 +188,9 @@ public final class ContextTestSuite extends TestSuite {
     class ArrayRecycling extends TestCase {
 
         int _size;
+
         boolean _recycle;
+
         char[] _array;
 
         public ArrayRecycling(int size, boolean recycle) {
@@ -194,8 +199,8 @@ public final class ContextTestSuite extends TestSuite {
         }
 
         public String getName() {
-            return "HeapContext, char[" + _size + "] " +
-                    (_recycle ? "recycled" : "allocated");
+            return "HeapContext, char[" + _size + "] "
+                    + (_recycle ? "recycled" : "allocated");
         }
 
         public void execute() {
@@ -220,6 +225,7 @@ public final class ContextTestSuite extends TestSuite {
                 return new XYZ();
             }
         };
+
         long x, y, z;
 
         private XYZ() {

@@ -15,13 +15,13 @@ import _templates.java.io.Serializable;
  *     (XML serialization is still possible for classes not implementing this
  *     interface through dynamic {@link XMLBinding} though).</p>
  *     
- * <p> Typically, classes implementing this interface have a static 
+ * <p> Typically, classes implementing this interface have a protected static
  *     {@link XMLFormat} holding their default XML representation. 
  *     For example:[code]
  *     public final class Complex implements XMLSerializable {
  *       
  *         // Use the cartesien form for the default XML representation.        
- *         static final XMLFormat<Complex> XML = new XMLFormat<Complex>(Complex.class) {
+ *         protected static final XMLFormat<Complex> XML = new XMLFormat<Complex>(Complex.class) {
  *             public Complex newInstance(Class<Complex> cls, InputElement xml) throws XMLStreamException {
  *                 return Complex.valueOf(xml.getAttribute("real", 0.0), 
  *                                        xml.getAttribute("imaginary", 0.0));

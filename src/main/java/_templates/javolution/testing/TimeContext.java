@@ -48,12 +48,14 @@ public abstract class TimeContext extends TestContext {
      * The larger the number the more accurate is the average time result; but
      * the longer it takes to run the tests.
      */
-    public static final Configurable/*<Integer>*/ TEST_DURATION_MS = new Configurable(new Integer(1000));
+    public static final Configurable/*<Integer>*/ TEST_DURATION_MS 
+            = new Configurable(new Integer(1000)) {};
     /**
      * Holds the time context default implementation (by default logs 
      * average and minimum execution time to <code>System.out</code>).
      */
-    public static final Configurable/*<Class<? extends TimeContext>>*/ DEFAULT = new Configurable(Default.class);
+    public static final Configurable/*<Class<? extends TimeContext>>*/ DEFAULT 
+            = new Configurable(Default.class) {};
  
     /**
      * Holds the minimum execution time in picoseconds.
@@ -92,7 +94,7 @@ public abstract class TimeContext extends TestContext {
      * @return the minimum execution time stated in the specified unit.
      */
     public static long getMinimumTime(String unit) {
-        LogContext ctx = (LogContext) LogContext.getCurrent();
+        LogContext ctx = (LogContext) LogContext.getCurrentLogContext();
         if (ctx instanceof TimeContext)
             return TimeContext.picosecondTo(unit, ((TimeContext) ctx).getMinimumTimeInPicoSeconds());
         else
@@ -107,7 +109,7 @@ public abstract class TimeContext extends TestContext {
      * @return the average execution time stated in the specified unit.
      */
     public static long getAverageTime(String unit) {
-        LogContext ctx = (LogContext) LogContext.getCurrent();
+        LogContext ctx = (LogContext) LogContext.getCurrentLogContext();
         if (ctx instanceof TimeContext)
             return TimeContext.picosecondTo(unit, ((TimeContext) ctx).getAverageTimeInPicoSeconds());
         else
@@ -122,7 +124,7 @@ public abstract class TimeContext extends TestContext {
      * @return the maximum execution time stated in the specified unit.
      */
     public static long getMaximumTime(String unit) {
-        LogContext ctx = (LogContext) LogContext.getCurrent();
+        LogContext ctx = (LogContext) LogContext.getCurrentLogContext();
         if (ctx instanceof TimeContext)
             return TimeContext.picosecondTo(unit, ((TimeContext) ctx).getMaximumTimeInPicoSeconds());
         else

@@ -93,7 +93,7 @@ public abstract class Context implements XMLSerializable {
      *
      * @return the current context.
      */
-    public static Context getCurrent() {
+    public static Context getCurrentContext() {
         return (Context) Context.CURRENT.get();
     }
 
@@ -151,7 +151,7 @@ public abstract class Context implements XMLSerializable {
     public static final void enter(Context context) {
         if (context._owner != null)
             throw new IllegalStateException("Context is currently in use");
-        Context current = Context.getCurrent();
+        Context current = Context.getCurrentContext();
         context._outer = current;
         context._owner = Thread.currentThread();
         context._allocator = context instanceof AllocatorContext ? (AllocatorContext) context : current._allocator;
@@ -166,7 +166,7 @@ public abstract class Context implements XMLSerializable {
      * @throws IllegalStateException if the specified context is not the current context.
      */
     public static final void exit(Context context) {
-        if (Context.getCurrent() != context)
+        if (Context.getCurrentContext() != context)
             throw new IllegalArgumentException("The specified context is not the current context");
         Context.exit(context.getClass());
     }
@@ -198,7 +198,7 @@ public abstract class Context implements XMLSerializable {
      *         context or the current thread is not the context owner.
      */
     public static void exit(Class/*<? extends Context>*/ contextType) {
-        Context context = Context.getCurrent();
+        Context context = Context.getCurrentContext();
         Context outer = context._outer;
         if (outer == null)
             throw new IllegalStateException("Cannot exit root context");
@@ -226,7 +226,7 @@ public abstract class Context implements XMLSerializable {
      * 
      * @param context the concurrent context.
      */
-    protected static void setCurrent(ConcurrentContext context) {
+    protected static void setConcurrentContext(ConcurrentContext context) {
         Context.CURRENT.set(context);
     }
 

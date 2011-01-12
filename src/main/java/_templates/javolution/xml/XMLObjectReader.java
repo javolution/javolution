@@ -115,6 +115,15 @@ public class XMLObjectReader implements Reusable {
     }
 
     /**
+     * Recycles the specified XMLObjectReader.
+     *
+     * @param that the instance to recycle.
+     */
+    public static void recycle(XMLObjectReader that) {
+        FACTORY.recycle(that);
+    }
+
+    /**
      * Default constructor.
      */
     public XMLObjectReader() {

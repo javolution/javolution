@@ -10,29 +10,44 @@ package _templates.javolution.text;
 
 import _templates.java.lang.CharSequence;
 import _templates.java.text.ParsePosition;
+import _templates.javolution.context.ObjectFactory;
 import _templates.javolution.lang.Reusable;
 
 /**
  * <p> This class represents a parsing cursor over characters. Cursor
- *     allows for token iterations over any {@link CharSequence}.[code]
- *       CharSequence csq = "this is a test";
- *       for (Cursor cursor = new Cursor(); cursor.skip(CharSet.WHITESPACES, csq);) {
- *           System.out.println(cursor.nextToken(csq, CharSet.WHITESPACES));
- *       }[/code]
+ *     allows for token iterations over any {@link CharSequence}.
+ *     [code]
+ *     CharSequence csq = "this is a test";
+ *     Cursor cursor = Cursor.newInstance();
+ *     try {
+ *        for (CharSequence token; (token=cursor.nextToken(csq, ' '))!= null;)
+ *            System.out.println(token); 
+ *     } finally {
+ *         Cursor.recycle(cursor);
+ *     }
+ *     [/code]
  *     Prints the following output:<pre>
  *        this
  *        is
  *        a
  *        test</pre>
- *     Cursors are typically used with {@link TextFormat} instances.[code]
- *        public Font parse(CharSequence csq, Cursor cursor) {
- *            CharSequence fontName = cursor.nextToken(csq, CharSet.WHITESPACE);
- *            return Font.decode(fontName.toString());
- *        }[/code]
+ *     Cursors are typically used with {@link TextFormat} instances.
+ *     [code]
+ *     // Parses decimal number (e.g. "xxx.xxxxxExx" or "NaN")
+ *     public Decimal parse(CharSequence csq, Cursor cursor) {
+ *         if (cursor.skip("NaN", csq))
+ *             return Decimal.NaN;
+ *         LargeInteger significand = LargeInteger.TEXT_FORMAT.parse(csq, cursor);
+ *         LargeInteger fraction = cursor.skip('.', csq) ? LargeInteger.TEXT_FORMAT.parse(csq, cursor) : LargeInteger.ZERO;
+ *         int exponent = cursor.skip(CharSet.valueOf('E', 'e'), csq) ? TypeFormat.parseInt(csq, 10, cursor) : 0;
+ *         int fractionDigits = fraction.digitLength();
+ *         return Decimal.valueOf(significand.E(fractionDigits).plus(fraction), exponent - fractionDigits);
+ *     }
+ *     [/code]
  * </p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.3, February 15, 2006
+ * @version 5.4, November 19, 2009
  */
 public class Cursor extends ParsePosition implements Reusable {
 
@@ -41,6 +56,31 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public Cursor() {
         super(0);
+    }
+
+    /**
+     * Returns a factory produced instance which can be {@link #recycle recycled}
+     * after usage.
+     *
+     * @return a recyclable instance.
+     */
+    public static Cursor newInstance() {
+        return (Cursor) FACTORY.object();
+    }
+    private static final ObjectFactory FACTORY = new ObjectFactory() {
+
+        protected Object create() {
+            return new Cursor();
+        }
+    };
+
+    /**
+     * Recycles the specified factory {@link #newInstance() produced} cursor.
+     *
+     * @param cursor the cursor to recycle.
+     */
+    public static void recycle(Cursor cursor) {
+        FACTORY.recycle(cursor);
     }
 
     /**
@@ -62,27 +102,70 @@ public class Cursor extends ParsePosition implements Reusable {
     }
 
     /**
-     * Indicates if this cursor points to a valid character in the specified
+     * Indicates if this cursor points to the end of the specified
      * character sequence.
      *
      * @param csq the character sequence iterated by this cursor.
-     * @return <code>true</code> if this cursor points to a valid character
-     *         position; <code>false</code> otherwise.
+     * @return <code>getIndex() &gt;= csq.length()</code>
      */
-    public final boolean hasNext(CharSequence csq) {
-        return getIndex() < csq.length();
+    public final boolean atEnd(CharSequence csq) {
+        return getIndex() >= csq.length();
     }
 
     /**
-     * Returns the next character at this cursor position. The cursor
+     * Indicates if this cursor points to the specified character in the
+     * specified character sequence.
+     *
+     * @param c the character to test.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>csq.charAt(this.getIndex()) == c</code>
+     */
+    public final boolean at(char c, CharSequence csq) {
+        int i = getIndex();
+        return i < csq.length() ? csq.charAt(i) == c : false;
+    }
+
+    /**
+     * Indicates if this cursor points to any of the specified character in the
+     * specified character sequence.
+     *
+     * @param charSet any of the character to test.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>csq.charAt(this.getIndex()) == c</code>
+     */
+    public final boolean at(CharSet charSet, CharSequence csq) {
+        int i = getIndex();
+        return i < csq.length() ? charSet.contains(csq.charAt(i)) : false;
+    }
+
+    /**
+     * Indicates if this cursor points to the specified characters in the
+     * specified sequence.
+     *
+     * @param str the characters to test.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>true</code> if this cursor points to the specified
+     *         characters; <code>false</code> otherwise.
+     */
+    public final boolean at(String str, CharSequence csq) {
+        int i = getIndex();
+        int length = csq.length();
+        for (int j = 0; j < str.length();) {
+            if ((i >= length) || (str.charAt(j++) != csq.charAt(i++)))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the next character at this cursor position.The cursor
      * position is incremented by one.
      *
      * @param csq the character sequence iterated by this cursor.
-     * @return this cursor points to a valid character;
-     *         <code>false</code> otherwise.
-     * @throws IndexOutOfBoundsException if {@link #hasNext !hasNext(csq)}
+     * @return the next character this cursor points to.
+     * @throws IndexOutOfBoundsException if {@link #atEnd this.atEnd(csq)}
      */
-    public final char next(CharSequence csq) {
+    public final char nextChar(CharSequence csq) {
         int i = getIndex();
         setIndex(i + 1);
         return csq.charAt(i);
@@ -94,20 +177,19 @@ public class Cursor extends ParsePosition implements Reusable {
      *
      * @param c the character to skip.
      * @param csq the character sequence iterated by this cursor.
-     * @return <code>true</code> if this cursor points to a character
-     *         different from the ones specified; <code>false</code>
-     *         otherwise (end of sequence reached).
+     * @return <code>true</code> if this cursor has skipped at least one 
+     *         character;<code>false</code> otherwise (e.g. end of sequence
+     *         reached).
      */
-    public final boolean skip(char c, CharSequence csq) {
+    public final boolean skipAny(char c, CharSequence csq) {
+        int i = getIndex();
         int n = csq.length();
-        for (int i=getIndex(); i < n; i++) {
-            if (csq.charAt(i) != c) {
-                setIndex(i);
-                return true;
-            }
+        for (; (i < n) && (csq.charAt(i) == c); i++) {
         }
-        setIndex(n);
-        return false;
+        if (i == getIndex())
+            return false; // Cursor did not moved.
+        setIndex(i);
+        return true;
     }
 
     /**
@@ -116,26 +198,92 @@ public class Cursor extends ParsePosition implements Reusable {
      * For example: [code]
      *  // Reads numbers separated by tabulations or spaces.
      *  FastTable<Integer> numbers = new FastTable<Integer>();
-     *  while (cursor.skip(CharSet.SPACE_OR_TAB, csq)) {
+     *  while (cursor.skipAny(CharSet.SPACE_OR_TAB, csq)) {
      *      numbers.add(TypeFormat.parseInt(csq, cursor));
      *  }[/code]
      *
      * @param charSet the character to skip.
      * @param csq the character sequence iterated by this cursor.
-     * @return <code>true</code> if this cursor points to a character
-     *         different from the ones specified; <code>false</code>
-     *         otherwise (e.g. end of sequence reached).
+     * @return <code>true</code> if this cursor has skipped at least one
+     *         character;<code>false</code> otherwise (e.g. end of sequence
+     *         reached).
+     */
+    public final boolean skipAny(CharSet charSet, CharSequence csq) {
+        int i = getIndex();
+        int n = csq.length();
+        for (; (i < n) && charSet.contains(csq.charAt(i)); i++) {
+        }
+        if (i == getIndex())
+            return false; // Cursor did not moved.
+        setIndex(i);
+        return true;
+    }
+
+    /**
+     * Moves this cursor forward only if at the specified character.
+     * This method is equivalent to:
+     * [code]
+     *     if (at(c, csq))
+     *          increment();
+     * [/code]
+     *
+     * @param c the character to skip.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>true</code> if this cursor has skipped the specified
+     *         character;<code>false</code> otherwise.
+     */
+    public final boolean skip(char c, CharSequence csq) {
+        if (this.at(c, csq)) {
+            this.increment();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Moves this cursor forward only if at any of the specified character.
+     * This method is equivalent to:
+     * [code]
+     *     if (at(charSet, csq))
+     *          increment();
+     * [/code]
+     *
+     * @param charSet holding the characters to skip.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>true</code> if this cursor has skipped any the specified
+     *         character;<code>false</code> otherwise.
      */
     public final boolean skip(CharSet charSet, CharSequence csq) {
-        int n = csq.length();
-        for (int i=getIndex(); i < n; i++) {
-            if (!charSet.contains(csq.charAt(i))) {
-                setIndex(i);
-                return true;
-            }
+        if (this.at(charSet, csq)) {
+            this.increment();
+            return true;
+        } else {
+            return false;
         }
-        setIndex(n);
-        return false;
+    }
+
+    /**
+     * Moves this cursor forward only if at the specified string.
+     * This method is equivalent to:
+     * [code]
+     *     if (at(str, csq))
+     *          increment(str.length());
+     * [/code]
+     *
+     * @param str the string to skip.
+     * @param csq the character sequence iterated by this cursor.
+     * @return <code>true</code> if this cursor has skipped the specified
+     *        string;<code>false</code> otherwise (e.g. end of sequence
+     *         reached).
+     */
+    public final boolean skip(String str, CharSequence csq) {
+        if (this.at(str, csq)) {
+            this.increment(str.length());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -153,9 +301,9 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final CharSequence nextToken(CharSequence csq, char c) {
         int n = csq.length();
-        for (int i=getIndex(); i < n; i++) {
+        for (int i = getIndex(); i < n; i++) {
             if (csq.charAt(i) != c) {
-                int j=i;
+                int j = i;
                 for (; (++j < n) && (csq.charAt(j) != c);) {
                     // Loop until j at the end of sequence or at specified character.
                 }
@@ -182,9 +330,9 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final CharSequence nextToken(CharSequence csq, CharSet charSet) {
         int n = csq.length();
-        for (int i=getIndex(); i < n; i++) {
+        for (int i = getIndex(); i < n; i++) {
             if (!charSet.contains(csq.charAt(i))) {
-                int j=i;
+                int j = i;
                 for (; (++j < n) && !charSet.contains(csq.charAt(j));) {
                     // Loop until j at the end of sequence or at specified characters.
                 }
@@ -232,9 +380,9 @@ public class Cursor extends ParsePosition implements Reusable {
      *         at the same index; <code>false</code> otherwise.
      */
     public boolean equals(Object obj) {
-        if (obj == null) 
+        if (obj == null)
             return false;
-        if (!(obj instanceof Cursor)) 
+        if (!(obj instanceof Cursor))
             return false;
         return getIndex() == ((Cursor) obj).getIndex();
     }

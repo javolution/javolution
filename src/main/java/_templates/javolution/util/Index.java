@@ -9,15 +9,22 @@
 package _templates.javolution.util;
 
 import _templates.java.io.ObjectStreamException;
+import _templates.javolution.text.Appendable;
 import _templates.java.lang.Comparable;
 import _templates.java.lang.Number;
+import _templates.java.util.List;
 import _templates.javax.realtime.MemoryArea;
+import _templates.java.lang.CharSequence;
 import _templates.javolution.lang.Configurable;
 import _templates.javolution.lang.Immutable;
 import _templates.javolution.lang.Realtime;
+import _templates.javolution.text.Cursor;
 import _templates.javolution.text.Text;
+import _templates.javolution.text.TextFormat;
+import _templates.javolution.text.TypeFormat;
 import _templates.javolution.util.FastCollection.Record;
 import _templates.javolution.xml.XMLSerializable;
+import java.io.IOException;
 
 /**
  * <p> This class represents a <b>unique</b> index which can be used instead of 
@@ -71,9 +78,9 @@ public final class Index extends Number implements
      */
     public static final Configurable/*<Integer>*/ INITIAL_FIRST
         = new Configurable(new Integer(-(_NegativeIndicesLength - 1))) {
-        protected void notifyChange() {
+        protected void notifyChange(Object oldValue, Object newValue) {
             // Ensures Index creation from minimum value. 
-            Index.valueOf(((Integer)INITIAL_FIRST.get()).intValue());
+            Index.valueOf(((Integer)newValue).intValue());
         }
     };
         
@@ -98,9 +105,9 @@ public final class Index extends Number implements
      */
     public static final Configurable/*<Integer>*/ INITIAL_LAST
         = new Configurable(new Integer(_PositiveIndicesLength - 1)) {
-        protected void notifyChange() {
+        protected void notifyChange(Object oldValue, Object newValue) {
             // Ensures Index creation to maximum value. 
-            Index.valueOf(((Integer)INITIAL_LAST.get()).intValue());
+            Index.valueOf(((Integer)newValue).intValue());
         }
     };
     
@@ -152,6 +159,36 @@ public final class Index extends Number implements
             : createPositive(i) : valueOfNegative(-i);
     }    
     
+    /**
+     * Returns all the indices greater or equal to <code>start</code>
+     * but less than <code>end</code>.
+     *
+     * @param start the start index.
+     * @param end the end index.
+     * @return <code>[start .. end[</code>
+     */
+    public static List/*<Index>*/ rangeOf(int start, int end) {
+        FastTable/*<Index>*/ list = FastTable.newInstance();
+        for (int i=start; i < end; i++) {
+            list.add(Index.valueOf(i));
+        }
+        return  list;
+    }
+
+    /**
+     * Returns the list of all the indices specified.
+     *
+     * @param indices the indices values.
+     * @return <code>{indices[0], indices[1], ...}</code>
+     *  @JVM-1.5+@
+    public static List<Index> valuesOf(int ... indices) {
+        FastTable<Index> list = FastTable.newInstance();
+        for (int i:indices) {
+            list.add(Index.valueOf(i));
+        }
+        return  list;
+    } /**/
+
     private static Index valueOfNegative(int i) {    
         return i < _NegativeIndicesLength ?
                     _NegativeIndices[i] : createNegative(i);
@@ -221,7 +258,7 @@ public final class Index extends Number implements
      * 
      * @return the index value.
      */
-    public final int intValue() {
+    public int intValue() {
         return _value;
     }
 
@@ -230,7 +267,7 @@ public final class Index extends Number implements
      * 
      * @return the index value.
      */
-    public final long longValue() {
+    public long longValue() {
         return intValue();
     }
     
@@ -239,7 +276,7 @@ public final class Index extends Number implements
      * 
      * @return the index value.
      */
-    public final float floatValue() {
+    public float floatValue() {
         return (float) intValue();
     }
 
@@ -248,18 +285,17 @@ public final class Index extends Number implements
      * 
      * @return the index value.
      */
-    public final double doubleValue() {
+    public double doubleValue() {
         return (double) intValue();
     }
-
 
     /**
      * Returns the <code>String</code> representation of this index.
      * 
-     * @return this index value formatted as a string.
+     * @return <code>TextFormat.getInstance(Cursor.class).formatToString(_value)</code>
      */
-    public final String toString() {
-        return String.valueOf(_value);
+    public String toString() {
+        return TextFormat.getInstance(Index.class).formatToString(this);
     }
 
     /**
@@ -307,8 +343,23 @@ public final class Index extends Number implements
 
     // Implements Realtime interface.
     public Text toText() {
-        return Text.valueOf(_value);
+        return TextFormat.getInstance(Index.class).format(this);
     }
+
+   /**
+     * Holds the default text format.
+     */
+    static final TextFormat TEXT_FORMAT = new TextFormat(Index.class) {
+
+        public Appendable format(Object obj, Appendable dest)
+                throws IOException {
+            return TypeFormat.format(((Index) obj).intValue(), dest);
+        }
+
+        public Object parse(CharSequence csq, Cursor cursor) {
+            return Index.valueOf(TypeFormat.parseInt(csq, 10, cursor));
+        }
+    };
 
     private static final long serialVersionUID = 1L;
 

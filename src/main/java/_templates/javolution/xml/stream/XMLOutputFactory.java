@@ -52,10 +52,10 @@ import _templates.javolution.lang.Configurable;
 public abstract class XMLOutputFactory {
 
     /**
-     * Holds the XMLOutputFactory default implementation (configurable).
+     * Holds the XMLOutputFactory implementation (configurable).
      */
-    public static final Configurable/*<Class<? extends XMLOutputFactory>>*/DEFAULT 
-        = new Configurable/*<Class<? extends XMLOutputFactory>>*/(Default.class);
+    public static final Configurable/*<Class<? extends XMLOutputFactory>>*/CLASS
+        = new Configurable/*<Class<? extends XMLOutputFactory>>*/(Default.class) {};
 
     /**
      * Property used to set prefix defaulting on the output side
@@ -77,6 +77,12 @@ public abstract class XMLOutputFactory {
      * (type: <code>String</code>, default: <code>null</code>).
      */
     public static final String INDENTATION = "javolution.xml.stream.indentation";
+
+     /**
+     * Property used to specify the new line characters
+     * (type: <code>String</code>, default: <code>"\n"</code>).
+     */
+    public static final String LINE_SEPARATOR = "javolution.xml.stream.lineSeparator";
 
     /**
      * Property indicating if the stream writers are allowed to automatically 
@@ -104,7 +110,7 @@ public abstract class XMLOutputFactory {
 
 
     /**
-     * Returns a new instance of the {@link #DEFAULT} output factory 
+     * Returns a new instance of the {@link #CLASS} output factory
      * implementation which may be configurated by the user 
      * (see {@link #setProperty(String, Object)}). The output factory
      * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
@@ -112,7 +118,7 @@ public abstract class XMLOutputFactory {
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
-        Class cls = (Class) DEFAULT.get();
+        Class cls = (Class) CLASS.get();
         return (XMLOutputFactory) ObjectFactory.getInstance(cls).object();
     }
 
@@ -196,6 +202,9 @@ public abstract class XMLOutputFactory {
         // Property setting.
         private String _indentation;
 
+        // Property setting.
+        private String _lineSeparator = "\n";
+
         // Implements XMLOutputFactory abstract method.
         public XMLStreamWriter createXMLStreamWriter(Writer writer)
                 throws XMLStreamException {
@@ -231,6 +240,7 @@ public abstract class XMLOutputFactory {
                     .booleanValue());
             xmlWriter.setRepairingPrefix(_repairingPrefix);
             xmlWriter.setIndentation(_indentation);
+            xmlWriter.setLineSeparator(_lineSeparator);
             xmlWriter.setAutomaticEmptyElements(_automaticEmptyElements
                     .booleanValue());
             xmlWriter.setNoEmptyElementTag(_noEmptyElementTag
@@ -251,6 +261,8 @@ public abstract class XMLOutputFactory {
                 _noEmptyElementTag = (Boolean) value;
             } else if (name.equals(INDENTATION)) {
                 _indentation = (String) value;
+            } else if (name.equals(LINE_SEPARATOR)) {
+                _lineSeparator = (String) value;
             } else {
                 throw new IllegalArgumentException("Property: " + name
                         + " not supported");
@@ -269,6 +281,8 @@ public abstract class XMLOutputFactory {
                 return _noEmptyElementTag;
             } else if (name.equals(INDENTATION)) {
                 return _indentation;
+            } else if (name.equals(LINE_SEPARATOR)) {
+                return _lineSeparator;
             } else {
                 throw new IllegalArgumentException("Property: " + name
                         + " not supported");
@@ -281,7 +295,8 @@ public abstract class XMLOutputFactory {
                     || name.equals(REPAIRING_PREFIX)
                     || name.equals(AUTOMATIC_EMPTY_ELEMENTS)
                     || name.equals(NO_EMPTY_ELEMENT_TAG)
-                    || name.equals(INDENTATION);
+                    || name.equals(INDENTATION)
+                    || name.equals(LINE_SEPARATOR);
         }
 
     }

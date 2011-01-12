@@ -61,9 +61,8 @@ import _templates.javolution.lang.Configurable;
  *     
  * <p> The default permissions managed by the {@link #DEFAULT} implementation
  *     are the permission to {@link #isReplaceable replace} the current security
- *     context by default) and the permission to {@link #isModifiable modify} 
- *     all the application {@link _templates.javolution.lang.Configurable.Logic 
- *     configuration} settings.</p>
+ *     context by default) and the permission to {@link #isConfigurable configure}
+ *     the application.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.2, August 5, 2007
@@ -79,8 +78,8 @@ public abstract class SecurityContext extends Context {
      */
     public static final Configurable/*<Class<? extends SecurityContext>>*/ DEFAULT = new Configurable(Default.class) {
 
-        protected void notifyChange() {
-            _Default = (SecurityContext) ObjectFactory.getInstance((Class) get()).object();
+        protected void notifyChange(Object oldValue, Object newValue) {
+            _Default = (SecurityContext) ObjectFactory.getInstance((Class) newValue).object();
         }
     };
 
@@ -96,8 +95,8 @@ public abstract class SecurityContext extends Context {
      *
      * @return the current security context.
      */
-    public static/*SecurityContext*/ Context getCurrent() {
-        for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
+    public static SecurityContext  getCurrentSecurityContext() {
+        for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof SecurityContext)
                 return (SecurityContext) ctx;
         }
@@ -137,8 +136,8 @@ public abstract class SecurityContext extends Context {
      * <code>true</code>). Applications may return <code>false</code> and 
      * prevent untrusted code to increase their privileges. Usually, 
      * such security setting should also prevent reconfiguring of the 
-     * {@link #DEFAULT default} context by making {@link #DEFAULT} not 
-     * {@link #isModifiable modifiable}.
+     * {@link #DEFAULT default} security context by making
+     * {@link #DEFAULT} not replaceable.
      * 
      * @return <code>true</code> if a new security context can be entered;
      *         <code>false</code> otherwise.
@@ -148,17 +147,17 @@ public abstract class SecurityContext extends Context {
     }
 
     /**
-     * Indicates if this security context allows modification of the 
-     * {@link _templates.javolution.lang.Configurable.Logic configuration} settings 
+     * Indicates if this security context allows changes in the specified
+     * {@link _templates.javolution.lang.Configurable Configurable}
      * (default <code>true</code>). Applications may override this method
      * to return <code>false</code> and prevent untrusted code to update the 
-     * some/all configuration parameters. 
+     * some or all configuration parameters.
      * 
-     * @param  cfg the configurable to check if modifiable.
+     * @param  cfg the configurable to check if changes are allowed.
      * @return <code>true</code> if the specified configurable can be modified;
      *         <code>false</code> otherwise.
      */
-    public boolean isModifiable(Configurable cfg) {
+    public boolean isConfigurable(Configurable cfg) {
         return true;
     }
 

@@ -25,7 +25,6 @@ import _templates.javolution.context.ObjectFactory;
 import _templates.javolution.context.PersistentContext;
 import _templates.javolution.lang.Reusable;
 
-
 /**
  * <p> This class represents a linked list with real-time behavior; 
  *     smooth capacity increase and no memory allocation as long as the
@@ -40,13 +39,13 @@ import _templates.javolution.lang.Reusable;
  *     {@link #subList splitting} the list into smaller ones.</p> 
  * 
  * <p> {@link FastList} (as for any {@link FastCollection} sub-class) supports
- *     thread-safe, fast iterations without using iterators.[code]
+ *     fast iterations without using iterators.[code]
  *     FastList<String> list = new FastList<String>();
  *     for (FastList.Node<String> n = list.head(), end = list.tail(); (n = n.getNext()) != end;) {
  *         String value = n.getValue(); // No typecast necessary.    
  *     }[/code]</p>
  *     
- * <p> {@link FastList} are fully {@link Reusable reusable}, they maintain 
+ * <p> {@link FastList} are {@link Reusable reusable}, they maintain
  *     internal pools of {@link Node nodes} objects. When a node is removed
  *     from its list, it is automatically restored to its pool.</p>
  * 
@@ -442,7 +441,7 @@ implements List/*<E>*/, Reusable {
         }
         _tail._value = value;
         _tail = _tail._next;
-        _size += ONE_VOLATILE; // Done last.
+        _size++;
     }
 
     /**
@@ -469,7 +468,7 @@ implements List/*<E>*/, Reusable {
     public final Object/*{E}*/removeLast() {
         if (_size == 0)
             throw new NoSuchElementException();
-        _size -= ONE_VOLATILE; // Done first.
+        _size--;
         final Node/*<E>*/last = _tail._previous;
         final Object/*{E}*/previousValue = last._value;
         _tail = last;
@@ -505,7 +504,7 @@ implements List/*<E>*/, Reusable {
         newNode._previous = previous;
 
         newNode._value = value;
-        _size += ONE_VOLATILE; // Done last.
+        _size++;
     }
 
     /**
@@ -542,7 +541,7 @@ implements List/*<E>*/, Reusable {
     // Implements FastCollection abstract method.
     public final void delete(Record record) {
         Node/*<E>*/node = (Node/*<E>*/) record;
-        _size -= ONE_VOLATILE; // Done first.
+        _size--;
         node._value = null;
         // Detaches.
         node._previous._next = node._next;
@@ -573,7 +572,7 @@ implements List/*<E>*/, Reusable {
 
     // Overrides (optimization).
     public final void clear() {
-        _size = ONE_VOLATILE - 1; // Done first.
+        _size = 0;
         for (Node/*<E>*/n = _head, end = _tail; (n = n._next) != end;) {
             n._value = null;
         }
@@ -991,8 +990,6 @@ implements List/*<E>*/, Reusable {
     private static boolean defaultEquals(Object o1, Object o2) {
         return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
     }
-
-    static volatile int ONE_VOLATILE = 1; // To prevent reordering.
 
     private static final long serialVersionUID = 1L;
 

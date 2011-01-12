@@ -8,11 +8,10 @@
  */
 package _templates.javolution.xml;
 
-import java.util.Hashtable;
-
 import _templates.java.lang.CharSequence;
-import _templates.javolution.Javolution;
+import _templates.javolution.lang.Reflection;
 import _templates.javolution.text.CharArray;
+import _templates.javolution.text.Text;
 import _templates.javolution.text.TextBuilder;
 import _templates.javolution.text.TextFormat;
 import _templates.javolution.xml.sax.Attributes;
@@ -27,10 +26,10 @@ import _templates.javolution.xml.stream.XMLStreamWriterImpl;
  *     deserialization.</p>
  *     
  * <p> Application classes typically define a default XML format for their 
- *     instances using static {@link XMLFormat} class members. 
+ *     instances using protected static {@link XMLFormat} class members.
  *     Formats are inherited by sub-classes. For example:[code]
  *     
- *     public abstract class Graphic {
+ *     public abstract class Graphic implements XMLSerializable {
  *         private boolean _isVisible;
  *         private Paint _paint; // null if none.
  *         private Stroke _stroke; // null if none.
@@ -38,7 +37,7 @@ import _templates.javolution.xml.stream.XMLStreamWriterImpl;
  *          
  *         // XML format with positional associations (members identified by their position),
  *         // see XML package description for examples of name associations.
- *         private static final XMLFormat<Graphic> XML = new XMLFormat<Graphic>(Graphic.class) {
+ *         protected static final XMLFormat<Graphic> GRAPHIC_XML = new XMLFormat<Graphic>(Graphic.class) {
  *              public void write(Graphic g, OutputElement xml) {
  *                  xml.setAttribute("isVisible", g._isVisible); 
  *                  xml.add(g._paint); // First.
@@ -59,8 +58,8 @@ import _templates.javolution.xml.stream.XMLStreamWriterImpl;
  *     formatting/parsing of XML attributes should always be performed before 
  *     formatting/parsing of the XML content.</p>
  * 
- * <p> The mapping between classes and XML formats is defined by {@link 
- *     XMLBinding} instances. 
+ * <p> The mapping between classes and XML formats can be overriden
+ *     through {@link XMLBinding} instances.
  *     Here is an example of serialization/deserialization:[code]
  *     
  *     // Creates a list holding diverse objects.
@@ -68,11 +67,11 @@ import _templates.javolution.xml.stream.XMLStreamWriterImpl;
  *     list.add("John Doe");
  *     list.add(null);
  *     Map map = new FastMap();
- *     map.put("ONE", new Integer(1));
- *     map.put("TWO", new Integer(2));
+ *     map.put("ONE", 1);
+ *     map.put("TWO", 2);
  *     list.add(map);
  *     
- *     // Creates some aliases to use instead of class names.
+ *     // Use of custom binding.
  *     XMLBinding binding = new XMLBinding();
  *     binding.setAlias(FastMap.class, "Map");
  *     binding.setAlias(String.class, "String");
@@ -107,13 +106,13 @@ import _templates.javolution.xml.stream.XMLStreamWriterImpl;
  *     </p>
  *     
  * <p> <i>Note:</i> Any type for which a text format is 
- *    {@link TextFormat#getInstance(Class) known} can be represented as 
+ *    {@link TextFormat#getInstance known} can be represented as 
  *    a XML attribute.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.1, July 4, 2007
+ * @version 5.4, December 1, 2009
  */
-public abstract class XMLFormat/*<T>*/{
+public abstract class XMLFormat/*<T>*/ {
 
     /**
      * Holds <code>null</code> representation.
@@ -121,29 +120,20 @@ public abstract class XMLFormat/*<T>*/{
     private static final String NULL = "Null";
 
     /**
-     * Holds the class instances.
+     * Holds the class associated to this format (static instances)
+     * or <code>null</code> if format is unbound.
      */
-    static volatile XMLFormat[] _ClassInstances = new XMLFormat[64];
+    private final Class/*<T>*/ _class;
 
     /**
-     * Holds the number of class instances.
-     */
-    static volatile int _ClassInstancesLength;
-
-    /**
-     * Holds the class associated to this format (static instances only).
-     */
-    final Class _class;
-
-    /**
-     * Creates a XML format mapped to the specified class. If the specified 
-     * class is <code>null</code> then the format is left unmapped ( 
-     * dynamic format used by custom {@link XMLBinding binding} instances).
+     * Defines the default XML format bound to the specified class.
+     * If the specified class is <code>null</code> then the format is unbound
+     * (unbound formats are used by custom {@link XMLBinding binding} instances).
      * The static binding is unique and can only be overriden by custom
      * {@link XMLBinding}. For example:[code]
      *    // Overrides default binding for java.util.Collection.
      *    class MyBinding extends XMLBinding {
-     *        XMLFormat<Collection> collectionXML = new XMLFormat<Collection>(null) { ... }; // Unmapped.
+     *        XMLFormat<Collection> collectionXML = new XMLFormat<Collection>(null) { ... }; // Unbound.
      *        public XMLFormat getFormat(Class cls) {
      *            if (Collection.isAssignableFrom(cls)) {
      *                return collectionXML; // Overrides default XML format.
@@ -153,37 +143,42 @@ public abstract class XMLFormat/*<T>*/{
      *        }
      *    }[/code]
      * 
-     * 
-     * @param cls the root class/interface to associate to this XML format
-     *        or <code>null</code> if this format is not mapped.
-     * @throws IllegalArgumentException if the specified class is already 
-     *         bound to another format.
+     * @param forClass the root class/interface to associate to this XML format
+     *        or <code>null</code> if this format is not bound.
+     * @throws IllegalArgumentException if a XMLFormat is already bound to 
+     *         the specified class.
      */
-    protected XMLFormat(Class/*<T>*/cls) {
-        _class = cls;
-        if (cls == null)
+    protected XMLFormat(Class/*<T>*/ forClass) {
+        _class = forClass;
+        if (forClass == null)
             return; // Dynamic format.
-        synchronized (_ClassToFormat) {
-            // Check if statically bounded.
-            if (_ClassToFormat.containsKey(cls))
-                throw new IllegalArgumentException(
-                        "Existing static binding for class "
-                                + cls
-                                + " can only be overriden through custom XMLBinding"
-                                + " (see XMLFormat(Class) documentation)");
-            final int length = XMLFormat._ClassInstancesLength;
-            final XMLFormat[] formats = XMLFormat._ClassInstances;
-            if (length >= formats.length) { // Resizes (ImmortalMemory).
-                XMLFormat[] tmp = new XMLFormat[length * 2];
-                System.arraycopy(formats, 0, tmp, 0, length);
-                XMLFormat._ClassInstances = tmp;
-            }
-            XMLFormat._ClassInstances[XMLFormat._ClassInstancesLength++] = this;
-            _ClassToFormat.put(cls, this);
-        }
+        Reflection.getInstance().setField(this, forClass, XMLFormat.class);
     }
 
-    private static Hashtable _ClassToFormat = new Hashtable();
+    /**
+     * <p> Returns the default format for the specified class/interface.
+     *     If there no direct mapping for the specified class, the mapping
+     *     for the specified class interfaces is searched, if none is found
+     *     the mapping for the parents classes is searched, if still none is
+     *     found the format for <code>java.lang.Object</code> is returned.</p>
+     *
+     * <p> A default xml format exists for the following predefined types:
+     *     <code><ul>
+     *       <li>java.lang.Object</li>
+     *       <li>java.util.Collection</li>
+     *       <li>java.util.Map</li>
+     *    </ul></code>
+     *    The default XML representation (java.lang.Object) consists of the
+     *    of a "value" attribute holding its textual representation
+     *    (see {@link TextFormat#getInstance}).</p>
+     *
+     * @return the class/interface bound to this format.
+     */
+    public static /*<T>*/ XMLFormat/*<T>*/ getInstance(Class/*<? extends T>*/ forClass) {
+        XMLFormat objectFormat = XMLBinding.OBJECT_XML; // Also forces initialization or XMLBinding.
+        XMLFormat xmlFormat = (XMLFormat) Reflection.getInstance().getField(forClass, XMLFormat.class, true);
+        return (xmlFormat != null) ? xmlFormat : objectFormat;
+    }
 
     /**
      * Returns the class/interface statically bound to this format or 
@@ -191,7 +186,7 @@ public abstract class XMLFormat/*<T>*/{
      * 
      * @return the class/interface bound to this format.
      */
-    public final Class/*<T>*/getBoundClass() {
+    public final Class/*<T>*/ getBoundClass() {
         return _class;
     }
 
@@ -219,7 +214,7 @@ public abstract class XMLFormat/*<T>*/{
      * @param xml the XML input element.
      * @return the object corresponding to the specified XML element.
      */
-    public Object/*{T}*/newInstance(Class/*<T>*/cls, InputElement xml)
+    public Object/*{T}*/ newInstance(Class/*<T>*/ cls, InputElement xml)
             throws XMLStreamException {
         try {
             return cls.newInstance();
@@ -236,7 +231,7 @@ public abstract class XMLFormat/*<T>*/{
      * @param obj the object to format.
      * @param xml the <code>XMLElement</code> destination.
      */
-    public abstract void write(Object/*{T}*/obj, OutputElement xml)
+    public abstract void write(Object/*{T}*/ obj, OutputElement xml)
             throws XMLStreamException;
 
     /**
@@ -246,8 +241,20 @@ public abstract class XMLFormat/*<T>*/{
      * @param obj the object created through {@link #newInstance}
      *        and to setup from the specified XML element.
      */
-    public abstract void read(InputElement xml, Object/*{T}*/obj)
+    public abstract void read(InputElement xml, Object/*{T}*/ obj)
             throws XMLStreamException;
+
+    /**
+     * Returns textual information about this format.
+     *
+     * @return this format textual information.
+     */
+    public String toString() {
+        Class boundClass = getBoundClass();
+        return (boundClass != null)
+                ? "Default XMLFormat for " + boundClass.getName()
+                : "Dynamic XMLtFormat (" + this.hashCode() + ")";
+    }
 
     /**
      * This class represents an input XML element (unmarshalling).
@@ -314,10 +321,9 @@ public abstract class XMLFormat/*<T>*/{
          * @return the next nested object which can be <code>null</code>.
          * @throws XMLStreamException if <code>hasNext() == false</code>.
          */
-        public/*<T>*/Object/*{T}*/getNext() throws XMLStreamException {
+        public/*<T>*/ Object/*{T}*/ getNext() throws XMLStreamException {
             if (!hasNext()) // Asserts isReaderAtNext == true
-                throw new XMLStreamException("No more element to read", _reader
-                        .getLocation());
+                throw new XMLStreamException("No more element to read", _reader.getLocation());
 
             // Checks for null.
             if (_reader.getLocalName().equals(NULL)) {
@@ -328,7 +334,8 @@ public abstract class XMLFormat/*<T>*/{
             }
 
             Object ref = readReference();
-            if (ref != null) return (Object/*{T}*/) ref;
+            if (ref != null)
+                return (Object/*{T}*/) ref;
 
             // Retrieves object's class from element tag.
             Class cls = _binding.readClass(_reader, false);
@@ -342,13 +349,14 @@ public abstract class XMLFormat/*<T>*/{
          * @param name the local name of the next element.
          * @return the next nested object or <code>null</code>.
          */
-        public/*<T>*/Object/*{T}*/get(String name) throws XMLStreamException {
+        public/*<T>*/ Object/*{T}*/ get(String name) throws XMLStreamException {
             if (!hasNext()// Asserts isReaderAtNext == true
                     || !_reader.getLocalName().equals(name))
                 return null;
 
             Object ref = readReference();
-            if (ref != null) return (Object/*{T}*/) ref;
+            if (ref != null)
+                return (Object/*{T}*/) ref;
 
             // Retrieves object's class from class attribute.
             Class cls = _binding.readClass(_reader, true);
@@ -363,18 +371,18 @@ public abstract class XMLFormat/*<T>*/{
          * @param uri the namespace URI or <code>null</code>.
          * @return the next nested object or <code>null</code>.
          */
-        public/*<T>*/Object/*{T}*/get(String localName, String uri)
+        public/*<T>*/ Object/*{T}*/ get(String localName, String uri)
                 throws XMLStreamException {
             if (uri == null)
                 return (Object/*{T}*/) get(localName);
 
             if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(localName)
-                    || !_reader.getNamespaceURI().equals(uri))
+                    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
                 return null;
 
             Object ref = readReference();
-            if (ref != null) return (Object/*{T}*/) ref;
+            if (ref != null)
+                return (Object/*{T}*/) ref;
 
             // Retrieves object's class from class attribute.
             Class cls = _binding.readClass(_reader, true);
@@ -389,14 +397,15 @@ public abstract class XMLFormat/*<T>*/{
          * @param cls the class identifying the format of the object to return.
          * @return the next nested object or <code>null</code>.
          */
-        public/*<T>*/Object/*{T}*/get(String name, Class/*<T>*/cls)
+        public/*<T>*/ Object/*{T}*/ get(String name, Class/*<T>*/ cls)
                 throws XMLStreamException {
             if (!hasNext()// Asserts isReaderAtNext == true
                     || !_reader.getLocalName().equals(name))
                 return null;
 
             Object ref = readReference();
-            if (ref != null) return (Object/*{T}*/) ref;
+            if (ref != null)
+                return (Object/*{T}*/) ref;
 
             return (Object/*{T}*/) readInstanceOf(cls);
         }
@@ -410,27 +419,29 @@ public abstract class XMLFormat/*<T>*/{
          * @param cls the class identifying the format of the object to return.
          * @return the next nested object or <code>null</code>.
          */
-        public/*<T>*/Object/*{T}*/get(String localName, String uri,
-                Class/*<T>*/cls) throws XMLStreamException {
+        public/*<T>*/ Object/*{T}*/ get(String localName, String uri,
+                Class/*<T>*/ cls) throws XMLStreamException {
             if (uri == null)
                 return get(localName, cls);
 
             if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(localName)
-                    || !_reader.getNamespaceURI().equals(uri))
+                    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
                 return null;
 
             Object ref = readReference();
-            if (ref != null) return (Object/*{T}*/) ref;
+            if (ref != null)
+                return (Object/*{T}*/) ref;
 
             return (Object/*{T}*/) readInstanceOf(cls);
         }
 
         // Returns the referenced object if any.
         private Object readReference() throws XMLStreamException {
-            if (_referenceResolver == null) return null;
+            if (_referenceResolver == null)
+                return null;
             Object ref = _referenceResolver.readReference(this);
-            if (ref == null) return null;
+            if (ref == null)
+                return null;
             if (_reader.next() != XMLStreamReader.END_ELEMENT)
                 throw new XMLStreamException("Non Empty Reference Element");
             _isReaderAtNext = false;
@@ -646,17 +657,16 @@ public abstract class XMLFormat/*<T>*/{
          * @return the parse value for the specified attribute or
          *         the default value if the attribute is not found.
          */
-        public/*<T>*/Object/*{T}*/getAttribute(String name,
-                Object/*{T}*/defaultValue) throws XMLStreamException {
+        public/*<T>*/ Object/*{T}*/ getAttribute(String name,
+                Object/*{T}*/ defaultValue) throws XMLStreamException {
             CharArray value = getAttribute(name);
             if (value == null)
                 return defaultValue;
             // Parses attribute value.
             Class type = defaultValue.getClass();
             TextFormat format = TextFormat.getInstance(type);
-            if (format == null)
-                throw new XMLStreamException("No TextFormat instance for "
-                        + type);
+            if (!format.isParsingSupported())
+                throw new XMLStreamException("No TextFormat instance for " + type);
             return (Object/*{T}*/) format.parse(value);
         }
 
@@ -734,12 +744,13 @@ public abstract class XMLFormat/*<T>*/{
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj)) return;
+            if (xmlFormat.isReferenceable() && writeReference(obj))
+                return;
 
             xmlFormat.write(obj, this);
             _writer.writeEndElement();
         }
-        
+
         /**
          * Adds the specified object as a named nested element of unknown type
          * (<code>null</code> objects are ignored).
@@ -762,7 +773,8 @@ public abstract class XMLFormat/*<T>*/{
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj)) return;
+            if (xmlFormat.isReferenceable() && writeReference(obj))
+                return;
 
             xmlFormat.write(obj, this);
             _writer.writeEndElement();
@@ -792,7 +804,8 @@ public abstract class XMLFormat/*<T>*/{
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj)) return;
+            if (xmlFormat.isReferenceable() && writeReference(obj))
+                return;
 
             xmlFormat.write(obj, this);
             _writer.writeEndElement();
@@ -807,7 +820,7 @@ public abstract class XMLFormat/*<T>*/{
          * @param name the name of the nested element.
          * @param cls the class identifying the format of the specified object.
          */
-        public/*<T>*/void add(Object/*{T}*/obj, String name, Class/*<T>*/cls)
+        public/*<T>*/ void add(Object/*{T}*/ obj, String name, Class/*<T>*/ cls)
                 throws XMLStreamException {
             if (obj == null)
                 return;
@@ -817,7 +830,8 @@ public abstract class XMLFormat/*<T>*/{
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj)) return;
+            if (xmlFormat.isReferenceable() && writeReference(obj))
+                return;
 
             xmlFormat.write(obj, this);
             _writer.writeEndElement();
@@ -833,8 +847,8 @@ public abstract class XMLFormat/*<T>*/{
          * @param uri the namespace URI of the nested element.
          * @param cls the class identifying the format of the specified object.
          */
-        public/*<T>*/void add(Object/*{T}*/obj, String localName, String uri,
-                Class/*<T>*/cls) throws XMLStreamException {
+        public/*<T>*/ void add(Object/*{T}*/ obj, String localName, String uri,
+                Class/*<T>*/ cls) throws XMLStreamException {
             if (obj == null)
                 return;
 
@@ -843,7 +857,8 @@ public abstract class XMLFormat/*<T>*/{
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj)) return;
+            if (xmlFormat.isReferenceable() && writeReference(obj))
+                return;
 
             xmlFormat.write(obj, this);
             _writer.writeEndElement();
@@ -916,7 +931,6 @@ public abstract class XMLFormat/*<T>*/{
                 throws XMLStreamException {
             setAttribute(name, _tmpTextBuilder.clear().append(value));
         }
-
         private TextBuilder _tmpTextBuilder = new TextBuilder();
 
         /**
@@ -1011,9 +1025,6 @@ public abstract class XMLFormat/*<T>*/{
                 return;
             Class type = value.getClass();
             TextFormat format = TextFormat.getInstance(type);
-            if (format == null)
-                throw new XMLStreamException("No TextFormat instance for "
-                        + type);
             setAttribute(name, (TextBuilder) format.format(value,
                     _tmpTextBuilder.clear()));
         }
@@ -1036,19 +1047,13 @@ public abstract class XMLFormat/*<T>*/{
             _writer.setAutomaticEmptyElements(true);
             _referenceResolver = null;
         }
-
     }
 
-    private static CharSequence toCsq/**/(Object str) {
-        return Javolution.j2meToCharSeq(str);
-    }
-
-    /**
-     * Creates an unmapped XML format.
-     * 
-     * @deprecated <code>XMLFormat(null) should be used instead.
-     */
-    protected XMLFormat() {
-        this(null);
+    // For J2ME Compatibility.
+    private static CharSequence toCsq(Object str) {
+        /*@JVM-1.4+@
+        if (true) return (CharSequence) str;
+        /**/
+        return str == null ? null : Text.valueOf(str);
     }
 }

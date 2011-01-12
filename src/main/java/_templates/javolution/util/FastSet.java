@@ -236,5 +236,11 @@ public class FastSet/*<E>*/ extends FastCollection/*<E>*/ implements Set/*<E>*/,
         _map.remove(((FastMap.Entry) record).getKey());
     }
 
+    // Implements FastCollection abstract method.
+    public Collection/*Set<E>*/ shared() {
+        _map.shared();
+        return this;
+    }
+
     private static final long serialVersionUID = 1L;
 }

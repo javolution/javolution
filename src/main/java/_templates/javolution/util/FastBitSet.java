@@ -8,6 +8,7 @@
  */
 package _templates.javolution.util;
 
+import _templates.java.lang.UnsupportedOperationException;
 import _templates.java.util.Set;
 import _templates.javax.realtime.MemoryArea;
 import _templates.javolution.context.ObjectFactory;

@@ -2,14 +2,14 @@
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
  * Copyright (C) 2005 - Javolution (http://javolution.org/)
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package _templates.java.nio;
 
 /**
- * Clean-room implementation of ByteBuffer to support 
+ * Clean-room implementation of ByteBuffer to support
  * <code>javolution.util.Struct</code> when <code>java.nio</code> is
  * not available.
  */
@@ -59,8 +59,9 @@ public final class ByteBuffer extends Buffer {
     }
 
     public ByteBuffer put(byte[] src, int offset, int length) {
-        for (int i = offset; i < offset + length; i++)
+        for (int i = offset; i < offset + length; i++) {
             put(src[i]);
+        }
 
         return this;
     }
@@ -113,11 +114,14 @@ public final class ByteBuffer extends Buffer {
     }
 
     public char getChar() {
-        return getChar(_position++);
+        char val = getChar(_position);
+        _position += 2;
+        return val;
     }
 
     public ByteBuffer putChar(char value) {
-        putChar(_position++, value);
+        putChar(_position, value);
+        _position += 2;
         return this;
     }
 
@@ -130,11 +134,15 @@ public final class ByteBuffer extends Buffer {
     }
 
     public short getShort() {
-        return getShort(_position++);
+        short val = getShort(_position);
+        _position += 2;
+        return val;
     }
 
     public ByteBuffer putShort(short value) {
-        return putShort(_position++, value);
+        putShort(_position, value);
+        _position += 2;
+        return this;
     }
 
     public short getShort(int index) {
@@ -157,11 +165,15 @@ public final class ByteBuffer extends Buffer {
     }
 
     public int getInt() {
-        return getInt(_position++);
+        int val = getInt(_position);
+        _position += 4;
+        return val;
     }
 
     public ByteBuffer putInt(int value) {
-        return putInt(_position++, value);
+        putInt(_position, value);
+        _position += 4;
+        return this;
     }
 
     public int getInt(int index) {
@@ -192,11 +204,15 @@ public final class ByteBuffer extends Buffer {
     }
 
     public long getLong() {
-        return getLong(_position++);
+        long val = getLong(_position);
+        _position += 8;
+        return val;
     }
 
     public ByteBuffer putLong(long value) {
-        return putLong(_position++, value);
+        putLong(_position, value);
+        _position += 8;
+        return this;
     }
 
     public long getLong(int index) {
@@ -244,11 +260,15 @@ public final class ByteBuffer extends Buffer {
     }
 
     public float getFloat() {
-        return getFloat(_position++);
+        float val = getFloat(_position);
+        _position += 4;
+        return val;
     }
 
     public ByteBuffer putFloat(float value) {
-        return putFloat(_position++, value);
+        putFloat(_position, value);
+        _position += 4;
+        return this;
     }
 
     public float getFloat(int index) {
@@ -260,11 +280,15 @@ public final class ByteBuffer extends Buffer {
     }
 
     public double getDouble() {
-        return getDouble(_position++);
+        double val = getDouble(_position);
+        _position += 8;
+        return val;
     }
 
     public ByteBuffer putDouble(double value) {
-        return putDouble(_position++, value);
+        putDouble(_position, value);
+        _position += 8;
+        return this;
     }
 
     public double getDouble(int index) {

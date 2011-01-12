@@ -8,7 +8,6 @@
  */
 package _templates.javolution.io;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,24 +15,25 @@ import java.io.OutputStream;
 import _templates.java.lang.UnsupportedOperationException;
 import _templates.java.nio.ByteBuffer;
 import _templates.java.nio.ByteOrder;
-import _templates.java.util.List;
-import _templates.javolution.JavolutionError;
 import _templates.javolution.lang.Configurable;
 import _templates.javolution.lang.Enum;
 import _templates.javolution.lang.MathLib;
 import _templates.javolution.lang.Reflection;
+import _templates.javolution.text.TextBuilder;
 
 /**
  * <p> This class represents a <code>C/C++ struct</code>; it confers
  *     interoperability between Java classes and C/C++ struct.</p>
+ *
  * <p> Unlike <code>C/C++</code>, the storage layout of Java objects is not
  *     determined by the compiler. The layout of objects in memory is deferred
  *     to run time and determined by the interpreter (or just-in-time compiler).
  *     This approach allows for dynamic loading and binding; but also makes
  *     interfacing with <code>C/C++</code> code difficult. Hence, this class for
  *     which the memory layout is defined by the initialization order of the
- *     {@link Struct}'s {@link Member members} and follows the same alignment
+ *     {@link Struct}'s {@link Member members} and follows the same wordSize
  *      rules as <code>C/C++ structs</code>.</p>
+ *
  * <p> This class (as well as the {@link Union} sub-class) facilitates:
  *     <ul>
  *     <li> Memory sharing between Java applications and native libraries.</li>
@@ -43,39 +43,46 @@ import _templates.javolution.lang.Reflection;
  *          e.g. no class header)</li>
  *     <li> Mapping of Java objects to physical addresses (with JNI).</li>
  *     </ul></p>
+ *
  * <p> Because of its one-to-one mapping, it is relatively easy to convert C
  *     header files (e.g. OpenGL bindings) to Java {@link Struct}/{@link Union}
  *     using simple text macros. Here is an example of C struct:<code><pre>
+ *     enum Gender{MALE, FEMALE};
  *     struct Date {
  *         unsigned short year;
  *         unsigned byte month;
  *         unsigned byte day;
  *     };
  *     struct Student {
+ *         enum Gender gender;
  *         char        name[64];
  *         struct Date birth;
  *         float       grades[10];
  *         Student*    next;
  *     };</pre></code>
  *     and here is the Java equivalent using this class:[code]
+ *     public enum Gender { MALE, FEMALE };
  *     public static class Date extends Struct {
  *         public final Unsigned16 year = new Unsigned16();
  *         public final Unsigned8 month = new Unsigned8();
  *         public final Unsigned8 day   = new Unsigned8();
  *     }
  *     public static class Student extends Struct {
- *         public final UTF8String  name   = new UTF8String(64);
- *         public final Date        birth  = inner(new Date());
- *         public final Float32[]   grades = array(new Float32[10]);
- *         public final Reference32<Student> next =  new Reference32<Student>();
+ *         public final Enum32<Gender>       gender = new Enum32<Gender>(Gender.values());
+ *         public final UTF8String           name   = new UTF8String(64);
+ *         public final Date                 birth  = inner(new Date());
+ *         public final Float32[]            grades = array(new Float32[10]);
+ *         public final Reference32<Student> next   =  new Reference32<Student>();
  *     }[/code]
  *     Struct's members are directly accessible:[code]
  *     Student student = new Student();
+ *     student.gender.set(Gender.MALE);
  *     student.name.set("John Doe"); // Null terminated (C compatible)
  *     int age = 2003 - student.birth.year.get();
  *     student.grades[2].set(12.5f);
  *     student = student.next.get();[/code]</p>
- * <p> Applications may also work with the raw {@link #getByteBuffer() bytes}
+ *
+ * <p> Applications can work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to
  *     decode/encode UDP messages directly:[code]
  *     class UDPMessage extends Struct {
@@ -94,6 +101,7 @@ import _templates.javolution.lang.Reflection;
  *             ... // Process message fields directly.
  *         }
  *     }[/code]</p>
+ *
  * <p> It is relatively easy to map instances of this class to any physical
  *     address using
  *     <a href="http://java.sun.com/docs/books/tutorial/native1.1/index.html">
@@ -115,15 +123,20 @@ import _templates.javolution.lang.Reflection;
  *     JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
  *         return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
  *     }[/code]</p>
+ *
  * <p> Bit-fields are supported (see <code>Clock</code> example above).
  *     Bit-fields allocation order is defined by the Struct {@link #byteOrder}
- *     return value (leftmost bit to rightmost bit if
+ *     return value. Leftmost bit to rightmost bit if
  *     <code>BIG_ENDIAN</code> and rightmost bit to leftmost bit if
- *      <code>LITTLE_ENDIAN</code>).
- *     Unless the Struct {@link #isPacked packing} directive is overridden,
- *     bit-fields cannot straddle the storage-unit boundary as defined by their
- *     base type (padding is inserted at the end of the first bit-field
- *     and the second bit-field is put into the next storage unit).</p>
+ *     <code>LITTLE_ENDIAN</code> (same layout as Microsoft Visual C++).
+ *     C/C++ Bit-fields cannot straddle the storage-unit boundary as defined
+ *     by their base type (padding is inserted at the end of the first bit-field
+ *     and the second bit-field is put into the next storage unit).
+ *     It is possible to avoid bit padding by using the {@link BitField}
+ *     member (or a sub-class). In which case the allocation order is always
+ *     from the leftmost to the rightmost bit (same as <code>BIG_ENDIAN</code>).
+ *     </p>
+ *
  * <p> Finally, it is possible to change the {@link #setByteBuffer ByteBuffer}
  *     and/or the Struct {@link #setByteBufferPosition position} in its
  *     <code>ByteBuffer</code> to allow for a single {@link Struct} object to
@@ -134,16 +147,16 @@ import _templates.javolution.lang.Reflection;
  *             Java NIO package are directly applicable to Struct/Union.</i></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.3, March 30, 2009
+ * @version 5.5.1, April 1, 2010
  */
 public class Struct {
 
     /**
-     * Configurable holding the maximum alignment in bytes
+     * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final Configurable/*<Integer>*/MAXIMUM_ALIGNMENT
-        = new Configurable(new Integer(4));
+    public static final Configurable/*<Integer>*/ MAXIMUM_ALIGNMENT = new Configurable(new Integer(4)) {
+    };
 
     /**
      * Holds the outer struct if any.
@@ -162,22 +175,36 @@ public class Struct {
     private int _outerOffset;
 
     /**
-     * Holds the number of bits currently used (for size calculation).
-     */
-    private int _bitsUsed;
-
-    /**
-     * Holds this struct alignment (largest alignment of its members).
+     * Holds this struct alignment in bytes (largest word size of its members).
      */
     private int _alignment = 1;
 
     /**
-     * Holds the current bit index position (during construction).
+     * Holds this struct's length.
      */
-    private int _bitIndex;
+    private int _length;
 
     /**
-     * Indicates if the index has to be reset for each new field.
+     * Holds the index position during construction.
+     * This is the index a the first unused byte available.
+     */
+    private int _index;
+
+    /**
+     * Holds the word size during construction (for bit fields).
+     * This is the size of the last word used.
+     */
+    private int _wordSize;
+
+    /**
+     * Holds the bits used in the word during construction (for bit fields).
+     * This is the number of bits used in the last word.
+     */
+    private int _bitsUsed;
+
+    /**
+     * Indicates if the index has to be reset for each new field (
+     * <code>true</code> only for Union subclasses).
      */
     private boolean _resetIndex;
 
@@ -195,15 +222,24 @@ public class Struct {
 
     /**
      * Returns the size in bytes of this struct. The size includes
-     * tail padding to satisfy the struct alignment requirement
-     * (defined by the largest alignment of its {@link Member members}).
+     * tail padding to satisfy the struct word size requirement
+     * (defined by the largest word size of its {@link Member members}).
      *
      * @return the C/C++ <code>sizeof(this)</code>.
      */
     public final int size() {
-        int nbrOfBytes = (_bitsUsed + 7) >> 3;
-        return ((nbrOfBytes % _alignment) == 0) ? nbrOfBytes : // Already aligned or packed.
-                nbrOfBytes + _alignment - (nbrOfBytes % _alignment); // Tail padding.
+        return (_alignment <= 1) ? _length :
+            ((_length + _alignment - 1) / _alignment) * _alignment;
+    }
+
+    /**
+     * Returns the outer of this struct or <code>null</code> if this struct
+     * is not an inner struct.
+     *
+     * @return the outer struct or <code>null</code>.
+     */
+    public Struct outer() {
+        return _outer;
     }
 
     /**
@@ -213,9 +249,9 @@ public class Struct {
      * <p> Changes to the buffer's content are visible in this struct,
      *     and vice versa.</p>
      * <p> The buffer of an inner struct is the same as its parent struct.</p>
-     * <p> The position of a {@link Struct.Member struct's member} within the
-     *     byte buffer is given by {@link Struct.Member#position
-     *     member.position()}</p>
+     * <p> If no byte buffer has been {@link Struct#setByteBuffer set},
+     *     a direct buffer is allocated with a capacity equals to this
+     *     struct's {@link Struct#size() size}.</p>
      *
      * @return the current byte buffer or a new direct buffer if none set.
      * @see #setByteBuffer
@@ -229,11 +265,7 @@ public class Struct {
     private synchronized ByteBuffer newBuffer() {
         if (_byteBuffer != null)
             return _byteBuffer; // Synchronized check.
-        int size = size();
-        // Covers misaligned 64 bits access when packed.
-        int capacity = isPacked() ? (((size & 0x7) == 0) ? size : size + 8
-                - (size & 0x7)) : size;
-        ByteBuffer bf = ByteBuffer.allocateDirect(capacity);
+        ByteBuffer bf = ByteBuffer.allocateDirect(size());
         bf.order(byteOrder());
         setByteBuffer(bf, 0);
         return _byteBuffer;
@@ -244,6 +276,8 @@ public class Struct {
      * The specified byte buffer can be mapped to memory for direct memory
      * access or can wrap a shared byte array for I/O purpose
      * (e.g. <code>DatagramPacket</code>).
+     * The capacity of the specified byte buffer should be at least the
+     * {@link Struct#size() size} of this struct plus the offset position.
      *
      * @param byteBuffer the new byte buffer.
      * @param position the position of this struct in the specified byte buffer.
@@ -256,8 +290,7 @@ public class Struct {
     public final Struct setByteBuffer(ByteBuffer byteBuffer, int position) {
         if (byteBuffer.order() != byteOrder())
             throw new IllegalArgumentException(
-                    "The byte order of the specified byte buffer"
-                            + " is different from this struct byte order");
+                    "The byte order of the specified byte buffer" + " is different from this struct byte order");
         if (_outer != null)
             throw new UnsupportedOperationException(
                     "Inner struct byte buffer is inherited from outer");
@@ -267,7 +300,7 @@ public class Struct {
     }
 
     /**
-     * Sets the position of this struct within its byte buffer.
+     * Sets the byte position of this struct within its byte buffer.
      *
      * @param position the position of this struct in its byte buffer.
      * @return <code>this</code>
@@ -278,10 +311,11 @@ public class Struct {
     }
 
     /**
-     * Returns the absolute position of this struct within its associated
+     * Returns the absolute byte position of this struct within its associated
      * {@link #getByteBuffer byte buffer}.
      *
-     * @return the absolute position of this struct in the byte buffer.
+     * @return the absolute position of this struct (can be an inner struct)
+     *         in the byte buffer.
      */
     public final int getByteBufferPosition() {
         return (_outer != null) ? _outer.getByteBufferPosition() + _outerOffset
@@ -361,9 +395,7 @@ public class Struct {
                     "Operation not supported for " + thisBuffer.getClass());
         }
     }
-
-    private static final Reflection.Method ADDRESS_METHOD = Reflection
-            .getMethod("sun.nio.ch.DirectBuffer.address()");
+    private static final Reflection.Method ADDRESS_METHOD = Reflection.getInstance().getMethod("sun.nio.ch.DirectBuffer.address()");
 
     /**
      * Returns the <code>String</code> representation of this struct
@@ -386,26 +418,28 @@ public class Struct {
      *         struct.
      */
     public String toString() {
-        final int size = size();
-        StringBuffer sb = new StringBuffer(size * 3);
-        final ByteBuffer buffer = getByteBuffer();
-        final int start = getByteBufferPosition();
-        for (int i = 0; i < size; i++) {
-            int b = buffer.get(start + i) & 0xFF;
-            sb.append(HEXA[b >> 4]);
-            sb.append(HEXA[b & 0xF]);
-            sb.append(((i & 0xF) == 0xF) ? '\n' : ' ');
+        TextBuilder tmp = TextBuilder.newInstance();
+        try {
+            final int size = size();
+            final ByteBuffer buffer = getByteBuffer();
+            final int start = getByteBufferPosition();
+            for (int i = 0; i < size; i++) {
+                int b = buffer.get(start + i) & 0xFF;
+                tmp.append(HEXA[b >> 4]);
+                tmp.append(HEXA[b & 0xF]);
+                tmp.append(((i & 0xF) == 0xF) ? '\n' : ' ');
+            }
+            return tmp.toString();
+        } finally {
+            TextBuilder.recycle(tmp);
         }
-        return sb.toString();
     }
-
-    private static final char[] HEXA = { '0', '1', '2', '3', '4', '5', '6',
-            '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    private static final char[] HEXA = {'0', '1', '2', '3', '4', '5', '6',
+        '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
     ///////////////////
     // CONFIGURATION //
     ///////////////////
-
     /**
      * Indicates if this struct's members are mapped to the same location
      * in memory (default <code>false</code>). This method is useful for
@@ -454,22 +488,21 @@ public class Struct {
      * Indicates if this struct is packed (configurable).
      * By default, {@link Member members} of a struct are aligned on the
      * boundary corresponding to the member base type; padding is performed
-     * if necessary. This directive is inherited by inner structs.
+     * if necessary. This directive is <b>not</b> inherited by inner structs.
      * Sub-classes may change the packing directive by overriding this method.
      * For example:[code]
-     * public class TopStruct extends Struct {
+     * public class MyStruct extends Struct {
      *     ... // Members initialization.
      *     public boolean isPacked() {
-     *         // TopStruct and its inner structs are packed.
-     *         return true;
+     *         return true; // MyStruct is packed.
      *     }
      * }}[/code]
      *
-     * @return <code>true</code> if alignment requirements are ignored.
+     * @return <code>true</code> if word size requirements are ignored.
      *         <code>false</code> otherwise (default).
      */
     public boolean isPacked() {
-        return (_outer != null) ? _outer.isPacked() : false;
+        return false;
     }
 
     /**
@@ -480,14 +513,13 @@ public class Struct {
      * @throws IllegalArgumentException if the specified struct is already
      *         an inner struct.
      */
-    protected/* <S extends Struct> S*/Struct inner(/*S*/Struct struct) {
+    protected/* <S extends Struct> S*/ Struct inner(/*S*/Struct struct) {
         if (struct._outer != null)
             throw new IllegalArgumentException(
                     "struct: Already an inner struct");
+        Member inner = new Member(struct.size() << 3, struct._alignment); // Update indexes.
         struct._outer = this;
-        final int bitSize = struct.size() << 3;
-        updateIndexes(struct._alignment, bitSize, bitSize);
-        struct._outerOffset = (_bitIndex - bitSize) >> 3;
+        struct._outerOffset = inner.offset();
         return (/*S*/Struct) struct;
     }
 
@@ -501,29 +533,28 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected/* <S extends Struct> S*/Struct[] array(/*S*/Struct[] structs) {
+    protected/* <S extends Struct> S*/ Struct[] array(/*S*/Struct[] structs) {
         Class structClass = null;
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < structs.length;) {
-            /*S*/Struct struct = structs[i];
+            /*S*/ Struct struct = structs[i];
             if (struct == null) {
                 try {
                     if (structClass == null) {
                         String arrayName = structs.getClass().getName();
-                        String structName = arrayName.substring(2, arrayName
-                                .length() - 1);
-                        structClass = Reflection.getClass(structName);
-                        if (structClass == null)
-                            throw new JavolutionError("Struct class: "
-                                    + structName + " not found");
+                        String structName = arrayName.substring(2, arrayName.length() - 1);
+                        structClass = Reflection.getInstance().getClass(structName);
+                        if (structClass == null) {
+                            throw new IllegalArgumentException("Struct class: " + structName + " not found");
+                        }
                     }
                     struct = (/*S*/Struct) structClass.newInstance();
                 } catch (Exception e) {
-                    throw new JavolutionError(e);
+                    throw new RuntimeException(e.getMessage());
                 }
             }
             structs[i++] = inner(struct);
@@ -542,11 +573,11 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected/* <S extends Struct> S*/Struct[][] array(
-    /*S*/Struct[][] structs) {
+    protected/* <S extends Struct> S*/ Struct[][] array(
+            /*S*/Struct[][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < structs.length; i++) {
@@ -566,11 +597,11 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected/* <S extends Struct> S*/Struct[][][] array(
-    /*S*/Struct[][][] structs) {
+    protected/* <S extends Struct> S*/ Struct[][][] array(
+            /*S*/Struct[][][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < structs.length; i++) {
@@ -590,52 +621,60 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected/* <M extends Member> M*/Member[] array(
-    /*M*/Member[] arrayMember) {
+    protected/* <M extends Member> M*/ Member[] array(
+            /*M*/Member[] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         if (BOOL.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Bool();
+            }
         } else if (SIGNED_8.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Signed8();
+            }
         } else if (UNSIGNED_8.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Unsigned8();
+            }
         } else if (SIGNED_16.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Signed16();
+            }
         } else if (UNSIGNED_16.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Unsigned16();
+            }
         } else if (SIGNED_32.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Signed32();
+            }
         } else if (UNSIGNED_32.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Unsigned32();
+            }
         } else if (SIGNED_64.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Signed64();
+            }
         } else if (FLOAT_32.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Float32();
+            }
         } else if (FLOAT_64.isInstance(arrayMember)) {
-            for (int i = 0; i < arrayMember.length;)
+            for (int i = 0; i < arrayMember.length;) {
                 arrayMember[i++] = (/*M*/Member) this.new Float64();
+            }
         } else {
             throw new UnsupportedOperationException(
-                    "Cannot create member elements, the arrayMember should "
-                            + "contain the member instances instead of null");
+                    "Cannot create member elements, the arrayMember should " + "contain the member instances instead of null");
         }
         _resetIndex = resetIndexSaved;
         return (/*M*/Member[]) arrayMember;
     }
-
     private static final Class BOOL = new Bool[0].getClass();
 
     private static final Class SIGNED_8 = new Signed8[0].getClass();
@@ -666,11 +705,11 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected/* <M extends Member> M*/Member[][] array(
-    /*M*/Member[][] arrayMember) {
+    protected/* <M extends Member> M*/ Member[][] array(
+            /*M*/Member[][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < arrayMember.length; i++) {
@@ -690,11 +729,11 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected/* <M extends Member> M*/Member[][][] array(
-    /*M*/Member[][][] arrayMember) {
+    protected/* <M extends Member> M*/ Member[][][] array(
+            /*M*/Member[][][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
-            _bitIndex = 0;
+            _index = 0;
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < arrayMember.length; i++) {
@@ -713,72 +752,120 @@ public class Struct {
      * @return the specified string array.
      */
     protected UTF8String[] array(UTF8String[] array, int stringLength) {
+        boolean resetIndexSaved = _resetIndex;
+        if (_resetIndex) {
+            _index = 0;
+            _resetIndex = false; // Ensures the array elements are sequential.
+        }
         for (int i = 0; i < array.length; i++) {
             array[i] = new UTF8String(stringLength);
         }
+        _resetIndex = resetIndexSaved;
         return array;
     }
 
     /**
-     * Updates this struct indexes after adding a member with the
-     * specified constraints.
+     * Reads the specified bits from this Struct as an long (signed) integer
+     * value.
      *
-     * @param  alignment  the desired alignment in bytes.
-     * @param  nbrOfBits  the size in bits.
-     * @param  capacity   the word size maximum capacity in bits
-     *                    (equal to nbrOfBits for non-bitfields).
-     * @return offset the offset of the member.
+     * @param  bitOffset the bit start position in the Struct.
+     * @param  bitSize the number of bits.
+     * @return the specified bits read as a signed long.
      * @throws IllegalArgumentException if
-     *         <code>nbrOfBits &gt; capacity</code>
+     *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
      */
-    private int updateIndexes(int alignment, int nbrOfBits, int capacity) {
-        if (nbrOfBits > capacity) {
-            throw new IllegalArgumentException("nbrOfBits: " + nbrOfBits
-                    + " exceeds capacity: " + capacity);
+    public long readBits(int bitOffset, int bitSize) {
+        if ((bitOffset + bitSize - 1) >> 3 >= this.size())
+            throw new IllegalArgumentException("Attempt to read outside the Struct");
+        int offset = bitOffset >> 3;
+        int bitStart = bitOffset - (offset << 3);
+        bitStart = (byteOrder() == ByteOrder.BIG_ENDIAN) ? bitStart : 64 - bitSize - bitStart;
+        int index = getByteBufferPosition() + offset;
+        long value = readByteBufferLong(index);
+        value <<= bitStart; // Clears preceding bits.
+        value >>= (64 - bitSize); // Signed shift.
+        return value;
+    }
+
+    private long readByteBufferLong(int index) {
+        ByteBuffer byteBuffer = getByteBuffer();
+        if (index + 8 < byteBuffer.limit())
+            return byteBuffer.getLong(index);
+        // Else possible buffer overflow.
+        if (byteBuffer.order() == ByteOrder.LITTLE_ENDIAN) {
+            return (readByte(index, byteBuffer) & 0xff) + ((readByte(++index, byteBuffer) & 0xff) << 8) + ((readByte(++index, byteBuffer) & 0xff) << 16) + ((readByte(++index, byteBuffer) & 0xffL) << 24) + ((readByte(++index, byteBuffer) & 0xffL) << 32) + ((readByte(++index, byteBuffer) & 0xffL) << 40) + ((readByte(++index, byteBuffer) & 0xffL) << 48) + ((readByte(++index, byteBuffer) & 0xffL) << 56);
+        } else {
+            return (((long) readByte(index, byteBuffer)) << 56) + ((readByte(++index, byteBuffer) & 0xffL) << 48) + ((readByte(++index, byteBuffer) & 0xffL) << 40) + ((readByte(++index, byteBuffer) & 0xffL) << 32) + ((readByte(++index, byteBuffer) & 0xffL) << 24) + ((readByte(++index, byteBuffer) & 0xff) << 16) + ((readByte(++index, byteBuffer) & 0xff) << 8) + (readByte(++index, byteBuffer) & 0xffL);
         }
+    }
 
-        // Resets index if union.
-        if (_resetIndex) {
-            _bitIndex = 0;
+    private static byte readByte(int index, ByteBuffer byteBuffer) {
+        return (index < byteBuffer.limit()) ? byteBuffer.get(index) : 0;
+    }
+
+    /**
+     * Writes the specified bits into this Struct.
+     *
+     * @param  value the bits value as a signed long.
+     * @param  bitOffset the bit start position in the Struct.
+     * @param  bitSize the number of bits.
+     * @throws IllegalArgumentException if
+     *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
+     */
+    public void writeBits(long value, int bitOffset, int bitSize) {
+        if ((bitOffset + bitSize - 1) >> 3 >= this.size())
+            throw new IllegalArgumentException("Attempt to write outside the Struct");
+        int offset = bitOffset >> 3;
+        int bitStart = (byteOrder() == ByteOrder.BIG_ENDIAN) ? bitOffset - (offset << 3)
+                : 64 - bitSize - (bitOffset - (offset << 3));
+        long mask = -1L;
+        mask <<= bitStart; // Clears preceding bits
+        mask >>>= (64 - bitSize); // Unsigned shift.
+        mask <<= 64 - bitSize - bitStart;
+        int index = getByteBufferPosition() + offset;
+        long oldValue = readByteBufferLong(index);
+        long resetValue = oldValue & (~mask);
+        long newValue = resetValue | (value << (64 - bitSize - bitStart));
+        writeByteBufferLong(index, newValue);
+    }
+
+    private void writeByteBufferLong(int index, long value) {
+        ByteBuffer byteBuffer = getByteBuffer();
+        if (index + 8 < byteBuffer.limit()) {
+            byteBuffer.putLong(index, value);
+            return;
         }
-
-        // Adjust alignment.
-        final boolean isPacked = isPacked();
-        alignment = isPacked ? 1 :
-            MathLib.min(alignment, ((Integer) MAXIMUM_ALIGNMENT.get()).intValue());
-        if (_alignment < alignment) { // Updates Struct's alignment.
-            _alignment = alignment;
+        // Else possible buffer overflow.
+        if (byteBuffer.order() == ByteOrder.LITTLE_ENDIAN) {
+            writeByte(index, byteBuffer, (byte) value);
+            writeByte(++index, byteBuffer, (byte) (value >> 8));
+            writeByte(++index, byteBuffer, (byte) (value >> 16));
+            writeByte(++index, byteBuffer, (byte) (value >> 24));
+            writeByte(++index, byteBuffer, (byte) (value >> 32));
+            writeByte(++index, byteBuffer, (byte) (value >> 40));
+            writeByte(++index, byteBuffer, (byte) (value >> 48));
+            writeByte(++index, byteBuffer, (byte) (value >> 56));
+        } else {
+            writeByte(index, byteBuffer, (byte) (value >> 56));
+            writeByte(++index, byteBuffer, (byte) (value >> 48));
+            writeByte(++index, byteBuffer, (byte) (value >> 40));
+            writeByte(++index, byteBuffer, (byte) (value >> 32));
+            writeByte(++index, byteBuffer, (byte) (value >> 24));
+            writeByte(++index, byteBuffer, (byte) (value >> 16));
+            writeByte(++index, byteBuffer, (byte) (value >> 8));
+            writeByte(++index, byteBuffer, (byte) value);
         }
+    }
 
-        // Calculates padding due to alignment constraints.
-        int i = _bitIndex % (alignment << 3);
-        int paddingBits = (i == 0) ? 0 : // Aligned.
-            (alignment << 3) - i; // Bits to next boundary.
-        final boolean isBitField = nbrOfBits != capacity;
-        if ((isPacked) || // Ignores alignment constraints.
-                (isBitField && (nbrOfBits != 0) && (paddingBits <= nbrOfBits))) {
-                 // No forced realignement and no bit field boundary crossing.
-            paddingBits = 0;
+    private static void writeByte(int index, ByteBuffer byteBuffer, byte value) {
+        if (index < byteBuffer.limit()) {
+            byteBuffer.put(index, value);
         }
-
-        // Calculates offset.
-        int offset = ((_bitIndex + paddingBits) / (alignment << 3)) * alignment;
-
-        // Updates struct bit index.
-        _bitIndex += paddingBits + nbrOfBits;
-
-        // Updates bits used (for size calculation).
-        if (_bitsUsed < _bitIndex) {
-            _bitsUsed = _bitIndex;
-        }
-
-        return offset;
     }
 
     /////////////
     // MEMBERS //
     /////////////
-
     /**
      * This inner class represents the base class for all {@link Struct}
      * members. It allows applications to define additional member types.
@@ -788,7 +875,7 @@ public class Struct {
      *        ...
      *        public BitSet extends Member {
      *            public BitSet(int nbrBits) {
-     *                super(1, (nbrBits+7)>>3);
+     *                super(nbrBits, 0); // Direct bit access.
      *            }
      *            public boolean get(int i) { ... }
      *            public void set(int i, boolean value) { ...}
@@ -798,38 +885,83 @@ public class Struct {
     protected class Member {
 
         /**
-         * Holds the relative offset of this member within its struct.
+         * Holds the relative offset (in bytes) of this member within its struct.
          */
         private final int _offset;
 
         /**
-         * Holds the number of bits reserved by this member
+         * Holds the relative bit offset of this member to its struct offset.
          */
-        protected final int _bitCount;
+        private final int _bitIndex;
+
+        /**
+         * Holds the bit length of this member.
+         */
+        private final int _bitLength;
 
         /**
          * Base constructor for custom member types.
          *
-         * @param  alignment the desired alignment in bytes.
-         * @param  size the size of this member in bytes.
-         */
-        protected Member(int alignment, int size) {
-            final int nbrOfBits = size << 3;
-            _offset = updateIndexes(alignment, nbrOfBits, nbrOfBits);
-            _bitCount = nbrOfBits;
-        }
-
-        /**
-         * Base constructor for predefined member types with bit fields.
+         * The word size can be zero, in which case the {@link #offset}
+         * of the member does not change, only {@link #bitIndex} is
+         * incremented.
          *
-         * @param  alignment  the desired alignment in bytes.
-         * @param  nbrOfBits  the size in bits.
-         * @param  capacity   the word size maximum capacity in bits
-         *                    (equal to nbrOfBits for non-bitfields).
+         * @param  bitLength the number of bits or <code>0</code>
+         *         to force next member on next word boundary.
+         * @param  wordSize the word size in bytes used when accessing
+         *         this member data or <code>0</code> if the data is accessed
+         *         at the bit level.
          */
-        Member(int alignment, int nbrOfBits, int capacity) {
-            _offset = updateIndexes(alignment, nbrOfBits, capacity);
-            _bitCount = nbrOfBits;
+        protected Member(int bitLength, int wordSize) {
+            _bitLength = bitLength;
+
+            // Resets index if union.
+            if (_resetIndex) {
+                _index = 0;
+            }
+
+            // Check if we can merge bitfields (always true if no word boundary).
+            if ((wordSize == 0) || ((bitLength != 0) && (wordSize == _wordSize)
+                    && ((_bitsUsed + bitLength) <= (wordSize << 3)))) {
+
+                _offset = _index - _wordSize;
+                _bitIndex = _bitsUsed;
+                _bitsUsed += bitLength;
+
+                // Straddling word boundary only possible if (wordSize == 0)
+                while (_bitsUsed > (_wordSize << 3)) {
+                    _index++;
+                    _wordSize++;
+                    _length = MathLib.max(_length, _index);
+                }
+                return; // Bit field merge done.
+            }
+
+            // Check alignment.
+            if (!isPacked()) {
+
+                // Updates struct's alignment constraint, based on largest word size.
+                if ((_alignment < wordSize)) {
+                    _alignment = wordSize;
+                }
+
+                // Adds padding if misaligned.
+                int misaligned = _index % wordSize;
+                if (misaligned != 0) {
+                    _index += wordSize - misaligned;
+                }
+            }
+
+            // Sets member indices.
+            _offset = _index;
+            _bitIndex = 0;
+
+            // Update struct indices.
+            _index += MathLib.max(wordSize, (bitLength + 7) >> 3);
+            _wordSize = wordSize;
+            _bitsUsed = bitLength;
+            _length = MathLib.max(_length, _index);
+            // size and index may differ because of {@link Union}
         }
 
         /**
@@ -842,63 +974,99 @@ public class Struct {
         }
 
         /**
-         * Returns the number of bits in this member
+         * Returns the byte offset of this member in its struct.
+         * Equivalent to C/C++ <code>offsetof(struct(), this)</code>
          *
-         * @return the number of bits in the Member
-         */
-        public final int bitCount() {
-            return _bitCount;
-        }
-
-        /**
-         * Returns the relative offset of this member within its struct.
-         *
-         * @return the relative offset in bytes.
+         * @return the offset of this member in the Struct.
          */
         public final int offset() {
             return _offset;
         }
 
         /**
-         * Returns the absolute position of this member in the
-         * byte buffer.
-         *
-         * @return the byte buffer position.
+         * Holds the bit offset of this member (if any).
+         * The actual position of the bits data depends upon the endianess and
+         * the word size.
          */
-        public final int position() {
-            return getByteBufferPosition() + _offset;
+        public final int bitIndex() {
+            return _bitIndex;
         }
 
+        /**
+         * Returns the number of bits in this member. Can be zero if this
+         * member is used to force the next member to the next word boundary.
+         *
+         * @return the number of bits in the member.
+         */
+        public final int bitLength() {
+            return _bitLength;
+        }
+
+        // Returns the member int value.
+        final int get(int wordSize, int word) {
+            final int shift = (byteOrder() == ByteOrder.BIG_ENDIAN)
+                    ? (wordSize << 3) - bitIndex() - bitLength() : bitIndex();
+            word >>= shift;
+            int mask = 0xFFFFFFFF >>> (32 - bitLength());
+            return word & mask;
+        }
+
+        // Sets the member int value.
+        final int set(int value, int wordSize, int word) {
+            final int shift = (byteOrder() == ByteOrder.BIG_ENDIAN)
+                    ? (wordSize << 3) - bitIndex() - bitLength() : bitIndex();
+            int mask = 0xFFFFFFFF >>> (32 - bitLength());
+            mask <<= shift;
+            value <<= shift;
+            return (word & ~mask) | (value & mask);
+        }
+
+        // Returns the member long value.
+        final long get(int wordSize, long word) {
+            final int shift = (byteOrder() == ByteOrder.BIG_ENDIAN)
+                    ? (wordSize << 3) - bitIndex() - bitLength() : bitIndex();
+            word >>= shift;
+            long mask = 0xFFFFFFFFFFFFFFFFL >>> (64 - bitLength());
+            return word & mask;
+        }
+
+        // Sets the member long value.
+        final long set(long value, int wordSize, long word) {
+            final int shift = (byteOrder() == ByteOrder.BIG_ENDIAN)
+                    ? (wordSize << 3) - bitIndex() - bitLength() : bitIndex();
+            long mask = 0xFFFFFFFFFFFFFFFFL >>> (64 - bitLength());
+            mask <<= shift;
+            value <<= shift;
+            return (word & ~mask) | (value & mask);
+        }
     }
 
     ///////////////////////
     // PREDEFINED FIELDS //
     ///////////////////////
-
     /**
      * This class represents a UTF-8 character string, null terminated
      * (for C/C++ compatibility)
      */
     public class UTF8String extends Member {
+
         private final UTF8ByteBufferWriter _writer = new UTF8ByteBufferWriter();
 
         private final UTF8ByteBufferReader _reader = new UTF8ByteBufferReader();
 
-        private final char[] _chars;
-
         private final int _length;
 
         public UTF8String(int length) {
-            super(1, length);
+            super(length << 3, 1);
             _length = length; // Takes into account 0 terminator.
-            _chars = new char[length];
         }
 
         public void set(String string) {
             final ByteBuffer buffer = getByteBuffer();
             synchronized (buffer) {
                 try {
-                    buffer.position(position());
+                    int index = getByteBufferPosition() + offset();
+                    buffer.position(index);
                     _writer.setOutput(buffer);
                     if (string.length() < _length) {
                         _writer.write(string);
@@ -908,8 +1076,8 @@ public class Struct {
                     } else { // Exact same length.
                         _writer.write(string);
                     }
-                } catch (IOException e) {
-                    throw new JavolutionError(e);
+                } catch (IOException e) { // Should never happen.
+                    throw new Error(e.getMessage());
                 } finally {
                     _writer.reset();
                 }
@@ -919,22 +1087,25 @@ public class Struct {
         public String get() {
             final ByteBuffer buffer = getByteBuffer();
             synchronized (buffer) {
+                TextBuilder tmp = TextBuilder.newInstance();
                 try {
-                    buffer.position(position());
+                    int index = getByteBufferPosition() + offset();
+                    buffer.position(index);
                     _reader.setInput(buffer);
-                    for (int i = 0; i < _length;) {
+                    for (int i = 0; i < _length; i++) {
                         char c = (char) _reader.read();
                         if (c == 0) { // Null terminator.
-                            return new String(_chars, 0, i);
+                            return tmp.toString();
                         } else {
-                            _chars[i++] = c;
+                            tmp.append(c);
                         }
                     }
-                    return new String(_chars, 0, _length);
-                } catch (IOException e) {
-                    throw new JavolutionError(e);
+                    return tmp.toString();
+                } catch (IOException e) { // Should never happen.
+                    throw new Error(e.getMessage());
                 } finally {
                     _reader.reset();
+                    TextBuilder.recycle(tmp);
                 }
             }
         }
@@ -949,37 +1120,28 @@ public class Struct {
      * by <code>1</code> and <code>false</code> represented by <code>0</code>.
      */
     public class Bool extends Member {
-        private final int _mask;
-
-        private final int _shift;
 
         public Bool() {
-            this(8);
+            super(8, 1);
         }
 
         public Bool(int nbrOfBits) {
-            super(1, nbrOfBits, 8);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
+            super(nbrOfBits, 1);
         }
 
         public boolean get() {
-            return (getByteBuffer().get(position()) & _mask) != 0;
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().get(index);
+            word = (bitLength() == 8) ? word : get(1, word);
+            return word != 0;
         }
 
         public void set(boolean value) {
-            if (_mask == 0xFF) { // Non bit-field.
-                getByteBuffer().put(position(), (byte) (value ? 1 : 0));
-            } else { // Bit-field.
-                int prevCleared = getByteBuffer().get(position()) & (~_mask);
-                if (value) {
-                    getByteBuffer().put(position(),
-                            (byte) (prevCleared | (1 << _shift)));
-                } else {
-                    getByteBuffer().put(position(), (byte) (prevCleared));
-                }
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 8) {
+                getByteBuffer().put(index, (byte) (value ? -1 : 0));
+            } else {
+                getByteBuffer().put(index, (byte) set(value ? -1 : 0, 1, getByteBuffer().get(index)));
             }
         }
 
@@ -992,45 +1154,27 @@ public class Struct {
      * This class represents a 8 bits signed integer.
      */
     public class Signed8 extends Member {
-        private final int _mask;
-
-        private final int _shift;
-
-        private final int _signShift;
 
         public Signed8() {
-            this(8);
+            super(8, 1);
         }
 
         public Signed8(int nbrOfBits) {
-            super(1, nbrOfBits, 8);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+            super(nbrOfBits, 1);
         }
 
         public byte get() {
-            if (_mask == 0xFF) { // Non bit-field.
-                return getByteBuffer().get(position());
-            } else { // Bit-field.
-                int value = getByteBuffer().get(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (byte) value;
-            }
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().get(index);
+            return (byte) ((bitLength() == 8) ? word : get(1, word));
         }
 
         public void set(byte value) {
-            if (_mask == 0xFF) { // Non bit-field.
-                getByteBuffer().put(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().get(position()) & (~_mask);
-                getByteBuffer().put(position(), (byte) (orMask | value));
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 8) {
+                getByteBuffer().put(index, value);
+            } else {
+                getByteBuffer().put(index, (byte) set(value, 1, getByteBuffer().get(index)));
             }
         }
 
@@ -1043,52 +1187,27 @@ public class Struct {
      * This class represents a 8 bits unsigned integer.
      */
     public class Unsigned8 extends Member {
-        private final int _shift;
-
-        private final int _mask;
 
         public Unsigned8() {
-            this(8);
+            super(8, 1);
         }
 
         public Unsigned8(int nbrOfBits) {
-            super(1, nbrOfBits, 8);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
-            //System.out.println(_bitIndex + " offset:" + offset() + " shift:" + _shift + " mask:" + _mask);
+            super(nbrOfBits, 1);
         }
 
         public short get() {
-            // return the contents of 1 or 2 bytes masked appropriately
-            if (_bitCount + _shift > 8) {
-                // mask runs into adjacent byte so fetch short, mask it and down shift
-                short value = getByteBuffer().getShort(position());
-                return (short) ((value & _mask) >>> _shift);
-            } else {
-                // mask and downshift
-                short value = getByteBuffer().get(position());
-                return (short) ((value & _mask) >>> _shift);
-            }
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().get(index);
+            return (short) (0xFF & ((bitLength() == 8) ? word : get(1, word)));
         }
 
         public void set(short value) {
-            if (_mask == 0xFF) { // Non bit-field.
-                getByteBuffer().put(position(), (byte) value);
-            } else { // Bit-field.
-                // upshift the value - applying the mask
-                value <<= _shift;
-                value &= _mask;
-                // does mask run into adjacent byte?
-                if (_bitCount + _shift > 8) {
-                    // yes so fetch short and mask it
-                    int orMask = getByteBuffer().getShort(position()) & (~_mask);
-                    getByteBuffer().putShort(position(), (short)(value | orMask));
-                } else {
-                    int orMask = getByteBuffer().get(position()) & (~_mask);
-                    getByteBuffer().put(position(), (byte)(value | orMask));
-                }
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 8) {
+                getByteBuffer().put(index, (byte) value);
+            } else {
+                getByteBuffer().put(index, (byte) set(value, 1, getByteBuffer().get(index)));
             }
         }
 
@@ -1101,45 +1220,27 @@ public class Struct {
      * This class represents a 16 bits signed integer.
      */
     public class Signed16 extends Member {
-        private final int _mask;
-
-        private final int _shift;
-
-        private final int _signShift;
 
         public Signed16() {
-            this(16);
+            super(16, 2);
         }
 
         public Signed16(int nbrOfBits) {
-            super(2, nbrOfBits, 16);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+            super(nbrOfBits, 2);
         }
 
         public short get() {
-            if (_mask == 0xFFFF) { // Non bit-field.
-                return getByteBuffer().getShort(position());
-            } else { // Bit-field.
-                int value = getByteBuffer().getShort(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (short) value;
-            }
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getShort(index);
+            return (short) ((bitLength() == 16) ? word : get(2, word));
         }
 
         public void set(short value) {
-            if (_mask == 0xFFFF) { // Non bit-field.
-                getByteBuffer().putShort(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().getShort(position()) & (~_mask);
-                getByteBuffer().putShort(position(), (short) (orMask | value));
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 16) {
+                getByteBuffer().putShort(index, value);
+            } else {
+                getByteBuffer().putShort(index, (short) set(value, 2, getByteBuffer().getShort(index)));
             }
         }
 
@@ -1152,64 +1253,27 @@ public class Struct {
      * This class represents a 16 bits unsigned integer.
      */
     public class Unsigned16 extends Member {
-        private final int _shift;
-
-        private final int _mask;
 
         public Unsigned16() {
-            this(16);
+            super(16, 2);
         }
 
         public Unsigned16(int nbrOfBits) {
-            super(2, nbrOfBits, 16);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
+            super(nbrOfBits, 2);
         }
 
         public int get() {
-            int value = getByteBuffer().getShort(position());
-            // determmine how many extra bytes we need
-            int msBitNum = _bitCount + _shift;
-            if (msBitNum > 16) {
-                // this can be from 1 to 2 extra bytes
-                int adjacentBytes = ((msBitNum - 16) + 7) >> 3;
-                for (int i=0; i<adjacentBytes; i++) {
-                    // shift 3rd byte from buffer
-                    int byteValue = getByteBuffer().get(position()+2) & 0x0FF;
-                    value |= (byteValue << (16 + i<<3));
-                }
-            }
-            // return masked result downshifted
-            return (value & _mask) >>> _shift;
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getShort(index);
+            return  0xFFFF & ((bitLength() == 16) ? word : get(2, word));
         }
 
         public void set(int value) {
-            if (_mask == 0xFFFF) { // Non bit-field.
-                getByteBuffer().putShort(position(), (short) value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().
-                    getShort(position()) & (~_mask);
-                getByteBuffer().putShort(position(),
-                   (short)(orMask | value));
-                // determmine how many extra bytes we need
-                int msBitNum = _bitCount + _shift;
-                if (msBitNum > 16) {
-                    // this can be from 1 to 2 extra bytes
-                    int adjacentBytes = ((msBitNum - 16) + 7) >> 3;
-                    for (int i=0; i<adjacentBytes; i++) {
-                        int extraShift = (16 + (i<<3));
-                        byte shiftedByteVal = (byte)((value) >>> extraShift);
-                        byte byteMask = (byte)((~_mask) >>> extraShift);
-                        byte orByteMask = (byte)(getByteBuffer().
-                            get(position() + 2 + i) & byteMask);
-                        getByteBuffer().put(position()+2+i,
-                            (byte)(shiftedByteVal | orByteMask));
-                    }
-                }
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 16) {
+                getByteBuffer().putShort(index, (short) value);
+            } else {
+                getByteBuffer().putShort(index, (short) set(value, 2, getByteBuffer().getShort(index)));
             }
         }
 
@@ -1222,46 +1286,27 @@ public class Struct {
      * This class represents a 32 bits signed integer.
      */
     public class Signed32 extends Member {
-        private final int _mask;
-
-        private final int _shift;
-
-        private final int _signShift;
 
         public Signed32() {
-            this(32);
+            super(32, 4);
         }
 
         public Signed32(int nbrOfBits) {
-            super(4, nbrOfBits, 32);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = (nbrOfBits == 32) ? 0xFFFFFFFF
-                    : ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+            super(nbrOfBits, 4);
         }
 
         public int get() {
-            if (_mask == 0xFFFFFFFF) { // Non bit-field.
-                return getByteBuffer().getInt(position());
-            } else { // Bit-field.
-                int value = getByteBuffer().getInt(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return value;
-            }
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getInt(index);
+            return (bitLength() == 32) ? word : get(4, word);
         }
 
         public void set(int value) {
-            if (_mask == 0xFFFFFFFF) { // Non bit-field.
-                getByteBuffer().putInt(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().getInt(position()) & (~_mask);
-                getByteBuffer().putInt(position(), orMask | value);
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 32) {
+                getByteBuffer().putInt(index, value);
+            } else {
+                getByteBuffer().putInt(index, set(value, 4, getByteBuffer().getInt(index)));
             }
         }
 
@@ -1274,65 +1319,27 @@ public class Struct {
      * This class represents a 32 bits unsigned integer.
      */
     public class Unsigned32 extends Member {
-        private final int _shift;
-
-        private final long _mask;
 
         public Unsigned32() {
-            this(32);
+            super(32, 4);
         }
 
         public Unsigned32(int nbrOfBits) {
-            super(4, nbrOfBits, 32);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = (nbrOfBits == 32) ? 0xFFFFFFFFl
-                    : ((1l << nbrOfBits) - 1l) << _shift;
+            super(nbrOfBits, 4);
         }
 
         public long get() {
-            int value = getByteBuffer().getInt(position());
-            // determmine how many extra bytes we need
-            int msBitNum = _bitCount + _shift;
-            if (msBitNum > 32) {
-                // this can be from 1 to 4 extra bytes
-                int adjacentBytes = ((msBitNum - 32) + 7) >> 3;
-                for (int i=0; i<adjacentBytes; i++) {
-                    // shift 3rd byte from buffer
-                    int byteValue = getByteBuffer().get(position()+2) & 0x0FF;
-                    value |= (byteValue << (32 + i<<3));
-                }
-            }
-            // return masked result downshifted
-            return (value & _mask) >>> _shift;
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getInt(index);
+            return 0xFFFFFFFFL & ((bitLength() == 32) ? word : get(4, word));
         }
 
         public void set(long value) {
-            if (_mask == 0xFFFFFFFF) { // Non bit-field.
-                getByteBuffer().putInt(position(), (int) value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                long orMask = getByteBuffer().
-                    getInt(position()) & (~_mask);
-                getByteBuffer().putInt(position(),
-                   (int) (orMask | value));
-                // determmine how many extra bytes we need
-                int msBitNum = _bitCount + _shift;
-                if (msBitNum > 32) {
-                    // this can be from 1 to 4 extra bytes
-                    int adjacentBytes = ((msBitNum - 32) + 7) >> 3;
-                    for (int i=0; i<adjacentBytes; i++) {
-                        int extraShift = (32 + (i<<3));
-                        byte shiftedByteVal = (byte)((value) >>> extraShift);
-                        byte byteMask = (byte)((~_mask) >>> extraShift);
-                        byte orByteMask = (byte)(getByteBuffer().
-                            get(position() + 4 + i) & byteMask);
-                        getByteBuffer().put(position()+4+i,
-                            (byte)(shiftedByteVal | orByteMask));
-                    }
-                }
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 32) {
+                getByteBuffer().putInt(index, (int) value);
+            } else {
+                getByteBuffer().putInt(index, set((int) value, 4, getByteBuffer().getInt(index)));
             }
         }
 
@@ -1345,46 +1352,27 @@ public class Struct {
      * This class represents a 64 bits signed integer.
      */
     public class Signed64 extends Member {
-        private final long _mask;
-
-        private final int _shift;
-
-        private final int _signShift;
 
         public Signed64() {
-            this(64);
+            super(64, 8);
         }
 
         public Signed64(int nbrOfBits) {
-            super(8, nbrOfBits, 64);
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 64 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = (nbrOfBits == 64) ? 0xFFFFFFFFFFFFFFFFl
-                    : ((1l << nbrOfBits) - 1l) << _shift;
-            _signShift = 64 - _shift - nbrOfBits;
+            super(nbrOfBits, 8);
         }
 
         public long get() {
-            if (_mask == 0xFFFFFFFFFFFFFFFFl) { // Non bit-field.
-                return getByteBuffer().getLong(position());
-            } else { // Bit-field.
-                long value = getByteBuffer().getLong(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return value;
-            }
+            final int index = getByteBufferPosition() + offset();
+            long word = getByteBuffer().getLong(index);
+            return (bitLength() == 64) ? word : get(8, word);
         }
 
         public void set(long value) {
-            if (_mask == 0xFFFFFFFFFFFFFFFFl) { // Non bit-field.
-                getByteBuffer().putLong(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                long orMask = getByteBuffer().getLong(position()) & (~_mask);
-                getByteBuffer().putLong(position(), orMask | value);
+            final int index = getByteBufferPosition() + offset();
+            if (bitLength() == 64) {
+                getByteBuffer().putLong(index, value);
+            } else {
+                getByteBuffer().putLong(index, set(value, 8, getByteBuffer().getLong(index)));
             }
         }
 
@@ -1394,42 +1382,87 @@ public class Struct {
     }
 
     /**
+     * This class represents an arbitrary size (unsigned) bit field with
+     * no word size constraint (they can straddle words boundaries).
+     */
+    public class BitField extends Member {
+
+        public BitField(int nbrOfBits) {
+            super(nbrOfBits, 0);
+        }
+
+        public long longValue() {
+            long signedValue = readBits(bitIndex() + (offset() << 3), bitLength());
+            return ~(-1L << bitLength()) & signedValue;
+        }
+
+        public int intValue() {
+            return (int) longValue();
+        }
+
+        public short shortValue() {
+            return (short) longValue();
+        }
+
+        public byte byteValue() {
+            return (byte) longValue();
+        }
+
+        public void set(long value) {
+            writeBits(value, bitIndex() + (offset() << 3), bitLength());
+        }
+
+        public String toString() {
+            return String.valueOf(longValue());
+        }
+    }
+
+    /**
      * This class represents a 32 bits float (C/C++/Java <code>float</code>).
      */
     public class Float32 extends Member {
+
         public Float32() {
-            super(4, 4);
+            super(32, 4);
         }
-         public void set(float value) {
-         getByteBuffer().putFloat(position(), value);
-         }
 
-         public float get() {
-         return getByteBuffer().getFloat(position());
-         }
+        public float get() {
+            final int index = getByteBufferPosition() + offset();
+            return getByteBuffer().getFloat(index);
+        }
 
-         public String toString() {
-             return String.valueOf(this.get());
-         }
+        public void set(float value) {
+            final int index = getByteBufferPosition() + offset();
+            getByteBuffer().putFloat(index, value);
+        }
+
+        public String toString() {
+            return String.valueOf(this.get());
+        }
     }
 
     /**
      * This class represents a 64 bits float (C/C++/Java <code>double</code>).
      */
     public class Float64 extends Member {
-        public Float64() {
-            super(8, 8);
-        }
-         public void set(double value) {
-         getByteBuffer().putDouble(position(), value);
-         }
-         public double get() {
-         return getByteBuffer().getDouble(position());
-         }
 
-         public String toString() {
-             return String.valueOf(this.get());
-         }
+        public Float64() {
+            super(64, 8);
+        }
+
+        public double get() {
+            final int index = getByteBufferPosition() + offset();
+            return getByteBuffer().getDouble(index);
+        }
+
+        public void set(double value) {
+            final int index = getByteBufferPosition() + offset();
+            getByteBuffer().putDouble(index, value);
+        }
+
+        public String toString() {
+            return String.valueOf(this.get());
+        }
     }
 
     /**
@@ -1442,37 +1475,39 @@ public class Struct {
      *           can be created at the address specified by {@link #value}
      *           (using JNI) and the reference {@link #set set} accordingly.</p>
      */
-    public class Reference32/*<S extends Struct>*/extends Member {
+    public class Reference32/*<S extends Struct>*/ extends Member {
 
-        private/*S*/Struct _struct;
+        private/*S*/ Struct _struct;
 
         public Reference32() {
-            super(4, 4);
+            super(32, 4);
         }
 
         public void set(/*S*/Struct struct) {
+            final int index = getByteBufferPosition() + offset();
             if (struct != null) {
-                getByteBuffer().putInt(position(), (int) struct.address());
+                getByteBuffer().putInt(index, (int) struct.address());
             } else {
-                getByteBuffer().putInt(position(), 0);
+                getByteBuffer().putInt(index, 0);
             }
             _struct = struct;
         }
 
-        public/*S*/Struct get() {
+        public/*S*/ Struct get() {
             return _struct;
         }
 
         public int value() {
-            return getByteBuffer().getInt(position());
+            final int index = getByteBufferPosition() + offset();
+            return getByteBuffer().getInt(index);
         }
 
         public boolean isUpToDate() {
+            final int index = getByteBufferPosition() + offset();
             if (_struct != null) {
-                return getByteBuffer().getInt(position()) == (int) _struct
-                        .address();
+                return getByteBuffer().getInt(index) == (int) _struct.address();
             } else {
-                return getByteBuffer().getInt(position()) == 0;
+                return getByteBuffer().getInt(index) == 0;
             }
         }
     }
@@ -1487,35 +1522,39 @@ public class Struct {
      *           can be created at the address specified by {@link #value}
      *           (using JNI) and then {@link #set set} to the reference.</p>
      */
-    public class Reference64/*<S extends Struct>*/extends Member {
-        private/*S*/Struct _struct;
+    public class Reference64/*<S extends Struct>*/ extends Member {
+
+        private/*S*/ Struct _struct;
 
         public Reference64() {
-            super(8, 8);
+            super(64, 8);
         }
 
         public void set(/*S*/Struct struct) {
+            final int index = getByteBufferPosition() + offset();
             if (struct != null) {
-                getByteBuffer().putLong(position(), struct.address());
+                getByteBuffer().putLong(index, struct.address());
             } else if (struct == null) {
-                getByteBuffer().putLong(position(), 0L);
+                getByteBuffer().putLong(index, 0L);
             }
             _struct = struct;
         }
 
-        public/*S*/Struct get() {
+        public/*S*/ Struct get() {
             return _struct;
         }
 
         public long value() {
-            return getByteBuffer().getLong(position());
+            final int index = getByteBufferPosition() + offset();
+            return getByteBuffer().getLong(index);
         }
 
         public boolean isUpToDate() {
+            final int index = getByteBufferPosition() + offset();
             if (_struct != null) {
-                return getByteBuffer().getLong(position()) == _struct.address();
+                return getByteBuffer().getLong(index) == _struct.address();
             } else {
-                return getByteBuffer().getLong(position()) == 0L;
+                return getByteBuffer().getLong(index) == 0L;
             }
         }
     }
@@ -1523,58 +1562,34 @@ public class Struct {
     /**
      * This class represents a 8 bits {@link Enum}.
      */
-    public class Enum8 extends Member {
-        private final int _mask;
+    public class Enum8/*<T extends Enum>*/ extends Member {
 
-        private final int _shift;
+        private final Enum/*T*/[] _values;
 
-        private final int _signShift;
-
-        private final List _enumValues;
-
-        public Enum8(List enumValues) {
-            this(enumValues, 8);
+        public Enum8(Enum/*T*/[] values) {
+            super(8, 1);
+            _values = values;
         }
 
-        public Enum8(List enumValues, int nbrOfBits) {
-            super(1, nbrOfBits, 8);
-            _enumValues = enumValues;
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 8 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+        public Enum8(Enum/*T*/[] values, int nbrOfBits) {
+            super(nbrOfBits, 1);
+            _values = values;
         }
 
-        public Enum get() {
-            if (_mask == 0xFF) { // Non bit-field.
-                return (Enum) _enumValues.get(getByteBuffer().get(position()));
-            } else { // Bit-field.
-                int value = getByteBuffer().get(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (Enum) _enumValues.get(value);
-            }
+        public Enum/*T*/ get() {
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().get(index);
+            return _values[0xFF & get(1, word)];
         }
 
-        public void set(Enum e) {
-            int index = e.ordinal();
-            if (_enumValues.get(index) != e) {
+        public void set(Enum/*T*/ e) {
+            int value = e.ordinal();
+            if (_values[value] != e)
                 throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
-            }
-            byte value = (byte) index;
-            if (_mask == 0xFF) { // Non bit-field.
-                getByteBuffer().put(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().get(position()) & (~_mask);
-                getByteBuffer().put(position(), (byte) (orMask | value));
-            }
+                        "enum: " + e + ", ordinal value does not reflect enum values position");
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().get(index);
+            getByteBuffer().put(index, (byte) set(value, 1, word));
         }
 
         public String toString() {
@@ -1585,59 +1600,34 @@ public class Struct {
     /**
      * This class represents a 16 bits {@link Enum}.
      */
-    public class Enum16 extends Member {
-        private final int _mask;
+    public class Enum16/*<T extends Enum>*/ extends Member {
 
-        private final int _shift;
+        private final Enum/*T*/[] _values;
 
-        private final int _signShift;
-
-        private final List _enumValues;
-
-        public Enum16(List enumValues) {
-            this(enumValues, 16);
+        public Enum16(Enum/*T*/[] values) {
+            super(16, 2);
+            _values = values;
         }
 
-        public Enum16(List enumValues, int nbrOfBits) {
-            super(2, nbrOfBits, 16);
-            _enumValues = enumValues;
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 16 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+        public Enum16(Enum/*T*/[] values, int nbrOfBits) {
+            super(nbrOfBits, 2);
+            _values = values;
         }
 
-        public Enum get() {
-            if (_mask == 0xFFFF) { // Non bit-field.
-                return (Enum) _enumValues.get(getByteBuffer().getShort(
-                        position()));
-            } else { // Bit-field.
-                int value = getByteBuffer().getShort(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (Enum) _enumValues.get(value);
-            }
+        public Enum/*T*/ get() {
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getShort(index);
+            return _values[0xFFFF & get(2, word)];
         }
 
-        public void set(Enum e) {
-            int index = e.ordinal();
-            if (_enumValues.get(index) != e) {
+        public void set(Enum/*T*/ e) {
+            int value = e.ordinal();
+            if (_values[value] != e)
                 throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
-            }
-            short value = (short) index;
-            if (_mask == 0xFFFF) { // Non bit-field.
-                getByteBuffer().putShort(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().getShort(position()) & (~_mask);
-                getByteBuffer().putShort(position(), (short) (orMask | value));
-            }
+                        "enum: " + e + ", ordinal value does not reflect enum values position");
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getShort(index);
+            getByteBuffer().putShort(index, (short) set(value, 2, word));
         }
 
         public String toString() {
@@ -1648,60 +1638,34 @@ public class Struct {
     /**
      * This class represents a 32 bits {@link Enum}.
      */
-    public class Enum32 extends Member {
-        private final int _mask;
+    public class Enum32/*<T extends Enum>*/ extends Member {
 
-        private final int _shift;
+        private final Enum/*T*/[] _values;
 
-        private final int _signShift;
-
-        private final List _enumValues;
-
-        public Enum32(List enumValues) {
-            this(enumValues, 32);
+        public Enum32(Enum/*T*/[] values) {
+            super(32, 4);
+            _values = values;
         }
 
-        public Enum32(List enumValues, int nbrOfBits) {
-            super(4, nbrOfBits, 32);
-            _enumValues = enumValues;
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 32 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = (nbrOfBits == 32) ? 0xFFFFFFFF
-                    : ((1 << nbrOfBits) - 1) << _shift;
-            _signShift = 32 - _shift - nbrOfBits;
+        public Enum32(Enum/*T*/[] values, int nbrOfBits) {
+            super(nbrOfBits, 4);
+            _values = values;
         }
 
-        public Enum get() {
-            if (_mask == 0xFFFFFFFF) { // Non bit-field.
-                return (Enum) _enumValues.get(getByteBuffer()
-                        .getInt(position()));
-            } else { // Bit-field.
-                int value = getByteBuffer().getInt(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (Enum) _enumValues.get(value);
-            }
+        public Enum/*T*/ get() {
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getInt(index);
+            return _values[get(4, word)];
         }
 
-        public void set(Enum e) {
-            int index = e.ordinal();
-            if (_enumValues.get(index) != e) {
+        public void set(Enum/*T*/ e) {
+            int value = e.ordinal();
+            if (_values[value] != e)
                 throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
-            }
-            int value = index;
-            if (_mask == 0xFFFFFFFF) { // Non bit-field.
-                getByteBuffer().putInt(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                int orMask = getByteBuffer().getInt(position()) & (~_mask);
-                getByteBuffer().putInt(position(), orMask | value);
-            }
+                        "enum: " + e + ", ordinal value does not reflect enum values position");
+            final int index = getByteBufferPosition() + offset();
+            int word = getByteBuffer().getInt(index);
+            getByteBuffer().putInt(index, set(value, 4, word));
         }
 
         public String toString() {
@@ -1712,60 +1676,34 @@ public class Struct {
     /**
      * This class represents a 64 bits {@link Enum}.
      */
-    public class Enum64 extends Member {
-        private final long _mask;
+    public class Enum64/*<T extends Enum>*/ extends Member {
 
-        private final int _shift;
+        private final Enum/*T*/[] _values;
 
-        private final int _signShift;
-
-        private final List _enumValues;
-
-        public Enum64(List enumValues) {
-            this(enumValues, 64);
+        public Enum64(Enum/*T*/[] values) {
+            super(64, 8);
+            _values = values;
         }
 
-        public Enum64(List enumValues, int nbrOfBits) {
-            super(8, nbrOfBits, 64);
-            _enumValues = enumValues;
-            final int startBit = offset() << 3;
-            _shift = (byteOrder() == ByteOrder.BIG_ENDIAN) ? 64 - _bitIndex
-                    + startBit : _bitIndex - startBit - nbrOfBits;
-            _mask = (nbrOfBits == 64) ? 0xFFFFFFFFFFFFFFFFl
-                    : ((1l << nbrOfBits) - 1l) << _shift;
-            _signShift = 64 - _shift - nbrOfBits;
+        public Enum64(Enum/*T*/[] values, int nbrOfBits) {
+            super(nbrOfBits, 8);
+            _values = values;
         }
 
-        public Enum get() {
-            if (_mask == 0xFFFFFFFFFFFFFFFFl) { // Non bit-field.
-                return (Enum) _enumValues.get((int) getByteBuffer().getLong(
-                        position()));
-            } else { // Bit-field.
-                long value = getByteBuffer().getLong(position());
-                value &= _mask;
-                value <<= _signShift;
-                value >>= _signShift + _shift; // Keeps sign.
-                return (Enum) _enumValues.get((int) value);
-            }
+        public Enum/*T*/ get() {
+            final int index = getByteBufferPosition() + offset();
+            long word = getByteBuffer().getLong(index);
+            return _values[(int) get(8, word)];
         }
 
-        public void set(Enum e) {
-            int index = e.ordinal();
-            if (_enumValues.get(index) != e) {
+        public void set(Enum/*T*/ e) {
+            long value = e.ordinal();
+            if (_values[(int) value] != e)
                 throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
-            }
-            long value = index;
-            if (_mask == 0xFFFFFFFFFFFFFFFFl) { // Non bit-field.
-                getByteBuffer().putLong(position(), value);
-            } else { // Bit-field.
-                value <<= _shift;
-                value &= _mask;
-                long orMask = getByteBuffer().getLong(position()) & (~_mask);
-                getByteBuffer().putLong(position(), orMask | value);
-            }
+                        "enum: " + e + ", ordinal value does not reflect enum values position");
+            final int index = getByteBufferPosition() + offset();
+            long word = getByteBuffer().getLong(index);
+            getByteBuffer().putLong(index, set(value, 8, word));
         }
 
         public String toString() {

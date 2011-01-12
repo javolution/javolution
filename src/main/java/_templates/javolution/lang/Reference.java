@@ -8,8 +8,6 @@
  */
 package _templates.javolution.lang;
 
-
-
 /**
  * <p> This interface represents an object reference, the reachability level 
  *     of a reference varies based on the actual reference implementation.

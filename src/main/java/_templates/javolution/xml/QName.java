@@ -12,6 +12,7 @@ import _templates.java.io.ObjectStreamException;
 import _templates.java.lang.CharSequence;
 import _templates.javolution.lang.Immutable;
 import _templates.javolution.text.CharArray;
+import _templates.javolution.text.Text;
 import _templates.javolution.text.TextBuilder;
 import _templates.javolution.util.FastComparator;
 import _templates.javolution.util.FastMap;
@@ -37,31 +38,6 @@ import _templates.javolution.xml.stream.XMLStreamException;
 public final class QName implements XMLSerializable, Immutable, CharSequence {
 
     /**
-     * Holds default XML representation.
-     */
-    static final XMLFormat XML = new XMLFormat(QName.class) {
-
-        public Object newInstance(Class cls, InputElement xml)
-                throws XMLStreamException {
-            CharSequence namespaceURI = xml.getAttribute("namespaceURI");
-            CharSequence localName = xml.getAttribute("localName");
-            return QName.valueOf(namespaceURI, localName);
-        }
-
-        public void read(InputElement xml, Object obj)
-                throws XMLStreamException {
-            // Do nothing (attribute already read).
-        }
-
-        public void write(Object obj, OutputElement xml)
-                throws XMLStreamException {
-            QName qName = (QName) obj;
-            xml.setAttribute("namespaceURI", qName._namespaceURI);
-            xml.setAttribute("localName", qName._localName);
-        }
-    };
-
-    /**
      * Holds the local name.
      */
     private transient final CharArray _localName;
@@ -80,7 +56,7 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      * Holds the full name (String) to QName mapping.
      */
     private static final FastMap FULL_NAME_TO_QNAME = new FastMap()
-            .setKeyComparator(FastComparator.LEXICAL).setShared(true);
+            .setKeyComparator(FastComparator.LEXICAL).shared();
 
     /**
      * Creates a qualified name having the specified local name and namespace 
@@ -241,11 +217,20 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      *         (start > end) || (end > this.length())</code>
      */
     public CharSequence subSequence(int start, int end) {
-        return _templates.javolution.Javolution.j2meToCharSeq(_toString.substring(start, end));
+        return QName.j2meToCharSeq(_toString.substring(start, end));
     }
 
     //Maintains unicity.
     private Object readResolve() throws ObjectStreamException {
         return QName.valueOf(_toString);
     }
+
+    // For J2ME Compatibility.
+    static CharSequence j2meToCharSeq(Object str) {
+        /*@JVM-1.4+@
+        if (true) return (CharSequence) str;
+        /**/
+        return str == null ? null : Text.valueOf(str);
+    }
+
 }

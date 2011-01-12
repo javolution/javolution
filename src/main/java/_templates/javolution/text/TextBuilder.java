@@ -15,7 +15,6 @@ import _templates.java.io.Serializable;
 import _templates.java.lang.CharSequence;
 import _templates.java.lang.Number;
 import _templates.javax.realtime.MemoryArea;
-import _templates.javolution.JavolutionError;
 import _templates.javolution.context.ObjectFactory;
 import _templates.javolution.io.UTF8StreamWriter;
 import _templates.javolution.lang.MathLib;
@@ -264,8 +263,8 @@ public class TextBuilder implements Appendable,
         if (obj instanceof Realtime)
             return append(((Realtime) obj).toText());
         if (obj instanceof Number)
-            return appendNumber(obj);
-        return append(obj.toString());
+            return appendNumber((Number)obj);
+        return append(String.valueOf(obj));
     }
 
     // For Integer, Long, Float and Double use direct formatting.
@@ -278,7 +277,7 @@ public class TextBuilder implements Appendable,
             return append(((Float) num).floatValue());
         if (num instanceof Double)
             return append(((Double) num).doubleValue());
-        return append(num.toString());
+        return append(String.valueOf(num));
     }
 
     /**
@@ -345,7 +344,7 @@ public class TextBuilder implements Appendable,
         if (str == null)
             return append("null");
         if ((start < 0) || (end < 0) || (start > end) || (end > str.length()))
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("start: " + start + ", end: " + end + ", str.length(): " + str.length());
         int newLength = _length + end - start;
         while (_capacity < newLength) {
             increaseCapacity();
@@ -559,9 +558,7 @@ public class TextBuilder implements Appendable,
         append(l / 1000000000);
         int i = (int) (l % 1000000000);
         int digits = MathLib.digitLength(i);
-        for (int j = digits; j < 9; j++) {
-            append('0');
-        }
+        append("000000000", 0, 9 - digits);
         return append(i);
     }
 
@@ -727,7 +724,7 @@ public class TextBuilder implements Appendable,
         if (l == 0)
             if (showZero)
                 for (int i = 0; i < digits; i++) {
-                    append('O');
+                    append('0');
                 }
             else
                 append('0');
@@ -844,6 +841,25 @@ public class TextBuilder implements Appendable,
     }
 
     /**
+     * Returns the <code>CharArray</code> representation of this
+     * {@link TextBuilder}.
+     *
+     * @return the corresponding {@link CharArray} instance.
+     */
+    public final CharArray toCharArray() {
+        CharArray cArray = new CharArray();
+        char[] data;
+        if (_length < C1) {
+            data = _low;
+        } else {
+            data = new char[_length];
+            this.getChars(0, _length, data, 0);
+        }
+        cArray.setArray(data, 0, _length);
+        return cArray;
+    }
+
+    /**
      * Resets this text builder for reuse (equivalent to {@link #clear}).
      */
     public final void reset() {
@@ -905,7 +921,7 @@ public class TextBuilder implements Appendable,
                 SYSTEM_OUT_WRITER.flush();
             }
         } catch (IOException e) { // Should never happen.
-            throw new JavolutionError(e);
+            throw new Error(e.getMessage());
         }
     }
     private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter().setOutput(System.out);
@@ -928,7 +944,7 @@ public class TextBuilder implements Appendable,
                 SYSTEM_OUT_WRITER.flush();
             }
         } catch (IOException e) { // Should never happen.
-            throw new JavolutionError(e);
+            throw new Error(e.getMessage());
         }
     }
 

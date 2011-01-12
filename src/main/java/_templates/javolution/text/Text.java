@@ -17,7 +17,6 @@ import _templates.java.lang.CharSequence;
 import _templates.java.lang.Comparable;
 import _templates.java.lang.Number;
 import _templates.javax.realtime.MemoryArea;
-import _templates.javolution.JavolutionError;
 import _templates.javolution.context.ObjectFactory;
 import _templates.javolution.io.UTF8StreamWriter;
 import _templates.javolution.lang.MathLib;
@@ -965,7 +964,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
                 SYSTEM_OUT_WRITER.flush();
             }
         } catch (IOException e) { // Should never happen.
-            throw new JavolutionError(e);
+            throw new Error(e.getMessage());
         }
     }
 
@@ -990,7 +989,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
                 SYSTEM_OUT_WRITER.flush();
             }
         } catch (IOException e) { // Should never happen.
-            throw new JavolutionError(e);
+            throw new Error(e.getMessage());
         }
     }
 
@@ -1064,6 +1063,19 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
             throw new IndexOutOfBoundsException();
         return (_data != null) ? _data[index] : (index < _head._count) ? _head
                 .charAt(index) : _tail.charAt(index - _head._count);
+    }
+
+   /**
+     * Returns the index within this text of the first occurrence of the
+     * specified character, starting the search at the beginning.
+     *
+     * @param c the character to search for.
+     * @return the index of the first occurrence of the character in this text
+     *         that is greater than or equal to <code>0</code>,
+     *         or <code>-1</code> if the character does not occur.
+     */
+    public int indexOf(char c) {
+        return indexOf(c, 0);
     }
 
     /**

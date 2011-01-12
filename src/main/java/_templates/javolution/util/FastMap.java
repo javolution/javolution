@@ -37,13 +37,13 @@ import _templates.javolution.xml.XMLSerializable;
 /**
  * <p> This class represents a hash map with real-time behavior; 
  *     smooth capacity increase and <i>thread-safe</i> without external 
- *     synchronization when {@link #isShared shared}.</p>
+ *     synchronization when {@link #shared shared}.</p>
  *     <img src="doc-files/map-put.png"/>
  *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys are inserted into the map (similar to 
  *     <code>java.util.LinkedHashMap</code> collection class). If the map is 
- *     marked {@link #setShared(boolean) shared} then all operations are 
+ *     marked {@link #shared shared} then all operations are
  *     thread-safe including iterations over the map's collections. 
  *     Unlike <code>ConcurrentHashMap</code>, {@link #get(Object) access} never
  *     blocks; retrieval reflects the map state not older than the last time the
@@ -54,9 +54,9 @@ import _templates.javolution.xml.XMLSerializable;
  *     (and quickly) until the next synchronization point. In some cases the
  *     "happen before" guarantee is necessary (e.g. to ensure unicity) and
  *     threads have to be synchronized explicitly. Whenever possible such
- *     synchronization should be performed on the key object itself and the 
+ *     synchronization should be performed on the key object itself and 
  *     not the whole map. For example:[code]
- *     FastMap<Index, Object> sparseVector = new FastMap<Index, Object>().setShared(true)
+ *     FastMap<Index, Object> sparseVector = new FastMap<Index, Object>().shared()
  *     ... // Put
  *     synchronized(index) { // javolution.util.Index instances are unique.
  *         sparseVector.put(index, value);
@@ -98,28 +98,32 @@ import _templates.javolution.xml.XMLSerializable;
  *     
  * <p> {@link FastMap} are {@link Reusable reusable}; they maintain an 
  *     internal pool of <code>Map.Entry</code> objects. When an entry is removed
- *     from a map, it is automatically restored to its pool (unless the map
- *     is shared in which case the removed entry is candidate for garbage 
- *     collection as it cannot be safely recycled).</p>
+ *     from a map, it is automatically restored to its pool. Any new entry is
+ *     allocated in the same memory area as the map itself (RTSJ). If the map
+ *     is shared, removed entries are not recycled but only dereferenced
+ *     (to maintain thread-safety) </p>
  *     
- * <p> Shared maps do not use internal synchronization, except in case of 
- *     concurrent modifications of the map structure (entry added/deleted).
+ * <p> {@link #shared() Shared} maps do not use internal synchronization, except in case of
+ *     concurrent modifications of the map structure (entries being added/deleted).
  *     Reads and iterations are never synchronized and never blocking.
  *     With regards to the memory model, shared maps are equivalent to shared 
- *     non-volatile variables (no "happen before" guarantee). There are
- *     typically used as lookup tables. For example:[code]
+ *     non-volatile variables (no "happen before" guarantee). They can be used 
+ *     as very efficient lookup tables. For example:[code]
  *     public class Unit {
- *         static FastMap<Unit, String> labels = new FastMap().setShared(true); 
+ *         static FastMap<Unit, String> labels = new FastMap().shared();
  *         ...
  *         public String toString() {
  *             String label = labels.get(this); // No synchronization.
- *             return label != null ? label : makeLabel();
+ *             if (label != null) return label;
+ *             label = makeLabel();
+ *             labels.put(this, label);
+ *             return label;
  *         }
  *    }[/code]</p>
  *            
  * <p> <b>Implementation Note:</b> To maintain time-determinism, rehash/resize
  *     is performed only when the map's size is small (see chart). For large 
- *     maps (size > 512), the collection is divided recursively into (64) 
+ *     maps (size > 512), the map is divided recursively into (64)
  *     smaller sub-maps. The cost of the dispatching (based upon hashcode 
  *     value) has been measured to be at most 20% of the access time 
  *     (and most often way less).</p>
@@ -486,19 +490,47 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
         }
 
         // Setup entry.
-        final Entry entry = _tail;
-        entry._key = key;
-        entry._value = value;
-        entry._keyHash = keyHash;
-        if (entry._next == null) {
-            createNewEntries();
+        final Entry entry;
+        if(!_isShared) {
+            entry = _tail;
+            entry._key = key;
+            entry._value = value;
+            entry._keyHash = keyHash;
+            if (entry._next == null) {
+                createNewEntries();
+            }
+            entries[slot] = entry;
+            map._entryCount += ONE_VOLATILE; // Prevents reordering.
+            _tail = _tail._next;
+        } else {
+        	// keep _tail as the same object
+            // check entry caches
+            if (_tail._next == null) {
+                createNewEntries();
+            }
+            // assign entry
+            entry = _tail._next;
+            
+            // step forward in the entry cache
+            _tail._next = entry._next;
+            
+            // populate entry
+            entry._key = key;
+            entry._value = value;
+            entry._keyHash = keyHash;
+            entry._next = _tail;
+            entry._previous = _tail._previous; // backwards
+            
+              // set the hash table slots
+            entries[slot] = entry;
+            map._entryCount += ONE_VOLATILE; // Prevents reordering.
+            // insert into chain at correct location
+            entry._next._previous = entry; // backwards
+            entry._previous._next = entry; // forwards
         }
-        entries[slot] = entry;
-        map._entryCount += ONE_VOLATILE; // Prevents reordering.
-        _tail = _tail._next;
-
+        
         if (map._entryCount + map._nullCount > (entries.length >> 1)) { // Table more than half empty.
-            map.resizeTable(_isShared);
+        	map.resizeTable(_isShared);
         }
         return returnEntry ? entry : null;
     }
@@ -569,7 +601,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
                     subMap.mapEntry(entry);
                     if (((subMap._entryCount + subMap._nullCount) << 1) >= subMap._entries.length) {
                         // Serious problem submap already full, don't use submap just resize.
-                        LogContext.warning("Unevenly distributed hash code - Degraded Preformance");
+                        LogContext.warning("Unevenly distributed hash code - Degraded Performance");
                         Entry[] tmp = new Entry[tableLength];
                         copyEntries(_entries, tmp, _entries.length);
                         _entries = tmp;
@@ -577,6 +609,14 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
                         return;
                     }
                 }
+                
+                if(isShared) {
+                	// clear the entries which now are held by submaps
+                    FastMap.reset(_entries);
+                    _nullCount = 0;
+                    _entryCount = 0;
+                }
+                
                 _useSubMaps = ONE_VOLATILE == 1 ? true : false; // Prevents reordering.   
             }
         });
@@ -736,7 +776,9 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
                     if (next != null) {
                         next._previous = entry;
                     }
-                }
+                } else {
+                    // do nothing, preserving the iterator-free iterations of other threads
+                }                       
                 return prevValue;
             }
         }
@@ -754,9 +796,15 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
      *     systems synchronizing ensures that the CPU internal cache is not 
      *     stale).</p>
      * 
-     * @param isShared <code>true</code> if this map is shared and thread-safe;
-     *        <code>false</code> otherwise.
      * @return <code>this</code>
+     */
+    public FastMap/*<K,V>*/ shared() {
+        _isShared = true;
+        return this;
+    }
+
+    /**
+     * @deprecated Replaced by {@link #shared}
      */
     public FastMap/*<K,V>*/ setShared(boolean isShared) {
         _isShared = isShared;
@@ -1201,7 +1249,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
 
         public boolean contains(Object obj) { // Optimization.
             if (obj instanceof Map.Entry) {
-                Map.Entry thatEntry = (Entry) obj;
+                Map.Entry thatEntry = (Map.Entry) obj;
                 Entry thisEntry = getEntry(thatEntry.getKey());
                 if (thisEntry == null) {
                     return false;
@@ -1465,7 +1513,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
 
     // Implements Reusable.
     public void reset() {
-        setShared(false); // A shared map can only be reset if no thread use it.
+        _isShared = false; // A shared map can only be reset if no thread use it.
         clear(); // In which case, it is safe to recycle the entries.
         setKeyComparator(FastComparator.DEFAULT);
         setValueComparator(FastComparator.DEFAULT);
@@ -1483,7 +1531,7 @@ public class FastMap/*<K,V>*/ implements Map/*<K,V>*/, Reusable,
             ClassNotFoundException {
         setKeyComparator((FastComparator) stream.readObject());
         setValueComparator((FastComparator) stream.readObject());
-        setShared(stream.readBoolean());
+        _isShared = stream.readBoolean();
         final int size = stream.readInt();
         setup(size);
         for (int i = 0; i < size; i++) {

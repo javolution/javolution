@@ -408,10 +408,6 @@ src/main/java/_templates/java/util/zip/ZipFile.java -text
 src/main/java/_templates/javax/realtime/MemoryArea.java -text
 src/main/java/_templates/javax/realtime/NoHeapRealtimeThread.java -text
 src/main/java/_templates/javax/realtime/RealtimeThread.java -text
-src/main/java/_templates/javolution/ContextTestSuite.java -text
-src/main/java/_templates/javolution/Javolution.java -text
-src/main/java/_templates/javolution/JavolutionError.java -text
-src/main/java/_templates/javolution/TypeFormatTestSuite.java -text
 src/main/java/_templates/javolution/context/Allocator.java -text
 src/main/java/_templates/javolution/context/AllocatorContext.java -text
 src/main/java/_templates/javolution/context/ArrayFactory.java -text
@@ -552,4 +548,7 @@ src/org/xml/sax/XMLFilter.java -text
 src/org/xml/sax/XMLReader.java -text
 src/org/xml/sax/package.html -text
 src/overview.html -text
+src/test/java/javolution/ContextTestSuite.java -text
 src/test/java/javolution/JavolutionTest.java -text
+src/test/java/javolution/StructTestSuite.java -text
+src/test/java/javolution/TypeFormatTestSuite.java -text

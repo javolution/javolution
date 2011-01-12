@@ -54,8 +54,8 @@ public abstract class StackContext extends AllocatorContext {
      * Users may also disable stack allocation by providing a class allocating
      * on the heap.
      */
-    public static final Configurable/*<Class<? extends StackContext>>*/ DEFAULT = new Configurable(
-            Default.class);
+    public static final Configurable/*<Class<? extends StackContext>>*/ DEFAULT 
+            = new Configurable(Default.class) {};
 
     /**
      * Enters the {@link #DEFAULT} stack context.
@@ -65,12 +65,36 @@ public abstract class StackContext extends AllocatorContext {
     }
 
     /**
+     * Enters a stack context only if the specified condition is verified.
+     *
+     * @param condition <code>true</code> to enter a stack context;
+     *                  <code>false</code> otherwise.
+     */
+    public static void enter(boolean condition) {
+        if (condition) {
+            StackContext.enter();
+        }
+    }
+
+    /**
      * Exits the current stack context.
      * 
      * @throws ClassCastException if the context is not a stack context.
      */
     public static void exit() {
         Context.exit(StackContext.class);
+    }
+
+    /**
+     * Exits a stack context only if the specified condition is verified.
+     *
+     * @param condition <code>true</code> to exit a stack context;
+     *                  <code>false</code> otherwise.
+     */
+    public static void exit(boolean condition) {
+        if (condition) {
+            StackContext.exit();
+        }
     }
 
     /**

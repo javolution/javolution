@@ -92,6 +92,11 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
      */
     private String _indentation;
 
+    /**
+     * Holds line separator property.
+     */
+    private String _lineSeparator = "\n";
+
     /** 
      * Holds current indentation level.
      */
@@ -233,6 +238,15 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         _indentation = indentation;
     }
 
+    /**
+     * Specifies the line separator (default <code>"\n"</code>).
+     *
+     * @param lineSeparator the line separator string.
+     */
+    public void setLineSeparator(String lineSeparator) {
+        _lineSeparator = lineSeparator;
+    }
+
     /** 
      * Requires this writer to automatically output empty elements when a 
      * start element is immediately followed by matching end element
@@ -348,7 +362,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         if ((_indentation != null) && (_indentationLevel != _nesting - 1)) {
             // Do not indent if no change in indentation level
             // to avoid interfering with text only elements.
-            write('\n');
+            writeNoEscape(_lineSeparator);
             for (int i = 1; i < _nesting; i++) {
                 writeNoEscape(_indentation);
             }
@@ -368,6 +382,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         while (_nesting > 0) { // Implicits closing of all elements.
             writeEndElement();
         }
+        flush(); // Not mandatory but safer.
     }
 
     // Implements XMLStreamWriter interface.
@@ -598,6 +613,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             return new Boolean(_noEmptyElementTag);
         } else if (name.equals(XMLOutputFactory.INDENTATION)) {
             return _indentation;
+        } else if (name.equals(XMLOutputFactory.LINE_SEPARATOR)) {
+            return _lineSeparator;
         } else {
             throw new IllegalArgumentException("Property: " + name
                     + " not supported");
@@ -612,7 +629,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         if (_isElementOpen)
             closeOpenTag();
         if (_indentation != null) {
-            write('\n');
+            writeNoEscape(_lineSeparator);
             _indentationLevel = _nesting;
             for (int i = 0; i < _indentationLevel; i++) {
                 writeNoEscape(_indentation);

@@ -122,7 +122,7 @@ public class LocalContext extends Context {
         }
 
         private Object/*{T}*/ retrieveValue() {
-            for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
+            for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
                 if (ctx instanceof LocalContext) {
                     LocalContext localContext = (LocalContext) ctx;
                     Object value = localContext._references.get(this);
@@ -194,7 +194,7 @@ public class LocalContext extends Context {
 
         // Returns the local context if any.
         private static LocalContext getLocalContext() {
-            for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
+            for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
                 if (ctx instanceof LocalContext)
                     return (LocalContext) ctx;
             }

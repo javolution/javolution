@@ -189,13 +189,13 @@ public class XMLReaderImpl implements XMLReader, Reusable {
     }
 
     private static final Reflection.Constructor NEW_URL = Reflection
-            .getConstructor("java.net.URL(j2me.lang.String)");
+            .getInstance().getConstructor("java.net.URL(j2me.lang.String)");
 
     private static final Reflection.Method OPEN_STREAM = Reflection
-            .getMethod("java.net.URL.openStream()");
+            .getInstance().getMethod("java.net.URL.openStream()");
 
     private static final Reflection.Constructor NEW_FILE_INPUT_STREAM = Reflection
-            .getConstructor("j2me.io.FileInputStream(j2me.lang.String)");
+            .getInstance().getConstructor("j2me.io.FileInputStream(j2me.lang.String)");
 
     // Implements XMLReader interface.
     public void setContentHandler(ContentHandler handler) {

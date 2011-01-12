@@ -8,58 +8,73 @@
  */
 package _templates.javolution.util;
 
+import _templates.java.io.ObjectOutputStream;
+import _templates.java.io.Serializable;
 import _templates.java.lang.UnsupportedOperationException;
 import _templates.java.util.Collection;
 import _templates.java.util.Iterator;
 import _templates.java.util.List;
 import _templates.java.util.ListIterator;
 import _templates.java.util.Set;
-import _templates.javax.realtime.MemoryArea;
 import _templates.javolution.lang.Realtime;
 import _templates.javolution.text.Text;
 import _templates.javolution.xml.XMLSerializable;
+import java.io.IOException;
 
 /**
  * <p> This class represents collections which can quickly be iterated over 
- *     (forward or backward) in a thread-safe manner without creating new 
- *     objects and without using {@link #iterator iterators} . For example:[code]
- *     boolean search(Object item, FastCollection c) {
- *         for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
- *              if (item.equals(c.valueOf(r))) return true;
+ *     (forward or backward) and which an be made {@link #shared() thread-safe}
+ *     and/or {@link #unmodifiable() unmodifiable}.</p>
+ *
+ * <p> Fast collections can be iterated over  without creating new objects
+ *     and without using {@link #iterator iterators} .
+ *     [code]
+ *         public boolean search(Object item, FastCollection c) {
+ *             for (Record r = c.head(), end = c.tail(); (r = r.getNext()) != end;) {
+ *                 if (item.equals(c.valueOf(r))) return true;
+ *             }
+ *             return false;
  *         }
- *         return false;
- *     }[/code]</p>
+ *     [/code]</p>
  *     
- * <p> Iterations are thread-safe as long as the {@link Record record} sequence
- *     iterated over is not structurally modified by another thread 
- *     (objects can safely be append/prepend during iterations but not 
- *     inserted/removed).</p>
+ * <p> Fast collections are thread-safe when marked {@link #shared shared}
+ *     (can be read, iterated over or modified concurrently).
+ *     [code]
+ *         public class Foo {
+ *             private static final Collection<Foo> INSTANCES = new FastTable().shared();
+ *             public Foo() {
+ *                 INSTANCES.add(this);
+ *             }
+ *             public static void showInstances() {
+ *                 for (Foo foo : INSTANCES) { // Iterations are thread-safe even if new Foo instances are added.
+ *                      System.out.println(foo);
+ *                 }
+ *             }
+ *         }[/code]</p>
  *     
  * <p> Users may provide a read-only view of any {@link FastCollection} 
  *     instance using the {@link #unmodifiable()} method (the view is 
- *     thread-safe if iterations are thread-safe). For example:[code]
- *     public class Polynomial {
- *         private final FastTable<Coefficient> _coefficients = new FastTable<Coefficient>();
- *         public List<Coefficient> getCoefficients() { // Read-only view. 
- *             return _coefficients.unmodifiable();
- *         }
- *     }[/code]</p>
+ *     thread-safe if the collection is {@link #shared shared}).
+ *     [code]
+ *         class Foo {
+ *             private static final FastTable<Foo> INSTANCES = new FastTable().shared();
+ *             Foo() {
+ *                INSTANCES.add(this);
+ *             }
+ *             public static Collection<Foo> getInstances() {
+ *                 return INSTANCES.unmodifiable(); // Returns a public unmodifiable view over the shared collection.
+ *             }
+ *         }[/code]</p>
  *     
  * <p> Finally, {@link FastCollection} may use custom {@link #getValueComparator
  *     comparators} for element equality or ordering if the collection is 
  *     ordered (e.g. <code>FastTree</code>).
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.3, February 28, 2008
+ * @version 5.4.5, March 23, 2010
  */
 public abstract class FastCollection/*<E>*/ implements
         Collection/*<E>*/, XMLSerializable, Realtime {
-
-    /**
-     * Holds the unmodifiable view (allocated in the same memory area as 
-     * this collection).  
-     */
-    private Unmodifiable _unmodifiable;
 
     /**
      * Default constructor.  
@@ -96,7 +111,7 @@ public abstract class FastCollection/*<E>*/ implements
      * @param record the record whose current value is returned.
      * @return the current value.
      */
-    public abstract Object/*{E}*/valueOf(Record record);
+    public abstract Object/*{E}*/ valueOf(Record record);
 
     /**
      * Deletes the specified record from this collection.
@@ -115,20 +130,28 @@ public abstract class FastCollection/*<E>*/ implements
     /**
      * Returns the unmodifiable view associated to this collection. 
      * Attempts to modify the returned collection result in an 
-     * {@link UnsupportedOperationException} being thrown. The view is 
-     * always a {@link FastCollection} instance.
+     * {@link UnsupportedOperationException} being thrown. 
      * 
      * @return the unmodifiable view over this collection.
      */
-    public Collection/*<E>*/unmodifiable() {
-        if (_unmodifiable == null) {
-            MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-                public void run() {
-                    _unmodifiable = new Unmodifiable();
-                }
-            });
-        }
-        return _unmodifiable;
+    public Collection/*<E>*/ unmodifiable() {
+        return new Unmodifiable();
+    }
+
+    /**
+     * <p> Returns a thread-safe read-write view of this collection.</p>
+     * <p> The default implementation performs synchronization on read and write.
+     *     Sub-classes may provide more efficient implementation (e.g.
+     *     only synchronizing on writes modifying the internal data structure).</p>
+     * <p> Having a shared collection does not mean that modifications made
+     *     by onethread are automatically viewed by others thread. Which in practice
+     *     is not an issue. In a well-behaved system, threads need to synchronize
+     *     only at predetermined synchronization points (the fewer the better).</p>
+     *
+     * @return a thread-safe collection.
+     */
+    public Collection/*<E>*/ shared() {
+        return new Shared();
     }
 
     /**
@@ -138,7 +161,7 @@ public abstract class FastCollection/*<E>*/ implements
      *
      * @return an iterator over this collection's elements.
      */
-    public Iterator/*<E>*/iterator() {
+    public Iterator/*<E>*/ iterator() {
         return FastIterator.valueOf(this);
     }
 
@@ -165,7 +188,7 @@ public abstract class FastCollection/*<E>*/ implements
      *         <code>Collection.add</code> method).
      * @throws UnsupportedOperationException if not supported.
      */
-    public boolean add(Object/*{E}*/value) {
+    public boolean add(Object/*{E}*/ value) {
         throw new UnsupportedOperationException();
     }
 
@@ -196,8 +219,7 @@ public abstract class FastCollection/*<E>*/ implements
      */
     public void clear() {
         // Removes last record until empty.
-        for (Record head = head(), r = tail().getPrevious(); r != head; r = r
-                .getPrevious()) {
+        for (Record head = head(), r = tail().getPrevious(); r != head; r = r.getPrevious()) {
             delete(r);
         }
     }
@@ -238,9 +260,9 @@ public abstract class FastCollection/*<E>*/ implements
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    public boolean addAll(Collection/*<? extends E>*/c) {
+    public boolean addAll(Collection/*<? extends E>*/ c) {
         boolean modified = false;
-        Iterator/*<? extends E>*/itr = c.iterator();
+        Iterator/*<? extends E>*/ itr = c.iterator();
         while (itr.hasNext()) {
             if (add(itr.next())) {
                 modified = true;
@@ -257,10 +279,10 @@ public abstract class FastCollection/*<E>*/ implements
      * @return <code>true</code> if this collection contains all of the values
      *         of the specified collection; <code>false</code> otherwise.
      */
-    public boolean containsAll(Collection/*<?>*/c) {
-        Iterator/*<?>*/itr = c.iterator();
+    public boolean containsAll(Collection/*<?>*/ c) {
+        Iterator/*<?>*/ itr = c.iterator();
         while (itr.hasNext()) {
-            if (!contains(itr.next())) 
+            if (!contains(itr.next()))
                 return false;
         }
         return true;
@@ -275,7 +297,7 @@ public abstract class FastCollection/*<E>*/ implements
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    public boolean removeAll(Collection/*<?>*/c) {
+    public boolean removeAll(Collection/*<?>*/ c) {
         boolean modified = false;
         // Iterates from the tail and remove the record if present in c. 
         for (Record head = head(), r = tail().getPrevious(), previous; r != head; r = previous) {
@@ -287,18 +309,19 @@ public abstract class FastCollection/*<E>*/ implements
         }
         return modified;
     }
-    
+
     private static boolean contains(Collection c, Object obj, FastComparator cmp) {
-        if ((c instanceof FastCollection) &&
-               ((FastCollection)c).getValueComparator().equals(cmp)) 
+        if ((c instanceof FastCollection)
+                && ((FastCollection) c).getValueComparator().equals(cmp))
             return c.contains(obj); // Direct is ok (same value comparator). 
-        Iterator/*<?>*/itr = c.iterator();
+        Iterator/*<?>*/ itr = c.iterator();
         while (itr.hasNext()) {
-            if (cmp.areEqual(obj, itr.next()))  return true;
+            if (cmp.areEqual(obj, itr.next()))
+                return true;
         }
-        return false; 
+        return false;
     }
-    
+
     /**
      * Retains only the values in this collection that are contained in the
      * specified collection.
@@ -307,7 +330,7 @@ public abstract class FastCollection/*<E>*/ implements
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    public boolean retainAll(Collection/*<?>*/c) {
+    public boolean retainAll(Collection/*<?>*/ c) {
         boolean modified = false;
         // Iterates from the tail and remove the record if not present in c. 
         for (Record head = head(), r = tail().getPrevious(), previous; r != head; r = previous) {
@@ -366,7 +389,7 @@ public abstract class FastCollection/*<E>*/ implements
      * 
      * @return this collection textual representation.
      */
-    public final Text toText() {
+    public Text toText() {
         // We use Text concatenation instead of TextBuilder to avoid copying 
         // the text representation of the record values (unknown length).
         Text text = Text.valueOf("{");
@@ -403,15 +426,14 @@ public abstract class FastCollection/*<E>*/ implements
      *         <code>false</code> otherwise.
      */
     public boolean equals(Object obj) {
-        if (this instanceof List) 
-            return  (obj instanceof List) ? equalsOrder((List)obj) : false;
+        if (this instanceof List)
+            return (obj instanceof List) ? equalsOrder((List) obj) : false;
         if (obj instanceof List)
             return false; // 'this' is not a list but obj is!
         if (!(obj instanceof Collection))
             return false; // Can only compare collections.
         Collection that = (Collection) obj;
-        return (this == that) || (
-                (this.size() == that.size()) && containsAll(that));
+        return (this == that) || ((this.size() == that.size()) && containsAll(that));
     }
 
     private boolean equalsOrder(List that) {
@@ -434,7 +456,7 @@ public abstract class FastCollection/*<E>*/ implements
      * Returns the hash code for this collection. For non-ordered collection
      * the hashcode of this collection is the sum of the hashcode of its 
      * values.
-   
+
      * @return the hash code for this collection.
      */
     public int hashCode() {
@@ -476,13 +498,12 @@ public abstract class FastCollection/*<E>*/ implements
          * @return the next record.
          */
         public Record getNext();
-
     }
 
     /**
      * This inner class represents an unmodifiable view over the collection.
      */
-    class Unmodifiable extends FastCollection implements List, Set {
+    class Unmodifiable  extends FastCollection implements List, Set {
 
         // Implements abstract method.
         public int size() {
@@ -532,13 +553,12 @@ public abstract class FastCollection/*<E>*/ implements
         //////////////////////////////////////////
         // List interface supplementary methods //
         //////////////////////////////////////////
-        
         public boolean addAll(int index, Collection c) {
             throw new UnsupportedOperationException("Unmodifiable");
         }
 
         public Object get(int index) {
-            return ((List)FastCollection.this).get(index);
+            return ((List) FastCollection.this).get(index);
         }
 
         public Object set(int index, Object element) {
@@ -554,27 +574,158 @@ public abstract class FastCollection/*<E>*/ implements
         }
 
         public int indexOf(Object o) {
-            return ((List)FastCollection.this).indexOf(o);
+            return ((List) FastCollection.this).indexOf(o);
         }
 
         public int lastIndexOf(Object o) {
-            return ((List)FastCollection.this).lastIndexOf(o);
+            return ((List) FastCollection.this).lastIndexOf(o);
         }
 
         public ListIterator listIterator() {
             throw new UnsupportedOperationException(
-            "List iterator not supported for unmodifiable collection");
+                    "List iterator not supported for unmodifiable collection");
         }
 
         public ListIterator listIterator(int index) {
             throw new UnsupportedOperationException(
-            "List iterator not supported for unmodifiable collection");
+                    "List iterator not supported for unmodifiable collection");
         }
 
         public List subList(int fromIndex, int toIndex) {
             throw new UnsupportedOperationException(
                     "Sub-List not supported for unmodifiable collection");
         }
-    }    
-    
+    }
+
+    /**
+     * This inner class represents a thread safe view (read-write) over the
+     * collection.
+     */
+    private class Shared implements Collection , Serializable {
+
+        public synchronized int size() {
+            return FastCollection.this.size();
+        }
+
+        public synchronized boolean isEmpty() {
+            return FastCollection.this.isEmpty();
+        }
+
+        public synchronized boolean contains(Object o) {
+            return FastCollection.this.contains(o);
+        }
+
+        public synchronized Object[] toArray() {
+            return FastCollection.this.toArray();
+        }
+
+        public synchronized Object[] toArray(Object[] a) {
+            return FastCollection.this.toArray(a);
+        }
+
+        public synchronized Iterator iterator() {
+            if (FastCollection.this instanceof List) 
+                return new ListArrayIterator(FastCollection.this.toArray());
+            return new CollectionArrayIterator(FastCollection.this.toArray());
+        }
+
+        public synchronized boolean add(Object  e) {
+            return ((FastCollection)FastCollection.this).add(e);
+        }
+
+        public synchronized boolean remove(Object o) {
+            return FastCollection.this.remove(o);
+        }
+
+        public synchronized boolean containsAll(Collection c) {
+            return FastCollection.this.containsAll(c);
+        }
+
+        public synchronized boolean addAll(Collection c) {
+            return FastCollection.this.addAll(c);
+        }
+
+        public synchronized boolean removeAll(Collection c) {
+            return FastCollection.this.removeAll(c);
+        }
+
+        public synchronized boolean retainAll(Collection c) {
+            return FastCollection.this.retainAll(c);
+        }
+
+        public synchronized void clear() {
+            FastCollection.this.clear();
+        }
+
+        public synchronized String toString() {
+            return FastCollection.this.toString();
+        }
+
+        private synchronized void writeObject(ObjectOutputStream s) throws IOException {
+            s.defaultWriteObject();
+        }
+
+        private class ListArrayIterator implements Iterator {
+
+            private final Object[] _elements;
+
+            private int _index;
+
+            private int _removed;
+
+            public ListArrayIterator(Object[] elements) {
+                _elements = elements;
+            }
+
+            public boolean hasNext() {
+                return _index < _elements.length;
+            }
+
+            public Object next() {
+                return _elements[_index++];
+            }
+
+            public void remove() {
+                if (_index == 0)
+                    throw new _templates.java.lang.IllegalStateException();
+                Object removed = _elements[_index - 1];
+                if (removed == NULL) // Double removed.
+                    throw new _templates.java.lang.IllegalStateException();
+                _elements[_index - 1] = NULL;
+                _removed++;
+                synchronized (FastCollection.Shared.this) {
+                    ((List) FastCollection.this).remove(_index - _removed);
+                }
+            }
+        }
+
+        private class CollectionArrayIterator implements Iterator {
+
+            private final Object[] _elements;
+
+            private int _index;
+
+            private Object _next;
+
+            public CollectionArrayIterator(Object[] elements) {
+                _elements = elements;
+            }
+
+            public boolean hasNext() {
+                return _index < _elements.length;
+            }
+
+            public Object next() {
+                return _next = _elements[_index++];
+            }
+
+            public void remove() {
+                if (_next == null)
+                    throw new _templates.java.lang.IllegalStateException();
+                FastCollection.Shared.this.remove(_next);
+                _next = null;
+            }
+        }
+    }
+    private static final Object NULL = new Object();
 }

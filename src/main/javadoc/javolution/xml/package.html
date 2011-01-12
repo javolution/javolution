@@ -41,7 +41,7 @@
            
           // Default XML format with name associations (members identified by an unique name).
           // See XMLFormat for examples of positional associations.
-          protected static final XMLFormat<Graphic> XML = new XMLFormat<Graphic>(Graphic.class) {
+          protected static final XMLFormat<Graphic> GRAPHIC_XML = new XMLFormat<Graphic>(Graphic.class) {
                public void write(Graphic g, OutputElement xml) throws XMLStreamException {
                    xml.setAttribute("isVisible", g._isVisible); 
                    xml.add(g._paint, "Paint");
@@ -61,9 +61,9 @@
           private Shape _geometry;  
         
           // Adds geometry to format.
-          protected static final XMLFormat<Area> XML = new XMLFormat<Area>(Area.class) {
+          protected static final XMLFormat<Area> AREA_XML = new XMLFormat<Area>(Area.class) {
               public void write(Area area, OutputElement xml) throws XMLStreamException {
-                  Graphic.XML.write(area, xml); // Calls parent write.
+                  GRAPHIC_XML.write(area, xml); // Calls parent write.
                   xml.add(area._geometry, "Geometry");
               }
               public void read(InputElement xml, Area area) throws XMLStreamException {
@@ -231,7 +231,7 @@
     Let's take for example:[code]
         public class Polygon implements Shape, XMLSerializable { 
             private Point[] _vertices;
-            static final XMLFormat<Polygon> XML = new XMLFormat<Polygon>(Polygon.class) {
+            static final XMLFormat<Polygon> POLYGON_XML = new XMLFormat<Polygon>(Polygon.class) {
                 public void write(Polygon polygon, OutputElement xml) throws XMLStreamException {
                     xml.setAttibutes("count", _vertices.length);
                     for (int i=0; i < _vertices.length; i++) {

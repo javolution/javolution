@@ -24,7 +24,6 @@ import _templates.javolution.lang.Reusable;
 import _templates.javolution.text.CharArray;
 import _templates.javolution.xml.sax.Attributes;
 
-
 /**
  * <p> This class represents a  {@link _templates.javolution.lang.Reusable reusable}
  *     implementation of {@link XMLStreamWriter}.</p>
@@ -235,7 +234,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
 
     /**
      * Sets the input stream source for this XML stream reader 
-     * (encoding retrieved from XML prolog if any).
+     * (encoding retrieved from XML prolog if any). This method
+     * attempts to detect the encoding automatically.
      *
      * @param  in the input source with unknown encoding.
      */
@@ -347,6 +347,19 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     }
 
     /**
+     * Returns the qualified name of the element at the specified level.
+     * This method can be used to retrieve the XPath of the current element.
+     *
+     * @return the qualified name of the element at the specified level.
+     * @throws IllegalArgumentException if <code>depth &gt; getDepth()</code>
+     */
+    public CharArray getQName(int depth) {
+        if (depth > this.getDepth())
+            throw new IllegalArgumentException();
+        return _elemStack[depth];
+    }
+
+    /**
      * Returns the current attributes (SAX2-Like).
      *
      * @return returns the number of attributes.
@@ -405,11 +418,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             _start = _index = startElem.offset();
             while (_seqs[--_seqsIndex] != startElem) { // Recycles CharArray instances.
             }
-        } else if (_eventType == CHARACTERS) {
-            System.arraycopy(_data, _start, _data, _text.offset(), _index - _start);
-            int textLength = _text.length();
-            _start -= textLength;
-            _index -= textLength;            
         }
         // Reader loop.
         while (true) {
@@ -835,6 +843,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
      *         and the event type (CHARACTERS or END_DOCUMENT) has been set.
      */
     private void reloadBuffer() throws XMLStreamException {
+        if (_reader == null) throw new XMLStreamException("Input not specified");
         _location._column += _readIndex;
         _location._charactersRead += _readIndex;
         _readIndex = 0;
@@ -1334,7 +1343,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     public CharArray getPIData() {
         if (_eventType != XMLStreamConstants.PROCESSING_INSTRUCTION)
             throw illegalState("Not a processing instruction");
-        int offset = _text.offsetOf(' ') + 1;
+        int offset = _text.indexOf(' ') + _text.offset() + 1;
         CharArray piData = newSeq(offset, _text.length() - offset);
         return piData;
     }
@@ -1342,7 +1351,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     public CharArray getPITarget() {
         if (_eventType != XMLStreamConstants.PROCESSING_INSTRUCTION)
             throw illegalState("Not a processing instruction");
-        CharArray piTarget = newSeq(_text.offset(), _text.offsetOf(' '));
+        CharArray piTarget = newSeq(_text.offset(), _text.indexOf(' ') + _text.offset());
         return piTarget;
     }
 
@@ -1510,8 +1519,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         final int VALUE_SIMPLE_QUOTE = 2;
         final int VALUE_DOUBLE_QUOTE = 3;
 
-        int i = _prolog.offsetOf(name);
+        int i = _prolog.indexOf(name);
         if (i >= 0) {
+            i += _prolog.offset();
             int maxIndex = _prolog.offset() + _prolog.length();
             i += name.length();
             int state = READ_EQUAL;

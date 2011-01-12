@@ -9,7 +9,6 @@
 package _templates.javolution.xml;
 
 import _templates.java.lang.CharSequence;
-import _templates.javolution.Javolution;
 import _templates.javolution.lang.Reusable;
 import _templates.javolution.text.CharArray;
 import _templates.javolution.text.TextBuilder;
@@ -215,7 +214,7 @@ public class XMLReferenceResolver implements Reusable {
     }
 
     private static CharSequence toCsq/**/(Object str) {
-        return Javolution.j2meToCharSeq(str);
+        return QName.j2meToCharSeq(str);
     }
 
 }

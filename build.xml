@@ -7,10 +7,10 @@
     <target name="_init">
         <tstamp />
         <property name="library" value="javolution" />
-        <property name="version" value="5.3" />
-        <property name="release" value="0" />
+        <property name="version" value="5.5" />
+        <property name="release" value="1" />
         <property name="jarpath" value="target/${library}-${version}.${release}" />
-        <property name="javaGenerated" value="target/generated-sources/main/java" />
+        <property name="javaGenerated" value="target/generated-sources/java" />
         <property name="javaSource" value="src/main/java" />
         <property name="javadocSource" value="src/main/javadoc" />
         <property name="bin" value="target/classes" />
@@ -123,10 +123,6 @@
         </copy>
     </target>
 
-   <target name="_setVersion">
-        <replace file="${javaGenerated}/javolution/Javolution.java" token="@VERSION@" value="${version}.${release} (${vm}) ${TODAY}" />
-    </target>
-
     <target name="_make_classes_parameterized">
      	<!-- Replace Javolution Enum with Java Enum -->
         <replace dir="${javaGenerated}" token="javolution.lang.Enum" value="java.lang.Enum" includes="**/*.java" />
@@ -158,7 +154,7 @@
         </replace>
         <!-- In Struct class -->
         <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/* <S extends Struct> S*/Struct]]></replacetoken>
+            <replacetoken><![CDATA[/* <S extends Struct> S*/ Struct]]></replacetoken>
             <replacevalue><![CDATA[ <S extends Struct> S ]]></replacevalue>
         </replace>
         <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
@@ -166,7 +162,11 @@
             <replacevalue><![CDATA[ S ]]></replacevalue>
         </replace>
         <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
-            <replacetoken><![CDATA[/* <M extends Member> M*/Member]]></replacetoken>
+            <replacetoken><![CDATA[/*S*/ Struct]]></replacetoken>
+            <replacevalue><![CDATA[ S ]]></replacevalue>
+        </replace>
+        <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
+            <replacetoken><![CDATA[/* <M extends Member> M*/ Member]]></replacetoken>
             <replacevalue><![CDATA[ <M extends Member> M ]]></replacevalue>
         </replace>
         <replace dir="${javaGenerated}/javolution" includes="**/Struct.java">
@@ -254,7 +254,7 @@
     </target>
 
     <target name="_zip" depends="_init">
-        <zip destfile="${jarpath}-src.zip" update="false">
+        <zip destfile="${jarpath}-project.zip" update="false">
             <zipfileset dir="." prefix="${library}" includes="src/**/*, pom.xml, LICENSE.txt, index.html, css/**/*, build.xml, colapi.jar" />
         </zip>
         <zip destfile="${jarpath}-bin.zip" update="false">
@@ -262,8 +262,8 @@
         </zip>
     </target>
 
-    <target name="j2me" depends="clean, _init_j2me, _setVersion, _compile, doc, jar, _zip" />
-    <target name="gcj" depends="clean, _init_gcj, _setVersion, _compile, doc, jar, _zip">
+    <target name="j2me" depends="clean, _init_j2me, _compile, doc, jar, _zip" />
+    <target name="gcj" depends="clean, _init_gcj, _compile, doc, jar, _zip">
         <echo>Build shared library ${library}.so</echo>
         <exec executable="gcj">
             <arg line='-shared -o ${jarpath}.so ${jarpath}.jar' />
@@ -273,9 +273,9 @@
             <arg line='--main=javolution.Javolution -o ${jarpath}.exe ${jarpath}.jar' />
         </exec>
     </target>
-    <target name="1.4" depends="clean, _init_1.4, _setVersion, _compile, doc, jar, _zip" />
-    <target name="1.5" depends="clean, _init_1.5, _setVersion, _compile, doc, jar, _zip" />
-    <target name="1.6" depends="clean, _init_1.6, _setVersion, _compile, doc, jar, _zip" />
+    <target name="1.4" depends="clean, _init_1.4, _compile, doc, jar, _zip" />
+    <target name="1.5" depends="clean, _init_1.5, _compile, doc, jar, _zip" />
+    <target name="1.6" depends="clean, _init_1.6, _compile, doc, jar, _zip" />
     <target name="no-args">
         <echo>Please select one of the following targets:</echo>
         <echo>    j2me (J2ME CLDC 1.1+)</echo>
@@ -283,36 +283,12 @@
         <echo>    1.4 (J2SE 1.4+)</echo>
         <echo>    1.5 (J2SE 1.5+)</echo>
         <echo>    1.6 (J2SE 1.6+)</echo>
-        <echo>    test (executes built-in tests in TestContext)</echo>
-        <echo>    time (executes built-in tests in TimeContext)</echo>
-        <echo>(use -Ddebug=off to turn off debug information)</echo>
+         <echo>(use -Ddebug=off to turn off debug information)</echo>
         <fail message="No target specified"/>
     </target>
 
     <target name="compile" depends="clean, _init_1.5, _compile, jar, doc" />
 
-    <target name="test" depends="clean, _init_1.6, _compile">
-        <java classpath="${bin}" classname="javolution.Javolution" fork="true">
-            <jvmarg value="-server" />
-            <jvmarg value="-Xms512M" />
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-XX:+UseConcMarkSweepGC" />
-            <jvmarg value="-XX:CompileThreshold=1" />
-            <arg value="test" />
-        </java>
-    </target>
-
-    <target name="time" depends="clean, _init_1.6, _compile">
-        <java classpath="${bin}" classname="javolution.Javolution" fork="true">
-            <jvmarg value="-server" />
-            <jvmarg value="-Xms512M" />
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-XX:+UseConcMarkSweepGC" />
-            <jvmarg value="-XX:CompileThreshold=1" />
-            <arg value="time" />
-        </java>
-    </target>
-
-    <target name="maven" depends="_init, _init_1.5, _setVersion" />
+    <target name="maven" depends="_init, _init_1.5" />
 
 </project>

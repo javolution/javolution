@@ -156,15 +156,15 @@ public abstract class ConcurrentContext extends Context {
      * Javolution Configuration</a> for details). 
      */
     public static final Configurable/*<Integer>*/ MAXIMUM_CONCURRENCY = new Configurable(
-            new Integer(availableProcessors() - 1)) {
+            new Integer(2 * (availableProcessors() - 1))) {
 
-        protected void notifyChange() { // The maximum concurrency is also the default concurrency.
-            CONCURRENCY.setDefault(this.get());
+        protected void notifyChange(Object oldValue, Object newValue) { // The maximum concurrency is also the default concurrency.
+            CONCURRENCY.setDefault(newValue);
         }
     };
 
     private static int availableProcessors() {
-        Reflection.Method availableProcessors = Reflection.getMethod("java.lang.Runtime.availableProcessors()");
+        Reflection.Method availableProcessors = Reflection.getInstance().getMethod("java.lang.Runtime.availableProcessors()");
         if (availableProcessors != null) {
             Integer processors = (Integer) availableProcessors.invoke(Runtime.getRuntime());
             return processors.intValue();
@@ -179,7 +179,7 @@ public abstract class ConcurrentContext extends Context {
      * for concurrent threads. Alternative (RTSJ) implementations could also use 
      * <code>javax.realtime.NoHeapRealtimeThread</code>. 
      */
-    public static final Configurable/*<Class<? extends ConcurrentContext>>*/ DEFAULT = new Configurable(Default.class);
+    public static final Configurable/*<Class<? extends ConcurrentContext>>*/ DEFAULT = new Configurable(Default.class) {};
 
     /**
      * Holds the current concurrency. 
@@ -201,12 +201,36 @@ public abstract class ConcurrentContext extends Context {
     }
 
     /**
+     * Enters a concurrent context only if the specified condition is verified.
+     *
+     * @param condition <code>true</code> to enter a concurrent context;
+     *                  <code>false</code> otherwise.
+     */
+    public static void enter(boolean condition) {
+        if (condition) {
+            ConcurrentContext.enter();
+        }
+    }
+
+    /**
      * Exits the current concurrent context.
      * 
      * @throws ClassCastException if the context is not a concurrent context.
      */
     public static void exit() {
         Context.exit(ConcurrentContext.class);
+    }
+
+    /**
+     * Exits a concurrent context only if the specified condition is verified.
+     *
+     * @param condition <code>true</code> to exit a concurrent context;
+     *                  <code>false</code> otherwise.
+     */
+    public static void exit(boolean condition) {
+        if (condition) {
+            ConcurrentContext.exit();
+        }
     }
 
     /**
@@ -243,7 +267,7 @@ public abstract class ConcurrentContext extends Context {
      *         {@link ConcurrentContext}.
      */
     public static void execute(Runnable logic) {
-        ConcurrentContext ctx = (ConcurrentContext) Context.getCurrent();
+        ConcurrentContext ctx = (ConcurrentContext) Context.getCurrentContext();
         ctx.executeAction(logic);
     }
 
@@ -264,7 +288,7 @@ public abstract class ConcurrentContext extends Context {
      *@JVM-1.5+@
     public static void execute(Runnable... logics) {
      ConcurrentContext.enter();
-     ConcurrentContext ctx = (ConcurrentContext) ConcurrentContext.getCurrent();
+     ConcurrentContext ctx = (ConcurrentContext) ConcurrentContext.getCurrentContext();
     try {
     for (int i=0; i < logics.length; i++) {
     ctx.executeAction(logics[i]);
@@ -290,7 +314,7 @@ public abstract class ConcurrentContext extends Context {
          * Holds the concurrent executors (created during class initialization).
          * The maximum concurrency cannot be changed afterward.
          */
-        private static final ConcurrentThread[] _Executors = new ConcurrentThread[((Integer) MAXIMUM_CONCURRENCY.setUnmodifiable().get()).intValue()];
+        private static final ConcurrentThread[] _Executors = new ConcurrentThread[((Integer) MAXIMUM_CONCURRENCY.get()).intValue()];
 
         static {
             for (int i = 0; i < Default._Executors.length; i++) {
@@ -363,7 +387,7 @@ public abstract class ConcurrentContext extends Context {
 
         // Called when a concurrent execution starts.
         void started() {
-            Context.setCurrent(this);
+            Context.setConcurrentContext(this);
         }
 
         // Called when a concurrent execution finishes. 
@@ -372,7 +396,7 @@ public abstract class ConcurrentContext extends Context {
                 _completed++;
                 this.notify();
             }
-            ((AllocatorContext) AllocatorContext.getCurrent()).deactivate();
+            AllocatorContext.getCurrentAllocatorContext().deactivate();
         }
 
         // Called when an error occurs.

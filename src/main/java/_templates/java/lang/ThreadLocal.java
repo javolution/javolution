@@ -15,8 +15,7 @@ import _templates.javolution.util.FastMap;
  */
 public class ThreadLocal {
 
-    private static final FastMap THREAD_TO_LOCAL_MAP = new FastMap(256)
-            .setShared(true);
+    private static final FastMap THREAD_TO_LOCAL_MAP = new FastMap(256).shared();
 
     public ThreadLocal() {
     }

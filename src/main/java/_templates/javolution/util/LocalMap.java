@@ -6,11 +6,10 @@ import _templates.java.util.Set;
 import _templates.javolution.context.LocalContext;
 
 /**
- * <p> This class represents a map which can be temporarily modified 
- *     without impacting other threads ({@link LocalContext locally}
- *     scoped changes).</p>
+ * <p> This class represents a map which can be temporarily modified without 
+ *     impacting other threads ({@link LocalContext scoped} changes).</p>
  *     
- * <p> Operation on instances of this class are completely thread-safe. 
+ * <p> Operation on instances of this class are thread-safe. 
  *     For example:
  *     public class XMLFormat {
  *         static LocalMap<Class, XMLFormat> CLASS_TO_FORMAT = new LocalMap<Class, XMLFormat>();
@@ -39,7 +38,7 @@ import _templates.javolution.context.LocalContext;
  *     [/code]</p>
  * 
  * <p> <b>Note:</b> Because key-value mappings are inherited, the semantic of  
- *     {@link #remove} and {@link #clear} is slightly modified (associate
+ *     {@link #remove} and {@link #clear} is slightly modified (association with
  *     <code>null</code> values instead of removing the entries).</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -51,7 +50,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
      * Holds the fast map reference (shared map).
      */
     private final LocalContext.Reference _mapRef 
-        = new LocalContext.Reference(new FastMap().setShared(true));
+        = new LocalContext.Reference(new FastMap().shared());
 
     /**
      * Default constructor.
@@ -98,6 +97,19 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
         return (Object/*{V}*/) ((FastMap) _mapRef.getDefault()).put(key,
                 defaultValue);
     }
+    
+    /**
+     * Returns the default value for the specified key.
+     *
+     * @param key the key with which the default value is  associated.
+     * @return the default value associated with specified key, or
+     *         <code>null</code> if there was no mapping for the key.
+     * @throws NullPointerException if the key is <code>null</code>.
+     */
+    public Object/*{V}*/getDefault(Object/*{K}*/key) {
+        return (Object/*{V}*/) ((FastMap) _mapRef.getDefault()).get(key);
+    }
+
     /**
      * Returns the number of key-value mappings in this map.
      * 
@@ -249,7 +261,7 @@ public final class LocalMap/*<K,V>*/implements Map/*<K,V>*/{
     private FastMap newLocalMap() {
         FastMap parentMap = (FastMap) _mapRef.get();
         FastMap localMap = FastMap.newInstance(); 
-        localMap.setShared(true);
+        localMap.shared();
         localMap.setKeyComparator(parentMap.getKeyComparator());
         localMap.setValueComparator(parentMap.getValueComparator());
         localMap.putAll(parentMap);

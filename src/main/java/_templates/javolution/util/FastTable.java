@@ -38,9 +38,8 @@ import _templates.javolution.lang.Reusable;
  *          arrays are employed). The garbage collector is not stressed with
  *          large chunk of memory to allocate (likely to trigger a
  *          full garbage collection due to memory fragmentation).</li>
- *     <li> Support concurrent access/iteration without synchronization if the 
- *          collection values are not removed/inserted (Ref. 
- *          {@link _templates.javolution.util} discussion).</li>
+ *     <li> Support concurrent access/iteration/modification without synchronization
+ *          if marked {@link FastCollection#shared shared}. </li>
  *     </ul></p>
  *     
  *  <p> Iterations over the {@link FastTable} values are faster when
@@ -53,14 +52,9 @@ import _templates.javolution.lang.Reusable;
  *  <p> {@link FastTable} supports {@link #sort sorting} in place (quick sort) 
  *      using the {@link FastCollection#getValueComparator() value comparator}
  *      for the table (no object or array allocation when sorting).</p>
- *       
- *  <p> The size of a {@link FastTable} can be {@link #setSize set} directly
- *      and populated concurrently through the {@link #set(int, Object)} 
- *      method (e.g. table shared by multiple threads each working on 
- *      different index ranges).</p> 
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.2, August 20, 2007
+ * @version 5.4.5, August 20, 2007
  */
 public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         List/*<E>*/, Reusable, RandomAccess {
@@ -99,7 +93,8 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     private transient int _capacity;
 
     /**
-     * Holds the current size.
+     * Holds the current size. Volatility ensures that when elements are
+     * added
      */
     private transient int _size;
 
@@ -241,7 +236,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         if (_size >= _capacity)
             increaseCapacity();
         _high[_size >> B1][_size & M1] = value;
-        _size += ONE_VOLATILE; // Prevents compiler reordering.
+        _size++;
         return true;
     }
 
@@ -338,7 +333,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
         for (int i = index, n = index + shift; i < n; i++) {
             _high[i >> B1][i & M1] = valuesIterator.next();
         }
-        _size += shift * ONE_VOLATILE; // Increases size last (thread-safe)
+        _size += shift; // Increases size last (thread-safe)
         return shift != 0;
     }
 
@@ -361,7 +356,7 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
             throw new IndexOutOfBoundsException("index: " + index);
         shiftRight(index, 1);
         _high[index >> B1][index & M1] = value;
-        _size += ONE_VOLATILE; // Increases size last (thread-safe).
+        _size++;
     }
 
     /**
@@ -957,6 +952,4 @@ public class FastTable/*<E>*/extends FastCollection/*<E>*/implements
     }
 
     private static final long serialVersionUID = 1L;
-
-    static volatile int ONE_VOLATILE = 1; // To prevent reordering.
 }

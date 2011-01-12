@@ -13,7 +13,7 @@ import _templates.javolution.util.FastTable;
 
 /**
  * <p> This class represents a grouping of potentially {@link #isParallelizable() 
- *     parallelizable}{@link TestCase test cases}.[code]
+ *     parallelizable}{@link TestCase test cases}. [code]
  *      class TypeFormatTestSuite extends TestSuite {
  *           public TypeFormatTestSuite() {
  *                addTest(new ParseBoolean());

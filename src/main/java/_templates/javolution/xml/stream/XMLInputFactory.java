@@ -52,10 +52,10 @@ import _templates.javolution.lang.Configurable;
 public abstract class XMLInputFactory {
 
     /**
-     * Holds the XMLInputFactory default implementation (configurable).
+     * Holds the XMLInputFactory implementation (configurable).
      */
     public static final Configurable/*<Class<? extends XMLInputFactory>>*/
-        DEFAULT = new Configurable/*<Class<? extends XMLInputFactory>>*/(Default.class);
+        CLASS = new Configurable/*<Class<? extends XMLInputFactory>>*/(Default.class) {};
 
     /**
      * The property that requires the parser to coalesce adjacent character data
@@ -85,7 +85,7 @@ public abstract class XMLInputFactory {
     }
 
     /**
-     * Returns a new instance of the {@link #DEFAULT} input factory 
+     * Returns a new instance of the {@link #CLASS} input factory
      * implementation which may be configurated by the user 
      * (see {@link #setProperty(String, Object)}). The input factory
      * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
@@ -93,7 +93,7 @@ public abstract class XMLInputFactory {
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
-        Class cls = (Class) DEFAULT.get();
+        Class cls = (Class) CLASS.get();
         return (XMLInputFactory) ObjectFactory.getInstance(cls).object();
     }
 

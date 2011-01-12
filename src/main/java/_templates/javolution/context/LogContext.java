@@ -9,8 +9,8 @@
 package _templates.javolution.context;
 
 import _templates.java.lang.CharSequence;
-import _templates.javolution.Javolution;
 import _templates.javolution.lang.Configurable;
+import _templates.javolution.text.Text;
 import _templates.javolution.text.TextBuilder;
 import _templates.javolution.util.StandardLog;
 
@@ -96,6 +96,7 @@ public abstract class LogContext extends Context {
      * Holds the default logging context instance.
      */
     private static volatile LogContext _Default = new StandardLog();
+
     /**
      * Holds the logging context implementation forwarding log events to the 
      * root <code>java.util.logging.Logger</code> (default logging context).
@@ -103,28 +104,32 @@ public abstract class LogContext extends Context {
      * debug/info/warning/severe log levels respectively.
      */
     public static final Class/*<? extends LogContext>*/ STANDARD = StandardLog.class;
+
     /**
      * Holds a logging context implementation ignoring logging events.
      */
     public static final Class/*<? extends LogContext>*/ NULL = Null.class;
+
     /**
      * Holds a context logging debug/informative/warning/error messages
      * to <code>System.out</code>.
      */
     public static final Class/*<? extends LogContext>*/ SYSTEM_OUT = SystemOut.class;
+
     /**
      * Holds a context logging debug/informative/warnings/errors events to
      * the system console (JVM 1.6+).
      */
     public static final Class/*<? extends LogContext>*/ CONSOLE = Console.class;
+
     /**
      * Holds the logging context default implementation (configurable, 
      * default value {@link #STANDARD}).
      */
     public static final Configurable/*<Class<? extends LogContext>>*/ DEFAULT = new Configurable(STANDARD) {
 
-        protected void notifyChange() {
-            _Default = (LogContext) ObjectFactory.getInstance((Class) get()).object();
+        protected void notifyChange(Object oldValue, Object newValue) {
+            _Default = (LogContext) ObjectFactory.getInstance((Class) newValue).object();
         }
     };
 
@@ -140,8 +145,8 @@ public abstract class LogContext extends Context {
      *
      * @return the current logging context.
      */
-    public static/*LogContext*/ Context getCurrent() {
-        for (Context ctx = Context.getCurrent(); ctx != null; ctx = ctx.getOuter()) {
+    public static LogContext getCurrentLogContext() {
+        for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
             if (ctx instanceof LogContext)
                 return (LogContext) ctx;
         }
@@ -164,7 +169,7 @@ public abstract class LogContext extends Context {
      *         <code>false</code> otherwise.
      */
     public static boolean isDebugLogged() {
-        return ((LogContext) LogContext.getCurrent()).isLogged("debug");
+        return ((LogContext) LogContext.getCurrentLogContext()).isLogged("debug");
     }
 
     /**
@@ -174,118 +179,39 @@ public abstract class LogContext extends Context {
      * @see #logDebug(CharSequence)
      */
     public static void debug(CharSequence message) {
-        ((LogContext) LogContext.getCurrent()).logDebug(message);
+        ((LogContext) LogContext.getCurrentLogContext()).logDebug(message);
     }
 
     /**
-     * Equivalent to {@link #debug(CharSequence)} (for J2ME compatibility).
+     * Equivalent to {@link #debug(CharSequence)} except that formatting
+     * is done only if debug is logged.
      *
      * @param message the message to log.
      */
-    public static void debug(String message) {
-        ((LogContext) LogContext.getCurrent()).logDebug(
-                Javolution.j2meToCharSeq(message));
+    public static void debug(Object message) {
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("debug"))
+            return;
+        logContext.logDebug(Text.valueOf(message));
     }
 
     /**
-     * Equivalent to {@link #debug(CharSequence) debug(message + obj}}
-     * except formatting is done only if {@link #isDebugLogged() debug is logged}.
+     * Equivalent to {@link #debug(CharSequence)} except that formatting
+     * is done only if debug is logged.
      *
-     * @param message the message to log.
-     * @param obj the object whose string representation is logged.
-     */
-    public static void debug(String message, Object obj) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("debug")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(message);
-                tmp.append(obj);
-                logContext.logDebug(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+     * @param messages the messages to log.
+    @JVM-1.5+@
+    public static void debug(Object... messages) {
+    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+    if (!logContext.isLogged("debug"))
+    return;
+    Text tmp = Text.valueOf(messages[0]);
+    for (int i=1; i < messages.length; i++) {
+    tmp = tmp.plus(messages[i]);
     }
-
-    /**
-     * Equivalent to {@link #debug(CharSequence)
-     * info(messagePart1 + obj + messagePart2}}
-     * except formatting is done only if {@link #isDebugLogged() debug is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj the object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     */
-    public static void debug(String messagePart1, Object obj, String messagePart2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("debug")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj);
-                tmp.append(messagePart2);
-                logContext.logDebug(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+    logContext.logDebug(tmp);
     }
-
-    /**
-     * Equivalent to {@link #debug(CharSequence)
-     * debug(messagePart1 + obj + messagePart2 + obj2}}
-     * except formatting is done only if {@link #isDebugLogged() debug is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     */
-    public static void debug(String messagePart1, Object obj1, String messagePart2, Object obj2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("debug")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                logContext.logDebug(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
-    /**
-     * Equivalent to {@link #debug(CharSequence)
-     * debug(messagePart1 + obj + messagePart2 + obj2 + messagePart3}}
-     * except formatting is done only if {@link #isDebugLogged() debug is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     * @param messagePart3 the third part of the message to log.
-     */
-    public static void debug(String messagePart1, Object obj1, String messagePart2, Object obj2, String messagePart3) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("debug")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                tmp.append(messagePart3);
-                logContext.logDebug(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
+    /**/
     /**
      * Indicates if info messages are currently logged.
      *
@@ -293,7 +219,7 @@ public abstract class LogContext extends Context {
      *         <code>false</code> otherwise.
      */
     public static boolean isInfoLogged() {
-        return ((LogContext) LogContext.getCurrent()).isLogged("info");
+        return ((LogContext) LogContext.getCurrentLogContext()).isLogged("info");
     }
 
     /**
@@ -303,118 +229,39 @@ public abstract class LogContext extends Context {
      * @see #logInfo(CharSequence)
      */
     public static void info(CharSequence message) {
-        ((LogContext) LogContext.getCurrent()).logInfo(message);
+        ((LogContext) LogContext.getCurrentLogContext()).logInfo(message);
     }
 
     /**
-     * Equivalent to {@link #info(CharSequence)} (for J2ME compatibility).
+     * Equivalent to {@link #info(CharSequence)} except that formatting
+     * is done only if info is logged.
      *
      * @param message the message to log.
      */
-    public static void info(String message) {
-        ((LogContext) LogContext.getCurrent()).logInfo(
-                Javolution.j2meToCharSeq(message));
+    public static void info(Object message) {
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("info"))
+            return;
+        logContext.logInfo(Text.valueOf(message));
     }
 
     /**
-     * Equivalent to {@link #info(CharSequence) info(message + obj}}
-     * except formatting is done only if {@link #isInfoLogged() info is logged}.
+     * Equivalent to {@link #info(CharSequence)} except that formatting
+     * is done only if info is logged.
      *
-     * @param message the message to log.
-     * @param obj the object whose string representation is logged.
-     */
-    public static void info(String message, Object obj) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("info")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(message);
-                tmp.append(obj);
-                logContext.logInfo(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+     * @param messages the messages to log.
+    @JVM-1.5+@
+    public static void info(Object... messages) {
+    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+    if (!logContext.isLogged("info"))
+    return;
+    Text tmp = Text.valueOf(messages[0]);
+    for (int i = 1; i < messages.length; i++) {
+    tmp = tmp.plus(messages[i]);
     }
-
-    /**
-     * Equivalent to {@link #info(CharSequence)
-     * info(messagePart1 + obj + messagePart2}}
-     * except formatting is done only if {@link #isInfoLogged() info is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj the object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     */
-    public static void info(String messagePart1, Object obj, String messagePart2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("info")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj);
-                tmp.append(messagePart2);
-                logContext.logInfo(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+    logContext.logInfo(tmp);
     }
-
-    /**
-     * Equivalent to {@link #info(CharSequence)
-     * info(messagePart1 + obj + messagePart2 + obj2}}
-     * except formatting is done only if {@link #isInfoLogged() info is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     */
-    public static void info(String messagePart1, Object obj1, String messagePart2, Object obj2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("info")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                logContext.logInfo(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
-    /**
-     * Equivalent to {@link #info(CharSequence)
-     * info(messagePart1 + obj + messagePart2 + obj2 + messagePart3}}
-     * except formatting is done only if {@link #isInfoLogged() info is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     * @param messagePart3 the third part of the message to log.
-     */
-    public static void info(String messagePart1, Object obj1, String messagePart2, Object obj2, String messagePart3) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("info")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                tmp.append(messagePart3);
-                logContext.logInfo(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
+    /**/
     /**
      * Indicates if warning messages are currently logged.
      *
@@ -422,7 +269,7 @@ public abstract class LogContext extends Context {
      *         <code>false</code> otherwise.
      */
     public static boolean isWarningLogged() {
-        return ((LogContext) LogContext.getCurrent()).isLogged("warning");
+        return ((LogContext) LogContext.getCurrentLogContext()).isLogged("warning");
     }
 
     /**
@@ -432,113 +279,39 @@ public abstract class LogContext extends Context {
      * @see #logWarning(CharSequence)
      */
     public static void warning(CharSequence message) {
-        ((LogContext) LogContext.getCurrent()).logWarning(message);
+        ((LogContext) LogContext.getCurrentLogContext()).logWarning(message);
     }
 
     /**
-     * Equivalent to {@link #warning(CharSequence)} (for J2ME compatibility).
+     * Equivalent to {@link #warning(CharSequence)} except that formatting
+     * is done only if warning is logged.
      *
      * @param message the message to log.
      */
-    public static void warning(String message) {
-        ((LogContext) LogContext.getCurrent()).logWarning(
-                _templates.javolution.Javolution.j2meToCharSeq(message));
+    public static void warning(Object message) {
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("warning"))
+            return;
+        logContext.logWarning(Text.valueOf(message));
     }
 
     /**
-     * Equivalent to {@link #warning(CharSequence) warning(message + object}}
-     * except formatting is done only if {@link #isWarningLogged() warnings
-     * are logged}.
-     */
-    public static void warning(String message, Object obj) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("warning")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(message);
-                tmp.append(obj);
-                logContext.logWarning(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
-    /**
-     * Equivalent to {@link #warning(CharSequence)
-     * warning(messagePart1 + object + messagePart2}}
-     * except formatting is done only if {@link #isWarningLogged() warnings
-     * are logged}.
-     */
-    public static void warning(String messagePart1, Object obj, String messagePart2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("warning")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj);
-                tmp.append(messagePart2);
-                logContext.logWarning(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
-    }
-
-    /**
-     * Equivalent to {@link #warning(CharSequence)
-     * warning(messagePart1 + obj + messagePart2 + obj2}}
-     * except formatting is done only if {@link #isWarningLogged() warning is logged}.
+     * Equivalent to {@link #warning(CharSequence)} except that formatting
+     * is done only if warning is logged.
      *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     */
-    public static void warning(String messagePart1, Object obj1, String messagePart2, Object obj2) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("warning")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                logContext.logWarning(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+     * @param messages the messages to log.
+    @JVM-1.5+@
+    public static void warning(Object... messages) {
+    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+    if (!logContext.isLogged("warning"))
+    return;
+    Text tmp = Text.valueOf(messages[0]);
+    for (int i = 1; i < messages.length; i++) {
+    tmp = tmp.plus(messages[i]);
     }
-
-    /**
-     * Equivalent to {@link #warning(CharSequence)
-     * warning(messagePart1 + obj + messagePart2 + obj2 + messagePart3}}
-     * except formatting is done only if {@link #isWarningLogged() warning is logged}.
-     *
-     * @param messagePart1 the first part of the message to log.
-     * @param obj1 the first object whose string representation is logged.
-     * @param messagePart2 the second part of the message to log.
-     * @param obj2 the second object whose string representation is logged.
-     * @param messagePart3 the third part of the message to log.
-     */
-    public static void warning(String messagePart1, Object obj1, String messagePart2, Object obj2, String messagePart3) {
-        LogContext logContext = (LogContext) LogContext.getCurrent();
-        if (logContext.isLogged("warning")) {
-            TextBuilder tmp = TextBuilder.newInstance();
-            try {
-                tmp.append(messagePart1);
-                tmp.append(obj1);
-                tmp.append(messagePart2);
-                tmp.append(obj2);
-                tmp.append(messagePart3);
-                logContext.logWarning(tmp);
-            } finally {
-                TextBuilder.recycle(tmp);
-            }
-        }
+    logContext.logWarning(tmp);
     }
-
+    /**/
     /**
      * Indicates if error messages are currently logged.
      *
@@ -546,7 +319,7 @@ public abstract class LogContext extends Context {
      *         <code>false</code> otherwise.
      */
     public static boolean isErrorLogged() {
-        return ((LogContext) LogContext.getCurrent()).isLogged("error");
+        return ((LogContext) LogContext.getCurrentLogContext()).isLogged("error");
     }
 
     /**
@@ -555,7 +328,7 @@ public abstract class LogContext extends Context {
      * @param error the error being logged.
      */
     public static void error(Throwable error) {
-        ((LogContext) LogContext.getCurrent()).logError(error, null);
+        ((LogContext) LogContext.getCurrentLogContext()).logError(error, null);
     }
 
     /**
@@ -566,18 +339,41 @@ public abstract class LogContext extends Context {
      * @param message the supplementary message.
      */
     public static void error(Throwable error, CharSequence message) {
-        ((LogContext) LogContext.getCurrent()).logError(error, message);
+        ((LogContext) LogContext.getCurrentLogContext()).logError(error, message);
+    }
+
+    /**
+     * Equivalent to {@link #error(Throwable, CharSequence)} except that
+     * formatting is done only if error is logged.
+     *
+     * @param error the error being logged.
+     * @param message the supplementary message.
+     */
+    public static void error(Throwable error, Object message) {
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("error"))
+            return;
+        logContext.logError(error, Text.valueOf(message));
     }
 
     /**
      * Equivalent to {@link #error(Throwable, CharSequence)}
-     * (for J2ME compatibility).
-     */
-    public static void error(Throwable error, String message) {
-        ((LogContext) LogContext.getCurrent()).logError(
-                error, _templates.javolution.Javolution.j2meToCharSeq(message));
+     * except that formatting is done only if error is logged.
+     *
+     * @param error the error being logged.
+     * @param messages the supplementary messages.
+    @JVM-1.5+@
+    public static void error(Throwable error, Object... messages) {
+    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+    if (!logContext.isLogged("error"))
+    return;
+    Text tmp = Text.valueOf(messages[0]);
+    for (int i = 1; i < messages.length; i++) {
+    tmp = tmp.plus(messages[i]);
     }
-
+    logContext.logError(error, tmp);
+    }
+    /**/
     /**
      * Logs the specified error message to the current logging
      * context. 
@@ -585,17 +381,39 @@ public abstract class LogContext extends Context {
      * @param message the error message being logged.
      */
     public static void error(CharSequence message) {
-        ((LogContext) LogContext.getCurrent()).logError(null, message);
+        ((LogContext) LogContext.getCurrentLogContext()).logError(null, message);
     }
 
     /**
-     * Equivalent to {@link #error(CharSequence)} (for J2ME compatibility).
+     * Equivalent to {@link #error(CharSequence)} except that formatting
+     * is done only if error is logged.
+     *
+     * @param message the message to log.
      */
-    public static final void error(String message) {
-        ((LogContext) LogContext.getCurrent()).logError(
-                null, _templates.javolution.Javolution.j2meToCharSeq(message));
+    public static void error(Object message) {
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("error"))
+            return;
+        logContext.logError(null, Text.valueOf(message));
     }
 
+    /**
+     * Equivalent to {@link #error(CharSequence)}
+     * except that formatting is done only if error is logged.
+     *
+     * @param messages the messages to log.
+    @JVM-1.5+@
+    public static void error(Object... messages) {
+    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+    if (!logContext.isLogged("error"))
+    return;
+    Text tmp = Text.valueOf(messages[0]);
+    for (int i = 1; i < messages.length; i++) {
+    tmp = tmp.plus(messages[i]);
+    }
+    logContext.logError(null, tmp);
+    }
+    /**/
     /**
      * Logs the message of specified category (examples of category are
      * "debug", "info", "warning", "error").
@@ -674,8 +492,8 @@ public abstract class LogContext extends Context {
                 /*@JVM-1.4+@
                 StackTraceElement[] trace = error.getStackTrace();
                 for (int i = 0; i < trace.length; i++) {
-                    tmp.append("\n\tat ");
-                    tmp.append(trace[i]);
+                tmp.append("\n\tat ");
+                tmp.append(trace[i]);
                 }
                 /**/
             }

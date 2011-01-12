@@ -98,7 +98,7 @@ public class JUnitContext extends TestContext {
         return true;
     }
     private static Reflection.Constructor JUNIT_ERROR_CONSTRUCTOR 
-            = Reflection.getConstructor("junit.framework.AssertionFailedError(String)");
+            = Reflection.getInstance().getConstructor("junit.framework.AssertionFailedError(String)");
 
 
     protected void logMessage(String category, CharSequence message) {

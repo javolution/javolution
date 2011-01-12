@@ -40,33 +40,41 @@ public class Logger {
     }
 
     public void config(String msg) {
+        System.out.println("[config] " + msg);
     }
 
     public void fine(String msg) {
+        System.out.println("[fine] " + msg);
     }
 
     public void finer(String msg) {
+        System.out.println("[finer] " + msg);
     }
 
     public void finest(String msg) {
+        System.out.println("[finest] " + msg);
     }
 
     public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
-        
+        System.out.println("[throwing] " + sourceClass + "." + sourceMethod + " throws " + thrown);
     }
 
     public void entering(String sourceClass, String sourceMethod) {
+        System.out.println("[entering] " + sourceClass + "." + sourceMethod);
     }
     
     public void exiting(String sourceClass, String sourceMethod) {
+        System.out.println("[exiting] " + sourceClass + "." + sourceMethod);
     }
     
     public void log(Level level,
             String msg) {        
+        System.out.println("[log] " + msg);
     }
     
     public void log(Level level,
             String msg,
-            Throwable thrown) {        
+            Throwable thrown) {
+        System.out.println("[log] Exception: " + thrown + ", " + msg);
     }
 }

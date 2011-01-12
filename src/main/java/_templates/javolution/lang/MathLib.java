@@ -264,54 +264,46 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of digits in the minimal ten's-complement 
-     * representation of the specified <code>int</code>, excluding a sign bit.
-     * For positive <code>int</code>, this is equivalent to the number of digit
-     * in the ordinary decimal representation. For negative <code>int</code>,
-     * it is equivalent to the number of digit of the positive value 
-     * <code>-(i + 1)</code>.
+     * Returns the number of digits of the decimal representation of the 
+     * specified <code>int</code> value, excluding the sign character if any.
      * 
      * @param i the <code>int</code> value for which the digit length is returned.
-     * @return the digit length of <code>i</code>.
+     * @return <code>String.valueOf(i).length()</code> for zero or positive values;
+     *         <code>String.valueOf(i).length() - 1</code> for negative values.
      */
     public static int digitLength(int i) {
-        if (i < 0)
-            i = -++i;
-        return (i >= 100000) ? (i >= 10000000) ? (i >= 1000000000) ? 10
-                : (i >= 100000000) ? 9 : 8 : (i >= 1000000) ? 7 : 6
-                : (i >= 100) ? (i >= 10000) ? 5 : (i >= 1000) ? 4 : 3
-                : (i >= 10) ? 2 : (i >= 1) ? 1 : 0;
-    }
-
-    /**
-     * Returns the number of digits in the minimal ten's-complement 
-     * representation of the specified <code>long</code>, excluding a sign bit.
-     * For positive <code>long</code>, this is equivalent to the number of digit
-     * in the ordinary decimal representation. For negative <code>long</code>,
-     * it is equivalent to the number of digit of the positive value 
-     * <code>-(value + 1)</code>.
-     * 
-     * @param l the <code>long</code> value for which the digit length is returned.
-     * @return the digit length of <code>l</code>.
-     */
-    public static int digitLength(long l) {
-        if (l < 0)
-            l = -++l;
-        if (l <= Integer.MAX_VALUE) {
-            int i = (int) l;
+        if (i >= 0)
             return (i >= 100000) ? (i >= 10000000) ? (i >= 1000000000) ? 10
                     : (i >= 100000000) ? 9 : 8 : (i >= 1000000) ? 7 : 6
                     : (i >= 100) ? (i >= 10000) ? 5 : (i >= 1000) ? 4 : 3
-                    : (i >= 10) ? 2 : (i >= 1) ? 1 : 0;
-        }
-        // At least 10 digits or more.
-        return (l >= 100000000000000L) ? (l >= 10000000000000000L) ? (l >= 1000000000000000000L) ? 19
-                : (l >= 100000000000000000L) ? 18 : 17
-                : (l >= 1000000000000000L) ? 16 : 15
-                : (l >= 100000000000L) ? (l >= 10000000000000L) ? 14
-                : (l >= 1000000000000L) ? 13 : 12
-                : (l >= 10000000000L) ? 11 : 10;
+                    : (i >= 10) ? 2 : 1;
+        if (i == Integer.MIN_VALUE)
+            return 10; // "2147483648".length()
+        return digitLength(-i); // No overflow possible.
+    }
 
+    /**
+     * Returns the number of digits of the decimal representation of the 
+     * the specified <code>long</code>, excluding the sign character if any.
+     * 
+     * @param l the <code>long</code> value for which the digit length is returned.
+     * @return <code>String.valueOf(l).length()</code> for zero or positive values;
+     *         <code>String.valueOf(l).length() - 1</code> for negative values.
+     */
+    public static int digitLength(long l) {
+        if (l >= 0)
+            return (l <= Integer.MAX_VALUE)
+                    ? digitLength((int) l)
+                    : // At least 10 digits or more.
+                    (l >= 100000000000000L) ? (l >= 10000000000000000L) ? (l >= 1000000000000000000L) ? 19
+                    : (l >= 100000000000000000L) ? 18 : 17
+                    : (l >= 1000000000000000L) ? 16 : 15
+                    : (l >= 100000000000L) ? (l >= 10000000000000L) ? 14
+                    : (l >= 1000000000000L) ? 13 : 12
+                    : (l >= 10000000000L) ? 11 : 10;
+        if (l == Long.MIN_VALUE)
+            return 19; // "9223372036854775808".length()
+        return digitLength(-l);
     }
 
     /**
@@ -465,7 +457,9 @@ public final class MathLib {
         }
     }
     private static final long MASK_63 = 0x7FFFFFFFFFFFFFFFL;
+
     private static final long MASK_32 = 0xFFFFFFFFL;
+
     private static final int[] POW5_INT = {1, 5, 25, 125, 625, 3125, 15625,
         78125, 390625, 1953125, 9765625, 48828125, 244140625, 1220703125
     };
@@ -672,46 +666,57 @@ public final class MathLib {
     }
     private static final double LOG2_DIV_LOG10 = 0.3010299956639811952137388947;
     /**/
+
     /**
      * The natural logarithm.
      **/
     public static final double E = 2.71828182845904523536028747135266;
+
     /**
      * The ratio of the circumference of a circle to its diameter.
      **/
     public static final double PI = 3.1415926535897932384626433832795;
+
     /**
      * Half the ratio of the circumference of a circle to its diameter.
      **/
     public static final double HALF_PI = 1.5707963267948966192313216916398;
+
     /**
      * Twice the ratio of the circumference of a circle to its diameter.
      **/
     public static final double TWO_PI = 6.283185307179586476925286766559;
+
     /**
      * Four time the ratio of the circumference of a circle to its diameter.
      **/
     public static final double FOUR_PI = 12.566370614359172953850573533118;
+
     /**
      * Holds {@link #PI} * {@link #PI}.
      **/
     public static final double PI_SQUARE = 9.8696044010893586188344909998762;
+
     /**
      * The natural logarithm of two.
      **/
     public static final double LOG2 = 0.69314718055994530941723212145818;
+
     /**
      * The natural logarithm of ten.
      **/
     public static final double LOG10 = 2.3025850929940456840179914546844;
+
     /**
      * The square root of two.
      **/
     public static final double SQRT2 = 1.4142135623730950488016887242097;
+
     /**
      * Not-A-Number.
      **/
     public static final double NaN = 0.0 / 0.0;
+
     /**
      * Infinity.
      **/
@@ -1193,12 +1198,14 @@ public final class MathLib {
         9.82793723247329054082e-01, // atan(1.5)hi 0x3FEF730B, 0xD281F69B 
         1.57079632679489655800e+00, // atan(inf)hi 0x3FF921FB, 0x54442D18 
     };
+
     static final double atanlo[] = {
         2.26987774529616870924e-17, // atan(0.5)lo 0x3C7A2B7F, 0x222F65E2
         3.06161699786838301793e-17, // atan(1.0)lo 0x3C81A626, 0x33145C07
         1.39033110312309984516e-17, // atan(1.5)lo 0x3C700788, 0x7AF0CBBD
         6.12323399573676603587e-17, // atan(inf)lo 0x3C91A626, 0x33145C07 
     };
+
     static final double aT[] = {
         3.33333333333329318027e-01, // 0x3FD55555, 0x5555550D
         -1.99999999998764832476e-01, // 0xBFC99999, 0x9998EBC4 
@@ -1212,6 +1219,7 @@ public final class MathLib {
         -3.65315727442169155270e-02, // 0xBFA2B444, 0x2C6A6C2F 
         1.62858201153657823623e-02, // 0x3F90AD3A, 0xE322DA11 
     };
+
     static final double one = 1.0, huge = 1.0e300;
 
     static double _atan(double x) {
@@ -1224,8 +1232,8 @@ public final class MathLib {
         hx = __HIx;
         ix = hx & 0x7fffffff;
         if (ix >= 0x44100000) {	// if |x| >= 2^66 
-            if (ix > 0x7ff00000 ||
-                    (ix == 0x7ff00000 && (__LOx != 0)))
+            if (ix > 0x7ff00000
+                    || (ix == 0x7ff00000 && (__LOx != 0)))
                 return x + x;		// NaN
             if (hx > 0)
                 return atanhi[3] + atanlo[3];
@@ -1247,14 +1255,13 @@ public final class MathLib {
                     id = 1;
                     x = (x - one) / (x + one);
                 }
-            else
-                if (ix < 0x40038000) {	// |x| < 2.4375
-                    id = 2;
-                    x = (x - 1.5) / (one + 1.5 * x);
-                } else {			// 2.4375 <= |x| < 2^66
-                    id = 3;
-                    x = -1.0 / x;
-                }
+            else if (ix < 0x40038000) {	// |x| < 2.4375
+                id = 2;
+                x = (x - 1.5) / (one + 1.5 * x);
+            } else {			// 2.4375 <= |x| < 2^66
+                id = 3;
+                x = -1.0 / x;
+            }
         }
         // end of argument reduction
         z = x * x;
@@ -1343,6 +1350,7 @@ public final class MathLib {
             Lg5 = 1.818357216161805012e-01, // 3FC74664 96CB03DE
             Lg6 = 1.531383769920937332e-01, // 3FC39A09 D078C69F
             Lg7 = 1.479819860511658591e-01;  // 3FC2F112 DF3E5244
+
     static final double zero = 0.0;
 
     static double _ieee754_log(double x) {
@@ -1408,11 +1416,10 @@ public final class MathLib {
                 return f - (hfsq - s * (hfsq + R));
             else
                 return dk * ln2_hi - ((hfsq - (s * (hfsq + R) + dk * ln2_lo)) - f);
-        } else
-            if (k == 0)
-                return f - s * (f - R);
-            else
-                return dk * ln2_hi - ((s * (f - R) - dk * ln2_lo) - f);
+        } else if (k == 0)
+            return f - s * (f - R);
+        else
+            return dk * ln2_hi - ((s * (f - R) - dk * ln2_lo) - f);
     }
     /**/
     ////////////////////////////////////////////////////////////////////////////

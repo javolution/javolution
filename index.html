@@ -15,14 +15,14 @@
 		 var imgID = (img.id) ? "id='" + img.id + "' " : ""
 		 var imgClass = (img.className) ? "class='" + img.className + "' " : ""
 		 var imgTitle = (img.title) ? "title='" + img.title + "' " : "title='" + img.alt + "' "
-		 var imgStyle = "display:inline-block;" + img.style.cssText 
+		 var imgStyle = "display:inline-block;" + img.style.cssText
 		 if (img.align == "left") imgStyle = "float:left;" + imgStyle
 		 if (img.align == "right") imgStyle = "float:right;" + imgStyle
-		 if (img.parentElement.href) imgStyle = "cursor:hand;" + imgStyle		
+		 if (img.parentElement.href) imgStyle = "cursor:hand;" + imgStyle
 		 var strNewHTML = "<span " + imgID + imgClass + imgTitle
 		 + " style=\"" + "width:" + img.width + "px; height:" + img.height + "px;" + imgStyle + ";"
 	     + "filter:progid:DXImageTransform.Microsoft.AlphaImageLoader"
-		 + "(src=\'" + img.src + "\', sizingMethod='scale');\"></span>" 
+		 + "(src=\'" + img.src + "\', sizingMethod='scale');\"></span>"
 		 img.outerHTML = strNewHTML
 		 i = i-1
 	     }
@@ -333,7 +333,7 @@
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16"><IMG SRC="css/img/new.gif"> Javolution Version 5.3.1 - April 13, 2009 <i>(maven integrated)</i> </SPAN></DIV>
+                                        CLASS="style16">Javolution Version 5.5.1 - April 22, 2010 <i>(<IMG SRC="css/img/new.gif"> Javolution is an OSGi Bundle)</i> </SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -341,12 +341,12 @@
                                                                                                   BORDER="0"
                                                                                                   SRC="css/img/browseapi.jpg"
                                                                                                   WIDTH="198"></A>
-                                    <A HREF="target/javolution-5.3.1-project.zip"><IMG HEIGHT="51" BORDER="0"
-                                                                                       SRC="css/img/getsource.jpg"
-                                                                                       WIDTH="194"></A>
-                                    <A HREF="target/javolution-5.3.1-bin.zip"><IMG HEIGHT="51" BORDER="0"
-                                                                                   SRC="css/img/getlibrary.jpg"
-                                                                                   WIDTH="198"></A></DIV></TD>
+                                    <A HREF="http://kenai.com/projects/javolution/sources"><IMG HEIGHT="51" BORDER="0"
+                                                                                                SRC="css/img/getsource.jpg"
+                                                                                                WIDTH="194"></A>
+                                    <A HREF="http://download.java.net/maven/2/javolution/javolution/"><IMG HEIGHT="51" BORDER="0"
+                                                                                                           SRC="css/img/getlibrary.jpg"
+                                                                                                           WIDTH="198"></A></DIV></TD>
                         </TR>
                     </TABLE>
                     <BR>
@@ -407,17 +407,17 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 The simplest way to use <B><I>Javolution</I></B> is through Maven
-                            with the following dependency in your POM.xml
-                        <pre>      &lt;dependency&gt;
+                                with the following dependency in your POM.xml
+                                <pre>      &lt;dependency&gt;
           &lt;groupId&gt;javolution&lt;/groupId&gt;
           &lt;artifactId&gt;javolution&lt;/artifactId&gt;
-          &lt;version&gt;5.3.1&lt;/version&gt;
+          &lt;version&gt;5.5.1&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
-      The latest <B><I>Javolution</I></B> artifact is deployed to the <A HREF="https://maven2-repository.dev.java.net/">java.net repository</A>
-                        </TD></TR>
+                                The latest <B><I>Javolution</I></B> artifact is deployed to the <A HREF="https://maven2-repository.dev.java.net/">java.net repository</A>
+                            </TD></TR>
                         <TR>
-                            <TD CLASS="simplespacer_body style14" VALIGN="top">The standard binary distribution (above) targets the
-                                J2SE 1.5+ platform and can be directly built from the project source
+                            <TD CLASS="simplespacer_body style14" VALIGN="top">The standard binary distribution (above)
+                                is an OSGi bundle and targets the J2SE 1.5+ platform. It can be directly built from the project source
                                 and <A HREF="http://maven.apache.org/">Maven</A>. For others platforms, the library should be
                                 rebuilt from the sources using the provided
                                 <A HREF="http://ant.apache.org/">Ant</A> script. Here is a summary of
@@ -644,7 +644,9 @@
                                 <B>A</B>ddition to <B>D</B>efault <B>E</B>nvironment):
                                 <UL>
                                     <LI><IMG SRC="css/img/new.gif">
-                                        <A href="http://www.javaworld.com/javaworld/jw-04-2008/jw-04-realtime.html">Realistically Real-Time<SUP>TM</SUP></A>
+                                        <A href="http://www.xml.com/lpt/a/1702">XML.com parser benchmark</A>
+                                        shows <B><I>Javolution</I></B> is one of the world fastest parsers!</LI>
+                                    <LI><A href="http://www.javaworld.com/javaworld/jw-04-2008/jw-04-realtime.html">Realistically Real-Time<SUP>TM</SUP></A>
                                         JavaWorld article on Javolution and multi-core processors.</LI>
                                     <LI>
                                         <A href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java<SUP>TM</SUP></A> paper presented
@@ -664,12 +666,13 @@
                                         article published in the 2001 February issue of Dr Dobb's Journal. </LI>
                                 </UL>Known projects using <B><I>Javolution</I></B>:
                                 <UL>
+                                    <LI><A HREF="http://www.resoa.org/">Resoa</A> -  Open Source project for SOA & Cloud computing</LI>
                                     <LI><A HREF="http://jscience.org/">
                                             <FONT COLOR="#B60606" FAMILY="Verdana">J</FONT><FONT COLOR="#506474" FAMILY="Verdana">Science</FONT></A> - Java Tools and Libraries for the Advancement of Sciences.</LI>
                                     <LI><A HREF="http://www.glimworm.com//">Glimworm</A> -  I.T. Firefly CMS Product</LI>
                                     <LI><A HREF="http://almworks.com/">ALMWorks</A> - Bug-tracking systems, Deskzilla and JIRA Client.</LI>
                                     <LI><A HREF="http://www.ofbiz.org/">Open For Business</A> - Open source enterprise automation software project.</LI>
-                                    <LI><A HREF="http://sourceforge.net/projects/radlab/">RADlab> - Similator for radiation detection and measurement experiments.</LI>
+                                    <LI><A HREF="http://sourceforge.net/projects/radlab/">RADlab</A> - Similator for radiation detection and measurement experiments.</LI>
                                     <LI><A HREF="http://www.jgame.org/">jgame</A> - Real-time and embedded gaming API.</LI>
                                     <LI><A HREF="http://www.matheclipse.org/me/">MathEclipse</A> - A symbolic mathematics engine written in Java.</LI>
                                     <LI><A HREF="http://www.intermedia.sa.it/lia/jroboop/">JRoboOp</A> - Java package for robotics simulation with visualization of a 3D robot model.</LI>
@@ -748,6 +751,22 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
+                                    <LI CLASS="simplespacer_body"><B>April 4, 2010: Javolution 5.5</B><BR>
+                                        <UL>
+                                            <LI> Fixed Struct Unsigned16/Unsigned16 (<A HREF="https://javolution.dev.java.net/issues/show_bug.cgi?id=69">Issue 69</A>) and String TextFormat [5.5.1] </LI>
+                                            <LI> Javolution is now an OSGi Bundle (shareable OSGi library) [5.5.0] </LI>
+                                            <LI> Fixed Struct/Union issue <A HREF="https://javolution.dev.java.net/issues/show_bug.cgi?id=68">68</A> [5.5.0] </LI>
+                                            <LI> Accelerated Struct/Union read & write access [5.5.0] </LI>
+                                        </UL>
+                                    </LI>
+                                    <LI CLASS="simplespacer_body"><B>November 5, 2009: Javolution 5.4</B><BR>
+                                        <UL>
+                                            <LI> Direct support for Enum (JDK 1.5) in <A HREF="target/site/apidocs/javolution/io/Struct.html">Struct/Union</A> (see class description) [5.4.5] </LI>
+                                            <LI> Any fast collection can be made "thread-safe" by marking them <A HREF="target/site/apidocs/javolution/util/FastCollection.html#shared()">shared</A> [5.4.5] </LI>
+                                            <LI> Source and JavaDoc deployed to maven repository [5.4.5] </LI>
+                                            <LI> Arbitrary size <A HREF="target/site/apidocs/javolution/io/Struct.Bitfield.html">BitField</A> capable of crossing word boundaries has been added [5.4.0] </LI>
+                                        </UL>
+                                    </LI>
                                     <LI CLASS="simplespacer_body"><B>March 30, 2009: Javolution 5.3</B><BR>
                                         <UL>
                                             <LI> Javolution now available from the <A HREF="https://maven2-repository.dev.java.net/">java.net repository</A> [5.3.1] </LI>
@@ -761,11 +780,11 @@
                                             <LI> Improved <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">ConcurrentContext</A> performance [5.3.0] </LI>
                                             <LI> J2ME support now requires CLDC 1.1 - The J2ME build command is: <i>ant j2me</i> [5.3.0] </LI>
                                         </UL>
-                                        <P></P>
+                                    </LI>
 
                                     <LI CLASS="simplespacer_body"><B>August 19, 2007: Javolution 5.2</B><BR>
                                         <UL>
-                                            <LI> <a href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java</A> paper presented
+                                            <LI> <A href="http://javolution.org/doc/AIAA-2007-6184.pdf">Fully time deterministic Java</A> paper presented
                                                 to AIAA Space 2007 conference </LI>
                                             <LI> Added the <A HREF="target/site/apidocs/javolution/xml/ws/WebServiceClient.html">WebServiceClient</A>
                                                 base class (no WSDL file required) [5.2.4] </LI>
@@ -775,7 +794,7 @@
                                             <LI> Default context implementations (e.g. LogContext, StackContext, HeapContext) are now
                                                 <A HREF="target/site/apidocs/javolution/lang/Configurable.html">configurable</A> [5.2.0] </LI>
                                         </UL>
-                                        <P></P>
+                                    </LI>
 
                                     <LI CLASS="simplespacer_body"><B>July 4, 2007: Javolution 5.1</B><BR>
                                         <UL>
@@ -790,10 +809,10 @@
                                             <LI> Any type for which the TextFormat is known can be represented
                                                 as a <A HREF="target/site/apidocs/javolution/xml/XMLFormat.html">XML attribute</A> [5.1.0] </LI>
                                         </UL>
-                                        <P></P>
+                                    </LI>
 
                                     <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
-                                        Major Relase! Here are the most important changes:<ul>
+                                        Major Relase! Here are the most important changes:<UL>
                                             <LI> Separation of concerns: Two new
                                                 <A HREF="target/site/apidocs/javolution/context/Context.html">contexts</A> have been added, the
                                                 <A HREF="target/site/apidocs/javolution/context/AllocatorContext.html">AllocatorContext</A>
@@ -894,29 +913,29 @@
                                 <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
                             </TD>
                             <TD CLASS="simplespacer_body style14">
-                                <A HREF="http://www.jcp.org/"><IMG BORDER="0" SRC="css/img/JCPlogoEC.jpg" WIDTH="125" HEIGHT="71"></A></DIV>
-            </TD>
-            <TD CLASS="simplespacer_body style14">
-                Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR>
-                Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                Revision      : April 13, 2009<BR>
-        </TR>
-</TABLE>
-<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
-    <TR>
-        <TD>
-            <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
-                        HEIGHT="31" BORDER="0" SRC="css/img/ventrobanner.jpg"
-                        WIDTH="590"></A><BR>
-                <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A>
-            </DIV>
-        </TD>
-    </TR>
-</TABLE>
-<BR> </TD>
-<TD WIDTH="10">
-    <IMG HEIGHT="100%" SRC="css/img/bg_right.png" WIDTH="15"></TD>
-</TR>
-</TABLE>
-</BODY>
+                                <A HREF="http://www.jcp.org/"><IMG BORDER="0" SRC="css/img/JCPlogoEC.jpg" WIDTH="125" HEIGHT="71"></A>
+                            </TD>
+                            <TD CLASS="simplespacer_body style14">
+                                Comments      : <A HREF="https://javolution.dev.java.net/servlets/ProjectMailingListList">Mailing Lists</A><BR>
+                                Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
+                                Revision      : April 22, 2010<BR>
+                        </TR>
+                    </TABLE>
+                    <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
+                        <TR>
+                            <TD>
+                                <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
+                                            HEIGHT="31" BORDER="0" SRC="css/img/ventrobanner.jpg"
+                                            WIDTH="590"></A><BR>
+                                    <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.sun.com/">Sun Microsystems, Inc</A>
+                                </DIV>
+                            </TD>
+                        </TR>
+                    </TABLE>
+                    <BR> </TD>
+                <TD WIDTH="10">
+                    <IMG HEIGHT="100%" SRC="css/img/bg_right.png" WIDTH="15"></TD>
+            </TR>
+        </TABLE>
+    </BODY>
 </HTML>

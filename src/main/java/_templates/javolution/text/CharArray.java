@@ -122,16 +122,15 @@ public final class CharArray implements CharSequence, Comparable {
     }
 
     /**
-     * Returns the offset within this character array of the first occurrence
-     * of the specified characters sequence searching forward from this 
-     * character array {@link #offset()} to <code>offset() + length()</code>.
+     * Returns the index within this character sequence of the first occurrence
+     * of the specified characters sequence searching forward.
      *
      * @param  csq a character sequence searched for.
-     * @return the offset of the specified character sequence in the range
-     *         <code>[offset(), offset() + length()[</code> 
+     * @return the index of the specified character sequence in the range
+     *         <code>[0, length()[</code>
      *         or <code>-1</code> if the character sequence is not found.
      */
-    public final int offsetOf(_templates.java.lang.CharSequence csq) {
+    public final int indexOf(_templates.java.lang.CharSequence csq) {
         final char c = csq.charAt(0);
         final int csqLength = csq.length();
         for (int i = _offset, end = _offset + _length - csqLength + 1; i < end; i++) {
@@ -144,7 +143,7 @@ public final class CharArray implements CharSequence, Comparable {
                     }
                 }
                 if (match) {
-                    return i;
+                    return i - _offset;
                 }
             }
         }
@@ -152,19 +151,18 @@ public final class CharArray implements CharSequence, Comparable {
     }
 
     /**
-     * Returns the offset within this character array of the first occurrence
-     * of the specified character searching forward from this 
-     * character array {@link #offset()} to <code>offset() + length()</code>.
+     * Returns the index within this character sequence of the first occurrence
+     * of the specified character searching forward.
      *
      * @param  c the character to search for.
-     * @return the offset of the specified character in the range
-     *         <code>[offset(), offset() + length()[</code> 
+     * @return the indext of the specified character in the range
+     *         <code>[0, length()[</code>
      *         or <code>-1</code> if the character is not found.
      */
-    public final int offsetOf(char c) {
+    public final int indexOf(char c) {
         for (int i = _offset, end = _offset + _length; i < end; i++) {
             if (_array[i] == c)
-                return i;
+                return i - _offset;
         }
         return -1;
     }

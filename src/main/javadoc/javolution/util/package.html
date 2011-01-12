@@ -32,10 +32,7 @@
     <LI>Used to implement most of {@link javolution.util.FastCollection FastCollection} base class methods 
         (including {@link javolution.util.FastCollection#iterator iterator()}).</LI>
     <LI>Support forward/backward iterations from the start (head) or from the end (tail)</LI>
-    <LI>Thread-safe as long as objects are not inserted/removed during iterations. Objects can safely be 
-       append/prepend by the current thread or other threads.
-        <i>(Note: {@link javolution.util.FastMap#setShared Shared FastMap} are always thread-safe even when entries are removed)</i>.</LI>
-    <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible 
+    <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible
         with other platforms (J2ME, 1.4, GCJ).</LI>
     </UL>
     Here are few examples of direct iterations:[code]
@@ -48,22 +45,42 @@
     for (FastMap.Entry<String, Thread> e = map.head(), end = map.tail(); (e = e.getNext()) != end;) {
         String key = e.getKey(); // No typecast necessary.
         Thread value = e.getValue(); // No typecast necessary.
-    }[/code]</P>
+    }[/code]
+    </P>
 
 <P> Users may provide a read-only view of any {@link javolution.util.FastCollection FastCollection} 
     (or {@link javolution.util.FastMap FastMap}) instance using the 
     {@link javolution.util.FastCollection#unmodifiable() FastCollection.unmodifiable()}
     (or {@link javolution.util.FastMap#unmodifiable FastMap.unmodifiable()}) method.
      For example:[code]
-    public class Polynomial {
+     public class Polynomial {
        
         private final FastSet<Term> _terms = new FastSet<Term>();
 
-        // Read-only view (also thread-safe as terms are not "deleted").
+        // Read-only view.
         public Set<Term> getTerms() { 
             return _terms.unmodifiable();
         }
     }[/code]</P>
+
+<P> Fast collections (or maps) can be made thread-safe by marking them
+    {@link javolution.util.FastCollection FastCollection#shared shared}
+    Having a shared collection (or map) means that it can be safely
+    used without synchronization. It does not mean that a change made by a thread
+    is automatically viewed by another thread (that would require synchronizing).
+    For example:[code]
+     class Foo {
+          private static final Collection<Foo> INSTANCES = new FastTable().shared();
+          public Foo() {
+              INSTANCES.add(this);
+         }
+         public static void showInstances() {
+             for (Foo foo : INSTANCES) {
+                 System.out.println(foo);
+             }
+         }
+     }[/code]
+</P>
 
 <P> Collection/maps of primitive types can be created using the
     {@link javolution.util.Index Index} class. It avoids the overhead 
@@ -89,15 +106,17 @@
    }[/code]        
     For more details, please read <a href="http://javolution.org/doc/Javolution-Collections.pdf">Javolution-Collection.pdf</a></P>.  
      
-<P> Temporary collection classes can be recycled (e.g. throw-away collections) to avoid the creation
-    cost. For example:[code]
+<P> Temporary collection classes can be recycled (e.g. throw-away collections) to avoid the creation cost. For example:[code]
     static void removeDuplicate(List<Person> persons) {
         FastSet<Person> tmp = FastSet.newInstance(); // Possibly recycled instance.
-        tmp.addAll(persons);
-        persons.clear();
-        persons.addAll(tmp);
-        FastSet.recycle(tmp); // Recycles the temporary instance.
-   }[/code]</p>  
+        try {
+            tmp.addAll(persons);
+            persons.clear();
+            persons.addAll(tmp);
+        } finally {
+            FastSet.recycle(tmp); // Recycles the temporary instance.
+        }
+   }[/code]</P>
  
 <P> Here is a summary of the collection classes with their defining characteristics:
        <TABLE border="1" summary="Fast Collections Classes">
@@ -116,7 +135,7 @@
               <TD>Yes</TD>
               <TD>{@link javolution.util.FastTable#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.Index Index}</TD>
-              <TD>Thread-safe random access collection<BR>
+              <TD>Thread-safe when marked as {@link javolution.util.FastCollection#shared shared}<BR>
                   No array resize/copy ever performed</TD>
             </TR>
             <TR>
@@ -125,7 +144,8 @@
               <TD>Yes</TD>
               <TD>{@link javolution.util.FastList#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastList.Node Node}</TD>
-              <TD> Recycle their own nodes (no adverse effect on GC)</TD>
+              <TD>Thread-safe when marked as {@link javolution.util.FastCollection#shared shared}<BR>
+                  Recycle their own nodes (no adverse effect on GC)</TD>
             </TR>
             <TR>
               <TD>{@link javolution.util.FastSet FastSet}</TD>
@@ -150,7 +170,7 @@
               <TD>{@link javolution.util.FastMap#setKeyComparator setKeyComparator(FastComparator)}<BR>
                   {@link javolution.util.FastMap#setValueComparator setValueComparator(FastComparator)}</TD>
               <TD>{@link javolution.util.FastMap.Entry Entry}</TD>
-              <TD>Thread-safe when marked as {@link javolution.util.FastMap#setShared shared}<BR>
+              <TD>Thread-safe when marked as {@link javolution.util.FastMap#shared shared}<BR>
                   No rehash/resize ever performed <BR>
                   Recycle their own entries (no adverse effect on GC)</TD>
             </TR>
@@ -162,10 +182,9 @@
     <li><b>ArrayList may throw ConcurrentModificationException,
            but <b>J</b>avolution FastTable does not, why?</b>
     <p> FastTable (or any <b>J</b>avolution collection/map) <b>do support concurrent modifications</b>
-    as long as these are not insertions at an arbitrary position or deletions <i>(Note: Shared FastMap 
-    <b>does</b> support concurrent deletions)</i>. 
-    In other words you can safely iterate (using iterators or not) through a FastList, FastMap 
-    (entries, keys values), FastTable, etc. while new elements/entries are being added 
+    as long as the collections/maps are marked {@link javolution.util.FastCollection FastCollection#setShared shared}.
+    In other words you can safely iterate (using iterators or not) through a FastList, FastMap
+    (entries, keys values), FastTable, etc. while new elements/entries are being added or removed
     (by you or another thread). You can also export a {@link javolution.util.FastCollection#unmodifiable() read-only}
      view over your collection and still add more elements to it.</p>
     
@@ -180,8 +199,8 @@
         with a read-only view of these units. The following code will fail miserably:[code]
     public class Unit {
         static ArrayList<Unit> INSTANCES = new ArrayList<unit>();
-        public static List<Unit> getInstances() {
-            return Collections.unmodifiableList(INSTANCES);
+        public static Collection<Unit> getInstances() {
+            return Collections.unmodifiableCollection(INSTANCES);
          }
     }[/code]
         Why? Because, it the user iterates on the read-only list of units while a new unit is added
@@ -191,8 +210,8 @@
         the whole collection each time a new unit is added).</p>
     <p> Now with FastTable the following is completely safe even when new units are added:[code]
     public class Unit {
-        static FastTable<Unit> INSTANCES = new FastTable<unit>();
-        public static List<Unit> getInstances() {
+        static Collection<Unit> INSTANCES = new FastTable<unit>().shared();
+        public static Collection<Unit> getInstances() {
             return INSTANCES.unmodifiable();
         }
     }[/code]</p>
@@ -208,7 +227,7 @@
     Not a good thing and very high probability for this to happen!</p>
     </li>
 
-    <li><b> Are {@link javolution.util.FastMap#setShared shared maps} valid substitutes for 
+    <li><b> Are {@link javolution.util.FastMap#shared shared maps} valid substitutes for
            <code>ConcurrentHashMap</code>?</b>
        <p> Unlike <code>ConcurrentHashMap</code> access to a
            shared FastMap never blocks. Retrieval reflects the map state not older than the last 
@@ -217,7 +236,9 @@
            
        <p> In practice, it means that <b>most well-written</b> concurrent programs should 
            be able to use shared FastMap in place of <code>ConcurrentHashMap</code> as 
-           threads are already synchronized to ensure proper behavior.</p>
+           threads are already synchronized to ensure proper behavior.
+           Nevertheless, if your code use <code>ConcurrentHashMap</code> to "synchronize"
+           between two threads then shared FastMap is not going to work.</p>
            
        <p> <sup><b>*</b></sup> It is important for both threads to synchronize on the same monitor
           in order to set up the happens-before relationship properly. It is not the case 
@@ -229,13 +250,11 @@
     </li>
     
     <li><b>Are all <b>J</b>avolution collection thread-safe?</b>
-    <p> Collections/Maps are thread-safe with regard to access (no need to
-        synchronize reading even if the collection is modified concurrently).
-        But the modifications themselves require either the collection/map to be
-        marked shared or synchronization to be used.</p></li>
+    <p> Collections/Maps are thread-safe only if marked {@link javolution.util.FastCollection#shared shared}.
+        In which case, the implementation may perform synchronization only
+        when structural modification occurs.</p></li>
     
-    <li><b>What is the overhead in term of performance when <code>FastMap.setShared</code>
-           is set to <code>true</code>?</b>
+    <li><b>What is the overhead in term of performance when FastMap are shared ?</b>
     <p> Marking the map shared avoid synchronizing when possible (e.g. put when
         entry already exists or remove when entry does not exist), if a new entry
         is created and added, synchronization is performed internally. In all

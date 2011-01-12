@@ -57,10 +57,10 @@ class ConcurrentThread extends RealtimeThread {
     private static int _Count;
 
     private static final Reflection.Method SET_NAME = Reflection
-            .getMethod("java.lang.Thread.setName(String)");
+            .getInstance().getMethod("java.lang.Thread.setName(String)");
 
     private static final Reflection.Method SET_DAEMON = Reflection
-            .getMethod("java.lang.Thread.setDaemon(boolean)");
+            .getInstance().getMethod("java.lang.Thread.setDaemon(boolean)");
 
     /**
      * Executes the concurrent logics sequentially.

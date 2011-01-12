@@ -77,7 +77,7 @@ public class StandardLog extends LogContext {
      *        be logged;<code>false</code> otherwise.
      */
     public static boolean isLoggable(Level level) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             return ((StandardLog) log)._logger.isLoggable(level);
         } else if (level.intValue() >= Level.SEVERE.intValue()) {
@@ -102,7 +102,7 @@ public class StandardLog extends LogContext {
      * @param record the LogRecord to be published.
      */
     public static void log(LogRecord record) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.log(record);
         } else {
@@ -129,7 +129,7 @@ public class StandardLog extends LogContext {
      * @param msg the severe message.
      */
     public static void severe(String msg) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.severe(msg);
         } else {
@@ -144,7 +144,7 @@ public class StandardLog extends LogContext {
      * @param msg the config message.
      */
     public static void config(String msg) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.config(msg);
         }
@@ -157,7 +157,7 @@ public class StandardLog extends LogContext {
      * @param msg the fine message.
      */
     public static void fine(String msg) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.fine(msg);
         }
@@ -170,7 +170,7 @@ public class StandardLog extends LogContext {
      * @param msg the finer message.
      */
     public static void finer(String msg) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.finer(msg);
         }
@@ -183,7 +183,7 @@ public class StandardLog extends LogContext {
      * @param msg the finest message.
      */
     public static void finest(String msg) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.finest(msg);
         }
@@ -199,7 +199,7 @@ public class StandardLog extends LogContext {
      */
     public static void throwing(String sourceClass, String sourceMethod,
             Throwable thrown) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.throwing(sourceClass, sourceMethod,
                     thrown);
@@ -216,7 +216,7 @@ public class StandardLog extends LogContext {
      * @param sourceMethod name of method that is being entered.
      */
     public static void entering(String sourceClass, String sourceMethod) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.entering(sourceClass, sourceMethod);
         } else {
@@ -232,7 +232,7 @@ public class StandardLog extends LogContext {
      * @param sourceMethod name of method that is being returned.
      */
     public static void exiting(String sourceClass, String sourceMethod) {
-        LogContext log = (LogContext) LogContext.getCurrent();
+        LogContext log = (LogContext) LogContext.getCurrentLogContext();
         if (log instanceof StandardLog) {
             ((StandardLog) log)._logger.exiting(sourceClass, sourceMethod);
         } else {
@@ -266,11 +266,8 @@ public class StandardLog extends LogContext {
 
     public void logError(Throwable error, CharSequence message) {
         String description = (message != null) ? message.toString() : "";
-        if (error != null) {
-            _logger.log(Level.SEVERE, description, error);
-        } else {
-            _logger.log(Level.SEVERE, description);            
-        }
+        description = (error != null) ? error.toString() + " " + description : description;
+        _logger.severe(description);
     }
 
     protected void logMessage(String category, CharSequence message) {

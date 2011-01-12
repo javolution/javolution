@@ -220,7 +220,8 @@ public class XMLObjectWriter implements Reusable {
 
     /**
      * Writes the specified object as an anonymous nested element of 
-     * unknown type.
+     * unknown type. This result in the actual type of the object being
+     * identified by the element name.
      *
      * @param obj the object written as nested element or <code>null</code>.
      * @see   XMLFormat.OutputElement#add(Object)

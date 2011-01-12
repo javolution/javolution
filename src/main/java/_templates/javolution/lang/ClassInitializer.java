@@ -13,8 +13,7 @@ import java.util.Enumeration;
 import _templates.java.io.File;
 import _templates.java.util.zip.ZipEntry;
 import _templates.java.util.zip.ZipFile;
-import _templates.javolution.util.StandardLog;
-
+import _templates.javolution.context.LogContext;
 
 /**
  * <p> This utility class allows for initialization of all classes
@@ -34,7 +33,7 @@ import _templates.javolution.util.StandardLog;
  *     }[/code]</p>
  *    
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, November 6, 2005
+ * @version 5.5, April 21, 2010
  */
 public class ClassInitializer {
 
@@ -64,23 +63,19 @@ public class ClassInitializer {
         String bootPath = System.getProperty("sun.boot.class.path");
         String pathSeparator = System.getProperty("path.separator");
         if ((bootPath == null) || (pathSeparator == null)) {
-            StandardLog
-                    .warning("Cannot initialize boot path through system properties");
+            LogContext.warning("Cannot initialize boot path through system properties");
             return;
         }
         initialize(bootPath, pathSeparator);
         String javaHome = System.getProperty("java.home");
         String fileSeparator = System.getProperty("file.separator");
         if ((javaHome == null) || (fileSeparator == null)) {
-            StandardLog
-                    .warning("Cannot initialize extension library through system properties");
+            LogContext.warning("Cannot initialize extension library through system properties");
             return;
         }
-        File extDir = new File(javaHome + fileSeparator + "lib" + fileSeparator
-                + "ext");
+        File extDir = new File(javaHome + fileSeparator + "lib" + fileSeparator + "ext");
         if (!extDir.getClass().getName().equals("java.io.File")) {
-            StandardLog
-                    .warning("Extension classes initialization not supported for J2ME build");
+            LogContext.warning("Extension classes initialization not supported for J2ME build");
             return;
         }
         if (extDir.isDirectory()) {
@@ -92,7 +87,7 @@ public class ClassInitializer {
                 }
             }
         } else {
-            StandardLog.warning(extDir + " is not a directory");
+            LogContext.warning(extDir + " is not a directory");
         }
     }
 
@@ -103,15 +98,14 @@ public class ClassInitializer {
         String classPath = System.getProperty("java.class.path");
         String pathSeparator = System.getProperty("path.separator");
         if ((classPath == null) || (pathSeparator == null)) {
-            StandardLog
-                    .warning("Cannot initialize classpath through system properties");
+            LogContext.warning("Cannot initialize classpath through system properties");
             return;
         }
         initialize(classPath, pathSeparator);
     }
 
     private static void initialize(String classPath, String pathSeparator) {
-        StandardLog.fine("Initialize classpath: " + classPath);
+        LogContext.info("Initialize classpath: " + classPath);
         while (classPath.length() > 0) {
             String name;
             int index = classPath.indexOf(pathSeparator);
@@ -136,11 +130,15 @@ public class ClassInitializer {
      * @param cls the class to initialize.
      */
     public static void initialize(Class cls) {
-        try {
-            Reflection.getClass(cls.getName());
-        } catch (Throwable error) {
-            StandardLog.error(error);
-        }
+       try {
+           /* @JVM-1.4+@
+           Class.forName(cls.getName(), true, cls.getClassLoader());
+           if (true) return;
+           /**/
+           Class.forName(cls.getName()); // J2ME
+       }  catch (ClassNotFoundException e) {
+           LogContext.error(e);
+       }
     }
 
     /**
@@ -150,11 +148,12 @@ public class ClassInitializer {
      */
     public static void initialize(String className) {
         try {
-            Reflection.getClass(className);
-        } catch (ClassNotFoundException e) {
-            StandardLog.warning("Class + " + className + " not found");
+            Class cls = Reflection.getInstance().getClass(className);
+            if (cls == null) {
+                LogContext.warning("Class + " + className + " not found");
+            }
         } catch (Throwable error) {
-            StandardLog.error(error);
+            LogContext.error(error);
         }
     }
 
@@ -165,11 +164,10 @@ public class ClassInitializer {
      */
     public static void initializeJar(String jarName) {
         try {
-            StandardLog.fine("Initialize Jar file: " + jarName);
+            LogContext.info("Initialize Jar file: " + jarName);
             ZipFile jarFile = new ZipFile(jarName);
             if (!jarFile.getClass().getName().equals("java.util.zip.ZipFile")) {
-                StandardLog
-                        .warning("Initialization of classes in jar file not supported for J2ME build");
+                LogContext.warning("Initialization of classes in jar file not supported for J2ME build");
                 return;
             }
             Enumeration e = jarFile.entries();
@@ -177,15 +175,13 @@ public class ClassInitializer {
                 ZipEntry entry = (ZipEntry) e.nextElement();
                 String entryName = entry.getName();
                 if (entryName.endsWith(".class")) {
-                    String className = entryName.substring(0, entryName
-                            .length() - 6);
+                    String className = entryName.substring(0, entryName.length() - 6);
                     className = className.replace('/', '.');
-                    StandardLog.finer("Initialize " + className);
                     ClassInitializer.initialize(className);
                 }
             }
         } catch (Exception e) {
-            StandardLog.error(e);
+            LogContext.error(e);
         }
     }
 
@@ -196,11 +192,10 @@ public class ClassInitializer {
      *         initialize. 
      */
     public static void initializeDir(String dirName) {
-        StandardLog.fine("Initialize Directory: " + dirName);
+        LogContext.info("Initialize Directory: " + dirName);
         File file = new File(dirName);
         if (!file.getClass().getName().equals("java.io.File")) {
-            StandardLog
-                    .warning("Initialization of classes in directory not supported for J2ME build");
+            LogContext.warning("Initialization of classes in directory not supported for J2ME build");
             return;
         }
         if (file.isDirectory()) {
@@ -209,7 +204,7 @@ public class ClassInitializer {
                 initialize("", files[i]);
             }
         } else {
-            StandardLog.warning(dirName + " is not a directory");
+            LogContext.warning(dirName + " is not a directory");
         }
     }
 
@@ -217,19 +212,15 @@ public class ClassInitializer {
         String name = file.getName();
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            String newPrefix = (prefix.length() == 0) ? name : prefix + "."
-                    + name;
+            String newPrefix = (prefix.length() == 0) ? name : prefix + "." + name;
             for (int i = 0; i < files.length; i++) {
                 initialize(newPrefix, files[i]);
             }
         } else {
             if (name.endsWith(".class")) {
-                String className = prefix + "."
-                        + name.substring(0, name.length() - 6);
-                StandardLog.finer("Initialize " + className);
+                String className = prefix + "." + name.substring(0, name.length() - 6);
                 ClassInitializer.initialize(className);
             }
         }
     }
-
 }
