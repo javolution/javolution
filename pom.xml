@@ -8,13 +8,37 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- ============================== -->
+    <!--     java.net configuration     -->
+    <!-- ============================== -->
+    <parent>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>1</version>
+    </parent>
+    <scm>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/show</url>
+    </scm>
+    <issueManagement>
+        <system>JIRA</system>
+        <url>http://java.net/jira/browse/JAVOLUTION</url>
+    </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>Users</name>
+            <post>users@javolution.java.net</post>
+        </mailingList>
+    </mailingLists>
+
     <!-- ==================================================== -->
     <!--     Project description (including license)          -->
     <!-- ==================================================== -->
-    <groupId>javolution</groupId>
+    <groupId>org.javolution</groupId>
     <artifactId>javolution</artifactId>
     <packaging>bundle</packaging>
-    <version>5.5.2</version> <!-- Update version in build.xml when changed. -->
+    <version>5.6-SNAPSHOT</version> <!-- Update version in build.xml when changed. -->
     <name>Javolution</name>
     <url>http://javolution.org</url>
     <description>Javolution - Java Solution for Real-Time and Embedded Systems.
@@ -34,26 +58,6 @@
         <url>http://javolution.org</url>
     </organization>
     <inceptionYear>2005</inceptionYear>
-
-    <!-- =========================================================== -->
-    <!--     Issue managements and mailing lists.                    -->
-    <!-- =========================================================== -->
-    <scm>
-        <url>https://svn.java.net/svn/javolution~svn/trunk</url>
-        <connection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk</connection>
-    </scm>
-
-    <issueManagement>
-        <system>JIRA</system>
-        <url>http://java.net/jira/browse/JAVOLUTION</url>
-    </issueManagement>
-
-    <mailingLists>
-        <mailingList>
-            <name>Users</name>
-            <post>users@javolution.java.net</post>
-        </mailingList>
-    </mailingLists>
 
     <!-- =========================================================== -->
     <!--     Developers and Contributors                             -->
@@ -95,8 +99,44 @@
         <sourceEncoding>UTF-8</sourceEncoding> <!-- in Maven 3. -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <build>
+
+        <!-- ================================== -->
+        <!--     Default plugin configuration   -->
+        <!-- ================================== -->
         <plugins>
+
+            <plugin> <!-- Ensures correct source encoding.-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin> <!-- Default Java compiler configuration.-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
             <!-- ======================================================= -->
             <!--     Compilation                                         -->
@@ -132,17 +172,6 @@
             </plugin>
 
             <!-- ======================================================= -->
-            <!--     Resources                                           -->
-            <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <!-- ======================================================= -->
             <!--     Custom Javadoc plugin (for reports)                 -->
             <!-- ======================================================= -->
             <plugin>
@@ -172,32 +201,8 @@
                     </instructions>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
 
         </plugins>
-
-        <!-- ======================================================= -->
-        <!--     For deployment on dev.java.net subversion           -->
-        <!--     See https://wagon-svn.dev.java.net/                 -->
-        <!-- ======================================================= -->
-        <extensions>
-            <extension>
-                <groupId>org.jvnet.wagon-svn</groupId>
-                <artifactId>wagon-svn</artifactId>
-                <version>1.9</version>
-            </extension>
-        </extensions>
     </build>
 
     <!-- ======================================================= -->
@@ -260,26 +265,4 @@
          </plugins>
     </reporting>
 
-    <!-- ================================================================== -->
-    <!--     Repositories. This is where Maven looks for dependencies. The  -->
-    <!--     Maven repository is implicit and doesn't need to be specified. -->
-    <!-- ================================================================== -->
-    <pluginRepositories>
-        <pluginRepository>
-            <id>maven2-repository.dev.java.net</id>
-            <name>Java.net Repository for Maven</name>
-            <url>http://download.java.net/maven/2/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <!-- ==================================================== -->
-    <!--     Deployment to public servers                     -->
-    <!-- ==================================================== -->
-    <distributionManagement>
-        <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>java.net-maven2-repository</id>
-            <url>java-net:/maven2-repository/trunk/repository/</url>
-        </repository>
-    </distributionManagement>
 </project>
