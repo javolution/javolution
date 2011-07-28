@@ -252,19 +252,19 @@ public class StandardLog extends LogContext {
         return true;
     }
 
-     public void logDebug(CharSequence message) {
+    protected void logDebug(CharSequence message) {
         _logger.fine(message.toString());
     }
 
-    public void logInfo(CharSequence message) {
+    protected void logInfo(CharSequence message) {
         _logger.info(message.toString());
     }
 
-    public void logWarning(CharSequence message) {
+    protected void logWarning(CharSequence message) {
         _logger.warning(message.toString());
     }
 
-    public void logError(Throwable error, CharSequence message) {
+    protected void logError(Throwable error, CharSequence message) {
         String description = (message != null) ? message.toString() : "";
         description = (error != null) ? error.toString() + " " + description : description;
         _logger.severe(description);

@@ -26,7 +26,9 @@ import _templates.javolution.util.StandardLog;
  *
  * <p> The {@link #DEFAULT default} logging context is {@link
  *     StandardLog StandardLog} to leverage <code>java.util.logging</code>
- *     capabilities.</p>
+ *     capabilities unless an OSGi LogService instance is found in which
+ *     case it is being used (configuration done during Javolution bundle
+ *     activation).</p>
  *
  * <p> Logging a message is quite simple:(code)
  *         LogContext.info("my message");(/code]

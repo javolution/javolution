@@ -85,6 +85,16 @@
     <!-- =========================================================== -->
     <dependencies>
         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>core</artifactId>
+            <version>4.3.0</version>
+        </dependency>
+        <dependency> <!-- OSGI Compendium (log service) -->
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.2.0</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.4</version>
@@ -196,8 +206,10 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>javolution.*,javax.realtime</Export-Package>
-                        <Private-Package>!*</Private-Package>
+						<Export-Package>!javolution.internal,javolution.*,javax.realtime</Export-Package>
+						<Private-Package>javolution.internal.*</Private-Package>
+						<Bundle-Activator>javolution.internal.osgi.JavolutionActivator</Bundle-Activator>
+						<Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
                     </instructions>
                 </configuration>
             </plugin>

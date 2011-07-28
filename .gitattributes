@@ -425,6 +425,7 @@ src/main/java/_templates/javolution/context/PersistentContext.java -text
 src/main/java/_templates/javolution/context/PoolContext.java -text
 src/main/java/_templates/javolution/context/SecurityContext.java -text
 src/main/java/_templates/javolution/context/StackContext.java -text
+src/main/java/_templates/javolution/internal/osgi/BundleActivatorImpl.java -text
 src/main/java/_templates/javolution/io/AppendableWriter.java -text
 src/main/java/_templates/javolution/io/CharSequenceReader.java -text
 src/main/java/_templates/javolution/io/Struct.java -text
@@ -435,6 +436,7 @@ src/main/java/_templates/javolution/io/UTF8StreamWriter.java -text
 src/main/java/_templates/javolution/io/Union.java -text
 src/main/java/_templates/javolution/lang/ClassInitializer.java -text
 src/main/java/_templates/javolution/lang/Configurable.java -text
+src/main/java/_templates/javolution/lang/ConfigurableService.java -text
 src/main/java/_templates/javolution/lang/Enum.java -text
 src/main/java/_templates/javolution/lang/Immutable.java -text
 src/main/java/_templates/javolution/lang/MathLib.java -text
@@ -488,7 +490,9 @@ src/main/java/_templates/javolution/xml/stream/Location.java -text
 src/main/java/_templates/javolution/xml/stream/NamespaceContext.java -text
 src/main/java/_templates/javolution/xml/stream/NamespacesImpl.java -text
 src/main/java/_templates/javolution/xml/stream/XMLInputFactory.java -text
+src/main/java/_templates/javolution/xml/stream/XMLInputFactoryService.java -text
 src/main/java/_templates/javolution/xml/stream/XMLOutputFactory.java -text
+src/main/java/_templates/javolution/xml/stream/XMLOutputFactoryService.java -text
 src/main/java/_templates/javolution/xml/stream/XMLStreamConstants.java -text
 src/main/java/_templates/javolution/xml/stream/XMLStreamException.java -text
 src/main/java/_templates/javolution/xml/stream/XMLStreamReader.java -text

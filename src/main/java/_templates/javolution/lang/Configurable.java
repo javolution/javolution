@@ -62,7 +62,7 @@ import java.util.Enumeration;
  *      They may depend upon the current run-time platform,
  *      the number of cpus, etc. Configuration parameters may also be retrieved
  *      from external resources such as databases, XML files,
- *      external servers, system properties, etc.[code]
+ *      external servers, system properties, OSGi configuration etc.[code]
  *      public abstract class FastComparator<T> implements Comparator<T>, Serializable  {
  *          public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE
  *              = new Configurable<Boolean>(isPoorSystemHash()); // Test system hashcode.
@@ -458,7 +458,7 @@ public class Configurable/*<T>*/ {
     };
 
     // For J2ME Compatibility.
-    private static _templates.java.lang.CharSequence toCsq(Object str) {
+    static _templates.java.lang.CharSequence toCsq(Object str) {
         /*@JVM-1.4+@
         if (true) return (CharSequence) str;
         /**/
