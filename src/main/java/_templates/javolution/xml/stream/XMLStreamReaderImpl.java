@@ -26,7 +26,7 @@ import _templates.javolution.xml.sax.Attributes;
 
 /**
  * <p> This class represents a  {@link _templates.javolution.lang.Reusable reusable}
- *     implementation of {@link XMLStreamWriter}.</p>
+ *     implementation of {@link XMLStreamReader}.</p>
  *  
  * <p> Except for the types being used ({@link CharArray CharArray}/
  *     {@link CharSequence CharSequence} instead of {@link String}) the 

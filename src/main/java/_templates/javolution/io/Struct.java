@@ -161,57 +161,57 @@ public class Struct {
     /**
      * Holds the outer struct if any.
      */
-    private Struct _outer;
+    Struct _outer;
 
     /**
      * Holds the byte buffer backing the struct (top struct).
      */
-    private ByteBuffer _byteBuffer;
+    ByteBuffer _byteBuffer;
 
     /**
      * Holds the offset of this struct relative to the outer struct or
      * to the byte buffer if there is no outer.
      */
-    private int _outerOffset;
+    int _outerOffset;
 
     /**
      * Holds this struct alignment in bytes (largest word size of its members).
      */
-    private int _alignment = 1;
+    int _alignment = 1;
 
     /**
      * Holds this struct's length.
      */
-    private int _length;
+    int _length;
 
     /**
      * Holds the index position during construction.
      * This is the index a the first unused byte available.
      */
-    private int _index;
+    int _index;
 
     /**
      * Holds the word size during construction (for bit fields).
      * This is the size of the last word used.
      */
-    private int _wordSize;
+    int _wordSize;
 
     /**
      * Holds the bits used in the word during construction (for bit fields).
      * This is the number of bits used in the last word.
      */
-    private int _bitsUsed;
+    int _bitsUsed;
 
     /**
      * Indicates if the index has to be reset for each new field (
      * <code>true</code> only for Union subclasses).
      */
-    private boolean _resetIndex;
+    boolean _resetIndex;
 
     /**
      * Holds bytes array for Stream I/O when byteBuffer has no intrinsic array.
      */
-    private byte[] _bytes;
+    byte[] _bytes;
 
     /**
      * Default constructor.
