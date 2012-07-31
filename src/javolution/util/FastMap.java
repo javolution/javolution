@@ -81,9 +81,7 @@ import javolution.xml.XMLSerializable;
  *     
  * <p> {@link FastMap} are {@link Reusable reusable}; they maintain an 
  *     internal pool of <code>Map.Entry</code> objects. When an entry is removed
- *     from a map, it is automatically restored to its pool (unless the map
- *     is shared in which case the removed entry is candidate for garbage 
- *     collection as it cannot be safely recycled).</p>
+ *     from a map, it is automatically restored to its pool.</p>
  *     
  * <p> Shared maps do not use internal synchronization, except in case of 
  *     concurrent modifications of the map structure (entry added/deleted).
@@ -105,7 +103,9 @@ import javolution.xml.XMLSerializable;
  *     maps (size > 512), the collection is divided recursively into (64) 
  *     smaller sub-maps. The cost of the dispatching (based upon hashcode 
  *     value) has been measured to be at most 20% of the access time 
- *     (and most often way less).</p>
+ *     (and most often way less). Also, for shared maps synchronization in 
+ *     case of structural modification of the map is performed only on the 
+ *     lowest level map to reduce conflict.</p>
  *            
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 5.2, September 11, 2007
@@ -468,7 +468,7 @@ public class FastMap/*<K,V>*/implements Map/*<K,V>*/, Reusable,
             }
         }
 
-        // Add new entry (synchronize if concurrent).
+        // Add new entry (synchronize on theif concurrent).
         if (concurrent) {
             synchronized (this) {
                 return put(key, value, keyHash, false, noReplace);
