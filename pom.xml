@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- =======================================================================
-        Maven Project Configuration File
-
         The Javolution Project, http://javolution.org
 ======================================================================= -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,9 +15,10 @@
         <version>1</version>
     </parent>
     <scm>
-        <connection>scm:svn:http://svn.java.net/svn/javolution~svn</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/show</url>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/show/trunk</url>
+        <tag>HEAD</tag>        
     </scm>
     <issueManagement>
         <system>JIRA</system>
