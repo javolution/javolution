@@ -37,15 +37,10 @@
     <groupId>org.javolution</groupId>
     <artifactId>javolution</artifactId>
     <packaging>bundle</packaging>
-    <version>5.6-SNAPSHOT</version> <!-- Update version in build.xml when changed. -->
+    <version>6.0.0</version> <!-- Update version in build.xml when changed. -->
     <name>Javolution</name>
     <url>http://javolution.org</url>
-    <description>Javolution - Java Solution for Real-Time and Embedded Systems.
-        This project uses template classes to generates java code for various versions
-        of the Java run-time (e.g. J2ME, 1.4, GCJ, 1.5). The default maven compilation
-        builds OSGI bundle for Java 1.5+ (parameterized classes).
-        For others targets the ant script should be used directly (e.g. "ant j2me").
-    </description>
+    <description>Javolution - Java Solution for Real-Time and Embedded Systems.</description>
     <licenses>
         <license>
             <name>BSD License</name>
@@ -150,26 +145,6 @@
             <!-- ======================================================= -->
             <!--     Compilation                                         -->
             <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>  <!-- Generates Java source files from templates  -->
-                        <id>gen-src</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <tasks>
-                                <ant target="maven" />
-                            </tasks>
-                            <sourceRoot>${project.build.directory}/generated-sources/java</sourceRoot>
-                            <testSourceRoot>${project.build.directory}/generated-sources/java</testSourceRoot>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
