@@ -216,3 +216,7 @@ src/main/javadoc/javolution/xml/ws/package.html -text
 src/main/javadoc/overview.html -text
 src/main/javadoc/stylesheet.css -text svneol=unset#application/octet-stream
 src/overview.html -text
+src/test/java/org/javolution/ContextTestSuite.java -text
+src/test/java/org/javolution/JavolutionTest.java -text
+src/test/java/org/javolution/StructTestSuite.java -text
+src/test/java/org/javolution/TypeFormatTestSuite.java -text
