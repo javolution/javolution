@@ -17,7 +17,7 @@
     <scm>
         <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk</connection>
         <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/show/trunk</url>
+        <url>http://java.net/projects/javolution/sources/svn/trunk/show</url>
         <tag>HEAD</tag>        
     </scm>
     <issueManagement>
