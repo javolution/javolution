@@ -78,20 +78,20 @@
     <!--     Reference: http://repo1.maven.org/maven2/               -->
     <!-- =========================================================== -->
     <dependencies>
-        <dependency> <!-- OSGI Core Library -->
+        <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_core</artifactId>
-            <version>1.0</version>
+            <artifactId>core</artifactId>
+            <version>4.3.0</version>
         </dependency>
         <dependency> <!-- OSGI Compendium (log service) -->
             <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_compendium</artifactId>
-            <version>1.0</version>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.2.0</version>
         </dependency>
-        <dependency> <!-- Validation tests -->
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>3.8.1</version>
+            <version>4.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -103,8 +103,44 @@
         <sourceEncoding>UTF-8</sourceEncoding> <!-- in Maven 3. -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <build>
-         <plugins>
+
+        <!-- ================================== -->
+        <!--     Default plugin configuration   -->
+        <!-- ================================== -->
+        <plugins>
+
+            <plugin> <!-- Ensures correct source encoding.-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin> <!-- Default Java compiler configuration.-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <!-- ======================================================= -->
             <!--     Compilation                                         -->
@@ -112,7 +148,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
@@ -142,18 +177,78 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>!javolution.internal.*,javolution.*,javax.realtime</Export-Package>
-                        <Private-Package>javolution.internal.*</Private-Package>
-                        <Bundle-Activator>javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
-                        <Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
+                        <Export-Package>!org.javolution.internal.*,org.javolution.*,javax.realtime</Export-Package>
+                        <Private-Package>org.javolution.internal.*</Private-Package>
+                        <Bundle-Activator>org.javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
+                        <Export-Service>org.javolution.xml.stream.XMLInputFactoryService,org.javolution.xml.stream.XMLOutputFactoryService</Export-Service>
                     </instructions>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
+
+    <!-- ======================================================= -->
+    <!--     Maven web site                                      -->
+    <!-- ======================================================= -->
+    <reporting>
+        <plugins>
+
+            <!-- ======================================================= -->
+            <!--     Javadoc generation                                  -->
+            <!--                                                         -->
+            <!--     Do not set <docfilessubdirs> to true, since this    -->
+            <!--     cause the unwanted copy of .svn sub-directories.    -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <excludePackageNames>_templates:org:javax</excludePackageNames>
+                    <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
+                    <source>1.5</source>             <!-- Enables javadoc to handle assertions present in J2SE 1.4.  -->
+                    <encoding>UTF-8</encoding>       <!-- The encoding of the source files.                          -->
+                    <docencoding>UTF-8</docencoding> <!-- The encoding of the generated HTML files.                  -->
+                    <charset>UTF-8</charset>         <!-- Specifies the HTML character set for this document.        -->
+                    <locale>en</locale>              <!-- Locale that javadoc uses when generating documentation.    -->
+                    <noqualifier>all</noqualifier>   <!-- Omit qualifying package name before class names in output. -->
+                    <quiet>true</quiet>              <!-- Shuts off non-error and non-warning messages.              -->
+                    <keywords>true</keywords>        <!-- Adds HTML meta keyword tags to the generated files.        -->
+
+                </configuration>
+            </plugin>
+
+            <!-- ======================================================= -->
+            <!--     Report on test results                              -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+            </plugin>
+
+            <!-- ======================================================= -->
+            <!--     Report on test coverage                             -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>emma-maven-plugin</artifactId>
+                <version>1.0-alpha-1</version>
+            </plugin>
+
+            <!-- ======================================================= -->
+            <!--     Static analysis for occurences of bug patterns      -->
+            <!-- ======================================================= -->
+            <!--
+                     <plugin>
+                          <groupId>org.codehaus.mojo</groupId>
+                          <artifactId>findbugs-maven-plugin</artifactId>
+                          <version>2.1</version>
+                     </plugin>
+            -->
+        </plugins>
+    </reporting>
 
 </project>
