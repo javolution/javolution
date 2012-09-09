@@ -2,7 +2,6 @@
 /.classpath -text
 /.project -text
 /LICENSE.txt -text
-/banner.png -text
 /colapi.jar -text
 css/img/a_ajavarevolution.jpg -text
 css/img/a_features.jpg -text
@@ -214,8 +213,6 @@ src/main/javadoc/javolution/xml/sax/package.html -text
 src/main/javadoc/javolution/xml/stream/package.html -text
 src/main/javadoc/javolution/xml/ws/package.html -text
 src/main/javadoc/overview.html -text
-src/main/javadoc/stylesheet.css -text svneol=unset#application/octet-stream
-src/overview.html -text
 src/test/java/javolution/ContextTestSuite.java -text
 src/test/java/javolution/JavolutionTest.java -text
 src/test/java/javolution/StructTestSuite.java -text

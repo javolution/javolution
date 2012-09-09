@@ -188,70 +188,58 @@
                     </execution>
                 </executions>
             </plugin>
-
-        </plugins>
-    </build>
-
-    <!-- ======================================================= -->
-    <!--     Maven web site                                      -->
-    <!-- ======================================================= -->
-    <reporting>
-        <plugins>
-
-            <!-- ======================================================= -->
-            <!--     Javadoc generation                                  -->
-            <!--                                                         -->
-            <!--     Do not set <docfilessubdirs> to true, since this    -->
-            <!--     cause the unwanted copy of .svn sub-directories.    -->
-            <!-- ======================================================= -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.1</version>
                 <configuration>
-                    <excludePackageNames>_templates:org:javax</excludePackageNames>
-                    <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
-                    <source>1.5</source>             <!-- Enables javadoc to handle assertions present in J2SE 1.4.  -->
-                    <encoding>UTF-8</encoding>       <!-- The encoding of the source files.                          -->
-                    <docencoding>UTF-8</docencoding> <!-- The encoding of the generated HTML files.                  -->
-                    <charset>UTF-8</charset>         <!-- Specifies the HTML character set for this document.        -->
-                    <locale>en</locale>              <!-- Locale that javadoc uses when generating documentation.    -->
-                    <noqualifier>all</noqualifier>   <!-- Omit qualifying package name before class names in output. -->
-                    <quiet>true</quiet>              <!-- Shuts off non-error and non-warning messages.              -->
-                    <keywords>true</keywords>        <!-- Adds HTML meta keyword tags to the generated files.        -->
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>2.4</version>
+                        </plugin>
+                        <!-- ======================================================= -->
+                        <!--     JavaDoc Report                                      -->
+                        <!-- ======================================================= -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>2.8.1</version>
+                            <configuration>
+                                <excludePackageNames>javax</excludePackageNames>
+                                <stylesheetfile>${basedir}/css/javadoc.css</stylesheetfile>
+                                <source>1.5</source>             <!-- Enables javadoc to handle assertions present in J2SE 1.4.  -->
+                                <encoding>UTF-8</encoding>       <!-- The encoding of the source files.                          -->
+                                <docencoding>UTF-8</docencoding> <!-- The encoding of the generated HTML files.                  -->
+                                <charset>UTF-8</charset>         <!-- Specifies the HTML character set for this document.        -->
+                                <locale>en</locale>              <!-- Locale that javadoc uses when generating documentation.    -->
+                                <noqualifier>all</noqualifier>   <!-- Omit qualifying package name before class names in output. -->
+                                <quiet>true</quiet>              <!-- Shuts off non-error and non-warning messages.              -->
+                                <keywords>true</keywords>        <!-- Adds HTML meta keyword tags to the generated files.        -->
+                            </configuration>
+                        </plugin>
+                        <!-- ======================================================= -->
+                        <!--     Report on test results                              -->
+                        <!-- ======================================================= -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-report-plugin</artifactId>
+                            <version>2.12.2</version>
+                        </plugin>
 
+                        <!-- ======================================================= -->
+                        <!--     Report on test coverage                             -->
+                        <!-- ======================================================= -->
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>emma-maven-plugin</artifactId>
+                            <version>1.0-alpha-3</version>
+                        </plugin>
+                    </reportPlugins>
                 </configuration>
             </plugin>
-
-            <!-- ======================================================= -->
-            <!--     Report on test results                              -->
-            <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.12.2</version>
-            </plugin>
-
-            <!-- ======================================================= -->
-            <!--     Report on test coverage                             -->
-            <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>emma-maven-plugin</artifactId>
-                <version>1.0-alpha-3</version>
-            </plugin>
-
-            <!-- ======================================================= -->
-            <!--     Static analysis for occurences of bug patterns      -->
-            <!-- ======================================================= -->
-            <!--
-                     <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>findbugs-maven-plugin</artifactId>
-                          <version>2.1</version>
-                     </plugin>
-            -->
+      
         </plugins>
-    </reporting>
-
+    </build>
 </project>
