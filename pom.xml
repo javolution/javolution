@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- =======================================================================
         The Javolution Project, http://javolution.org
+        To deploy snapshots: 
+                mvn clean javadoc:jar source:jar deploy
+        To deploy release:
+                mvn release:clean
+                mvn release:prepare
+                mvn release:perform
 ======================================================================= -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -12,7 +18,7 @@
     <parent>
         <groupId>net.java</groupId>
         <artifactId>jvnet-parent</artifactId>
-        <version>1</version>
+        <version>3</version>
     </parent>
     <scm>
         <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk</connection>
@@ -78,20 +84,20 @@
     <!--     Reference: http://repo1.maven.org/maven2/               -->
     <!-- =========================================================== -->
     <dependencies>
-        <dependency>
+        <dependency> <!-- OSGI Core Library -->
             <groupId>org.osgi</groupId>
-            <artifactId>core</artifactId>
-            <version>4.3.0</version>
+            <artifactId>osgi_R4_core</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency> <!-- OSGI Compendium (log service) -->
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.2.0</version>
+            <artifactId>osgi_R4_compendium</artifactId>
+            <version>1.0</version>
         </dependency>
-        <dependency>
+        <dependency> <!-- Validation tests -->
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.4</version>
+            <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -100,7 +106,6 @@
     <!--     Build Settings                                      -->
     <!-- ======================================================= -->
     <properties>
-        <sourceEncoding>UTF-8</sourceEncoding> <!-- in Maven 3. -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -110,44 +115,13 @@
         <!--     Default plugin configuration   -->
         <!-- ================================== -->
         <plugins>
-
-            <plugin> <!-- Ensures correct source encoding.-->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <plugin> <!-- Default Java compiler configuration.-->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- ======================================================= -->
             <!--     Compilation                                         -->
             <!-- ======================================================= -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
@@ -177,15 +151,42 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>!org.javolution.internal.*,org.javolution.*,javax.realtime</Export-Package>
-                        <Private-Package>org.javolution.internal.*</Private-Package>
-                        <Bundle-Activator>org.javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
-                        <Export-Service>org.javolution.xml.stream.XMLInputFactoryService,org.javolution.xml.stream.XMLOutputFactoryService</Export-Service>
+                        <Export-Package>!javolution.internal.*,javolution.*,javax.realtime</Export-Package>
+                        <Private-Package>javolution.internal.*</Private-Package>
+                        <Bundle-Activator>javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
+                        <Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
@@ -206,6 +207,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
                 <configuration>
                     <excludePackageNames>_templates:org:javax</excludePackageNames>
                     <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
@@ -227,6 +229,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.12.2</version>
             </plugin>
 
             <!-- ======================================================= -->
@@ -235,7 +238,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>emma-maven-plugin</artifactId>
-                <version>1.0-alpha-1</version>
+                <version>1.0-alpha-3</version>
             </plugin>
 
             <!-- ======================================================= -->
