@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ======================================================= -->
+    <!--   Artifact Coordinates                                  -->
+    <!-- ======================================================= -->
+    <parent>
+        <groupId>org.javolution</groupId>
+        <artifactId>javolution</artifactId>
+        <version>6.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>javolution-core-java</artifactId>
+    <packaging>bundle</packaging>
+    <name>Javolution Core (Java)</name>
+
+    <!-- ======================================================= -->
+    <!--   OSGi Dependencies                                     -->
+    <!-- ======================================================= -->
+    <dependencies>
+        <dependency> <!-- OSGI Core Library -->
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi_R4_core</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency> <!-- OSGI Compendium (log service) -->
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi_R4_compendium</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- ======================================================= -->
+            <!--     OSGi Packaging                                      -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>!javolution.internal.*,javolution.*,javax.realtime</Export-Package>
+                        <Private-Package>javolution.internal.*</Private-Package>
+                        <Bundle-Activator>javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
+                        <Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
