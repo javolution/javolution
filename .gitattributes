@@ -441,6 +441,7 @@ src/site/doc/Javolution-Collections.pdf -text
 src/site/doc/Man33955.pdf -text
 src/site/doc/benchmark.html -text
 src/site/doc/coding_standard.txt -text
+test-cpp/pom.xml -text
 test-cpp/src/main/c++/Main.cpp -text
 test-cpp/src/main/c++/javolution/lang/EnumTest.cpp -text
 test-cpp/src/main/c++/javolution/lang/EnumTest.hpp -text

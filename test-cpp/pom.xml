@@ -1,0 +1,92 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ======================================================= -->
+    <!--   Artifact Coordinates                                  -->
+    <!-- ======================================================= -->
+    <parent>
+        <groupId>org.javolution</groupId>
+        <artifactId>javolution</artifactId>
+        <version>6.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>javolution-test-cpp</artifactId>
+    <packaging>${native.exe}</packaging>
+    <name>Javolution Test (C++)</name>
+    <description>Example of executable linking dynamically with the Javolution DLL
+        and performing JUnit tests.
+    </description>
+     
+    <!-- ======================================================= -->
+    <!--   Dependencies (Javolution Dynamic Library)             -->
+    <!-- ======================================================= -->
+    <dependencies>
+        <dependency>
+            <groupId>org.javolution</groupId>
+            <artifactId>libjavolution-core-cpp</artifactId>
+            <version>6.0-SNAPSHOT</version>
+            <type>inczip</type>
+        </dependency>
+        <dependency>
+            <groupId>org.javolution</groupId>
+            <artifactId>libjavolution-core-cpp</artifactId>
+            <version>6.0-SNAPSHOT</version>
+            <type>${dll.compile.dependency.type}</type>
+            <classifier>${dll.compile.dependency.classifier}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.javolution</groupId>
+            <artifactId>libjavolution-core-cpp</artifactId>
+            <version>6.0-SNAPSHOT</version>
+            <type>${dll.runtime.dependency.type}</type>
+            <classifier>${dll.runtime.dependency.classifier}</classifier>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- ======================================================= -->
+            <!--     Native Plugin Configuration Override                -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <configuration>
+                    <sources>
+                        <source>
+                            <directory>${project.basedir}/src/main/c++</directory>
+                            <includes>
+                                <include>**/*.cpp</include>
+                            </includes>
+                            <deployable>false</deployable>
+                        </source>
+                    </sources>
+                    <linkerSecondaryOutputExtensions></linkerSecondaryOutputExtensions>
+   
+                </configuration>
+            </plugin>
+            
+            <!-- ======================================================= -->
+            <!--     Runs the Test (native executable)                          -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>${project.build.directory}/${native.classifier}/${project.artifactId}.${native.exe}</executable>
+                    <workingDirectory>${project.build.directory}/${native.classifier}</workingDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
