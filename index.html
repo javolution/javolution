@@ -321,8 +321,8 @@
                                         There is no static instance, orchestration classes (the high level classes holding the state) are typically created on-demand and <A HREF="target/site/apidocs/org/javolution/lang/Recyclable.html">recyclable</A>.
                                         This design approach makes Javolution and any product based on Javolution highly parrallelizable with no need for synchronization.
                                         <BR> </LI>
-                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> can be a <B>pure
-                                            Java</B> Solution or a <B>pure native</B> Solution, small (less than 300 KBytes jar
+                                    <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> can be either a <B>Pure
+                                            Java</B> Solution or a <B>Pure Native</B> Solution, small (less than 300 KBytes jar
                                         file) and free; permission to use, copy, modify, and distribute
                                         this software is freely granted, provided that copyright notices are preserved
                                         (<A HREF="LICENSE.txt">BSD License</A>). </LI>
@@ -347,7 +347,7 @@
                                     <A HREF="http://java.net/projects/javolution/sources"><IMG HEIGHT="51" BORDER="0"
                                                                                                SRC="src/site/css/img/getsource.jpg"
                                                                                                WIDTH="194"></A>
-                                    <A HREF="https://maven.java.net/content/repositories/snapshots/org/javolution/javolution/"><IMG HEIGHT="51" BORDER="0"
+                                    <A HREF="https://maven.java.net/content/repositories/snapshots/org/javolution/"><IMG HEIGHT="51" BORDER="0"
                                                                                                  SRC="src/site/css/img/getlibrary.jpg"
                                                                                                  WIDTH="198"></A></DIV></TD>
                         </TR>
@@ -416,16 +416,10 @@
           &lt;artifactId&gt;javolution-core-java&lt;/artifactId&gt;
           &lt;version&gt;6.0-SNAPSHOT&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
-                             or (C++ dependency managed by the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A>) 
-                                <pre>      &lt;dependency&gt;
-          &lt;groupId&gt;org.javolution&lt;/groupId&gt;
-          &lt;artifactId&gt;javolution-core-cpp&lt;/artifactId&gt;
-          &lt;version&gt;6.0-SNAPSHOT&lt;/version&gt;
-          &lt;type&gt;dll&lt;/type&gt;
-          &lt;classifier&gt;win32&lt;/classifier&gt;
-      &lt;/dependency&gt;  </pre>
-                             
-                                Released artifacts are available from the maven central repository, 
+      The native dynamic library (.dll or .so) is generated from the sources using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
+      <BR>
+          
+                               Released artifacts are available from the maven central repository, 
                                 snapshots are deployed to the <A HREF="https://maven.java.net/index.html">java.net repository</A>
                             </TD></TR>
                         <TR>
@@ -740,6 +734,7 @@
                                     <LI CLASS="simplespacer_body"><B>September 11, 2012: Javolution 6.0-SNAPSHOT</B><BR>
                                         <UL>
                                             <LI> Reworked shared FastMap implementation to synchronize based on hash code values (improves concurrent access of shared instances)[6.0.0] </LI>
+                                            <LI> Added C++ mirror release (includes C++ porting of OSGi and JUnit) [6.0-SNAPSHOT] </LI>
                                             <LI> Remove preprocessing of source code (and J2ME support) [6.0-SNAPSHOT] </LI>
                                         </UL>
                                     </LI>
