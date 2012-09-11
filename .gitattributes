@@ -449,6 +449,13 @@ test-cpp/src/main/c++/javolution/lang/StringTest.cpp -text
 test-cpp/src/main/c++/javolution/lang/StringTest.hpp -text
 test-cpp/src/main/c++/javolution/lang/ThrowableTest.cpp -text
 test-cpp/src/main/c++/javolution/lang/ThrowableTest.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ActivatorA.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ActivatorB.hpp -text
+test-cpp/src/main/c++/javolution/osgi/OSGiTest.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ServiceA.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ServiceAImpl.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ServiceB.hpp -text
+test-cpp/src/main/c++/javolution/osgi/ServiceBImpl.hpp -text
 test-cpp/src/main/c++/javolution/util/FastMapTest.cpp -text
 test-cpp/src/main/c++/javolution/util/FastMapTest.hpp -text
 test-cpp/src/main/c++/javolution/util/FastSetTest.cpp -text
