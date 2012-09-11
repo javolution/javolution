@@ -36,11 +36,16 @@
     <!-- ==================================================== -->
     <groupId>org.javolution</groupId>
     <artifactId>javolution</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>pom</packaging>
     <version>6.0-SNAPSHOT</version> 
     <name>Javolution</name>
     <url>http://javolution.org</url>
-    <description>Javolution - Java Solution for Real-Time and Embedded Systems.</description>
+    <description>Javolution - Java Solution for Real-Time and Embedded Systems.
+    This project provides a Java library and a (mirror) C++ library for real-time applications.
+    Both libraries are maven-based and can be used to build multi-platform real-time applications 
+    or to port Java applications to C++. The C++ library contains already a port of OSGi and JUnit 
+    (demonstrated by the subproject test-cpp).            
+    </description>
     <licenses>
         <license>
             <name>BSD License</name>
@@ -78,16 +83,6 @@
     <!--     Reference: http://repo1.maven.org/maven2/               -->
     <!-- =========================================================== -->
     <dependencies>
-        <dependency> <!-- OSGI Core Library -->
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_core</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency> <!-- OSGI Compendium (log service) -->
-            <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_compendium</artifactId>
-            <version>1.0</version>
-        </dependency>
         <dependency> <!-- Validation tests -->
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -95,13 +90,61 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    
     <!-- ======================================================= -->
-    <!--     Build Settings                                      -->
+    <!--     Properties setting                                  -->
     <!-- ======================================================= -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <profiles>
+        <profile> <!-- On windows we have to link with DbgHelp.Lib to get backtrace working. -->
+            <id>windows</id>
+            <activation><os><family>windows</family></os></activation>
+            <properties>
+                <dll.compile.dependency.type>lib</dll.compile.dependency.type>
+                <dll.compile.dependency.classifier></dll.compile.dependency.classifier> <!-- No classifier for .lib secondary artifact of dll -->
+                <dll.runtime.dependency.type>dll</dll.runtime.dependency.type>
+                <dll.runtime.dependency.classifier>win32</dll.runtime.dependency.classifier>
+                <lib.compile.dependency.type>lib</lib.compile.dependency.type>
+                <lib.compile.dependency.classifier>win32</lib.compile.dependency.classifier>
+
+                <native.exe>exe</native.exe>                  
+                <native.classifier>win32</native.classifier>  
+                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName> 
+                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/en-us/products/2010-editions/express -->                
+                <native.compilerProvider>msvc</native.compilerProvider>
+                <native.compilerExecutable></native.compilerExecutable>
+                <native.compilerOptions>/EHsc /TP /W4 /Od /Zi /Fd${project.artifactId} /MDd /D_DEBUG</native.compilerOptions>
+                <native.linkerProvider>msvc</native.linkerProvider>
+                <native.linkerExecutable></native.linkerExecutable>
+                <native.linkerOptions>/DEBUG</native.linkerOptions>
+                <native.linkerSecondaryOutputExtensions>lib</native.linkerSecondaryOutputExtensions>     
+                <native.define>/D</native.define>
+                <native.compilerConcurrency>16</native.compilerConcurrency>                
+                <native.dll>dll</native.dll>  
+                <native.dll.compilerOptions></native.dll.compilerOptions>
+                <native.dll.linkerOptions>/DLL</native.dll.linkerOptions>
+                <native.debugLib>${project.basedir}\lib\windows\DbgHelp.Lib</native.debugLib>
+            </properties>
+        </profile>
+        <profile> <!-- On linux we have to include libdl -->
+            <id>linux</id>
+            <activation><os><family>linux</family></os></activation>
+            <properties>
+                <packaging.dynamic-library>so</packaging.dynamic-library>       
+                <linkerEndOption>-ldl</linkerEndOption>                
+            </properties>
+        </profile>
+        <profile> <!-- On solaris we include libdl too -->
+            <id>solaris</id>
+            <activation><os><name>SunOS</name><arch>sparc</arch></os></activation>
+            <properties>
+                <packaging.dynamic-library>so</packaging.dynamic-library>       
+                <linkerEndOption>-ldl -ldemangle -lrt</linkerEndOption>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
 
@@ -140,48 +183,45 @@
             </plugin>
 
             <!-- ======================================================= -->
-            <!--     Packaging                                           -->
-            <!-- ======================================================= -->
+            <!--     Native Plugin Default Configuration (EXE)           -->
+            <!-- ======================================================= -->  
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>1.0-alpha-7</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Export-Package>!javolution.internal.*,javolution.*,javax.realtime</Export-Package>
-                        <Private-Package>javolution.internal.*</Private-Package>
-                        <Bundle-Activator>javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
-                        <Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
-                    </instructions>
+                <dependencies> 
+                    <!-- Add support for Visual Studio 2010 (expected Windows environment) 
+                         If an earlier version of Visual Studio is installed this dependencies is unnecessary
+                         but the property ${native.envFactoryName} must be set differently 
+                         (see http://mojo.codehaus.org/maven-native/native-maven-plugin/envfactory.html) -->
+                    <dependency>
+                        <groupId>org.javolution</groupId>
+                        <artifactId>native-msvc</artifactId>
+                        <version>1.0-alpha-7</version>
+                    </dependency>
+                </dependencies>       
+                <configuration> <!-- Default configuration for an executable -->
+                    <classifier>${native.classifier}</classifier>
+                    <workingDirectory>${project.build.directory}/${native.classifier}</workingDirectory>
+                    <compilerOutputDirectory>${project.build.directory}/${native.classifier}/objs</compilerOutputDirectory>
+                    <linkerOutputDirectory>${project.build.directory}/${native.classifier}</linkerOutputDirectory>
+                    <externalLibDirectory>${project.build.directory}/${native.classifier}</externalLibDirectory> 
+                    <envFactoryName>${native.envFactoryName}</envFactoryName>
+                    <numberOfConcurrentCompilation>${native.compilerConcurrency}</numberOfConcurrentCompilation>        
+                    <compilerProvider>${native.compilerProvider}</compilerProvider>
+                    <compilerExecutable>${native.compilerExecutable}</compilerExecutable>
+                    <compilerStartOptions><compilerStartOption>${native.compilerOptions}</compilerStartOption></compilerStartOptions>
+                    <linkerProvider>${native.linkerProvider}</linkerProvider>
+                    <linkerExecutable>${native.linkerExecutable}</linkerExecutable>
+                    <linkerStartOptions><linkerStartOption>${native.linkerOptions}</linkerStartOption></linkerStartOptions>
+                    <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+
+            <!-- ======================================================= -->
+            <!--     Site Building Configuration                         -->
+            <!-- ======================================================= -->  
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
@@ -202,7 +242,7 @@
                             <version>2.8.1</version>
                             <configuration>
                                 <excludePackageNames>javax</excludePackageNames>
-                                <stylesheetfile>${basedir}/css/javadoc.css</stylesheetfile>
+                                <stylesheetfile>${basedir}/src/site/css/javadoc.css</stylesheetfile>
                                 <source>1.5</source>             <!-- Enables javadoc to handle assertions present in J2SE 1.4.  -->
                                 <encoding>UTF-8</encoding>       <!-- The encoding of the source files.                          -->
                                 <docencoding>UTF-8</docencoding> <!-- The encoding of the generated HTML files.                  -->
@@ -236,4 +276,16 @@
       
         </plugins>
     </build>
+    
+    <!-- ====================== -->
+    <!--     List of modules    -->
+    <!-- ====================== -->
+    <modules>
+        <module>colapi</module>
+        <module>msvc</module>
+        <module>core-java</module>
+        <module>core-cpp</module>
+        <module>test-cpp</module>
+    </modules>
+
 </project>

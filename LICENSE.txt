@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(tm) Solution for Real-Time and Embedded Systems
- * Copyright (c) 2005-2009, Javolution (http://javolution.org/)
+ * Copyright (c) 2012, Javolution (http://javolution.org/)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
