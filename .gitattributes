@@ -441,3 +441,9 @@ src/site/doc/Javolution-Collections.pdf -text
 src/site/doc/Man33955.pdf -text
 src/site/doc/benchmark.html -text
 src/site/doc/coding_standard.txt -text
+test-cpp/src/main/c++/javolution/util/FastMapTest.cpp -text
+test-cpp/src/main/c++/javolution/util/FastMapTest.hpp -text
+test-cpp/src/main/c++/javolution/util/FastSetTest.cpp -text
+test-cpp/src/main/c++/javolution/util/FastSetTest.hpp -text
+test-cpp/src/main/c++/javolution/util/FastTableTest.cpp -text
+test-cpp/src/main/c++/javolution/util/FastTableTest.hpp -text

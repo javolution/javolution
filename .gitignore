@@ -3,3 +3,5 @@ core-cpp/target
 core-java/target
 msvc/target
 /target
+test-cpp/src/main/c++/.sub_dir.ccm
+test-cpp/target
