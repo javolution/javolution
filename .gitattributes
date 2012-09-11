@@ -2,6 +2,7 @@
 /.classpath -text
 /.project -text
 /LICENSE.txt -text
+colapi/pom.xml -text
 colapi/src/main/java/javolution/tools/colapi/Colapi.java -text
 colapi/src/site/apt/index.apt -text
 colapi/src/site/site.xml -text
