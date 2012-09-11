@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+  
+    <!-- ======================================================= -->
+    <!--   Artifact Coordinates                                  -->
+    <!-- ======================================================= -->
+    <parent>
+        <groupId>org.javolution</groupId>
+        <artifactId>javolution</artifactId>
+        <version>6.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>native-msvc</artifactId>
+    <version>1.0-alpha-7</version>  
+    <name>MSVC Factories</name>
+    <description>Provides environment factories missing from the 
+                 current maven native plugin distribution: 
+                 MSVC2010x86EnvFactory, MSVC2010x86AMD64EnvFactory
+    </description>
+    <url>http://mojo.codehaus.org/maven-native/native-maven-plugin/envfactory.html</url>
+  
+    <dependencies>
+        <dependency>
+            <groupId>org.codehaus.mojo.natives</groupId>
+            <artifactId>maven-native-generic-c</artifactId>
+             <version>1.0-alpha-7</version>  
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>        
+    </dependencies>
+</project>

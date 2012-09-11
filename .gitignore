@@ -1,4 +1,5 @@
 colapi/target
 core-cpp/target
 core-java/target
+msvc/target
 /target
