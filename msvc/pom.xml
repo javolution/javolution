@@ -11,9 +11,9 @@
         <version>3</version>
     </parent>
     <scm>
-        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/trunk/show</url>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/javolution-msvc-0</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/javolution-msvc-0</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/tags/javolution-msvc-0</url>
     </scm>
     
     <!-- ==================================================== -->
