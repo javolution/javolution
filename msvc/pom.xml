@@ -21,7 +21,7 @@
     <!-- ==================================================== -->
     <groupId>org.javolution</groupId>
     <artifactId>javolution-msvc</artifactId>
-    <version>1.0.0</version>  
+    <version>1.0.0-SNAPSHOT</version>  
     <name>MSVC Factories</name>
     <description>Provides environment factories missing from the 
                  current maven native plugin distribution: 
