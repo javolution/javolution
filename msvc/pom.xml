@@ -2,24 +2,55 @@
 
     <modelVersion>4.0.0</modelVersion>
   
-    <!-- ======================================================= -->
-    <!--   Artifact Coordinates                                  -->
-    <!-- ======================================================= -->
+    <!-- ============================== -->
+    <!--     java.net configuration     -->
+    <!-- ============================== -->
     <parent>
-        <groupId>org.javolution</groupId>
-        <artifactId>javolution</artifactId>
-        <version>6.0-SNAPSHOT</version>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>3</version>
     </parent>
-    <artifactId>native-msvc</artifactId>
-    <version>1.0-alpha-7</version>  
+    <scm>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/trunk/show</url>
+    </scm>
+    
+    <!-- ==================================================== -->
+    <!--     Project description (including license)          -->
+    <!-- ==================================================== -->
+    <groupId>org.javolution</groupId>
+    <artifactId>javolution-msvc</artifactId>
+    <version>1.0-SNAPSHOT</version>  
     <name>MSVC Factories</name>
     <description>Provides environment factories missing from the 
                  current maven native plugin distribution: 
                  MSVC2010x86EnvFactory, MSVC2010x86AMD64EnvFactory
     </description>
-    <url>http://mojo.codehaus.org/maven-native/native-maven-plugin/envfactory.html</url>
-  
-    <dependencies>
+    <url>http://jira.codehaus.org/browse/MOJO-1797</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://javolution.org/msvc/LICENSE.txt</url>
+        </license>
+    </licenses>
+
+    <!-- =========================================================== -->
+    <!--     Developers and Contributors                             -->
+    <!-- =========================================================== -->
+    <developers>
+        <developer>
+            <name>Richard Baldwin</name>
+            <roles>
+                <role>Patch Author</role>
+            </roles>
+        </developer>
+    </developers>
+       
+   <!-- =========================================================== -->
+    <!--     Dependency Management                                   -->
+    <!-- =========================================================== -->
+     <dependencies>
         <dependency>
             <groupId>org.codehaus.mojo.natives</groupId>
             <artifactId>maven-native-generic-c</artifactId>
@@ -31,4 +62,5 @@
             <version>2.6</version>
         </dependency>        
     </dependencies>
+
 </project>
