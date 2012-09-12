@@ -11,9 +11,9 @@
         <version>3</version>
     </parent>
     <scm>
-        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/javolution-msvc-1.0.0</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/javolution-msvc-1.0.0</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/tags/javolution-msvc-1.0.0</url>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/msvc-1.0.0</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/msvc-1.0.0</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/tags/msvc-1.0.0</url>
     </scm>
     
     <!-- ==================================================== -->
@@ -21,7 +21,7 @@
     <!-- ==================================================== -->
     <groupId>org.javolution</groupId>
     <artifactId>javolution-msvc</artifactId>
-    <version>1.0.0-SNAPSHOT</version>  
+    <version>1.0.0</version>  
     <name>MSVC Factories</name>
     <description>Provides environment factories missing from the 
                  current maven native plugin distribution: 
