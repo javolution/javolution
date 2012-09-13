@@ -1,0 +1,41 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ======================================================= -->
+    <!--   Artifact Coordinates                                  -->
+    <!-- ======================================================= -->
+    <parent>
+        <groupId>org.javolution</groupId>
+        <artifactId>javolution</artifactId>
+        <version>6.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>libjavolution-core-cpp</artifactId>
+    <packaging>${native.dll}</packaging>
+    <name>Javolution Core (C++)</name>
+
+    <build>
+        <plugins>
+              <!-- ======================================================= -->
+              <!--     Native Plugin Configuration Override (DLL)          -->
+              <!-- ======================================================= -->
+              <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <configuration>
+                    <sources>
+                        <source><directory>${project.basedir}/src/include/c++</directory><includes><include>**/*.cpp</include></includes><deployable>true</deployable></source>
+                        <source><directory>${project.basedir}/src/main/c++</directory><includes><include>**/*.cpp</include></includes><deployable>true</deployable></source>
+                    </sources>
+                    <compilerStartOptions>
+                        <compilerStartOption>${native.compilerOptions} ${native.dll.compilerOptions}</compilerStartOption>
+                        <compilerStartOption>${native.define}JAVOLUTION_DLL_EXPORT ${native.define}JAVOLUTION_VERSION=\"${project.version}-${native.classifier}\"</compilerStartOption>
+                   </compilerStartOptions>
+                   <linkerStartOptions><linkerStartOption>${native.linkerOptions} ${native.dll.linkerOptions}</linkerStartOption></linkerStartOptions>
+                   <linkerEndOptions><linkerEndOption>${native.debugLib}</linkerEndOption></linkerEndOptions> <!-- Will be included in javolution lib -->
+               </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,6 +1,9 @@
 colapi/target
 core-cpp/target
 core-java/target
+javolution/core-cpp/target
+javolution/core-java/target
+javolution/test-cpp/target
 msvc/target
 /target
 test-cpp/src/main/c++/.sub_dir.ccm
