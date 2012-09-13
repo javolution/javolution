@@ -1,6 +1,4 @@
 * text=auto !eol
-/.classpath -text
-/.project -text
 colapi/pom.xml -text
 colapi/src/main/java/javolution/tools/colapi/Colapi.java -text
 colapi/src/site/apt/index.apt -text
