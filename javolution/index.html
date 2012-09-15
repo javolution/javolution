@@ -210,8 +210,16 @@
                                         facility.</LI>
                                     <LI> Simple yet flexible <A HREF="target/site/apidocs/org/javolution/lang/Configurable.html">configuration</A> management
                                         of your application.</LI>
-                                    <LI> <IMG SRC="src/site/css/img/new.gif" /> <B><I>Javolution</I></B> makes it easy to port <b>any</b> Java application to C++ for native compilation 
-                                        (maven based)</LI>
+                                    <LI> <IMG SRC="src/site/css/img/new.gif" /> <B><I>Javolution</I></B> makes it easy to port <b>any</b> Java application 
+                                         to C++ for native compilation (maven based) or to write Java-Like code directly in C++.</LI> 
+<pre>// Example of C++ code (from org.osgi.util.tracker.ServiceTracker) 
+synchronized(_trackedServices) {
+    for (int i = 0; i &lt; serviceReferences.length; i++) {
+        Object service = _customizer->addingService(serviceReferences[i]);
+        _trackedServices->put(serviceReferences[i], service);
+    }
+    _trackingCount = 0;
+}</pre>
                                 </UL></TD>
                         </TR>
                     </TABLE>
@@ -426,7 +434,7 @@
                             <TD CLASS="simplespacer_body style14" VALIGN="top">The standard Java  distribution is an OSGi bundle 
                                 which can also be used as standalone Java library. The C++ distribution includes a port of standard Java classes, Javolution 
                                 classes, <A HREF="http://www.osgi.org/">OSGi</A> and <A HREF="http://www.junit.org/">JUnit</A>. Below 
-                                is the table of correspondance between the Java packages and Javolution packages. 
+                                is the table of correspondance between the Java packages and Javolution C++ namespaces. 
                                 
                                 <BR></TD>
                         </TR>
@@ -478,7 +486,7 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 Developpers may download the <code>test-cpp</code> maven submodule which illustrates the use of OSGi and JUnit in C++
-                                Both libraries (Java and C++) provides benchmark tests.
+                                Both libraries (Java and C++) provide benchmark tests.
                                 <A HREF="src/site/doc/benchmark.html">Here</A> are the Java benchmark results on Windows.</TD>
                         </TR>
                     </TABLE>
@@ -794,7 +802,7 @@
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : September 11, 2012<BR>
+                                Revision      : September 16, 2012<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
