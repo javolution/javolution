@@ -344,7 +344,7 @@ synchronized(_trackedServices) {
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0-SNAPSHOT - September 11, 2012</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.0-SNAPSHOT - September 16, 2012</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -668,7 +668,14 @@ synchronized(_trackedServices) {
                                     <LI><A HREF="http://www.jmulti.de/">JMulTi</A> - Time Series Analysis with Java.</LI>
                                     <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
                                     <LI><A HREF="http://oval.sourceforge.net/">OVal</A> - Object Validation Framework.</LI>
-                                </UL><I> (Let us know if your project uses <B>Javolution</B>
+                                </UL>
+                                Known projects having a C++ port of their Java library based on <B><I>Javolution</I></B>:
+                                <UL>
+                                    <LI><A HREF="http://www.osgi.org/">OSGi</A> - Included in Javolution core distribution</LI>
+                                    <LI><A HREF="http://www.junit.org/">JUnit</A> - Included in Javolution core distribution</LI>
+                                </UL>
+                                
+                                <I> (Let us know if your project uses <B>Javolution</B>
                                     and you would like it to be listed here)
                                     <BR>
                                     <BR></I><B><I>Javolution</I></B>'s users can also show their
@@ -740,11 +747,19 @@ synchronized(_trackedServices) {
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
-                                    <LI CLASS="simplespacer_body"><B>September 11, 2012: Javolution 6.0-SNAPSHOT</B><BR>
+                                    <LI CLASS="simplespacer_body"><B>September 16, 2012: Javolution 6.0-SNAPSHOT</B><BR>
+                                        This release makes it easy for Java developers to translate their Java code to C++ 
+                                        or to write Java-Like C++ code without knowledge of the C++ intricacies. 
                                         <UL>
-                                            <LI> Reworked shared FastMap implementation to synchronize based on hash code values (improves concurrent access of shared instances)[6.0.0] </LI>
-                                            <LI> Added C++ mirror release (includes C++ porting of OSGi and JUnit) [6.0-SNAPSHOT] </LI>
-                                            <LI> Remove preprocessing of source code (and J2ME support) [6.0-SNAPSHOT] </LI>
+                                            <LI> Your Java-Like C++ code is robust, multi-platforms (Windows/Linux/Solaris) and 
+                                                can take advantage of any Java library which has already been ported.</LI>
+                                            <LI> Still your code can interface directly with existing C/C++ libraries</LI>
+                                            <LI> Your native application will exhibit nice real-time characterics. For example, there is
+                                                 no GC pause, the base class javolution::lang::Object uses intrinsic (atomic) counters to
+                                                 release memory when instances are dereferenced.</LI>
+                                            <LI> You can write OSGi bundles in C++ and execute them using the light OSGi framework provided.</LI>
+                                            <LI> Memory allocation/deallocation for small objects is optimized and fast (on par with Java)</LI>
+                                            <LI> A single build tool (Maven) can be used for all your compilation needs (Java or C++)</LI>
                                         </UL>
                                     </LI>
                                     <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
