@@ -271,6 +271,22 @@
             </plugin>
             
             <!-- ======================================================= -->
+            <!--     Custom Javadoc plugin (for reports)                 -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.javolution</groupId>
+                <artifactId>colapi</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>colorize</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+                        
+            <!-- ======================================================= -->
             <!--     Site Building Configuration                         -->
             <!-- ======================================================= -->  
             <plugin>
@@ -324,7 +340,7 @@
                     </reportPlugins>
                 </configuration>
             </plugin>
-            
+
             <!-- ======================================================= -->
             <!--     Deployement Configuration                           -->
             <!-- ======================================================= -->                   
