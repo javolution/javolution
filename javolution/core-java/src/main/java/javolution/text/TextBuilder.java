@@ -107,7 +107,7 @@ public class TextBuilder implements Appendable,
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} text builder
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}).
      *
      * @return a new, preallocated or recycled text builder instance.
@@ -120,7 +120,7 @@ public class TextBuilder implements Appendable,
 
     /**
      * Recycles a text builder {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}). 
      */
     public static void recycle(TextBuilder instance) {
@@ -822,7 +822,7 @@ public class TextBuilder implements Appendable,
     /**
      * Returns the {@link Text} corresponding to this {@link TextBuilder}
      * (allocated on the "stack" when executing in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return the corresponding {@link Text} instance.
      */

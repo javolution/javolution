@@ -42,7 +42,7 @@ public abstract class AllocatorContext extends Context {
      * (the default is a {@link HeapContext} instance).
      * The default allocator context is configurable. For example the following
      * runs the javolution built-in tests with a {@link PoolContext} as default
-     * (javolution built-in tests {@link org.javolution.lang.Configurable#read
+     * (javolution built-in tests {@link javolution.lang.Configurable#read
      * loads} their configuration from systems properties)[code]
      *   > java -Djavolution.AllocatorContext.Default=javolution.context.PoolContext -jar javolution.jar time
      * [/code]
@@ -157,7 +157,7 @@ public abstract class AllocatorContext extends Context {
     }
 
     /**
-     * <p> This class represents a {@link org.javolution.lang.Reference reference}
+     * <p> This class represents a {@link javolution.lang.Reference reference}
      *     allocated from the current {@link AllocatorContext}. 
      *     The reachability level of this reference is the scope of the 
      *     {@link AllocatorContext} in which it has been 

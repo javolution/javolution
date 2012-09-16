@@ -74,7 +74,7 @@ public class FastBitSet extends FastCollection <Index>  implements Set <Index> ,
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} set instance
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}).
      *
      * @return a new, preallocated or recycled set instance.
@@ -87,7 +87,7 @@ public class FastBitSet extends FastCollection <Index>  implements Set <Index> ,
 
     /**
      * Recycles a set {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}). 
      */
     public static void recycle(FastBitSet instance) {

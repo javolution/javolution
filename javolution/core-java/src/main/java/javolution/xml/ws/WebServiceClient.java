@@ -25,9 +25,9 @@ import javolution.xml.stream.XMLStreamWriter;
 
 /**
  * <p> This class provides a simple web service client capable of leveraging  
- *     Javolution {@link org.javolution.xml XML marshalling/unmarshalling}.</p>
+ *     Javolution {@link javolution.xml XML marshalling/unmarshalling}.</p>
  *     
- * <p> Sub-classes may work from WSDL files, {@link org.javolution.xml.XMLFormat
+ * <p> Sub-classes may work from WSDL files, {@link javolution.xml.XMLFormat
  *     XMLFormat} or directly with the XML streams (StAX). For example:[code]
  *     private static class HelloWorld extends WebServiceClient  {
  *         protected void writeRequest(XMLObjectWriter out) throws XMLStreamException {

@@ -49,7 +49,7 @@ import javolution.xml.XMLSerializable;
  *          <code>java.lang.String</code> or <code>CharSequence</code>.</li>
  *     <li> Support custom allocation policies (instances allocated on the 
  *          "stack" when executing in a 
- *          {@link org.javolution.context.StackContext StackContext}).</li>
+ *          {@link javolution.context.StackContext StackContext}).</li>
  *     </ul></p>
  * <p> {@link Text} literals should be explicitly {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
@@ -909,7 +909,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     /**
      * Returns <code>this</code> (implements 
-     * {@link org.javolution.lang.ValueType Realtime} interface).
+     * {@link javolution.lang.ValueType Realtime} interface).
      *
      * @return <code>this</code>
      */
@@ -1467,7 +1467,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns a {@link org.javolution.context.AllocatorContext context allocated}
+     * Returns a {@link javolution.context.AllocatorContext context allocated}
      * primitive text instance.
      *
      * @param length the primitive length.
@@ -1486,7 +1486,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     };
 
     /**
-     * Returns a {@link org.javolution.context.AllocatorContext context allocated}
+     * Returns a {@link javolution.context.AllocatorContext context allocated}
      * composite text instance.
      *
      * @param head the composite head.

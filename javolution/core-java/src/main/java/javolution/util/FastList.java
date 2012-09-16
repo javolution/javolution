@@ -105,7 +105,7 @@ implements List <E> , Reusable {
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see org.javolution.context.PersistentContext.Reference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastList(String id) {
         this();
@@ -149,7 +149,7 @@ implements List <E> , Reusable {
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} list instance
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}).
      *
      * @return a new, preallocated or recycled list instance.
@@ -160,7 +160,7 @@ implements List <E> , Reusable {
 
     /**
      * Recycles a list {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}). 
      */
     public static void recycle(FastList instance) {
@@ -316,7 +316,7 @@ implements List <E> , Reusable {
     /**
      * Returns a simple iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -327,7 +327,7 @@ implements List <E> , Reusable {
     /**
      * Returns a list iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -338,7 +338,7 @@ implements List <E> , Reusable {
     /**
      * Returns a list iterator from the specified position
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * 
      * The specified index indicates the first value that would be returned by
      * an initial call to the <code>next</code> method.  An initial call to
@@ -361,7 +361,7 @@ implements List <E> , Reusable {
     /**
      * Returns a view of the portion of this list between the specified
      * indexes (allocated from the "stack" when executing in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 

@@ -121,7 +121,7 @@ public class FastTable <E> extends FastCollection <E> implements
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see org.javolution.context.PersistentContext.Reference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastTable(String id) {
         this();
@@ -160,7 +160,7 @@ public class FastTable <E> extends FastCollection <E> implements
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} table instance
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}).
      *
      * @return a new, preallocated or recycled table instance.
@@ -171,7 +171,7 @@ public class FastTable <E> extends FastCollection <E> implements
 
     /**
      * Recycles a table {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}). 
      */
     public static void recycle(FastTable instance) {
@@ -456,7 +456,7 @@ public class FastTable <E> extends FastCollection <E> implements
     /**
      * Returns an iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -467,7 +467,7 @@ public class FastTable <E> extends FastCollection <E> implements
     /**
      * Returns a list iterator over the elements in this list 
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this list values.
      */
@@ -478,7 +478,7 @@ public class FastTable <E> extends FastCollection <E> implements
     /**
      * Returns a list iterator from the specified position
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      * The list iterator being returned does not support insertion/deletion.
      * 
      * @param index the index of first value to be returned from the
@@ -496,7 +496,7 @@ public class FastTable <E> extends FastCollection <E> implements
     /**
      * Returns a view of the portion of this list between the specified
      * indexes (instance of {@link FastList} allocated from the "stack" when
-     * executing in a {@link org.javolution.context.StackContext StackContext}).
+     * executing in a {@link javolution.context.StackContext StackContext}).
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 

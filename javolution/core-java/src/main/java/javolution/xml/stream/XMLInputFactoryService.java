@@ -19,7 +19,7 @@ public interface XMLInputFactoryService {
 
     /**
      * Holds the property that defines the name of this service implementation
-     * (Javolution's property value is <code>"org.javolution"</code>)
+     * (Javolution's property value is <code>"javolution"</code>)
      */
     public static final String OSGI_SERVICE_PROPERTY_IMPLEMENTATION_NAME = "name";
 

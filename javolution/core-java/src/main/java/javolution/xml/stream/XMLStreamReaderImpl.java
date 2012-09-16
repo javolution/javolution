@@ -27,7 +27,7 @@ import javolution.xml.sax.Attributes;
 
 
 /**
- * <p> This class represents a  {@link org.javolution.lang.Reusable reusable}
+ * <p> This class represents a  {@link javolution.lang.Reusable reusable}
  *     implementation of {@link XMLStreamReader}.</p>
  *  
  * <p> Except for the types being used ({@link CharArray CharArray}/
@@ -287,9 +287,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
      * This method reads the prolog (if any).
      *
      * @param  reader the input source reader.
-     * @see    org.javolution.io.UTF8StreamReader
-     * @see    org.javolution.io.UTF8ByteBufferReader
-     * @see    org.javolution.io.CharSequenceReader
+     * @see    javolution.io.UTF8StreamReader
+     * @see    javolution.io.UTF8ByteBufferReader
+     * @see    javolution.io.CharSequenceReader
      */
     public void setInput(Reader reader) throws XMLStreamException {
         if (_reader != null)

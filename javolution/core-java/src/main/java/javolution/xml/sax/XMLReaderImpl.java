@@ -139,9 +139,9 @@ public class XMLReaderImpl implements XMLReader, Reusable {
      *         exception.
      * @throws IOException an IO exception from the parser, possibly from
      *         a byte stream or character stream supplied by the application.
-     * @see    org.javolution.io.UTF8StreamReader
-     * @see    org.javolution.io.UTF8ByteBufferReader
-     * @see    org.javolution.io.CharSequenceReader
+     * @see    javolution.io.UTF8StreamReader
+     * @see    javolution.io.UTF8ByteBufferReader
+     * @see    javolution.io.CharSequenceReader
      */
     public void parse(Reader reader) throws IOException, SAXException {
         try {

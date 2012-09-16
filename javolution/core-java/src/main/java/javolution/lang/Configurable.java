@@ -221,7 +221,7 @@ public class Configurable <T>  {
     /**
      * Returns the field name of this configurable (for example <code>
      * "javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY"</code>)
-     * for {@link org.javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}.
+     * for {@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}.
      *
      *  @return this configurable name or <code>null</code> if the name
      *          of this configurable is unknown (e.g. J2ME).
@@ -272,7 +272,7 @@ public class Configurable <T>  {
      * Returns the configurable instance having the specified name.
      * For example:[code]
      *     Configurable cfg = Configurable.getInstance("javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY")
-     * [/code] returns {@link org.javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}.
+     * [/code] returns {@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}.
      *
      * <p><b>Note:</b> OSGI based framework should ensure that class loaders
      *    of configurable instances are known to the {@link Reflection} utility
@@ -350,14 +350,14 @@ public class Configurable <T>  {
      *     Configurable.read(System.getProperties());[/code]
      * Configurables are identified by their field names. The textual
      * representation of their value is defined by
-     * {@link org.javolution.text.TextFormat#getInstance(Class)}
+     * {@link javolution.text.TextFormat#getInstance(Class)}
      * text format}. For example:[code]
      *      javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE = true
      *      javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY = 0
      *      javolution.xml.stream.XMLInputFactory#CLASS = com.foo.bar.XMLInputFactoryImpl
      * [/code]
      * Conversion of <code>String</code> values to actual object is
-     * performed using {@link org.javolution.text.TextFormat#getInstance(Class)}.
+     * performed using {@link javolution.text.TextFormat#getInstance(Class)}.
      *
      * <p><b>Note:</b> OSGI based framework should ensure that class loaders
      *    of configurable instances are known to the {@link Reflection} utility

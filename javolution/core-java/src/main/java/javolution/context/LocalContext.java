@@ -33,7 +33,7 @@ import javolution.util.FastMap;
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.6, September 24, 2005
- * @see org.javolution.util.LocalMap
+ * @see javolution.util.LocalMap
  */
 public class LocalContext extends Context {
 

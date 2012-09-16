@@ -14,11 +14,11 @@ package javolution.lang;
  *     on the stack and pass references by copy.</p>
  *     
  * <p> {@link Realtime} instances can be "explicitly" allocated on the  
- *     "stack" by executing within a {@link org.javolution.context.StackContext 
+ *     "stack" by executing within a {@link javolution.context.StackContext 
  *     StackContext} and creating new instances with an  {@link 
- *     org.javolution.context.ObjectFactory ObjectFactory}. 
+ *     javolution.context.ObjectFactory ObjectFactory}. 
  *     It is the responsibility of the users to ensure 
- *     that "stack" objects are {@link org.javolution.context.StackContext#outerCopy
+ *     that "stack" objects are {@link javolution.context.StackContext#outerCopy
  *     copied out} when
  *     referenced outside of the stack context. For example:[code]
  *     public final class Complex implements Realtime, ValueType { ... }
@@ -47,7 +47,7 @@ public interface ValueType extends Immutable {
 
     /**
      * Returns a deep copy of this object allocated in the memory area (RTSJ) 
-     * and/or {@link org.javolution.context.AllocatorContext context} (Javolution)
+     * and/or {@link javolution.context.AllocatorContext context} (Javolution)
      * of the calling thread (the one making the copy).
      * 
      * @return an object identical to this object but allocated by the calling

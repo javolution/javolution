@@ -32,11 +32,11 @@ import java.lang.CharSequence;
 
 /**
  * <p> This class provides a SAX2-compliant parser wrapping a
- *     {@link org.javolution.xml.sax.XMLReaderImpl}. This parser allocates 
+ *     {@link javolution.xml.sax.XMLReaderImpl}. This parser allocates 
  *     <code>java.lang.String</code> instances while parsing in accordance 
  *     with the SAX2 specification. For faster performance (2-5x), the use of 
- *     the SAX2-like {@link org.javolution.xml.sax.XMLReaderImpl 
- *     XMLSaxParserImpl} or better{@link org.javolution.xml.stream.XMLStreamReader 
+ *     the SAX2-like {@link javolution.xml.sax.XMLReaderImpl 
+ *     XMLSaxParserImpl} or better{@link javolution.xml.stream.XMLStreamReader 
  *     XMLStreamReader} is recommended.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>

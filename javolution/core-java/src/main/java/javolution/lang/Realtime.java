@@ -13,11 +13,11 @@ import javolution.text.Text;
 /**
  * <p> This interface identifies <a href="http://www.rtsj.org/">RTSJ</a> safe 
  *     classes with predictable response time and supporting custom {@link 
- *     org.javolution.context.AllocatorContext allocation} policies (e.g.&nbsp; 
- *     {@link org.javolution.context.StackContext "stack"} allocations).</p>
+ *     javolution.context.AllocatorContext allocation} policies (e.g.&nbsp; 
+ *     {@link javolution.context.StackContext "stack"} allocations).</p>
  *     
  * <p> Instances of this class are typically created through an 
- *     {@link org.javolution.context.ObjectFactory ObjectFactory}. For example:
+ *     {@link javolution.context.ObjectFactory ObjectFactory}. For example:
  *     [code]
  *         public final class Complex implements Realtime, ValueType {
  *             private double _real;
@@ -45,7 +45,7 @@ import javolution.text.Text;
  *     or with only static final {@link Immutable immutable} fields are 
  *     always RTSJ safe. Such classes may implement this interface
  *     and be used while running in scoped memory (RTSJ) or non-heap 
- *     {@link org.javolution.context.AllocatorContext allocators} (Javolution).</p>
+ *     {@link javolution.context.AllocatorContext allocators} (Javolution).</p>
  *    
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.0, May 6, 2007
@@ -55,7 +55,7 @@ public interface Realtime {
     /**
      * Returns the textual representation of this real-time object
      * (equivalent to <code>toString</code> except that the returned value
-     * can be {@link org.javolution.context.StackContext "stack"} allocated and 
+     * can be {@link javolution.context.StackContext "stack"} allocated and 
      * supports fast concatenation).
      * 
      * @return this object's textual representation.

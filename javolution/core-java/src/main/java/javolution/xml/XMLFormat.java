@@ -475,7 +475,7 @@ public abstract class XMLFormat <T>  {
 
         /**
          * Returns the content of a text-only element (equivalent to 
-         * {@link org.javolution.xml.stream.XMLStreamReader#getElementText 
+         * {@link javolution.xml.stream.XMLStreamReader#getElementText 
          * getStreamReader().getElementText()}).
          *
          * @return the element text content or an empty sequence if none.
@@ -650,7 +650,7 @@ public abstract class XMLFormat <T>  {
         /**
          * Returns the attribute of same type as the specified
          * default value. The default value 
-         * {@link org.javolution.text.TextFormat#getInstance TextFormat} is
+         * {@link javolution.text.TextFormat#getInstance TextFormat} is
          * used to parse the attribute value.
          *
          * @param  name the name of the attribute.
@@ -875,7 +875,7 @@ public abstract class XMLFormat <T>  {
 
         /**
          * Adds the content of a text-only element (equivalent to {@link 
-         * org.javolution.xml.stream.XMLStreamWriter#writeCharacters(CharSequence) 
+         * javolution.xml.stream.XMLStreamWriter#writeCharacters(CharSequence) 
          * getStreamWriter().writeCharacters(text)}).
          *
          * @param text the element text content or an empty sequence if none.
@@ -1014,7 +1014,7 @@ public abstract class XMLFormat <T>  {
 
         /**
          * Sets the specified attribute using its associated 
-         * {@link org.javolution.text.TextFormat#getInstance TextFormat}.
+         * {@link javolution.text.TextFormat#getInstance TextFormat}.
          * 
          * @param  name the name of the attribute.
          * @param  value the <code>Boolean</code> value for the specified attribute

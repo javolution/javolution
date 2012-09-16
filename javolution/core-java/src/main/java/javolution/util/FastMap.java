@@ -79,7 +79,7 @@ import javolution.xml.XMLSerializable;
  *     
  * <p> Custom key comparators are extremely useful for value retrieval when
  *     map's keys and argument keys are not of the same class (such as 
- *     {@link String} and {@link org.javolution.text.Text Text} 
+ *     {@link String} and {@link javolution.text.Text Text} 
  *     ({@link FastComparator#LEXICAL LEXICAL})), to substitute more efficient
  *     hash code calculations ({@link FastComparator#STRING STRING}) 
  *     or for identity maps ({@link FastComparator#IDENTITY IDENTITY}):[code]
@@ -226,7 +226,7 @@ public class FastMap <K,V>  implements Map <K,V> , Reusable,
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see org.javolution.context.PersistentContext.Reference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastMap(String id) {
         this();

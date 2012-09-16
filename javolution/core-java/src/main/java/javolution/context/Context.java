@@ -36,7 +36,7 @@ import javolution.xml.XMLSerializable;
  *
  * <p> Context objects can be inherited by multiple threads (see
  *     {@link ConcurrentContext}}, but only one thread may
- *     {@link #enter(org.javolution.context.Context) enter} a particular context 
+ *     {@link #enter(javolution.context.Context) enter} a particular context 
  *     instance at any given time (and becomes its {@link #getOwner() owner}.
  *     When the owner thread exits its context, the
  *     context is automatically {@link ObjectFactory#recycle(java.lang.Object)

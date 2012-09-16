@@ -50,8 +50,8 @@ package javolution.lang;
  *          static FastMap<Class, XMLFormat> ClassToFormat = FastMap<Class, XMLFormat>();
  *     }[/code]</p>
  *     
- * <p> Reusable objects can also be allocated from {@link org.javolution.context.ObjectFactory}
- *     in which case the {@link org.javolution.context.ObjectFactory#cleanup(java.lang.Object) cleanup}
+ * <p> Reusable objects can also be allocated from {@link javolution.context.ObjectFactory}
+ *     in which case the {@link javolution.context.ObjectFactory#cleanup(java.lang.Object) cleanup}
  *     method is automatically called when the object is recycled. For example:[code]
  *     public class Foo implements Reusable {
  *         private static final ObjectFactory<Foo> FACTORY = new ObjectFactory<Foo>() {

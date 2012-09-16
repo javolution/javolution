@@ -65,7 +65,7 @@ public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusa
      * 
      * @param id the unique identifier for this map.
      * @throws IllegalArgumentException if the identifier is not unique.
-     * @see org.javolution.context.PersistentContext.Reference
+     * @see javolution.context.PersistentContext.Reference
      */
     public FastSet(String id) {
         this(new FastMap(id));
@@ -104,7 +104,7 @@ public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusa
 
     /**
      * Returns a new, preallocated or {@link #recycle recycled} set instance
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}).
      *
      * @return a new, preallocated or recycled set instance.
@@ -115,7 +115,7 @@ public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusa
 
     /**
      * Recycles a set {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link org.javolution.context.StackContext
+     * (on the stack when executing in a {@link javolution.context.StackContext
      * StackContext}). 
      */
     public static void recycle(FastSet instance) {
@@ -146,7 +146,7 @@ public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusa
     /**
      * Returns an iterator over the elements in this set 
      * (allocated on the stack when executed in a 
-     * {@link org.javolution.context.StackContext StackContext}).
+     * {@link javolution.context.StackContext StackContext}).
      *
      * @return an iterator over this set values.
      */

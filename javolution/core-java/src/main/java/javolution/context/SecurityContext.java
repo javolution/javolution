@@ -148,7 +148,7 @@ public abstract class SecurityContext extends Context {
 
     /**
      * Indicates if this security context allows changes in the specified
-     * {@link org.javolution.lang.Configurable Configurable}
+     * {@link javolution.lang.Configurable Configurable}
      * (default <code>true</code>). Applications may override this method
      * to return <code>false</code> and prevent untrusted code to update the 
      * some or all configuration parameters.

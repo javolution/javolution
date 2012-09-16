@@ -13,15 +13,15 @@ package javolution.lang;
  *     of a reference varies based on the actual reference implementation.
  *     Here are the reachability levels for some of <i><b>J</b>avolution</i>
  *     references:<ul>
- *     <li> {@link org.javolution.context.PersistentContext.Reference PersistentContext.Reference} : 
+ *     <li> {@link javolution.context.PersistentContext.Reference PersistentContext.Reference} : 
  *          Reachable accross multiple program executions.</li>
- *     <li> {@link org.javolution.context.LocalContext.Reference LocalContext.Reference} : 
+ *     <li> {@link javolution.context.LocalContext.Reference LocalContext.Reference} : 
  *          Reachable only within the scope of the 
- *          {@link org.javolution.context.LocalContext LocalContext}
+ *          {@link javolution.context.LocalContext LocalContext}
  *          where it has been set.</li>
- *     <li> {@link org.javolution.context.AllocatorContext.Reference AllocatorContext.Reference} :
+ *     <li> {@link javolution.context.AllocatorContext.Reference AllocatorContext.Reference} :
  *          Reachable only within the scope of the  
- *          {@link org.javolution.context.AllocatorContext Allocator}
+ *          {@link javolution.context.AllocatorContext Allocator}
  *          where it has been created (factory produced).</li>
  *     </ul></p>
  * 

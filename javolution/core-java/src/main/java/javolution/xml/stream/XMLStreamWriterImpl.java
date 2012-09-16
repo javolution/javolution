@@ -27,7 +27,7 @@ import javolution.text.TextBuilder;
 
 
 /**
- * <p> This class represents a  {@link org.javolution.lang.Reusable reusable}
+ * <p> This class represents a  {@link javolution.lang.Reusable reusable}
  *     implementation of {@link XMLStreamWriter}.</p>
  *     
  * <p> The <code>writeCharacters</code> methods will escape &amp; , &lt; and 
@@ -196,9 +196,9 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
      * Sets the writer output destination for this XML stream writer. 
      *
      * @param  writer the output destination writer.
-     * @see    org.javolution.io.UTF8StreamWriter
-     * @see    org.javolution.io.UTF8ByteBufferWriter
-     * @see    org.javolution.io.AppendableWriter
+     * @see    javolution.io.UTF8StreamWriter
+     * @see    javolution.io.UTF8ByteBufferWriter
+     * @see    javolution.io.AppendableWriter
      */
     public void setOutput(Writer writer) throws XMLStreamException {
         if (_writer != null)
