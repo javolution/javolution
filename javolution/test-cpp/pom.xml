@@ -32,22 +32,22 @@
             <groupId>org.javolution</groupId>
             <artifactId>libjavolution-core-cpp</artifactId>
             <version>${project.version}</version>
-            <type>${dll.compile.dependency.type}</type>
-            <classifier>${dll.compile.dependency.classifier}</classifier>
+            <type>${compile.dependency.type}</type>
+            <classifier>${compile.dependency.classifier}</classifier>
         </dependency>
         <dependency>
             <groupId>org.javolution</groupId>
             <artifactId>libjavolution-core-cpp</artifactId>
             <version>${project.version}</version>
-            <type>${dll.runtime.dependency.type}</type>
-            <classifier>${dll.runtime.dependency.classifier}</classifier>
+            <type>${runtime.dependency.type}</type>
+            <classifier>${runtime.dependency.classifier}</classifier>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <!-- ======================================================= -->
-            <!--     Native Plugin Configuration Override                -->
+            <!--     Native Plugin Configuration Override  (EXE)         -->
             <!-- ======================================================= -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -62,8 +62,13 @@
                             <deployable>false</deployable>
                         </source>
                     </sources>
-                    <linkerSecondaryOutputExtensions></linkerSecondaryOutputExtensions>
-   
+                    <compilerStartOptions>
+                        <compilerStartOption>${native.exe.compilerOptions}</compilerStartOption>
+                    </compilerStartOptions>
+                    <linkerStartOptions>
+                        <linkerStartOption>${native.exe.linkerOptions}</linkerStartOption>
+                    </linkerStartOptions>
+                    <linkerSecondaryOutputExtensions></linkerSecondaryOutputExtensions>   
                 </configuration>
             </plugin>
             
