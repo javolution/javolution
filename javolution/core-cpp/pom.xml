@@ -29,11 +29,14 @@
                         <source><directory>${project.basedir}/src/main/c++</directory><includes><include>**/*.cpp</include></includes><deployable>true</deployable></source>
                     </sources>
                     <compilerStartOptions>
-                        <compilerStartOption>${native.compilerOptions} ${native.dll.compilerOptions}</compilerStartOption>
-                        <compilerStartOption>${native.define}JAVOLUTION_DLL_EXPORT ${native.define}JAVOLUTION_VERSION=\"${project.version}-${native.classifier}\"</compilerStartOption>
+                        <compilerStartOption>${native.dll.compilerOptions}</compilerStartOption>
+                        <compilerStartOption>${native.define}JAVOLUTION_DLL_EXPORT</compilerStartOption>
+                        <compilerStartOption>${native.define}JAVOLUTION_VERSION=\"${project.version}-${native.classifier}\"</compilerStartOption>
                    </compilerStartOptions>
-                   <linkerStartOptions><linkerStartOption>${native.linkerOptions} ${native.dll.linkerOptions}</linkerStartOption></linkerStartOptions>
-                   <linkerEndOptions><linkerEndOption>${native.debugLib}</linkerEndOption></linkerEndOptions> <!-- Will be included in javolution lib -->
+                   <linkerEndOptions>
+                        <linkerEndOption>${native.javolution.linkerOptions}</linkerEndOption>
+                   </linkerEndOptions>
+
                </configuration>
             </plugin>
         </plugins>

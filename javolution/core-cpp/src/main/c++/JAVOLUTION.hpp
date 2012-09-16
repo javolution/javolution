@@ -158,9 +158,7 @@ public:
     }
 
     T* operator->() const {
-#ifdef _DEBUG
         if (ptr == 0) Type::NullHandle::throwNullPointerException("Null Handle.");
-#endif
         return ptr;
     }
 private:
@@ -321,9 +319,7 @@ namespace JAVOLUTION {
         inline void* allocate(size_t size) {
             if (!_isEnabled || (size > BLOCK_SIZE) || (freeCount() < MAX_CPU))
                 return ::operator new(size);
-#ifdef _DEBUG
-        if (useCount() > _debugMaxUsage) _debugMaxUsage = useCount();
-#endif
+            if (useCount() > _debugMaxUsage) _debugMaxUsage = useCount();
             return _queue[++_newCount & MASK];
         }
 

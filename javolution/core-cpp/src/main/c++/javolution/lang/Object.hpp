@@ -313,12 +313,10 @@ public:
 	Array(Type::NullHandle = Type::Null) : Type::Handle<Array_API<E> >(), length(0) {} // Null
 	Array(Type::int32 len) : Type::Handle<Array_API<E> >(new Array_API<E> (len)), length(len) {}
 	E& operator[](Type::int32 index) const {
-#ifdef _DEBUG
-		if ((index < 0) || (index >= length))
+            if ((index < 0) || (index >= length))
 			Type::NullHandle::throwArrayIndexOutOfBoundsException(index, length);
-        if (this->get() == 0) Type::NullHandle::throwNullPointerException("Null Array.");
-#endif
-        return this->get()->value[index];
+            if (this->get() == 0) Type::NullHandle::throwNullPointerException("Null Array.");
+            return this->get()->value[index];
 	}
 };
 
