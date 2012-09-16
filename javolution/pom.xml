@@ -93,9 +93,10 @@
     <!-- ======================================================= -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <native.compilerConcurrency>16</native.compilerConcurrency>                
     </properties>
     <profiles>
-        <profile> <!-- On windows we have to link with DbgHelp.Lib to get backtrace working. -->
+        <profile> 
             <id>windows</id>
             <activation>
                 <os>
@@ -103,44 +104,70 @@
                 </os>
             </activation>
             <properties>
-                <dll.compile.dependency.type>lib</dll.compile.dependency.type>
-                <dll.compile.dependency.classifier></dll.compile.dependency.classifier> <!-- No classifier for .lib secondary artifact of dll -->
-                <dll.runtime.dependency.type>dll</dll.runtime.dependency.type>
-                <dll.runtime.dependency.classifier>win32</dll.runtime.dependency.classifier>
-                <lib.compile.dependency.type>lib</lib.compile.dependency.type>
-                <lib.compile.dependency.classifier>win32</lib.compile.dependency.classifier>
-
-                <native.exe>exe</native.exe>                  
                 <native.classifier>win32</native.classifier>  
-         
-                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/en-us/products/2010-editions/express -->                
-                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName> 
+                <native.dll>dll</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
                 
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>lib</compile.dependency.type>
+                <compile.dependency.classifier></compile.dependency.classifier> <!-- No classifier for .lib secondary artifact of dll -->
+                <runtime.dependency.type>dll</runtime.dependency.type>
+                <runtime.dependency.classifier>win32</runtime.dependency.classifier>
+          
+                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/en-us/products/2010-editions/express -->                
+                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName>                 
                 <native.compilerProvider>msvc</native.compilerProvider>
                 <native.compilerExecutable></native.compilerExecutable>
-                <native.compilerOptions>/EHsc /TP /W4 /Od /Zi /Fd${project.artifactId} /MDd /D_DEBUG</native.compilerOptions>
                 <native.linkerProvider>msvc</native.linkerProvider>
                 <native.linkerExecutable></native.linkerExecutable>
-                <native.linkerOptions>/DEBUG</native.linkerOptions>
                 <native.linkerSecondaryOutputExtensions>lib</native.linkerSecondaryOutputExtensions>     
                 <native.define>/D</native.define>
-                <native.compilerConcurrency>16</native.compilerConcurrency>                
-                <native.dll>dll</native.dll>  
-                <native.dll.compilerOptions></native.dll.compilerOptions>
-                <native.dll.linkerOptions>/DLL</native.dll.linkerOptions>
-                <native.debugLib>${project.basedir}\lib\windows\DbgHelp.Lib</native.debugLib>
+            
+                <!-- On windows the stack trace is only available for code compiled with optimization disabled -->    
+                <native.dll.compilerOptions>/EHsc /TP /W4 /Od /Zi /Fd${project.artifactId} /MDd /DLL</native.dll.compilerOptions>
+                <native.exe.compilerOptions>/EHsc /TP /W4 /O2 /Zi /Fd${project.artifactId} /MDd</native.exe.compilerOptions>
+                <native.dll.linkerOptions>/DEBUG /DLL</native.dll.linkerOptions>                
+                <native.exe.linkerOptions>/DEBUG</native.exe.linkerOptions>
+                
+                <!-- On windows to build the javolution dll we link with DbgHelp.Lib to get backtrace working. -->
+                <native.javolution.linkerOptions>${project.basedir}\lib\windows\DbgHelp.Lib</native.javolution.linkerOptions>                
             </properties>
         </profile>
         <profile> <!-- On linux we have to include libdl -->
             <id>linux</id>
             <activation>
                 <os>
-                    <family>linux</family>
+                    <family>unix</family>
                 </os>
             </activation>
             <properties>
-                <packaging.dynamic-library>so</packaging.dynamic-library>       
-                <linkerEndOption>-ldl</linkerEndOption>                
+             <native.classifier>linux</native.classifier>  
+                <native.dll>so</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
+                
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>so</compile.dependency.type>
+                <compile.dependency.classifier>linux</compile.dependency.classifier>
+                <runtime.dependency.type>so</runtime.dependency.type>
+                <runtime.dependency.classifier>linux</runtime.dependency.classifier>
+          
+                <native.envFactoryName></native.envFactoryName>                 
+                <native.compilerProvider>generic</native.compilerProvider>
+                <native.compilerExecutable>g++</native.compilerExecutable>
+                <native.linkerProvider>generic</native.linkerProvider>
+                <native.linkerExecutable>g++</native.linkerExecutable>
+                <native.linkerSecondaryOutputExtensions></native.linkerSecondaryOutputExtensions>     
+                <native.define>-D</native.define>
+            
+                <native.dll.compilerOptions>-Wall -O2 -g -fPIC</native.dll.compilerOptions>
+                <native.exe.compilerOptions>-Wall -O2 -g</native.exe.compilerOptions>
+                <native.dll.linkerOptions>-pthread -rdynamic -shared</native.dll.linkerOptions> <!-- Option -rdynamic to obtains backtrace -->               
+                <native.exe.linkerOptions>>-pthread -rdynamic</native.exe.linkerOptions>
+                
+                <!-- On linux to build javolution we link with the debug library to get backtrace working. -->
+                <native.javolution.linkerOptions>-ldl</native.javolution.linkerOptions>                      
             </properties>
         </profile>
         <profile> <!-- On solaris we include libdl too -->
@@ -151,11 +178,35 @@
                     <arch>sparc</arch>
                 </os>
             </activation>
-            <properties>
-                <packaging.dynamic-library>so</packaging.dynamic-library>       
-                <linkerEndOption>-ldl -ldemangle -lrt</linkerEndOption>
+             <properties>
+             <native.classifier>solaris</native.classifier>  
+                <native.dll>so</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
+                
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>so</compile.dependency.type>
+                <compile.dependency.classifier>solaris</compile.dependency.classifier>
+                <runtime.dependency.type>so</runtime.dependency.type>
+                <runtime.dependency.classifier>solaris</runtime.dependency.classifier>
+          
+                <native.envFactoryName></native.envFactoryName>                 
+                <native.compilerProvider>generic</native.compilerProvider>
+                <native.compilerExecutable>CC</native.compilerExecutable>
+                <native.linkerProvider>generic</native.linkerProvider>
+                <native.linkerExecutable>CC</native.linkerExecutable>
+                <native.linkerSecondaryOutputExtensions></native.linkerSecondaryOutputExtensions>     
+                <native.define>-D</native.define>
+            
+                <native.dll.compilerOptions>-xtarget=generic -mt -g -xO2 -xcode=pic32</native.dll.compilerOptions>
+                <native.exe.compilerOptions>-xtarget=generic -mt -g -xO2</native.exe.compilerOptions>
+                <native.dll.linkerOptions>-mt -lpthread -G</native.dll.linkerOptions>               
+                <native.exe.linkerOptions>>-mt -lpthread</native.exe.linkerOptions>
+                
+                <!-- On solaris to build javolution we link with the debug library to get backtrace working. -->
+                <native.javolution.linkerOptions>-ldl -ldemangle -lrt</native.javolution.linkerOptions>                      
             </properties>
-        </profile>
+           </profile>
     </profiles>
 
     <build>
@@ -179,22 +230,6 @@
             </plugin>
 
             <!-- ======================================================= -->
-            <!--     Custom Javadoc plugin (for reports)                 -->
-            <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.javolution</groupId>
-                <artifactId>colapi</artifactId>
-                <version>1.0.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>colorize</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- ======================================================= -->
             <!--     Native Plugin Default Configuration (EXE)           -->
             <!-- ======================================================= -->  
             <plugin>
@@ -213,7 +248,7 @@
                         <version>1.0.0</version>
                     </dependency>
                 </dependencies>       
-                <configuration> <!-- Default configuration for an executable -->
+                <configuration> <!-- Default configuration for a dynamic library -->
                     <classifier>${native.classifier}</classifier>
                     <workingDirectory>${project.build.directory}/${native.classifier}</workingDirectory>
                     <compilerOutputDirectory>${project.build.directory}/${native.classifier}/objs</compilerOutputDirectory>
@@ -223,13 +258,13 @@
                     <numberOfConcurrentCompilation>${native.compilerConcurrency}</numberOfConcurrentCompilation>        
                     <compilerProvider>${native.compilerProvider}</compilerProvider>
                     <compilerExecutable>${native.compilerExecutable}</compilerExecutable>
-                    <compilerStartOptions>
-                        <compilerStartOption>${native.compilerOptions}</compilerStartOption>
-                    </compilerStartOptions>
                     <linkerProvider>${native.linkerProvider}</linkerProvider>
                     <linkerExecutable>${native.linkerExecutable}</linkerExecutable>
+                    <compilerStartOptions>
+                        <compilerStartOption>${native.dll.compilerOptions}</compilerStartOption>
+                    </compilerStartOptions>
                     <linkerStartOptions>
-                        <linkerStartOption>${native.linkerOptions}</linkerStartOption>
+                        <linkerStartOption>${native.dll.linkerOptions}</linkerStartOption>
                     </linkerStartOptions>
                     <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
                 </configuration>

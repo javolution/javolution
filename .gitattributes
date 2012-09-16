@@ -437,7 +437,8 @@ javolution/src/site/css/javadoc.css -text svneol=unset#application/octet-stream
 javolution/src/site/doc/AIAA-2007-6184.pdf -text
 javolution/src/site/doc/Javolution-Collections.pdf -text
 javolution/src/site/doc/Man33955.pdf -text
-javolution/src/site/doc/benchmark.html -text
+javolution/src/site/doc/benchmark_cpp.html -text
+javolution/src/site/doc/benchmark_java.html -text
 javolution/src/site/doc/coding_standard.txt -text
 javolution/test-cpp/pom.xml -text
 javolution/test-cpp/src/main/c++/Main.cpp -text

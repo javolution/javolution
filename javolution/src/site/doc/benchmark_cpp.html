@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Javolution - Benchmark Results </TITLE>
+<META content="text/html; charset=utf-8" http-equiv=Content-Type>
+<META NAME="keywords" CONTENT="Javolution, benchmark">
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../css/javadoc.css" TITLE="Style">
+</HEAD>
+<BODY>
+<H3> Performance of Javolution native library (Platform: Windows XP - Intel Core i5 - 2.5 GHz - 1024M of RAM):</H3>
+<PRE>
+<B>C:\javolution\test-cpp>mvn test</B>
+...
+[exec:exec]
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST] TestSuite: javolution::lang::StringTest_API
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_Object
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_wchars
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_wstring
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_chars
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_string
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_wchar
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_char
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_int8
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_int16
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_int32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_int64
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_float32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_float64
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf_boolean
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testLength
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testSubstring_int32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testSubstring_int32_int32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testCharAt_int32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testConcat_String
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testStartsWith_String
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testStartsWith_String_int32
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testEquals_Object
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testEquals_String
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testHashCode
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testToUTF8
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testIntern
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testToWString
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testToString
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST] TestSuite: javolution::lang::EnumTest_API
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValues
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testValueOf
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testDeclaringClass
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testName
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testOrdinal
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testToString
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST] TestSuite: javolution::util::FastTableTest_API
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testIsEmpty
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testIterator
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testSubList
+Sun Sep 16 13:25:45.0140 2012 - INFO [TEST]     TestCase: testCreationDeletionSpeed
+Sun Sep 16 13:25:47.0078 2012 - INFO [TEST] Creation/Deletion Speed 515996 list/sec.
+Sun Sep 16 13:25:47.0078 2012 - INFO [TEST] TestSuite: javolution::util::FastMapTest_API
+Sun Sep 16 13:25:47.0078 2012 - INFO [TEST]     TestCase: testIsEmpty
+Sun Sep 16 13:25:47.0578 2012 - INFO [TEST]     TestCase: testGet
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST] TestSuite: javolution::util::FastSetTest_API
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testIsEmpty
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testContains
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testSize
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST] TestSuite: javolution::lang::Integer32Test_API
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testZero
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testNegative
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testPositive
+Sun Sep 16 13:25:48.0530 2012 - INFO [TEST]     TestCase: testCreationDeletionSpeed
+Sun Sep 16 13:25:49.0437 2012 - INFO [TEST] No Memory Cache - Creation/Deletion Speed 1.15737e+006 obj/sec.
+Sun Sep 16 13:25:49.0453 2012 - INFO [JAVOLUTION] Enable Memory Cache, free: 1048576, used: 0
+Sun Sep 16 13:25:49.0546 2012 - INFO [JAVOLUTION] Disable Memory Cache, free: 1048574, used: 2
+Sun Sep 16 13:25:49.0546 2012 - INFO [JAVOLUTION] Memory Cache number of allocations: 1052687
+Sun Sep 16 13:25:49.0546 2012 - INFO [JAVOLUTION] Memory Cache number of deallocations: 1052697
+Sun Sep 16 13:25:49.0546 2012 - INFO [JAVOLUTION] Memory Cache peak use: 257
+Sun Sep 16 13:25:49.0546 2012 - INFO [TEST] With Memory Cache - Creation/Deletion Speed 1.1275e+007 obj/sec.
+Sun Sep 16 13:25:49.0546 2012 - INFO [TEST] TestSuite: OSGiTest_API
+Sun Sep 16 13:25:49.0546 2012 - INFO [TEST]     TestCase: testActivator
+Sun Sep 16 13:25:49.0578 2012 - INFO [JAVOLUTION] Start Bundle: JAVOLUTION, Version: 6.0.0-SNAPSHOT-win32
+Sun Sep 16 13:25:49.0578 2012 - INFO [JAVOLUTION] Enable Memory Cache, free: 1048576, used: 0
+Sun Sep 16 13:25:49.0608 2012 - INFO [JAVOLUTION] Stop Bundle: JAVOLUTION, Version: 6.0.0-SNAPSHOT-win32
+Sun Sep 16 13:25:49.0608 2012 - INFO [JAVOLUTION] Disable Memory Cache, free: 1048565, used: 11
+Sun Sep 16 13:25:49.0608 2012 - INFO [JAVOLUTION] Memory Cache number of allocations: 1052824
+Sun Sep 16 13:25:49.0608 2012 - INFO [JAVOLUTION] Memory Cache number of deallocations: 1052825
+Sun Sep 16 13:25:49.0608 2012 - INFO [JAVOLUTION] Memory Cache peak use: 257
+Sun Sep 16 13:25:49.0608 2012 - INFO [TEST] TestSuite: javolution::lang::ThrowableTest_API
+Sun Sep 16 13:25:49.0608 2012 - INFO [TEST]     TestCase: testPrintStack
+Sun Sep 16 13:25:49.0608 2012 - ERROR [JAVOLUTION] STACK TRACE - Throwable Test
+100687E8: javolution::lang::Throwable_API::Throwable_API +0x68
+0041734D: javolution::lang::Throwable_API::newInstance +0x7d
+10077E87: junit::framework::TestResult_API::run +0x97
+00435C3F: junit::framework::TestCase_API::run +0x6f
+</PRE>
+
+<H2><A name="FAQ">FAQ:</A></H2>
+<OL>
+    <A name="FAQ-1"></A>
+    <LI><B> There seems to be a 10x speed improvement when enabling memory cache.
+            Why is that?</B>
+    <P> On windows, memory allocation for small objects is slow. To speed things up, after the Javolution 
+        C++ bundle is activated, memory is taken from a preallocated memory block instead of the heap.
+        It is thread-safe and fast (based on atomic count).
+        The preallocated block is used only for small objects; bigger objects are allocated on the heap.
+        When the cache is full, objects are allocated on the heap until there is some place freed in the cache. 
+        The library keeps track of the maximum cache usage (to help developpers in sizing the cache). 
+        </P>
+  </OL>
+
+</BODY></HTML>
