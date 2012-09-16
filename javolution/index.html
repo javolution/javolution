@@ -344,7 +344,7 @@ synchronized(_trackedServices) {
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0-SNAPSHOT - September 16, 2012</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - September 16, 2012</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -422,7 +422,7 @@ synchronized(_trackedServices) {
                                 <pre>      &lt;dependency&gt;
           &lt;groupId&gt;org.javolution&lt;/groupId&gt;
           &lt;artifactId&gt;javolution-core-java&lt;/artifactId&gt;
-          &lt;version&gt;6.0-SNAPSHOT&lt;/version&gt;
+          &lt;version&gt;6.0.0-SNAPSHOT&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
       The native dynamic library (.dll or .so) is generated from the sources using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
       <BR>
@@ -470,7 +470,7 @@ synchronized(_trackedServices) {
                                 <DIV CLASS="style9" ALIGN="center">org.osgi
                                 </DIV></TD>
                             <TD CLASS="style9">org::osgi</TD>
-                            <TD CLASS="style9">Also provides a light port of the <A HREF="http://felix.apache.org/">Apache Felix OSGi Platform</A> implementation
+                            <TD CLASS="style9">Also provides an embedded OSGi runtime (light).
                                 </TD>
                         </TR>
                         <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
@@ -669,7 +669,7 @@ synchronized(_trackedServices) {
                                     <LI><A HREF="http://www.jstatcom.com/">JStatCom</A> - A Software Framework for Data Based Analysis.</LI>
                                     <LI><A HREF="http://oval.sourceforge.net/">OVal</A> - Object Validation Framework.</LI>
                                 </UL>
-                                Known projects having a C++ port of their Java library based on <B><I>Javolution</I></B>:
+                                Known projects having a C++ port of their Java library or specifications based on <B><I>Javolution</I></B>:
                                 <UL>
                                     <LI><A HREF="http://www.osgi.org/">OSGi</A> - Included in Javolution core distribution</LI>
                                     <LI><A HREF="http://www.junit.org/">JUnit</A> - Included in Javolution core distribution</LI>
@@ -747,18 +747,18 @@ synchronized(_trackedServices) {
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
-                                    <LI CLASS="simplespacer_body"><B>September 16, 2012: Javolution 6.0-SNAPSHOT</B><BR>
+                                    <LI CLASS="simplespacer_body"><B>September 16, 2012: Javolution 6.0.0-SNAPSHOT</B><BR>
                                         This release makes it easy for Java developers to translate their Java code to C++ 
                                         or to write Java-Like C++ code without knowledge of the C++ intricacies. 
                                         <UL>
                                             <LI> Your Java-Like C++ code is robust, multi-platforms (Windows/Linux/Solaris) and 
                                                 can take advantage of any Java library which has already been ported.</LI>
-                                            <LI> Still your code can interface directly with existing C/C++ libraries</LI>
-                                            <LI> Your native application will exhibit nice real-time characterics. For example, there is
+                                            <LI> Your code can still interface directly with existing C/C++ libraries (no JNI required)</LI>
+                                            <LI> Your native application exhibits nice real-time characterics. For example, there is
                                                  no GC pause, the base class javolution::lang::Object uses intrinsic (atomic) counters to
-                                                 release memory when instances are dereferenced.</LI>
-                                            <LI> You can write OSGi bundles in C++ and execute them using the light OSGi framework provided.</LI>
-                                            <LI> Memory allocation/deallocation for small objects is optimized and fast (on par with Java)</LI>
+                                                 release memory when instances are dereferenced (intrusive smart pointer).</LI>
+                                            <LI> You can write OSGi bundles in C++ and execute them using the light OSGi runtime provided.</LI>
+                                            <LI> Memory allocation/deallocation for small objects is optimized and fast (on a par with Java)</LI>
                                             <LI> A single build tool (Maven) can be used for all your compilation needs (Java or C++)</LI>
                                         </UL>
                                     </LI>
