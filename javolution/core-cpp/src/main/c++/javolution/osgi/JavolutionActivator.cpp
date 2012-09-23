@@ -17,9 +17,6 @@ using namespace org::osgi::framework;
 using namespace javolution::log;
 using namespace javolution::osgi;
 
-// Identifying information which can be retrieved using the Linux command 'what'
-static char ident[] = "@(#)JAVOLUTION Implementation: " JAVOLUTION_VERSION;
-
 void JavolutionActivator_API::start(BundleContext context) {
     Logging_API::info(L"JAVOLUTION", L"Start Bundle: JAVOLUTION, Version: ", (String) JAVOLUTION_VERSION);
 

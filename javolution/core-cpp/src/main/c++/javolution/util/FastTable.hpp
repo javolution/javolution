@@ -41,11 +41,6 @@ class javolution::util::FastTable_API : public javolution::util::AbstractList_AP
     friend class FastTableIterator_API<E>;
 
     /**
-     * Holds list elements.
-     */
-    Type::Array<E> elements;
-
-    /**
      * Holds list current size.
      */
     Type::int32 count;
@@ -54,6 +49,11 @@ class javolution::util::FastTable_API : public javolution::util::AbstractList_AP
      * Holds this list mutex.
      */
     Type::Mutex mutex;
+
+    /**
+     * Holds list elements.
+     */
+    Type::Array<E> elements;
 
 public:
 

@@ -76,7 +76,7 @@ public:
         if ((length <= 0) && ((E)length)) return ; // Would not compile if E is not a primitive type.
     	E* s = src + srcPos;
     	E* d = dest + destPos;
-    	std::memcpy(d, s, length * sizeof(E));
+    	memcpy(d, s, length * sizeof(E));
     }
 
 };

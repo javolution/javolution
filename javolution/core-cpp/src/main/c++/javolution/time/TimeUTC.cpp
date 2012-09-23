@@ -5,13 +5,13 @@
  */
 #include "javolution/time/TimeUTC.hpp"
 #include "javolution/lang/StringBuilder.hpp"
+#include <stdio.h>
 
 using namespace javolution::lang;
 using namespace javolution::time;
 
 #if defined (_WINDOWS)
 
-#include <stdio.h>
 #include <sys/timeb.h>
 #include <time.h>
 

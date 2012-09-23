@@ -93,7 +93,7 @@
     <!-- ======================================================= -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <native.compilerConcurrency>16</native.compilerConcurrency>                
+        <native.compilerConcurrency>1</native.compilerConcurrency>                
     </properties>
     <profiles>
         <profile> 
@@ -164,7 +164,7 @@
                 <native.dll.compilerOptions>-Wall -O2 -g -fPIC</native.dll.compilerOptions>
                 <native.exe.compilerOptions>-Wall -O2 -g</native.exe.compilerOptions>
                 <native.dll.linkerOptions>-pthread -rdynamic -shared</native.dll.linkerOptions> <!-- Option -rdynamic to obtains backtrace -->               
-                <native.exe.linkerOptions>>-pthread -rdynamic</native.exe.linkerOptions>
+                <native.exe.linkerOptions>-pthread -rdynamic</native.exe.linkerOptions>
                 
                 <!-- On linux to build javolution we link with the debug library to get backtrace working. -->
                 <native.javolution.linkerOptions>-ldl</native.javolution.linkerOptions>                      

@@ -9,7 +9,7 @@
 #include "junit/framework/TestCase.hpp"
 #include "javolution/osgi/ActivatorA.hpp"
 #include "javolution/osgi/ActivatorB.hpp"
-#include "javolution/osgi/JAVOLUTIONActivator.hpp"
+#include "javolution/osgi/JavolutionActivator.hpp"
 #include "javolution/osgi/OSGi.hpp"
 
 namespace javolution {

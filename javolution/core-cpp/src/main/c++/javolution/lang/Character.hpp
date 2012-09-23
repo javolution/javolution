@@ -65,7 +65,7 @@ public:
       * This method throws an overflow error if this character cannot
       * be represented as an ascii character.
       */
-     char asciiValue() const {
+     unsigned char asciiValue() const {
      	if (_value > 127) throw ArithmeticException_API::newInstance("wchar to ascii overflow");
          return (char) _value;
      }
@@ -76,10 +76,6 @@ public:
     Type::wchar charValue() const {
         return _value;
     }
-    Type::wchar wcharValue() const { // For backward compatibility.
-          return _value; // TODO: Remove
-      }
-
 
     /**
      * Returns the textual representation of this Character (string of length 1).
@@ -139,10 +135,10 @@ public:
 
 inline javolution::lang::Character& javolution::lang::Character_API::valueOf(char ascii) { // Reference ok, static instance.
     static Character* characters = getASCIICharacters(); // To avoid C++ initialization fiasco.
-    return characters[ascii]; // IndexOutOfBound exception if character is not ASCII.
+    return characters[(unsigned char)ascii]; // IndexOutOfBound exception if character is not ASCII.
 }
 inline javolution::lang::Character javolution::lang::Character_API::valueOf(Type::wchar value) {
-    return (value < 128) ? Character_API::valueOf((char)value) : new Character_API(value);
+    return (value < 128) ? Character_API::valueOf((char)value) : Character(new Character_API(value));
 }
 inline Type::boolean javolution::lang::Character_API::equals(javolution::lang::Object obj) const {
     Character that = Type::dynamic_handle_cast<Character_API>(obj);
