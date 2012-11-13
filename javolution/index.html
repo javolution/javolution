@@ -211,15 +211,8 @@
                                     <LI> Simple yet flexible <A HREF="target/site/apidocs/javolution/lang/Configurable.html">configuration</A> management
                                         of your application.</LI>
                                     <LI> <IMG SRC="src/site/css/img/new.gif" /> <B><I>Javolution</I></B> makes it easy to port <b>any</b> Java application 
-                                         to C++ for native compilation (maven based) or to write Java-Like code directly in C++.</LI> 
-<pre>// Example of C++ code (from org.osgi.util.tracker.ServiceTracker) 
-synchronized(_trackedServices) {
-    for (int i = 0; i &lt; serviceReferences.length; i++) {
-        Object service = _customizer->addingService(serviceReferences[i]);
-        _trackedServices->put(serviceReferences[i], service);
-    }
-    _trackingCount = 0;
-}</pre>
+                                         to C++ for native compilation (maven based) or to write Java-Like code directly in C++ 
+                                         (see <A HREF="src/site/doc/Javolution_Cpp_Overview.pdf">Javolution C++ Overview)</A>.</LI> 
                                 </UL></TD>
                         </TR>
                     </TABLE>
