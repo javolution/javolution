@@ -27,7 +27,7 @@ public:
         return ActivatorB(new ActivatorB_API());
     }
 
-    void start(org::osgi::framework::BundleContext ctx) {
+    void start(org::osgi::framework::BundleContext const& ctx) {
         ctx->registerService(
                 ServiceB_API::NAME,
                 ServiceBImpl_API::newInstance(),
@@ -39,7 +39,7 @@ public:
         trackerServiceA->open();
     }
 
-    void stop(org::osgi::framework::BundleContext ctx) {
+    void stop(org::osgi::framework::BundleContext const& ctx) {
         trackerServiceA->close();
         trackerServiceA = Type::Null;
     }

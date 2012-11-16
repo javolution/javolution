@@ -8,5 +8,5 @@
 using namespace javolution::lang;
 
 void ThrowableTest_API::testPrintStack() {
-    Throwable error = Throwable_API::newInstance(L"Throwable Test");
+    Throwable error = new Throwable_API(L"Throwable Test");
 }
