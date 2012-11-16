@@ -39,7 +39,7 @@ class javolution::lang::Boolean_API : public virtual javolution::lang::Object_AP
     Type::boolean _value;
 
     /**
-     * Private constructor (class final).
+     * Private constructor (factory methods should be used).
      */
     Boolean_API(Type::boolean value) : _value(value) {
     }

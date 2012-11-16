@@ -32,7 +32,7 @@ namespace org {
 class org::osgi::framework::InvalidSyntaxException_API : public virtual javolution::lang::Exception_API {
 protected:
 
-    InvalidSyntaxException_API(javolution::lang::String message) :
+    InvalidSyntaxException_API(javolution::lang::String const& message) :
         javolution::lang::Exception_API(message) {
     };
 
@@ -43,7 +43,7 @@ public:
      *
      * @param message the exception message.
      */
-    static InvalidSyntaxException newInstance(String message = Type::Null) {
+    static InvalidSyntaxException newInstance(String const& message = Type::Null) {
         return new InvalidSyntaxException_API(message);
     }
 

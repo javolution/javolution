@@ -65,7 +65,7 @@ public:
      * Inserts all of the elements in the specified collection into this list
      * at the specified position (optional operation).
      */
-    virtual Type::boolean addAll(Type::int32 index, javolution::util::Collection<E> c) = 0;
+    virtual Type::boolean addAll(Type::int32 index, javolution::util::Collection<E> const& c) = 0;
 
     /**
      * Returns the element at the specified position in this list.
@@ -99,13 +99,13 @@ public:
      * Returns the index in this list of the first occurrence of the specified element,
      * or <code>-1</code> if this list does not contain this element.
      */
-     virtual Type::int32 indexOf(javolution::lang::Object o) const = 0;
+     virtual Type::int32 indexOf(javolution::lang::Object const& o) const = 0;
 
     /**
      * Returns the index in this list of the last occurrence of the specified element,
      * or <code>-1</code> if this list does not contain this element.
      */
-     virtual Type::int32 lastIndexOf(javolution::lang::Object o) const = 0;
+     virtual Type::int32 lastIndexOf(javolution::lang::Object const& o) const = 0;
 
      /**
       *  Returns a view of the portion of this list between the specified fromIndex,
@@ -119,7 +119,7 @@ public:
      * both lists have the same size, and all corresponding pairs of elements in
      * the two lists are <i>equal</i>.
      */
-    virtual Type::boolean equals(javolution::lang::Object o) const = 0;
+    virtual Type::boolean equals(javolution::lang::Object const& o) const = 0;
 
     /**
      * Returns the hash code value for this list. The hash code of a list

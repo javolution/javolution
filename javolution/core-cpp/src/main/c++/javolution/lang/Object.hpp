@@ -6,7 +6,7 @@
 #ifndef _JAVOLUTION_LANG_OBJECT_HPP
 #define _JAVOLUTION_LANG_OBJECT_HPP
 
-#include "JAVOLUTION.hpp"
+#include "Javolution.hpp"
 
 // Declares the namespace here to avoid unnecessary indentation later.
 namespace javolution {
@@ -15,8 +15,7 @@ namespace javolution {
         typedef Type::Handle<Object_API> Object;
         class Class_ANY_API; // Forward reference.
         typedef Type::Handle<Class_ANY_API> Class_ANY;
-        class JAVOLUTION_String; // Forward reference.
-        typedef JAVOLUTION_String String;
+        class String;
     }
 }
 // Methods required by Type::Handle.
@@ -30,8 +29,8 @@ namespace Type {
  *     API. For such API, classes <b>and</b> interfaces should derive directly
  *     or indirectly from <code>Object_API</code>.</p>
  *
- * <p> Many classes from this JAVOLUTION have been translated from Open Source
- *     Java code (e.g. JAVOLUTION Java, Javolution, OSGi Java Spec, JUnit, etc.)
+ * <p> Many classes from Javolution have been translated from Open Source
+ *     Java code (e.g. Java, Javolution, OSGi Java Spec, JUnit, etc.)
  *     Therefore for consistency and maintainability we follow the same
  *     <a href="http://geosoft.no/development/javastyle.html">Java Style</a>.
  *     Java objects are represented using Type::Handle<XXX_API> where XXX is
@@ -43,53 +42,49 @@ namespace Type {
  *
  *     #include "javolution/lang/Object.hpp"
  *     #include "com/bar/Bar.hpp"
- *     namespace com {                              // Namespace declaration to avoid indenting later.
+ *     namespace com { // Namespace declaration to avoid indenting later.
  *         namespace bar {
  *            class Foo_API;
- *            typedef Type::Handle<Foo_API> Foo;     // Foo is the handle of Foo_API
+ *            typedef Type::Handle<Foo_API> Foo; // Foo is the handle of Foo_API
  *        }
  *     }
  *     class com::bar::Foo_API : public virtual javolution::lang::Object_API {
  *         Bar _bar;                       // Private member.
  *     public:
- *         Foo_API(Bar bar) : _bar(bar) {} // Constructor (e.g. Foo foo = new Foo_API(bar);)
- *         virtual void g() { ... };       // Member method implemented in header.
- *         JAVOLUTION_DLL virtual void f();       // Member method implemented in body.
+ *         Foo_API(Bar bar) : _bar(bar) {}  // Constructor (e.g. Foo foo = new Foo_API(bar);)
+ *         virtual void g() { ... };        // Member method implemented in header.
+ *         JAVOLUTION_DLL virtual void f(); // Member method implemented in body.
  *     }
  *
  *     </code></pre></p>
  *
- * <p> JAVOLUTION handles, like standard C++ pointers, are initialized to null.
+ * <p> Javolution handles, like standard C++ pointers, are initialized to null.
  *     The constant <code>Type::Null</code> can be used for resetting or
  *     testing of handles. Accessing members from a null handle results
  *     in a <code>NullPointerException</code> being thrown.</p>
  *
- * <p> JAVOLUTION handles can be implicitly created from raw pointers.<pre><code>
+ * <p> Javolution handles can be implicitly created from raw pointers.<pre><code>
  *
  *     <pre><code>
- *
  *     // Allows chaining, e.g. sb->append("Duration: ")->append(t)->append("ms")
  *     StringBuilder StringBuilder_API::append(...) {
  *         ...
  *         return this; // Implicit conversion from StringBuilder_API* to StringBuilder.
  *     }
- *
  *     </code></pre>
  *
  *     To facilitate object casting Type::static_handle_cast and
  *     Type::dynamic_handle_cast are provided.
  *
  *     <pre><code>
- *
- *     Type::boolean equals(Object obj) const {      // String_API::equals(Object)
+ *     Type::boolean equals(Object obj) const {  // String_API::equals(Object)
  *        String that = Type::dynamic_handle_cast<String_API>(obj);
  *        if (that == Type::Null) return false;
  *        return equals(that);
  *     }
- *     Type::boolean equals(String const& that) const {
+ *     Type::boolean equals(String const& that) const { 
  *        return _wchars == that->_wchars;
  *     }
- *
  *     </code></pre>
  *
  *     Special precaution must be taken in case of cycles (object referencing
@@ -98,29 +93,25 @@ namespace Type {
  *     automatic deletion when there is no external reference to it.
  *
  *     <pre><code>
- *
  *     class ServiceTracker_API : public virtual ServiceTrackerCustomizer_API {
  *          ServiceTrackerCustomizer _customizer;
- *          ServiceTracker_API(ServiceTrackerCustomizer customizer) {'
- *              _customizer = customizer;
- *              if (customizer == Type::Null) {
- *                  _customizer.set(this);  // The set method does not increment the reference count.
+ *          ServiceTracker_API(ServiceTrackerCustomizer customizer) {
+ *              _customizer = customizer; 
+ *              if (customizer == Type::Null) { // Then the customizer is itself.
+ *                  _customizer.set(this); // The set method does not increment the reference count.
  *              }
  *          }
  *     }
- *
  *     </code></pre>
- *
  *     </p>
  *
  * <p> Any object can be output directly (standard or wide stream).
  *
  *     <pre><code>
- *
  *     List<String> list = new FastTable_API<String>();
- *     list->add("first");
- *     list->add("second");
- *     list->add("third");
+ *     list->add(L"first");
+ *     list->add(L"second");
+ *     list->add(L"third");
  *     list->add(Type::Null);
  *     std::cout << list << std::endl; // Displays list->toString() content.
  *
@@ -132,38 +123,10 @@ namespace Type {
  * <p> Concatenations between string literals and objects are supported,
  *     e.g. <code>String str = L"Hello " + user;</code>.</p>
  *
- * <p> Object handles should be stored and manipulated by value.
- *     'const&' are authorized for direct getter/setter and constructors.
- *     All other usage is dangerous and should be documented.<pre><code>
- *
- *         Temperature const& getTemperature() const { // Ok. Direct member access.
- *             return memberTemperature;
- *         }
- *
- *         void setTemperature(Temperature const& t) { // Ok. Direct member setting.
- *              memberTemperature = t; // Self assignment supported (e.g. setTemperature(getTemperature))
- *         }
- *
- *         Type::boolean equals(Object that) const; // Ok. This method accepts any handles referencing
- *                                                 // an Object_API subclass (implicit constructor)
- *
- *         Temperature const& getTemperature() const { // Wrong. Not a direct member access.
- *             return Temperature_API::valueOf(20, CELSIUS);  // Stack allocated instance.
- *         }
- *
- *         void setTemperature(Temperature const& t) { // Wrong. Not a direct member setting.
- *             memberTemperature = Type::Null;
- *             ...
- *             memberTemperature = t; // setTemperature(getTemperature()) would crash.
- *         }
- *
- *         Type::boolean equals(Object const& that) const; // Wrong. This method does not override Object_API::equals(Object)
- *                                                        // There is no class hierarchy between handles.
- *
- *     </code></pre>
- *
- *     JAVOLUTION handles have the same size as regular pointers, using handles by reference
- *     instead of by value is interesting only for very simple/short methods (e.g. getter/setter).
+ * <p> Object handles should be always stored and manipulated by value.
+ *     'const&' is used solely when passing handles as parameters 
+ *     (as long as the method implementation cannot cause the dereferencing 
+ *      of the parameter). Functions returning handles return them by value.
  * </p>
  *
  * @see  <a href="http://java.sun.com/javase/6/docs/api/java/lang/Object.html">Java - Object</a>
@@ -180,7 +143,7 @@ class javolution::lang::Object_API  {
 	/**
 	 * Holds memory cache for small objects.
 	 */
-	JAVOLUTION_DLL static JAVOLUTION::MemoryCache _memoryCache;
+	JAVOLUTION_DLL static Javolution::MemoryCache _memoryCache;
 
 public:
 
@@ -215,7 +178,7 @@ public:
      * @return <code>true</code> if this object is the same as the argument;
      *         <code>false</code> otherwise.
      */
-    virtual Type::boolean equals(Object obj) const {
+    virtual Type::boolean equals(Object const& obj) const {
     	return this == obj.get();
     }
 
@@ -247,7 +210,7 @@ public:
     /**
      * Returns the memory cache used by Object_API and its sub-classes.
      */
-    static JAVOLUTION::MemoryCache& getMemoryCache() {
+    static Javolution::MemoryCache& getMemoryCache() {
     	return _memoryCache;
     }
 
@@ -264,7 +227,6 @@ public:
     inline void operator delete (void* mem) {
      	_memoryCache.deallocate(mem);
     }
-
 
 private:
 

@@ -126,7 +126,7 @@ public:
      * @param timeout the maximum time to wait. If less than
      * or equal to zero, do not wait at all.
      */
-    JAVOLUTION_DLL void timedWait(javolution::lang::Object obj, Type::int64 timeout) const;
+    JAVOLUTION_DLL void timedWait(javolution::lang::Object const& obj, Type::int64 timeout) const;
 
     /**
      * Performs a timed <code>Thread.join</code> using this time unit.
@@ -136,7 +136,7 @@ public:
      * @param timeout the maximum time to wait. If less than
      * or equal to zero, do not wait at all.
      */
-    JAVOLUTION_DLL void timedJoin(javolution::lang::Thread thread, Type::int64 timeout) const;
+    JAVOLUTION_DLL void timedJoin(javolution::lang::Thread const& thread, Type::int64 timeout) const;
 
     /**
      * Performs a <code>Thread.sleep</code> using this unit.

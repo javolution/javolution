@@ -13,7 +13,7 @@ using namespace javolution::util;
 
 
 // Local method to return the list of enums for the given type.
-FastTable<Enum_ANY> getEnums(Class_ANY enumType) {
+FastTable<Enum_ANY> getEnums(Class_ANY const& enumType) {
     static FastMap<Class_ANY, FastTable<Enum_ANY> > classToEnums
         = FastMap_API<Class_ANY, FastTable<Enum_ANY> >::newInstance();
     FastTable<Enum_ANY> enums;
@@ -26,14 +26,14 @@ FastTable<Enum_ANY> getEnums(Class_ANY enumType) {
     return enums;
 }
 
-Enum_ANY Enum_ANY_API::newInstance(Class_ANY enumType, String name, Type::int32 ordinal) {
+Enum_ANY Enum_ANY_API::newInstance(Class_ANY const& enumType, String const& name, Type::int32 ordinal) {
     FastTable<Enum_ANY> enums = getEnums(enumType);
     Enum_ANY newEnum = new Enum_ANY_API(enumType, name->intern(), ordinal);
     enums->add(newEnum);
     return newEnum;
 }
 
-Enum_ANY Enum_ANY_API::newInstance(Class_ANY enumType, String name) {
+Enum_ANY Enum_ANY_API::newInstance(Class_ANY const& enumType, String const& name) {
     FastTable<Enum_ANY> enums = getEnums(enumType);
     Type::int32 n = enums->size();
     Type::int32 ordinalValue = (n != 0) ? enums->get(n-1)->ordinal() + 1 : 0;
@@ -42,7 +42,7 @@ Enum_ANY Enum_ANY_API::newInstance(Class_ANY enumType, String name) {
     return newEnum;
 }
 
-Type::Array<Enum_ANY> Enum_ANY_API::values(Class_ANY enumType) {
+Type::Array<Enum_ANY> Enum_ANY_API::values(Class_ANY const& enumType) {
     FastTable<Enum_ANY> enums = getEnums(enumType);
     Type::int32 n = enums->size();
     Type::Array< Enum_ANY > enumArray = Type::Array<Enum_ANY>(n);
@@ -52,7 +52,7 @@ Type::Array<Enum_ANY> Enum_ANY_API::values(Class_ANY enumType) {
     return enumArray;
 }
 
-Enum_ANY Enum_ANY_API::valueOf(Class_ANY enumType, String name) {
+Enum_ANY Enum_ANY_API::valueOf(Class_ANY const& enumType, String const& name) {
     FastTable<Enum_ANY> enums = getEnums(enumType);
     Type::int32 n = enums->size();
     for (Type::int32 i=0; i < n; i++) {

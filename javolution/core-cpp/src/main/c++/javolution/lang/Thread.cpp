@@ -57,7 +57,7 @@ void javolution::lang::Thread_API::sleep(Type::int64 msec) {
 	  nanosleep(&sleepTime, &remainingSleepTime);
 }
 
-javolution::lang::Thread_API::Thread_API(Runnable target, String name) :
+javolution::lang::Thread_API::Thread_API(Runnable const& target, String const& name) :
 		_target(target), _name(name) {
     _nativeThreadPtr = new pthread_t();
 }
@@ -91,7 +91,7 @@ void javolution::lang::Thread_API::join() {
 void javolution::lang::Thread_API::sleep(Type::int64 millis) {
     Sleep((DWORD)millis); // Windows::Thread method.
 }
-javolution::lang::Thread_API::Thread_API(Runnable target, String name) : _target(target), _name(name) {
+javolution::lang::Thread_API::Thread_API(Runnable const& target, String const& name) : _target(target), _name(name) {
 }
 javolution::lang::Thread_API::~Thread_API() {
 }

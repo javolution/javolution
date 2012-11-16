@@ -54,9 +54,9 @@ public:
      * @param msg/obj the debug message being formatted and logged.
      */
     JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg);
-    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object obj);
-    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2);
-    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Object obj2);
+    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object const& obj);
+    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2);
+    JAVOLUTION_DLL static void debug(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Object const& obj2);
 
     /**
      * Logs the specified informative message if informative logging is
@@ -68,9 +68,9 @@ public:
      * @param msg/obj the informative message being formatted and logged.
      */
     JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg);
-    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object obj);
-    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2);
-    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Object obj2);
+    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object const& obj);
+    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2);
+    JAVOLUTION_DLL static void info(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Object const& obj2);
 
     /**
      * Logs the specified warning message if warning logging is
@@ -82,9 +82,9 @@ public:
      * @param msg/obj the warning message being formatted and logged.
      */
     JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg);
-    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object obj);
-    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2);
-    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Object obj2);
+    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object const& obj);
+    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2);
+    JAVOLUTION_DLL static void warning(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Object const& obj2);
 
     /**
      * Logs the specified error message if error logging is
@@ -96,9 +96,9 @@ public:
      * @param msg/obj the warning message being formatted and logged.
      */
     JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object obj);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Object obj2);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object const& obj);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Object const& obj2);
 
     /**
      * Logs the specified error and error message if error logging is
@@ -110,11 +110,11 @@ public:
      * @param msg/obj the warning message being formatted and logged.
      * @param thrown the error being thrown.
      */
-    JAVOLUTION_DLL static void error(const wchar_t* subject, javolution::lang::Throwable thrown);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Throwable thrown);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object obj, javolution::lang::Throwable thrown);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Throwable thrown);
-    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object obj1, const wchar_t* msg2, javolution::lang::Object obj2, javolution::lang::Throwable thrown);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, javolution::lang::Throwable const& thrown);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Throwable const& thrown);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg, javolution::lang::Object const& obj, javolution::lang::Throwable const& thrown);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Throwable const& thrown);
+    JAVOLUTION_DLL static void error(const wchar_t* subject, const wchar_t* msg1, javolution::lang::Object const& obj1, const wchar_t* msg2, javolution::lang::Object const& obj2, javolution::lang::Throwable const& thrown);
 
     //////////////////////
     // LogFilterService //

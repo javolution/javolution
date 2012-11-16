@@ -45,7 +45,7 @@ public:
      *
      * @param name the name of the test suite.
      */
-    TestSuite_API(javolution::lang::String name) {
+    TestSuite_API(javolution::lang::String const& name) {
         _name = name;
         _tests = new javolution::util::FastTable_API<Test>();
     };
@@ -55,21 +55,21 @@ public:
      *
      * @param name the name of the test suite.
      */
-    static TestSuite newInstance(javolution::lang::String name) {
+    static TestSuite newInstance(javolution::lang::String const& name) {
         return new TestSuite_API(name);
     }
 
     /**
      *  Returns the name of the test suite.
      */
-    javolution::lang::String const& getName() {
+    javolution::lang::String getName() {
         return _name;
     }
 
     /**
       * Adds a test to the suite.
       */
-     virtual void addTest(TestCase test) {
+     virtual void addTest(TestCase const& test) {
          _tests->add(test);
      }
 
@@ -83,7 +83,7 @@ public:
     }
 
     // Implements test.
-    virtual void run(TestResult result) {
+    virtual void run(TestResult const& result) {
        result->startTest(this);
        for (int i=0; i < _tests->size(); i++) {
             _tests->get(i)->run(result);

@@ -33,7 +33,7 @@ public:
      * Returns <code>true</code> if the service's properties match this Filter;
      * <code>false</code> otherwise.
      */
-     virtual Type::boolean match(ServiceReference reference) const = 0;
+     virtual Type::boolean match(ServiceReference const& reference) const = 0;
 
 };
 

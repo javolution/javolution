@@ -29,12 +29,7 @@ namespace javolution {
 class javolution::lang::IllegalArgumentException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    /**
-     * Creates an illegal argument exception having the specified message.
-     *
-     * @param message the error message.
-     */
-    IllegalArgumentException_API(String message) :
+    IllegalArgumentException_API(String const& message) :
         RuntimeException_API(message) {
     };
 
@@ -45,7 +40,7 @@ public:
      *
      * @param message the exception message.
      */
-    static IllegalArgumentException newInstance(String message = Type::Null) {
+    static IllegalArgumentException newInstance(String const& message = Type::Null) {
         return new IllegalArgumentException_API(message);
     }
 };

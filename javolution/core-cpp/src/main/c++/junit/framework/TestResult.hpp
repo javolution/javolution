@@ -40,7 +40,6 @@ class junit::framework::TestResult_API : public virtual javolution::lang::Object
     Type::int32 _runCount;
     Type::int32 _failureCount;
     Type::int32 _errorCount;
-    std::ofstream _tusarFile;
 
 public:
 
@@ -48,10 +47,6 @@ public:
       * Default constructor.
       */
      TestResult_API() : _runCount(0), _failureCount(0), _errorCount(0) {
-         _tusarFile.open("test-result.xml", std::ios::out | std::ios::trunc );
-         _tusarFile << "<?xml version='1.0' encoding='UTF-8'?>" << std::endl;
-         _tusarFile << "<tusar xmlns_xsi='http://www.w3.org/2001/XMLSchema-instance' version='1.0'>" << std::endl;
-         _tusarFile << "<tests>" << std::endl;
      };
 
      /**

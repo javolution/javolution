@@ -36,20 +36,20 @@ namespace javolution {
 class javolution::internal::osgi::FilterImpl_API : public virtual Filter_API {
 public: // Internal classes can have public members visibility.
 
-	String _className;
-	String _filterString;
+    String _className;
+    String _filterString;
 
-    FilterImpl_API(String filterString) {
+    FilterImpl_API(String const& filterString) {
         _filterString = filterString;
         if (!filterString->startsWith(Constants_API::OBJECTCLASS, 1))
-        		throw UnsupportedOperationException_API::newInstance();
-	    // Filter is : "(<Constants_API::OBJECT_CLASS>=<className>)"
+            throw UnsupportedOperationException_API::newInstance();
+        // Filter is : "(<Constants_API::OBJECT_CLASS>=<className>)"
         Type::int32 classNameStartIndex = Constants_API::OBJECTCLASS->length() + 2;
-	    _className = filterString->substring(classNameStartIndex, filterString->length()-1);
+        _className = filterString->substring(classNameStartIndex, filterString->length() - 1);
     }
 
-    Type::boolean match(ServiceReference reference) const {
-        ServiceReferenceImpl sri = Type::dynamic_handle_cast<ServiceReferenceImpl_API>(reference);
+    Type::boolean match(ServiceReference const& reference) const {
+        ServiceReferenceImpl sri = Type::dynamic_handle_cast<ServiceReferenceImpl_API > (reference);
         return sri->_serviceName->equals(_className);
     }
 

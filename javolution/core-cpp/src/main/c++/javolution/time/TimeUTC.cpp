@@ -33,7 +33,7 @@ String TimeUTC_API::toString() const {
 	String ms = String_API::valueOf(milliseconds);
 	while (ms->length() < 4) ms = "0" + ms;
 	timeline[19] = 0;
-	StringBuilder tmp = new StringBuilder_API();
+	StringBuilder tmp = StringBuilder_API::newInstance();
 	tmp->append(timeline)->append('.')->append(ms)->append(' ')->append(year);
 	return tmp->toString();
 }

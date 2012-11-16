@@ -91,7 +91,7 @@ public:
      * Copies all of the mappings from the specified map to this map
      * (optional operation).
      */
-    virtual void putAll(javolution::util::Map<K, V> m) = 0;
+    virtual void putAll(javolution::util::Map<K, V> const& m) = 0;
 
     /**
      * Removes all of the mappings from this map (optional operation).
@@ -146,7 +146,7 @@ public:
     /**
      * Compares the specified object with this entry for equality.
      */
-    virtual Type::boolean equals(javolution::lang::Object o) const = 0;
+    virtual Type::boolean equals(javolution::lang::Object const& o) const = 0;
 
     /**
      * Returns the hash code value for this map entry.  The hash code

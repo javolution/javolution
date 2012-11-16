@@ -29,7 +29,7 @@ namespace javolution {
 class javolution::util::NoSuchElementException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    NoSuchElementException_API(javolution::lang::String message) :
+    NoSuchElementException_API(javolution::lang::String const& message) :
         javolution::lang::RuntimeException_API(message) {
     };
 
@@ -40,7 +40,7 @@ public:
      *
      * @param message the exception message.
      */
-    static NoSuchElementException newInstance(javolution::lang::String message = Type::Null) {
+    static NoSuchElementException newInstance(javolution::lang::String const& message = Type::Null) {
         return new NoSuchElementException_API(message);
     }
 

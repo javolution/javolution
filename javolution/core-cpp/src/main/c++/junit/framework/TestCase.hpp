@@ -96,7 +96,7 @@ public:
     }
 
     // Implements junit::framework::Test
-    virtual void run(TestResult result) {
+    virtual void run(TestResult const& result) {
         result->run(this);
     }
 

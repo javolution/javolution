@@ -44,7 +44,7 @@ public:
      * Asserts that a condition is true. If it isn't it throws
      * an AssertionFailedError with the given message.
      */
-    static void assertTrue(javolution::lang::String message, Type::boolean condition) {
+    static void assertTrue(javolution::lang::String const& message, Type::boolean condition) {
         if (!condition)
             fail(message);
     }
@@ -61,7 +61,7 @@ public:
      * Asserts that a condition is false. If it isn't it throws
      * an AssertionFailedError with the given message.
      */
-    static void assertFalse(javolution::lang::String message, Type::boolean condition) {
+    static void assertFalse(javolution::lang::String const& message, Type::boolean condition) {
         assertTrue(message, !condition);
     }
 
@@ -76,7 +76,7 @@ public:
     /**
      * Fails a test with the given message.
      */
-    static void fail(javolution::lang::String message) {
+    static void fail(javolution::lang::String const& message) {
         throw AssertionFailedError_API::newInstance(message);
     }
 
@@ -91,7 +91,7 @@ public:
      * Asserts that two objects are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertEquals(javolution::lang::String const& message, javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         if (expected == Type::Null && actual == Type::Null)
             return;
         if (expected != Type::Null && expected->equals(actual))
@@ -103,14 +103,14 @@ public:
      * Asserts that two objects are equal. If they are not
      * an AssertionFailedError is thrown.
      */
-    static void assertEquals(javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertEquals(javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         assertEquals(L"assertEquals(javolution::lang::Object, javolution::lang::Object)", expected, actual);
     }
 
     /**
      * Asserts that two strings are equal.
      */
-    static void assertEquals(javolution::lang::String message, javolution::lang::String const& expected, javolution::lang::String const& actual) {
+    static void assertEquals(javolution::lang::String const& message, javolution::lang::String const& expected, javolution::lang::String const& actual) {
         if (expected == Type::Null && actual == Type::Null)
             return;
         if (expected != Type::Null && expected->equals(actual))
@@ -130,7 +130,7 @@ public:
      * an AssertionFailedError is thrown with the given message.  If the expected
      * value is infinity then the delta value is ignored.
      */
-    static void assertEquals(javolution::lang::String message, Type::float64 expected, Type::float64 actual, Type::float64 delta) {
+    static void assertEquals(javolution::lang::String const& message, Type::float64 expected, Type::float64 actual, Type::float64 delta) {
         if (!(abs(expected - actual) <= delta))
             failNotEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
@@ -148,7 +148,7 @@ public:
      * are not an AssertionFailedError is thrown with the given message. If the
      * expected value is infinity then the delta value is ignored.
      */
-    static void assertEquals(javolution::lang::String message, Type::float32 expected, Type::float32 actual, Type::float32 delta) {
+    static void assertEquals(javolution::lang::String const& message, Type::float32 expected, Type::float32 actual, Type::float32 delta) {
         if (!(abs(expected - actual) <= delta))
             failNotEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
@@ -165,7 +165,7 @@ public:
      * Asserts that two longs are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::int64 expected, Type::int64 actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::int64 expected, Type::int64 actual) {
         assertEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
 
@@ -180,7 +180,7 @@ public:
      * Asserts that two Type::boolean are equals. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::boolean expected, Type::boolean actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::boolean expected, Type::boolean actual) {
         if (expected != actual)
             failNotEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
@@ -196,7 +196,7 @@ public:
      * Asserts that two bytes are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::int8 expected, Type::int8 actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::int8 expected, Type::int8 actual) {
         assertEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
 
@@ -211,7 +211,7 @@ public:
      * Asserts that two chars are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::wchar expected, Type::wchar actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::wchar expected, Type::wchar actual) {
         assertEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
 
@@ -226,7 +226,7 @@ public:
      * Asserts that two shorts are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::int16 expected, Type::int16 actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::int16 expected, Type::int16 actual) {
         assertEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
 
@@ -241,7 +241,7 @@ public:
      * Asserts that two ints are equal. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertEquals(javolution::lang::String message, Type::int32 expected, Type::int32 actual) {
+    static void assertEquals(javolution::lang::String const& message, Type::int32 expected, Type::int32 actual) {
         assertEquals(message, javolution::lang::String_API::valueOf(expected), javolution::lang::String_API::valueOf(actual));
     }
 
@@ -255,7 +255,7 @@ public:
     /**
      * Asserts that an object isn't Type::Null.
      */
-    static void assertNotNull(javolution::lang::Object object) {
+    static void assertNotNull(javolution::lang::Object const& object) {
         assertNotNull(L"assertNotNull(javolution::lang::Object)", object);
     }
 
@@ -263,14 +263,14 @@ public:
      * Asserts that an object isn't Type::Null. If it is
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertNotNull(javolution::lang::String message, javolution::lang::Object object) {
+    static void assertNotNull(javolution::lang::String const& message, javolution::lang::Object const& object) {
         assertTrue(message, object != Type::Null);
     }
 
     /**
      * Asserts that an object is Type::Null.
      */
-    static void assertNull(javolution::lang::Object object) {
+    static void assertNull(javolution::lang::Object const& object) {
         assertNull(L"assertNull(javolution::lang::Object)", object);
     }
 
@@ -278,7 +278,7 @@ public:
      * Asserts that an object is Type::Null.  If it is not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertNull(javolution::lang::String message, javolution::lang::Object object) {
+    static void assertNull(javolution::lang::String const& message, javolution::lang::Object object) {
         assertTrue(message, object == Type::Null);
     }
 
@@ -286,7 +286,7 @@ public:
      * Asserts that two objects refer to the same object. If they are not
      * an AssertionFailedError is thrown with the given message.
      */
-    static void assertSame(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertSame(javolution::lang::String const& message, javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         if (expected == actual)
             return;
         failNotSame(message, expected, actual);
@@ -296,7 +296,7 @@ public:
      * Asserts that two objects refer to the same object. If they are not
      * the same an AssertionFailedError is thrown.
      */
-    static void assertSame(javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertSame(javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         assertSame(L"assertSame(javolution::lang::Object, javolution::lang::Object)", expected, actual);
     }
 
@@ -305,7 +305,7 @@ public:
      * refer to the same object an AssertionFailedError is thrown with the
      * given message.
      */
-    static void assertNotSame(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertNotSame(javolution::lang::String const& message, javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         if (expected != actual) return;
         failSame(message);
     }
@@ -314,21 +314,21 @@ public:
      * Asserts that two objects do not refer to the same object. If they do
      * refer to the same object an AssertionFailedError is thrown.
      */
-    static void assertNotSame(javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void assertNotSame(javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
         assertNotSame(L"assertSame(javolution::lang::Object, javolution::lang::Object)", expected, actual);
     }
 
 
 private:
 
-    static void failSame(javolution::lang::String message) {
-        javolution::lang::StringBuilder tmp = new javolution::lang::StringBuilder_API();
+    static void failSame(javolution::lang::String const& message) {
+        javolution::lang::StringBuilder tmp = javolution::lang::StringBuilder_API::newInstance();
         tmp->append(message)->append(L" expected not same");
         fail(tmp->toString());
     }
 
-    static void failNotSame(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
-        javolution::lang::StringBuilder tmp = new javolution::lang::StringBuilder_API();
+    static void failNotSame(javolution::lang::String const& message, javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
+        javolution::lang::StringBuilder tmp = javolution::lang::StringBuilder_API::newInstance();
         tmp->append(message)
                 ->append(L" expected same:<")
                 ->append(expected)
@@ -338,12 +338,12 @@ private:
         fail(tmp->toString());
     }
 
-    static void failNotEquals(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
+    static void failNotEquals(javolution::lang::String const& message, javolution::lang::Object const&expected, javolution::lang::Object const& actual) {
         fail(format(message, expected, actual));
     }
 
-    static javolution::lang::String format(javolution::lang::String message, javolution::lang::Object expected, javolution::lang::Object actual) {
-        javolution::lang::StringBuilder tmp = new javolution::lang::StringBuilder_API();
+    static javolution::lang::String format(javolution::lang::String const& message, javolution::lang::Object const& expected, javolution::lang::Object const& actual) {
+        javolution::lang::StringBuilder tmp = javolution::lang::StringBuilder_API::newInstance();
         tmp->append(message)
                 ->append(L" expected:<")
                 ->append(expected)

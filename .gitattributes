@@ -154,8 +154,8 @@ javolution/core-cpp/src/include/c++/boost/throw_exception.hpp -text
 javolution/core-cpp/src/include/c++/booster/backtrace.cpp -text
 javolution/core-cpp/src/include/c++/booster/backtrace.hpp -text
 javolution/core-cpp/src/include/c++/booster/config.hpp -text
-javolution/core-cpp/src/main/c++/JAVOLUTION.cpp -text
 javolution/core-cpp/src/main/c++/JAVOLUTION.hpp -text
+javolution/core-cpp/src/main/c++/Javolution.hpp -text
 javolution/core-cpp/src/main/c++/javolution/internal/osgi/BundleContextImpl.hpp -text
 javolution/core-cpp/src/main/c++/javolution/internal/osgi/BundleImpl.hpp -text
 javolution/core-cpp/src/main/c++/javolution/internal/osgi/FilterImpl.hpp -text

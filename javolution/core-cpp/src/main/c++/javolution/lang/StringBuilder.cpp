@@ -11,7 +11,7 @@
 
 using namespace javolution::lang;
 
-StringBuilder StringBuilder_API::append(Object obj) {
+StringBuilder StringBuilder_API::append(Object const& obj) {
 	if (obj == Type::Null) return append(L"null");
 	String str = obj->toString();
 	while (_capacity < _length + str->length()) increaseCapacity();

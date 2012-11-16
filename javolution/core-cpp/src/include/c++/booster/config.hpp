@@ -10,7 +10,7 @@
 #ifndef BOOSTER_CONFIG_HPP
 #define BOOSTER_CONFIG_HPP
 
-#include "JAVOLUTION.hpp"
+#include "Javolution.hpp"
 
 #define BOOSTER_API JAVOLUTION_DLL
 

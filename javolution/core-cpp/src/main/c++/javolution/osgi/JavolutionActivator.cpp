@@ -17,14 +17,14 @@ using namespace org::osgi::framework;
 using namespace javolution::log;
 using namespace javolution::osgi;
 
-void JavolutionActivator_API::start(BundleContext context) {
+void JavolutionActivator_API::start(BundleContext const& context) {
     Logging_API::info(L"JAVOLUTION", L"Start Bundle: JAVOLUTION, Version: ", (String) JAVOLUTION_VERSION);
 
     // Activates the memory cache.
     Object_API::getMemoryCache().enable(true);
 }
 
-void JavolutionActivator_API::stop(BundleContext context) {
+void JavolutionActivator_API::stop(BundleContext const& context) {
     Logging_API::info(L"JAVOLUTION", L"Stop Bundle: JAVOLUTION, Version: ", (String) JAVOLUTION_VERSION);
 
     // Deactivates the memory cache.
@@ -34,7 +34,7 @@ void JavolutionActivator_API::stop(BundleContext context) {
     // This is done automatically by the framework.
 }
 
-void JavolutionActivator_API::checkVersion(javolution::lang::String majorVersion, char*) {
+void JavolutionActivator_API::checkVersion(javolution::lang::String const& majorVersion, char*) {
 	String runtimeVersion = JAVOLUTION_VERSION;
 	if (!runtimeVersion->startsWith(majorVersion))
 		throw UnsupportedOperationException_API::newInstance(

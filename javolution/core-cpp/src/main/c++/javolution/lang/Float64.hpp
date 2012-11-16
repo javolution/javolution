@@ -33,15 +33,15 @@ namespace javolution {
 class javolution::lang::Float64_API : public javolution::lang::Number_API {
 
     /**
-	 * Holds the 64 bits float value.
-	 */
-	Type::float64 _value;
+     * Holds the 64 bits float value.
+     */
+    Type::float64 _value;
 
-	/**
-	 * Private constructor (class final).
-	 */
-	Float64_API(Type::float64 value) : _value(value) {
-	}
+    /**
+     * Private constructor (factory methods should be used).
+     */
+    Float64_API(Type::float64 value) : _value(value) {
+    }
 
 public:
 
@@ -82,7 +82,7 @@ public:
     }
 
     // Overrides
-    Type::boolean equals(javolution::lang::Object obj) const;
+    Type::boolean equals(javolution::lang::Object const& obj) const;
     Type::boolean equals(Float64 const& that) const;
 
     // Overrides
@@ -123,7 +123,7 @@ inline javolution::lang::Float64 javolution::lang::Float64_API::valueOf(Type::fl
     static Float64 zero = createStaticZero(); // To avoid C++ initialization fiasco.
     return (thisValue == 0.0f) ? zero : Float64(new Float64_API(thisValue));
 }
-inline Type::boolean  javolution::lang::Float64_API::equals(javolution::lang::Object obj) const {
+inline Type::boolean  javolution::lang::Float64_API::equals(javolution::lang::Object const& obj) const {
     Float64 that = Type::dynamic_handle_cast<Float64_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

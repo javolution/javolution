@@ -28,6 +28,11 @@ namespace javolution {
  * @version 1.0
  */
 class javolution::lang::Error_API : public javolution::lang::Throwable_API {
+protected:
+
+    Error_API(String message) : Throwable_API(message) {
+    };
+
 public:
 
     /**
@@ -35,16 +40,9 @@ public:
      *
      * @param message the Error message.
      */
-    static Error newInstance(String message = Type::Null) {
+    static Error newInstance(String const& message = Type::Null) {
         return new Error_API(message);
     }
-
-protected:
-
-    Error_API(String message) :
-        Throwable_API(message) {
-    };
-
 };
 
 #endif

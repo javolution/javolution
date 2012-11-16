@@ -30,19 +30,14 @@ namespace javolution {
 class javolution::lang::RuntimeException_API : public javolution::lang::Exception_API {
 protected:
 
-    /**
-     * Creates an RuntimeException having the specified message.
-     *
-     * @param message the error message.
-     */
-    RuntimeException_API(String message = Type::Null) :
+    RuntimeException_API(String const& message = Type::Null) :
         Exception_API(message) {
     };
 
 public:
 
     /**
-     * Returns an exception having the specified message.
+     * Returns a RuntimeException having the specified message.
      *
      * @param message the message.
      */

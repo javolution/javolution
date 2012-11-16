@@ -64,7 +64,7 @@ public:
      *         service or <code>null</code> if the specified referenced service
      *         should not be tracked.
      */
-    virtual javolution::lang::Object addingService(org::osgi::framework::ServiceReference serviceReference) = 0;
+    virtual javolution::lang::Object addingService(org::osgi::framework::ServiceReference const& serviceReference) = 0;
 
     /**
      * A service tracked by the ServiceTracker has been modified.
@@ -74,7 +74,7 @@ public:
      * @param reference The reference to the service that has been modified.
      * @param service The service object for the specified referenced service.
      */
-    virtual void modifiedService(org::osgi::framework::ServiceReference reference, javolution::lang::Object service) = 0;
+    virtual void modifiedService(org::osgi::framework::ServiceReference const& reference, javolution::lang::Object const& service) = 0;
 
     /**
      * This method is called when a service tracked by the ServiceTracker
@@ -85,7 +85,7 @@ public:
      * @param ref The reference to the service being removed from the ServiceTracker.
      * @param service The service object for the specified referenced service.
      */
-    virtual void removedService(org::osgi::framework::ServiceReference serviceReference, javolution::lang::Object service) = 0;
+    virtual void removedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const& service) = 0;
 
 };
 

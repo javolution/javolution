@@ -50,7 +50,7 @@ public:
         return AbstractCollection_API<E>::add(element);
     }
 
-    virtual Type::boolean addAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean addAll(javolution::util::Collection<E> const& c) {
         return AbstractCollection_API<E>::addAll(c);
     }
 
@@ -62,7 +62,7 @@ public:
         return AbstractCollection_API<E>::contains(value);
     }
 
-    virtual Type::boolean containsAll(javolution::util::Collection<E> c) const {
+    virtual Type::boolean containsAll(javolution::util::Collection<E> const& c) const {
         return AbstractCollection_API<E>::containsAll(c);
     }
 
@@ -78,11 +78,11 @@ public:
         return AbstractCollection_API<E>::remove(element);
     }
 
-    virtual Type::boolean removeAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean removeAll(javolution::util::Collection<E> const& c) {
         return AbstractCollection_API<E>::removeAll(c);
     }
 
-    virtual Type::boolean retainAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean retainAll(javolution::util::Collection<E> const& c) {
         return AbstractCollection_API<E>::retainAll(c);
     }
 
@@ -94,11 +94,11 @@ public:
         return AbstractCollection_API<E>::toArray();
     }
 
-    virtual Type::Array<E> toArray(Type::Array<E> result) const {
+    virtual Type::Array<E> toArray(Type::Array<E> const& result) const {
         return AbstractCollection_API<E>::toArray(result);
     }
 
-    virtual Type::boolean equals(javolution::lang::Object obj) const {
+    virtual Type::boolean equals(javolution::lang::Object const& obj) const {
         return AbstractCollection_API<E>::equals(obj);
     }
 

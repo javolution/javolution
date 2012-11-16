@@ -51,7 +51,6 @@ namespace org {
  * @version 1.0
  */
 class org::osgi::util::tracker::ServiceTracker_API : public virtual org::osgi::util::tracker::ServiceTrackerCustomizer_API {
-
     /**
      * The bundle context used by this service tracker.
      */
@@ -99,26 +98,28 @@ class org::osgi::util::tracker::ServiceTracker_API : public virtual org::osgi::u
      */
     class ServiceListenerImpl;
 
-public:
+protected:
 
-	/**
-	 * Constructor for ServiceTracker.
-	 */
-	ServiceTracker_API(org::osgi::framework::BundleContext context,
-			javolution::lang::String serviceName, ServiceTrackerCustomizer customizer) {
-		_context = context;
-		_serviceName = serviceName;
-		_customizer = customizer;
-		if (_customizer == Type::Null) {
-			_customizer.set(this); // Do not increment the counter on 'this' to allow for its
-		}                          // deletion when there is no more external references to it.
-		javolution::lang::StringBuilder listenerFilter = new javolution::lang::StringBuilder_API();
-		listenerFilter->append('(')->append(org::osgi::framework::Constants_API::OBJECTCLASS)
-		    ->append('=')->append(serviceName)->append(')');
-		_filter = _context->createFilter(listenerFilter->toString());
-		_trackedServices = new javolution::util::FastMap_API<org::osgi::framework::ServiceReference, javolution::lang::Object>();
-		_trackingCount = -1;
-	}
+    /**
+     * Constructor for ServiceTracker.
+     */
+    ServiceTracker_API(org::osgi::framework::BundleContext const& context,
+            javolution::lang::String const& serviceName, ServiceTrackerCustomizer const& customizer) {
+        _context = context;
+        _serviceName = serviceName;
+        _customizer = customizer;
+        if (_customizer == Type::Null) {
+            _customizer.set(this); // Do not increment the counter on 'this' to allow for its
+        } // deletion when there is no more external references to it.
+        javolution::lang::StringBuilder listenerFilter = javolution::lang::StringBuilder_API::newInstance();
+        listenerFilter->append('(')->append(org::osgi::framework::Constants_API::OBJECTCLASS)
+                ->append('=')->append(serviceName)->append(')');
+        _filter = _context->createFilter(listenerFilter->toString());
+        _trackedServices = new javolution::util::FastMap_API<org::osgi::framework::ServiceReference, javolution::lang::Object > ();
+        _trackingCount = -1;
+    }
+
+public:
 
     /**
      * Creates instances of class <code>ServiceTracker</code>.
@@ -131,8 +132,8 @@ public:
      *        ServiceTrackerCustomizer and this service tracker will call the
      *        ServiceTrackerCustomizer methods on itself.
      */
-    static ServiceTracker newInstance(org::osgi::framework::BundleContext context,
-    		javolution::lang::String serviceName, ServiceTrackerCustomizer customizer) {
+    static ServiceTracker newInstance(org::osgi::framework::BundleContext const& context,
+            javolution::lang::String const& serviceName, ServiceTrackerCustomizer const& customizer) {
         return new ServiceTracker_API(context, serviceName, customizer);
     }
 
@@ -167,7 +168,7 @@ public:
      * @return a service object or <code>Type::Null</code> if the service
      *         referenced by the specified argument is not being tracked.
      */
-    JAVOLUTION_DLL virtual javolution::lang::Object getService(org::osgi::framework::ServiceReference serviceReference);
+    JAVOLUTION_DLL virtual javolution::lang::Object getService(org::osgi::framework::ServiceReference const& serviceReference);
 
     /**
      * Returns a ServiceReference for one of the services being tracked by this
@@ -229,21 +230,21 @@ public:
     /**
      * Implements ServiceTrackerCustomizer.
      */
-    virtual javolution::lang::Object addingService(org::osgi::framework::ServiceReference serviceReference) {
+    virtual javolution::lang::Object addingService(org::osgi::framework::ServiceReference const& serviceReference) {
         return _context->getService(serviceReference); // Default behavior (no translation)
     }
 
     /**
      * Implements ServiceTrackerCustomizer.
      */
-    virtual void modifiedService(org::osgi::framework::ServiceReference serviceReference, javolution::lang::Object service) {
+    virtual void modifiedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const& service) {
         // Do nothing.
     }
 
     /**
      * Implements ServiceTrackerCustomizer.
      */
-    virtual void removedService(org::osgi::framework::ServiceReference serviceReference, javolution::lang::Object service) {
+    virtual void removedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const& service) {
         _context->ungetService(serviceReference);
     }
 

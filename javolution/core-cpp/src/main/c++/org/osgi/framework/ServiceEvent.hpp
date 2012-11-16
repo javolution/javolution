@@ -68,7 +68,7 @@ public:
      * @param type the type of the event.
      * @param reference describes the service.
      */
-    ServiceEvent_API(Type::int32 type, ServiceReference reference) {
+    ServiceEvent_API(Type::int32 type, ServiceReference const& reference) {
         _type = type;
         _reference = reference;
     }
@@ -86,7 +86,7 @@ public:
      *
      * @return the <code>ServiceReference</code> object.
      */
-    virtual ServiceReference const& getServiceReference() const {
+    virtual ServiceReference getServiceReference() const {
         return _reference;
     }
 

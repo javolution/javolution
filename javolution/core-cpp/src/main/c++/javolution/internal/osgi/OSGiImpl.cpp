@@ -19,7 +19,7 @@ using namespace org::osgi::framework;
 using namespace javolution::log;
 using namespace javolution::internal::osgi;
 
-void OSGiImpl_API::start(String symbolicName, BundleActivator activator) {
+void OSGiImpl_API::start(String const& symbolicName, BundleActivator const& activator) {
     try {
         BundleImpl bundle = dynamic_cast<BundleImpl_API*>(getBundle(symbolicName).get());
         if (bundle == Type::Null) { // Creates the bundle.
@@ -33,7 +33,7 @@ void OSGiImpl_API::start(String symbolicName, BundleActivator activator) {
     }
 }
 
-void OSGiImpl_API::stop(String symbolicName) {
+void OSGiImpl_API::stop(String const& symbolicName) {
     try {
         BundleImpl bundle = dynamic_cast<BundleImpl_API*> (getBundle(symbolicName).get());
         if (bundle == Type::Null) throw Exception_API::newInstance("Cannot find bundle " + symbolicName);
@@ -44,7 +44,7 @@ void OSGiImpl_API::stop(String symbolicName) {
     }
 }
 
-void OSGiImpl_API::fireServiceEvent(ServiceEvent serviceEvent) {
+void OSGiImpl_API::fireServiceEvent(ServiceEvent const& serviceEvent) {
     ServiceReferenceImpl serviceReference = dynamic_cast<ServiceReferenceImpl_API*>(serviceEvent->getServiceReference().get());
     String serviceName = serviceReference->_serviceName;
     String filter = StringBuilder_API::newInstance()
@@ -61,7 +61,7 @@ void OSGiImpl_API::fireServiceEvent(ServiceEvent serviceEvent) {
     }
 }
 
-Bundle OSGiImpl_API::getBundle(String symbolicName) const {
+Bundle OSGiImpl_API::getBundle(String const& symbolicName) const {
     for (int i = 0; i < _bundles->size(); i++) {
         Bundle bundle = _bundles->get(i);
         if (bundle->getSymbolicName()->equals(symbolicName))

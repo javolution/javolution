@@ -39,7 +39,7 @@ class javolution::lang::Character_API : public virtual javolution::lang::Object_
     Type::wchar _value;
 
     /**
-     * Private constructor (class final).
+     * Private constructor (factory methods should be used).
      */
     Character_API(Type::wchar value) : _value(value) {
     }
@@ -85,7 +85,7 @@ public:
     }
 
     // Overrides
-    Type::boolean equals(javolution::lang::Object obj) const;
+    Type::boolean equals(javolution::lang::Object const& obj) const;
     Type::boolean equals(Character const& that) const;
    
     // Overrides
@@ -140,7 +140,7 @@ inline javolution::lang::Character& javolution::lang::Character_API::valueOf(cha
 inline javolution::lang::Character javolution::lang::Character_API::valueOf(Type::wchar value) {
     return (value < 128) ? Character_API::valueOf((char)value) : Character(new Character_API(value));
 }
-inline Type::boolean javolution::lang::Character_API::equals(javolution::lang::Object obj) const {
+inline Type::boolean javolution::lang::Character_API::equals(javolution::lang::Object const& obj) const {
     Character that = Type::dynamic_handle_cast<Character_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

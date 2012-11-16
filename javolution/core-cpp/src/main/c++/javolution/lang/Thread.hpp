@@ -41,15 +41,17 @@ class javolution::lang::Thread_API : public virtual javolution::lang::Runnable_A
      */
     void* _nativeThreadPtr;
 
-public:
-
+protected: 
+    
     /**
      * Creates a thread having the specified target and name.
      *
      * @param target the runnable to be executed by this thread.
      * @param name the name of the thread.
      */
-    JAVOLUTION_DLL Thread_API(Runnable target, String name);
+    JAVOLUTION_DLL Thread_API(Runnable const& target, String const& name);
+
+public:
 
     /**
      * Returns a new thread instance executing the specified runnable and 
@@ -58,14 +60,14 @@ public:
      * @param target the runnable to be executed by this thread.
      * @param name the name of the thread.
      */
-    static Thread newInstance(Runnable target, String name) {
+    static Thread newInstance(Runnable const& target, String const& name) {
         return new Thread_API(target, name);
     }
 
     /**
      * Returns this thread's name.
      */
-    javolution::lang::String const& getName() const {
+    javolution::lang::String getName() const {
     	 return _name;
     }
 

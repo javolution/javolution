@@ -29,7 +29,7 @@ namespace javolution {
 class javolution::lang::UnsupportedOperationException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    UnsupportedOperationException_API(String message) :
+    UnsupportedOperationException_API(String const& message) :
         RuntimeException_API(message) {
     };
 
@@ -40,7 +40,7 @@ public:
      *
      * @param message the exception message.
      */
-    static UnsupportedOperationException newInstance(String message = Type::Null) {
+    static UnsupportedOperationException newInstance(String const& message = Type::Null) {
         return new UnsupportedOperationException_API(message);
     }
 

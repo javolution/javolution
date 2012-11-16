@@ -30,7 +30,7 @@ namespace javolution {
 class javolution::lang::IndexOutOfBoundsException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    IndexOutOfBoundsException_API(String message) :
+    IndexOutOfBoundsException_API(String const& message) :
         RuntimeException_API(message) {
     };
 
@@ -41,7 +41,7 @@ public:
      *
      * @param message the exception message.
      */
-    static IndexOutOfBoundsException newInstance(String message = Type::Null) {
+    static IndexOutOfBoundsException newInstance(String const& message = Type::Null) {
         return new IndexOutOfBoundsException_API(message);
     }
 

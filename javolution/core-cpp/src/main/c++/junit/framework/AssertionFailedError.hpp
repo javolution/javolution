@@ -29,7 +29,7 @@ namespace junit {
 class junit::framework::AssertionFailedError_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    AssertionFailedError_API(javolution::lang::String message) :
+    AssertionFailedError_API(javolution::lang::String const& message) :
         javolution::lang::RuntimeException_API(message) {
     };
 
@@ -40,7 +40,7 @@ public:
      *
      * @param message the exception message.
      */
-    static AssertionFailedError newInstance(javolution::lang::String message = Type::Null) {
+    static AssertionFailedError newInstance(javolution::lang::String const& message = Type::Null) {
         return new AssertionFailedError_API(message);
     }
 

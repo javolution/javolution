@@ -11,11 +11,11 @@
 #include "javolution/lang/UnsupportedOperationException.hpp"
 #include <typeinfo> // Used for Object_API::getClass() (C++ Reflection)
 
-using namespace JAVOLUTION;
+using namespace Javolution;
 using namespace std;
 using namespace javolution::lang;
 
-JAVOLUTION::MemoryCache javolution::lang::Object_API::_memoryCache;
+Javolution::MemoryCache javolution::lang::Object_API::_memoryCache;
 
 Class_ANY Object_API::getClass() const {
     String name = String_API::valueOf(typeid(*this).name());

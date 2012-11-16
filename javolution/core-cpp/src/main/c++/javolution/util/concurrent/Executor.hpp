@@ -38,7 +38,7 @@ public:
      * @throws RejectedExecutionException if this task cannot be
      *         accepted for execution.
      */
-    virtual void execute(javolution::lang::Runnable command) = 0;
+    virtual void execute(javolution::lang::Runnable const& command) = 0;
 
 };
 

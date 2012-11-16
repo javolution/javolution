@@ -40,25 +40,24 @@ namespace javolution {
  */
 class javolution::lang::Throwable_API : public virtual javolution::lang::Object_API, public booster::backtrace {
 
-	/**
+    /**
      * Holds the error message.
      */
     String _message;
 
-protected:
-
-    JAVOLUTION_DLL Throwable_API(String message);
 
 public:
 
+    JAVOLUTION_DLL Throwable_API(String const& message);
+
     /**
-     * Creates a runtime exception having the specified message.
+     * Returns  a throwable having the specified message.
      * Note: A debug message holding the stack trace may be logged
      *       (useful if an exception is raised during static initialization).
      *
      * @param thisMessage the error message or Type::Null if none.
      */
-    static Throwable newInstance(String message = Type::Null) {
+    static Throwable newInstance(String const& message = Type::Null) {
         return new Throwable_API(message);
     }
 

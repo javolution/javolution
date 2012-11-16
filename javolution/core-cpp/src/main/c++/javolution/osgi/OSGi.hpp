@@ -46,21 +46,21 @@ public:
      * @param id the bundle identifier.
      * @param  activator the bundle activator instance.
      */
-   virtual void start(javolution::lang::String symbolicName, org::osgi::framework::BundleActivator activator) = 0;
+   virtual void start(javolution::lang::String const& symbolicName, org::osgi::framework::BundleActivator const& activator) = 0;
 
     /**
      * Stops the bundle having the specified identifier.
      *
      * @param id the bundle identifier.
      */
-    virtual void stop(javolution::lang::String symbolicName) = 0;
+    virtual void stop(javolution::lang::String const& symbolicName) = 0;
 
     /**
      * Returns the bundle having the specified identifier.
      *
      * @param id the bundle identifier.
      */
-    virtual org::osgi::framework::Bundle getBundle(javolution::lang::String id) const = 0;
+    virtual org::osgi::framework::Bundle getBundle(javolution::lang::String const& id) const = 0;
 
 };
 #endif

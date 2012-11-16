@@ -30,7 +30,7 @@ namespace javolution {
 class javolution::lang::IllegalStateException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    IllegalStateException_API(String message) :
+    IllegalStateException_API(String const& message) :
         RuntimeException_API(message) {
     };
 
@@ -41,7 +41,7 @@ public:
      *
      * @param message the exception message.
      */
-    static IllegalStateException newInstance(String message = Type::Null) {
+    static IllegalStateException newInstance(String const& message = Type::Null) {
         return new IllegalStateException_API(message);
     }
 

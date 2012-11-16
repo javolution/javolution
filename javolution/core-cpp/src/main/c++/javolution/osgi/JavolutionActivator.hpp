@@ -40,10 +40,10 @@ public:
     }
 
     // Implements BundleActivator.
-    JAVOLUTION_DLL void start(org::osgi::framework::BundleContext context);
+    JAVOLUTION_DLL void start(org::osgi::framework::BundleContext const& context);
 
     // Implements BundleActivator.
-    JAVOLUTION_DLL void stop(org::osgi::framework::BundleContext context);
+    JAVOLUTION_DLL void stop(org::osgi::framework::BundleContext const& context);
 
     /**
      * Default constructor (private, class final).
@@ -54,7 +54,7 @@ public:
 private:
 
     // Check potential mismatch between header major version and runtime versions.
-    JAVOLUTION_DLL static void checkVersion(javolution::lang::String majorVersion, char* ident);
+    JAVOLUTION_DLL static void checkVersion(javolution::lang::String const& majorVersion, char* ident);
 
 };
 

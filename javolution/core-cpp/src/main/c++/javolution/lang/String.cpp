@@ -33,67 +33,67 @@ using namespace javolution::lang;
 using namespace javolution::util;
 using namespace javolution::lang;
 
-String String_API::valueOf(Object value) {
-    StringBuilder sb = new StringBuilder_API();
+String String_API::valueOf(Object const& value) {
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(const wchar_t* value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(const std::wstring& value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(const char* value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(const std::string& value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::wchar value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(char value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::int8 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::int16 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::int32 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 String String_API::valueOf(Type::int64 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::float32 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
 String String_API::valueOf(Type::float64 value) {
-    StringBuilder sb = new StringBuilder_API();
+    StringBuilder sb = StringBuilder_API::newInstance();
     return sb->append(value)->toString();
 }
 
@@ -103,27 +103,27 @@ String String_API::valueOf(Type::boolean value) {
     return value ? TRUE_STRING : FALSE_STRING;
 }
 
-String String_API::valueOf(Boolean b) {
+String String_API::valueOf(Boolean const& b) {
 	return valueOf(b->booleanValue());
 }
 
-String String_API::valueOf(Character c) {
+String String_API::valueOf(Character const& c) {
 	return valueOf(c->charValue());
 }
 
-String String_API::valueOf(Integer32 i32) {
+String String_API::valueOf(Integer32 const& i32) {
 	return valueOf(i32->intValue());
 }
 
-String String_API::valueOf(Integer64 i64) {
+String String_API::valueOf(Integer64 const& i64) {
 	return valueOf(i64->longValue());
 }
 
-String String_API::valueOf(Float32 f32) {
+String String_API::valueOf(Float32 const& f32) {
 	return valueOf(f32->floatValue());
 }
 
-String String_API::valueOf(Float64 f64) {
+String String_API::valueOf(Float64 const& f64) {
 	return valueOf(f64->doubleValue());
 }
 
@@ -173,7 +173,7 @@ String String_API::intern() const {
     return str;
 }
 
-Type::boolean String_API::equals(Object obj) const {
+Type::boolean String_API::equals(Object const& obj) const {
 	String that = Type::dynamic_handle_cast<String_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

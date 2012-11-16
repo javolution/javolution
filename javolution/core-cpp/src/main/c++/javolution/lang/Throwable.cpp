@@ -20,7 +20,7 @@ const char* Throwable::what() const throw() { // Standard C++ exception contract
                 return this->get()->toString()->toUTF8().c_str();
 }
 
-Throwable_API::Throwable_API(String message) {
+Throwable_API::Throwable_API(String const& message) {
     _message = message;
     // Automatically show the stack trace of any exception being raised.
     // Unless the error logging is disabled.

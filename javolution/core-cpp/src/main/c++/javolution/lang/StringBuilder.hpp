@@ -53,14 +53,16 @@ class javolution::lang::StringBuilder_API : public virtual javolution::lang::Obj
      */
     Type::wchar* _buffer;
 
-public:
-
+protected:
+    
     /**
      * Default constructor.
      */
     StringBuilder_API() : _capacity(DEFAULT_CAPACITY), _length(0),
     _buffer(new Type::wchar[DEFAULT_CAPACITY]) {
     };
+
+public:
 
     /**
      * Returns a new empty string builder instance.
@@ -98,7 +100,7 @@ public:
      * @param obj the object or <code>Type::Null</code>
      * @return <code>this</code> 
      */
-    JAVOLUTION_DLL StringBuilder append(Object obj);
+    JAVOLUTION_DLL StringBuilder append(Object const& obj);
 
     /**
      * Appends the specified C++ wide characters (null terminated).
@@ -242,42 +244,42 @@ public:
 	/**
 	 * Equivalent to <code>append(b->booleanValue())</code>
 	 */
-	StringBuilder append(Boolean b) {
+	StringBuilder append(Boolean const& b) {
 		return append(b->booleanValue());
 	}
 
 	/**
 	 * Equivalent to <code>append(c->charValue())</code>
 	 */
-	StringBuilder append(Character c) {
+	StringBuilder append(Character const& c) {
 		return append(c->charValue());
 	}
 
 	/**
 	 * Equivalent to <code>append(i32->intValue())</code>
 	 */
-	StringBuilder append(javolution::lang::Integer32 i32) {
+	StringBuilder append(javolution::lang::Integer32 const& i32) {
 		return append(i32->intValue());
 	}
 
 	/**
 	 * Equivalent to <code>append(i64->longValue())</code>
 	 */
-	StringBuilder append(javolution::lang::Integer64 i64) {
+	StringBuilder append(javolution::lang::Integer64 const& i64) {
 		return append(i64->longValue());
 	}
 
 	/**
 	 * Equivalent to <code>append(f32->floatValue())</code>
 	 */
-	StringBuilder append(javolution::lang::Float32 f32) {
+	StringBuilder append(javolution::lang::Float32 const& f32) {
 		return append(f32->floatValue());
 	}
 
 	/**
 	 * Equivalent to <code>append(f64->doubleValue())</code>
 	 */
-	StringBuilder append(javolution::lang::Float64 f64) {
+	StringBuilder append(javolution::lang::Float64 const& f64) {
 		return append(f64->doubleValue());
 	}
 

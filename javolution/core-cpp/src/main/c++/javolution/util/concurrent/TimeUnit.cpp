@@ -46,10 +46,10 @@ Type::int64 TimeUnit_API::toHours(Type::int64) const {
 Type::int64 TimeUnit_API::toDays(Type::int64) const {
     throw UnsupportedOperationException_API::newInstance(L"Not implemented yet");
 }
-void TimeUnit_API::timedWait(javolution::lang::Object, Type::int64) const {
+void TimeUnit_API::timedWait(javolution::lang::Object const&, Type::int64) const {
     throw UnsupportedOperationException_API::newInstance(L"Not implemented yet");
 }
-void TimeUnit_API::timedJoin(javolution::lang::Thread, Type::int64) const {
+void TimeUnit_API::timedJoin(javolution::lang::Thread const&, Type::int64) const {
     throw UnsupportedOperationException_API::newInstance(L"Not implemented yet");
 }
 void TimeUnit_API::sleep(Type::int64) const {

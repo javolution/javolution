@@ -49,9 +49,9 @@ class javolution::lang::Class_ANY_API : public virtual javolution::lang::Object_
 	Type::Mutex _mutex;
 
 	/**
-	 * Private constructor (class final).
+	 * Private constructor (factory methods should be used).
 	 */
-	Class_ANY_API(String name) : _name(name) {
+	Class_ANY_API(String const& name) : _name(name) {
 	}
 
  public:
@@ -59,13 +59,13 @@ class javolution::lang::Class_ANY_API : public virtual javolution::lang::Object_
     /**
      * Returns the unique class instance for the specified name.
      */
-    JAVOLUTION_DLL static Class_ANY forName(String name);
+    JAVOLUTION_DLL static Class_ANY forName(String const& name);
 
     /**
      * Returns the Java class name of this instance (for example
      * java.lang.Boolean).
      */
-    String const& getName() const {
+    String getName() const {
         return _name;
     }
 
@@ -103,7 +103,7 @@ public:
      *
      * @param name the name of the class instance.
      */
-    static Class<T> forName(String name) {
+    static Class<T> forName(String const& name) {
         Class_ANY classAny = Class_ANY_API::forName(name);
         return Class<T>(classAny);
     }

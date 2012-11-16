@@ -71,7 +71,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::boolean addAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean addAll(javolution::util::Collection<E> const& c) {
         Type::boolean modified = false;
         javolution::util::Iterator<E> i = c->iterator();
         while (i->hasNext()) {
@@ -109,7 +109,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::boolean containsAll(javolution::util::Collection<E> c) const {
+    virtual Type::boolean containsAll(javolution::util::Collection<E> const& c) const {
         javolution::util::Iterator<E> i = c->iterator();
         while (i->hasNext()) {
             if (!this->contains(i->next()))
@@ -151,7 +151,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::boolean removeAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean removeAll(javolution::util::Collection<E> const& c) {
         Type::boolean modified = false;
         javolution::util::Iterator<E> i = this->iterator();
         while (i->hasNext()) {
@@ -164,7 +164,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::boolean retainAll(javolution::util::Collection<E> c) {
+    virtual Type::boolean retainAll(javolution::util::Collection<E> const& c) {
         Type::boolean modified = false;
         javolution::util::Iterator<E> i = this->iterator();
         while (i->hasNext()) {
@@ -195,7 +195,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::Array<E> toArray(Type::Array<E> result) const {
+    virtual Type::Array<E> toArray(Type::Array<E> const& result) const {
         if (result.length != this->size())
             throw javolution::lang::UnsupportedOperationException_API::newInstance(
                 L"Method toArray(Type::Array<E>) requires array's length == size()");
@@ -208,7 +208,7 @@ public:
     }
 
     // Overrides.
-    virtual Type::boolean equals(javolution::lang::Object obj) const {
+    virtual Type::boolean equals(javolution::lang::Object const& obj) const {
     	javolution::util::Collection<E> that = Type::dynamic_handle_cast<javolution::util::Collection_API<E> >(obj);
         if (that == Type::Null) return false;
         if (this->size() != that->size()) return false;

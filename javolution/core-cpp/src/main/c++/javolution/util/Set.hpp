@@ -47,7 +47,7 @@ public:
      * equals method works properly across different implementations of the
      * set interface.
      */
-    virtual Type::boolean equals(javolution::lang::Object o) const = 0;
+    virtual Type::boolean equals(javolution::lang::Object const& o) const = 0;
 
     /**
      * Returns the hash code value for this set.  The hash code of a set is

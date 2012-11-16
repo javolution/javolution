@@ -29,18 +29,18 @@ namespace javolution {
 class javolution::lang::NullPointerException_API : public javolution::lang::RuntimeException_API {
 protected:
 
-    NullPointerException_API(String message) :
+    NullPointerException_API(String const& message) :
         RuntimeException_API(message) {
     };
 
 public:
 
     /**
-     * Returns an exception having the specified message.
+     * Returns a NullPointerException having the specified message.
      *
      * @param message the exception message.
      */
-    static NullPointerException newInstance(String message = Type::Null) {
+    static NullPointerException newInstance(String const& message = Type::Null) {
         return new NullPointerException_API(message);
     }
 };

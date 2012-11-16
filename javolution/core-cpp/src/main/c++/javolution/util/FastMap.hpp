@@ -211,7 +211,7 @@ public:
      * Copies all of the mappings from the specified map to this map
      * (optional operation).
      */
-    virtual void putAll(javolution::util::Map<K, V> m) {
+    virtual void putAll(javolution::util::Map<K, V> const& m) {
         for (Iterator<Entry<K,V> > i = m->entrySet()->iterator(); i->hasNext();) {
             Entry<K,V> entry = i->next();
             put(entry->getKey(), entry->getValue());
@@ -339,7 +339,7 @@ public:
         return oldValue;
     }
 
-    Type::boolean equals(javolution::lang::Object obj) const {
+    Type::boolean equals(javolution::lang::Object const& obj) const {
         Type::Handle<FastMapEntry_API<K, V> > that = Type::dynamic_handle_cast<FastMapEntry_API<K,V> >(obj);
         if (that == Type::Null) return false;
         return this->equals(that);
@@ -359,7 +359,7 @@ public:
     }
 
     javolution::lang::String toString() const {
-        javolution::lang::StringBuilder sb = new javolution::lang::StringBuilder_API();
+        javolution::lang::StringBuilder sb = javolution::lang::StringBuilder_API::newInstance();
         sb->append(L"(key: ");
         sb->append(getKey());
         sb->append(L", value: ");

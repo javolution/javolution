@@ -44,7 +44,7 @@ class javolution::lang::Integer64_API : public javolution::lang::Number_API {
      Type::int64 _value;
 
      /**
-     * Private constructor (class final).
+     * Private constructor (factory methods should be used).
       */
      Integer64_API(Type::int64 value) : _value(value) {
      }
@@ -85,7 +85,7 @@ public:
     }
 
     // Overrides
-    Type::boolean equals(javolution::lang::Object obj) const;
+    Type::boolean equals(javolution::lang::Object const& obj) const;
     Type::boolean equals(Integer64 const& that) const;
 
 private:
@@ -121,7 +121,7 @@ inline javolution::lang::Integer64 javolution::lang::Integer64_API::valueOf(Type
     return ((value >= -128) && (value < 127)) ? bytesValues[value+128] : Integer64(new Integer64_API(value));
 }
 // Overrides
-inline Type::boolean javolution::lang::Integer64_API::equals(javolution::lang::Object obj) const {
+inline Type::boolean javolution::lang::Integer64_API::equals(javolution::lang::Object const& obj) const {
     Integer64 that = Type::dynamic_handle_cast<Integer64_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

@@ -41,7 +41,7 @@ public: // Internal classes can have public members visibility.
     String _serviceName;
     Object _service;
 
-    ServiceReferenceImpl_API(Bundle bundle, String serviceName, Object service) {
+    ServiceReferenceImpl_API(Bundle const& bundle, String const& serviceName, Object const& service) {
         _bundle = bundle;
         _serviceName = serviceName;
         _service = service;

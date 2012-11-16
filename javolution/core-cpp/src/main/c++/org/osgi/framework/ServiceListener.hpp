@@ -43,7 +43,7 @@ public:
      *
      * @param serviceEvent The service event.
      */
-     virtual void serviceChanged(ServiceEvent serviceEvent) = 0;
+     virtual void serviceChanged(ServiceEvent const& serviceEvent) = 0;
 
 };
 

@@ -33,15 +33,15 @@ namespace javolution {
 class javolution::lang::Float32_API : public javolution::lang::Number_API {
 
     /**
-	 * Holds the 32 bits float value.
-	 */
-	Type::float32 _value;
+     * Holds the 32 bits float value.
+     */
+    Type::float32 _value;
 
-	/**
-	 * Private constructor (class final).
-	 */
-	Float32_API(Type::float32 value) : _value(value) {
-	}
+    /**
+     * Private constructor (factory methods should be used).
+     */
+    Float32_API(Type::float32 value) : _value(value) {
+    }
 
 public:
 
@@ -82,7 +82,7 @@ public:
     }
 
     // Overrides
-    Type::boolean equals(javolution::lang::Object obj) const;
+    Type::boolean equals(javolution::lang::Object const& obj) const;
     Type::boolean equals(Float32 const& that) const;
 
     // Overrides
@@ -123,7 +123,7 @@ inline javolution::lang::Float32 javolution::lang::Float32_API::valueOf(Type::fl
     static Float32 zero = createStaticZero(); // To avoid C++ initialization fiasco.
     return (thisValue == 0.0f) ? zero : Float32(new Float32_API(thisValue));
 }
-inline Type::boolean javolution::lang::Float32_API::equals(javolution::lang::Object obj) const {
+inline Type::boolean javolution::lang::Float32_API::equals(javolution::lang::Object const& obj) const {
     Float32 that = Type::dynamic_handle_cast<Float32_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

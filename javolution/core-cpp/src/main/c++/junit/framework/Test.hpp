@@ -35,7 +35,7 @@ public:
     /**
      * Runs a test and collects its result.
      */
-    virtual void run(TestResult result) = 0;
+    virtual void run(TestResult const& result) = 0;
 
 };
 

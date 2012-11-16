@@ -42,7 +42,7 @@ class javolution::lang::Integer32_API : public javolution::lang::Number_API {
      Type::int32 _value;
 
      /**
-     * Private constructor (class final).
+     * Private constructor (factory methods should be used).
       */
      Integer32_API(Type::int32 value) : _value(value) {
      }
@@ -81,7 +81,7 @@ public:
     }
 
     // Overrides
-    Type::boolean equals(javolution::lang::Object obj) const;
+    Type::boolean equals(javolution::lang::Object const& obj) const;
     Type::boolean equals(Integer32 const& that) const;
 
     // Overrides
@@ -121,7 +121,7 @@ inline javolution::lang::Integer32 javolution::lang::Integer32_API::valueOf(Type
     static Integer32* bytesValues = getBytesValues(); // To avoid C++ initialization fiasco.
      return ((value >= -128) && (value < 127)) ? bytesValues[value+128] : Integer32(new Integer32_API(value));
 }
-inline Type::boolean javolution::lang::Integer32_API::equals(javolution::lang::Object obj) const {
+inline Type::boolean javolution::lang::Integer32_API::equals(javolution::lang::Object const& obj) const {
     Integer32 that = Type::dynamic_handle_cast<Integer32_API>(obj);
     if (that == Type::Null) return false;
     return equals(that);

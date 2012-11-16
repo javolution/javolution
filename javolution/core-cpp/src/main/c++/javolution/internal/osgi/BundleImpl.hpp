@@ -49,7 +49,7 @@ public: // Internal classes can have public members visibility.
     FastTable<String> _serviceListenerFilters;
     BundleContext _context; // Null when not active. This context is set by the framework.
 
-    BundleImpl_API(OSGiImpl osgi, String symbolicName, BundleActivator activator) {
+    BundleImpl_API(OSGiImpl const& osgi, String const& symbolicName, BundleActivator const& activator) {
         _osgi = osgi;
         _symbolicName = symbolicName;
         _activator = activator;

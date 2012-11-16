@@ -47,7 +47,7 @@ public:
     /**
      * Adds all of the elements in the specified collection to this collection (optional operation).
      */
-    virtual Type::boolean addAll(javolution::util::Collection<E> c) = 0;
+    virtual Type::boolean addAll(javolution::util::Collection<E> const& c) = 0;
 
     /**
      * Removes all of the elements from this collection (optional operation).
@@ -62,14 +62,14 @@ public:
     /**
      * Returns true if this collection contains all of the elements in the specified collection.
      */
-    virtual Type::boolean containsAll(javolution::util::Collection<E> c) const = 0;
+    virtual Type::boolean containsAll(javolution::util::Collection<E> const& c) const = 0;
 
     /**
      * Compares the specified object with this collection for equality.
      * If this collection is a list then the specified object must be
      * a list with the element in the same order.
      */
-    virtual Type::boolean equals(javolution::lang::Object o) const = 0;
+    virtual Type::boolean equals(javolution::lang::Object const& o) const = 0;
     
     /**
      * Returns the hash code value for this collection (consistent with
@@ -97,13 +97,13 @@ public:
      * Removes all this collection's elements that are also contained in the
      *  specified collection (optional operation).
      */
-    virtual Type::boolean removeAll(javolution::util::Collection<E> c) = 0;
+    virtual Type::boolean removeAll(javolution::util::Collection<E> const& c) = 0;
 
     /**
      *  Retains only the elements in this collection that are contained in the
      *  specified collection (optional operation).
      */
-    virtual Type::boolean retainAll(javolution::util::Collection<E> c) = 0;
+    virtual Type::boolean retainAll(javolution::util::Collection<E> const& c) = 0;
 
     /**
      *  Returns the number of elements in this collection.
@@ -119,7 +119,7 @@ public:
      * Returns an array containing all of the elements in this collection;
      * the runtime type of the returned array is that of the specified array.
      */
-    virtual Type::Array<E> toArray(Type::Array<E> array) const = 0;
+    virtual Type::Array<E> toArray(Type::Array<E> const& array) const = 0;
 
 };
 

@@ -28,8 +28,8 @@ namespace javolution {
  */
 class javolution::lang::ArithmeticException_API : public javolution::lang::RuntimeException_API {
 protected:
-
-    ArithmeticException_API(String message) : RuntimeException_API(message) {
+    
+    ArithmeticException_API(String const& message) : RuntimeException_API(message) {
     };
 
 public:
@@ -39,7 +39,7 @@ public:
      *
      * @param message the exception message or Type::Null
      */
-    static ArithmeticException newInstance(String message = Type::Null) {
+    static ArithmeticException newInstance(String const& message = Type::Null) {
         return new ArithmeticException_API(message);
     }
 

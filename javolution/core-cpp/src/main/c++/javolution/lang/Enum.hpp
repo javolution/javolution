@@ -77,7 +77,7 @@ namespace javolution {
  	 /**
   	  * Private constructor (class final).
  	  */
-     Enum_ANY_API(Class_ANY declaringClass, String name, Type::int32 ordinal)
+     Enum_ANY_API(Class_ANY const& declaringClass, String const& name, Type::int32 ordinal)
      : _declaringClass(declaringClass), _name(name), _ordinal(ordinal) {
      }
 
@@ -92,7 +92,7 @@ namespace javolution {
      * @param ordinal the ordinal value of the constant to create.
      * @return the enum constant of the specified enum type with the specified name and value.
      */
-    JAVOLUTION_DLL static Enum_ANY newInstance(Class_ANY enumType, String name, Type::int32 ordinal);
+    JAVOLUTION_DLL static Enum_ANY newInstance(Class_ANY const& enumType, String const& name, Type::int32 ordinal);
 
     /**
      * Creates a new enum constant of the specified enum type and name.
@@ -103,7 +103,7 @@ namespace javolution {
      * @param name the name of the constant to create.
      * @return the enum constant of the specified enum type with the specified name.
      */
-    JAVOLUTION_DLL static Enum_ANY newInstance(Class_ANY enumType, String name);
+    JAVOLUTION_DLL static Enum_ANY newInstance(Class_ANY const& enumType, String const& name);
 
     /**
      * Returns an array containing all of the values of the specified enum type
@@ -113,7 +113,7 @@ namespace javolution {
      * @param enumType the class object identifying the enum type.
      * @return the whole enumeration.
      */
-    JAVOLUTION_DLL static Type::Array<Enum_ANY> values(Class_ANY enumType);
+    JAVOLUTION_DLL static Type::Array<Enum_ANY> values(Class_ANY const& enumType);
 
     /**
      * Returns the enum constant of the specified enum type with the specified
@@ -125,19 +125,19 @@ namespace javolution {
      * @throws IllegalArgumentException if the specified enum type has no constant
      *         with the specified name.
      */
-    JAVOLUTION_DLL static Enum_ANY valueOf(Class_ANY enumType, String name);
+    JAVOLUTION_DLL static Enum_ANY valueOf(Class_ANY const& enumType, String const& name);
 
     /**
      * Returns the Class object corresponding to this enum constant's enum type.
      */
-    Class_ANY const& getDeclaringClass() {
+    Class_ANY getDeclaringClass() {
         return _declaringClass;
     }
 
     /**
      * Returns the name of this enum.
      */
-    String const& name() const {
+    String name() const {
         return _name;
     }
 
@@ -168,15 +168,15 @@ namespace javolution {
 template <class E> class javolution::lang::Enum_API : public Enum_ANY_API  {
     Enum_API() {} // Private constructor. There is no instance of this class.
 public:
-    static Enum<E> newInstance(Class<E> enumType, String enumName, Type::int32 ordinalValue) {
+    static Enum<E> newInstance(Class<E> const& enumType, String const& enumName, Type::int32 ordinalValue) {
         Enum_ANY enumAny = Enum_ANY_API::newInstance(enumType, enumName, ordinalValue);
         return Enum<E>(enumAny);
     }
-    static Enum<E> newInstance(Class<E> enumType, String enumName) {
+    static Enum<E> newInstance(Class<E> const& enumType, String const& enumName) {
         Enum_ANY enumAny = Enum_ANY_API::newInstance(enumType, enumName);
         return Enum<E>(enumAny);
     }
-    static Type::Array< Enum<E> > values(Class<E> enumType) {
+    static Type::Array< Enum<E> > values(Class<E> const& enumType) {
         Type::Array<Enum_ANY> enumAnys = Enum_ANY_API::values(enumType);
         Type::int32 length = enumAnys.length;
         Type::Array< Enum<E> > enums =  Type::Array< Enum<E> >(length);
@@ -185,7 +185,7 @@ public:
         }
         return enums;
     }
-    static Enum<E> valueOf(Class<E> enumType, String const& enumName) {
+    static Enum<E> valueOf(Class<E> const& enumType, String const& enumName) {
         Enum_ANY enumAny = Enum_ANY_API::valueOf(enumType, enumName);
         return Enum<E>(enumAny);
     }

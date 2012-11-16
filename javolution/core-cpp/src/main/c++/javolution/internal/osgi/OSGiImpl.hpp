@@ -45,18 +45,18 @@ public: // Internal classes can have public members visibility.
     }
 
     // Override
-    JAVOLUTION_DLL void start(javolution::lang::String symbolicName, org::osgi::framework::BundleActivator activator);
+    JAVOLUTION_DLL void start(javolution::lang::String const& symbolicName, org::osgi::framework::BundleActivator const& activator);
 
     // Override
-    JAVOLUTION_DLL void stop(javolution::lang::String symbolicName);
+    JAVOLUTION_DLL void stop(javolution::lang::String const& symbolicName);
 
     // Override
-    JAVOLUTION_DLL org::osgi::framework::Bundle getBundle(javolution::lang::String symbolicName) const;
+    JAVOLUTION_DLL org::osgi::framework::Bundle getBundle(javolution::lang::String const& symbolicName) const;
 
     /**
      * Fires the specified service event (affect all bundles).
      */
-    JAVOLUTION_DLL void fireServiceEvent(org::osgi::framework::ServiceEvent serviceEvent);
+    JAVOLUTION_DLL void fireServiceEvent(org::osgi::framework::ServiceEvent const& serviceEvent);
 
 };
 #endif

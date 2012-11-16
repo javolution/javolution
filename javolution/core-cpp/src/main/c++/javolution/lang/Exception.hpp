@@ -31,7 +31,7 @@ namespace javolution {
 class javolution::lang::Exception_API : public javolution::lang::Throwable_API {
 protected:
 
-    Exception_API(String message) :
+    Exception_API(String const& message) :
         Throwable_API(message) {
     };
 
@@ -42,7 +42,7 @@ public:
      *
      * @param message the exception message.
      */
-    static Exception newInstance(String message = Type::Null) {
+    static Exception newInstance(String const& message = Type::Null) {
         return new Exception_API(message);
     }
 

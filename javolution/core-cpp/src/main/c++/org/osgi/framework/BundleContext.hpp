@@ -65,8 +65,8 @@ public:
      * @return a service registration object for use by the bundle registering
      *         the service.
      */
-    virtual ServiceRegistration registerService(javolution::lang::String className,
-            javolution::lang::Object service, javolution::util::Dictionary properties) = 0;
+    virtual ServiceRegistration registerService(javolution::lang::String const& className,
+            javolution::lang::Object const& service, javolution::util::Dictionary const& properties) = 0;
 
     /**
      * Adds the specified ServiceListener object with the specified filter
@@ -80,14 +80,14 @@ public:
      * @param serviceListener the service listener object.
      * @param filter the filter criteria.
      */
-    virtual void addServiceListener(ServiceListener serviceListener, javolution::lang::String filter) = 0;
+    virtual void addServiceListener(ServiceListener const& serviceListener, javolution::lang::String const& filter) = 0;
 
     /**
      * Unregisters a service listener object.
      *
      * @param serviceListener the service listener object.
      */
-    virtual void removeServiceListener(ServiceListener serviceListener) = 0;
+    virtual void removeServiceListener(ServiceListener const& serviceListener) = 0;
 
     /**
      * Returns an array of ServiceReference objects. The returned array of
@@ -98,7 +98,7 @@ public:
      * @param filterExpression the filter expression or <code>Type::Null</code> for all services.
      * @return an array of ServiceReference objects or  <code>Type::Null</code>if no services are registered which satisfy the search.
      */
-    virtual Type::Array<ServiceReference> getServiceReferences(javolution::lang::String clazz, javolution::lang::String filterExpression) const = 0;
+    virtual Type::Array<ServiceReference> getServiceReferences(javolution::lang::String const& clazz, javolution::lang::String const& filterExpression) const = 0;
 
     /**
      * Returns the service object referenced by the specified ServiceReference object.
@@ -106,7 +106,7 @@ public:
      * @param reference the service reference.
      * @return the actual service or <code>Object.NULL</code>
      */
-    virtual javolution::lang::Object getService(ServiceReference reference) = 0;
+    virtual javolution::lang::Object getService(ServiceReference const& reference) = 0;
 
     /**
      * Releases the service object referenced by the specified ServiceReference
@@ -115,7 +115,7 @@ public:
      * @param reference the service reference.
      * @return the actual service or <code>Object.NULL</code>
      */
-    virtual Type::boolean ungetService(ServiceReference reference) = 0;
+    virtual Type::boolean ungetService(ServiceReference const& reference) = 0;
 
     /**
      * Creates a Filter object. This Filter object may be used to match a
@@ -124,7 +124,7 @@ public:
      * @param the filter expression.
      * @return A Filter object encapsulating the filter string.
      */
-    virtual Filter createFilter(javolution::lang::String filter) const = 0;
+    virtual Filter createFilter(javolution::lang::String const& filter) const = 0;
 
     /**
      * Returns a list of all installed bundles.

@@ -44,7 +44,7 @@ public:
      * @param context The bundle context.
      * @throws javolution::lang::Exception (not declared due to Visual C++ warning C4290)
      */
-    virtual void start(BundleContext context) = 0;
+    virtual void start(BundleContext const& context) = 0;
 
     /**
      * Stops the bundle activator instance.
@@ -52,7 +52,7 @@ public:
      * @param context The bundle context.
      * @throws javolution::lang::Exception (not declared due to Visual C++ warning C4290)
      */
-    virtual void stop(BundleContext context) = 0;
+    virtual void stop(BundleContext const& context) = 0;
 
 };
 

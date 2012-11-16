@@ -12,7 +12,7 @@ using namespace javolution::lang;
 using namespace javolution::util;
 
 
-Class_ANY Class_ANY_API::forName(String className) { // Maintains unicity.
+Class_ANY Class_ANY_API::forName(String const& className) { // Maintains unicity.
     static FastMap<String, Class_ANY> nameToClass = FastMap_API<String, Class_ANY>::newInstance();
     Class_ANY newClass;
     synchronized (nameToClass) {

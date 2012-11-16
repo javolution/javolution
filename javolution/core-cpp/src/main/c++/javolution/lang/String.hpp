@@ -12,16 +12,15 @@
 namespace javolution {
     namespace lang {
         class String_API;
-        class JAVOLUTION_String; // Avoid name clash.
-        typedef JAVOLUTION_String String;
+        class String;
         class StringBuilder_API;
         class Boolean;
         class Character;
         class Integer32;
         class Integer64;
-        class Float32; 
+        class Float32;
         class Float64;
-      }
+    }
 }
 
 /**
@@ -68,7 +67,8 @@ class javolution::lang::String_API : public virtual javolution::lang::Object_API
 
     /**
      * Creates a string holding the specified wide characters.
-     * Private constructor solely used by StringBuilder.
+     * Private constructor solely used by StringBuilder (factory method 
+     * should be used).
      *
      * @param wchars the wide characters array for this string (now managed
      *        by this string object).
@@ -87,7 +87,7 @@ public:
      *
      * @param obj the object or <code>NULL</code>
      */
-    JAVOLUTION_DLL static String valueOf(Object value);
+    JAVOLUTION_DLL static String valueOf(Object const& value);
 
     /**
      * Returns the string holding the specified wide characters
@@ -189,35 +189,35 @@ public:
      */
     JAVOLUTION_DLL static String valueOf(Type::boolean value);
 
-	/**
-	 * Equivalent to <code>valueOf(b->booleanValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(Boolean b);
+    /**
+     * Equivalent to <code>valueOf(b->booleanValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(Boolean const& b);
 
-	/**
-	 * Equivalent to <code>valueOf(c->charValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(Character c);
+    /**
+     * Equivalent to <code>valueOf(c->charValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(Character const& c);
 
-	/**
-	 * Equivalent to <code>valueOf(i32->intValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(javolution::lang::Integer32 i32);
+    /**
+     * Equivalent to <code>valueOf(i32->intValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(javolution::lang::Integer32 const& i32);
 
-	/**
-	 * Equivalent to <code>valueOf(i64->longValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(javolution::lang::Integer64 i64);
+    /**
+     * Equivalent to <code>valueOf(i64->longValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(javolution::lang::Integer64 const& i64);
 
-	/**
-	 * Equivalent to <code>valueOf(f32->floatValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(javolution::lang::Float32 f32);
+    /**
+     * Equivalent to <code>valueOf(f32->floatValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(javolution::lang::Float32 const& f32);
 
-	/**
-	 * Equivalent to <code>append(f64->doubleValue())</code>
-	 */
-	JAVOLUTION_DLL static String valueOf(javolution::lang::Float64 f64);
+    /**
+     * Equivalent to <code>append(f64->doubleValue())</code>
+     */
+    JAVOLUTION_DLL static String valueOf(javolution::lang::Float64 const& f64);
 
     /**
      * Returns the length of this string.
@@ -283,7 +283,7 @@ public:
      *         <code>false</code> otherwise.
      */
     Type::boolean startsWith(String const& prefix) const {
-    	return startsWith(prefix, 0);
+        return startsWith(prefix, 0);
     }
 
     /**
@@ -305,7 +305,7 @@ public:
      * @return true if that object is a string identical to this one;
      *         <code>false</code> otherwise.
      */
-    JAVOLUTION_DLL Type::boolean equals(Object obj) const;
+    JAVOLUTION_DLL Type::boolean equals(Object const& obj) const;
 
     /**
      * Indicates whether the specified string is holding the same
@@ -347,7 +347,7 @@ public:
      * @return the wide string representation of this string.
      */
     std::wstring toWString() const {
-    	return std::wstring(_wchars, _length);
+        return std::wstring(_wchars, _length);
     }
 
     /**
@@ -360,9 +360,9 @@ public:
     /**
      * Overrides destructor to ensure internal array deallocation.
      */
-	virtual ~String_API() {
-		delete [] _wchars;
-	}
+    virtual ~String_API() {
+        delete [] _wchars;
+    }
 
 private:
 
@@ -376,34 +376,45 @@ private:
 };
 
 // Sub-class of Handle<String_API> to support automatic conversions/comparisons.
-class javolution::lang::JAVOLUTION_String : public Type::Handle<javolution::lang::String_API> {
+
+class javolution::lang::String : public Type::Handle<javolution::lang::String_API> {
 public:
-    JAVOLUTION_String(Type::NullHandle = Type::Null) : Type::Handle<String_API>() {} // Null.
-    JAVOLUTION_String(String_API* ptr) : Type::Handle<String_API>(ptr) {} // Construction from handle.
+
+    String(Type::NullHandle = Type::Null) : Type::Handle<String_API>() {
+    } // Null.
+
+    String(String_API* ptr) : Type::Handle<String_API>(ptr) {
+    } // Construction from handle.
 
     // Autoboxing.
-    JAVOLUTION_String& operator=(const char* chars) {
+
+    String& operator=(const char* chars) {
         return *this = String_API::valueOf(chars);
     }
-    JAVOLUTION_String(const char* chars) {
-    	*this = String_API::valueOf(chars);
+
+    String(const char* chars) {
+        *this = String_API::valueOf(chars);
     }
-    JAVOLUTION_String(std::string const& str) {
-    	*this = String_API::valueOf(str);
+
+    String(std::string const& str) {
+        *this = String_API::valueOf(str);
     }
-    JAVOLUTION_String& operator=(const wchar_t* wchars) {
+
+    String& operator=(const wchar_t* wchars) {
         return *this = String_API::valueOf(wchars);
     }
-    JAVOLUTION_String(const wchar_t* wchars) {
-    	*this = String_API::valueOf(wchars);
+
+    String(const wchar_t* wchars) {
+        *this = String_API::valueOf(wchars);
     }
-    JAVOLUTION_String(std::wstring const& wstr) {
-    	*this = String_API::valueOf(wstr);
+
+    String(std::wstring const& wstr) {
+        *this = String_API::valueOf(wstr);
     }
 };
 
 inline javolution::lang::String javolution::lang::String_API::toString() const {
-	return const_cast<String_API*>(this);
+    return const_cast<String_API*> (this);
 }
 
 #endif

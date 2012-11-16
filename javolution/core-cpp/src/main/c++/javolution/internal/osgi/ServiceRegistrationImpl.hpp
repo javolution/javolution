@@ -39,7 +39,7 @@ public: // Internal classes can have public members visibility.
 
 	ServiceReferenceImpl _serviceReference;
 
-    ServiceRegistrationImpl_API(ServiceReferenceImpl serviceReference) {
+    ServiceRegistrationImpl_API(ServiceReferenceImpl const& serviceReference) {
         _serviceReference = serviceReference;
     }
 

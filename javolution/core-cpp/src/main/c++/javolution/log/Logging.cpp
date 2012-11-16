@@ -23,17 +23,17 @@ void Logging_API::debug(const wchar_t* subject, const wchar_t* msg) {
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - DEBUG [" << subject << L"] " << msg << std::endl;
 }
-void Logging_API::debug(const wchar_t* subject, const wchar_t* msg, Object obj) {
+void Logging_API::debug(const wchar_t* subject, const wchar_t* msg, Object const& obj) {
     if (!isDebugEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - DEBUG [" << subject << L"] " << msg << obj << std::endl;
 }
-void Logging_API::debug(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2) {
+void Logging_API::debug(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2) {
     if (!isDebugEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - DEBUG [" << subject << L"] " << msg1 << obj1 << msg2 << std::endl;
 }
-void Logging_API::debug(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Object obj2) {
+void Logging_API::debug(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Object const& obj2) {
     if (!isDebugEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - DEBUG [" << subject << L"] " << msg1 << obj1 << msg2 << obj2 << std::endl;
@@ -43,17 +43,17 @@ void Logging_API::info(const wchar_t* subject, const wchar_t* msg) {
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - INFO [" << subject << L"] " << msg << std::endl;
 }
-void Logging_API::info(const wchar_t* subject, const wchar_t* msg, Object obj) {
+void Logging_API::info(const wchar_t* subject, const wchar_t* msg, Object const& obj) {
     if (!isInfoEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - INFO [" << subject << L"] " << msg << obj << std::endl;
 }
-void Logging_API::info(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2) {
+void Logging_API::info(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2) {
     if (!isInfoEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - INFO [" << subject << L"] " << msg1 << obj1 << msg2 << std::endl;
 }
-void Logging_API::info(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Object obj2) {
+void Logging_API::info(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Object const& obj2) {
     if (!isInfoEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - INFO [" << subject << L"] " << msg1 << obj1 << msg2 << obj2 << std::endl;
@@ -63,17 +63,17 @@ void Logging_API::warning(const wchar_t* subject, const wchar_t* msg) {
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - WARNING [" << subject << L"] " << msg << std::endl;
 }
-void Logging_API::warning(const wchar_t* subject, const wchar_t* msg, Object obj) {
+void Logging_API::warning(const wchar_t* subject, const wchar_t* msg, Object const& obj) {
     if (!isWarningEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - WARNING [" << subject << L"] " << msg << obj << std::endl;
 }
-void Logging_API::warning(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2) {
+void Logging_API::warning(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2) {
     if (!isWarningEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - WARNING [" << subject << L"] " << msg1 << obj1 << msg2 << std::endl;
 }
-void Logging_API::warning(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Object obj2) {
+void Logging_API::warning(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Object const& obj2) {
     if (!isWarningEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - WARNING [" << subject << L"] " << msg1 << obj1 << msg2 << obj2 << std::endl;
@@ -83,46 +83,46 @@ void Logging_API::error(const wchar_t* subject, const wchar_t* msg) {
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg << std::endl;
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Object obj) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Object const& obj) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg << obj << std::endl;
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg1 << obj1 << msg2 << std::endl;
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Object obj2) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Object const& obj2) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg1 << obj1 << msg2 << obj2 << std::endl;
 }
-void Logging_API::error(const wchar_t* subject, Throwable thrown) {
+void Logging_API::error(const wchar_t* subject, Throwable const& thrown) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << thrown << std::endl;
     thrown->printStackTrace();
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Throwable thrown) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Throwable const& thrown) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg << thrown << std::endl;
     thrown->printStackTrace();
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Object obj, Throwable thrown) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg, Object const& obj, Throwable const& thrown) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg << obj << L" - " << thrown << std::endl;
     thrown->printStackTrace();
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Throwable thrown) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Throwable const& thrown) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg1 << obj1 << msg2 << thrown << std::endl;
     thrown->printStackTrace();
 }
-void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object obj1, const wchar_t* msg2, Object obj2, Throwable thrown) {
+void Logging_API::error(const wchar_t* subject, const wchar_t* msg1, Object const& obj1, const wchar_t* msg2, Object const& obj2, Throwable const& thrown) {
     if (!isErrorEnabled) return;
     Type::ScopedLock lock(MUTEX);
     std::wcout << TimeUTC_API::current() << L" - ERROR [" << subject << L"] " << msg1 << obj1 << msg2 << obj2 << L" - " << thrown << std::endl;

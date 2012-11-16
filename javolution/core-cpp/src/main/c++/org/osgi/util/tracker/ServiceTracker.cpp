@@ -13,49 +13,53 @@ using namespace javolution::lang;
 using namespace javolution::util;
 
 // ServiceTracker Inner class.
-class ServiceTracker_API::ServiceListenerImpl : public ServiceListener_API {
 
-	ServiceTracker _thisServiceTracker; // Holds outer reference.
+class ServiceTracker_API::ServiceListenerImpl : public ServiceListener_API {
+    ServiceTracker _thisServiceTracker; // Holds outer reference.
 
 public:
 
     ServiceListenerImpl(ServiceTracker_API* thisServiceTracker) {
-    	_thisServiceTracker.set(thisServiceTracker); // Do not increment reference count, this to ensure
-    	                                             // that the service tracker is deleted when there is
-    	                                             // no external references to it.
-    }
-    ~ServiceListenerImpl() {
-    	_thisServiceTracker.set(0); // Do not decrement reference count.
+        _thisServiceTracker.set(thisServiceTracker); // Do not increment reference count, this to ensure
+        // that the service tracker is deleted when there is
+        // no external references to it.
     }
 
-    void serviceChanged(ServiceEvent serviceEvent) {
+    ~ServiceListenerImpl() {
+        _thisServiceTracker.set(0); // Do not decrement reference count.
+    }
+
+    void serviceChanged(ServiceEvent const& serviceEvent) {
         ServiceReference serviceReference = serviceEvent->getServiceReference();
-          switch (serviceEvent->getType()) {
+        switch (serviceEvent->getType()) {
             case ServiceEvent_API::REGISTERED:
-                synchronized(_thisServiceTracker->_trackedServices) {
-                    Object service = _thisServiceTracker->_customizer->addingService(serviceReference);
-                        // Called before service added (see ServiceTrackerCustomizer spec).
-                    _thisServiceTracker->_trackedServices->put(serviceReference, service);
-                    _thisServiceTracker->_cachedService = service;
-                    _thisServiceTracker->_trackingCount++;
-                }
+                synchronized(_thisServiceTracker->_trackedServices)
+            {
+                Object service = _thisServiceTracker->_customizer->addingService(serviceReference);
+                // Called before service added (see ServiceTrackerCustomizer spec).
+                _thisServiceTracker->_trackedServices->put(serviceReference, service);
+                _thisServiceTracker->_cachedService = service;
+                _thisServiceTracker->_trackingCount++;
+            }
                 break;
             case ServiceEvent_API::MODIFIED:
-                synchronized(_thisServiceTracker->_trackedServices) {
-                	_thisServiceTracker->_cachedService = Type::Null;
-                	_thisServiceTracker->_trackingCount++;
-                	_thisServiceTracker->_customizer->modifiedService(serviceReference, _thisServiceTracker->getService(serviceReference));
-                        // Called after service modified (see ServiceTrackerCustomizer spec).
-                }
+                synchronized(_thisServiceTracker->_trackedServices)
+            {
+                _thisServiceTracker->_cachedService = Type::Null;
+                _thisServiceTracker->_trackingCount++;
+                _thisServiceTracker->_customizer->modifiedService(serviceReference, _thisServiceTracker->getService(serviceReference));
+                // Called after service modified (see ServiceTrackerCustomizer spec).
+            }
                 break;
             case ServiceEvent_API::UNREGISTERING:
-                synchronized(_thisServiceTracker->_trackedServices) {
-                	_thisServiceTracker->_trackedServices->remove(serviceReference);
-                	_thisServiceTracker->_cachedService = Type::Null;
-                	_thisServiceTracker->_trackingCount++;
-                	_thisServiceTracker->_customizer->removedService(serviceReference, _thisServiceTracker->getService(serviceReference));
-                        // Called after service removed (see ServiceTrackerCustomizer spec).
-                }
+                synchronized(_thisServiceTracker->_trackedServices)
+            {
+                _thisServiceTracker->_trackedServices->remove(serviceReference);
+                _thisServiceTracker->_cachedService = Type::Null;
+                _thisServiceTracker->_trackingCount++;
+                _thisServiceTracker->_customizer->removedService(serviceReference, _thisServiceTracker->getService(serviceReference));
+                // Called after service removed (see ServiceTrackerCustomizer spec).
+            }
                 break;
             default:
                 throw RuntimeException_API::newInstance(L"Unknown service event");
@@ -74,6 +78,7 @@ void ServiceTracker_API::open() {
 
     // Retrieves existing services and start tracking them.
     Type::Array<ServiceReference> serviceReferences = _context->getServiceReferences(_serviceName, Type::Null);
+
     synchronized(_trackedServices) {
         for (int i = 0; i < serviceReferences.length; i++) {
             Object service = _customizer->addingService(serviceReferences[i]);
@@ -91,18 +96,19 @@ void ServiceTracker_API::open() {
 void ServiceTracker_API::close() {
 
     // Unregisters this tracker listener.
-	if (_serviceListener != Type::Null) {
+    if (_serviceListener != Type::Null) {
         _context->removeServiceListener(_serviceListener);
         _serviceListener = Type::Null;
-	}
+    }
     // Untrack services.
+
     synchronized(_trackedServices) {
-        for (Iterator<Entry<ServiceReference,Object> > i = _trackedServices->entrySet()->iterator(); i->hasNext();) {
+        for (Iterator<Entry<ServiceReference, Object> > i = _trackedServices->entrySet()->iterator(); i->hasNext();) {
             Entry<ServiceReference, Object> entry = i->next();
             Object service = entry->getValue();
             entry->setValue(Type::Null); // Removes the service.
             _customizer->removedService(entry->getKey(), service);
-                // Called after service removed (see ServiceTrackerCustomizer spec).
+            // Called after service removed (see ServiceTrackerCustomizer spec).
         }
         _trackedServices->clear();
         _cachedService = Type::Null;
@@ -135,9 +141,10 @@ Object ServiceTracker_API::getService() {
  * @return a service object or <code>Type::Null</code> if the service
  *         referenced by the specified argument is not being tracked.
  */
-Object ServiceTracker_API::getService(ServiceReference serviceReference)  {
+Object ServiceTracker_API::getService(ServiceReference const& serviceReference) {
     Object service;
-    synchronized (_trackedServices) {
+
+    synchronized(_trackedServices) {
         service = _trackedServices->get(serviceReference);
     }
     return service;
@@ -165,10 +172,11 @@ ServiceReference ServiceTracker_API::getServiceReference() {
  */
 Type::Array<ServiceReference> ServiceTracker_API::getServiceReferences() {
     Type::Array<ServiceReference> serviceReferences;
+
     synchronized(_trackedServices) {
         Type::int32 count = _trackedServices->size();
         if (count == 0) return Type::Null;
-        serviceReferences = Type::Array<ServiceReference>(count);
+        serviceReferences = Type::Array<ServiceReference > (count);
         _trackedServices->keySet()->toArray(serviceReferences);
     }
     return serviceReferences;
@@ -186,10 +194,11 @@ Type::Array<ServiceReference> ServiceTracker_API::getServiceReferences() {
  */
 Type::Array<Object> ServiceTracker_API::getServices() {
     Type::Array<Object> services;
+
     synchronized(_trackedServices) {
         Type::int32 count = _trackedServices->size();
         if (count == 0) return Type::Null;
-        services = Type::Array<Object>(count);
+        services = Type::Array<Object > (count);
         _trackedServices->values()->toArray(services);
     }
     return services;
