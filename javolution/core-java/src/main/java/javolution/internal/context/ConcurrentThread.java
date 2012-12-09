@@ -6,12 +6,12 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.context;
+package javolution.internal.context;
 
 import javax.realtime.MemoryArea;
 import javax.realtime.RealtimeThread;
-
-import javolution.lang.Reflection;
+import javolution.context.ConcurrentContext;
+import javolution.context.ConcurrentException;
 
 /**
  * <p> This class represents the concurrent executors used by the default 
@@ -43,12 +43,8 @@ class ConcurrentThread extends RealtimeThread {
      */
     public ConcurrentThread() {
         _name = "ConcurrentThread-" + getCount();
-        if (SET_NAME != null) {
-            SET_NAME.invoke(this, _name);
-        }
-        if (SET_DAEMON != null) {
-            SET_DAEMON.invoke(this, Boolean.TRUE);
-        }
+        this.setName(_name);
+        this.setDaemon(true);
     }
 
     private synchronized int getCount() {
@@ -57,27 +53,24 @@ class ConcurrentThread extends RealtimeThread {
 
     private static int _Count;
 
-    private static final Reflection.Method SET_NAME = Reflection
-            .getInstance().getMethod("java.lang.Thread.setName(String)");
-
-    private static final Reflection.Method SET_DAEMON = Reflection
-            .getInstance().getMethod("java.lang.Thread.setDaemon(boolean)");
-
     /**
      * Executes the concurrent logics sequentially.
      */
+    @Override
     public void run() {
         while (true) { // Main loop.
             synchronized (this) { // Waits for a task.
                 try {
-                    while ((_logic == null) && !_terminate)
+                    while ((_logic == null) && !_terminate) {
                         this.wait();
+                    }
                 } catch (InterruptedException e) {
                     throw new ConcurrentException(e);
                 }
             }
-            if (_terminate)
-                break; // Terminates.
+            if (_terminate) {
+                break;  // Terminates.
+            }
             try {
                 Thread current = Thread.currentThread();
                 if (current.getPriority() != _priority) {
@@ -103,11 +96,13 @@ class ConcurrentThread extends RealtimeThread {
      * @param context the concurrent context.
      */
     public boolean execute(Runnable logic, ConcurrentContext.Default context) {
-        if (_logic != null)
-            return false; // Shortcut to avoid synchronizing.
+        if (_logic != null) {
+            return false;  // Shortcut to avoid synchronizing.
+        }
         synchronized (this) {
-            if (_logic != null)
+            if (_logic != null) {
                 return false; // Synchronized check.
+            } 
             _memoryArea = RealtimeThread.getCurrentMemoryArea();
             _parent = Thread.currentThread();
             _priority = _parent.getPriority();
@@ -132,6 +127,7 @@ class ConcurrentThread extends RealtimeThread {
      * 
      * @return the string representation of this thread.
      */
+    @Override
     public String toString() {
         return _name + " from " + getSource();
     }

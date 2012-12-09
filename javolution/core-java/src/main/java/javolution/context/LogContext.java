@@ -8,8 +8,6 @@
  */
 package javolution.context;
 
-import java.lang.CharSequence;
-
 import javolution.lang.Configurable;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
@@ -93,7 +91,7 @@ import javolution.util.StandardLog;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, March 5, 2009
  */
-public abstract class LogContext extends Context {
+public abstract class LogContext extends AbstractContext {
 
     /**
      * Holds the default logging context instance.
@@ -129,8 +127,9 @@ public abstract class LogContext extends Context {
      * Holds the logging context default implementation (configurable, 
      * default value {@link #STANDARD}).
      */
-    public static final Configurable <Class<? extends LogContext>>  DEFAULT = new Configurable(STANDARD) {
+    public static final Configurable <Class<? extends LogContext>>  LOG_CONTEXT_IMPL = new Configurable(STANDARD) {
 
+        @Override
         protected void notifyChange(Object oldValue, Object newValue) {
             _Default = (LogContext) ObjectFactory.getInstance((Class) newValue).object();
         }
@@ -149,9 +148,10 @@ public abstract class LogContext extends Context {
      * @return the current logging context.
      */
     public static LogContext getCurrentLogContext() {
-        for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof LogContext)
+        for (AbstractContext ctx = AbstractContext.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
+            if (ctx instanceof LogContext) {
                 return (LogContext) ctx;
+            }
         }
         return LogContext._Default;
     }
@@ -193,8 +193,9 @@ public abstract class LogContext extends Context {
      */
     public static void debug(Object message) {
         LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-        if (!logContext.isLogged("debug"))
+        if (!logContext.isLogged("debug")) {
             return;
+        }
         logContext.logDebug(Text.valueOf(message));
     }
 
@@ -205,16 +206,17 @@ public abstract class LogContext extends Context {
      * @param messages the messages to log.
     */
     public static void debug(Object... messages) {
-    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-    if (!logContext.isLogged("debug"))
-    return;
-    Text tmp = Text.valueOf(messages[0]);
-    for (int i=1; i < messages.length; i++) {
-    tmp = tmp.plus(messages[i]);
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("debug")) {
+            return;
+        }
+        Text tmp = Text.valueOf(messages[0]);
+        for (int i = 1; i < messages.length; i++) {
+            tmp = tmp.plus(messages[i]);
+        }
+        logContext.logDebug(tmp);
     }
-    logContext.logDebug(tmp);
-    }
-    /**/
+   
     /**
      * Indicates if info messages are currently logged.
      *
@@ -243,8 +245,9 @@ public abstract class LogContext extends Context {
      */
     public static void info(Object message) {
         LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-        if (!logContext.isLogged("info"))
+        if (!logContext.isLogged("info")) {
             return;
+        }
         logContext.logInfo(Text.valueOf(message));
     }
 
@@ -255,16 +258,17 @@ public abstract class LogContext extends Context {
      * @param messages the messages to log.
     */
     public static void info(Object... messages) {
-    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-    if (!logContext.isLogged("info"))
-    return;
-    Text tmp = Text.valueOf(messages[0]);
-    for (int i = 1; i < messages.length; i++) {
-    tmp = tmp.plus(messages[i]);
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("info")) {
+            return;
+        }
+        Text tmp = Text.valueOf(messages[0]);
+        for (int i = 1; i < messages.length; i++) {
+            tmp = tmp.plus(messages[i]);
+        }
+        logContext.logInfo(tmp);
     }
-    logContext.logInfo(tmp);
-    }
-    /**/
+    
     /**
      * Indicates if warning messages are currently logged.
      *
@@ -293,8 +297,9 @@ public abstract class LogContext extends Context {
      */
     public static void warning(Object message) {
         LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-        if (!logContext.isLogged("warning"))
+        if (!logContext.isLogged("warning")) {
             return;
+        }
         logContext.logWarning(Text.valueOf(message));
     }
 
@@ -305,16 +310,17 @@ public abstract class LogContext extends Context {
      * @param messages the messages to log.
     */
     public static void warning(Object... messages) {
-    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-    if (!logContext.isLogged("warning"))
-    return;
-    Text tmp = Text.valueOf(messages[0]);
-    for (int i = 1; i < messages.length; i++) {
-    tmp = tmp.plus(messages[i]);
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("warning")) {
+            return;
+        }
+        Text tmp = Text.valueOf(messages[0]);
+        for (int i = 1; i < messages.length; i++) {
+            tmp = tmp.plus(messages[i]);
+        }
+        logContext.logWarning(tmp);
     }
-    logContext.logWarning(tmp);
-    }
-    /**/
+    
     /**
      * Indicates if error messages are currently logged.
      *
@@ -354,8 +360,9 @@ public abstract class LogContext extends Context {
      */
     public static void error(Throwable error, Object message) {
         LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-        if (!logContext.isLogged("error"))
+        if (!logContext.isLogged("error")) {
             return;
+        }
         logContext.logError(error, Text.valueOf(message));
     }
 
@@ -367,16 +374,17 @@ public abstract class LogContext extends Context {
      * @param messages the supplementary messages.
     */
     public static void error(Throwable error, Object... messages) {
-    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-    if (!logContext.isLogged("error"))
-    return;
-    Text tmp = Text.valueOf(messages[0]);
-    for (int i = 1; i < messages.length; i++) {
-    tmp = tmp.plus(messages[i]);
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("error")) {
+            return;
+        }
+        Text tmp = Text.valueOf(messages[0]);
+        for (int i = 1; i < messages.length; i++) {
+            tmp = tmp.plus(messages[i]);
+        }
+        logContext.logError(error, tmp);
     }
-    logContext.logError(error, tmp);
-    }
-    /**/
+    
     /**
      * Logs the specified error message to the current logging
      * context. 
@@ -395,8 +403,9 @@ public abstract class LogContext extends Context {
      */
     public static void error(Object message) {
         LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-        if (!logContext.isLogged("error"))
+        if (!logContext.isLogged("error")) {
             return;
+        }
         logContext.logError(null, Text.valueOf(message));
     }
 
@@ -407,16 +416,17 @@ public abstract class LogContext extends Context {
      * @param messages the messages to log.
     */
     public static void error(Object... messages) {
-    LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
-    if (!logContext.isLogged("error"))
-    return;
-    Text tmp = Text.valueOf(messages[0]);
-    for (int i = 1; i < messages.length; i++) {
-    tmp = tmp.plus(messages[i]);
+        LogContext logContext = (LogContext) LogContext.getCurrentLogContext();
+        if (!logContext.isLogged("error")) {
+            return;
+        }
+        Text tmp = Text.valueOf(messages[0]);
+        for (int i = 1; i < messages.length; i++) {
+            tmp = tmp.plus(messages[i]);
+        }
+        logContext.logError(null, tmp);
     }
-    logContext.logError(null, tmp);
-    }
-    /**/
+    
     /**
      * Logs the message of specified category (examples of category are
      * "debug", "info", "warning", "error").
@@ -487,18 +497,17 @@ public abstract class LogContext extends Context {
                 tmp.append(error.getClass().getName());
                 tmp.append(" - ");
             }
-            if (message != null)
+            if (message != null) {
                 tmp.append(message);
-            else if (error != null) // Use the error message if no message specified.
+            } else if (error != null) {
                 tmp.append(error.getMessage());
+            }
             if (error != null) { // Outputs error stack trace.
-                /**/
                 StackTraceElement[] trace = error.getStackTrace();
                 for (int i = 0; i < trace.length; i++) {
-                tmp.append("\n\tat ");
-                tmp.append(trace[i]);
+                    tmp.append("\n\tat ");
+                    tmp.append(trace[i]);
                 }
-                /**/
             }
             logMessage("error", tmp);
         } finally {
@@ -534,10 +543,12 @@ public abstract class LogContext extends Context {
      */
     private static final class Null extends SystemOut {
 
+        @Override
         protected boolean isLogged(String category) {
             return false;
         }
 
+        @Override
         protected void logMessage(String category, CharSequence message) {
             // Do nothing.
         }
@@ -547,25 +558,25 @@ public abstract class LogContext extends Context {
      * This class represents the console logging context.
      */
     private static class Console extends SystemOut {
-        /*@JVM-1.6+@
+
         final java.io.PrintWriter writer;
+
         Console() {
-        java.io.Console console = System.console();
-        writer = console != null ? console.writer() : null;
+            java.io.Console console = System.console();
+            writer = console != null ? console.writer() : null;
         }
 
         @Override
         protected void logMessage(String category, CharSequence message) {
-        if (writer == null) {
-        super.logMessage(category, message);
-        } else {
-        writer.print("[");
-        writer.print(category);
-        writer.print("] ");
-        writer.println(message);
+            if (writer == null) {
+                super.logMessage(category, message);
+            } else {
+                writer.print("[");
+                writer.print(category);
+                writer.print("] ");
+                writer.println(message);
+            }
         }
-        }
-        /**/
     }
 
     // Allows instances of private classes to be factory produced. 

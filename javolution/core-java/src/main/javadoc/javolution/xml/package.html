@@ -32,7 +32,7 @@
 
 <p> The default XML mapping for a class and its sub-classes is typically defined using 
     a <code>static final</code> {@link javolution.xml.XMLFormat XMLFormat} instance. 
-    For example:[code]
+    For example:<pre>{@code
       public abstract class Graphic implements XMLSerializable {
           private boolean _isVisible;
           private Paint _paint; // null if none.
@@ -56,7 +56,7 @@
               }
           };
       }[/code]
-    Sub-classes may override the inherited XML format:[code]
+    Sub-classes may override the inherited XML format:<pre>{@code
       public class Area extends Graphic {
           private Shape _geometry;  
         
@@ -73,7 +73,7 @@
           };
       }[/code]
     
-    The following writes a graphic area to a file, then reads it:[code]
+    The following writes a graphic area to a file, then reads it:<pre>{@code
     
       // Creates some useful aliases for class names.
       XMLBinding binding = new XMLBinding();
@@ -95,7 +95,7 @@
       reader.close();
       [/code]
  
-    Here is an example of valid XML representation for an area:[code]
+    Here is an example of valid XML representation for an area:<pre>{@code
       <Area isVisible="true">
           <Paint type="Color" rgb="#F3EBC6" />
           <Geometry type="Polygon">
@@ -115,7 +115,7 @@
         <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML DATA</span></td>
       </tr>
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>{@codeXMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.setAttribute("text", foo.text); 
     }
@@ -130,7 +130,7 @@
       </tr>
       
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>{@codeXMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text); 
     }
@@ -147,7 +147,7 @@
       </tr>
 
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>{@codeXMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.addText(foo.text);
         // or xml.getStreamWriter().writeCDATA(foo.text) to use CDATA block. 
@@ -163,7 +163,7 @@
       </tr>
 
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>{@codeXMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text"); 
     }
@@ -180,7 +180,7 @@
       </tr>
 
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>{@codeXMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text", String.class); 
     }
@@ -202,7 +202,7 @@
 <p> The {@link javolution.xml.XMLFormat XMLFormat} does not have to use the class
     public no-arg constructor, instances can be created using factory methods, 
     private constructors (with constructor parameters set from the XML element) or even retrieved from a collection 
-    (if the object is shared or unique). For example:[code]
+    (if the object is shared or unique). For example:<pre>{@code
         public final class Point implements XMLSerializable { 
             // Default XMLFormat can be private as the class cannot be extended.
             static final XMLFormat<Point> XML = new XMLFormat<Point>(Point.class) {
@@ -228,7 +228,7 @@
 </p>
 
 <p> Document cross-references are supported, including circular references. 
-    Let's take for example:[code]
+    Let's take for example:<pre>{@code
         public class Polygon implements Shape, XMLSerializable { 
             private Point[] _vertices;
             static final XMLFormat<Polygon> POLYGON_XML = new XMLFormat<Polygon>(Polygon.class) {
@@ -257,7 +257,7 @@
         writer.close();
         System.out.println(xml);
         [/code]
-    Prints the following (noticed that the first polygon and last one are being shared).[code]
+    Prints the following (noticed that the first polygon and last one are being shared).<pre>{@code
       <Polygons length="3">
           <Polygon id="0" count="3">
               <Vertex x="123" y="-34" />  

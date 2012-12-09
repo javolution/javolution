@@ -26,7 +26,7 @@ to conserve memory.</b>
     <p> It all depends of the size of the text to append (the actual size of the
          document being appended has almost no impact in both cases).</p>
     <p> If the text being appended is large (or arbitrarily large) then using 
-        {@link javolution.text.Text Text} is preferable.[code]
+        {@link javolution.text.Text Text} is preferable.<pre>{@code
         class FastCollection {
              public final Text toText() {
                  // We don't know the length of the text representation for
@@ -65,7 +65,7 @@ to conserve memory.</b>
 <code>"/proj/lodecase/src/com/lodecase/util/bar.java"</code>.
 Can the 'Text' class save us memory when strings
 have common prefixes?</b>
-    <p> It depends how you build your text. For example in following code:[code]
+    <p> It depends how you build your text. For example in following code:<pre>{@code
    Text directoryName = Text.valueOf("/proj/lodecase/src/com/lodecase/util/");
    Text fooFileName = directoryName.plus("foo.java");
    Text barFileName = directoryName.plus("bar.java");[/code]

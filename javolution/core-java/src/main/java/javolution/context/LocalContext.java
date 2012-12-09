@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,197 +8,96 @@
  */
 package javolution.context;
 
-import javolution.util.FastMap;
+import javolution.internal.context.LocalContextImpl;
+import javolution.internal.osgi.JavolutionActivator;
 
 /**
- * <p> This class represents a context to define locally scoped environment
- *     settings. This settings are held by {@link LocalContext.Reference} 
- *     and typically wrapped within a static method:[code]
- *     LocalContext.enter();
+ * <p> This class represents a context to override locally scoped environment
+ *     settings. The settings are typically  
+ *     {@link LocalParameter} ({@link Configurable}) static fields.
+ *     [code]
+ *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
+ *     ...
+ *     LocalContext.enter(); 
  *     try {
- *         ModuloInteger.setModulus(m); // Performs integer operations modulo m.
- *         Length.showAs(NonSI.INCH); // Shows length in inches.
- *         RelativisticModel.select(); // Uses relativistic physical model.
- *         ... // Operations performed using local settings.
+ *         LocalContext.override(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         z = x.times(y); // Multiplication modulo m.
  *     } finally {
- *         LocalContext.exit(); // Reverts to previous settings.
+ *         LocalContext.exit(); // Reverts changes. 
+ *     }
  *     }[/code]</p>   
- *     
- * <p> Calls to locally scoped methods should be performed either at
- *     start-up (global setting) or within a local context (to avoid 
- *     impacting other threads).</p>
  *     
  * <p> As for any context, local context settings are inherited during 
  *     {@link ConcurrentContext concurrent} executions.</p> 
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.6, September 24, 2005
- * @see javolution.util.LocalMap
+ * @version 6.0 December 12, 2012
  */
-public class LocalContext extends Context {
+public abstract class LocalContext extends AbstractContext {
+
 
     /**
-     * Holds any reference associated to this context (reference to 
-     * referent mapping).
+     * Defines the factory service producing {@link LocalContext} implementations.
      */
-    final FastMap _references = new FastMap();
+    public interface Factory {
+
+        /**
+         * Returns a new instance of the heap context.
+         */
+        LocalContext newLocalContext();
+    }
 
     /**
      * Default constructor.
      */
-    public LocalContext() {
+    protected LocalContext() {
     }
 
     /**
-     * Enters a {@link LocalContext} possibly recycled.
+     * Enters a new local context instance.
      */
     public static void enter() {
-         Context.enter(LocalContext.class);
+        LocalContext.Factory factory = JavolutionActivator.getLocalContextFactory();
+        LocalContext ctx = (factory != null) ? factory.newLocalContext()
+                : new LocalContextImpl();
+        ctx.enterScope();
     }
 
     /**
      * Exits the current local context.
-     * 
-     * @throws ClassCastException if the context is not a local context.
+     *
+     * @throws ClassCastException if the current context is not a local context.
      */
     public static void exit() {
-        Context.exit(LocalContext.class);
+        ((LocalContext) AbstractContext.current()).exitScope();
     }
-
-    // Implements Context abstract method.
-    protected void enterAction() {
-        // Do nothing.
-    }
-
-    // Implements Context abstract method.
-    protected void exitAction() {
-        _references.clear();
-    }
-
+    
     /**
-     * <p> This class represents a reference whose setting is local to the current 
-     *     {@link LocalContext}. Setting outside of any {@link LocalContext} scope 
-     *     affects the reference default value (equivalent to {@link #setDefault}).
-     * </p>
+     * Returns the local value of the specified local parameter (or its default
+     * value if not executing within the scope of a local context)
+     * 
+     * @param  param the local parameter whose current value is returned.
+     * @throws IllegalStateException if there is no outer concurrent context.
      */
-    public static class Reference <T>  implements javolution.lang.Reference <T>  {
-
-        /**
-         * Holds the default value for this reference.
-         */
-        private  T  _defaultValue;
-        /**
-         * Indicates if this reference value has ever been locally overriden 
-         * (optimization, most applications use default values).
-         */
-        private boolean _hasBeenLocallyOverriden;
-
-        /**
-         * Default constructor (default referent is <code>null</code>).
-         */
-        public Reference() {
-            this(null);
-        }
-
-        /**
-         * Creates a local reference having the specified default value.
-         * 
-         * @param defaultValue the default value or root value of this variable.
-         */
-        public Reference( T  defaultValue) {
-            _defaultValue = defaultValue;
-        }
-
-        /**
-         * Returns the local value for this reference.
-         * The first outer {@link LocalContext} is searched first, then
-         * all outer {@link LocalContext} are recursively searched up to the
-         * global root context which contains the default value.
-         *
-         * @return the context-local value.
-         */
-        public final  T  get() {
-            return (_hasBeenLocallyOverriden) ? retrieveValue() : _defaultValue;
-        }
-
-        private  T  retrieveValue() {
-            for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
-                if (ctx instanceof LocalContext) {
-                    LocalContext localContext = (LocalContext) ctx;
-                    Object value = localContext._references.get(this);
-                    if (value != null)
-                        return ( T ) value;
-                }
-            }
-            // Not found, returns default value.
-            return _defaultValue;
-        }
-
-        /**
-         * Sets the local value (referent) for this reference.
-         *
-         * @param value the new local value or <code>null</code> to inherit
-         *        the outer value.
-         */
-        public void set( T  value) {
-            LocalContext ctx = Reference.getLocalContext();
-            if (ctx != null) {
-                FastMap references = ctx._references;
-                references.put(this, value);
-                _hasBeenLocallyOverriden = true;
-                return;
-            }
-            // No local context, sets default value.
-            _defaultValue = value;
-        }
-
-        /**
-         * Returns the default value for this reference.
-         *
-         * @return the defaultValue.
-         */
-        public  T  getDefault() {
-            return _defaultValue;
-        }
-
-        /**
-         * Returns the local (non-inherited) value for this reference.
-         *
-         * @return the local value or <code>null</code> if none (value to be 
-         *         inherited or not set).
-         */
-        public  T  getLocal() {
-            LocalContext ctx = Reference.getLocalContext();
-            return (ctx != null) ? ( T ) ctx._references.get(this)
-                    : _defaultValue;
-        }
-
-        /**
-         * Sets the default value for this reference.
-         *
-         * @param  defaultValue the root value.
-         */
-        public void setDefault( T  defaultValue) {
-            _defaultValue = defaultValue;
-        }
-
-        /**
-         * Returns the string representation of the current value of this 
-         * reference.
-         *
-         * @return <code>String.valueOf(this.get())</code>
-         */
-        public String toString() {
-            return String.valueOf(this.get());
-        }
-
-        // Returns the local context if any.
-        private static LocalContext getLocalContext() {
-            for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
-                if (ctx instanceof LocalContext)
-                    return (LocalContext) ctx;
-            }
-            return null;
-        }
+    public static <T> T valueOf(LocalParameter<T> param) {
+        LocalContext ctx = AbstractContext.current(LocalContext.class);
+        if (ctx == null)
+            return param.getDefault();
+        return ctx.getValueOf(param);        
     }
+    
+    /**
+     * Returns the current value of the specified local parameter (or its default
+     * value if not executing within the scope of a local context)
+     * 
+     * @param  param the local parameter whose current value is returned.
+     * @throws IllegalStateException if there is no outer local context.
+     */
+    public static <T> void override(LocalParameter<T> param, T localValue) {
+        LocalContext ctx = AbstractContext.current(LocalContext.class);
+        if (ctx == null)
+            return param.getDefault();
+        return ctx.getValueOf(param);        
+    }
+        
 }

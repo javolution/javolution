@@ -10,7 +10,7 @@ package javolution.testing;
 
 import java.lang.CharSequence;
 
-import javolution.context.Context;
+import javolution.context.AbstractContext;
 import javolution.lang.Reflection;
 import javolution.text.Text;
 
@@ -58,7 +58,7 @@ public class JUnitContext extends TestContext {
      * fails.
      */
     public static void enter() {
-        Context.enter(JUnitContext.class);
+        AbstractContext.enter(JUnitContext.class);
     }
 
     /**
@@ -67,7 +67,7 @@ public class JUnitContext extends TestContext {
      * @throws ClassCastException if the current context is not a JUnit context.
      */
     public static void exit() {
-         Context.exit(JUnitContext.class);
+         AbstractContext.exit(JUnitContext.class);
     }
 
     protected void doRun(TestSuite testSuite) throws Exception {

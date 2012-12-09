@@ -10,7 +10,7 @@ package javolution.testing;
 
 import java.lang.CharSequence;
 
-import javolution.context.Context;
+import javolution.context.AbstractContext;
 import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
 import javolution.lang.Configurable;
@@ -83,7 +83,7 @@ public abstract class TestContext extends LogContext {
      * Enters the {@link #DEFAULT} test context.
      */
     public static void enter() {
-        Context.enter((Class) DEFAULT.get());
+        AbstractContext.enter((Class) DEFAULT.get());
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class TestContext extends LogContext {
      * @throws ClassCastException if the current context is not a test context.
      */
     public static void exit() {
-         Context.exit(TestContext.class);
+         AbstractContext.exit(TestContext.class);
     }
 
     /**

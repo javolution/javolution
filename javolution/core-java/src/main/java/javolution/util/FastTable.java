@@ -30,9 +30,24 @@ import javolution.lang.Reusable;
 
 
 /**
- * <p> This class represents a random access collection with real-time behavior 
- *     (smooth capacity increase).</p>
+ * <p> This class represents a random access collection with fast insertion 
+ *     deletion speed and smooth capacity increase (real-time). 
+ *     Instances of this class can advantageously replace {@link ArrayList}
+ *     and {@link LinkedList} both in term of space and performance.</p>
  *     <img src="doc-files/list-add.png"/>
+ * 
+ * abstract FastTable ...
+ *     isOrdered()
+ *     isShared()
+ *     getValueComparator()
+ *     isUnmodifiable()
+ * 
+ *     static newInstance(); // BasicTableImpl (elements null, size 0)
+ *     static newInstance(int capacity): // LargeTableImpl (if size > 1024)
+ *     shared(); // Shared view, SharedTableImpl
+ *     unmodifiable():  // Unmodifiable view, UnmodifiableTableImpl
+ *     ordered(); // Ordered View, table.
+ *     valueComparator(FastComparator); // CustomValueComparatorTableImpl * 
  *     
  * <p> This class has the following advantages over the widely used 
  *     <code>java.util.ArrayList</code>:<ul>
@@ -70,6 +85,9 @@ public class FastTable <E> extends FastCollection <E> implements
         }
     };
 
+    
+    
+    
     // We do a full resize (and copy) only when the capacity is less than C1.
     // For large collections, multi-dimensional arrays are employed.
 

@@ -8,25 +8,23 @@
  */
 package javolution.context;
 
-import java.lang.ThreadLocal;
-
 import javolution.lang.Configurable;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
 
 /**
- * <p> This class represents a stack {@link AllocatorContext allocator context};
- *     (using thread-local pools or RTSJ <code>ScopedMemory</code>).</p>
+ * <p> This class represents a stack allocator context. Implementations 
+ *     may be based on RTSJ <code>ScopedMemory</code> or any other mechanism
+ *     specific to the run-time JVM.</p>
  *       
  * <p> Stacks allocations reduce heap memory allocation and often result in 
- *     faster execution time for almost all objects but the smallest one.</p>
- *     
- * <p> Stack allocated objects should never be assigned to static members 
- *     (see {@link ImmortalContext}). Also, methods entering/exiting stack 
+ *     faster execution time. Although stack allocations are great for 
+ *     temporary objects, they cannot be used to store static members.
+ *     More generally speaking, methods entering/exiting stack 
  *     contexts should ensure that stack allocated objects do not escape from
  *     their context scope. If necessary, stack objects can be exported using 
  *     {@link #outerExecute} or {@link #outerCopy}:[code]
- *     public class LargeInteger implements ValueType, Realtime {
+ *     public class LargeInteger implements ValueType {
  *         public LargeInteger sqrt() {
  *             StackContext.enter(); 
  *             try { 
@@ -44,7 +42,7 @@ import javolution.util.FastTable;
  *     }[/code]</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.2, August 19, 2007
+ * @version 6.0 December 12, 2012
  */
 public abstract class StackContext extends AllocatorContext {
 
@@ -62,7 +60,7 @@ public abstract class StackContext extends AllocatorContext {
      * Enters the {@link #DEFAULT} stack context.
      */
     public static void enter() {
-        Context.enter((Class) DEFAULT.get());
+        AbstractContext.enter((Class) DEFAULT.get());
     }
 
     /**
@@ -83,7 +81,7 @@ public abstract class StackContext extends AllocatorContext {
      * @throws ClassCastException if the context is not a stack context.
      */
     public static void exit() {
-        Context.exit(StackContext.class);
+        AbstractContext.exit(StackContext.class);
     }
 
     /**

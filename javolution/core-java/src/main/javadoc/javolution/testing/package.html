@@ -20,7 +20,7 @@
     <i>(Note: You will find examples of test suites in the <code>javolution.*</code> source directory)</i>.
     Then by running within an appropriate {@link javolution.testing.TestContext TestContext}, the developer 
     can focus on any particular aspect of interest (behavior, performance, memory usage, ...) 
-    [code]
+    <pre>{@code
     // Default context (validation).
     TextContext.enter();
     try {
@@ -52,7 +52,7 @@
     
     Logging/tests contexts do not have to output test results in a text form.
     Implementations may store results in databases, spreadsheets or show them graphically (IDE plugin).
-    [code]
+    <pre>{@code
     // Logs output to console.
     TestContext.enter(TestContext.CONSOLE);
     try {

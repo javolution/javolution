@@ -8,80 +8,49 @@
  */
 package javolution.context;
 
-import javolution.lang.Configurable;
+import javolution.internal.context.SecurityContextImpl;
+import javolution.internal.osgi.JavolutionActivator;
 
 /**
  * <p> This class represents a high-level security context (low level 
- *     security being addressed by the system security manager).</p>
+ *     security being addressed by the system security manager). It defines 
+ *     whether or not {@link SecurityPermission} are granted or not.</p>
  *     
- * <p> Applications may extend this base class to address specific security
- *     requirements. For example:[code]
- *     // This class defines custom policy with regards to database access. 
- *     public abstract class DatabaseAccess extends SecurityContext  {
- *         public static boolean isReadAllowed(Table table) {
- *             SecurityContext policy = SecurityContext.current();
- *             return (policy instanceof DatabaseAccess.Permission) ?
- *                 ((DatabaseAccess.Permission)policy).isReadable(table) : false;
- *         }
- *         public interface Permission { 
- *             boolean isReadable(Table table);
- *             boolean isWritable(Table table);
- *         }
- *     }[/code]</p>
- *     
- * <p> The use of interfaces (such as <code>Permission</code> above) makes 
- *     it easy for custom policies to support any security actions.
- *     For example:[code]
- *     class Policy extends SecurityContext implements DatabaseAccess.Permission, FileAccess.Permission {
- *          public boolean isReadable(Table table) { 
- *              return !table.isPrivate();
- *          }
- *          public boolean isWritable(Table table) { 
- *              return Session.getSession().getUser().isAdministrator();
- *          }
- *          public boolean isReadable(File file) { 
- *              return true;
- *          }
- *          public boolean isWritable(File file) { 
- *              return false;
- *          }
- *     }
- *     ...
- *     Policy localPolicy = new Policy();
- *     SecurityContext.enter(localPolicy); // Current thread overrides default policy (configurable)  
- *     try {                               // (if allowed, ref. SecurityContext.isReplaceable())
- *         ...
- *         DatabaseAccess.isReadAllowed(table);   
- *         ...
- *         FileAccess.isWriteAllowed(file);
+ * <p> Outside of any context scope, there is no security context and the only 
+ *     permission granted is to enter a security context! Therefore, before 
+ *     executing any code which requires permissions to be granted, it is 
+ *     necessary to enter a security context and to grant the appropriate 
+ *     permissions.
+ *     [code]
+ *     SecurityContext.enter();
+ *     try {
+ *         SecurityContext.grant(SecurityPermission.ALL);
  *         ...
  *     } finally {
- *         SecurityContext.exit();
- *     }[/code]</p>    
- *     
- * <p> The default permissions managed by the {@link #DEFAULT} implementation
- *     are the permission to {@link #isReplaceable replace} the current security
- *     context by default) and the permission to {@link #isConfigurable configure}
- *     the application.</p>
- *
+ *         SecurityContext.exit(); // Back to previous security settings. 
+ *     }
+ *     [/code]
+ * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.2, August 5, 2007
+ * @version 6.0, December 12, 2012
  */
-public abstract class SecurityContext extends Context {
+public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
     /**
-     * Holds the default security context.
+     * Holds the permission to enter a new security context.
      */
-    private static volatile SecurityContext _Default = new Default();
-    /**
-     * Holds the default security context implementation (configurable).
-     */
-    public static final Configurable <Class<? extends SecurityContext>>  DEFAULT = new Configurable(Default.class) {
+    public static final SecurityPermission<SecurityContext> ENTER_PERMISSION = new SecurityPermission(SecurityContext.class, "enter");
 
-        protected void notifyChange(Object oldValue, Object newValue) {
-            _Default = (SecurityContext) ObjectFactory.getInstance((Class) newValue).object();
-        }
-    };
+    /**
+     * Defines the factory producing {@link SecurityContext} implementations.
+     */
+    public interface Factory {
+
+        /**
+         * Returns a new instance of the security context.
+         */
+        SecurityContext newSecurityContext();
+    }
 
     /**
      * Default constructor.
@@ -90,91 +59,103 @@ public abstract class SecurityContext extends Context {
     }
 
     /**
-     * Returns the current security context. If the current thread has not 
-     * entered any security context then  {@link #getDefault()} is returned.
+     * Checks if the specified permission is granted.
+     *
+     * @return the current security context.
+     * @throws SecurityException if the permission is not granted.
+     */
+    public static void check(SecurityPermission permission) throws SecurityException {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if ((ctx == null) && (permission.equals(ENTER_PERMISSION))) return; // Ok.
+        if (ctx == null) throw new SecurityException(
+                    "There is no SecurityContext!"
+                    + " Make sure to enter a SecurityContext in order to grant "
+                    + permission);
+        if (!ctx.isGranted(permission))
+            throw new SecurityException(permission + " is not granted.");
+    }
+
+    /**
+     * Grants the specified permission.
+     * 
+     * @throws SecurityException if the permission cannot be granted or if there 
+     *         is no SecurityContext outer scope.
+     */
+    public static void grant(SecurityPermission permission) throws SecurityException {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if (ctx == null)
+            throw new SecurityException("Not executing in a SecurityContext scope");
+        ctx.doGrant(permission);
+    }
+
+    /**
+     * Revokes the specified permission.
+     * 
+     * @throws SecurityException if the permission cannot be revoked or if there
+     *         is no SecurityContext outer scope.
+     */
+    public static void revoke(SecurityPermission permission) throws SecurityException {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if (ctx == null)
+            throw new SecurityException("Not executing in a SecurityContext scope");
+        ctx.doRevoke(permission);
+    }
+
+    /**
+     * Enters a new security context instance.
+     * 
+     * @throws SecurityException if the {@link SecurityContext#ENTER_PERMISSION
+     *         permission} to enter a security context is not granted.
+     */
+    public static void enter() throws SecurityException {
+        SecurityContext.Factory factory = JavolutionActivator.getSecurityContextFactory();
+        SecurityContext ctx = (factory != null) ? factory.newSecurityContext()
+                : new SecurityContextImpl();
+        ctx.enterScope();
+    }
+
+    /**
+     * Exits the current security context.
+     *
+     * @throws ClassCastException if the current context is not a security context.
+     */
+    public static void exit() {
+        ((SecurityContext) AbstractContext.current()).exitScope();
+    }
+
+    /**
+     * Indicates if the specified permission is granted.
      *
      * @return the current security context.
      */
-    public static SecurityContext  getCurrentSecurityContext() {
-        for (Context ctx = Context.getCurrentContext(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof SecurityContext)
-                return (SecurityContext) ctx;
-        }
-        return SecurityContext._Default;
-    }
+    public abstract boolean isGranted(SecurityPermission<?> permission);
 
     /**
-     * Returns the default instance ({@link #DEFAULT} implementation).
-     *
-     * @return the default instance.
-     */
-    public static SecurityContext getDefault() {
-        return SecurityContext._Default;
-    }
-
-    // Implements Context abstract method.
-    protected final void enterAction() {
-        // Checks if the previous security context is replaceable.
-        SecurityContext previousPolicy = SecurityContext._Default;
-        for (Context ctx = this.getOuter(); ctx != null; ctx = ctx.getOuter()) {
-            if (ctx instanceof SecurityContext) {
-                previousPolicy = (SecurityContext) ctx;
-                break;
-            }
-        }
-        if (!previousPolicy.isReplaceable())
-            throw new SecurityException("Current Security Context not Replaceable");
-    }
-
-    // Implements Context abstract method.
-    protected final void exitAction() {
-        // Do nothing.
-    }
-
-    /**
-     * Indicates if a new security context can be entered (default 
-     * <code>true</code>). Applications may return <code>false</code> and 
-     * prevent untrusted code to increase their privileges. Usually, 
-     * such security setting should also prevent reconfiguring of the 
-     * {@link #DEFAULT default} security context by making
-     * {@link #DEFAULT} not replaceable.
+     * Grants the specified permission.
      * 
-     * @return <code>true</code> if a new security context can be entered;
-     *         <code>false</code> otherwise.
+     * @throws SecurityException if the permission cannot be granted.
      */
-    public boolean isReplaceable() {
-        return true;
-    }
+    public abstract void doGrant(SecurityPermission<?> permission) throws SecurityException;
 
     /**
-     * Indicates if this security context allows changes in the specified
-     * {@link javolution.lang.Configurable Configurable}
-     * (default <code>true</code>). Applications may override this method
-     * to return <code>false</code> and prevent untrusted code to update the 
-     * some or all configuration parameters.
+     * Revokes the specified permission.
      * 
-     * @param  cfg the configurable to check if changes are allowed.
-     * @return <code>true</code> if the specified configurable can be modified;
-     *         <code>false</code> otherwise.
+     * @throws SecurityException if the permission cannot be revoked.
      */
-    public boolean isConfigurable(Configurable cfg) {
-        return true;
-    }
+    public abstract void doRevoke(SecurityPermission<?> permission) throws SecurityException;
 
     /**
-     * Default implementation. 
+     * Overrides the parent method {@link AbstractContext#enterScope() } 
+     * to check that {@link SecurityContext#ENTER_PERMISSION} is granted.
+     * Revoking this permission prevents the application from overriding the 
+     * current security policy with a new one.
+     * 
+     * @throws SecurityException if the permission to enter a security context
+     *         is not granted.
      */
-    private static class Default extends SecurityContext {
-    }
-
-    // Allows instances of private classes to be factory produced. 
-    static {
-        ObjectFactory.setInstance(new ObjectFactory() {
-
-            protected Object create() {
-                return new Default();
-            }
-        }, Default.class);
+    @Override
+    protected void enterScope() throws IllegalStateException, SecurityException {
+        SecurityContext.check(SecurityContext.ENTER_PERMISSION);
+        super.enterScope();
     }
 }
-

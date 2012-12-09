@@ -21,13 +21,13 @@
     <dependencies>
         <dependency> <!-- OSGI Core Library -->
             <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_core</artifactId>
-            <version>1.0</version>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.3.1</version>
         </dependency>
         <dependency> <!-- OSGI Compendium (log service) -->
             <groupId>org.osgi</groupId>
-            <artifactId>osgi_R4_compendium</artifactId>
-            <version>1.0</version>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.3.1</version>
         </dependency>
     </dependencies>
     

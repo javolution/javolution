@@ -259,23 +259,28 @@ javolution/core-java/pom.xml -text
 javolution/core-java/src/main/java/javax/realtime/MemoryArea.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javax/realtime/NoHeapRealtimeThread.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javax/realtime/RealtimeThread.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/Allocator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AllocatorContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/ArrayFactory.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/ConcurrentException.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/ConcurrentThread.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/Context.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/HeapContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/ImmortalContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/LocalContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/LocalParameter.java -text
 javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/ObjectFactory.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/PersistentContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/PoolContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/SecurityPermission.java -text
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/internal/osgi/BundleActivatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/package-info.java -text
+javolution/core-java/src/main/java/javolution/internal/context/ConcurrentContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/ConcurrentThread.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/context/HeapContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/LocalContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/SecurityContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/osgi/BundleContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/osgi/BundleImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/osgi/FilterImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/osgi/JavolutionActivator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/osgi/ServiceReferenceImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/osgi/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/io/AppendableWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/CharSequenceReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Struct.java -text svneol=unset#text/plain
@@ -284,16 +289,13 @@ javolution/core-java/src/main/java/javolution/io/UTF8ByteBufferWriter.java -text
 javolution/core-java/src/main/java/javolution/io/UTF8StreamReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/UTF8StreamWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/ClassInitializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/ConfigurableService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Reference.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Reflection.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Reusable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/osgi/OSGi.java -text
 javolution/core-java/src/main/java/javolution/testing/AssertionException.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/testing/JUnitContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/testing/TestCase.java -text svneol=unset#text/plain

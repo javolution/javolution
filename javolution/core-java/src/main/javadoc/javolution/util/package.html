@@ -17,13 +17,13 @@
     <UL>
     <LI>Faster than iterators, see <A href="http://javolution.org/doc/benchmark.html">benchmark</A>.</LI>
     <LI>No object creation not even the iterator object itself. For example, visiting a tree structure using
-        iterators creates as many iterators as they are nodes in the tree:[code]
+        iterators creates as many iterators as they are nodes in the tree:<pre>{@code
     public static void visit(Collection<Collection> node) {
         for (Collection<Collection> i : node) { // Creates iterator.
             visit(i);
         }
     }[/code]
-    Not so with direct iterations:[code]
+    Not so with direct iterations:<pre>{@code
     public static void visit(FastCollection<FastCollection> node) {
         for (FastCollection.Record r = node.head(), end = node.tail(); (r = r.getNext()) != end;) {
             visit(node.valueOf(r));
@@ -35,7 +35,7 @@
     <LI>Fully integrated with the JDK1.5+ generic framework (strong typing) and still compatible
         with other platforms (J2ME, 1.4, GCJ).</LI>
     </UL>
-    Here are few examples of direct iterations:[code]
+    Here are few examples of direct iterations:<pre>{@code
     FastList<String> list;
     for (FastList.Node<String> n = list.head(), end = list.tail(); (n = n.getNext()) != end;) {
         String value = n.getValue(); // No typecast necessary.    
@@ -52,7 +52,7 @@
     (or {@link javolution.util.FastMap FastMap}) instance using the 
     {@link javolution.util.FastCollection#unmodifiable() FastCollection.unmodifiable()}
     (or {@link javolution.util.FastMap#unmodifiable FastMap.unmodifiable()}) method.
-     For example:[code]
+     For example:<pre>{@code
      public class Polynomial {
        
         private final FastSet<Term> _terms = new FastSet<Term>();
@@ -68,7 +68,7 @@
     Having a shared collection (or map) means that it can be safely
     used without synchronization. It does not mean that a change made by a thread
     is automatically viewed by another thread (that would require synchronizing).
-    For example:[code]
+    For example:<pre>{@code
      class Foo {
           private static final Collection<Foo> INSTANCES = new FastTable().shared();
           public Foo() {
@@ -85,7 +85,7 @@
 <P> Collection/maps of primitive types can be created using the
     {@link javolution.util.Index Index} class. It avoids the overhead 
     of wrapping primitives types (for reasonably small <code>int</code> values).
-    For example:[code]
+    For example:<pre>{@code
     public class SparseVector<F> {
         FastMap<Index, F> _elements = new FastMap<Index, F>();
         ...
@@ -96,7 +96,7 @@
     is allocated at creation. For <a href="http://www.rtj.org/">RTSJ</a> VMs, all 
     collections/maps can reside in <code>ImmortalMemory</code> (e.g. <code>static</code>)
     and be used by all threads (including <code>NoHeapRealtimeThread</code>) <b>without resulting into memory leaks 
-    or illegal access errors</b>. For example:[code]
+    or illegal access errors</b>. For example:<pre>{@code
     public class XmlFormat {
         // RTSJ Unsafe! Memory leaks (when entries removed) or IllegalAssignmentError (when new entries while in ScopedArea).   
         static HashMap<Class, XmlFormat> ClassToFormat = HashMap<Class, XmlFormat>();
@@ -106,7 +106,7 @@
    }[/code]        
     For more details, please read <a href="http://javolution.org/doc/Javolution-Collections.pdf">Javolution-Collection.pdf</a></P>.  
      
-<P> Temporary collection classes can be recycled (e.g. throw-away collections) to avoid the creation cost. For example:[code]
+<P> Temporary collection classes can be recycled (e.g. throw-away collections) to avoid the creation cost. For example:<pre>{@code
     static void removeDuplicate(List<Person> persons) {
         FastSet<Person> tmp = FastSet.newInstance(); // Possibly recycled instance.
         try {
@@ -196,7 +196,7 @@
     <li><b>Do you have a test case showing any scenario of concurrent modification where 
           ArrayList "fails" and FastTable doesn't?</b>
     <p> Let's say that you have a collection of "Units", and you want to provide users 
-        with a read-only view of these units. The following code will fail miserably:[code]
+        with a read-only view of these units. The following code will fail miserably:<pre>{@code
     public class Unit {
         static ArrayList<Unit> INSTANCES = new ArrayList<unit>();
         public static Collection<Unit> getInstances() {
@@ -208,7 +208,7 @@
         automatically raised. In other words, it is almost impossible to provide a "read-only" view
         of non-fixed size collections with the current java.util classes (e.g. you will have to replace
         the whole collection each time a new unit is added).</p>
-    <p> Now with FastTable the following is completely safe even when new units are added:[code]
+    <p> Now with FastTable the following is completely safe even when new units are added:<pre>{@code
     public class Unit {
         static Collection<Unit> INSTANCES = new FastTable<unit>().shared();
         public static Collection<Unit> getInstances() {

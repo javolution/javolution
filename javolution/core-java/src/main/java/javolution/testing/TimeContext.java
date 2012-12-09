@@ -10,7 +10,7 @@ package javolution.testing;
 
 import java.lang.CharSequence;
 
-import javolution.context.Context;
+import javolution.context.AbstractContext;
 import javolution.context.LogContext;
 import javolution.context.ObjectFactory;
 import javolution.lang.Configurable;
@@ -76,7 +76,7 @@ public abstract class TimeContext extends TestContext {
      * Enters the {@link #DEFAULT} time context.
      */
     public static void enter() {
-         Context.enter((Class) DEFAULT.get());
+         AbstractContext.enter((Class) DEFAULT.get());
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class TimeContext extends TestContext {
      * @throws ClassCastException if the context is not a time context.
      */
     public static void exit() {
-         Context.exit(TimeContext.class);
+         AbstractContext.exit(TimeContext.class);
     }
 
     /**
