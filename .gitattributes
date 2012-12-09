@@ -348,7 +348,6 @@ javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReaderImpl.jav
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
-javolution/core-java/src/main/javadoc/javolution/context/package.html -text
 javolution/core-java/src/main/javadoc/javolution/io/package.html -text
 javolution/core-java/src/main/javadoc/javolution/lang/package.html -text
 javolution/core-java/src/main/javadoc/javolution/package.html -text
