@@ -8,9 +8,9 @@
  */
 package javolution.context;
 
-import javolution.lang.Configurable;
-import javolution.util.FastMap;
-import javolution.util.FastTable;
+import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
+import javolution.lang.Copyable;
+import javolution.text.TypeFormat;
 
 /**
  * <p> This class represents a stack allocator context. Implementations 
@@ -26,17 +26,17 @@ import javolution.util.FastTable;
  *     {@link #outerExecute} or {@link #outerCopy}:[code]
  *     public class LargeInteger implements ValueType {
  *         public LargeInteger sqrt() {
- *             StackContext.enter(); 
+ *             StackContext ctx = StackContext.enter(); 
  *             try { 
  *                 LargeInteger result = ZERO;
  *                 LargeInteger k = this.shiftRight(this.bitLength() / 2)); // First approximation.
  *                 while (true) { // Newton Iteration.
  *                     result = (k.plus(this.divide(k))).shiftRight(1);
- *                     if (result.equals(k)) return StackContext.outerCopy(result); // Exports result.
+ *                     if (result.equals(k)) return ctx.export(result); // Exports result.
  *                     k = result;
  *                 }
  *             } finally { 
- *                 StackContext.exit(); 
+ *                 ctx.exit(); 
  *             }
  *         }
  *     }[/code]</p>
@@ -44,190 +44,51 @@ import javolution.util.FastTable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class StackContext extends AllocatorContext {
+public abstract class StackContext extends AllocatorContext<StackContext> {
 
-    /**
-     * Holds the default implementation. This implementation uses thread-local
-     * pools. RTSJ alternative implementations could use 
-     * <code>ScopedMemory</code> for their stack allocations.
-     * Users may also disable stack allocation by providing a class allocating
-     * on the heap.
+  /**
+     * Indicates whether or not static methods will block for an OSGi published
+     * implementation this class (default configuration <code>false</code>).
+     * This parameter cannot be locally overriden.
      */
-    public static final Configurable <Class<? extends StackContext>>  DEFAULT 
-            = new Configurable(Default.class) {};
-
-    /**
-     * Enters the {@link #DEFAULT} stack context.
-     */
-    public static void enter() {
-        AbstractContext.enter((Class) DEFAULT.get());
-    }
-
-    /**
-     * Enters a stack context only if the specified condition is verified.
-     *
-     * @param condition <code>true</code> to enter a stack context;
-     *                  <code>false</code> otherwise.
-     */
-    public static void enter(boolean condition) {
-        if (condition) {
-            StackContext.enter();
+    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+        @Override
+        public void configure(CharSequence configuration) {
+            setDefault(TypeFormat.parseBoolean(configuration));
         }
+
+        @Override
+        public void checkOverridePermission() throws SecurityException {
+            throw new SecurityException(this + " cannot be overriden");
+        }
+    };
+    
+    /**
+     * Default constructor.
+     */
+    protected StackContext() {
     }
 
     /**
-     * Exits the current stack context.
+     * Enters a new stack context instance.
      * 
-     * @throws ClassCastException if the context is not a stack context.
+     * @return the new heap context implementation entered.
      */
-    public static void exit() {
-        AbstractContext.exit(StackContext.class);
-    }
-
+    public static StackContext enter() {
+        StackContext ctx = AbstractContext.current(StackContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return STACK_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+    }   
+    
     /**
-     * Exits a stack context only if the specified condition is verified.
+     * Exports this object (through copy) outside of this stack context.
+     * The object is copied to the outer allocator context (which might be 
+     * a stack context as well).
      *
-     * @param condition <code>true</code> to exit a stack context;
-     *                  <code>false</code> otherwise.
+     * @param obj the object to export.
+     * @return a deep copy of this object allocated in the outer allocator 
+     *         context of this statck context.
      */
-    public static void exit(boolean condition) {
-        if (condition) {
-            StackContext.exit();
-        }
-    }
-
-    /**
-     * Default implementation. 
-     */
-    private static final class Default extends StackContext {
-
-        private final ThreadLocal _factoryToAllocator = new ThreadLocal() {
-
-            protected Object initialValue() {
-                return new FastMap();
-            }
-        };
-        private final ThreadLocal _activeAllocators = new ThreadLocal() {
-
-            protected Object initialValue() {
-                return new FastTable();
-            }
-        };
-        // All allocators which have been used by the owner  
-        // (no synchronization required).
-        private final FastTable _ownerUsedAllocators = new FastTable();
-        // All allocators which have been used by the concurrent threads 
-        // (synchronization required).
-        private final FastTable _nonOwnerUsedAllocators = new FastTable();
-
-        protected void deactivate() {
-            FastTable allocators = (FastTable) _activeAllocators.get();
-            for (int i = 0, n = allocators.size(); i < n;) {
-                ((Allocator) allocators.get(i++)).user = null;
-            }
-            allocators.clear();
-        }
-
-        protected Allocator getAllocator(ObjectFactory factory) {
-            FastMap factoryToAllocator = (FastMap) _factoryToAllocator.get();
-            StackAllocator allocator = (StackAllocator) factoryToAllocator.get(factory);
-            if (allocator == null) {
-                allocator = new StackAllocator(factory);
-                factoryToAllocator.put(factory, allocator);
-            }
-            if (allocator.user == null) { // Activate.
-                allocator.user = Thread.currentThread();
-                FastTable activeAllocators = (FastTable) _activeAllocators.get();
-                activeAllocators.add(allocator);
-            }
-            if (!allocator._inUse) { // Add to lists of allocators used.
-                allocator._inUse = true;
-                if (Thread.currentThread() == getOwner())
-                    _ownerUsedAllocators.add(allocator);
-                else
-                    synchronized (_nonOwnerUsedAllocators) {
-                        _nonOwnerUsedAllocators.add(allocator);
-                    }
-            }
-            return allocator;
-        }
-
-        protected void enterAction() {
-            getOuter().getAllocatorContext().deactivate();
-        }
-
-        protected void exitAction() {
-            this.deactivate();
-
-            // Resets all allocators used.
-            for (int i = 0; i < _ownerUsedAllocators.size(); i++) {
-                StackAllocator allocator = (StackAllocator) _ownerUsedAllocators.get(i);
-                allocator.reset();
-            }
-            _ownerUsedAllocators.clear();
-            for (int i = 0; i < _nonOwnerUsedAllocators.size(); i++) {
-                StackAllocator allocator = (StackAllocator) _nonOwnerUsedAllocators.get(i);
-                allocator.reset();
-            }
-            _nonOwnerUsedAllocators.clear();
-        }
-    }
-
-    // Holds stack allocator implementation.
-    private static final class StackAllocator extends Allocator {
-
-        private final ObjectFactory _factory;
-        private boolean _inUse;
-        private int _queueLimit;
-
-        public StackAllocator(ObjectFactory factory) {
-            this._factory = factory;
-        }
-
-        protected Object allocate() {
-            if (_queueLimit >= queue.length)
-                resize();
-            Object obj = _factory.create();
-            queue[_queueLimit++] = obj;
-            return obj;
-        }
-
-        protected void recycle(Object object) {
-            if (_factory.doCleanup())
-                _factory.cleanup(object);
-            for (int i = queueSize; i < _queueLimit; i++) {
-                if (queue[i] == object) { // Found it.
-                    queue[i] = queue[queueSize];
-                    queue[queueSize++] = object;
-                    return;
-                }
-            }
-            throw new java.lang.UnsupportedOperationException(
-                    "Cannot recycle to the stack an object " +
-                    "which has not been allocated from the stack");
-        }
-
-        protected void reset() {
-            _inUse = false;
-            while (_factory.doCleanup() && (queueSize != _queueLimit)) {
-                Object obj = queue[queueSize++];
-                _factory.cleanup(obj);
-            }
-            queueSize = _queueLimit;
-        }
-
-        public String toString() {
-            return "Stack allocator for " + _factory.getClass();
-        }
-    }
-
-    // Allows instances of private classes to be factory produced. 
-    static {
-        ObjectFactory.setInstance(new ObjectFactory() {
-
-            protected Object create() {
-                return new Default();
-            }
-        }, Default.class);
-    }
+    public abstract <T extends Copyable> T export(Copyable<T> obj);
+        
 }

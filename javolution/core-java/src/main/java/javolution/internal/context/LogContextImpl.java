@@ -8,31 +8,35 @@
  */
 package javolution.internal.context;
 
-import javolution.context.HeapContext;
-import javolution.lang.Copyable;
+import javolution.context.LogContext;
+
 
 /**
- * Holds the default implementation of HeapContext.
+ * Holds the default implementation of LogContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public final class HeapContextImpl extends HeapContext {
+public final class LogContextImpl extends LogContext {
 
     @Override
-    protected void execute(Runnable logic) {
+    public void attach(Object property, Object propertyValue) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    protected <T extends Copyable> T copy(T copyable) {
+    public void suppress(Level level) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    protected HeapContext inner() {
+    protected void log(Level level, Object... objs) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    
+    @Override
+    protected LogContext inner() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 }

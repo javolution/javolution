@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -49,7 +49,8 @@ import javolution.context.SecurityPermission;
 public interface Configurable {
 
     /**
-     * Holds the the permission to configure any configurable instance.
+     * Holds the general permission to configure a configurable instance
+     * (action <code>"configure"</code>).
      * Whether or not that permission is granted depends on the current 
      * {@link SecurityContext}. It is possible that the general permission 
      * to update any configurable is granted but revoked for specific 
@@ -62,10 +63,12 @@ public interface Configurable {
     /**
      * Configures this configurable from the specified textual configuration.
      * Decoding and meaning of the configuration may vary according to the
-     * class implementing the Configurable interface.
+     * class implementing the configurable interface.
      * 
      * @param configuration the configuration text.
+     * @throws SecurityException if the permission to configure this configurable is not granted.
+     * @throws IllegalArgumentException if the specified configuration if not valid.
      */
-    public void configure(CharSequence configuration) throws SecurityException;
+    public void configure(CharSequence configuration) throws SecurityException, IllegalArgumentException;
         
 }

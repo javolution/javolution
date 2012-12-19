@@ -52,76 +52,13 @@
       <li>{@link javolution.context.AllocatorContext AllocatorContext} - To control 
            object allocation, e.g. {@link javolution.context.StackContext StackContext}
            to allocate on the stack (or RTSJ ScopedMemory).</li>
-      <li>{@link javolution.context.LogContext LogContext} - For thread-based or object-based logging
-          capability, e.g. {@link javolution.util.StandardLog StandardLog} to leverage standard
-          logging capabilities.
-          <i>Note: <code>java.util.logging</code> provides class-based 
-            logging (based upon class hierarchy).</i></li>
-      <li>{@link javolution.context.PersistentContext PersistentContext} - To achieve persistency across 
-          multiple program execution.</li>
+      <li>{@link javolution.context.LogContext LogContext} - For performant logging capabilities
+           using either {@link org.osgi.service.log.LogService} when running OSGi or 
+          {@link javolution.util.StandardLog StandardLog} when running outside of OSGi.</li>     
       <li>{@link javolution.context.SecurityContext SecurityContext} - To address application-level security 
           concerns.</li>
-      <li>{@link javolution.testing.TestContext TestContext} - To address varied aspect of testing such as performance and regression. </li>
       </ul>
   </p>
 
- <h2><a name="FAQ">FAQ:</a></h2>
-<ol>
-    <a name="FAQ-1"></a>
-    <li><b>I am writing an application using third party libraries. 
-          I cannot avoid GC unless I get the source and patch it to Javolution.
-          Can I still make my application real-time using {@link javolution.context.StackContext StackContext}?</b>
-    <p> You cannot get determinism using "any" library (including Java standard library) 
-    regardless of the garbage collector issue. Array resizing, lazy initialization, map rehashing (...)
-    would all introduce unexpected  delays (this is why Javolution comes with its own 
-    {@link javolution.lang.Realtime real-time} collections implementation). 
-    Still, you may use incremental/real-time collectors (if few milliseconds delays are acceptable). 
-    These collectors work even faster if you limit the amount of garbage produced onto the heap
-    through {@link javolution.context.StackContext stack allocations}.</p>
-    </li><p></p>
-
-    <a name="FAQ-2"></a>
-    <li><b>Can you explain a little how objects can be "stack" allocated?</b>
-    <p> It all depends upon the StackContext {@link javolution.context.StackContext#DEFAULT default} implementation.
-    The default implementation use thread-local queues (no synchronization required);
-    but if you run on a <a href="https://rtsj.dev.java.net/">RTSJ</a> virtual machine
-    entering a {@link javolution.context.StackContext StackContext} could mean using <code>ScopedMemory</code>.</p>
-    </li><p></p>
-    
-    <a name="FAQ-3"></a>
-    <li><b>As a rule, I am skeptical of classes that pool small objects. 
-     At one time (5 years ago) it was a big win. Over time, the advantage has 
-     diminished as garbage collectors improve. Object pools can make it much more
-     difficult for the garbage collector to do its job efficiently, and can have
-     adverse effects on footprint. (Joshua Bloch) </b>
-    <p> Stack allocation is different from object pooling, it is a simple and transparent 
-        way to make your methods "clean" (no garbage generated), it has also the side effect
-        of making your methods faster and more time-predictable. 
-        If all your methods are "clean" then your whole 
-        application is "clean", faster and more time-predictable (aka real-time).</p>
-    <p> In practice very few methods need to enter a {@link javolution.context.StackContext StackContext}, 
-        only the one generating a significant number of temporary objects (these methods are made "cleaner"
-        and faster through stack allocation). For example:[code]
-        public final class DenseVector<F extends Field<F>> extends Vector<F> {
-            ...
-            public F times(Vector<F> that) {
-                final int n = this.getDimension();
-                if (that.getDimension() != n) throw new DimensionException();
-                StackContext.enter();
-                try { // Reduces memory allocation / garbage collection.
-                    F sum = this.get(0).times(that.get(0));
-                    for (int i = 1; i < n; i++) {
-                        sum = sum.plus(this.get(i).times(that.get(i)));
-                    }
-                    return StackContext.outerCopy(sum); // Stack object exported through copy.
-                } finally {
-                    StackContext.exit(); // Resets stack.
-                }
-            }
-            ...
-        }[/code]</p>
-    </li><p></p>
-       
- </ol>
  */
 package javolution.context;

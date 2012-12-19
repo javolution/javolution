@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -15,19 +15,20 @@ import org.osgi.framework.BundleActivator;
  *  <p> This class represents a light OSGi framework which can be
  *      used to run bundles as "standard" java applications. This can 
  *      be particularly useful for testing/debugging purpose.
- *      This requires that the bundle activator class is a public class 
+ *      This requires that the bundle activator classes are accessible (public)
  *      [code]
  *      public void main(String[] args) throws Exception {
  *           OSGi osgi = OSGi.newInstance();
- *           osgi.start("Javolution bundle", new javolution.osgi.JavolutionActivator());
- *           osgi.start("Foo bundle", new org.foo.osgi.FooActivator());
+ *           osgi.start("Javolution", new javolution.internal.osgi.JavolutionActivator());
+ *           osgi.start("Foo", new org.foo.internal.osgi.FooActivator());
  *           Thread.sleep(10000);
- *           osgi.stop("bundle1");
- *           osgi.stop("bundle2");
+ *           osgi.stop("Javolution");
+ *           osgi.stop("Foo");
  *       }
  *       [/code]
  * </p>
- *
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 6.0, December 12, 2012
  */
 public abstract class OSGi {
 

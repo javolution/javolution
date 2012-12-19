@@ -271,10 +271,12 @@ javolution/core-java/src/main/java/javolution/context/SecurityPermission.java -t
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/package-info.java -text
 javolution/core-java/src/main/java/javolution/internal/context/ConcurrentContextImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/context/ConcurrentThread.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/context/ContextTracker.java -text
 javolution/core-java/src/main/java/javolution/internal/context/HeapContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/context/LocalContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/LogContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/context/SecurityContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/StackContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/BundleContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/BundleImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/FilterImpl.java -text
@@ -296,12 +298,6 @@ javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=uns
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/OSGi.java -text
-javolution/core-java/src/main/java/javolution/testing/AssertionException.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/testing/JUnitContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/testing/TestCase.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/testing/TestContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/testing/TestSuite.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/testing/TimeContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/Cursor.java -text svneol=unset#text/plain

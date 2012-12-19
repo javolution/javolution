@@ -8,8 +8,8 @@
  */
 package javolution.context;
 
-import javolution.internal.context.HeapContextImpl;
-import javolution.internal.osgi.JavolutionActivator;
+import static javolution.internal.osgi.JavolutionActivator.HEAP_CONTEXT_TRACKER;
+import javolution.text.TypeFormat;
 
 /**
  * <p> This abstract class represents an {@link AllocatorContext} always 
@@ -20,18 +20,24 @@ import javolution.internal.osgi.JavolutionActivator;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class HeapContext extends AllocatorContext {
+public abstract class HeapContext extends AllocatorContext<HeapContext> {
 
     /**
-     * Defines the factory service producing {@link HeapContext} implementations.
+     * Indicates whether or not static methods will block for an OSGi published
+     * implementation this class (default configuration <code>false</code>).
+     * This parameter cannot be locally overriden.
      */
-    public interface Factory {
+    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+        @Override
+        public void configure(CharSequence configuration) {
+            setDefault(TypeFormat.parseBoolean(configuration));
+        }
 
-        /**
-         * Returns a new instance of the heap context.
-         */
-        HeapContext newHeapContext();
-    }
+        @Override
+        public void checkOverridePermission() throws SecurityException {
+            throw new SecurityException(this + " cannot be overriden");
+        }
+    };
 
     /**
      * Default constructor.
@@ -41,20 +47,12 @@ public abstract class HeapContext extends AllocatorContext {
 
     /**
      * Enters a new heap context instance.
+     * 
+     * @return the new heap context implementation entered.
      */
-    public static void enter() {
-        HeapContext.Factory factory = JavolutionActivator.getHeapContextFactory();
-        HeapContext ctx = (factory != null) ? factory.newHeapContext()
-                : new HeapContextImpl();
-        ctx.enterScope();
-    }
-
-    /**
-     * Exits the heap context.
-     *
-     * @throws ClassCastException if the current context is not a heap context.
-     */
-    public static void exit() {
-        ((HeapContext) AbstractContext.current()).exitScope();
+    public static HeapContext enter() {
+        HeapContext ctx = AbstractContext.current(HeapContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
     }
 }

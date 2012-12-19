@@ -8,154 +8,112 @@
  */
 package javolution.context;
 
-import javolution.internal.context.SecurityContextImpl;
-import javolution.internal.osgi.JavolutionActivator;
+import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRACKER;
+import javolution.text.TypeFormat;
 
 /**
  * <p> This class represents a high-level security context (low level 
  *     security being addressed by the system security manager). It defines 
  *     whether or not {@link SecurityPermission} are granted or not.</p>
  *     
- * <p> Outside of any context scope, there is no security context and the only 
- *     permission granted is to enter a security context! Therefore, before 
- *     executing any code which requires permissions to be granted, it is 
- *     necessary to enter a security context and to grant the appropriate 
- *     permissions.
+ * <p> To ensure that your OSGi published system security context is always used, 
+ *     the configurable parameter {@link #WAIT_FOR_SERVICE} should be set
+ *     (especially knowing that the default implementation grants all permissions).
+ *     When granting/revoking permission the order is very important. 
+ *     For example, the following code revokes all configurable permissions 
+ *     except for concurrency settings.
  *     [code]
- *     SecurityContext.enter();
+ *     SecurityContext ctx = SecurityContext.enter(); 
  *     try {
- *         SecurityContext.grant(SecurityPermission.ALL);
+ *         ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
+ *         ctx.grant(
+ *             new SecurityPermission(Configurable.class, "configure", ConcurrentContext.CONCURRENCY), 
+ *             adminCertificate);
+ *         ...
+ *         ConcurrentContext.CONCURRENCY.configure("0"); // Ok (disables concurrency).
  *         ...
  *     } finally {
  *         SecurityContext.exit(); // Back to previous security settings. 
  *     }
- *     [/code]
+ *     [/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
 public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
-    /**
-     * Holds the permission to enter a new security context.
+  /**
+     * Indicates whether or not static methods will block for an OSGi published
+     * implementation this class (default configuration <code>false</code>).
+     * This parameter cannot be locally overriden.
      */
-    public static final SecurityPermission<SecurityContext> ENTER_PERMISSION = new SecurityPermission(SecurityContext.class, "enter");
+    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+        @Override
+        public void configure(CharSequence configuration) {
+            setDefault(TypeFormat.parseBoolean(configuration));
+        }
 
-    /**
-     * Defines the factory producing {@link SecurityContext} implementations.
-     */
-    public interface Factory {
-
-        /**
-         * Returns a new instance of the security context.
-         */
-        SecurityContext newSecurityContext();
-    }
-
+        @Override
+        public void checkOverridePermission() throws SecurityException {
+            throw new SecurityException(this + " cannot be overriden");
+        }
+    };
+    
     /**
      * Default constructor.
      */
     protected SecurityContext() {
     }
-
-    /**
-     * Checks if the specified permission is granted.
-     *
-     * @return the current security context.
-     * @throws SecurityException if the permission is not granted.
-     */
-    public static void check(SecurityPermission permission) throws SecurityException {
-        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if ((ctx == null) && (permission.equals(ENTER_PERMISSION))) return; // Ok.
-        if (ctx == null) throw new SecurityException(
-                    "There is no SecurityContext!"
-                    + " Make sure to enter a SecurityContext in order to grant "
-                    + permission);
-        if (!ctx.isGranted(permission))
-            throw new SecurityException(permission + " is not granted.");
-    }
-
-    /**
-     * Grants the specified permission.
-     * 
-     * @throws SecurityException if the permission cannot be granted or if there 
-     *         is no SecurityContext outer scope.
-     */
-    public static void grant(SecurityPermission permission) throws SecurityException {
-        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if (ctx == null)
-            throw new SecurityException("Not executing in a SecurityContext scope");
-        ctx.doGrant(permission);
-    }
-
-    /**
-     * Revokes the specified permission.
-     * 
-     * @throws SecurityException if the permission cannot be revoked or if there
-     *         is no SecurityContext outer scope.
-     */
-    public static void revoke(SecurityPermission permission) throws SecurityException {
-        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if (ctx == null)
-            throw new SecurityException("Not executing in a SecurityContext scope");
-        ctx.doRevoke(permission);
-    }
-
     /**
      * Enters a new security context instance.
      * 
-     * @throws SecurityException if the {@link SecurityContext#ENTER_PERMISSION
-     *         permission} to enter a security context is not granted.
+     * @return the new security context implementation entered. 
      */
-    public static void enter() throws SecurityException {
-        SecurityContext.Factory factory = JavolutionActivator.getSecurityContextFactory();
-        SecurityContext ctx = (factory != null) ? factory.newSecurityContext()
-                : new SecurityContextImpl();
-        ctx.enterScope();
+    public static SecurityContext enter() throws SecurityException {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
     }
 
     /**
-     * Exits the current security context.
+     * Checks if the specified permission is granted. 
      *
-     * @throws ClassCastException if the current context is not a security context.
+     * @param permission the permission to check.
+     * @throws SecurityException if the specified permission is not granted.
      */
-    public static void exit() {
-        ((SecurityContext) AbstractContext.current()).exitScope();
+    public static void check(SecurityPermission permission) throws SecurityException, IllegalStateException {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if (ctx != null) {
+            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+        }
+        if (!ctx.isGranted(permission)) throw new SecurityException(permission + " is not granted.");
     }
 
     /**
      * Indicates if the specified permission is granted.
      *
-     * @return the current security context.
+     * @param permission the permission to check.
      */
     public abstract boolean isGranted(SecurityPermission<?> permission);
 
     /**
      * Grants the specified permission.
      * 
-     * @throws SecurityException if the permission cannot be granted.
+     * @param permission the permission to grant.
+     * @param certificate  the certificate used to grant that permission or 
+     *        <code>null</code> if none.
+     * @throws SecurityException if the specified permission cannot be granted.
      */
-    public abstract void doGrant(SecurityPermission<?> permission) throws SecurityException;
+    public abstract void grant(SecurityPermission permission, Object certificate) throws SecurityException;
 
     /**
      * Revokes the specified permission.
      * 
-     * @throws SecurityException if the permission cannot be revoked.
+     * @param permission the permission to grant.
+     * @param certificate  the certificate used to grant that permission or 
+     *        <code>null</code> if none.
+     * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public abstract void doRevoke(SecurityPermission<?> permission) throws SecurityException;
+    public abstract void revoke(SecurityPermission permission, Object certificate) throws SecurityException;
 
-    /**
-     * Overrides the parent method {@link AbstractContext#enterScope() } 
-     * to check that {@link SecurityContext#ENTER_PERMISSION} is granted.
-     * Revoking this permission prevents the application from overriding the 
-     * current security policy with a new one.
-     * 
-     * @throws SecurityException if the permission to enter a security context
-     *         is not granted.
-     */
-    @Override
-    protected void enterScope() throws IllegalStateException, SecurityException {
-        SecurityContext.check(SecurityContext.ENTER_PERMISSION);
-        super.enterScope();
-    }
 }

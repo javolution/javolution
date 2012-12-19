@@ -28,7 +28,7 @@ import org.osgi.service.cm.ManagedService;
  *      public class MyBundleActivator implements BundleActivator {
  *          ServiceRegistration<ManagedService> registration;
  *          public void start(BundleContext bc) throws Exception {
- *              ConfigurableService cs = new ConfigurableService("MyBundle"); // PID for Javolution is "Javolution"
+ *              ConfigurableService cs = new ConfigurableService("mypid"); // Note: PID for Javolution is "javolution"
  *              registration = bc.registerService(ManagedService.class, cs, cs.getProperties());
  *          }
  *          public void stop(BundleContext context) throws Exception {
@@ -71,6 +71,7 @@ public class ConfigurableService implements ManagedService {
      * @throws ConfigurationException
      */
     public void updated(Dictionary<String, ?> configuration) throws ConfigurationException {
+        if (configuration == null) return; // No configuration data.
         SecurityContext.enter();
         try {
             SecurityContext.grant(Configurable.CONFIGURE_PERMISSION);
@@ -79,7 +80,13 @@ public class ConfigurableService implements ManagedService {
                 String name = (String) e.nextElement();
                 String textValue = (String) configuration.get(name);
                 Configurable cfg = ConfigurableService.configurableFor(name);
-                cfg.configure(textValue);
+                if (cfg != null) {
+                    try {
+                        cfg.configure(textValue);
+                    } catch (IllegalArgumentException error) {
+                        throw new ConfigurationException(name, "Cannot be configured", error);
+                    }
+                }
             }
         } finally {
             SecurityContext.exit();

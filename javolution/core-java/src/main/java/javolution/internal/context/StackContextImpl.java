@@ -8,16 +8,21 @@
  */
 package javolution.internal.context;
 
-import javolution.context.HeapContext;
+import javolution.context.StackContext;
 import javolution.lang.Copyable;
 
 /**
- * Holds the default implementation of HeapContext.
+ * Holds the default implementation of StackContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public final class HeapContextImpl extends HeapContext {
+public final class StackContextImpl extends StackContext {
+
+    @Override
+    public <T extends Copyable> T export(Copyable<T> obj) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 
     @Override
     protected void execute(Runnable logic) {
@@ -30,9 +35,8 @@ public final class HeapContextImpl extends HeapContext {
     }
 
     @Override
-    protected HeapContext inner() {
+    protected StackContext inner() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    
 }

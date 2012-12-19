@@ -12,16 +12,17 @@ import javolution.lang.Copyable;
 
 /**
  * <p> This abstract class represents the memory allocator context.
- *     The allocation context specifies how the memory is allocated for new 
- *     objects. The default allocator context is an instance of 
- *     {@link HeapContext}. Some JVM (e.g. RTSJ compliant VM) may support 
- *     additional mode of allocation such as the stack 
- *     (see {@link StackContext}).</p>
+ *     This context specifies how the memory is allocated ("new" object).
+ *     The default implementation is an instance of {@link HeapContext}. 
+ *     Specialized JVM  (e.g. RTSJ compliant) can support additional modes of
+ *     allocation (e.g. stack allocation).</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
+ * @link HeapContext
+ * @link StackContext
  */
-public abstract class AllocatorContext extends AbstractContext<AllocatorContext> {
+public abstract class AllocatorContext<C extends AllocatorContext> extends AbstractContext<C> {
             
     /**
      * Default constructor.

@@ -8,8 +8,7 @@
  */
 package javolution.context;
 
-import javolution.internal.context.ConcurrentContextImpl;
-import javolution.internal.osgi.JavolutionActivator;
+import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TRACKER;
 import javolution.text.TypeFormat;
 
 /**
@@ -22,13 +21,13 @@ import javolution.text.TypeFormat;
  *     thread itself if there is no concurrent thread immediately available 
  *     (the number of concurrent threads is limited, see {@link #CONCURRENCY}).
  *     [code]
- *     ConcurrentContext.enter(); 
+ *     ConcurrentContext ctx = ConcurrentContext.enter(); 
  *     try { 
- *         ConcurrentContext.execute(new Runnable() {...}); 
- *         ConcurrentContext.execute(...); // Shorter notation if closure are supported (JDK1.8) 
+ *         ctx.execute(new Runnable() {...}); 
+ *         ctx.execute(...); // Shorter notation if closure are supported (JDK1.8) 
  *     } finally {
- *         ConcurrentContext.exit(); // Waits for all concurrent executions to complete.
- *                                   // Reexports any exception raised during concurrent executions. 
+ *         ctx.exit(); // Waits for all concurrent executions to complete.
+ *                     // Reexports any exception raised during concurrent executions. 
  *     }
  *    [/code]</p>
  *     
@@ -50,9 +49,9 @@ import javolution.text.TypeFormat;
  *     load-balancing between processors with almost no overhead. 
  *     Here is a concurrent/recursive quick/merge sort using anonymous inner 
  *     classes (the same method is used for   
- *    <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).
- *    [code]
- *    private void quickSort(final FastTable<? extends Comparable> table) {
+ *     <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).
+ *     [code]
+ *     private void quickSort(final FastTable<? extends Comparable> table) {
  *        final int size = table.size();
  *        if (size < 100) { 
  *            table.sort(); // Direct quick sort.
@@ -60,22 +59,22 @@ import javolution.text.TypeFormat;
  *            // Splits table in two and sort both part concurrently.
  *            final FastTable<? extends Comparable> t1 = new FastTable();
  *            final FastTable<? extends Comparable> t2 = new FastTable();
- *            ConcurrentContext.enter();
+ *            ConcurrentContext ctx = ConcurrentContext.enter();
  *            try {
- *                ConcurrentContext.execute(new Runnable() {
+ *                ctx.execute(new Runnable() {
  *                    public void run() {
  *                        t1.addAll(table.subList(0, size / 2));
  *                        quickSort(t1); // Recursive.
  *                    }
  *                });
- *                ConcurrentContext.execute(new Runnable() {
+ *                ctx.execute(new Runnable() {
  *                    public void run() {
  *                        t2.addAll(table.subList(size / 2, size));
  *                        quickSort(t2); // Recursive.
  *                    }
  *                });
  *            } finally {
- *                ConcurrentContext.exit();
+ *                ctx.exit();
  *            }
  *            // Merges results.
  *            for (int i=0, i1=0, i2=0; i < size; i++) {
@@ -96,65 +95,90 @@ import javolution.text.TypeFormat;
  *                }
  *            }
  *        }
- *     }[/code]</p>
- *     
- * <p> The concurrency can be {@link LocalContext locally} adjusted.
+ *     }[/code]
+ *      Here is another example using <code>execute(...)</code> convenience 
+ *      method (Karatsuba recursive multiplication for large integers).
+ *      [code]
+ *     public LargeInteger multiply(LargeInteger that) {
+ *         if (that._size <= 1) {
+ *             return multiply(that.longValue()); // Direct multiplication.
+ *         } else { // Karatsuba multiplication in O(n^log2(3))
+ *             int bitLength = this.bitLength();
+ *             int n = (bitLength >> 1) + (bitLength & 1);
+ *                 
+ *             // this = a + 2^n b,   that = c + 2^n d
+ *             LargeInteger b = this.shiftRight(n);
+ *             LargeInteger a = this.minus(b.shiftLeft(n));
+ *             LargeInteger d = that.shiftRight(n);
+ *             LargeInteger c = that.minus(d.shiftLeft(n));
+ *             Multiply ac = new Multiply(a, c);
+ *             Multiply bd = new Multiply(b, d);
+ *             Multiply abcd = new Multiply(a.plus(b), c.plus(d));
+ *             ConcurrentContext.execute(ac, bd, abcd); // Convenience method.  
+ *             // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
+ *             return  ac.result.plus(abcd.result.minus(ac.result.plus(bd.result)).shiftWordLeft(n))
+ *                 .plus(bd.result.shiftWordLeft(n << 1));
+ *         }
+ *     }
+ *     private static class Multiply implements Runnable {
+ *         LargeInteger left, right, result;
+ *         Multiply(LargeInteger left, LargeInteger right) {
+ *            this.left = left;
+ *            this.right = right;
+ *         }
+ *         public void run() {
+ *             result = left.times(right); // Recursive.
+ *         }
+ *     };
+ *    [/code]</p>
+ *          
+ * <p> Concurrency can be adjusted or disabled. The maximum concurrency 
+ *     is defined by {@link #CONCURRENCY}. 
  *    [code]
- *    LocalContext.enter(); 
+ *    LocalContext ctx = LocalContext.enter(); 
  *    try { 
  *        // Performs analysis sequentially.
- *        LocalContext.override(ConcurrentContext.CONCURRENCY, 0);
+ *        ctx.override(ConcurrentContext.CONCURRENCY, 0);
  *        runAnalysis();  
  *     } finally {
- *        LocalContext.exit();    
- *     }[/code]</p>
- * 
- * <p> Finally, because executing in a concurrent context may consume a lot of 
- *     CPU resources, the {@link #ENTER_PERMISSION permission} to enter a 
- *     concurrent context must be granted.
- *     [code]
- *     SecurityContext.enter(); 
- *     try { 
- *        SecurityContext.grant(ConcurrentContext.ENTER_PERMISSION);
- *        ... // Concurrency is authorized.
- *     } finally {
- *        SecurityContext.exit();    
+ *        ctx.exit(); // Back to previous concurrency settings.  
  *     }[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class ConcurrentContext extends AbstractContext {
+public abstract class ConcurrentContext extends AbstractContext<ConcurrentContext> {
 
     /**
-     * Defines the factory service producing {@link ConcurrentContext} implementations.
+     * Indicates whether or not static methods will block for an OSGi published
+     * implementation this class (default configuration <code>false</code>).
+     * This parameter cannot be locally overriden.
      */
-    public interface Factory {
+    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+        @Override
+        public void configure(CharSequence configuration) {
+            setDefault(TypeFormat.parseBoolean(configuration));
+        }
 
-        /**
-         * Returns a new instance of the concurrent context.
-         */
-        ConcurrentContext newConcurrentContext();
-    }
-
+        @Override
+        public void checkOverridePermission() throws SecurityException {
+            throw new SecurityException(this + " cannot be overriden");
+        }
+    };
+    
     /**
-     * Holds the maximum number of concurent threads (default
-     * <code>Runtime.getRuntime().availableProcessors()</code>).
-     * A value of <code>0</code> disables concurrency.
+     * Holds the maximum number of concurrent threads usable 
+     * (default <code>Runtime.getRuntime().availableProcessors()</code>).
+     * For example, running with the option 
+     * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
+     * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY 
-            = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
+    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseInt(configuration));
         }
     };
-
-    /**
-     * Holds the permission to enter a concurrent context.
-     */
-    public static final SecurityPermission<ConcurrentContext> ENTER_PERMISSION 
-            = new SecurityPermission(ConcurrentContext.class, "enter");
 
     /**
      * Default constructor.
@@ -165,60 +189,53 @@ public abstract class ConcurrentContext extends AbstractContext {
     /**
      * Enters a new concurrent context instance.
      * 
-     * @throws SecurityException if the {@link ConcurrentContext#ENTER_PERMISSION
-     *         permission} to enter a concurrent context is not granted.
+     * @return the new concurrent context implementation entered.
      */
-    public static void enter() throws SecurityException {
-        ConcurrentContext.Factory factory = JavolutionActivator.getConcurrentContextFactory();
-        ConcurrentContext ctx = (factory != null) ? factory.newConcurrentContext()
-                : new ConcurrentContextImpl();
-        ctx.enterScope();
+    public static ConcurrentContext enter() {
+        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return CONCURRENT_CONTEXT_TRACKER.getService(
+                WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
     }
 
     /**
-     * Exits the concurrent context.
-     *
-     * @throws ClassCastException if the current context is not a security context.
+     * Convenience method to executes the specified logics concurrently. 
+     * This method is equivalent to:
+     * [code]
+     *     ConcurrentContext ctx = ConcurrentContext.enter();
+     *     try {
+     *         ctx.execute(logics[0]);
+     *         ctx.execute(logics[1]);
+     *         ...
+     *     } finally {
+     *         ctx.exit();
+     *     }
+     * [/code]
+     * 
+     * @param  logics the logics to execute concurrently if possible.
      */
-    public static void exit() {
-        ((ConcurrentContext) AbstractContext.current()).exitScope();
-    } 
+    public static void execute(Runnable... logics) {
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            for (int i = 0; i < logics.length; i++) {
+                ctx.execute(logics[i]);
+            }
+        } finally {
+            ctx.exit();
+        }
+    }
 
     /**
      * Executes the specified logic by a concurrent thread if 
      * one available; otherwise the logic is executed by the current thread.
      * Any exception or error occurring during the concurrent execution is
-     * propagated to the current thread upon {@link #exit} 
+     * propagated to the current thread upon {@link AbstractContext#exit} 
      * of the concurrent context.
      * 
      * @param  logic the logic to be executed concurrently when possible.
-     * @throws IllegalStateException if there is no outer concurrent context.
+     * @throws IllegalStateException if not executing within the scope of 
+     *         a concurrent context.
      */
-    public static void execute(Runnable logic) {
-        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
-        if (ctx == null)
-            throw new IllegalStateException("Not executing in the scope of a ConcurrentContext");
-        ctx.doExecute(logic);        
-    }
-   
-    /**
-     * Executes the specified logic concurrently when possible. 
-     * 
-     * @param  logic the logic to execute.
-     */
-    protected abstract void doExecute(Runnable logic);
+    public abstract void execute(Runnable logic);
 
-    /**
-     * Overrides the parent method {@link AbstractContext#enterScope() } 
-     * to check that {@link ConcurrentContext#ENTER_PERMISSION} is granted.
-     * 
-     * @throws SecurityContext if the permission to enter a concurrent context
-     *         is not granted.
-     */
-    @Override
-    protected void enterScope() throws IllegalStateException, SecurityException {
-        SecurityContext.check(ConcurrentContext.ENTER_PERMISSION);
-        super.enterScope();
-    }
-       
 }

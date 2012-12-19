@@ -8,44 +8,49 @@
  */
 package javolution.context;
 
-import javolution.internal.context.LocalContextImpl;
-import javolution.internal.osgi.JavolutionActivator;
+import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER;
+import javolution.text.TypeFormat;
 
 /**
  * <p> This class represents a context to override locally scoped environment
- *     settings. The settings are typically  
- *     {@link LocalParameter} ({@link Configurable}) static fields.
+ *     settings. The settings are held by {@link LocalParameter local parameters}
+ *     instances. 
  *     [code]
  *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
  *     ...
- *     LocalContext.enter(); 
+ *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         LocalContext.override(ModuloInteger.MODULO, m); // No impact on other threads!
- *         z = x.times(y); // Multiplication modulo m.
+ *         ctx.override(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
  *     } finally {
- *         LocalContext.exit(); // Reverts changes. 
+ *         ctx.exit(); // Reverts changes. 
  *     }
  *     }[/code]</p>   
  *     
  * <p> As for any context, local context settings are inherited during 
- *     {@link ConcurrentContext concurrent} executions.</p> 
+ *     {@link ConcurrentContext} executions.</p> 
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class LocalContext extends AbstractContext {
-
+public abstract class LocalContext extends AbstractContext<LocalContext> {
 
     /**
-     * Defines the factory service producing {@link LocalContext} implementations.
+     * Indicates whether or not static methods will block for an OSGi published
+     * implementation this class (default configuration <code>false</code>).
+     * This parameter cannot be locally overriden.
      */
-    public interface Factory {
+    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+        @Override
+        public void configure(CharSequence configuration) {
+            setDefault(TypeFormat.parseBoolean(configuration));
+        }
 
-        /**
-         * Returns a new instance of the heap context.
-         */
-        LocalContext newLocalContext();
-    }
+        @Override
+        public void checkOverridePermission() throws SecurityException {
+            throw new SecurityException(this + " cannot be overriden");
+        }
+    };
 
     /**
      * Default constructor.
@@ -55,49 +60,44 @@ public abstract class LocalContext extends AbstractContext {
 
     /**
      * Enters a new local context instance.
+     * 
+     * @return the new local context implementation entered.
      */
-    public static void enter() {
-        LocalContext.Factory factory = JavolutionActivator.getLocalContextFactory();
-        LocalContext ctx = (factory != null) ? factory.newLocalContext()
-                : new LocalContextImpl();
-        ctx.enterScope();
-    }
-
-    /**
-     * Exits the current local context.
-     *
-     * @throws ClassCastException if the current context is not a local context.
-     */
-    public static void exit() {
-        ((LocalContext) AbstractContext.current()).exitScope();
+    public static LocalContext enter() {
+        LocalContext ctx = AbstractContext.current(LocalContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return LOCAL_CONTEXT_TRACKER.getService(
+                WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
     }
     
     /**
-     * Returns the local value of the specified local parameter (or its default
-     * value if not executing within the scope of a local context)
+     * Returns the local value of the specified local parameter (its default
+     * value if it is not {@link LocalContext#override overriden}).
      * 
-     * @param  param the local parameter whose current value is returned.
-     * @throws IllegalStateException if there is no outer concurrent context.
+     * @param  param the local parameter whose local value is returned.
      */
     public static <T> T valueOf(LocalParameter<T> param) {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx == null)
-            return param.getDefault();
-        return ctx.getValueOf(param);        
+        return (ctx != null) ? ctx.getValueOf(param) : param.getDefault();
     }
     
     /**
-     * Returns the current value of the specified local parameter (or its default
-     * value if not executing within the scope of a local context)
+     * Overrides the local value of the specified local parameter. 
+     * 
+     * @param  param the local parameter whose local value is overriden.
+     * @param  localValue the new local value.
+     * @throws SecurityException if <code>param.checkOverridePermission()</code>
+     *         raises a security exception.
+     */
+    public abstract <T> void override(LocalParameter<T> param, T localValue) throws SecurityException;
+    
+
+    /**
+     * For this context, returns the local value of the specified parameter 
+     * or its default value if not {@link LocalContext#override overriden}. 
      * 
      * @param  param the local parameter whose current value is returned.
-     * @throws IllegalStateException if there is no outer local context.
      */
-    public static <T> void override(LocalParameter<T> param, T localValue) {
-        LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx == null)
-            return param.getDefault();
-        return ctx.getValueOf(param);        
-    }
-        
+    protected abstract <T> T getValueOf(LocalParameter<T> param);
+                  
 }

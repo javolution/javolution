@@ -21,15 +21,22 @@ public final class SecurityContextImpl extends SecurityContext {
 
     @Override
     public boolean isGranted(SecurityPermission<?> permission) {
-        return true;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public void doGrant(SecurityPermission<?> permission) throws SecurityException {
+    public void grant(SecurityPermission permission, Object certificate) throws SecurityException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public void doRevoke(SecurityPermission<?> permission) throws SecurityException {
+    public void revoke(SecurityPermission permission, Object certificate) throws SecurityException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
+    @Override
+    protected SecurityContext inner() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 }

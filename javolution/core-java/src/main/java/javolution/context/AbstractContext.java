@@ -8,33 +8,49 @@
  */
 package javolution.context;
 
-import javolution.xml.XMLSerializable;
-
 /**
  * <p> This abstract class represents the root class for all contexts. 
  *     Contexts allow for cross cutting concerns (performance, logging, 
  *     security, ...) to be addressed at run-time without polluting the
  *     application code (<a href="http://en.wikipedia.org/wiki/Separation_of_concerns">
- *     Separation of Concerns</a>).</p>
+ *     Separation of Concerns</a>). 
+ *     With contexts, you <i>Think Locally, Act Globally</i>.</p>
  *     
  * <p> Typically, a context is surrounded by a <code>try, 
  *     finally</code> block statement to ensure correct behavior in case 
- *     of exceptions being raised.[code]
- *     MyContext.enter(); // Enters a new instance of MyContext (OSGi factory produced when possible).
- *     try {              // (equivalent to MyContext.Factory.newMyContext().enterScope())
- *        ...              
+ *     of exceptions being raised.
+ *     [code]
+ *     MyContext ctx = MyContext.enter(); // Enters an inner instance 
+ *     try {                              // (equivalent to AbstractContext.current(MyContext.class).inner().enterScope())
+ *        ctx.memberMethod(...); // Instance configuration.
+ *        ...
+ *        MyContext.staticMethod(...); // Users methods (works with the last instance entered).
+ *        ...
  *     } finally {
- *        MyContext.exit();  // Exits (back to previous context).
+ *        ctx.exit();  // Exits context instance.
+ *     }
+ *     [/code]
+ *     When running OSGi, the context implementation is retrieved from published
+ *     services (if any). <a href="http://wiki.osgi.org/wiki/Avoid_Start_Order_Dependencies">
+ *     To avoid start order dependencies</a> contexts methods can be configured to block
+ *     until an implementation is published. For example, the java option  
+ *     <code>-Djavolution.context.SecurityContext#WAIT_FOR_SERVICE=true</code>
+ *     causes the security checks to block until a {@link SecurityContext}
+ *     implementation is published.</p>
+ * 
+ * <p> Applications may enter specific (static) implementations of any context.
+ *     [code]
+ *     MyContext ctx = AbstractContext.enter(MyContextImpl.class); // Enter instance of specified class.
+ *     try { 
+ *        ...
+ *     } finally {
+ *        ctx.exit();
  *     }
  *     [/code]</p>
  * 
- * <p> Except for {@link ConcurrentContext} instances, there can be only one 
- *     thread executing in any context. Therefore context methods do not 
- *     require synchronization. Nonetheless, because multiple threads 
- *     may execute in a {@link ConcurrentContext} and inherit the contexts of 
- *     their parent thread (the one which entered the concurrent context), 
- *     context instances should provide a thread-safe {@link #shared shared} 
- *     view of themselves (view usable by concurrent threads). </p>
+ * <p> Contexts do not pause thread-safety issues. There is at most one thread 
+ *     to configure them. Even so they are inherited by potentially multiple threads
+ *     (see {@link ConcurrentContext}); these threads cannot modify their states. </p>
  * 
  * <p> Here are few examples of predefined context.
  *     [code]
@@ -60,7 +76,6 @@ import javolution.xml.XMLSerializable;
  *        StackContext.exit(); // Resets stack.
  *     }
  * 
- * 
  *     LogContext.enter();
  *     try {
  *         LogContext.setHeader("My Logger");
@@ -73,15 +88,11 @@ import javolution.xml.XMLSerializable;
  * 
  *     [/code]</p>
  * 
- * <p> Threads executing in a {@link ConcurrentContext} inherit the contexts 
- *     of the parent thread (the one which entered the concurrent context), this 
- *     to ensure that the behaviors of the concurrent threads are the same as if 
- *     the concurrent executions were performed by the parent thread. </p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class AbstractContext<C extends AbstractContext> implements XMLSerializable {
+public abstract class AbstractContext<C extends AbstractContext> {
 
     /**
      * Holds the last context entered (thread-local).
@@ -108,59 +119,80 @@ public abstract class AbstractContext<C extends AbstractContext> implements XMLS
     }
 
     /**
-     * Returns the first outer context of specified type or <code>null</code> 
-     * if none. If the context found is outer of a {@link ConcurrentContext},
-     * then a {@link #shared() shared} view is returned.
+     * Returns the current context of specified type or <code>null</code> if none. 
      */
     protected static <T extends AbstractContext> T current(Class<T> type) {
         AbstractContext ctx = AbstractContext.CURRENT.get();
-        boolean isShared = false;
         while (true) {
             if (ctx == null) return null;
-            if (type.isInstance(ctx)) return (T) (isShared ? ctx.shared() : ctx);
-            if (ctx instanceof ConcurrentContext) isShared = true;
+            if (type.isInstance(ctx))
+                return (T) ctx;
             ctx = ctx.outer;
         }
     }
 
     /**
-     * Enters the scope of this context. This method sets this context as
-     * the current context.
+     * Enters the scope of the specified context implementation
+     * (the instance is created using the implementation default constructor).
+     * This method raises a {@link SecurityException} if the 
+     * permission to enter the specified class (or a parent class) is not
+     * granted. 
      * 
-     * @throws IllegalStateException if this context is currently in use.
+     * @param impl the context implementation class.
+     * @throws IllegalArgumentException if the specified class default constructor
+     *         cannot be instantiated.
+     * @throws SecurityException 
+     *         if <code>SecurityPermission(impl, "enter")</code> is not granted. 
      */
-    protected void enterScope() throws IllegalStateException {
-        if (outer != null)
-            throw new IllegalStateException(this + " currently in use");
-        outer = AbstractContext.CURRENT.get();
-        AbstractContext.CURRENT.set(this);
+    public static <T extends AbstractContext> T enter(Class<T> impl) {
+        SecurityContext.check(new SecurityPermission(impl, "enter"));
+        try {
+            return (T) impl.newInstance().enterScope();
+        } catch (InstantiationException e) {
+            throw new IllegalArgumentException("Invalid context implementation " + impl, e);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException("Invalid context implementation " + impl, e);
+        }
     }
 
     /**
-     * Exits the scope of this context. 
+     * Exits the scope of this context; the outer of this context becomes  
+     * the current context.
      * 
-     * @throws IllegalStateException if this context is not the current context
-     *         in scope.
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
      */
-    protected void exitScope() throws IllegalStateException {
+    public void exit() {
         if (this != AbstractContext.CURRENT.get())
-            throw new IllegalStateException(this + " is not the context in scope");
+            throw new IllegalStateException("This context is not the current context");
         AbstractContext.CURRENT.set(outer);
         outer = null;
     }
 
     /**
+     * Enters the scope of this context which becomes the current context; 
+     * the previous current context becomes the outer of this context. 
+     */
+    protected C enterScope() {
+        outer = AbstractContext.CURRENT.get();
+        AbstractContext.CURRENT.set(this);
+        return (C) this;
+    }
+
+    /**
      * Returns the outer context of this context or <code>null</code> if this 
-     * context is root or not attached.
+     * context has no outer context (top context).
      */
     protected AbstractContext<?> getOuter() {
         return outer;
     }
+  
 
     /**
-     * Returns a shared view of this context (to be inherited by 
-     * {@link ConcurrentContext}).
+     * Returns a new inner instance of this context inheriting the properties 
+     * of this context. The new instance can be configured independently 
+     * from its parent. 
      */
-    protected abstract C shared();
+    protected abstract C inner();
 
 }

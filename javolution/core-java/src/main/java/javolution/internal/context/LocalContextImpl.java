@@ -8,8 +8,8 @@
  */
 package javolution.internal.context;
 
-import javolution.context.AbstractContext;
 import javolution.context.LocalContext;
+import javolution.context.LocalParameter;
 
 /**
  * Holds the default implementation of LocalContext.
@@ -20,8 +20,19 @@ import javolution.context.LocalContext;
 public final class LocalContextImpl extends LocalContext {
 
     @Override
-    protected AbstractContext shared() {
+    public <T> void override(LocalParameter<T> param, T localValue) throws SecurityException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    @Override
+    protected <T> T getValueOf(LocalParameter<T> param) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    protected LocalContext inner() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+   
 }
