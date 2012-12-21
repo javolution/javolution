@@ -12,9 +12,8 @@ import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents a context to override locally scoped environment
- *     settings. The settings are held by {@link LocalParameter local parameters}
- *     instances. 
+ * <p> This class represents the current context holding {@link LocalParameter 
+ *     local parameters} values.
  *     [code]
  *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
  *     ...

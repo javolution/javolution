@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -66,6 +66,10 @@ public class ServiceReferenceImpl implements ServiceReference {
 
     @Override
     public boolean isAssignableTo(Bundle bundle, String string) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int compareTo(Object o) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

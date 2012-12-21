@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,16 +8,10 @@
  */
 package javolution.io;
 
+import java.io.CharConversionException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-
-import java.io.CharConversionException;
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
-
-import javolution.lang.Reusable;
-
 
 /**
  * <p> This class represents a UTF-8 stream writer.</p>
@@ -39,7 +33,7 @@ import javolution.lang.Reusable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 2.0, December 9, 2004
  */
-public final class UTF8StreamWriter extends Writer implements Reusable {
+public final class UTF8StreamWriter extends Writer {
 
     /**
      * Holds the current output stream or <code>null</code> if closed.
@@ -329,8 +323,7 @@ public final class UTF8StreamWriter extends Writer implements Reusable {
         _index = 0;
     }
 
-    // Implements Reusable.
-    public void reset() {
+     public void reset() {
         _highSurrogate = 0;
         _index = 0;
         _outputStream = null;

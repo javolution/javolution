@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -10,13 +10,7 @@ package javolution.io;
 
 import java.io.IOException;
 import java.io.Reader;
-
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
-import java.lang.Appendable;
-
 import javolution.lang.MathLib;
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
@@ -28,7 +22,7 @@ import javolution.text.TextBuilder;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.8, May 8, 2004
  */
-public final class CharSequenceReader extends Reader implements Reusable {
+public final class CharSequenceReader extends Reader  {
 
     /**
      * Holds the character sequence input.
@@ -156,7 +150,7 @@ public final class CharSequenceReader extends Reader implements Reusable {
         dest.append(_input);
     }
 
-    // Implements Reusable.
+    @Override
     public void reset() {
         _index = 0;
         _input = null;

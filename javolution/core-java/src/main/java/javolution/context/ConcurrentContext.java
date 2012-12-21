@@ -12,8 +12,8 @@ import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TR
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents a context able to take advantage of concurrent 
- *     algorithms on multi-processors systems.</p>
+ * <p> This class represents the current context able to take advantage 
+ *     of concurrent algorithms on multi-processors systems.</p>
  *     
  * <p> When a thread enters a concurrent context, it may performs concurrent
  *     executions by calling the {@link #execute(Runnable)} static method.

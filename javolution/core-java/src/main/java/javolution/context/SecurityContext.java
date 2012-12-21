@@ -12,7 +12,7 @@ import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRAC
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents a high-level security context (low level 
+ * <p> This class represents the current high-level security context (low level 
  *     security being addressed by the system security manager). It defines 
  *     whether or not {@link SecurityPermission} are granted or not.</p>
  *     

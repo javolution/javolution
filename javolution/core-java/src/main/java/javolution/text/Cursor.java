@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2009 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software is
@@ -8,25 +8,14 @@
  */
 package javolution.text;
 
-import java.lang.CharSequence;
-import java.text.ParsePosition;
-
-import javolution.context.ObjectFactory;
-import javolution.lang.Reusable;
-
-
 /**
  * <p> This class represents a parsing cursor over characters. Cursor
  *     allows for token iterations over any {@link CharSequence}.
  *     [code]
- *     CharSequence csq = "this is a test";
- *     Cursor cursor = Cursor.newInstance();
- *     try {
- *        for (CharSequence token; (token=cursor.nextToken(csq, ' '))!= null;)
+ *     String str = "this is a test";
+ *     Cursor cursor = new Cursor();
+ *     for (CharSequence token; (token=cursor.nextToken(str, ' '))!= null;)
  *            System.out.println(token); 
- *     } finally {
- *         Cursor.recycle(cursor);
- *     }
  *     [/code]
  *     Prints the following output:<pre>
  *        this
@@ -36,12 +25,13 @@ import javolution.lang.Reusable;
  *     Cursors are typically used with {@link TextFormat} instances.
  *     [code]
  *     // Parses decimal number (e.g. "xxx.xxxxxExx" or "NaN")
- *     public Decimal parse(CharSequence csq, Cursor cursor) {
+ *     public Decimal parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
+ *         TextFormat<LargeInteger> largeIntegerFormat = TextContext.getFormat(LargeInteger.class);
  *         if (cursor.skip("NaN", csq))
  *             return Decimal.NaN;
- *         LargeInteger significand = LargeInteger.TEXT_FORMAT.parse(csq, cursor);
- *         LargeInteger fraction = cursor.skip('.', csq) ? LargeInteger.TEXT_FORMAT.parse(csq, cursor) : LargeInteger.ZERO;
- *         int exponent = cursor.skip(CharSet.valueOf('E', 'e'), csq) ? TypeFormat.parseInt(csq, 10, cursor) : 0;
+ *         LargeInteger significand = LargeIntegerFormat.parse(csq, cursor);
+ *         LargeInteger fraction = cursor.skip('.', csq) ? largeIntegerFormat.parse(csq, cursor) : LargeInteger.ZERO;
+ *         int exponent = cursor.skip(CharSet.valueOf('E', 'e'), csq) ? TypeFormat.parseInt(csq, cursor) : 0;
  *         int fractionDigits = fraction.digitLength();
  *         return Decimal.valueOf(significand.E(fractionDigits).plus(fraction), exponent - fractionDigits);
  *     }
@@ -51,38 +41,17 @@ import javolution.lang.Reusable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, November 19, 2009
  */
-public class Cursor extends ParsePosition implements Reusable {
+public class Cursor  {
 
+    /**
+     * Holds the index.
+     */
+   private int index;
+   
     /**
      * Default constructor.
      */
     public Cursor() {
-        super(0);
-    }
-
-    /**
-     * Returns a factory produced instance which can be {@link #recycle recycled}
-     * after usage.
-     *
-     * @return a recyclable instance.
-     */
-    public static Cursor newInstance() {
-        return (Cursor) FACTORY.object();
-    }
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        protected Object create() {
-            return new Cursor();
-        }
-    };
-
-    /**
-     * Recycles the specified factory {@link #newInstance() produced} cursor.
-     *
-     * @param cursor the cursor to recycle.
-     */
-    public static void recycle(Cursor cursor) {
-        FACTORY.recycle(cursor);
     }
 
     /**
@@ -91,7 +60,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return the index of the next character to parse.
      */
     public final int getIndex() {
-        return super.getIndex();
+        return index;
     }
 
     /**
@@ -99,8 +68,8 @@ public class Cursor extends ParsePosition implements Reusable {
      *
      * @param i the index of the next character to parse.
      */
-    public void setIndex(int i) {
-        super.setIndex(i);
+    public final void setIndex(int i) {
+        index = i;
     }
 
     /**
@@ -111,7 +80,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return <code>getIndex() &gt;= csq.length()</code>
      */
     public final boolean atEnd(CharSequence csq) {
-        return getIndex() >= csq.length();
+        return index >= csq.length();
     }
 
     /**
@@ -123,8 +92,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return <code>csq.charAt(this.getIndex()) == c</code>
      */
     public final boolean at(char c, CharSequence csq) {
-        int i = getIndex();
-        return i < csq.length() ? csq.charAt(i) == c : false;
+        return index < csq.length() ? csq.charAt(index) == c : false;
     }
 
     /**
@@ -136,8 +104,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return <code>csq.charAt(this.getIndex()) == c</code>
      */
     public final boolean at(CharSet charSet, CharSequence csq) {
-        int i = getIndex();
-        return i < csq.length() ? charSet.contains(csq.charAt(i)) : false;
+        return index < csq.length() ? charSet.contains(csq.charAt(index)) : false;
     }
 
     /**
@@ -150,13 +117,24 @@ public class Cursor extends ParsePosition implements Reusable {
      *         characters; <code>false</code> otherwise.
      */
     public final boolean at(String str, CharSequence csq) {
-        int i = getIndex();
+        int i = index;
         int length = csq.length();
         for (int j = 0; j < str.length();) {
             if ((i >= length) || (str.charAt(j++) != csq.charAt(i++)))
                 return false;
         }
         return true;
+    }
+
+    /**
+     * Returns the current character at this cursor position.
+     *
+     * @param csq the character sequence iterated by this cursor.
+     * @return the current character this cursor points to.
+     * @throws IndexOutOfBoundsException if {@link #atEnd this.atEnd(csq)}
+     */
+    public final char currentChar(CharSequence csq) {
+        return csq.charAt(index);
     }
 
     /**
@@ -168,9 +146,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @throws IndexOutOfBoundsException if {@link #atEnd this.atEnd(csq)}
      */
     public final char nextChar(CharSequence csq) {
-        int i = getIndex();
-        setIndex(i + 1);
-        return csq.charAt(i);
+        return csq.charAt(index++);
     }
 
     /**
@@ -184,13 +160,13 @@ public class Cursor extends ParsePosition implements Reusable {
      *         reached).
      */
     public final boolean skipAny(char c, CharSequence csq) {
-        int i = getIndex();
+        int i = index;
         int n = csq.length();
         for (; (i < n) && (csq.charAt(i) == c); i++) {
         }
-        if (i == getIndex())
+        if (i == index)
             return false; // Cursor did not moved.
-        setIndex(i);
+        index = i;
         return true;
     }
 
@@ -211,13 +187,13 @@ public class Cursor extends ParsePosition implements Reusable {
      *         reached).
      */
     public final boolean skipAny(CharSet charSet, CharSequence csq) {
-        int i = getIndex();
+        int i = index;
         int n = csq.length();
         for (; (i < n) && charSet.contains(csq.charAt(i)); i++) {
         }
-        if (i == getIndex())
+        if (i == index)
             return false; // Cursor did not moved.
-        setIndex(i);
+        index = i;
         return true;
     }
 
@@ -236,7 +212,7 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final boolean skip(char c, CharSequence csq) {
         if (this.at(c, csq)) {
-            this.increment();
+            index++;
             return true;
         } else {
             return false;
@@ -258,7 +234,7 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final boolean skip(CharSet charSet, CharSequence csq) {
         if (this.at(charSet, csq)) {
-            this.increment();
+            index++;
             return true;
         } else {
             return false;
@@ -281,7 +257,7 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final boolean skip(String str, CharSequence csq) {
         if (this.at(str, csq)) {
-            this.increment(str.length());
+            index += str.length();
             return true;
         } else {
             return false;
@@ -303,17 +279,17 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final CharSequence nextToken(CharSequence csq, char c) {
         int n = csq.length();
-        for (int i = getIndex(); i < n; i++) {
+        for (int i = index; i < n; i++) {
             if (csq.charAt(i) != c) {
                 int j = i;
                 for (; (++j < n) && (csq.charAt(j) != c);) {
                     // Loop until j at the end of sequence or at specified character.
                 }
-                setIndex(j);
+                index = j;
                 return csq.subSequence(i, j);
             }
         }
-        setIndex(n);
+        index = n;
         return null;
     }
 
@@ -332,18 +308,38 @@ public class Cursor extends ParsePosition implements Reusable {
      */
     public final CharSequence nextToken(CharSequence csq, CharSet charSet) {
         int n = csq.length();
-        for (int i = getIndex(); i < n; i++) {
+        for (int i = index; i < n; i++) {
             if (!charSet.contains(csq.charAt(i))) {
                 int j = i;
                 for (; (++j < n) && !charSet.contains(csq.charAt(j));) {
                     // Loop until j at the end of sequence or at specified characters.
                 }
-                setIndex(j);
+                index = j;
                 return csq.subSequence(i, j);
             }
         }
-        setIndex(n);
+        index = n;
         return null;
+    }
+
+    /**
+     * Returns the head of the specified character sequence until   
+     * this cursor position.
+     *
+     * @return the corresponding sub-sequence.
+     */
+    public final CharSequence head(CharSequence csq) {
+        return csq.subSequence(0, index);
+    }
+
+    /**
+     * Returns the tail of the specified character sequence starting at 
+     * this cursor position.
+     *
+     * @return the corresponding sub-sequence.
+     */
+    public final CharSequence tail(CharSequence csq) {
+        return csq.subSequence(index, csq.length());
     }
 
     /**
@@ -362,7 +358,7 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return <code>this</code>
      */
     public final Cursor increment(int i) {
-        setIndex(getIndex() + i);
+        index++;
         return this;
     }
 
@@ -371,8 +367,9 @@ public class Cursor extends ParsePosition implements Reusable {
      *
      * @return the index value as a string.
      */
+    @Override
     public String toString() {
-        return "Index: " + getIndex();
+        return "Cursor: " + index;
     }
 
     /**
@@ -381,12 +378,13 @@ public class Cursor extends ParsePosition implements Reusable {
      * @return <code>true</code> if the specified object is a cursor
      *         at the same index; <code>false</code> otherwise.
      */
+    @Override
     public boolean equals(Object obj) {
         if (obj == null)
             return false;
         if (!(obj instanceof Cursor))
             return false;
-        return getIndex() == ((Cursor) obj).getIndex();
+        return index == ((Cursor) obj).index;
     }
 
     /**
@@ -394,17 +392,8 @@ public class Cursor extends ParsePosition implements Reusable {
      *
      * @return the hash code value for this object
      */
+    @Override
     public int hashCode() {
-        return getIndex();
-    }
-
-    /**
-     * Resets this cursor instance.
-     *
-     * @see Reusable
-     */
-    public void reset() {
-        super.setIndex(0);
-        super.setErrorIndex(-1);
+        return index;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,16 +9,10 @@
 package javolution.io;
 
 
+import java.io.CharConversionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-
-import java.io.CharConversionException;
-import java.lang.IllegalStateException;
-import java.lang.Appendable;
-
-import javolution.lang.Reusable;
-
 
 /**
  * <p> This class represents a UTF-8 stream reader.</p>
@@ -48,7 +42,7 @@ import javolution.lang.Reusable;
  * @version 2.0, December 9, 2004
  * @see     UTF8StreamWriter
  */
-public final class UTF8StreamReader extends Reader implements Reusable {
+public final class UTF8StreamReader extends Reader  {
 
     /**
      * Holds the current input stream or <code>null</code> if closed.
@@ -306,8 +300,7 @@ public final class UTF8StreamReader extends Reader implements Reusable {
         }
     }
 
-    // Implements Reusable.
-    public void reset() {
+     public void reset() {
         _code = 0;
         _end = 0;
         _inputStream = null;

@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -18,8 +18,12 @@ import javolution.internal.context.ConcurrentContextImpl;
 import javolution.internal.context.ContextTracker;
 import javolution.internal.context.HeapContextImpl;
 import javolution.internal.context.LocalContextImpl;
+import javolution.internal.context.LogContextImpl;
 import javolution.internal.context.SecurityContextImpl;
+import javolution.internal.context.StackContextImpl;
+import javolution.internal.text.TextContextImpl;
 import javolution.osgi.ConfigurableService;
+import javolution.text.TextContext;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -27,8 +31,9 @@ import org.osgi.service.cm.ManagedService;
 
 /**
  * This class implements Javolution OSGi bundle activator.
- * This class makes available all the services tracker required by Javolution to 
- * perform.
+ * 
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 6.0, December 12, 2012
  */
 public class JavolutionActivator implements BundleActivator {
 
@@ -44,17 +49,20 @@ public class JavolutionActivator implements BundleActivator {
             = new ContextTracker(SecurityContext.class, new SecurityContextImpl());
     public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER 
             = new ContextTracker(StackContext.class, new StackContextImpl());
+    public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER 
+            = new ContextTracker(TextContext.class, new TextContextImpl());
     
     // Services provided by Javolution.
     private ServiceRegistration<ManagedService> configurableServiceRegistration;
    
     public void start(BundleContext bc) throws Exception {
-        CONCURRENT_CONTEXT_TRACKER.activate(bc);;
-        HEAP_CONTEXT_TRACKER.activate(bc);;
-        LOCAL_CONTEXT_TRACKER.activate(bc);;
-        LOG_CONTEXT_TRACKER.activate(bc);;
-        SECURITY_CONTEXT_TRACKER.activate(bc);;
-        STACK_CONTEXT_TRACKER.activate(bc);;
+        CONCURRENT_CONTEXT_TRACKER.activate(bc);
+        HEAP_CONTEXT_TRACKER.activate(bc);
+        LOCAL_CONTEXT_TRACKER.activate(bc);
+        LOG_CONTEXT_TRACKER.activate(bc);
+        SECURITY_CONTEXT_TRACKER.activate(bc);
+        STACK_CONTEXT_TRACKER.activate(bc);
+        TEXT_CONTEXT_TRACKER.activate(bc);
  
         // Publish Javolution Configuration service.
         ConfigurableService cs = new ConfigurableService("Javolution");
@@ -63,11 +71,12 @@ public class JavolutionActivator implements BundleActivator {
 
     public void stop(BundleContext bc) throws Exception {
         CONCURRENT_CONTEXT_TRACKER.deactivate(bc);
-        HEAP_CONTEXT_TRACKER.deactivate(bc);;
-        LOCAL_CONTEXT_TRACKER.deactivate(bc);;
-        LOG_CONTEXT_TRACKER.deactivate(bc);;
-        SECURITY_CONTEXT_TRACKER.deactivate(bc);;
-        STACK_CONTEXT_TRACKER.deactivate(bc);;
+        HEAP_CONTEXT_TRACKER.deactivate(bc);
+        LOCAL_CONTEXT_TRACKER.deactivate(bc);
+        LOG_CONTEXT_TRACKER.deactivate(bc);
+        SECURITY_CONTEXT_TRACKER.deactivate(bc);
+        STACK_CONTEXT_TRACKER.deactivate(bc);
+        TEXT_CONTEXT_TRACKER.deactivate(bc);
         
         if (configurableServiceRegistration != null) {
              configurableServiceRegistration.unregister();

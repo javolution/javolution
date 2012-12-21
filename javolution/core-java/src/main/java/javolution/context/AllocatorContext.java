@@ -11,7 +11,7 @@ package javolution.context;
 import javolution.lang.Copyable;
 
 /**
- * <p> This abstract class represents the memory allocator context.
+ * <p> This abstract class represents the current memory allocator context.
  *     This context specifies how the memory is allocated ("new" object).
  *     The default implementation is an instance of {@link HeapContext}. 
  *     Specialized JVM  (e.g. RTSJ compliant) can support additional modes of

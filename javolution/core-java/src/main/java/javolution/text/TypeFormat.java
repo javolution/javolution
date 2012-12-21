@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,10 +9,6 @@
 package javolution.text;
 
 import java.io.IOException;
-
-import java.lang.CharSequence;
-import java.lang.Appendable;
-
 import javolution.lang.MathLib;
 
 /**
@@ -71,7 +67,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static boolean parseBoolean(String str) {
-        return parseBoolean(j2meToCharSeq(str));
+        return parseBoolean(str);
     }
 
     /**
@@ -219,7 +215,7 @@ public final class TypeFormat {
      * Equivalent to {@link #parseInt(CharSequence)} (for J2ME compatibility).
      */
     public static int parseInt(String str) {
-        return parseInt(j2meToCharSeq(str));
+        return parseInt(str);
     }
 
     /**
@@ -241,7 +237,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static int parseInt(String str, int radix) {
-        return parseInt(j2meToCharSeq(str), radix);
+        return parseInt(str, radix);
     }
 
     /**
@@ -306,7 +302,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static long parseLong(String str) {
-        return parseLong(j2meToCharSeq(str), 10);
+        return parseLong(str, 10);
     }
 
     /**
@@ -328,7 +324,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static long parseLong(String str, int radix) {
-        return parseLong(j2meToCharSeq(str), radix);
+        return parseLong(str, radix);
     }
 
     /**
@@ -390,7 +386,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static float parseFloat(String str) {
-        return parseFloat(j2meToCharSeq(str));
+        return parseFloat(str);
     }
 
     /**
@@ -426,7 +422,7 @@ public final class TypeFormat {
      * (for J2ME compatibility).
      */
     public static double parseDouble(String str) {
-        return parseDouble(j2meToCharSeq(str));
+        return parseDouble(str);
     }
 
     /**
@@ -467,8 +463,8 @@ public final class TypeFormat {
 
         // At least one digit or a '.' required.
         if (((c < '0') || (c > '9')) && (c != '.'))
-             throw new NumberFormatException("Digit or '.' required");
-   
+            throw new NumberFormatException("Digit or '.' required");
+
         // Reads decimal and fraction (both merged to a long).
         long decimal = 0;
         int decimalPoint = -1;
@@ -552,8 +548,8 @@ public final class TypeFormat {
     public static Appendable format(boolean b, Appendable a) throws IOException {
         return b ? a.append(TRUE) : a.append(FALSE);
     }
-    private static final CharSequence TRUE = j2meToCharSeq("true");
-    private static final CharSequence FALSE = j2meToCharSeq("false");
+    private static final CharSequence TRUE = "true";
+    private static final CharSequence FALSE = "false";
 
     /**
      * Formats the specified <code>int</code> and appends the resulting
@@ -568,13 +564,9 @@ public final class TypeFormat {
     public static Appendable format(int i, Appendable a) throws IOException {
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(i);
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            tb.append(i);
-            return a.append(tb);
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        tb.append(i);
+        return a.append(tb);
     }
 
     /**
@@ -591,13 +583,9 @@ public final class TypeFormat {
     public static Appendable format(int i, int radix, Appendable a) throws IOException {
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(i, radix);
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            tb.append(i, radix);
-            return a.append(tb);
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        tb.append(i, radix);
+        return a.append(tb);
     }
 
     /**
@@ -613,13 +601,9 @@ public final class TypeFormat {
     public static Appendable format(long l, Appendable a) throws IOException {
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(l);
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            tb.append(l);
-            return a.append(tb);
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        tb.append(l);
+        return a.append(tb);
     }
 
     /**
@@ -638,13 +622,9 @@ public final class TypeFormat {
             throws IOException {
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(l, radix);
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            tb.append(l, radix);
-            return a.append(tb);
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        tb.append(l, radix);
+        return a.append(tb);
     }
 
     /**
@@ -694,13 +674,9 @@ public final class TypeFormat {
             boolean showZero, Appendable a) throws IOException {
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(d, digits, scientific, showZero);
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            tb.append(d, digits, scientific, showZero);
-            return a.append(tb);
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        tb.append(d, digits, scientific, showZero);
+        return a.append(tb);
     }
 
     // Increments the specified cursor if not null.
@@ -711,13 +687,4 @@ public final class TypeFormat {
         if (inc != endIndex)
             throw new NumberFormatException("Extraneous character: '" + csq.charAt(inc) + "'");
     }
-
-    // For J2ME Compatibility.
-    static CharSequence j2meToCharSeq(Object str) {
-        /**/
-        if (true) return (CharSequence) str;
-        /**/
-        return str == null ? null : Text.valueOf(str);
-    }
-
 }

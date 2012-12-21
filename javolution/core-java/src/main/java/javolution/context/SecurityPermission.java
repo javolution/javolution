@@ -10,13 +10,13 @@ package javolution.context;
 
 /**
  * This class represents a security permission associated to a specific 
- * class/interface. There are three levels of permission possible, at 
- * the category level, at the action level or at the instance level.
+ * class/action/instance. There are three levels of permission possible, at 
+ * the class/category level, at the action level and at the instance level.
  * Any permission granted/revoked at the higer level is explicitly 
  * granted/revoked at the lower level. The order in which the permission 
  * are granted/revoked is important. For example, it is possible to grant 
- * a permission at the category level, then to revoke it at the action or 
- * instance level. In which case, for that category the permission is granted 
+ * a permission at the class level, then to revoke it at the action or 
+ * instance level. In which case, for that class the permission is granted 
  * for all actions/instances except for those actions/instances for which the 
  * permission has been explicitly revoked.
  * 

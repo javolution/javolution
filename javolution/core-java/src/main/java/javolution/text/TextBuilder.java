@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,20 +9,10 @@
 package javolution.text;
 
 import java.io.IOException;
-import java.io.Writer;
-
 import java.io.Serializable;
-import java.lang.CharSequence;
-import java.lang.Number;
-import javax.realtime.MemoryArea;
-
-import javolution.context.ObjectFactory;
+import java.io.Writer;
 import javolution.io.UTF8StreamWriter;
 import javolution.lang.MathLib;
-import javolution.lang.Realtime;
-import javolution.lang.Reusable;
-
-import java.lang.Appendable;
 
 /**
  * <p> This class represents an {@link Appendable} text whose capacity expands 
@@ -38,18 +28,8 @@ import java.lang.Appendable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, January 20, 2008
  */
-public class TextBuilder implements Appendable,
-        CharSequence, Reusable, Realtime, Serializable {
+public class TextBuilder implements Appendable, CharSequence, Serializable {
 
-    /**
-     * Holds the factory for this text builder.
-     */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new TextBuilder();
-        }
-    };
     // We do a full resize (and copy) only when the capacity is less than C1.
     // For large collections, multi-dimensional arrays are employed.
     private static final int B0 = 5; // Initial capacity in bits.
@@ -58,25 +38,24 @@ public class TextBuilder implements Appendable,
     private static final int C1 = 1 << B1; // Low array maximum capacity (1024).
     private static final int M1 = C1 - 1; // Mask.
     // Resizes up to 1024 maximum (32, 64, 128, 256, 512, 1024). 
-    private char[] _low;
+    private char[] _low = new char[C0];
     // For larger capacity use multi-dimensional array.
-    private char[][] _high;
+    private char[][] _high = new char[1][];
+
     /**
      * Holds the current length.
      */
     private int _length;
+    
     /**
      * Holds current capacity.
      */
-    private int _capacity;
+    private int _capacity = C0;
 
     /**
      * Creates a text builder of small initial capacity.
      */
     public TextBuilder() {
-        _capacity = C0;
-        _low = new char[C0];
-        _high = new char[1][];
         _high[0] = _low;
     }
 
@@ -103,28 +82,6 @@ public class TextBuilder implements Appendable,
         while (capacity > _capacity) {
             increaseCapacity();
         }
-    }
-
-    /**
-     * Returns a new, preallocated or {@link #recycle recycled} text builder
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}).
-     *
-     * @return a new, preallocated or recycled text builder instance.
-     */
-    public static TextBuilder newInstance() {
-        TextBuilder textBuilder = (TextBuilder) FACTORY.object();
-        textBuilder._length = 0;
-        return textBuilder;
-    }
-
-    /**
-     * Recycles a text builder {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}). 
-     */
-    public static void recycle(TextBuilder instance) {
-        FACTORY.recycle(instance);
     }
 
     /**
@@ -243,7 +200,7 @@ public class TextBuilder implements Appendable,
      * @param  c the character to append.
      * @return <code>this</code>
      */
-    public final  TextBuilder  append(char c) {
+    public final TextBuilder append(char c) {
         if (_length >= _capacity)
             increaseCapacity();
         _high[_length >> B1][_length & M1] = c;
@@ -262,10 +219,8 @@ public class TextBuilder implements Appendable,
     public final TextBuilder append(Object obj) {
         if (obj instanceof String)
             return append((String) obj);
-        if (obj instanceof Realtime)
-            return append(((Realtime) obj).toText());
         if (obj instanceof Number)
-            return appendNumber((Number)obj);
+            return appendNumber((Number) obj);
         return append(String.valueOf(obj));
     }
 
@@ -290,7 +245,7 @@ public class TextBuilder implements Appendable,
      * @param  csq the character sequence to append or <code>null</code>.
      * @return <code>this</code>
      */
-    public final  TextBuilder  append(java.lang.CharSequence csq) {
+    public final TextBuilder append(java.lang.CharSequence csq) {
         return (csq == null) ? append("null") : append(csq, 0, csq.length());
     }
 
@@ -306,7 +261,7 @@ public class TextBuilder implements Appendable,
      * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
      *         || (start > end) || (end > csq.length())</code>
      */
-    public final  TextBuilder  append(java.lang.CharSequence csq, int start,
+    public final TextBuilder append(java.lang.CharSequence csq, int start,
             int end) {
         if (csq == null)
             return append("null");
@@ -631,8 +586,8 @@ public class TextBuilder implements Appendable,
      *        (MathLib.abs(d) < 0.001), false)</code>
      */
     public final TextBuilder append(double d) {
-        return append(d, -1, (MathLib.abs(d) >= 1E7) ||
-                (MathLib.abs(d) < 0.001), false);
+        return append(d, -1, (MathLib.abs(d) >= 1E7)
+                || (MathLib.abs(d) < 0.001), false);
     }
 
     /**
@@ -721,7 +676,7 @@ public class TextBuilder implements Appendable,
         return this;
     }
 
-    private final void appendFraction(long l, int digits, boolean showZero) {
+    private void appendFraction(long l, int digits, boolean showZero) {
         append('.');
         if (l == 0)
             if (showZero)
@@ -836,10 +791,14 @@ public class TextBuilder implements Appendable,
      *
      * @return the <code>java.lang.String</code> for this text builder.
      */
+    @Override
     public final String toString() {
+        return (_length < C1) ? new String(_low, 0, _length) : toLargeString();
+    }
+    private String toLargeString() {
         char[] data = new char[_length];
         this.getChars(0, _length, data, 0);
-        return new String(data, 0, _length);
+        return new String(data, 0, _length);     
     }
 
     /**
@@ -862,17 +821,11 @@ public class TextBuilder implements Appendable,
     }
 
     /**
-     * Resets this text builder for reuse (equivalent to {@link #clear}).
-     */
-    public final void reset() {
-        _length = 0;
-    }
-
-    /**
      * Returns the hash code for this text builder.
      *
      * @return the hash code value.
      */
+    @Override
     public final int hashCode() {
         int h = 0;
         for (int i = 0; i < _length;) {
@@ -890,6 +843,7 @@ public class TextBuilder implements Appendable,
      * @return <code>true</code> if that is a text builder with the same 
      *         character content as this text; <code>false</code> otherwise.
      */
+    @Override
     public final boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -906,74 +860,6 @@ public class TextBuilder implements Appendable,
     }
 
     /**
-     * Prints out this text builder to <code>System.out</code> (UTF-8 encoding).
-     * This method is equivalent to:[code]
-     *     synchronized(OUT) {
-     *         print(OUT);
-     *         OUT.flush();
-     *     }
-     *     ...
-     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
-     * [/code]
-     */
-    public void print() {
-        try {
-            synchronized (SYSTEM_OUT_WRITER) {
-                print(SYSTEM_OUT_WRITER);
-                SYSTEM_OUT_WRITER.flush();
-            }
-        } catch (IOException e) { // Should never happen.
-            throw new Error(e.getMessage());
-        }
-    }
-    private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter().setOutput(System.out);
-
-    /**
-     * Prints out this text builder to <code>System.out</code> and then 
-     * terminates the line. This method is equivalent to:[code]
-     *     synchronized(OUT) {
-     *         println(OUT);
-     *         OUT.flush();
-     *     }
-     *     ...
-     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
-     * [/code]
-     */
-    public void println() {
-        try {
-            synchronized (SYSTEM_OUT_WRITER) {
-                println(SYSTEM_OUT_WRITER);
-                SYSTEM_OUT_WRITER.flush();
-            }
-        } catch (IOException e) { // Should never happen.
-            throw new Error(e.getMessage());
-        }
-    }
-
-    /**
-     * Prints out this text builder to the specified writer.
-     * 
-     * @param writer the destination writer.
-     */
-    public void print(Writer writer) throws IOException {
-        for (int i = 0; i < _length; i += C1) {
-            char[] chars = _high[i >> B1];
-            writer.write(chars, 0, MathLib.min(C1, _length - i));
-        }
-    }
-
-    /**
-     * Prints out this text builder to the specified writer and then terminates 
-     * the line.
-     * 
-     * @param writer the destination writer.
-     */
-    public void println(Writer writer) throws IOException {
-        print(writer);
-        writer.write('\n');
-    }
-
-    /**
      * Indicates if this text builder has the same character content as the 
      * specified character sequence.
      *
@@ -985,26 +871,7 @@ public class TextBuilder implements Appendable,
         if (csq.length() != _length)
             return false;
         for (int i = 0; i < _length;) {
-            char c = i < C1 ? _low[i] : _high[i >> B1][i & M1];
-            if (csq.charAt(i++) != c)
-                return false;
-        }
-        return true;
-    }
-
-    /**
-     * Equivalent to {@link #contentEquals(CharSequence)} 
-     * (for J2ME compability).
-     *
-     * @param csq the string character sequence to compare with.
-     * @return <code>true</code> if the specified string has the 
-     *        same character content as this text; <code>false</code> otherwise.
-     */
-    public final boolean contentEquals(String csq) {
-        if (csq.length() != _length)
-            return false;
-        for (int i = 0; i < _length;) {
-            char c = i < C1 ? _low[i] : _high[i >> B1][i & M1];
+            char c = _high[i >> B1][i & M1];
             if (csq.charAt(i++) != c)
                 return false;
         }
@@ -1015,26 +882,21 @@ public class TextBuilder implements Appendable,
      * Increases this text builder capacity.
      */
     private void increaseCapacity() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-
-            public void run() {
-                if (_capacity < C1) { // For small capacity, resize.
-                    _capacity <<= 1;
-                    char[] tmp = new char[_capacity];
-                    System.arraycopy(_low, 0, tmp, 0, _length);
-                    _low = tmp;
-                    _high[0] = tmp;
-                } else { // Add a new low block of 1024 elements.
-                    int j = _capacity >> B1;
-                    if (j >= _high.length) { // Resizes _high.
-                        char[][] tmp = new char[_high.length * 2][];
-                        System.arraycopy(_high, 0, tmp, 0, _high.length);
-                        _high = tmp;
-                    }
-                    _high[j] = new char[C1];
-                    _capacity += C1;
-                }
+        if (_capacity < C1) { // For small capacity, resize.
+            _capacity <<= 1;
+            char[] tmp = new char[_capacity];
+            System.arraycopy(_low, 0, tmp, 0, _length);
+            _low = tmp;
+            _high[0] = tmp;
+        } else { // Add a new low block of 1024 elements.
+            int j = _capacity >> B1;
+            if (j >= _high.length) { // Resizes _high.
+                char[][] tmp = new char[_high.length * 2][];
+                System.arraycopy(_high, 0, tmp, 0, _high.length);
+                _high = tmp;
             }
-        });
+            _high[j] = new char[C1];
+            _capacity += C1;
+        }
     }
 }

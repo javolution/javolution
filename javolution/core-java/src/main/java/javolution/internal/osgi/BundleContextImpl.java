@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -11,9 +11,9 @@ package javolution.internal.osgi;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Dictionary;
 import javolution.context.LogContext;
-import javolution.osgi.OSGi;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -31,14 +31,14 @@ import org.osgi.framework.ServiceRegistration;
  */
 public class BundleContextImpl implements BundleContext {
 
-    OSGi osgi;
+    OSGiImpl osgi;
 
     BundleImpl bundle;
 
     /**
      * Creates a new instance.
      */
-    public BundleContextImpl(OSGi osgi, BundleImpl bundle) {
+    public BundleContextImpl(OSGiImpl osgi, BundleImpl bundle) {
         this.osgi = osgi;
         this.bundle = bundle;
     }
@@ -187,6 +187,22 @@ public class BundleContextImpl implements BundleContext {
 
     @Override
     public File getDataFile(String string) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public <S> ServiceRegistration<S> registerService(Class<S> type, S s, Dictionary<String, ?> dctnr) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public <S> ServiceReference<S> getServiceReference(Class<S> type) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public <S> Collection<ServiceReference<S>> getServiceReferences(Class<S> type, String string) throws InvalidSyntaxException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Bundle getBundle(String string) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

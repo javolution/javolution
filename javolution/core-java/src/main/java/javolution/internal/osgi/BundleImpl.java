@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,22 +8,26 @@
  */
 package javolution.internal.osgi;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import javolution.osgi.OSGi;
+import java.util.List;
+import java.util.Map;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.Version;
 
 /**
  * Holds minimalist bundle implementation.
@@ -34,7 +38,7 @@ public class BundleImpl implements Bundle{
    // Converted from BundleImpl.hpp (C++)
    //
 
-    OSGi osgi;
+    OSGiImpl osgi;
     String symbolicName;
     BundleActivator activator;
     int state;
@@ -46,7 +50,7 @@ public class BundleImpl implements Bundle{
     /**
      * Creates a new BundleImpl instance.
      */
-    public BundleImpl(OSGi osgi, String symbolicName, BundleActivator activator) {
+    public BundleImpl(OSGiImpl osgi, String symbolicName, BundleActivator activator) {
         this.osgi = osgi;
         this.symbolicName = symbolicName;
         this.activator = activator;
@@ -239,6 +243,34 @@ public class BundleImpl implements Bundle{
 
     @Override
     public Enumeration findEntries(String string, String string1, boolean bln) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void start(int i) throws BundleException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void stop(int i) throws BundleException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Map<X509Certificate, List<X509Certificate>> getSignerCertificates(int i) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Version getVersion() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public <A> A adapt(Class<A> type) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public File getDataFile(String string) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int compareTo(Bundle o) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

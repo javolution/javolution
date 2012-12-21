@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -11,13 +11,6 @@ package javolution.io;
 
 import java.io.IOException;
 import java.io.Writer;
-
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
-import java.lang.UnsupportedOperationException;
-import java.lang.Appendable;
-
-import javolution.lang.Reusable;
 import javolution.text.Text;
 
 /**
@@ -27,7 +20,7 @@ import javolution.text.Text;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.8, May 8, 2006
  */
-public final class AppendableWriter extends Writer implements Reusable {
+public final class AppendableWriter extends Writer  {
 
     /**
      * Holds the current appendable output or <code>null</code> if closed.
@@ -165,7 +158,6 @@ public final class AppendableWriter extends Writer implements Reusable {
         }
     }
 
-    // Implements Reusable.
     public void reset() {
         _output = null;
         _tmpBuffer = null;

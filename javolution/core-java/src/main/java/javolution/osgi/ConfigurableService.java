@@ -12,7 +12,6 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import javolution.context.LogContext;
-import javolution.context.SecurityContext;
 import javolution.lang.Configurable;
 import org.osgi.framework.Constants;
 import org.osgi.service.cm.ConfigurationException;
@@ -43,7 +42,7 @@ import org.osgi.service.cm.ManagedService;
  * @version 6.0, December 12, 2012
  */
 public class ConfigurableService implements ManagedService {
-    
+
     private Dictionary properties = new Hashtable();
 
     /**
@@ -71,25 +70,19 @@ public class ConfigurableService implements ManagedService {
      * @throws ConfigurationException
      */
     public void updated(Dictionary<String, ?> configuration) throws ConfigurationException {
-        if (configuration == null) return; // No configuration data.
-        SecurityContext.enter();
-        try {
-            SecurityContext.grant(Configurable.CONFIGURE_PERMISSION);
-            Enumeration e = configuration.keys();
-            while (e.hasMoreElements()) {
-                String name = (String) e.nextElement();
-                String textValue = (String) configuration.get(name);
-                Configurable cfg = ConfigurableService.configurableFor(name);
-                if (cfg != null) {
-                    try {
-                        cfg.configure(textValue);
-                    } catch (IllegalArgumentException error) {
-                        throw new ConfigurationException(name, "Cannot be configured", error);
-                    }
+        if (configuration == null) return; // No configuration data.      
+        Enumeration e = configuration.keys();
+        while (e.hasMoreElements()) {
+            String name = (String) e.nextElement();
+            String textValue = (String) configuration.get(name);
+            Configurable cfg = ConfigurableService.configurableFor(name);
+            if (cfg != null) {
+                try {
+                    cfg.configure(textValue);
+                } catch (IllegalArgumentException error) {
+                    throw new ConfigurationException(name, "Cannot be configured", error);
                 }
             }
-        } finally {
-            SecurityContext.exit();
         }
     }
 

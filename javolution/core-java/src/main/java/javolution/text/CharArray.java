@@ -1,15 +1,12 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
 package javolution.text;
-
-import java.lang.CharSequence;
-import java.lang.Comparable;
 
 import javolution.util.FastComparator;
 
@@ -175,6 +172,7 @@ public final class CharArray implements CharSequence, Comparable {
      *
      * @return the <code>java.lang.String</code> for this character sequence.
      */
+    @Override
     public String toString() {
         return new String(_array, _offset, _length);
     }
@@ -186,6 +184,7 @@ public final class CharArray implements CharSequence, Comparable {
      *           (consistent with {@link #equals})</p>
      * @return the hash code value.
      */
+    @Override
     public int hashCode() {
         int h = 0;
         for (int i = 0, j = _offset; i < _length; i++) {
@@ -202,6 +201,7 @@ public final class CharArray implements CharSequence, Comparable {
      * @return <code>true</code> if both objects represent the same sequence;
      *         <code>false</code> otherwise.
      */
+    @Override
     public boolean equals(Object that) {
         if (that instanceof String) {
             return equals((String) that);

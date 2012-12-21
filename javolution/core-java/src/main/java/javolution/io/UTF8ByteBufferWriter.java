@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,16 +9,10 @@
 package javolution.io;
 
 
+import java.io.CharConversionException;
 import java.io.IOException;
 import java.io.Writer;
-
-import java.io.CharConversionException;
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
-
-import javolution.lang.Reusable;
-
 
 /**
  * <p> This class represents a UTF-8 <code>j2me.nio.ByteBuffer</code> 
@@ -42,7 +36,7 @@ import javolution.lang.Reusable;
  * @version 2.0, December 9, 2004
  * @see     UTF8ByteBufferReader
  */
-public final class UTF8ByteBufferWriter extends Writer implements Reusable {
+public final class UTF8ByteBufferWriter extends Writer {
 
     /**
      * Holds the byte buffer destination.

@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -8,8 +8,7 @@
  */
 package javolution.text;
 
-import java.lang.CharSequence;
-
+import javolution.lang.Copyable;
 import javolution.lang.Immutable;
 import javolution.lang.MathLib;
 
@@ -34,7 +33,7 @@ import javolution.lang.MathLib;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
  */
-public final class CharSet implements Immutable {
+public final class CharSet implements Immutable, Copyable<CharSet> {
 
     /**
      * Represents an empty character set.
@@ -287,8 +286,9 @@ public final class CharSet implements Immutable {
      *  
      * @return the textual representation.
      */
+    @Override
     public String toString() {
-        TextBuilder tb = TextBuilder.newInstance();
+        TextBuilder tb = new TextBuilder();
         tb.append('{');
         int length = _mapping.length << 6;
         for (int i = 0; i < length; i++) {
@@ -311,7 +311,7 @@ public final class CharSet implements Immutable {
      *  
      * @return an independant copy.
      */
-    private CharSet copy() {
+    public CharSet copy() {
         CharSet charSet = new CharSet(new long[this._mapping.length]);
         for (int i = _mapping.length; --i >= 0;) {
             charSet._mapping[i] = _mapping[i];

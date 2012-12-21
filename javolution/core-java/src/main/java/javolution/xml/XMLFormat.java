@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -149,12 +149,9 @@ public abstract class XMLFormat <T>  {
      * @throws IllegalArgumentException if a XMLFormat is already bound to 
      *         the specified class.
      */
-    protected XMLFormat(Class <T>  forClass) {
-        _class = forClass;
-        if (forClass == null)
-            return; // Dynamic format.
-        Reflection.getInstance().setField(this, forClass, XMLFormat.class);
-    }
+    protected XMLFormat() {
+        _class = null;
+     }
 
     /**
      * <p> Returns the default format for the specified class/interface.

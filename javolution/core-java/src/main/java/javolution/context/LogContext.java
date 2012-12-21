@@ -12,8 +12,8 @@ import static javolution.internal.osgi.JavolutionActivator.LOG_CONTEXT_TRACKER;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the logging context. Typically, logging contexts
- *     forward messages to the runtime OSGi {@link org.osgi.service.log.LogService 
+ * <p> This class represents the current logging context. Typically, logging 
+ *     contexts forward messages to the OSGi {@link org.osgi.service.log.LogService 
  *     LogService}. Beside their ease of use, they also provide additional 
  *     capabilities such as custom attachments, log level filtering, etc.
  *     [code]
@@ -23,13 +23,13 @@ import javolution.text.TypeFormat;
  *             ctx.attach("User ID", userId); // Attaches the specified properties.
  *             ... 
  *             LogContext.info("Overdraft of ", amount); 
- *                 // Message logged (default impl.) "[User ID: <userId>] Overdraft of <amount>"
+ *                 // Message logged (default impl.): "[User ID: <userId>] Overdraft of <amount>"
  *             ...
  *         } finally {
  *             ctx.exit(); // Reverts to previous header.
  *         }
  *     }[/code]
- *     If logging is not performed, no string formatting is performed.
+ *     If logging is not performed, no message formatting is performed.
  *     [code]
  *     // Suppress Warnings (e.g. warnings have been identified as harmless)
  *     LogContext ctx = LogContext.enter();

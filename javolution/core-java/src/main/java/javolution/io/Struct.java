@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -11,16 +11,13 @@ package javolution.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import java.lang.UnsupportedOperationException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.lang.Enum;
-
+import javolution.context.LocalParameter;
 import javolution.lang.Configurable;
 import javolution.lang.MathLib;
-import javolution.lang.Reflection;
 import javolution.text.TextBuilder;
+import javolution.text.TypeFormat;
 
 /**
  * <p> This class represents a <code>C/C++ struct</code>; it confers
@@ -156,59 +153,52 @@ public class Struct {
      * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final Configurable <Integer>  MAXIMUM_ALIGNMENT = new Configurable(new Integer(4)) {
+    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter(4) {
+        public void configure(CharSequence configuration) throws SecurityException, IllegalArgumentException {
+            setDefault(TypeFormat.parseInt(configuration));
+        }
     };
-
     /**
      * Holds the outer struct if any.
      */
     Struct _outer;
-
     /**
      * Holds the byte buffer backing the struct (top struct).
      */
     ByteBuffer _byteBuffer;
-
     /**
      * Holds the offset of this struct relative to the outer struct or
      * to the byte buffer if there is no outer.
      */
     int _outerOffset;
-
     /**
      * Holds this struct alignment in bytes (largest word size of its members).
      */
     int _alignment = 1;
-
     /**
      * Holds this struct's length.
      */
     int _length;
-
     /**
      * Holds the index position during construction.
      * This is the index a the first unused byte available.
      */
     int _index;
-
     /**
      * Holds the word size during construction (for bit fields).
      * This is the size of the last word used.
      */
     int _wordSize;
-
     /**
      * Holds the bits used in the word during construction (for bit fields).
      * This is the number of bits used in the last word.
      */
     int _bitsUsed;
-
     /**
      * Indicates if the index has to be reset for each new field (
      * <code>true</code> only for Union subclasses).
      */
     boolean _resetIndex;
-
     /**
      * Holds bytes array for Stream I/O when byteBuffer has no intrinsic array.
      */
@@ -229,8 +219,8 @@ public class Struct {
      * @return the C/C++ <code>sizeof(this)</code>.
      */
     public final int size() {
-        return (_alignment <= 1) ? _length :
-            ((_length + _alignment - 1) / _alignment) * _alignment;
+        return (_alignment <= 1) ? _length
+                : ((_length + _alignment - 1) / _alignment) * _alignment;
     }
 
     /**
@@ -387,16 +377,18 @@ public class Struct {
      * @see    Reference64
      */
     public final long address() {
-        ByteBuffer thisBuffer = this.getByteBuffer();
-        if (ADDRESS_METHOD != null) {
-            Long start = (Long) ADDRESS_METHOD.invoke(thisBuffer);
-            return start.longValue() + getByteBufferPosition();
-        } else {
-            throw new UnsupportedOperationException(
-                    "Operation not supported for " + thisBuffer.getClass());
-        }
+        throw new UnsupportedOperationException();
+        /*
+         ByteBuffer thisBuffer = this.getByteBuffer();
+         if (ADDRESS_METHOD != null) {
+         Long start = (Long) ADDRESS_METHOD.invoke(thisBuffer);
+         return start.longValue() + getByteBufferPosition();
+         } else {
+         throw new UnsupportedOperationException(
+         "Operation not supported for " + thisBuffer.getClass());
+         }
+         */
     }
-    private static final Reflection.Method ADDRESS_METHOD = Reflection.getInstance().getMethod("sun.nio.ch.DirectBuffer.address()");
 
     /**
      * Returns the <code>String</code> representation of this struct
@@ -419,21 +411,17 @@ public class Struct {
      *         struct.
      */
     public String toString() {
-        TextBuilder tmp = TextBuilder.newInstance();
-        try {
-            final int size = size();
-            final ByteBuffer buffer = getByteBuffer();
-            final int start = getByteBufferPosition();
-            for (int i = 0; i < size; i++) {
-                int b = buffer.get(start + i) & 0xFF;
-                tmp.append(HEXA[b >> 4]);
-                tmp.append(HEXA[b & 0xF]);
-                tmp.append(((i & 0xF) == 0xF) ? '\n' : ' ');
-            }
-            return tmp.toString();
-        } finally {
-            TextBuilder.recycle(tmp);
+        TextBuilder tmp = new TextBuilder();
+        final int size = size();
+        final ByteBuffer buffer = getByteBuffer();
+        final int start = getByteBufferPosition();
+        for (int i = 0; i < size; i++) {
+            int b = buffer.get(start + i) & 0xFF;
+            tmp.append(HEXA[b >> 4]);
+            tmp.append(HEXA[b & 0xF]);
+            tmp.append(((i & 0xF) == 0xF) ? '\n' : ' ');
         }
+        return tmp.toString();
     }
     private static final char[] HEXA = {'0', '1', '2', '3', '4', '5', '6',
         '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -514,14 +502,14 @@ public class Struct {
      * @throws IllegalArgumentException if the specified struct is already
      *         an inner struct.
      */
-    protected <S extends Struct> S  inner( S  struct) {
+    protected <S extends Struct> S inner(S struct) {
         if (struct._outer != null)
             throw new IllegalArgumentException(
                     "struct: Already an inner struct");
         Member inner = new Member(struct.size() << 3, struct._alignment); // Update indexes.
         struct._outer = this;
         struct._outerOffset = inner.offset();
-        return ( S ) struct;
+        return (S) struct;
     }
 
     /**
@@ -534,7 +522,7 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected <S extends Struct> S [] array( S [] structs) {
+    protected <S extends Struct> S[] array(S[] structs) {
         Class structClass = null;
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
@@ -542,18 +530,18 @@ public class Struct {
             _resetIndex = false; // Ensures the array elements are sequential.
         }
         for (int i = 0; i < structs.length;) {
-             S  struct = structs[i];
+            S struct = structs[i];
             if (struct == null) {
                 try {
                     if (structClass == null) {
                         String arrayName = structs.getClass().getName();
                         String structName = arrayName.substring(2, arrayName.length() - 1);
-                        structClass = Reflection.getInstance().getClass(structName);
+                        structClass = Class.forName(structName);
                         if (structClass == null) {
                             throw new IllegalArgumentException("Struct class: " + structName + " not found");
                         }
                     }
-                    struct = ( S ) structClass.newInstance();
+                    struct = (S) structClass.newInstance();
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage());
                 }
@@ -561,7 +549,7 @@ public class Struct {
             structs[i++] = inner(struct);
         }
         _resetIndex = resetIndexSaved;
-        return ( S []) structs;
+        return (S[]) structs;
     }
 
     /**
@@ -574,8 +562,8 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected <S extends Struct> S [][] array(
-             S [][] structs) {
+    protected <S extends Struct> S[][] array(
+            S[][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -585,7 +573,7 @@ public class Struct {
             array(structs[i]);
         }
         _resetIndex = resetIndexSaved;
-        return ( S [][]) structs;
+        return (S[][]) structs;
     }
 
     /**
@@ -598,8 +586,8 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    protected <S extends Struct> S [][][] array(
-             S [][][] structs) {
+    protected <S extends Struct> S[][][] array(
+            S[][][] structs) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -609,7 +597,7 @@ public class Struct {
             array(structs[i]);
         }
         _resetIndex = resetIndexSaved;
-        return ( S [][][]) structs;
+        return (S[][][]) structs;
     }
 
     /**
@@ -622,8 +610,8 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected <M extends Member> M [] array(
-             M [] arrayMember) {
+    protected <M extends Member> M[] array(
+            M[] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -631,69 +619,60 @@ public class Struct {
         }
         if (BOOL.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Bool();
+                arrayMember[i++] = (M) this.new Bool();
             }
         } else if (SIGNED_8.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Signed8();
+                arrayMember[i++] = (M) this.new Signed8();
             }
         } else if (UNSIGNED_8.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Unsigned8();
+                arrayMember[i++] = (M) this.new Unsigned8();
             }
         } else if (SIGNED_16.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Signed16();
+                arrayMember[i++] = (M) this.new Signed16();
             }
         } else if (UNSIGNED_16.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Unsigned16();
+                arrayMember[i++] = (M) this.new Unsigned16();
             }
         } else if (SIGNED_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Signed32();
+                arrayMember[i++] = (M) this.new Signed32();
             }
         } else if (UNSIGNED_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Unsigned32();
+                arrayMember[i++] = (M) this.new Unsigned32();
             }
         } else if (SIGNED_64.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Signed64();
+                arrayMember[i++] = (M) this.new Signed64();
             }
         } else if (FLOAT_32.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Float32();
+                arrayMember[i++] = (M) this.new Float32();
             }
         } else if (FLOAT_64.isInstance(arrayMember)) {
             for (int i = 0; i < arrayMember.length;) {
-                arrayMember[i++] = ( M ) this.new Float64();
+                arrayMember[i++] = (M) this.new Float64();
             }
         } else {
             throw new UnsupportedOperationException(
                     "Cannot create member elements, the arrayMember should " + "contain the member instances instead of null");
         }
         _resetIndex = resetIndexSaved;
-        return ( M []) arrayMember;
+        return (M[]) arrayMember;
     }
     private static final Class BOOL = new Bool[0].getClass();
-
     private static final Class SIGNED_8 = new Signed8[0].getClass();
-
     private static final Class UNSIGNED_8 = new Unsigned8[0].getClass();
-
     private static final Class SIGNED_16 = new Signed16[0].getClass();
-
     private static final Class UNSIGNED_16 = new Unsigned16[0].getClass();
-
     private static final Class SIGNED_32 = new Signed32[0].getClass();
-
     private static final Class UNSIGNED_32 = new Unsigned32[0].getClass();
-
     private static final Class SIGNED_64 = new Signed64[0].getClass();
-
     private static final Class FLOAT_32 = new Float32[0].getClass();
-
     private static final Class FLOAT_64 = new Float64[0].getClass();
 
     /**
@@ -706,8 +685,8 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected <M extends Member> M [][] array(
-             M [][] arrayMember) {
+    protected <M extends Member> M[][] array(
+            M[][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -717,7 +696,7 @@ public class Struct {
             array(arrayMember[i]);
         }
         _resetIndex = resetIndexSaved;
-        return ( M [][]) arrayMember;
+        return (M[][]) arrayMember;
     }
 
     /**
@@ -730,8 +709,8 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    protected <M extends Member> M [][][] array(
-             M [][][] arrayMember) {
+    protected <M extends Member> M[][][] array(
+            M[][][] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -741,7 +720,7 @@ public class Struct {
             array(arrayMember[i]);
         }
         _resetIndex = resetIndexSaved;
-        return ( M [][][]) arrayMember;
+        return (M[][][]) arrayMember;
     }
 
     /**
@@ -889,12 +868,10 @@ public class Struct {
          * Holds the relative offset (in bytes) of this member within its struct.
          */
         private final int _offset;
-
         /**
          * Holds the relative bit offset of this member to its struct offset.
          */
         private final int _bitIndex;
-
         /**
          * Holds the bit length of this member.
          */
@@ -1052,9 +1029,7 @@ public class Struct {
     public class UTF8String extends Member {
 
         private final UTF8ByteBufferWriter _writer = new UTF8ByteBufferWriter();
-
         private final UTF8ByteBufferReader _reader = new UTF8ByteBufferReader();
-
         private final int _length;
 
         public UTF8String(int length) {
@@ -1088,7 +1063,7 @@ public class Struct {
         public String get() {
             final ByteBuffer buffer = getByteBuffer();
             synchronized (buffer) {
-                TextBuilder tmp = TextBuilder.newInstance();
+                TextBuilder tmp = new TextBuilder();
                 try {
                     int index = getByteBufferPosition() + offset();
                     buffer.position(index);
@@ -1106,7 +1081,6 @@ public class Struct {
                     throw new Error(e.getMessage());
                 } finally {
                     _reader.reset();
-                    TextBuilder.recycle(tmp);
                 }
             }
         }
@@ -1266,7 +1240,7 @@ public class Struct {
         public int get() {
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().getShort(index);
-            return  0xFFFF & ((bitLength() == 16) ? word : get(2, word));
+            return 0xFFFF & ((bitLength() == 16) ? word : get(2, word));
         }
 
         public void set(int value) {
@@ -1476,15 +1450,15 @@ public class Struct {
      *           can be created at the address specified by {@link #value}
      *           (using JNI) and the reference {@link #set set} accordingly.</p>
      */
-    public class Reference32 <S extends Struct>  extends Member {
+    public class Reference32<S extends Struct> extends Member {
 
-        private S  _struct;
+        private S _struct;
 
         public Reference32() {
             super(32, 4);
         }
 
-        public void set( S  struct) {
+        public void set(S struct) {
             final int index = getByteBufferPosition() + offset();
             if (struct != null) {
                 getByteBuffer().putInt(index, (int) struct.address());
@@ -1494,7 +1468,7 @@ public class Struct {
             _struct = struct;
         }
 
-        public S  get() {
+        public S get() {
             return _struct;
         }
 
@@ -1523,15 +1497,15 @@ public class Struct {
      *           can be created at the address specified by {@link #value}
      *           (using JNI) and then {@link #set set} to the reference.</p>
      */
-    public class Reference64 <S extends Struct>  extends Member {
+    public class Reference64<S extends Struct> extends Member {
 
-        private S  _struct;
+        private S _struct;
 
         public Reference64() {
             super(64, 8);
         }
 
-        public void set( S  struct) {
+        public void set(S struct) {
             final int index = getByteBufferPosition() + offset();
             if (struct != null) {
                 getByteBuffer().putLong(index, struct.address());
@@ -1541,7 +1515,7 @@ public class Struct {
             _struct = struct;
         }
 
-        public S  get() {
+        public S get() {
             return _struct;
         }
 
@@ -1563,7 +1537,7 @@ public class Struct {
     /**
      * This class represents a 8 bits {@link Enum}.
      */
-    public class Enum8 <T extends Enum>  extends Member {
+    public class Enum8<T extends Enum> extends Member {
 
         private final Enum/*T*/[] _values;
 
@@ -1601,7 +1575,7 @@ public class Struct {
     /**
      * This class represents a 16 bits {@link Enum}.
      */
-    public class Enum16 <T extends Enum>  extends Member {
+    public class Enum16<T extends Enum> extends Member {
 
         private final Enum/*T*/[] _values;
 
@@ -1639,7 +1613,7 @@ public class Struct {
     /**
      * This class represents a 32 bits {@link Enum}.
      */
-    public class Enum32 <T extends Enum>  extends Member {
+    public class Enum32<T extends Enum> extends Member {
 
         private final Enum/*T*/[] _values;
 
@@ -1677,7 +1651,7 @@ public class Struct {
     /**
      * This class represents a 64 bits {@link Enum}.
      */
-    public class Enum64 <T extends Enum>  extends Member {
+    public class Enum64<T extends Enum> extends Member {
 
         private final Enum/*T*/[] _values;
 

@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2006 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,6 +9,7 @@
 package javolution.internal.osgi;
 
 import java.util.Dictionary;
+import java.util.Map;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceReference;
@@ -55,6 +56,10 @@ class FilterImpl implements Filter{
 
     @Override
     public boolean matchCase(Dictionary dctnr) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean matches(Map<String, ?> map) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

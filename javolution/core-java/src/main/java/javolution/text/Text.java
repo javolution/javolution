@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2005 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,24 +9,14 @@
 package javolution.text;
 
 import java.io.IOException;
-import java.io.Writer;
-
 import java.io.PrintStream;
-
-import java.lang.CharSequence;
-import java.lang.Comparable;
-import java.lang.Number;
-import javax.realtime.MemoryArea;
-
-import javolution.context.ObjectFactory;
+import java.io.Writer;
 import javolution.io.UTF8StreamWriter;
 import javolution.lang.MathLib;
-import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
 import javolution.xml.XMLSerializable;
-
 
 /**
  * <p> This class represents an immutable character sequence with 
@@ -56,8 +46,7 @@ import javolution.xml.XMLSerializable;
  *     interning is not implicit. For example:[code]
  *         final static Text TRUE = Text.intern("true");
  *         final static Text FALSE = Text.intern("false");
- *     [/code]
- *     Interned texts are always allocated in ImmortalMemory (RTSJ VMs).</p>
+ *     [/code]</p>
  * <p> {@link Text} instances can be {@link #println printed out} directly 
  *     (no intermediate <code>String</code> allocated). For example:[code]
  *           FastTable myTable ...;
@@ -78,48 +67,40 @@ import javolution.xml.XMLSerializable;
  * @version 5.3, January 10, 2007
  */
 public final class Text implements CharSequence, Comparable, XMLSerializable,
-        ValueType, Realtime {
+        ValueType {
 
     /**
      * Holds the default size for primitive blocks of characters.
      */
     private static final int BLOCK_SIZE = 1 << 5;
-
     /**
      * Holds the mask used to ensure a block boundary cesures.
      */
     private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
-
     /**
      * Holds the primitive text factory.
      */
-
     /**
      * Holds the texts interned in ImmortalMemory
      */
     private static final FastMap INTERN_INSTANCES = new FastMap()
             .setKeyComparator(FastComparator.LEXICAL);
-
     /**
      * Holds an empty character sequence.
      */
     public static final Text EMPTY = Text.intern("");
-
     /**
      * Holds the raw data (primitive) or <code>null</code> (composite).
      */
     private final char[] _data;
-
     /**
      * Holds the total number of characters.
      */
     private int _count;
-
     /**
      * Holds the head block of character (composite).
      */
     private Text _head;
-
     /**
      * Holds the tail block of character (composite).
      */
@@ -161,8 +142,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the textual representation of the specified object.
      */
     public static Text valueOf(Object obj) {
-        if (obj instanceof Realtime)
-            return ((Realtime) obj).toText();
         if (obj instanceof Number) // Use faster primitive formatting.
             return Text.valueOfNumber(obj);
         return Text.valueOf(String.valueOf(obj));
@@ -266,9 +245,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     public static Text valueOf(boolean b) {
         return b ? TRUE : FALSE;
     }
-
     private static final Text TRUE = Text.intern("true");
-
     private static final Text FALSE = Text.intern("false");
 
     /**
@@ -291,12 +268,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(int i) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            return tb.append(i).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
+        TextBuilder tb = new TextBuilder();
+        return tb.append(i).toText();
     }
 
     /**
@@ -308,12 +281,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(int i, int radix) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
+        TextBuilder tb = new TextBuilder();
             return tb.append(i, radix).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
     }
 
     /**
@@ -324,13 +293,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(long l) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
+        TextBuilder tb = new TextBuilder();
             return tb.append(l).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
-    }
+     }
 
     /**
      * Returns the radix representation of the specified <code>long</code>
@@ -341,13 +306,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(long l, int radix) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            return tb.append(l, radix).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
-    }
+        TextBuilder tb = new TextBuilder();
+             return tb.append(l, radix).toText();
+     }
 
     /**
      * Returns the textual representation of the specified <code>float</code>
@@ -357,13 +318,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(float f) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
+        TextBuilder tb = new TextBuilder();
             return tb.append(f).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
-    }
+     }
 
     /**
      * Returns the textual representation of the specified <code>double</code>
@@ -373,13 +330,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return the corresponding text instance.
      */
     public static Text valueOf(double d) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
+        TextBuilder tb = new TextBuilder();
             return tb.append(d).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
-    }
+      }
 
     /**
      * Returns the textual representation of the specified <code>double</code>
@@ -398,13 +351,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(double d, int digits, boolean scientific,
             boolean showZero) {
-        TextBuilder tb = TextBuilder.newInstance();
-        try {
-            return tb.append(d, digits, scientific, showZero).toText();
-        } finally {
-            TextBuilder.recycle(tb);
-        }
-    }
+        TextBuilder tb = new TextBuilder();
+             return tb.append(d, digits, scientific, showZero).toText();
+     }
 
     /**
      * Returns the length of this text.
@@ -434,7 +383,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return <code>this.concat(Text.valueOf(obj))</code>
      */
     public Text plus(String str) {
-        
+
         Text merge = this.append(str);
         return merge != null ? merge : concat(Text.valueOf(str));
     }
@@ -449,8 +398,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
             Text text = Text.newPrimitive(_count + length);
             System.arraycopy(_data, 0, text._data, 0, _count);
             str.getChars(0, length, text._data, _count);
-            return text;        
-        } 
+            return text;
+        }
     }
 
     /**
@@ -465,7 +414,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     public Text concat(Text that) {
         // All Text instances are maintained balanced:
         //   (head < tail * 2) & (tail < head * 2)
-  
+
         final int length = this._count + that._count;
         if (length <= BLOCK_SIZE) { // Merges to primitive.
             Text text = Text.newPrimitive(length);
@@ -476,7 +425,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         } else { // Returns a composite.
             Text head = this;
             Text tail = that;
-            
+
             if (((head._count << 1) < tail._count) && (tail._data == null)) { // tail is composite
                 // head too small, returns (head + tail/2) + (tail/2) 
                 if (tail._head._count > tail._tail._count) {
@@ -575,8 +524,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         int i = indexOf(target);
         return (i < 0) ? this : // No target sequence found.
                 subtext(0, i).concat(Text.valueOf(replacement)).concat(
-                        subtext(i + target.length()).replace(target,
-                                replacement));
+                subtext(i + target.length()).replace(target,
+                replacement));
     }
 
     /**
@@ -591,7 +540,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         int i = indexOfAny(charSet);
         return (i < 0) ? this : // No character to replace.
                 subtext(0, i).concat(Text.valueOf(replacement)).concat(
-                        subtext(i + 1).replace(charSet, replacement));
+                subtext(i + 1).replace(charSet, replacement));
     }
 
     /**
@@ -643,7 +592,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         // Searches for csq.
         final char c = csq.charAt(0);
         for (int i = indexOf(c, min); (i >= 0) && (i <= max); i = indexOf(c,
-                ++i)) {
+                        ++i)) {
             boolean match = true;
             for (int j = 1; j < csqLength; j++) {
                 if (this.charAt(i + j) != csq.charAt(j)) {
@@ -798,13 +747,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     private static synchronized Text internImpl(final String str) {
         if (!INTERN_INSTANCES.containsKey(str)) { // Synchronized check.
-            MemoryArea.getMemoryArea(INTERN_INSTANCES).executeInArea(
-                    new Runnable() {
-                        public void run() {
-                            Text txt = new Text(str);
-                            INTERN_INSTANCES.put(txt, txt);
-                        }
-                    });
+            Text txt = new Text(str);
+            INTERN_INSTANCES.put(txt, txt);
         }
         return (Text) INTERN_INSTANCES.get(str);
     }
@@ -846,7 +790,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
                 u2 = Character.toUpperCase(u2);
                 if ((u1 != u2)
                         && (Character.toLowerCase(u1) != Character
-                                .toLowerCase(u2)))
+                        .toLowerCase(u2)))
                     return false;
 
             }
@@ -865,6 +809,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @return <code>true</code> if that is a text with the same character
      *         sequence as this text; <code>false</code> otherwise.
      */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -885,6 +830,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      *
      * @return the hash code value.
      */
+    @Override
     public int hashCode() {
         int h = 0;
         final int length = this.length();
@@ -916,7 +862,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     public Text toText() {
         return this;
     }
-    
+
     /**
      * Prints the current statistics on this text tree structure.
      *  
@@ -933,21 +879,24 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
             out.print(", AVG LEAVE LENGTH: " + (length + (leaves >> 1)) / leaves);
             out.println();
         }
-    }    
+    }
+
     private int getDepth() {
         if (_data != null) // Primitive.
             return 0;
         return MathLib.max(_head.getDepth(), _tail.getDepth()) + 1;
     }
+
     private int getNbrOfBranches() {
-        return (_data == null) ? 
-            _head.getNbrOfBranches() + _tail.getNbrOfBranches() + 1 : 0;
+        return (_data == null)
+                ? _head.getNbrOfBranches() + _tail.getNbrOfBranches() + 1 : 0;
     }
+
     private int getNbrOfLeaves() {
-        return (_data == null) ? 
-            _head.getNbrOfLeaves() + _tail.getNbrOfLeaves() : 1;
+        return (_data == null)
+                ? _head.getNbrOfLeaves() + _tail.getNbrOfLeaves() : 1;
     }
-        
+
     /**
      * Prints out this text to <code>System.out</code> (UTF-8 encoding).
      * This method is equivalent to:[code]
@@ -969,7 +918,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
             throw new Error(e.getMessage());
         }
     }
-
     private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter()
             .setOutput(System.out);
 
@@ -1067,7 +1015,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
                 .charAt(index) : _tail.charAt(index - _head._count);
     }
 
-   /**
+    /**
      * Returns the index within this text of the first occurrence of the
      * specified character, starting the search at the beginning.
      *
@@ -1219,7 +1167,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     }
 
     // Implements ValueType interface.
-    public  Text copy() {
+    public Text copy() {
         if (_data != null) { // Primitive.
             Text text = Text.newPrimitive(_count);
             System.arraycopy(_data, 0, text._data, 0, _count);
@@ -1232,7 +1180,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     //////////////////////////////////////////////////////////////////
     // Wilfried add-ons (methods provided by Microsoft .Net in C#)
     //
-
     /**
      * Returns the text that contains a specific length sequence of the
      * character specified.
@@ -1465,7 +1412,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     //
     ////////////////////////////////////////////////////////////////////////////
-
     /**
      * Returns a {@link javolution.context.AllocatorContext context allocated}
      * primitive text instance.
@@ -1473,17 +1419,11 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @param length the primitive length.
      */
     private static Text newPrimitive(int length) {
-        Text text = (Text) PRIMITIVE_FACTORY.object();
+        Text text = new Text(true);
         text._count = length;
         return text;
     }
-
-    private static final ObjectFactory PRIMITIVE_FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new Text(true);
-        }
-    };
+ 
 
     /**
      * Returns a {@link javolution.context.AllocatorContext context allocated}
@@ -1493,17 +1433,10 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @param tail the composite tail.
      */
     private static Text newComposite(Text head, Text tail) {
-        Text text = (Text) COMPOSITE_FACTORY.object();
+        Text text = new Text(false);
         text._count = head._count + tail._count;
         text._head = head;
         text._tail = tail;
         return text;
     }
-
-    private static final ObjectFactory COMPOSITE_FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new Text(false);
-        }
-    };
 }
