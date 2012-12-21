@@ -256,9 +256,6 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.cpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.hpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.hpp -text
 javolution/core-java/pom.xml -text
-javolution/core-java/src/main/java/javax/realtime/MemoryArea.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javax/realtime/NoHeapRealtimeThread.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javax/realtime/RealtimeThread.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AllocatorContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
@@ -346,11 +343,7 @@ javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReaderImpl.jav
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
-javolution/core-java/src/main/javadoc/javolution/io/package.html -text
-javolution/core-java/src/main/javadoc/javolution/lang/package.html -text
 javolution/core-java/src/main/javadoc/javolution/package.html -text
-javolution/core-java/src/main/javadoc/javolution/testing/package.html -text
-javolution/core-java/src/main/javadoc/javolution/text/package.html -text
 javolution/core-java/src/main/javadoc/javolution/util/doc-files/list-add.png -text
 javolution/core-java/src/main/javadoc/javolution/util/doc-files/map-put.png -text
 javolution/core-java/src/main/javadoc/javolution/util/package.html -text
