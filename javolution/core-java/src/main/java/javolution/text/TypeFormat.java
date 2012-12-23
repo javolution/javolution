@@ -9,6 +9,7 @@
 package javolution.text;
 
 import java.io.IOException;
+import javolution.annotation.StackSafe;
 import javolution.lang.MathLib;
 
 /**
@@ -39,6 +40,7 @@ import javolution.lang.MathLib;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, February 15, 2009
  */
+@StackSafe
 public final class TypeFormat {
 
     /**
@@ -50,93 +52,57 @@ public final class TypeFormat {
     /////////////
     // PARSING //
     /////////////
-    /**
-     * Parses the specified character sequence as a <code>boolean</code>.
-     *
-     * @param  csq the character sequence to parse.
-     * @return <code>parseBoolean(csq, null)</code>
-     * @throws IllegalArgumentException if the specified character sequence 
-     *         is different from "true" or "false" ignoring cases.
-     */
-    public static boolean parseBoolean(CharSequence csq) {
-        return parseBoolean(csq, null);
-    }
-
-    /**
-     * Equivalent to {@link #parseBoolean(CharSequence)} 
-     * (for J2ME compatibility).
-     */
-    public static boolean parseBoolean(String str) {
-        return parseBoolean(str);
-    }
 
     /**
      * Parses the specified character sequence from the specified position 
-     * as a <code>boolean</code>.
+     * as a <code>boolean</code> ignoring cases.
      *
      * @param csq the character sequence to parse.
-     * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     * @param cursor the cursor position (being maintained).
      * @return the next boolean value.
      * @throws IllegalArgumentException if the character sequence from the 
      *         specified position is different from "true" or "false" ignoring
      *         cases.
      */
     public static boolean parseBoolean(CharSequence csq, Cursor cursor) {
-        int start = (cursor != null) ? cursor.getIndex() : 0;
+        int start = cursor.getIndex();
         int end = csq.length();
         if ((end >= start + 5) && (csq.charAt(start) == 'f' || csq.charAt(start) == 'F')) { // False.
             if ((csq.charAt(++start) == 'a' || csq.charAt(start) == 'A') && (csq.charAt(++start) == 'l' || csq.charAt(start) == 'L') && (csq.charAt(++start) == 's' || csq.charAt(start) == 'S') && (csq.charAt(++start) == 'e' || csq.charAt(start) == 'E')) {
-                increment(cursor, 5, end, csq);
+                cursor.increment(5);
                 return false;
             }
         } else if ((end >= start + 4) && (csq.charAt(start) == 't' || csq.charAt(start) == 'T')) // True.
             if ((csq.charAt(++start) == 'r' || csq.charAt(start) == 'R') && (csq.charAt(++start) == 'u' || csq.charAt(start) == 'U') && (csq.charAt(++start) == 'e' || csq.charAt(start) == 'E')) {
-                increment(cursor, 4, end, csq);
+                cursor.increment(4);
                 return true;
             }
         throw new IllegalArgumentException("Invalid boolean representation");
     }
 
     /**
-     * Parses the specified character sequence as a signed decimal 
-     * <code>byte</code>.
+     * Parses the whole specified character sequence as a <code>boolean</code>.
      *
      * @param  csq the character sequence to parse.
-     * @return <code>parseByte(csq, 10)</code>
-     * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>byte</code>.
-     * @see    #parseByte(CharSequence, int)
+     * @return <code>parseBoolean(csq, new Cursor())</code>
+     * @throws IllegalArgumentException if the specified character sequence 
+     *         is different from "true" or "false" ignoring cases.
      */
-    public static byte parseByte(CharSequence csq) {
-        return parseByte(csq, 10);
+    public static boolean parseBoolean(CharSequence csq) {
+        Cursor cursor = new Cursor();
+        boolean result = parseBoolean(csq, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
     }
-
-    /**
-     * Parses the specified character sequence as a signed <code>byte</code> 
-     * in the specified radix.
-     *
-     * @param  csq the character sequence to parse.
-     * @param  radix the radix to be used while parsing.
-     * @return the corresponding <code>byte</code>.
-     * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>byte</code>.
-     */
-    public static byte parseByte(CharSequence csq, int radix) {
-        int i = parseInt(csq, radix);
-        if ((i < Byte.MIN_VALUE) || (i > Byte.MAX_VALUE))
-            throw new NumberFormatException("Overflow");
-        return (byte) i;
-    }
-
+    
     /**
      * Parses the specified character sequence from the specified position 
      * as a signed <code>byte</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     * @param cursor the cursor position being updated.
      * @return the corresponding <code>byte</code>.
      * @throws NumberFormatException if the specified character sequence
      *         does not contain a parsable <code>byte</code>.
@@ -149,34 +115,50 @@ public final class TypeFormat {
     }
 
     /**
-     * Parses the specified character sequence as a signed decimal 
-     * <code>short</code>.
-     *
-     * @param  csq the character sequence to parse.
-     * @return <code>parseShort(csq, 10)</code>
-     * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>short</code>.
-     * @see    #parseShort(CharSequence, int)
-     */
-    public static short parseShort(CharSequence csq) {
-        return parseShort(csq, 10);
-    }
-
-    /**
-     * Parses the specified character sequence as a signed <code>short</code> 
-     * in the specified radix.
+     * Parses the whole specified character sequence  
+     * as a signed <code>byte</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @return the corresponding <code>short</code>.
+     * @return the corresponding <code>byte</code>.
      * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>short</code>.
+     *         does not contain a parsable <code>byte</code> or contains 
+     *         extraneous characters.
      */
-    public static short parseShort(CharSequence csq, int radix) {
-        int i = parseInt(csq, radix);
-        if ((i < Short.MIN_VALUE) || (i > Short.MAX_VALUE))
-            throw new NumberFormatException("Overflow");
-        return (short) i;
+    public static byte parseByte(CharSequence csq, int radix) {
+        Cursor cursor = new Cursor();
+        byte result = parseByte(csq, radix, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
+    }
+
+    /**
+     * Parses the specified character sequence from the specified position 
+     * as a signed decimal <code>byte</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @param cursor the cursor position being updated.
+     * @return the corresponding <code>byte</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>byte</code>.
+     */
+    public static byte parseByte(CharSequence csq, Cursor cursor) {
+        return parseByte(csq, 10, cursor);
+    }
+
+    /**
+     * Parses the whole specified character sequence as a signed decimal 
+     * <code>byte</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @return <code>parseByte(csq, 10)</code>
+    *  @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>byte</code> or contains 
+     *         extraneous characters.
+     */
+    public static byte parseByte(CharSequence csq) {
+        return parseByte(csq, 10);
     }
 
     /**
@@ -185,8 +167,7 @@ public final class TypeFormat {
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     * @param cursor the cursor position being updated.
      * @return the corresponding <code>short</code>.
      * @throws NumberFormatException if the specified character sequence
      *         does not contain a parsable <code>short</code>.
@@ -199,61 +180,65 @@ public final class TypeFormat {
     }
 
     /**
-     * Parses the specified character sequence as a signed <code>int</code>.
-     *
-     * @param  csq the character sequence to parse.
-     * @return <code>parseInt(csq, 10)</code>
-     * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>int</code>.
-     * @see    #parseInt(CharSequence, int)
-     */
-    public static int parseInt(CharSequence csq) {
-        return parseInt(csq, 10);
-    }
-
-    /**
-     * Equivalent to {@link #parseInt(CharSequence)} (for J2ME compatibility).
-     */
-    public static int parseInt(String str) {
-        return parseInt(str);
-    }
-
-    /**
-     * Parses the specified character sequence as a signed <code>int</code> 
-     * in the specified radix.
+     * Parses the whole specified character sequence  
+     * as a signed <code>short</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @return the corresponding <code>int</code>.
+     * @return the corresponding <code>short</code>.
      * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>int</code>.
+     *         does not contain a parsable <code>short</code> or contains 
+     *         extraneous characters.
      */
-    public static int parseInt(CharSequence csq, int radix) {
-        return parseInt(csq, radix, null);
+    public static short parseShort(CharSequence csq, int radix) {
+        Cursor cursor = new Cursor();
+        short result = parseShort(csq, radix, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
     }
 
     /**
-     * Equivalent to {@link #parseInt(CharSequence, int)} 
-     * (for J2ME compatibility).
+     * Parses the specified character sequence from the specified position 
+     * as a signed decimal <code>short</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @param cursor the cursor position being updated.
+     * @return the corresponding <code>short</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>short</code>.
      */
-    public static int parseInt(String str, int radix) {
-        return parseInt(str, radix);
+    public static short parseShort(CharSequence csq, Cursor cursor) {
+        return parseShort(csq, 10, cursor);
     }
 
     /**
-     * Parses the specified character sequence from the specified position
+     * Parses the whole specified character sequence as a signed decimal 
+     * <code>short</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @return <code>parseShort(csq, 10)</code>
+    *  @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>short</code> or contains 
+     *         extraneous characters.
+     */
+    public static short parseShort(CharSequence csq) {
+        return parseShort(csq, 10);
+    }
+
+    /**
+     * Parses the specified character sequence from the specified position 
      * as a signed <code>int</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     * @param cursor the cursor position being updated.
      * @return the corresponding <code>int</code>.
      * @throws NumberFormatException if the specified character sequence
      *         does not contain a parsable <code>int</code>.
      */
     public static int parseInt(CharSequence csq, int radix, Cursor cursor) {
-        int start = (cursor != null) ? cursor.getIndex() : 0;
+        int start = cursor.getIndex();
         int end = csq.length();
         boolean isNegative = false;
         int result = 0; // Accumulates negatively (avoid MIN_VALUE overflow).
@@ -280,51 +265,55 @@ public final class TypeFormat {
             throw new NumberFormatException("Invalid integer representation for " + csq.subSequence(start, end));
         if ((result == Integer.MIN_VALUE) && !isNegative)
             throw new NumberFormatException("Overflow parsing " + csq.subSequence(start, end));
-        increment(cursor, i - start, end, csq);
+        cursor.increment(i - start);
         return isNegative ? result : -result;
     }
 
     /**
-     * Parses the specified character sequence as a decimal <code>long</code>.
-     *
-     * @param  csq the character sequence to parse.
-     * @return <code>parseLong(csq, 10)</code>
-     * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>long</code>.
-     * @see    #parseLong(CharSequence, int)
-     */
-    public static long parseLong(CharSequence csq) {
-        return parseLong(csq, 10);
-    }
-
-    /**
-     * Equivalent to {@link #parseLong(CharSequence)} 
-     * (for J2ME compatibility).
-     */
-    public static long parseLong(String str) {
-        return parseLong(str, 10);
-    }
-
-    /**
-     * Parses the specified character sequence as a signed <code>long</code>
-     * in the specified radix.
+     * Parses the whole specified character sequence  
+     * as a signed <code>int</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @return the corresponding <code>long</code>.
+     * @return the corresponding <code>int</code>.
      * @throws NumberFormatException if the specified character sequence
-     *         does not contain a parsable <code>long</code>.
+     *         does not contain a parsable <code>int</code> or contains 
+     *         extraneous characters.
      */
-    public static long parseLong(CharSequence csq, int radix) {
-        return parseLong(csq, radix, null);
+    public static int parseInt(CharSequence csq, int radix) {
+        Cursor cursor = new Cursor();
+        int result = parseInt(csq, radix, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
     }
 
     /**
-     * Equivalent to {@link #parseLong(CharSequence, int)} 
-     * (for J2ME compatibility).
+     * Parses the specified character sequence from the specified position 
+     * as a signed decimal <code>int</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @param cursor the cursor position being updated.
+     * @return the corresponding <code>int</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>int</code>.
      */
-    public static long parseLong(String str, int radix) {
-        return parseLong(str, radix);
+    public static int parseInt(CharSequence csq, Cursor cursor) {
+        return parseInt(csq, 10, cursor);
+    }
+
+    /**
+     * Parses the whole specified character sequence as a signed decimal 
+     * <code>int</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @return <code>parseInt(csq, 10)</code>
+    *  @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>int</code> or contains 
+     *         extraneous characters.
+     */
+    public static int parseInt(CharSequence csq) {
+        return parseInt(csq, 10);
     }
 
     /**
@@ -333,14 +322,13 @@ public final class TypeFormat {
      *
      * @param  csq the character sequence to parse.
      * @param  radix the radix to be used while parsing.
-     * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     * @param cursor the cursor position being updated.
      * @return the corresponding <code>long</code>.
      * @throws NumberFormatException if the specified character sequence
      *         does not contain a parsable <code>long</code>.
      */
     public static long parseLong(CharSequence csq, int radix, Cursor cursor) {
-        final int start = (cursor != null) ? cursor.getIndex() : 0;
+        final int start = cursor.getIndex();
         final int end = csq.length();
         boolean isNegative = false;
         long result = 0; // Accumulates negatively (avoid MIN_VALUE overflow).
@@ -367,26 +355,55 @@ public final class TypeFormat {
             throw new NumberFormatException("Invalid integer representation for " + csq.subSequence(start, end));
         if ((result == Long.MIN_VALUE) && !isNegative)
             throw new NumberFormatException("Overflow parsing " + csq.subSequence(start, end));
-        increment(cursor, i - start, end, csq);
+        cursor.increment(i - start);
         return isNegative ? result : -result;
     }
 
     /**
-     * Parses the specified character sequence as a <code>float</code>.
+     * Parses the whole specified character sequence  
+     * as a signed <code>long</code> in the specified radix.
      *
      * @param  csq the character sequence to parse.
-     * @return the float number represented by the specified character sequence.
+     * @param  radix the radix to be used while parsing.
+     * @return the corresponding <code>long</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>long</code> or contains 
+     *         extraneous characters.
      */
-    public static float parseFloat(CharSequence csq) {
-        return (float) parseDouble(csq);
+    public static long parseLong(CharSequence csq, int radix) {
+        Cursor cursor = new Cursor();
+        long result = parseLong(csq, radix, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
     }
 
     /**
-     * Equivalent to {@link #parseFloat(CharSequence)} 
-     * (for J2ME compatibility).
+     * Parses the specified character sequence from the specified position 
+     * as a signed decimal <code>long</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @param cursor the cursor position being updated.
+     * @return the corresponding <code>long</code>.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>long</code>.
      */
-    public static float parseFloat(String str) {
-        return parseFloat(str);
+    public static long parseLong(CharSequence csq, Cursor cursor) {
+        return parseLong(csq, 10, cursor);
+    }
+
+    /**
+     * Parses the whole specified character sequence as a signed decimal 
+     * <code>long</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @return <code>parseLong(csq, 10)</code>
+     *  @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>long</code> or contains 
+     *         extraneous characters.
+     */
+    public static long parseLong(CharSequence csq) {
+        return parseLong(csq, 10);
     }
 
     /**
@@ -403,26 +420,16 @@ public final class TypeFormat {
     }
 
     /**
-     * Parses the specified character sequence as a <code>double</code>.
-     * The format must be of the form:<code>
-     * &lt;decimal&gt;{'.'&lt;fraction&gt;}{'E|e'&lt;exponent&gt;}</code>.
+     * Parses the whole specified character sequence as a <code>float</code>.
      *
      * @param  csq the character sequence to parse.
-     * @return the double number represented by this character sequence.
-     * @throws NumberFormatException if the character sequence does not contain
-     *         a parsable <code>double</code>.
+     * @return the float number represented by the specified character sequence.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>long</code> or contains 
+     *         extraneous characters.
      */
-    public static double parseDouble(CharSequence csq)
-            throws NumberFormatException {
-        return parseDouble(csq, null);
-    }
-
-    /**
-     * Equivalent to {@link #parseDouble(CharSequence)} 
-     * (for J2ME compatibility).
-     */
-    public static double parseDouble(String str) {
-        return parseDouble(str);
+    public static float parseFloat(CharSequence csq) {
+        return (float) parseDouble(csq);
     }
 
     /**
@@ -438,14 +445,14 @@ public final class TypeFormat {
      */
     public static double parseDouble(CharSequence csq, Cursor cursor)
             throws NumberFormatException {
-        final int start = (cursor != null) ? cursor.getIndex() : 0;
+        final int start = cursor.getIndex();
         final int end = csq.length();
         int i = start;
         char c = csq.charAt(i);
 
         // Checks for NaN.
         if ((c == 'N') && match("NaN", csq, i, end)) {
-            increment(cursor, 3, end, csq);
+            cursor.increment(3);
             return Double.NaN;
         }
 
@@ -456,7 +463,7 @@ public final class TypeFormat {
 
         // Checks for Infinity.
         if ((c == 'I') && match("Infinity", csq, i, end)) {
-            increment(cursor, i + 8 - start, end, csq);
+            cursor.increment(i + 8 - start);
             return isNegative ? Double.NEGATIVE_INFINITY
                     : Double.POSITIVE_INFINITY;
         }
@@ -513,8 +520,28 @@ public final class TypeFormat {
             if (isNegativeExp)
                 exp = -exp;
         }
-        increment(cursor, i - start, end, csq);
+        cursor.increment(i - start);
         return javolution.lang.MathLib.toDoublePow10(decimal, exp - fractionLength);
+    }
+
+    /**
+     * Parses the whole specified character sequence as a <code>double</code>.
+     * The format must be of the form:<code>
+     * &lt;decimal&gt;{'.'&lt;fraction&gt;}{'E|e'&lt;exponent&gt;}</code>.
+     *
+     * @param  csq the character sequence to parse.
+     * @return the double number represented by this character sequence.
+     * @throws NumberFormatException if the specified character sequence
+     *         does not contain a parsable <code>long</code> or contains 
+     *         extraneous characters.
+     */
+    public static double parseDouble(CharSequence csq)
+            throws NumberFormatException {
+        Cursor cursor = new Cursor();
+        double result = parseDouble(csq, cursor);
+        if (!cursor.atEnd(csq)) 
+            throw new IllegalArgumentException("Extraneous characters \"" + cursor.tail(csq) + "\"");
+        return result;
     }
 
     static boolean match(String str, CharSequence csq, int start, int length) {
@@ -546,11 +573,9 @@ public final class TypeFormat {
      * @throws IOException if an I/O exception occurs.
      */
     public static Appendable format(boolean b, Appendable a) throws IOException {
-        return b ? a.append(TRUE) : a.append(FALSE);
+        return b ? a.append("true") : a.append("false");
     }
-    private static final CharSequence TRUE = "true";
-    private static final CharSequence FALSE = "false";
-
+ 
     /**
      * Formats the specified <code>int</code> and appends the resulting
      * text (decimal representation) to the <code>Appendable</code> argument.
@@ -679,12 +704,4 @@ public final class TypeFormat {
         return a.append(tb);
     }
 
-    // Increments the specified cursor if not null.
-    private static void increment(Cursor cursor, int inc, int endIndex, CharSequence csq) throws NumberFormatException {
-        if (cursor != null)
-            cursor.increment(inc);
-        else // Whole string must be parsed.
-        if (inc != endIndex)
-            throw new NumberFormatException("Extraneous character: '" + csq.charAt(inc) + "'");
-    }
 }

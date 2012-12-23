@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TRACKER;
+import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
@@ -152,17 +153,11 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
-     * This parameter cannot be locally overriden.
      */
-    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseBoolean(configuration));
-        }
-
-        @Override
-        public void checkOverridePermission() throws SecurityException {
-            throw new SecurityException(this + " cannot be overriden");
         }
     };
     
@@ -173,7 +168,8 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
+    public static final LocalParameter<Integer> CONCURRENCY 
+            = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseInt(configuration));
@@ -238,4 +234,20 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      */
     public abstract void execute(Runnable logic);
 
+    /**
+     * Exits the scope of this concurrent context; this method blocks until 
+     * all the concurrent executions are completed.
+     * 
+     * @throws RuntimeException reexports any exception raised during concurrent
+     *         executions.
+     * @throws Error reexports any error raised during concurrent executions.
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
+     */
+    @Override
+    public void exit() throws RuntimeException, Error, IllegalStateException {
+        super.exit();
+    }
+        
+    
 }

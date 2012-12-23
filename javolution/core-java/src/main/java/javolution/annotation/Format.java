@@ -11,6 +11,7 @@ package javolution.annotation;
 import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -20,13 +21,13 @@ import javolution.xml.XMLFormat;
 import javolution.xml.stream.XMLStreamException;
 
 /**
- * <p> Defines the annotation holding the default 
- *     serializer/deserializer for a class.</p>
+ * <p> Annotation holding serializers/deserializers of a class.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
 @Documented
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Format {

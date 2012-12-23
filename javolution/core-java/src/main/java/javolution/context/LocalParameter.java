@@ -8,7 +8,6 @@
  */
 package javolution.context;
 
-import java.lang.reflect.Field;
 import javolution.lang.Configurable;
 
 /**
@@ -25,7 +24,7 @@ import javolution.lang.Configurable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class LocalParameter<T> implements Configurable {
+public abstract class LocalParameter<T> extends Configurable<T> {
 
     /**
      * Holds the general permission to override a local parameter 
@@ -33,126 +32,27 @@ public abstract class LocalParameter<T> implements Configurable {
      */
     public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION 
             = new SecurityPermission(LocalParameter.class, "override");
-    
-    // Private members
-    private T defaultValue;
-    private final SecurityPermission<LocalParameter> configurePermission;
-    private final SecurityPermission<LocalParameter> overridePermission;
-    private final String name;
 
+    /**
+     * Holds this instance override permission.
+     */
+    private final SecurityPermission<LocalParameter> overridePermission;   
+    
     /**
      * Creates a local parameter having the specified default value (configurable).
      * 
      * @param defaultValue 
      */
-    public LocalParameter(T defaultValue) {
-        this.defaultValue = defaultValue;
-        configurePermission = new SecurityPermission<LocalParameter>(
-                LocalParameter.class, "configure", this);
-        overridePermission = new SecurityPermission<LocalParameter>(
-                LocalParameter.class, "override", this);
-        name = LocalParameter.nameOf(this);
-        if (name != null) { // Reads system properties for default value.
-            try {
-                String configuration = System.getProperty(name);
-                configure(configuration);   
-            } catch (Throwable e) {
-                LogContext.error(e);
-            }            
-        }        
+    protected LocalParameter(T defaultValue) {
+        super(defaultValue);
+        overridePermission = new SecurityPermission(LocalParameter.class, "override", this);
     }
     
     /**
-     * Configures the default value of this local parameter.
-     * 
-     * @param configuration the textual representation of the new default value. 
-     * @throws SecurityException if {@link #getConfigurePermission} is not 
-     *         granted.
+     * Returns the permission to override this instance.
+     * @see LocalContext
      */
-    public abstract void configure(CharSequence configuration);
-
-    /**
-     * Returns the local value of this parameter.
-     * 
-     * @return <code>LocalContext.valueOf(this)</code>
-     */
-    public T get() {
-        return LocalContext.valueOf(this);
-    }
-
-    /**
-     * Returns the name of this local parameter.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Returns this local parameter default value.
-     */
-    public T getDefault() {
-        return defaultValue;
-    }
-
-    /**
-     * This methods checks if this parameter default value can be changed.
-     * Subclasses may override this method to raise an exception if this 
-     * parameter can never be configured (but only locally overriden).
-     * 
-     * @throws SecurityException if 
-     *         <code>SecurityPermission(LocalParameter.class, "configure", this)</code>
-     *         is not granted.
-     */
-    public void checkConfigurePermission() throws SecurityException {
-        SecurityContext.check(configurePermission);
-    }
-
-    /**
-     * This methods checks if this parameter can be locally overriden.
-     * Subclasses may override this method to raise an exception if this 
-     * parameter can never be overriden (but only configured).
-     * 
-     * @throws SecurityException if 
-     *         <code>SecurityPermission(LocalParameter.class, "override", this)</code>
-     *         is not granted.
-     */
-    public void checkOverridePermission() throws SecurityException {
-        SecurityContext.check(overridePermission);
-    }
-
-    /**
-     * Returns the name of this local parameter.
-     * @see #getName() 
-     */
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    /**
-     * Sets the default value of the configurable local parameter.
-     * 
-     * @param newDefault the new default value.
-     * @throws SecurityException if {@link #checkConfigurePermission() raises 
-     *         an exception.
-     */
-    protected void setDefault(T newDefault) {
-        checkConfigurePermission();
-        defaultValue = newDefault;
-    }
-
-  // Returns the full name of this local parameter (complete field name)
-    private static String nameOf(LocalParameter<?> param) {
-        Class<?> paramClass = param.getClass();
-        Class<?> enclosingClass = paramClass.getEnclosingClass();
-        Field[] fields = enclosingClass.getDeclaredFields();
-        String name = null;
-        for (Field field : fields) {
-            if (field.getDeclaringClass().equals(paramClass)) {
-                name = field.getName();
-                break;
-            }
-        }
-        return name;        
-    }
+    public SecurityPermission<LocalParameter> getOverridePermission() {
+        return overridePermission;
+    }  
 }

@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOG_CONTEXT_TRACKER;
+import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
@@ -55,31 +56,25 @@ public abstract class LogContext extends AbstractContext<LogContext> {
 
         DEBUG, INFO, WARNING, ERROR
     }
-    
+
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
-     * This parameter cannot be locally overriden.
      */
-    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseBoolean(configuration));
         }
-
-        @Override
-        public void checkOverridePermission() throws SecurityException {
-            throw new SecurityException(this + " cannot be overriden");
-        }
     };
-    
+ 
     /**
-     * Holds the level for which log entries are not created (default 
-     * <code>null</code> all entries are created). For example, running with 
+     * Holds the default suppress level (default <code>null</code> no log 
+     * suppressed). This level is configurable. For example, running with 
      * the option <code>-Djavolution.context.LogContext#SUPPRESS=DEBUG</code>  
      * causes debug information not to be logged. 
      */
-    public static final LocalParameter<Level> SUPPRESS = new LocalParameter(null) {
+    public static final Configurable<Level> SUPPRESS = new Configurable(null) {
         @Override
         public void configure(CharSequence configuration) {
             String str = configuration.toString();
@@ -177,4 +172,16 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      *        logged (may include exceptions).
      */
     protected abstract void log(Level level, Object... objs);
+
+    /**
+     * Exits the scope of this log context; reverts to the log settings 
+     * before this context was entered.
+     * 
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
+     */
+    @Override
+    public void exit() throws IllegalStateException {
+        super.exit();
+    }
 }

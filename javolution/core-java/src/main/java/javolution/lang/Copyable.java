@@ -15,12 +15,12 @@ package javolution.lang;
  *     [code]
  *     class Foo implements Copyable {...}
  *     ...
- *     StackContext.enter(); // Starts stack allocation (if supported by JVM)
+ *     StackContext ctx = StackContext.enter(); // Starts stack allocation (if supported by JVM)
  *     try {
  *         Foo foo = calculateFoo(); // All allocations are performed on the stack.
- *         return StackContext.outerCopy(foo); // Exports foo outside of the stack.
+ *         return ctx.export(foo); // Exports through copy outside of the stack.
  *     } finally {
- *         StackContext.exit(); // Resets stacks.
+ *         ctx.exit(); // Resets stacks.
  *     }[/code]</p>
  *                  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>

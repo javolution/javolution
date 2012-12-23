@@ -9,23 +9,14 @@
 package javolution.util;
 
 import java.io.IOException;
-
-import java.util.NoSuchElementException;
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.IllegalStateException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import javax.realtime.MemoryArea;
-
-import javolution.context.ObjectFactory;
-import javolution.context.PersistentContext;
-import javolution.lang.Reusable;
-
+import java.util.NoSuchElementException;
 
 /**
  * <p> This class represents a linked list with real-time behavior; 
@@ -58,35 +49,21 @@ import javolution.lang.Reusable;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, December 18, 2006
  */
-public class FastList <E> extends FastCollection <E> 
-implements List <E> , Reusable {
-
-    /**
-     * Holds the main list factory.
-     */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new FastList();
-        }
-        
-    };
+public class FastList<E> extends FastCollection<E>
+        implements List<E> {
 
     /**
      * Holds the node marking the beginning of the list (not included).
      */
-    private transient Node <E> _head = newNode();
-
+    private transient Node<E> _head = newNode();
     /**
      * Holds the node marking the end of the list (not included).
      */
-    private transient Node <E> _tail = newNode();
-
+    private transient Node<E> _tail = newNode();
     /**
      * Holds the value comparator.
      */
-    private transient FastComparator <? super E> _valueComparator = FastComparator.DEFAULT;
-
+    private transient FastComparator<? super E> _valueComparator = FastComparator.DEFAULT;
     /**
      * Holds the current size.
      */
@@ -127,9 +104,9 @@ implements List <E> , Reusable {
     public FastList(int capacity) {
         _head._next = _tail;
         _tail._previous = _head;
-        Node <E> previous = _tail;
+        Node<E> previous = _tail;
         for (int i = 0; i++ < capacity;) {
-            Node <E> newNode = newNode();
+            Node<E> newNode = newNode();
             newNode._previous = previous;
             previous._next = newNode;
             previous = newNode;
@@ -142,7 +119,7 @@ implements List <E> , Reusable {
      *
      * @param values the values to be placed into this list.
      */
-    public FastList(Collection <? extends E> values) {
+    public FastList(Collection<? extends E> values) {
         this(values.size());
         addAll(values);
     }
@@ -154,8 +131,8 @@ implements List <E> , Reusable {
      *
      * @return a new, preallocated or recycled list instance.
      */
-    public static <E> FastList <E> newInstance() {
-        return (FastList <E> ) FACTORY.object();
+    public static <E> FastList<E> newInstance() {
+        return (FastList<E>) FACTORY.object();
     }
 
     /**
@@ -175,11 +152,11 @@ implements List <E> , Reusable {
      * @return <code>true</code> (as per the general contract of the
      *         <code>Collection.add</code> method).
      */
-    public final boolean add( E value) {
+    public final boolean add(E value) {
         addLast(value);
         return true;
     }
- 
+
     /**
      * Returns the value at the specified position in this list.
      *
@@ -188,7 +165,7 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final  E get(int index) {
+    public final E get(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
         return nodeAt(index)._value;
@@ -204,11 +181,11 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final  E set(int index,  E value) {
+    public final E set(int index, E value) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        final Node <E> node = nodeAt(index);
-         E previousValue = node._value;
+        final Node<E> node = nodeAt(index);
+        E previousValue = node._value;
         node._value = value;
         return previousValue;
     }
@@ -224,7 +201,7 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index > size())</code>
      */
-    public final void add(int index,  E value) {
+    public final void add(int index, E value) {
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
         addBefore(nodeAt(index), value);
@@ -244,11 +221,11 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index > size())</code>
      */
-    public final boolean addAll(int index, Collection <? extends E> values) {
+    public final boolean addAll(int index, Collection<? extends E> values) {
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
         final Node indexNode = nodeAt(index);
-        Iterator <? extends E> i = values.iterator();
+        Iterator<? extends E> i = values.iterator();
         while (i.hasNext()) {
             addBefore(indexNode, i.next());
         }
@@ -266,11 +243,11 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final  E remove(int index) {
+    public final E remove(int index) {
         if ((index < 0) || (index >= _size))
             throw new IndexOutOfBoundsException("index: " + index);
-        final Node <E> node = nodeAt(index);
-         E previousValue = node._value;
+        final Node<E> node = nodeAt(index);
+        E previousValue = node._value;
         delete(node);
         return previousValue;
     }
@@ -320,7 +297,7 @@ implements List <E> , Reusable {
      *
      * @return an iterator over this list values.
      */
-    public Iterator <E> iterator() {
+    public Iterator<E> iterator() {
         return listIterator();
     }
 
@@ -331,7 +308,7 @@ implements List <E> , Reusable {
      *
      * @return an iterator over this list values.
      */
-    public ListIterator <E> listIterator() {
+    public ListIterator<E> listIterator() {
         return FastListIterator.valueOf(this, _head._next, 0, _size);
     }
 
@@ -352,7 +329,7 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if the index is out of range
      *        [code](index < 0 || index > size())[/code].
      */
-    public ListIterator <E> listIterator(int index) {
+    public ListIterator<E> listIterator(int index) {
         if ((index < 0) || (index > _size))
             throw new IndexOutOfBoundsException("index: " + index);
         return FastListIterator.valueOf(this, nodeAt(index), index, _size);
@@ -389,7 +366,7 @@ implements List <E> , Reusable {
      * @throws IndexOutOfBoundsException if [code](fromIndex < 0 ||
      *          toIndex > size || fromIndex < toIndex)[/code]
      */
-    public final List <E> subList(int fromIndex, int toIndex) {
+    public final List<E> subList(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex > _size) || (fromIndex > toIndex))
             throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
                     + ", toIndex: " + toIndex + " for list of size: " + _size);
@@ -403,8 +380,8 @@ implements List <E> , Reusable {
      * @return this list's first value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final  E getFirst() {
-        final Node <E> node = _head._next;
+    public final E getFirst() {
+        final Node<E> node = _head._next;
         if (node == _tail)
             throw new NoSuchElementException();
         return node._value;
@@ -416,8 +393,8 @@ implements List <E> , Reusable {
      * @return this list's last value.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final  E getLast() {
-        final Node <E> node = _tail._previous;
+    public final E getLast() {
+        final Node<E> node = _tail._previous;
         if (node == _head)
             throw new NoSuchElementException();
         return node._value;
@@ -428,7 +405,7 @@ implements List <E> , Reusable {
      * 
      * @param value the value to be inserted.
      */
-    public final void addFirst( E value) {
+    public final void addFirst(E value) {
         addBefore(_head._next, value);
     }
 
@@ -437,7 +414,7 @@ implements List <E> , Reusable {
      * 
      * @param value the value to be inserted.
      */
-    public void addLast( E value) { // Optimized.
+    public void addLast(E value) { // Optimized.
         if (_tail._next == null) {
             increaseCapacity();
         }
@@ -452,11 +429,11 @@ implements List <E> , Reusable {
      * @return this list's first value before this call.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final  E removeFirst() {
-        final Node <E> first = _head._next;
+    public final E removeFirst() {
+        final Node<E> first = _head._next;
         if (first == _tail)
             throw new NoSuchElementException();
-         E previousValue = first._value;
+        E previousValue = first._value;
         delete(first);
         return previousValue;
     }
@@ -467,12 +444,12 @@ implements List <E> , Reusable {
      * @return this list's last value before this call.
      * @throws NoSuchElementException if this list is empty.
      */
-    public final  E removeLast() {
+    public final E removeLast() {
         if (_size == 0)
             throw new NoSuchElementException();
         _size--;
-        final Node <E> last = _tail._previous;
-        final  E previousValue = last._value;
+        final Node<E> last = _tail._previous;
+        final E previousValue = last._value;
         _tail = last;
         last._value = null;
         return previousValue;
@@ -481,14 +458,13 @@ implements List <E> , Reusable {
     ///////////////////////
     // Nodes operations. //
     ///////////////////////
-
     /**
      * Inserts the specified value before the specified Node.
      * 
      * @param next the Node before which this value is inserted.
      * @param value the value to be inserted.   
      */
-    public final void addBefore(Node <E> next,  E value) {
+    public final void addBefore(Node<E> next, E value) {
         if (_tail._next == null) {
             increaseCapacity();// Increases capacity.
         }
@@ -516,9 +492,9 @@ implements List <E> , Reusable {
      * 
      * @param index the index of the Node to return.
      */
-    private final Node <E> nodeAt(int index) {
+    private final Node<E> nodeAt(int index) {
         // We cannot do backward search because of thread-safety.
-        Node <E> node = _head;
+        Node<E> node = _head;
         for (int i = index; i-- >= 0;) {
             node = node._next;
         }
@@ -526,30 +502,30 @@ implements List <E> , Reusable {
     }
 
     // Implements FastCollection abstract method.
-    public final Node<E>head() {
+    public final Node<E> head() {
         return _head;
     }
 
     // Implements FastCollection abstract method.
-    public final Node<E>tail() {
+    public final Node<E> tail() {
         return _tail;
     }
 
     // Implements FastCollection abstract method.
-    public final  E valueOf(Record record) {
-        return ((Node <E> ) record)._value;
+    public final E valueOf(Record record) {
+        return ((Node<E>) record)._value;
     }
 
     // Implements FastCollection abstract method.
     public final void delete(Record record) {
-        Node <E> node = (Node <E> ) record;
+        Node<E> node = (Node<E>) record;
         _size--;
         node._value = null;
         // Detaches.
         node._previous._next = node._next;
         node._next._previous = node._previous;
         // Inserts after _tail.
-        final Node <E> next = _tail._next;
+        final Node<E> next = _tail._next;
         node._previous = _tail;
         node._next = next;
         _tail._next = node;
@@ -566,7 +542,6 @@ implements List <E> , Reusable {
     ///////////////////////
     // Contract Methods. //
     ///////////////////////
-
     // Implements abstract method.
     public final int size() {
         return _size;
@@ -575,7 +550,7 @@ implements List <E> , Reusable {
     // Overrides (optimization).
     public final void clear() {
         _size = 0;
-        for (Node <E> n = _head, end = _tail; (n = n._next) != end;) {
+        for (Node<E> n = _head, end = _tail; (n = n._next) != end;) {
             n._value = null;
         }
         _tail = _head._next;
@@ -587,20 +562,20 @@ implements List <E> , Reusable {
      * @param comparator the value comparator.
      * @return <code>this</code>
      */
-    public FastList <E> setValueComparator(
-            FastComparator <? super E> comparator) {
+    public FastList<E> setValueComparator(
+            FastComparator<? super E> comparator) {
         _valueComparator = comparator;
         return this;
     }
 
     // Overrides.
-    public FastComparator <? super E> getValueComparator() {
+    public FastComparator<? super E> getValueComparator() {
         return _valueComparator;
     }
 
     // Overrides  to return a list (JDK1.5+).
-    public  List<E> unmodifiable() {
-        return ( List<E> ) super.unmodifiable();
+    public List<E> unmodifiable() {
+        return (List<E>) super.unmodifiable();
     }
 
     /**
@@ -609,7 +584,7 @@ implements List <E> , Reusable {
      *
      * @return a new node.
      */
-    protected Node <E> newNode() {
+    protected Node<E> newNode() {
         return new Node();
     }
 
@@ -626,7 +601,7 @@ implements List <E> , Reusable {
         setValueComparator((FastComparator) stream.readObject());
         final int size = stream.readInt();
         for (int i = size; i-- != 0;) {
-            addLast(( E ) stream.readObject());
+            addLast((E) stream.readObject());
         }
     }
 
@@ -645,25 +620,24 @@ implements List <E> , Reusable {
     private void increaseCapacity() {
         MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
             public void run() {
-                Node <E> newNode0 = newNode();
+                Node<E> newNode0 = newNode();
                 _tail._next = newNode0;
                 newNode0._previous = _tail;
 
-                Node <E> newNode1 = newNode();
+                Node<E> newNode1 = newNode();
                 newNode0._next = newNode1;
                 newNode1._previous = newNode0;
 
-                Node <E> newNode2 = newNode();
+                Node<E> newNode2 = newNode();
                 newNode1._next = newNode2;
                 newNode2._previous = newNode1;
 
-                Node <E> newNode3 = newNode();
+                Node<E> newNode3 = newNode();
                 newNode2._next = newNode3;
                 newNode3._previous = newNode2;
             }
         });
     }
-
 
     // Implements Reusable interface.
     public void reset() {
@@ -685,22 +659,20 @@ implements List <E> , Reusable {
      *        }        
      *    }[/code]
      */
-    public static class Node <E> implements Record, Serializable {
+    public static class Node<E> implements Record, Serializable {
 
         /**
          * Holds the next node.
          */
-        private Node <E> _next;
-
+        private Node<E> _next;
         /**
          * Holds the previous node.
          */
-        private Node <E> _previous;
-
+        private Node<E> _previous;
         /**
          * Holds the node value.
          */
-        private  E _value;
+        private E _value;
 
         /**
          * Default constructor.
@@ -713,20 +685,19 @@ implements List <E> , Reusable {
          * 
          * @return the node value.
          */
-        public final  E getValue() {
+        public final E getValue() {
             return _value;
         }
 
         // Implements Record interface.
-        public final Node<E>getNext() {
+        public final Node<E> getNext() {
             return _next;
         }
 
         // Implements Record interface.
-        public final Node<E>getPrevious() {
+        public final Node<E> getPrevious() {
             return _previous;
         }
-
     }
 
     /**
@@ -747,13 +718,9 @@ implements List <E> , Reusable {
                 sl._tail = null;
             }
         };
-
         private FastList _list;
-
         private Node _head;
-
         private Node _tail;
-
         private int _size;
 
         public static SubList valueOf(FastList list, Node head, Node tail,
@@ -869,7 +836,7 @@ implements List <E> , Reusable {
                         + _size);
             SubList subList = SubList.valueOf(_list,
                     nodeAt(fromIndex)._previous, nodeAt(toIndex), toIndex
-                            - fromIndex);
+                    - fromIndex);
             return subList;
         }
 
@@ -907,15 +874,10 @@ implements List <E> , Reusable {
                 i._nextNode = null;
             }
         };
-
         private FastList _list;
-
         private Node _nextNode;
-
         private Node _currentNode;
-
         private int _length;
-
         private int _nextIndex;
 
         public static FastListIterator valueOf(FastList list, Node nextNode,
@@ -992,7 +954,5 @@ implements List <E> , Reusable {
     private static boolean defaultEquals(Object o1, Object o2) {
         return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
     }
-
     private static final long serialVersionUID = 1L;
-
 }

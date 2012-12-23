@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
+import javolution.lang.Configurable;
 import javolution.lang.Copyable;
 import javolution.text.TypeFormat;
 
@@ -23,7 +24,9 @@ import javolution.text.TypeFormat;
  *     More generally speaking, methods entering/exiting stack 
  *     contexts should ensure that stack allocated objects do not escape from
  *     their context scope. If necessary, stack objects can be exported using 
- *     {@link #outerExecute} or {@link #outerCopy}:[code]
+ *     the {@link #export} method.
+ *     [code]
+ *     @StackSafe
  *     public class LargeInteger implements ValueType {
  *         public LargeInteger sqrt() {
  *             StackContext ctx = StackContext.enter(); 
@@ -36,33 +39,29 @@ import javolution.text.TypeFormat;
  *                     k = result;
  *                 }
  *             } finally { 
- *                 ctx.exit(); 
- *             }
+ *                 ctx.exit(); // Recycles the stack, stack allocated objects are still valid until    
+ *             }               // a new stack context is entered.
  *         }
- *     }[/code]</p>
+ *     }[/code]
+ *     Classes/methods identified as {@link javolution.annotation.StackSafe 
+ *     @StackSafe} can be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
 public abstract class StackContext extends AllocatorContext<StackContext> {
 
-  /**
+   /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
-     * This parameter cannot be locally overriden.
      */
-    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseBoolean(configuration));
         }
-
-        @Override
-        public void checkOverridePermission() throws SecurityException {
-            throw new SecurityException(this + " cannot be overriden");
-        }
     };
-    
+ 
     /**
      * Default constructor.
      */
@@ -90,5 +89,18 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      *         context of this statck context.
      */
     public abstract <T extends Copyable> T export(Copyable<T> obj);
+
+    /**
+     * Exits the scope of this stack context; the objects allocated while in the 
+     * scope of this context remain valid until a new stack context (possibly 
+     * the same) is entered.
+     * 
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
+     */
+    @Override
+    public void exit() {
+        super.exit();
+    }
         
 }

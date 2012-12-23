@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER;
+import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
@@ -37,20 +38,14 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
-     * This parameter cannot be locally overriden.
      */
-    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseBoolean(configuration));
         }
-
-        @Override
-        public void checkOverridePermission() throws SecurityException {
-            throw new SecurityException(this + " cannot be overriden");
-        }
     };
-
+    
     /**
      * Default constructor.
      */
@@ -85,8 +80,8 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * 
      * @param  param the local parameter whose local value is overriden.
      * @param  localValue the new local value.
-     * @throws SecurityException if <code>param.checkOverridePermission()</code>
-     *         raises a security exception.
+     * @throws SecurityException if the permission to override the specified 
+     *         parameter is not granted.
      */
     public abstract <T> void override(LocalParameter<T> param, T localValue) throws SecurityException;
     
@@ -99,4 +94,15 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      */
     protected abstract <T> T getValueOf(LocalParameter<T> param);
                   
+    /**
+     * Exits the scope of this local context; reverts to the local settings 
+     * before this context was entered.
+     * 
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
+     */
+    @Override
+    public void exit() throws IllegalStateException {
+        super.exit();
+    }
 }

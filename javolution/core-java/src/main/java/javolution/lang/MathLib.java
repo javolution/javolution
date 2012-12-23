@@ -9,19 +9,24 @@
 package javolution.lang;
 
 import java.util.Random;
+import javolution.annotation.StackSafe;
+import javolution.context.HeapContext;
 
 /**
- * <p> This utility class ensures cross-platform portability of the math 
- *     library. Functions not supported by the platform are emulated.
- *     Developers may replace the current implementation with native
- *     implementations for faster execution (unlike 
- *     <code>java.lang.Math</code> this class can be customized).<p> 
+ * <p> This utility class provides a {@link StackSafe} implementation of 
+ *     the math library (and can be used when objects allocations are performed 
+ *     on the stack).</p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
+ * @see javolution.context.StackContext
  */
+@StackSafe
 public final class MathLib {
-
+    
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();     
+    
     /**
      * Default constructor.
      */
@@ -665,7 +670,6 @@ public final class MathLib {
         return guess + 1;
     }
     private static final double LOG2_DIV_LOG10 = 0.3010299956639811952137388947;
-    /**/
 
     /**
      * The natural logarithm.
@@ -969,7 +973,7 @@ public final class MathLib {
         return log(x) * INV_LOG10;
     }
     private static double INV_LOG10 = 0.43429448190325182765112891891661;
-    /**/
+   
 
     /**
      * Returns the value of the first argument raised to the power of the
@@ -989,7 +993,6 @@ public final class MathLib {
             return (((int) y) & 1) == 0 ? pow(-x, y) : -pow(-x, y);
         return MathLib.exp(y * MathLib.log(x));
     }
-    /**/
 
     /**
      * Returns the closest <code>int</code> to the specified argument. 
@@ -1012,7 +1015,6 @@ public final class MathLib {
     public static long round(double d) {
         return (long) floor(d + 0.5d);
     }
-    /**/
 
     /**
      * Returns a random number between zero and one.
@@ -1024,7 +1026,7 @@ public final class MathLib {
         return random(0, Integer.MAX_VALUE) * NORMALIZATION_FACTOR;
     }
     private static final double NORMALIZATION_FACTOR = -1.0 / Integer.MIN_VALUE;
-    /**/
+  
 
     /**
      * Returns the absolute value of the specified <code>int</code> argument.
@@ -1055,7 +1057,6 @@ public final class MathLib {
     public static float abs(float f) {
         return (f < 0) ? -f : f;
     }
-    /**/
 
     /**
      * Returns the absolute value of the specified <code>double</code> argument.
@@ -1100,7 +1101,6 @@ public final class MathLib {
     public static float max(float x, float y) {
         return (x >= y) ? x : y;
     }
-    /**/
 
     /**
      * Returns the greater of two <code>double</code> values. 
@@ -1158,7 +1158,7 @@ public final class MathLib {
     public static double min(double x, double y) {
         return (x < y) ? x : y;
     }
-    /**/
+   
     ////////////////////////////////////////////////////////////////////////////
     /* @(#)s_atan.c 1.3 95/01/18 */
     /*
@@ -1577,5 +1577,7 @@ public final class MathLib {
             return y * twom1000;
         }
     }
-    /**/
+  
+    // End of class initialization.
+    static { INIT_CTX.exit(); }   
 }

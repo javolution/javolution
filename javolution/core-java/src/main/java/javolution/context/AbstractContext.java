@@ -162,7 +162,7 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * @throws IllegalStateException if this context is not the current 
      *         context.
      */
-    public void exit() {
+    public void exit() throws IllegalStateException {
         if (this != AbstractContext.CURRENT.get())
             throw new IllegalStateException("This context is not the current context");
         AbstractContext.CURRENT.set(outer);

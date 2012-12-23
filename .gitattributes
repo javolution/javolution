@@ -257,6 +257,7 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.hpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.hpp -text
 javolution/core-java/pom.xml -text
 javolution/core-java/src/main/java/javolution/annotation/Format.java -text
+javolution/core-java/src/main/java/javolution/annotation/StackSafe.java -text
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AllocatorContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
@@ -295,6 +296,7 @@ javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#t
 javolution/core-java/src/main/java/javolution/io/package-info.java -text
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Functor.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
@@ -314,15 +316,12 @@ javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastComparator.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/FastIterator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastList.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/LocalMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/ReentrantLock.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/StandardLog.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLFormat.java -text svneol=unset#text/plain

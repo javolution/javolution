@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRACKER;
+import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
@@ -42,23 +43,17 @@ import javolution.text.TypeFormat;
  */
 public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
-  /**
+   /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
-     * This parameter cannot be locally overriden.
      */
-    public static final LocalParameter<Boolean> WAIT_FOR_SERVICE = new LocalParameter(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
         @Override
         public void configure(CharSequence configuration) {
             setDefault(TypeFormat.parseBoolean(configuration));
         }
-
-        @Override
-        public void checkOverridePermission() throws SecurityException {
-            throw new SecurityException(this + " cannot be overriden");
-        }
     };
-    
+ 
     /**
      * Default constructor.
      */
@@ -116,4 +111,15 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      */
     public abstract void revoke(SecurityPermission permission, Object certificate) throws SecurityException;
 
+    /**
+     * Exits the scope of this security context; reverts to the security settings 
+     * before this context was entered.
+     * 
+     * @throws IllegalStateException if this context is not the current 
+     *         context.
+     */
+    @Override
+    public void exit() throws IllegalStateException {
+        super.exit();
+    }
 }

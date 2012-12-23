@@ -8,27 +8,29 @@
  */
 package javolution.lang;
 
+import javolution.annotation.StackSafe;
+
 /**
  * <p> This interface identifies objects which can be manipulated by 
  *     value; a JVM implementation may allocate instances of this class 
  *     on the stack and pass references by copy.</p>
  *     
  * <p> {@link ValueType} instances are {@link Copyable} to be easily 
- *     exported outside a stack when  executing in 
+ *     exported out of the stack when  executing in a 
  *     {@link javolution.context.StackContext StackContext}.
  *     [code]
  *     public final class Complex implements ValueType<Complex> { ... }
  *     ...
  *     public Complex sumOf(Complex[] values) {
- *         StackContext.enter(); // Starts stack allocation.
+ *         StackContext ctx = StackContext.enter(); // Starts stack allocation.
  *         try {
  *             Complex sum = Complex.ZERO;
  *             for (Complex c : values) {
  *                 sum = sum.plus(c);
  *             }
- *             return StackContext.outerCopy(sum); // Exports result outside of the stack.
+ *             return ctx.export(sum); // Exports result outside of the stack.
  *         } finally {
- *             StackContext.exit(); // Resets stacks.
+ *             ctx.exit(); // Resets stacks.
  *         }
  *     }[/code]</p>
  *      
@@ -39,6 +41,7 @@ package javolution.lang;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
+@StackSafe
 public interface ValueType<T extends ValueType> extends Immutable, Copyable<T> {
     
 }

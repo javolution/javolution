@@ -1,12 +1,10 @@
 package javolution.util;
 
 import java.io.ObjectStreamException;
-import java.lang.CharSequence;
-import java.lang.Comparable;
 import java.util.Comparator;
-
 import javolution.lang.Configurable;
 import javolution.text.Text;
+import javolution.text.TypeFormat;
 import javolution.xml.XMLSerializable;
 
 /**
@@ -32,14 +30,11 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
      * (see <a href="{@docRoot}/overview-summary.html#configuration">
      * Javolution Configuration</a> for details).
      */
-    public static final Configurable <Boolean>  REHASH_SYSTEM_HASHCODE = new Configurable(
-            new Boolean(isPoorSystemHash())) {
-
-        protected void notifyChange(Object oldValue, Object newValue) {
-            _Rehash = ((Boolean) newValue).booleanValue();
+    public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE = new Configurable(isPoorSystemHash()) {
+        public void configure(CharSequence configuration) throws SecurityException, IllegalArgumentException {
+            setDefault(TypeFormat.parseBoolean(configuration));
         }
     };
-    private static boolean _Rehash = ((Boolean) REHASH_SYSTEM_HASHCODE.get()).booleanValue();
 
     private static boolean isPoorSystemHash() {
         boolean[] dist = new boolean[64]; // Length power of 2.
@@ -64,7 +59,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
     private static final class Default <T>  extends FastComparator <T>  {
 
         public int hashCodeOf( T  obj) {
-            return (obj == null) ? 0 : (_Rehash ? REHASH.hashCodeOf(obj) : obj.hashCode());
+            return (obj == null) ? 0 : (REHASH_SYSTEM_HASHCODE.getDefault() ? REHASH.hashCodeOf(obj) : obj.hashCode());
         }
 
         public boolean areEqual( T  o1,  T  o2) {
@@ -75,6 +70,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return ((Comparable) o1).compareTo(o2);
         }
 
+        @Override
         public String toString() {
             return "Default";
         }
@@ -106,6 +102,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return ((Comparable) o1).compareTo(o2);
         }
 
+        @Override
         public String toString() {
             return "Direct";
         }
@@ -145,6 +142,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return ((Comparable) o1).compareTo(o2);
         }
 
+        @Override
         public String toString() {
             return "Rehash";
         }
@@ -183,6 +181,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return ((String) o1).compareTo((String) o2);
         }
 
+        @Override
         public String toString() {
             return "String";
         }
@@ -204,7 +203,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
 
         public int hashCodeOf(Object obj) {
             int h = System.identityHashCode(obj);
-            if (!_Rehash)
+            if (!REHASH_SYSTEM_HASHCODE.getDefault())
                 return h;
             h += ~(h << 9);
             h ^= (h >>> 14);
@@ -221,6 +220,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return ((Comparable) o1).compareTo(o2);
         }
 
+        @Override
         public String toString() {
             return "Identity";
         }
@@ -330,6 +330,7 @@ public abstract class FastComparator <T>  implements Comparator <T> ,
             return seq1.length() - seq2.length();
         }
 
+        @Override
         public String toString() {
             return "Lexical";
         }
