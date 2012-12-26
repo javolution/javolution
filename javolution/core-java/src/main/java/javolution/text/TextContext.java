@@ -10,6 +10,7 @@ package javolution.text;
 
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
+import javolution.context.HeapContext;
 import static javolution.internal.osgi.JavolutionActivator.TEXT_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
 
@@ -41,24 +42,29 @@ import javolution.lang.Configurable;
  */
 public abstract class TextContext extends FormatContext<TextContext> {
 
-   /**
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
+    /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
- 
+
     /**
      * Default constructor.
      */
     protected TextContext() {
     }
-    
-  /**
+
+    /**
      * Enters a new text context instance.
      * 
      * @return the new text context implementation entered.
@@ -66,46 +72,42 @@ public abstract class TextContext extends FormatContext<TextContext> {
     public static TextContext enter() {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
-    
+
     /**
-     * Returns the text format for the specified class.
+     * Returns the most specialized format for the specified class. 
+     * If this context has no format set for the class specified 
+     * (or a superclass), the {@link javolution.annotation.Format Format} 
+     * annotation is used to retrieve the most specialized format for that 
+     * class. If no format can be found; the object default format is returned
+     * (for which formatting returns Object.toString() and parsing is not 
+     * supported).
      * 
-     * @param cls the class for which the text format is returned.
-     * @throws UnsupportedOperationException if the format for the specified class 
-     *         does not exist.
+     * @param cls the class for which the most suitable text format is returned.
      */
-     public static <T> TextFormat<T> getFormat(Class<T> cls) throws UnsupportedOperationException {
-         TextContext ctx = AbstractContext.current(TextContext.class);
-         if (ctx != null) {
-            ctx = TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
-         }
-         return ctx.findFormat(cls);
-     }  
-     
+    public static <T> TextFormat<T> getFormat(Class<T> cls) {
+        TextContext ctx = AbstractContext.current(TextContext.class);
+        if (ctx != null) {
+            ctx = TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        }
+        return ctx.findFormat(cls);
+    }
+
     /**
-     * Sets the format for the specified class.
+     * Sets the format for the specified class (and its sub-classes).
      * 
      * @param format the format associated to the specified class.
      * @param cls the class for which the text format is set.
      */
-    protected abstract <T> void setFormat(TextFormat<T> format, Class<T> cls);    
-  
+    protected abstract <T> void setFormat(TextFormat<T> format, Class<T> cls);
+
     /**
-     * Searches the format for the specified class. If this context has no
-     * format for the specified class, it uses the 
-     * {@link javolution.annotation.Format Format} annotation to retrieve 
-     * the text format associated with the class.
-     * If there is no format or the format found is an instance of 
-     * {@link javolution.annotation.Format.UnsupportedTextFormat} 
-     * then an exception is raised.
+     * Searches the most specialized format for the specified class.
      * 
      * @param cls the class for which the text format is returned.
-     * @throws UnsupportedOperationException if the format for the specified class 
-     *         does not exist.
      */
-    protected abstract <T> TextFormat<T> findFormat(Class<T> cls) throws UnsupportedOperationException;
+    protected abstract <T> TextFormat<T> findFormat(Class<T> cls);
 
     /**
      * Exits the scope of this text context; reverts to the text formats 
@@ -115,7 +117,12 @@ public abstract class TextContext extends FormatContext<TextContext> {
      *         context.
      */
     @Override
-    public void exit() throws IllegalStateException {
+    public void exit() {
         super.exit();
-    }    
+    }
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
+    }
 }

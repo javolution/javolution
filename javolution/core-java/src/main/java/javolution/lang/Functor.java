@@ -22,7 +22,7 @@ import javolution.util.FastCollection;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Functor<P, R>  {
+public interface Functor<P, R> {
 
     /**
      * Returns the result of an evaluation on the specified parameter. 
@@ -31,5 +31,5 @@ public interface Functor<P, R>  {
      * @return the result of the evaluation.
      */
     R evaluate(P param);
-    
+
 }

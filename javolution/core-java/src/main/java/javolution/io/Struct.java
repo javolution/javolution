@@ -154,8 +154,8 @@ public class Struct {
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
     public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter(4) {
-        public void configure(CharSequence configuration) throws SecurityException, IllegalArgumentException {
-            setDefault(TypeFormat.parseInt(configuration));
+        public void configure(CharSequence configuration) {
+            set(TypeFormat.parseInt(configuration));
         }
     };
     /**

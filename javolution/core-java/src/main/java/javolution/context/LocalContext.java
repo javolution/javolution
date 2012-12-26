@@ -13,14 +13,14 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the current context holding {@link LocalParameter 
- *     local parameters} values.
+ * <p> This class represents the current context holding parameters local
+ *     {@link #valueOf values}.
  *     [code]
  *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
  *     ...
  *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         ctx.override(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         ctx.setLocalValue(ModuloInteger.MODULO, m); // No impact on other threads!
  *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
  *     } finally {
  *         ctx.exit(); // Reverts changes. 
@@ -35,17 +35,22 @@ import javolution.text.TypeFormat;
  */
 public abstract class LocalContext extends AbstractContext<LocalContext> {
 
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
-    
+
     /**
      * Default constructor.
      */
@@ -61,39 +66,38 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return LOCAL_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+                WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
-    
+
     /**
-     * Returns the local value of the specified local parameter (its default
-     * value if it is not {@link LocalContext#override overriden}).
+     * Returns the local value of the specified parameter (its default
+     * value if it is not {@link LocalContext#setLocalValue overriden}).
      * 
      * @param  param the local parameter whose local value is returned.
      */
     public static <T> T valueOf(LocalParameter<T> param) {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        return (ctx != null) ? ctx.getValueOf(param) : param.getDefault();
+        return (ctx != null) ? ctx.getLocalValue(param) : param.get();
     }
-    
+
     /**
-     * Overrides the local value of the specified local parameter. 
+     * Overrides the value of the specified parameter. 
      * 
      * @param  param the local parameter whose local value is overriden.
      * @param  localValue the new local value.
      * @throws SecurityException if the permission to override the specified 
      *         parameter is not granted.
      */
-    public abstract <T> void override(LocalParameter<T> param, T localValue) throws SecurityException;
-    
+    public abstract <T> void setLocalValue(LocalParameter<T> param, T localValue);
 
     /**
-     * For this context, returns the local value of the specified parameter 
-     * or its default value if not {@link LocalContext#override overriden}. 
+     * Returns the value possibly overriden of the specified parameter 
+     * (its default value if not {@link LocalContext#setLocalValue overriden}). 
      * 
-     * @param  param the local parameter whose current value is returned.
+     * @param  param the local parameter whose local value is returned.
      */
-    protected abstract <T> T getValueOf(LocalParameter<T> param);
-                  
+    protected abstract <T> T getLocalValue(LocalParameter<T> param);
+
     /**
      * Exits the scope of this local context; reverts to the local settings 
      * before this context was entered.
@@ -102,7 +106,12 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      *         context.
      */
     @Override
-    public void exit() throws IllegalStateException {
+    public void exit() {
         super.exit();
+    }
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
     }
 }

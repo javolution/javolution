@@ -150,17 +150,22 @@ import javolution.text.TypeFormat;
  */
 public abstract class ConcurrentContext extends AbstractContext<ConcurrentContext> {
 
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+    
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
-    
+
     /**
      * Holds the maximum number of concurrent threads usable 
      * (default <code>Runtime.getRuntime().availableProcessors()</code>).
@@ -168,12 +173,13 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY 
-            = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
+    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseInt(configuration));
+            set(TypeFormat.parseInt(configuration));
         }
+
     };
 
     /**
@@ -191,7 +197,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
         ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return CONCURRENT_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+                WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
 
     /**
@@ -245,9 +251,12 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      *         context.
      */
     @Override
-    public void exit() throws RuntimeException, Error, IllegalStateException {
+    public void exit() {
         super.exit();
     }
-        
-    
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
+    }
 }

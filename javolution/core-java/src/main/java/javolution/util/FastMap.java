@@ -41,6 +41,10 @@ import javolution.xml.XMLSerializable;
  *     smooth capacity increase and <i>thread-safe</i> without external 
  *     synchronization when {@link #shared shared}.</p>
  *     <img src="doc-files/map-put.png"/>
+ * 
+ *     Fast maps will automatically rehash the key hash codes if the hash codes
+ *     are not evenly distributed.
+ *     
  *     
  * <p> {@link FastMap} has a predictable iteration order, which is the order in
  *     which keys are inserted into the map (similar to 

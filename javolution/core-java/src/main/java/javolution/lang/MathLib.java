@@ -23,10 +23,10 @@ import javolution.context.HeapContext;
  */
 @StackSafe
 public final class MathLib {
-    
+
     // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();     
-    
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
     /**
      * Default constructor.
      */
@@ -55,6 +55,7 @@ public final class MathLib {
             throw new Error("Interval [" + min + ".." + max + "] error"); // In case.
         return MathLib.abs(next % interval) + min;
     }
+
     private static final Random RANDOM = new Random();
 
     /**
@@ -125,6 +126,7 @@ public final class MathLib {
                 : (i < 1 << 24) ? BIT_LENGTH[i >>> 16] + 16
                 : BIT_LENGTH[i >>> 24] + 24;
     }
+
     private static final byte[] BIT_LENGTH = {0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4,
         4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
@@ -461,6 +463,7 @@ public final class MathLib {
             return toDoublePow2(x1, pow2);
         }
     }
+
     private static final long MASK_63 = 0x7FFFFFFFFFFFFFFFL;
 
     private static final long MASK_32 = 0xFFFFFFFFL;
@@ -669,6 +672,7 @@ public final class MathLib {
             return guess - 1;
         return guess + 1;
     }
+
     private static final double LOG2_DIV_LOG10 = 0.3010299956639811952137388947;
 
     /**
@@ -972,8 +976,8 @@ public final class MathLib {
     public static double log10(double x) {
         return log(x) * INV_LOG10;
     }
+
     private static double INV_LOG10 = 0.43429448190325182765112891891661;
-   
 
     /**
      * Returns the value of the first argument raised to the power of the
@@ -1025,8 +1029,8 @@ public final class MathLib {
     public static double random() {
         return random(0, Integer.MAX_VALUE) * NORMALIZATION_FACTOR;
     }
+
     private static final double NORMALIZATION_FACTOR = -1.0 / Integer.MIN_VALUE;
-  
 
     /**
      * Returns the absolute value of the specified <code>int</code> argument.
@@ -1158,7 +1162,7 @@ public final class MathLib {
     public static double min(double x, double y) {
         return (x < y) ? x : y;
     }
-   
+
     ////////////////////////////////////////////////////////////////////////////
     /* @(#)s_atan.c 1.3 95/01/18 */
     /*
@@ -1241,13 +1245,13 @@ public final class MathLib {
                 return -atanhi[3] - atanlo[3];
         }
         if (ix < 0x3fdc0000) {	// |x| < 0.4375
-            if (ix < 0x3e200000)	// |x| < 2^-29
+            if (ix < 0x3e200000) // |x| < 2^-29
                 if (huge + x > one)
                     return x;
             id = -1;
         } else {
             x = MathLib.abs(x);
-            if (ix < 0x3ff30000)		// |x| < 1.1875
+            if (ix < 0x3ff30000) // |x| < 1.1875
                 if (ix < 0x3fe60000) {	// 7/16 <=|x|<11/16
                     id = 0;
                     x = (2.0 * x - one) / (2.0 + x);
@@ -1577,7 +1581,10 @@ public final class MathLib {
             return y * twom1000;
         }
     }
-  
+
     // End of class initialization.
-    static { INIT_CTX.exit(); }   
+    static {
+        INIT_CTX.exit();
+    }
+
 }

@@ -13,50 +13,46 @@ import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import javolution.annotation.Format;
 import javolution.annotation.StackSafe;
+import javolution.lang.Copyable;
 import javolution.lang.Functor;
+import javolution.lang.Immutable;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 
 /**
- * <p> This class represents {@link javolution.annotation.StackSafe stack-safe},
- *     time-deterministics and closure-ready collections.</p>
+ * <p> This abstract class represents {@link javolution.annotation.StackSafe 
+ *     stack-safe}, time-deterministics and closure-ready collections.</p>
  * 
- * <p> Unlike standard {@link java.util.collection}, collection elements 
- *     cannot be <code>null</code>.</p> 
- *     
+ * <p> Whereas Java current evolution leads to more and more classes being parts 
+ *     of the standard library; Javolution approach is quite the opposite. 
+ *     It aims to provide only the quintessential classes from which all 
+ *     others can be derived. For example, the following illustrates how  
+ *     a {@link FastTable} can advantageously replace a 
+ *     {@link java.util.TreeSet} both in terms of space and performance.
+ *     [code]
+ *     class EmployeeSet extends FastTable<Employee> {
+ *         public boolean add(Employee e) {
+ *             return addIfAbsent(); // Avoids duplicate.
+ *         }
+ *         public boolean isOrdered() {
+ *             return true; // Keeps elements ordered. 
+ *         }
+ *         public FastComparator<Employee> comparator() {
+ *             return employeeComparator; // E.g. comparison based on names.
+ *         }
+ *      }
+ *      [/code]</p>
+ * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4.5, March 23, 2010
  */
 @StackSafe
 @Format(text = FastCollection.TextFormat.class)
-public abstract class FastCollection<E> implements Collection<E> {
-
-    /**
-     * Holds the default text format for fast collections (parsing not supported).
-     */
-    public static class TextFormat extends javolution.text.TextFormat<FastCollection> {
-
-        @Override
-        public FastCollection parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Appendable format(FastCollection fc, Appendable dest) throws IOException {
-            dest.append('{');
-            for (Iterator it = fc.iterator(); it.hasNext();) {
-                Object obj = it.next();
-                javolution.text.TextFormat tf = TextContext.getFormat(obj.getClass());
-                tf.format(obj, dest);
-                if (it.hasNext()) {
-                    dest.append(", ");
-                }
-            }
-            return dest.append('}');
-        }
-    }
+public abstract class FastCollection<E> implements Collection<E>, Copyable<FastCollection<E>> {
 
     /**
      * Default constructor.  
@@ -65,85 +61,81 @@ public abstract class FastCollection<E> implements Collection<E> {
     }
 
     /**
-     * Returns the unmodifiable view associated to this collection. 
+     * Returns an unmodifiable/{@link Immutable} view of this collection. 
      * Attempts to modify the returned collection result in an 
      * {@link UnsupportedOperationException} being thrown. 
      * 
      * @return the unmodifiable view over this collection.
      */
-    public FastCollection<E> unmodifiable() {
+    public Unmodifiable unmodifiable() {
         return new Unmodifiable();
     }
 
     /**
      * <p> Returns a thread-safe read-write view of this collection.</p>
-     * <p> The default implementation performs synchronization on read and write.
-     *     Sub-classes may provide more efficient implementation.</p>
+     * <p> The default implementation performs synchronization on read/write.
+     *     Sub-classes may provide more efficient implementations.</p>
      * <p> Having a shared collection does not mean that modifications made
      *     by one thread are automatically viewed by others thread.
      *     For this to happen the thread must obtain a shared lock, then 
-     *     all values cached in its CPU registers or CPU cache are invalidated
+     *     all elements cached in its CPU registers or CPU cache are invalidated
      *     and refreshed from main memory. When the thread releases the 
-     *     shared lock, all values cached in its CPU registers or CPU cache are
-     *     flushed (written) to main memory. 
-     *     In a well-designed system, synchronization points should be 
-     *     unfrequent.</p>
+     *     shared lock, all elements cached in its CPU registers or CPU cache are
+     *     flushed (written) to main memory. In a well-designed system, 
+     *     synchronization points should only occur when required.</p>
      * <p> Iterators on {@link #shared} collections are deprecated as the may 
      *     raise {@link ConcurrentModificationException}.  {@link #forEach 
      *     Closures} should be used to iterate over shared collections
-     *    (note: all fast collections methods are based on closure).</p> 
+     *    (Note: All fast collection methods use closures to iterate).</p> 
      */
-    public FastCollection<E> shared() {
+    public Shared shared() {
         return new Shared();
     }
 
     /**
-     * Returns the value comparator for this collection (default 
-     * {@link FastComparator#DEFAULT}).
+     * Returns the element comparator for this collection (default 
+     * {@link FastComparator#DEFAULT}). If this method is overriden,
+     * it is possible that elements considered distinct using the 
+     * default equality comparator, would appear to be equals as far 
+     * as this collection is concerned. For example, a lexical comparator 
+     * will consider that two {@link CharSequence} are equals if they hold 
+     * the same characters regardless of the implementation.
+     * A direct consequences is that fast collections equality/hashcode 
+     * is linked to the collection comparator and two collections can be 
+     * considered equals only if they use the same comparators.
      *
-     * @return the comparator to use for value equality (or ordering if 
-     *        the collection is ordered)
+     * @return the comparator to use for element equality (or ordering if 
+     *        the collection is ordered).
+     * @see #equals
+     * @see #hashCode()
      */
-    public FastComparator<? super E> getValueComparator() {
-        return FastComparator.DEFAULT;
+    public FastComparator<E> comparator() {
+        return (FastComparator<E>) FastComparator.getDefault();
+    }
+
+    /**
+     * Indicates if this collecion is ordered (default <code>false</code>). 
+     * Sub-classes for which this method is overloaded to return <code>true</code>
+     * must ensure that the {@link #add} method keeps the collection ordered.
+     */
+    public boolean isOrdered() {
+        return false;
     }
 
     /***************************************************************************
      * Closures operations.
      */
-    
     /**
-     * Applies the specified functor to this collection elements; 
-     * returns "non-null" evaluated elements.
+     * Applies the specified functor to this collection elements; returns the
+     * results of the evaluations different from <code>null</code>.
      */
     public abstract <R> FastCollection<R> forEach(final Functor<E, R> functor);
 
     /**
-     * Returns all the elements matching the specified predicate.
+     * Iterates this collection elements until the specified predicate 
+     * returns <code>false</code>.
      */
-    public FastCollection<E> findAll(final Functor<E, Boolean> predicate) {
-        return this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
-                return predicate.evaluate(param) ? param : null;
-            }
-        });
-    }
-
-    /**
-     * Returns the first element matching the specified predicate.
-     */
-    public E findFirst(final Functor<E, Boolean> predicate) {
-        final Object[] found = new Object[1];
-        this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
-                if ((found[0] == null) && predicate.evaluate(param)) {
-                    found[0] = param;
-                }
-                return null;
-            }
-        });
-        return (E) found[0];
-    }
+    public abstract void doWhile(final Functor<E, Boolean> predicate);
 
     /**
      * Removes from this collection all the elements matching the specified 
@@ -161,12 +153,41 @@ public abstract class FastCollection<E> implements Collection<E> {
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    public boolean retainAll(final Functor<E, Boolean> functor) {
+    public boolean retainAll(final Functor<E, Boolean> predicate) {
         return removeAll(new Functor<E, Boolean>() {
             public Boolean evaluate(E param) {
-                return !functor.evaluate(param);
+                return !predicate.evaluate(param);
             }
         });
+    }
+
+    /**
+     * Returns all the elements different from <code>null</code> matching 
+     * the specified predicate.
+     */
+    public FastCollection<E> findAll(final Functor<E, Boolean> predicate) {
+        return forEach(new Functor<E, E>() {
+            public E evaluate(E param) {
+                return predicate.evaluate(param) ? param : null;
+            }
+        });
+    }
+
+    /**
+     * Returns the first element matching the specified predicate.
+     */
+    public E findFirst(final Functor<E, Boolean> predicate) {
+        final Object[] found = new Object[1];
+        doWhile(new Functor<E, Boolean>() {
+            public Boolean evaluate(E param) {
+                if (predicate.evaluate(param)) {
+                    found[0] = param;
+                    return false; // Exits.
+                }
+                return true;
+            }
+        });
+        return (E) found[0];
     }
 
     /***************************************************************************
@@ -187,48 +208,46 @@ public abstract class FastCollection<E> implements Collection<E> {
      */
     public int size() {
         final int[] count = new int[1];
-        this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
+        this.doWhile(new Functor<E, Boolean>() {
+            public Boolean evaluate(E param) {
                 count[0]++;
-                return null;
+                return true;
             }
         });
         return count[0];
     }
 
     /**
-     * Appends the specified (non null) value to the end of this collection
-     * (optional operation).
+     * Adds the specified element; if the collection {@link #isOrdered is ordered}
+     * the ordering of the collection is maintained after the element is added.
      * 
-     * <p>Note: This default implementation always throws 
+     * <p>Note: This default implementation throws 
      *          <code>UnsupportedOperationException</code>.</p>
      * 
-     * @param value the value to be appended to this collection.
+     * @param element the element to be added to this collection.
      * @return <code>true</code> (as per the general contract of the
      *         <code>Collection.add</code> method).
-     * @throws UnsupportedOperationException if the collection is not modificable
-     *         or the specified value is <code>null</code>.
+     * @throws UnsupportedOperationException if the collection is not modifiable.
      */
-    public boolean add(final E value) {
+    public boolean add(final E element) {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * Removes the first occurrence in this collection of the specified value
-     * (optional operation).
+     * Removes the first occurrence in this collection of the specified element.
      *
-     * @param value the value to be removed from this collection.
+     * @param element the element to be removed from this collection.
      * @return <code>true</code> if this collection contained the specified
-     *         value; <code>false</code> otherwise.
-     * @throws UnsupportedOperationException if not supported.
+     *         element; <code>false</code> otherwise.
+     * @throws UnsupportedOperationException if the collection is not modifiable.
      */
-    public boolean remove(final Object value) {
-        final FastComparator valueComp = this.getValueComparator();
-        final Object[] found = new Object[1];
-        return this.removeAll(new Functor<E, Boolean>() {
+    public boolean remove(final Object element) {
+        final FastComparator comp = comparator();
+        final boolean[] found = new boolean[1];
+        return removeAll(new Functor<E, Boolean>() {
             public Boolean evaluate(E param) {
-                if ((found[0] == null) && valueComp.areEqual(value, param)) {
-                    found[0] = param;
+                if (!found[0] && comp.areEqual(element, param)) {
+                    found[0] = true;
                     return true;
                 }
                 return false;
@@ -237,12 +256,12 @@ public abstract class FastCollection<E> implements Collection<E> {
     }
 
     /**
-     * Removes all of the values from this collection (optional operation).
+     * Removes all of the elements from this collection (optional operation).
      *
      * @throws UnsupportedOperationException if not supported.
      */
     public void clear() {
-        this.removeAll(new Functor<E, Boolean>() {
+        removeAll(new Functor<E, Boolean>() {
             public Boolean evaluate(E param) {
                 return true;
             }
@@ -252,38 +271,43 @@ public abstract class FastCollection<E> implements Collection<E> {
     /**
      * Indicates if this collection is empty.
      *
-     * @return <code>true</code> if this collection contains no value;
+     * @return <code>true</code> if this collection contains no element;
      *         <code>false</code> otherwise.
      */
-    public boolean isEmpty() {
+    public final boolean isEmpty() {
         return size() == 0;
     }
 
     /**
-     * Indicates if this collection contains the specified value.
+     * Indicates if this collection contains the specified element.
      *
-     * @param value the value whose presence in this collection 
+     * @param element the element whose presence in this collection 
      *        is to be tested.
      * @return <code>true</code> if this collection contains the specified
-     *         value;<code>false</code> otherwise.
+     *         element;<code>false</code> otherwise.
      */
-    public boolean contains(final Object value) {
-        final FastComparator valueComp = this.getValueComparator();
-        E found = this.findFirst(new Functor<E, Boolean>() {
+    public boolean contains(final Object element) {
+        final FastComparator comp = comparator();
+        final boolean[] found = new boolean[1];
+        this.doWhile(new Functor<E, Boolean>() {
             public Boolean evaluate(E param) {
-                return valueComp.areEqual(value, param);
+                if (comp.areEqual(element, param)) {
+                    found[0] = true;
+                    return false; // Exits.
+                }
+                return true;
             }
         });
-        return (found != null) ? true : false;
+        return found[0];
     }
 
     /**
-     * Appends all of the values in the specified collection to the end of
+     * Appends all of the elements in the specified collection to the end of
      * this collection, in the order that they are returned by {@link #forEach} 
      * or the collection's iterator (if the specified collection is not 
      * a fast collection).
      *
-     * @param that collection whose values are to be added to this collection.
+     * @param that collection whose elements are to be added to this collection.
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
@@ -302,43 +326,54 @@ public abstract class FastCollection<E> implements Collection<E> {
 
     private boolean addAllFast(FastCollection that) {
         final boolean[] modified = new boolean[1];
-        that.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
+        that.doWhile(new Functor<E, Boolean>() {
+            public Boolean evaluate(E param) {
                 if (add(param)) {
                     modified[0] = true;
                 }
-                return null;
+                return true;
             }
         });
         return modified[0];
     }
 
     /**
-     * Indicates if this collection contains all of the values of the
+     * Indicates if this collection contains all of the elements of the
      * specified collection.
      *
      * @param  that collection to be checked for containment in this collection.
-     * @return <code>true</code> if this collection contains all of the values
+     * @return <code>true</code> if this collection contains all of the elements
      *         of the specified collection; <code>false</code> otherwise.
      */
     public boolean containsAll(final Collection<?> that) {
-        final boolean[] mismatch = new boolean[1];
-        this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
-                if (!mismatch[0] && !that.contains(param)) {
-                    mismatch[0] = true;
+        if (that instanceof FastCollection)
+            return containsAllFast((FastCollection) that);
+        for (Object e : that) {
+            if (!contains(e))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean containsAllFast(final FastCollection<E> that) {
+        final boolean[] containsAll = new boolean[]{true};
+        that.doWhile(new Functor<E, Boolean>() {
+            public Boolean evaluate(E param) {
+                if (!FastCollection.this.contains(param)) {
+                    containsAll[0] = false;
+                    return false; // Exits.
                 }
-                return null;
+                return true;
             }
         });
-        return !mismatch[0];
+        return containsAll[0];
     }
 
     /**
-     * Removes from this collection all the values that are contained in the
+     * Removes from this collection all the elements that are contained in the
      * specified collection.
      *
-     * @param that collection that defines which values will be removed from
+     * @param that collection that defines which elements will be removed from
      *          this collection.
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
@@ -352,10 +387,10 @@ public abstract class FastCollection<E> implements Collection<E> {
     }
 
     /**
-     * Retains only the values in this collection that are contained in the
+     * Retains only the elements in this collection that are contained in the
      * specified collection.
      *
-     * @param that collection that defines which values this set will retain.
+     * @param that collection that defines which elements this set will retain.
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
@@ -368,8 +403,9 @@ public abstract class FastCollection<E> implements Collection<E> {
     }
 
     /**
-     * Returns a new array allocated on the heap containing all of the values 
+     * Returns a new array allocated on the heap containing all of the elements 
      * in this collection in proper sequence.
+     * 
      * <p> Note: To avoid heap allocation {@link #toArray(Object[])} is 
      *           recommended.</p> 
      * @return <code>toArray(new Object[size()])</code>
@@ -379,31 +415,42 @@ public abstract class FastCollection<E> implements Collection<E> {
     }
 
     /**
-     * Fills the specified array with the values of this collection in 
-     * the proper sequence.
+     * Fills the specified array with the elements of this collection in 
+     * the proper sequence. If the collection fits in the specified array,
+     * it is returned therein. Otherwise, a new array is allocated with 
+     * the runtime type of the specified array and the size of this collection.
+     * If this collection fits in the specified array with room to spare 
+     * (i.e., the array has more elements than this collection), the element in
+     * the array immediately following the end of the collection is set to
+     * <code>null</code>. 
      *  
-     * <p> Note: Unlike standard Collection, this method does not try to resize
-     *           the array using reflection (which might not be supported) if 
-     *           the array is too small. IndexOutOfBoundsException is raised 
-     *           if the specified array is too small for this collection.</p>
-     *
-     * @param  array the array into which the values of this collection
-     *         are to be stored.
-     * @return the specified array.
-     * @throws UnsupportedOperationException if <code>array.length < size()</code> 
+     * @param  array the array into which the elements of this collection
+     *         are to be stored if it has enough capacity.
+     * @return an array containing this collections elements.
+     * @throws IndexOutOfBoundsException  if <code>array.length < size()</code> 
      */
-    public <T> T[] toArray(final T[] array) {
-        final int[] count = new int[1];
-        this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
-                array[count[0]++] = (T) param;
-                return null;
+    public <T> T[] toArray(final T[] array) { // Support concurrent modifications if Shared.
+        final T[][] result = (T[][]) new Object[1][];
+        final int[] size = new int[1];
+        doWhile(new Functor<E, Boolean>() { // Synchronized if Shared instance.
+            int i;
+
+            { // Instance initializer.
+                size[0] = size();
+                result[0] = (size[0] <= array.length) ? array
+                        : (T[]) java.lang.reflect.Array
+                        .newInstance(array.getClass().getComponentType(), size[0]);
+            }
+
+            public Boolean evaluate(E param) {
+                result[0][i++] = (T) param;
+                return true;
             }
         });
-        if (array.length > count[0]) {
-            array[count[0]] = null; // As per Collection contract.
+        if (result[0].length > size[0]) {
+            result[0][size[0]] = null; // As per Collection contract.
         }
-        return array;
+        return result[0];
     }
 
     /**
@@ -419,48 +466,115 @@ public abstract class FastCollection<E> implements Collection<E> {
 
     /**
      * Compares the specified object with this collection for equality.
-     * The default behavior is to consider two collections equal if they 
-     * contains the same elements regardless of the order.
-     * Sub-classes may require additional constraints (e.g. same order 
-     * for list instances).
+     * If this collection is a set, returns <code>true</code> if the specified
+     * object is also a set, the two sets have the same size, they   
+     * use the same comparator and every member of the specified set
+     * is contained in this set using the common comparator.
+     * If this collection is a list, returns <code>true</code> if and only 
+     * if the specified object is also a list, both lists have the same size,
+     * they use the same comparator and all corresponding pairs of elements in
+     * the two lists are <i>equal</i> using their common comparator.
+     * If this collection is neither a list, nor a set, this method returns 
+     * the default object equality (<code>this == obj</code>).
      *
      * @param obj the object to be compared for equality with this collection
-     * @return <code>(this.size() == that.size()) && containsAll(obj)</code> 
+     * @return <code>true</code> if both collection are considered equals;
+     *        <code>false</code> otherwise. 
      */
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Collection))
-            return false; // Can only compare collections.
-        Collection that = (Collection) obj;
-        return (this == that) || ((this.size() == that.size())
-                && containsAll(that));
+        if (this == obj) return true;
+        FastComparator<E> thatComparator =  (obj instanceof FastCollection) ? ((FastCollection)obj).comparator() : FastComparator.DEFAULT;
+        if (!this.comparator().equals(thatComparator)) return false;
+        if (this instanceof Set) {
+            if (!(obj instanceof Set)) return false;
+            Set that = (Set) obj;
+            if (this.size() != that.size()) return false;
+            return (this.containsAll(that));
+        } else if (this instanceof List) {
+            final List that = (List) obj;
+            if (this.size() != that.size()) return false;
+            final boolean[] distinct = new boolean[1];
+            final FastComparator comp = this.comparator();
+            this.doWhile(new Functor<E, Boolean>() {
+                Iterator<E> it = that.iterator();
+                public Boolean evaluate(E param) {
+                    if (!it.hasNext() || comp.equals(param, it.next())) {
+                        distinct[1] = true;
+                        return false;
+                    } 
+                    return true;
+                }
+            });
+            return hash[0];
+        } else {
+            return super.hashCode();
+        }
     }
 
     /**
-     * Returns the hash code for this collection. The hashcode of this 
-     * collection is the sum of the hashcode of its values.
+     * Returns the hash code for this collection. 
+     * The hash code of a set is defined to be the sum of the hash codes of 
+     * the elements in the set, where the hash code of a <code>null</code> 
+     * element is defined to be zero. 
+     * The hash code of a list is defined to be the result of the following 
+     * calculation:
+     * <pre>
+     *  int hashCode = 1;
+     *  for (E e : list)
+     *      hashCode = 31*hashCode + (e==null ? 0 : e.hashCode());
+     * </pre>
+     * If this collection is neither a list, nor a set the default object 
+     * hashcode is returned.
      */
     @Override
     public int hashCode() {
-        final FastComparator valueComp = this.getValueComparator();
         final int[] hash = new int[1];
-        this.forEach(new Functor<E, E>() {
-            public E evaluate(E param) {
-                hash[0] += valueComp.hashCodeOf(param);
-                return null;
-            }
-        });
-        return hash[0];
+        if (this instanceof Set) {
+            this.doWhile(new Functor<E, Boolean>() {
+                public Boolean evaluate(E param) {
+                    hash[0] += (param != null) ? param.hashCode() : 0;
+                    return true;
+                }
+            });
+            return hash[0];
+        } else if (this instanceof List) {
+            hash[0] = 1;
+            this.doWhile(new Functor<E, Boolean>() {
+                public Boolean evaluate(E param) {
+                    hash[0] = 31 * hash[0] + ((param != null) ? param.hashCode() : 0);
+                    return true;
+                }
+            });
+            return hash[0];
+        } else {
+            return super.hashCode();
+        }
     }
 
     /**
      * This inner class represents an unmodifiable view over the collection.
      */
-    private class Unmodifiable extends FastCollection<E> {
+    protected class Unmodifiable extends FastCollection<E> implements Immutable {
+
+        @Override
+        public FastComparator getComparator() {
+            return FastCollection.this.getComparator();
+        }
+
+        @Override
+        public boolean isOrdered() {
+            return FastCollection.this.isOrdered();
+        }
 
         @Override
         public <R> FastCollection<R> forEach(Functor<E, R> functor) {
             return FastCollection.this.forEach(functor);
+        }
+
+        @Override
+        public void doWhile(Functor<E, Boolean> predicate) {
+            FastCollection.this.doWhile(predicate);
         }
 
         @Override
@@ -471,11 +585,6 @@ public abstract class FastCollection<E> implements Collection<E> {
         @Override
         public int size() {
             return FastCollection.this.size();
-        }
-
-        @Override
-        public FastComparator getValueComparator() {
-            return FastCollection.this.getValueComparator();
         }
 
         @Override
@@ -501,19 +610,38 @@ public abstract class FastCollection<E> implements Collection<E> {
                 }
             };
         }
+
+        public FastCollection<E> copy() {
+            return FastCollection.this.copy();
+        }
     }
 
     /**
      * This inner class represents a thread safe view (read-write) over the
      * collection.
      */
-    private class Shared extends FastCollection<E> {
+    protected class Shared extends FastCollection<E> {
 
         int modifications; // Count modifications.
 
         @Override
+        public synchronized FastComparator getComparator() {
+            return FastCollection.this.getComparator();
+        }
+
+        @Override
+        public boolean isOrdered() {
+            return FastCollection.this.isOrdered();
+        }
+
+        @Override
         public synchronized <R> FastCollection<R> forEach(Functor<E, R> functor) {
             return FastCollection.this.forEach(functor);
+        }
+
+        @Override
+        public void doWhile(Functor<E, Boolean> predicate) {
+            FastCollection.this.doWhile(predicate);
         }
 
         @Override
@@ -526,11 +654,6 @@ public abstract class FastCollection<E> implements Collection<E> {
         @Override
         public synchronized int size() {
             return FastCollection.this.size();
-        }
-
-        @Override
-        public synchronized FastComparator getValueComparator() {
-            return FastCollection.this.getValueComparator();
         }
 
         @Override
@@ -575,8 +698,51 @@ public abstract class FastCollection<E> implements Collection<E> {
             };
         }
 
+        public synchronized FastCollection<E> copy() {
+            return FastCollection.this.copy();
+        }
+
         private synchronized void writeObject(ObjectOutputStream s) throws IOException {
             s.defaultWriteObject();
+        }
+    }
+
+    /**
+     * Holds the default text format for fast collections (parsing not supported).
+     */
+    public static class TextFormat extends javolution.text.TextFormat<FastCollection> {
+
+        @Override
+        public FastCollection parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Appendable format(FastCollection fc, final Appendable dest) throws IOException {
+            dest.append('{');
+            fc.doWhile(new Functor<Object, Boolean>() {
+                boolean isFirst = true;
+
+                public Boolean evaluate(Object param) {
+                    try {
+                        if (!isFirst) {
+                            dest.append(", ");
+                        } else {
+                            isFirst = false;
+                        }
+                        if (param != null) {
+                            javolution.text.TextFormat tf = TextContext.getFormat(param.getClass());
+                            tf.format(param, dest);
+                        } else {
+                            dest.append("null");
+                        }
+                        return true;
+                    } catch (IOException error) {
+                        throw new RuntimeException(error);
+                    }
+                }
+            });
+            return dest.append('}');
         }
     }
 }

@@ -43,31 +43,37 @@ import javolution.text.TypeFormat;
  */
 public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
-   /**
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
+    /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
- 
+
     /**
      * Default constructor.
      */
     protected SecurityContext() {
     }
+
     /**
      * Enters a new security context instance.
      * 
      * @return the new security context implementation entered. 
      */
-    public static SecurityContext enter() throws SecurityException {
+    public static SecurityContext enter() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
 
     /**
@@ -76,12 +82,13 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to check.
      * @throws SecurityException if the specified permission is not granted.
      */
-    public static void check(SecurityPermission permission) throws SecurityException, IllegalStateException {
+    public static void check(SecurityPermission permission) {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) {
-            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
         }
-        if (!ctx.isGranted(permission)) throw new SecurityException(permission + " is not granted.");
+        if (!ctx.isGranted(permission))
+            throw new SecurityException(permission + " is not granted.");
     }
 
     /**
@@ -99,7 +106,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be granted.
      */
-    public abstract void grant(SecurityPermission permission, Object certificate) throws SecurityException;
+    public abstract void grant(SecurityPermission permission, Object certificate);
 
     /**
      * Revokes the specified permission.
@@ -109,7 +116,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public abstract void revoke(SecurityPermission permission, Object certificate) throws SecurityException;
+    public abstract void revoke(SecurityPermission permission, Object certificate);
 
     /**
      * Exits the scope of this security context; reverts to the security settings 
@@ -119,7 +126,12 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *         context.
      */
     @Override
-    public void exit() throws IllegalStateException {
+    public void exit() {
         super.exit();
+    }
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
     }
 }

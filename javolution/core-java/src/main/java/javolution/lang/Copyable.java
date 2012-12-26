@@ -27,7 +27,7 @@ package javolution.lang;
  * @version 6.0, December 12, 2012
  * @see     javolution.context.StackContext
  */
-public interface Copyable<T extends Copyable>  {
+public interface Copyable<T extends Copyable> {
 
     /**
      * Returns a deep copy of this object. 
@@ -36,5 +36,5 @@ public interface Copyable<T extends Copyable>  {
      *         in a different memory space.
      */
     T copy();
-    
+
 }

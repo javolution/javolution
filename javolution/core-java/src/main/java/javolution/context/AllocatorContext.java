@@ -23,14 +23,14 @@ import javolution.lang.Copyable;
  * @link StackContext
  */
 public abstract class AllocatorContext<C extends AllocatorContext> extends AbstractContext<C> {
-            
+
     /**
      * Default constructor.
      */
     protected AllocatorContext() {
     }
 
-   /**
+    /**
      * Executes the specified logic allocating memory using this 
      * allocator context regardless of the current allocator context.
      *

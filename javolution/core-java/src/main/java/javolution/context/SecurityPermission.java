@@ -8,6 +8,8 @@
  */
 package javolution.context;
 
+import javolution.annotation.StackSafe;
+
 /**
  * This class represents a security permission associated to a specific 
  * class/action/instance. There are three levels of permission possible, at 
@@ -24,11 +26,15 @@ package javolution.context;
  * @version 6.0, December 12, 2012
  * @see SecurityContext
  */
+@StackSafe
 public class SecurityPermission<T> {
 
     public static SecurityPermission<?> ALL = new SecurityPermission(null);
+
     private final Class<T> category;
+
     private final String action;
+
     private final T instance;
 
     public SecurityPermission(Class<T> category) {
@@ -46,17 +52,17 @@ public class SecurityPermission<T> {
     }
 
     public Class<T> getCategory() {
-        return category;        
+        return category;
     }
-    
+
     public String getAction() {
-        return action;        
+        return action;
     }
-    
+
     public T getInstance() {
-        return instance;        
+        return instance;
     }
-   
+
     /**
      * Checks if the specified permission is automatically granted/revoked 
      * by 'this' permission being granted/revoked.
@@ -75,7 +81,7 @@ public class SecurityPermission<T> {
         if (!instance.equals(that.instance)) return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         if (category == null) return "All permissions";
@@ -108,4 +114,5 @@ public class SecurityPermission<T> {
                 + (action != null ? action.hashCode() : 0)
                 + (instance != null ? instance.hashCode() : 0);
     }
+
 }

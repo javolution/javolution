@@ -15,8 +15,9 @@ import javolution.text.TypeFormat;
 /**
  * <p> This abstract class represents an {@link AllocatorContext} always 
  *     allocating from the heap (default Java allocation). This context 
- *     can be useful while executing in a {@link StackContext} to perform 
- *     allocations on the heap (e.g. when creating/updating static fields). 
+ *     is useful for {@link javolution.annotation.StackSafe} classes to 
+ *     ensure that static fields are allocated on the heap (even if class
+ *     initialization occurs while in a {@link StackContext}).
  *     [code]
  *     @StackSafe
  *     class Foo {
@@ -39,10 +40,12 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
 
     /**
@@ -59,7 +62,7 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
     public static HeapContext enter() {
         HeapContext ctx = AbstractContext.current(HeapContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
 
     /**
@@ -70,7 +73,8 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
      *         context.
      */
     @Override
-    public void exit() throws IllegalStateException {
+    public void exit() {
         super.exit();
     }
-}
+
+ }

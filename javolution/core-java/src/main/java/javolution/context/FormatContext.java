@@ -27,11 +27,11 @@ package javolution.context;
  * @version 6.0 December 12, 2012
  */
 public abstract class FormatContext<C extends FormatContext> extends AbstractContext<C> {
-            
+
     /**
      * Default constructor.
      */
     protected FormatContext() {
     }
-    
+
 }

@@ -20,7 +20,6 @@ import javolution.lang.ValueType;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 import javolution.text.TypeFormat;
-import javolution.util.FastCollection.Record;
 import javolution.xml.XMLSerializable;
 
 /**
@@ -43,44 +42,28 @@ import javolution.xml.XMLSerializable;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
- @Format(text=Index.TextFormat.class)
- public final class Index extends Number implements
+@Format(text = Index.TextFormat.class)
+public final class Index extends Number implements
         Comparable<Index>, Immutable, ValueType, XMLSerializable {
 
-     /**
-      * Holds the default text format for indices (decimal value representation).
-      */
-     public static class TextFormat extends javolution.text.TextFormat<Index> {
-        @Override
-        public Index parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
-             return Index.valueOf(TypeFormat.parseInt(csq, cursor));
-        }
-        @Override
-        public Appendable format(Index obj, Appendable dest) throws IOException {
-            return TypeFormat.format(obj.intValue(), dest);
-        }
-     }
-       
     // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();     
-    
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
     /**
      * Holds the index zero (value <code>0</code>).
      */
     public static final Index ZERO = new Index(0);
-
     /**
      * Holds indices (to maintains unicity).
      */
     private static Index[] INSTANCES = new Index[256];
+
     static { // Allocation on the heap context.
         INSTANCES[0] = ZERO;
-        for (int i=1; i < INSTANCES.length; i++) {
+        for (int i = 1; i < INSTANCES.length; i++) {
             INSTANCES[i] = new Index(i);
         }
     }
-    
-    
     /**
      * Holds the number of indices preallocated (default <code>256</code>).
      */
@@ -90,11 +73,10 @@ import javolution.xml.XMLSerializable;
             int max = TypeFormat.parseInt(configuration);
             if (max <= 0)
                 throw new IllegalArgumentException("Preallocated max cannot be zero or negative");
-            setDefault(max);
+            set(max);
             if (max > INSTANCES.length) Index.preallocate(max);
         }
     };
-    
     /**
      * Holds the index value.
      */
@@ -108,7 +90,6 @@ import javolution.xml.XMLSerializable;
     private Index(int value) {
         this.value = value;
     }
-
 
     /**
      * Returns the unique index for the specified <code>int</code> value 
@@ -132,7 +113,7 @@ import javolution.xml.XMLSerializable;
      * @return <code>[start .. end[</code>
      */
     public static List<Index> rangeOf(int start, int end) {
-        FastTable<Index> list = FastTable.newInstance();
+        FastTable<Index> list = new FastTable();
         for (int i = start; i < end; i++) {
             list.add(Index.valueOf(i));
         }
@@ -146,13 +127,12 @@ import javolution.xml.XMLSerializable;
      * @return <code>{indices[0], indices[1], ...}</code>
      */
     public static List<Index> valuesOf(int... indices) {
-        FastTable<Index> list = FastTable.newInstance();
+        FastTable<Index> list = new FastTable();
         for (int i : indices) {
             list.add(Index.valueOf(i));
         }
         return list;
-    } 
-
+    }
 
     private static synchronized void preallocate(int nbr) {
         if (nbr <= INSTANCES.length) return; // Already done.
@@ -171,7 +151,9 @@ import javolution.xml.XMLSerializable;
         } finally {
             ctx.exit();
         }
-    };
+    }
+
+    ;
  
     /**
      * Returns the index value as <code>int</code>.
@@ -238,7 +220,7 @@ import javolution.xml.XMLSerializable;
      * 
      * @return <code>this == obj</code>
      */
-     @Override
+    @Override
     public final boolean equals(Object obj) {
         return this == obj;
     }
@@ -248,7 +230,7 @@ import javolution.xml.XMLSerializable;
      *
      * @return the index value.
      */
-     @Override
+    @Override
     public final int hashCode() {
         return value;
     }
@@ -260,9 +242,9 @@ import javolution.xml.XMLSerializable;
      * @return <code>this</code>
      */
     public Copyable copy() {
-        return this; 
+        return this;
     }
-    
+
     /**
      * Ensures index unicity during deserialization.
      * 
@@ -272,6 +254,24 @@ import javolution.xml.XMLSerializable;
         return Index.valueOf(value);
     }
 
+    /**
+     * Holds the default text format for indices (decimal value representation).
+     */
+    public static class TextFormat extends javolution.text.TextFormat<Index> {
+
+        @Override
+        public Index parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
+            return Index.valueOf(TypeFormat.parseInt(csq, cursor));
+        }
+
+        @Override
+        public Appendable format(Index obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.intValue(), dest);
+        }
+    }
+
     // End of class initialization.
-    static { INIT_CTX.exit(); }
+    static {
+        INIT_CTX.exit();
+    }
 }

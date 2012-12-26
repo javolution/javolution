@@ -8,6 +8,7 @@
  */
 package javolution.internal.osgi;
 
+import javolution.annotation.StackSafe;
 import javolution.context.ConcurrentContext;
 import javolution.context.HeapContext;
 import javolution.context.LocalContext;
@@ -31,6 +32,9 @@ import org.osgi.service.cm.ManagedService;
 
 /**
  * This class implements Javolution OSGi bundle activator.
+ * It also provides a Javolution initialize routine which ensures that
+ * all {@link StackSafe} classes are initialized before entering  
+ * a {@link StackContext}.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
@@ -83,4 +87,5 @@ public class JavolutionActivator implements BundleActivator {
              configurableServiceRegistration = null;
         }
     }
+    
 }

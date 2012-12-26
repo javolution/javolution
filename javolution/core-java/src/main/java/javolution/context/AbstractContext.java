@@ -8,6 +8,8 @@
  */
 package javolution.context;
 
+import javolution.annotation.StackSafe;
+
 /**
  * <p> This abstract class represents the root class for all contexts. 
  *     Contexts allow for cross cutting concerns (performance, logging, 
@@ -92,13 +94,14 @@ package javolution.context;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
+@StackSafe
 public abstract class AbstractContext<C extends AbstractContext> {
 
     /**
      * Holds the last context entered (thread-local).
      */
     private static final ThreadLocal<AbstractContext> CURRENT = new ThreadLocal();
-    
+
     /**
      * Holds the outer context or <code>null</code> if none (root or not attached).
      */
@@ -162,7 +165,7 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * @throws IllegalStateException if this context is not the current 
      *         context.
      */
-    public void exit() throws IllegalStateException {
+    public void exit() {
         if (this != AbstractContext.CURRENT.get())
             throw new IllegalStateException("This context is not the current context");
         AbstractContext.CURRENT.set(outer);
@@ -186,7 +189,6 @@ public abstract class AbstractContext<C extends AbstractContext> {
     protected AbstractContext<?> getOuter() {
         return outer;
     }
-  
 
     /**
      * Returns a new inner instance of this context inheriting the properties 

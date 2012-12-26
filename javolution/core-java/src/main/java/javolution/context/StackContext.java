@@ -51,17 +51,22 @@ import javolution.text.TypeFormat;
  */
 public abstract class StackContext extends AllocatorContext<StackContext> {
 
-   /**
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
+    /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
- 
+
     /**
      * Default constructor.
      */
@@ -76,9 +81,9 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
     public static StackContext enter() {
         StackContext ctx = AbstractContext.current(StackContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return STACK_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
-    }   
-    
+        return STACK_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
+    }
+
     /**
      * Exports this object (through copy) outside of this stack context.
      * The object is copied to the outer allocator context (which might be 
@@ -102,5 +107,9 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
     public void exit() {
         super.exit();
     }
-        
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
+    }
 }

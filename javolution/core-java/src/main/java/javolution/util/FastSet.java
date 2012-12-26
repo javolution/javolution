@@ -190,11 +190,6 @@ public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusa
         return _map.getKeyComparator();
     }
 
-    // Implements Reusable.
-    public void reset() {
-        _map.reset();
-    }
-
     // Requires special handling during de-serialization process.
     private void readObject(ObjectInputStream stream) throws IOException,
             ClassNotFoundException {

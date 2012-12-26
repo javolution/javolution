@@ -31,7 +31,5 @@ package javolution.lang;
  * @version 3.7, February 6, 2006
  */
 public interface Immutable {
-
     // No method (tagging interface).
-    
 }

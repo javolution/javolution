@@ -49,12 +49,16 @@ import javolution.text.TypeFormat;
  */
 public abstract class LogContext extends AbstractContext<LogContext> {
 
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
     /**
      * Defines the logging levels.
      */
     public enum Level {
 
         DEBUG, INFO, WARNING, ERROR
+
     }
 
     /**
@@ -62,12 +66,14 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+
         @Override
         public void configure(CharSequence configuration) {
-            setDefault(TypeFormat.parseBoolean(configuration));
+            set(TypeFormat.parseBoolean(configuration));
         }
+
     };
- 
+
     /**
      * Holds the default suppress level (default <code>null</code> no log 
      * suppressed). This level is configurable. For example, running with 
@@ -75,11 +81,13 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * causes debug information not to be logged. 
      */
     public static final Configurable<Level> SUPPRESS = new Configurable(null) {
+
         @Override
         public void configure(CharSequence configuration) {
             String str = configuration.toString();
-            setDefault((str.length() != 0) ? Level.valueOf(str) : null);
+            set((str.length() != 0) ? Level.valueOf(str) : null);
         }
+
     };
 
     /**
@@ -96,7 +104,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static LogContext enter() {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault()).inner().enterScope();
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
 
     /**
@@ -107,7 +115,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void debug(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
         }
         ctx.log(Level.DEBUG, objs);
     }
@@ -120,7 +128,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void info(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
         }
         ctx.log(Level.INFO, objs);
     }
@@ -133,7 +141,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void warning(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
         }
         ctx.log(Level.WARNING, objs);
     }
@@ -147,7 +155,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void error(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefault());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
         }
         ctx.log(Level.ERROR, objs);
     }
@@ -181,7 +189,12 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      *         context.
      */
     @Override
-    public void exit() throws IllegalStateException {
+    public void exit() {
         super.exit();
+    }
+
+    // End of class initialization.
+    static {
+        INIT_CTX.exit();
     }
 }

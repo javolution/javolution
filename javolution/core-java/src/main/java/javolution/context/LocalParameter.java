@@ -12,9 +12,9 @@ import javolution.lang.Configurable;
 
 /**
  * <p> This class represents a local parameter. The default value of 
- *     a local parameter is {@link Configurable}. Its local value is
- *     given by the {@link LocalContext#valueOf} method and can be locally
- *     {@link LocalContext#override overriden}.</p>
+ *     a local parameter is {@link Configurable configurable}. Its local value
+ *     is given by the {@link LocalContext#valueOf} method and can be locally
+ *     {@link LocalContext#setLocalValue overriden}.</p>
  * 
  * <p> The parameter default values is either the value specified at creation
  *     or a configuration value read from system properties. For example the
@@ -29,15 +29,15 @@ public abstract class LocalParameter<T> extends Configurable<T> {
     /**
      * Holds the general permission to override a local parameter 
      * (action <code>"override"</code>).
+     * @see LocalContext#setLocalValue
      */
-    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION 
-            = new SecurityPermission(LocalParameter.class, "override");
+    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION = new SecurityPermission(LocalParameter.class, "override");
 
     /**
      * Holds this instance override permission.
      */
-    private final SecurityPermission<LocalParameter> overridePermission;   
-    
+    private final SecurityPermission<LocalParameter> overridePermission;
+
     /**
      * Creates a local parameter having the specified default value (configurable).
      * 
@@ -47,12 +47,14 @@ public abstract class LocalParameter<T> extends Configurable<T> {
         super(defaultValue);
         overridePermission = new SecurityPermission(LocalParameter.class, "override", this);
     }
-    
+
     /**
      * Returns the permission to override this instance.
-     * @see LocalContext
+     * 
+     * @see LocalContext#setLocalValue
      */
     public SecurityPermission<LocalParameter> getOverridePermission() {
         return overridePermission;
-    }  
+    }
+
 }
