@@ -8,9 +8,6 @@
  */
 package javolution.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
@@ -18,94 +15,83 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javolution.lang.Copyable;
+import javolution.lang.Functor;
+import javolution.lang.Immutable;
+import javolution.lang.Predicate;
 
 /**
- * <p> This class represents a random access collection with fast 
+ * <p> A random access collection of ordered/unordered elements with fast 
  *     insertion/deletion and smooth capacity increase.</p>
  * 
- * <p> Instances of this class can advantageously replace {@link ArrayList}
- *     and {@link LinkedList} both in term of space and performance.</p>
+ * <p> Instances of this class can advantageously replace {@link ArrayList},
+ *     {@link LinkedList}, {@link Deque} and {@link TreeSet} in term 
+ *     of adaptability, space or performance.</p>
  *     <img src="doc-files/list-add.png"/>
  *     
  *  <p> As for any {@link FastCollection} iterations are faster when performed
  *      using closures (and the notation will be shorter with JDK 8).
  *      [code]
  *      FastTable<Person> persons = ...
- *      Person john = persons.findFirst(new Functor<Person, Boolean>() {
+ *      Person john = persons.findFirst(new Predicate<Person>() {
  *          public Boolean evaluate(Person person) {
- *               return person.getName().equals("John");
+ *              return person.getName().equals("John");
  *          }
  *      });
  *      [/code]</p>
  *     
  *  <p> {@link FastTable} supports {@link #sort sorting} in place (quick sort) 
- *      using the {@link FastCollection#getComparator() comparator}
- *      for the table (no object or array allocation when sorting). 
- *      {@link FastCollection#isOrdered Ordered} sub-classes ensure that the 
- *      {@link #add} method inserts elements while keeping the collection
- *      ordered (unlike {@link #addLast} which always adds to the end).</p>
+ *      using the table {@link FastCollection#comparator() comparator}.
+ *      If the table {@link FastCollection#isOrdered is ordered}, the 
+ *      the {@link #add add} method keeps the collection sorted and the 
+ *      implementation guaranteed log(n) time cost for the basic
+ *      operations such as {@link #indexOf indexOf}, {@link #contains},
+ *      and {@link #remove}.
+ *      </p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.4.5, August 20, 2007
+ * @version 6.0.0, December 12, 2012
  */
 public class FastTable<E> extends FastCollection<E> implements
-        List<E>, Deque<E>, RandomAccess {
+        List<E>, RandomAccess, Copyable<FastTable<E>> {
 
-    
-    
     // We do a full resize (and copy) only when the capacity is less than C1.
     // For large collections, multi-dimensional arrays are employed.
     private static final int B0 = 2; // Block initial capacity in bits.
+
     private static final int C0 = 1 << B0; // Block initial capacity (4)
+
     private static final int B1 = 8; // Block maximum capacity in bits.
+
     private static final int C1 = 1 << B1; // Block maximum capacity (256).
+
     private static final int M1 = C1 - 1; // Block Mask.
 
-    // Element blocks.
-    private static class Block<T> {
-
-        int offset; // Allows for fast shift.
-        T[] data = (T[]) new Object[C0];
-
-        T get(int i) {
-            return data[(i + offset) & M1];
-        }
-
-        void set(int i, T t) {
-            data[(i + offset) & M1] = t;
-        }
-
-        void clear(int start, int end) {
-            System.arraycopy(NULL_BLOCK, 0, data,, data.length);
-        }
-        private static final Object[] NULL_BLOCK = (Object[]) new Object[C1];
-    }
-
-    void copy(int srcPos, int srcDest, int length) {
-    }
     /**
      * Holds the block elements.
      */
-    private transient Block<E>[] blocks = new Block[]{new Block()};
+    private Block<E>[] blocks = new Block[1];
+
     /**
      * Holds the current size.
      */
-    private transient int size;
+    private int size;
+
     /**
      * Holds the current capacity.
      */
-    private transient int capacity = C0;
+    private int capacity;
 
     /**
-     * Creates a table of small initial capacity.
+     * Creates an empty table.
      */
     public FastTable() {
     }
 
     /**
-     * Creates a table of specified initial capacity; unless the table size 
-     * reaches the specified capacity, operations on this table will not 
-     * allocate memory (no lazy object creation).
+     * Creates a table of specified initial capacity.
      * 
      * @param capacity the initial capacity.
      */
@@ -125,6 +111,477 @@ public class FastTable<E> extends FastCollection<E> implements
     }
 
     /**
+     * Returns an {@link Unmodifiable}/immutable view of this table.
+     * Attempts to modify the table returned will result in an 
+     * {@link UnsupportedOperationException} being thrown. 
+     * 
+     * @return an unmodifiable view over this table.
+     */
+    public Unmodifiable<E> unmodifiable() {
+        return new Unmodifiable<E>(this);
+    }
+
+    /**
+     * Returns a thread-safe read-write {@link Shared} view of this table.
+     * It uses {@link ReentrantReadWriteLock read-write lock} in order to support 
+     * concurrent reads. Iterators methods have been deprecated since they
+     * don't prevent concurrent modifications. Closures (e.g. {@link FastTable#doWhile}) 
+     * are the preferred mean of iterating over a shared table.
+     * The shared view exports most of the {@link Deque} methods provided by this table.
+     */
+    public Shared<E> shared() {
+        return new Shared<E>(this);
+    }
+
+    // Implements FastCollection Abstract Method.
+    public <R> FastTable<R> forEach(Functor<E, R> functor) {
+        return forEach(functor, 0, size);
+    }
+
+    final <R> FastTable<R> forEach(Functor<E, R> functor, int start, int length) {
+        FastTable<R> results = new FastTable<R>();
+        for (int i = start >> B1; (i << B1) < (start + length); i++) {
+            Block<E> block = blocks[i];
+            for (int j = i << B1, n = Math.min(start + length, j + C1); j < n;) {
+                R result = functor.evaluate(block.get(j++));
+                if (result != null) results.addLast(result);
+            }
+        }
+        return results;
+    }
+
+    // Implements FastCollection Abstract Method.
+    public void doWhile(Predicate<E> predicate) {
+        doWhile(predicate, 0, size);
+    }
+
+    final void doWhile(Predicate<E> predicate, int start, int length) {
+        for (int i = start >> B1; (i << B1) < (start + length); i++) {
+            Block<E> block = blocks[i];
+            for (int j = i << B1, n = Math.min(start + length, j + C1); j < n;) {
+                if (!predicate.evaluate(block.get(j++))) return;
+            }
+        }
+    }
+
+    // Implements FastCollection Abstract Method.
+    public boolean removeAll(Predicate<E> predicate) {
+        return removeAll(predicate, 0, size);
+    }
+
+    final boolean removeAll(Predicate<E> predicate, int start, int length) {
+        boolean modified = false;
+        for (int i = start >> B1; (i << B1) < (start + length); i++) {
+            Block<E> block = blocks[i];
+            for (int j = i << B1, n = Math.min(start + length, j + C1); j < n;) {
+                if (predicate.evaluate(block.get(j++))) {
+                    this.remove(--j);
+                    modified = true;
+                }
+            }
+        }
+        return modified;
+    }
+
+    // Implements FastCollection Abstract Method.
+    public ListIterator<E> iterator() {
+        return new ListIteratorImpl(this, 0);
+    }
+
+    /**
+     * Either inserts the specified element ({@link FastTable#isOrdered 
+     * ordered} table) or appends the element to the end of this table. 
+     *
+     * @param element the element to be added to this table.
+     * @return <code>true</code> (as per the general contract of the
+     *         <code>Collection.add</code> method).
+     */
+    @Override
+    public boolean add(E element) {
+        if (isOrdered()) {
+            add(indexIfOrderedOf(element, 0, size), element);
+            return true;
+        }
+        ensureCapacity(size + 1);
+        blocks[size >> B1].set(size++, element);
+        return true;
+    }
+
+    /**
+     * Removes the first occurrence in this collection of the specified element
+     * (performs a dichotomic search if the table is ordered).
+     *
+     * @param element the element to be removed from this collection.
+     * @return <code>true</code> if this collection contained the specified
+     *         element; <code>false</code> otherwise.
+     * @throws UnsupportedOperationException if the collection is not modifiable.
+     */
+    @Override
+    public boolean remove(Object element) {
+        return remove((E) element, 0, size);
+    }
+
+    final boolean remove(E e, int start, int length) {
+        int i = indexOf(e, start, length);
+        if (i < 0) return false;
+        remove(i);
+        return true;
+    }
+
+    /**
+     * Indicates if this collection contains the specified element (performs
+     * a dichotomic search if the table is ordered).
+     *
+     * @param element the element whose presence in this collection 
+     *        is to be tested.
+     * @return <code>true</code> if this collection contains the specified
+     *         element;<code>false</code> otherwise.
+     */
+    @Override
+    public boolean contains(Object element) {
+        return contains((E) element, 0, size);
+    }
+
+    final boolean contains(E e, int start, int length) {
+        int i = indexOf(e, start, length);
+        return (i < 0) ? false : true;
+    }
+
+    @Override
+    public void clear() {
+        clear(0, size);
+        size = 0;
+    }
+
+    final void clear(int start, int length) {
+        for (int i = start, n = start + length; i < n;) {
+            blocks[i >> B1].set(i++, null); // TODO: Optimize.
+        }
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    //
+    // Convenience/Dequeu Methods 
+    //
+    /**
+     * Adds this element to this table only if not already present.
+     * The element is either appended to the end of this table or 
+     * inserted if the table is {@link FastTable#isOrdered ordered}.
+     *
+     * @param element the element to be added to this table if not already there.
+     * @return <code>true</code> if the element has been added;
+     *         <code>false</code> otherwise.
+     */
+    public boolean addIfAbsent(E element) {
+        if (isOrdered()) {
+            int index = indexIfOrderedOf(element, 0, size);
+            if (comparator().areEqual(element, blocks[index >> B1].get(index)))
+                return false;
+            add(index, element);
+            return true;
+        } else {
+            if (this.contains(element)) return false;
+            return add(element);
+        }
+    }
+
+    /**
+     * Removes the elements between <code>[fromIndex..toIndex[<code> from
+     * this table.
+     *
+     * @param fromIndex the beginning index, inclusive.
+     * @param toIndex the ending index, exclusive.
+     * @throws IndexOutOfBoundsException if <code>(fromIndex < 0) || (toIndex < 0) 
+     *         || (fromIndex > toIndex) || (toIndex > this.size())</code>
+     */
+    public void removeRange(int fromIndex, int toIndex) {
+        if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex)
+                || (toIndex > size))
+            throw new IndexOutOfBoundsException("FastTable removeRange("
+                    + fromIndex + ", " + toIndex + ") index out of bounds, size: " + size);
+        int shift = toIndex - fromIndex;
+        copy(toIndex, toIndex - shift, size - toIndex);
+        size -= shift;
+        clear(size, shift);
+    }
+
+    /**
+     * Returns the first element of this table.
+     *
+     * @return this table first element.
+     * @throws NoSuchElementException if this table is empty.
+     */
+    public E getFirst() {
+        if (size == 0)
+            throw new NoSuchElementException();
+        return blocks[0].get(0);
+    }
+
+    /**
+     * Returns the last element of this table.
+     *
+     * @return this table last element.
+     * @throws NoSuchElementException if this table is empty.
+     */
+    public E getLast() {
+        if (size == 0)
+            throw new NoSuchElementException();
+        return blocks[(size - 1) >> B1].get(size - 1);
+    }
+
+    /**
+     * Appends the specified element to the beginning of this table.
+     * 
+     * @param element the element to be added.
+     */
+    public void addFirst(E element) {
+        add(0, element);
+    }
+
+    /**
+     * Appends the specified element to the end of this table.
+     * 
+     * @param element the element to be added.
+     */
+    public void addLast(E element) {
+        ensureCapacity(size + 1);
+        blocks[size >> B1].set(size++, element);
+    }
+
+    /**
+     * Removes and returns the first element of this table.
+     *
+     * @return this table's last element before this call.
+     * @throws NoSuchElementException if this table is empty.
+     */
+    public E removeFirst() {
+        if (size == 0) throw new NoSuchElementException();
+        return remove(0);
+    }
+
+    /**
+     * Removes and returns the last element of this table.
+     *
+     * @return this table's last element before this call.
+     * @throws NoSuchElementException if this table is empty.
+     */
+    public E removeLast() {
+        if (size == 0) throw new NoSuchElementException();
+        final E previous = blocks[--size >> B1].get(size);
+        blocks[size >> B1].set(size, null);
+        return previous;
+    }
+
+    /**
+     * Retrieves and removes the first element of this table,
+     * or returns <code>null</code> if this table is empty.
+     *
+     * @return the head of this table, or <code>null</code> if empty.
+     */
+    public E pollFirst() {
+        return (size != 0) ? removeFirst() : null;
+    }
+
+    /**
+     * Retrieves and removes the last element of this table,
+     * or returns <code>null</code> if this table is empty.
+     *
+     * @return the tail of this table or <code>null</code> if empty.
+     */
+    public E pollLast() {
+        return (size != 0) ? removeLast() : null;
+    }
+
+    /**
+     * Retrieves, but does not remove, the first element of this table,
+     * or returns <code>null</code> if this table is empty.
+     *
+     * @return the head of this table or <code>null</code> if empty
+     */
+    public E peekFirst() {
+        return (size != 0) ? getFirst() : null;
+    }
+
+    /**
+     * Retrieves, but does not remove, the last element of this table,
+     * or returns <code>null</code> if this table is empty.
+     *
+     * @return the tail of this table or <code>null</code> if empty
+     */
+    public E peekLast() {
+        return (size != 0) ? getLast() : null;
+    }
+
+    /**
+     * Sorts this table in place (quick sort) using this table 
+     * {@link FastCollection#comparator() comparator}
+     * (smallest first).
+     * 
+     * @return <code>this</code>
+     */
+    public FastTable<E> sort() {
+        if (size > 1) {
+            quicksort(0, size - 1, this.comparator());
+        }
+        return this;
+    }
+
+    // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
+    //
+    private void quicksort(int first, int last, FastComparator<E> cmp) {
+        if (first < last) {
+            int pivIndex = partition(first, last, cmp);
+            quicksort(first, (pivIndex - 1), cmp);
+            quicksort((pivIndex + 1), last, cmp);
+        }
+    }
+
+    private int partition(int f, int l, FastComparator<E> cmp) {
+        int up, down;
+        E piv = get(f);
+        up = f;
+        down = l;
+        do {
+            while (cmp.compare(get(up), piv) <= 0 && up < l) {
+                up++;
+            }
+            while (cmp.compare(get(down), piv) > 0 && down > f) {
+                down--;
+            }
+            if (up < down) { // Swaps.
+                E temp = get(up);
+                set(up, get(down));
+                set(down, temp);
+            }
+        } while (down > up);
+        set(f, get(down));
+        set(down, piv);
+        return down;
+    }
+
+    /**
+     * Returns a deep copy of this object. 
+     * 
+     * @return an object identical to this object but possibly allocated 
+     *         in a different memory space.
+     * @see Copyable
+     */
+    public FastTable<E> copy() {
+        final FastComparator<E> comp = comparator();
+        final boolean ordered = isOrdered();
+        final FastTable<E> newTable = new FastTable(size()) {
+
+            @Override
+            public boolean isOrdered() {
+                return ordered;
+            }
+
+            @Override
+            public FastComparator<E> comparator() {
+                return comp;
+            }
+
+        };
+        this.doWhile(new Predicate<E>() {
+
+            public Boolean evaluate(E param) {
+                newTable.addLast((param instanceof Copyable)
+                        ? ((Copyable<E>) param).copy() : param);
+                return true;
+            }
+
+        });
+        return newTable;
+    }
+
+    //
+    // List Specifics
+    //
+    /**
+     * Inserts the specified element at the specified position in this table.
+     * Shifts the element currently at that position
+     * (if any) and any subsequent elements to the right (adds one to their
+     * indices).
+     *
+     * @param index the index at which the specified element is to be inserted.
+     * @param element the element to be inserted.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index > size())</code>
+     */
+    public void add(int index, E element) {
+        if (index > size)
+            throw new IndexOutOfBoundsException("index: " + index);
+        ensureCapacity(size + 1);
+        copy(index, index + 1, size - index);
+        blocks[index >> B1].set(index, element);
+        size++;
+    }
+
+    /**
+     * Inserts all of the elements in the specified collection into this
+     * table at the specified position. Shifts the element currently at that
+     * position and any subsequent elements to the right 
+     * (increases their indices). 
+     *
+     * @param index the index at which to insert first element from the specified
+     *        collection.
+     * @param elements the elements to be inserted into this list.
+     * @return <code>true</code> if this list changed as a result of the call;
+     *         <code>false</code> otherwise.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index > size())</code>
+     */
+    public boolean addAll(final int index, final Collection<? extends E> elements) {
+        if (index > size)
+            throw new IndexOutOfBoundsException("index: " + index);
+        int shift = elements.size();
+        ensureCapacity(size + shift);
+        copy(index, index + shift, size - index);
+        if (elements instanceof FastCollection) {
+            ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
+
+                int i = index;
+
+                public Boolean evaluate(E param) {
+                    blocks[i >> B1].set(i++, param);
+                    return true;
+                }
+
+            });
+        } else { // Use iterator since we have no choice.
+            Iterator<? extends E> elementsIterator = elements.iterator();
+            for (int i = index, n = index + shift; i < n; i++) {
+                blocks[i >> B1].set(i, elementsIterator.next());
+            }
+        }
+        size += shift;
+        return shift != 0;
+    }
+
+    /**
+     * Removes the element at the specified position from this table.
+     * Shifts any subsequent elements to the left (subtracts one
+     * from their indices). Returns the element that was removed from the
+     * table.
+     *
+     * @param index the index of the element to removed.
+     * @return the element previously at the specified position.
+     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
+     *         (index >= size())</code>
+     */
+    public E remove(int index) {
+        final E previous = get(index);
+        copy(index, index - 1, size - index);
+        size--;
+        blocks[size >> B1].set(size, null);
+        return previous;
+    }
+
+    /**
      * Returns the element at the specified index.
      *
      * @param index index of element to return.
@@ -132,7 +589,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final E get(int index) { // Short to be inlined.
+    public E get(int index) {
         if (index >= size)
             throw new IndexOutOfBoundsException();
         return blocks[index >> B1].get(index);
@@ -148,7 +605,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @throws IndexOutOfBoundsException if <code>(index < 0) || 
      *         (index >= size())</code>
      */
-    public final E set(int index, E element) {
+    public E set(int index, E element) {
         if (index >= size)
             throw new IndexOutOfBoundsException();
         final Block<E> block = blocks[index >> B1];
@@ -158,207 +615,31 @@ public class FastTable<E> extends FastCollection<E> implements
     }
 
     /**
-     * For {@link FastCollection#isOrdered ordered} collection inserts the
-     * specified element at the proper position to keep the collection ordered; 
-     * otherwise (default) appends the specified element to the end of this table.
-     *
-     * @param element the element to be added to this table.
-     * @return <code>true</code> (as per the general contract of the
-     *         <code>Collection.add</code> method).
-     */
-    @Override
-    public final boolean add(E element) {
-        if (isOrdered()) {  
-            addOrdered(element);
-        } else {
-            addLast(element);
-        }
-        return true;
-    }
-
-    /**
-     * Returns the first element of this table.
-     *
-     * @return this table first element.
-     * @throws NoSuchElementException if this table is empty.
-     */
-    public final E getFirst() {
-        if (size == 0)
-            throw new NoSuchElementException();
-        return blocks[0].get(0);
-    }
-
-    /**
-     * Returns the last element of this table.
-     *
-     * @return this table last element.
-     * @throws NoSuchElementException if this table is empty.
-     */
-    public final E getLast() {
-        if (size == 0)
-            throw new NoSuchElementException();
-        return get(size - 1);
-    }
-
-    /**
-     * Appends the specified element to the beginning of this table <i>(fast)</i>.
-     * 
-     * @param element the element to be added.
-     */
-    public final void addFirst(E element) {
-        add(0, element);
-    }
-
-    /**
-     * Appends the specified element to the end of this table <i>(fast)</i>.
-     * 
-     * @param element the element to be added.
-     */
-    public final void addLast(E element) {
-        if (size >= capacity)
-            ensureCapacity(size + 1);
-        blocks[size >> B1].set(size++, element);
-    }
-
-    /**
-     * Removes and returns the first element of this table <i>(fast)</i>.
-     *
-     * @return this table's last element before this call.
-     * @throws NoSuchElementException if this table is empty.
-     */
-    public final E removeFirst() {
-        return remove(0);
-    }
-
-    /**
-     * Removes and returns the last element of this table <i>(fast)</i>.
-     *
-     * @return this table's last element before this call.
-     * @throws NoSuchElementException if this table is empty.
-     */
-    public final E removeLast() {
-        if (size == 0)
-            throw new NoSuchElementException();
-        size--;
-        final Block<E> block = blocks[size >> B1];
-        final E previous = block.get(size);
-        block.set(size, null);
-        return previous;
-    }
-
-    @Override
-    public final void clear() {
-        int n = (size - 1) >> B1;
-        for (int i = 0; i <= n; i++) {
-            blocks[i].clear();
-        }
-        size = 0;
-    }
-
-    /**
-     * Inserts all of the elements in the specified collection into this
-     * table at the specified position. Shifts the element currently at that
-     * position (if any) and any subsequent elements to the right 
-     * (increases their indices). 
-     *
-     * @param index the index at which to insert first element from the specified
-     *        collection.
-     * @param elements the elements to be inserted into this list.
-     * @return <code>true</code> if this list changed as a result of the call;
-     *         <code>false</code> otherwise.
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *         (index > size())</code>
-     */
-    public final boolean addAll(int index, Collection<? extends E> elements) {
-        if ((index < 0) || (index > size))
-            throw new IndexOutOfBoundsException("index: " + index);
-        final int shift = elements.size();
-        shiftRight(index, shift);
-        Iterator<? extends E> elementsIterator = elements.iterator();
-        for (int i = index, n = index + shift; i < n; i++) {
-            blocks[i >> B1].set(i, elementsIterator.next());
-        }
-        size += shift;
-        return shift != 0;
-    }
-
-    /**
-     * Inserts the specified element at the specified position in this table.
-     * Shifts the element currently at that position
-     * (if any) and any subsequent elements to the right (adds one to their
-     * indices).
-     *
-     * <p>Note: If this method is used concurrent access must be synchronized
-     *          (the table is no more thread-safe).</p>
-     *
-     * @param index the index at which the specified element is to be inserted.
-     * @param element the element to be inserted.
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *         (index > size())</code>
-     */
-    public final void add(int index, E element) {
-        if ((index < 0) || (index > size))
-            throw new IndexOutOfBoundsException("index: " + index);
-        shiftRight(index, 1);
-        blocks[index >> B1].set(index, element);
-        size++;
-    }
-
-    /**
-     * Removes the element at the specified position from this table.
-     * Shifts any subsequent elements to the left (subtracts one
-     * from their indices). Returns the element that was removed from the
-     * table.
-     *
-     * @param index the index of the element to removed.
-     * @return the element previously at the specified position.
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *         (index >= size())</code>
-     */
-    public final E remove(int index) {
-        final E previous = get(index);
-        shiftLeft(index + 1, 1);
-        size--;
-        blocks[size >> B1].set(size, null);
-        return previous;
-    }
-
-    /**
-     * Removes the elements between <code>[fromIndex..toIndex[<code> from
-     * this table.
-     *
-     * @param fromIndex the beginning index, inclusive.
-     * @param toIndex the ending index, exclusive.
-     * @throws IndexOutOfBoundsException if <code>(fromIndex < 0) || (toIndex < 0) 
-     *         || (fromIndex > toIndex) || (toIndex > this.size())</code>
-     */
-    public final void removeRange(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex)
-                || (toIndex > size))
-            throw new IndexOutOfBoundsException("FastTable removeRange("
-                    + fromIndex + ", " + toIndex + ") index out of bounds, size: " + size);
-        final int shift = toIndex - fromIndex;
-        shiftLeft(toIndex, shift);
-        size -= shift; // No need for volatile, removal are not thread-safe.
-        for (int i = size, n = size + shift; i < n; i++) {
-            blocks[i >> B1].set(i, null);
-        }
-    }
-
-    /**
      * Returns the index in this table of the first occurrence of the specified
-     * element, or -1 if this table does not contain this element.
+     * element, or -1 if this table does not contain this element. If this  
+     * table {@link #isOrdered() is ordered} a dichotomic search is performed.
      *
      * @param element the element to search for.
      * @return the index in this table of the first occurrence of the specified
      *         element, or -1 if this table does not contain this element.
      */
-    public final int indexOf(Object element) {
-        final FastComparator comp = this.getComparator();
-        for (int i = 0; i < size; i++) {
-            if (comp.areEqual(element, blocks[i >> B1].get(i))) return i;
+    public int indexOf(Object element) {
+        return indexOf((E) element, 0, size);
+    }
+
+    final int indexOf(E e, int start, int length) {
+        final FastComparator<E> comp = comparator();
+        if (isOrdered()) {
+            int index = indexIfOrderedOf(e, start, length);
+            if ((index == start + length) || !comp.areEqual(e, blocks[index >> B1].get(index)))
+                return -1;
+            return index;
+        } else {
+            for (int i = start; i < start + length; i++) {
+                if (comp.areEqual(e, blocks[i >> B1].get(i))) return i;
+            }
+            return -1;
         }
-        return -1;
     }
 
     /**
@@ -369,41 +650,29 @@ public class FastTable<E> extends FastCollection<E> implements
      * @return the index in this table of the last occurrence of the specified
      *         element, or -1 if this table does not contain this element.
      */
-    public final int lastIndexOf(Object element) {
-        final FastComparator comp = this.getComparator();
-        for (int i = size - 1; i >= 0; i--) {
-            if (comp.areEqual(element, blocks[i >> B1].get(i))) return i;
+    public int lastIndexOf(Object element) {
+        return lastIndexOf((E) element, 0, size);
+    }
+
+    final int lastIndexOf(E e, int start, int length) {
+        final FastComparator<E> comp = comparator();
+        for (int i = start + length - 1; i >= start; i--) {
+            if (comp.areEqual(e, blocks[i >> B1].get(i))) return i;
         }
         return -1;
     }
 
     /**
-     * Returns an iterator over the elements in this list 
-     * (allocated on the stack when executed in a 
-     * {@link javolution.context.StackContext StackContext}).
-     *
-     * @return an iterator over this list elements.
-     */
-    public Iterator<E> iterator() {
-        return FastTableIterator.valueOf(this, 0, 0, size);
-    }
-
-    /**
-     * Returns a list iterator over the elements in this list 
-     * (allocated on the stack when executed in a 
-     * {@link javolution.context.StackContext StackContext}).
+     * Returns a list iterator over the elements in this list.
      *
      * @return an iterator over this list values.
      */
     public ListIterator<E> listIterator() {
-        return FastTableIterator.valueOf(this, 0, 0, size);
+        return new ListIteratorImpl(this, 0);
     }
 
     /**
-     * Returns a list iterator from the specified position
-     * (allocated on the stack when executed in a 
-     * {@link javolution.context.StackContext StackContext}).
-     * The list iterator being returned does not support insertion/deletion.
+     * Returns a list iterator from the specified position.
      * 
      * @param index the index of first value to be returned from the
      *        list iterator (by a call to the <code>next</code> method).
@@ -413,15 +682,12 @@ public class FastTable<E> extends FastCollection<E> implements
      *         [code](index < 0 || index > size())[/code]
      */
     public ListIterator<E> listIterator(int index) {
-        if ((index < 0) || (index > size))
-            throw new IndexOutOfBoundsException();
-        return FastTableIterator.valueOf(this, index, 0, size);
+        return new ListIteratorImpl(this, index);
     }
 
     /**
-     * Returns a view of the portion of this list between the specified
-     * indexes (instance of {@link FastList} allocated from the "stack" when
-     * executing in a {@link javolution.context.StackContext StackContext}).
+     * Returns a view of the portion of this table between the specified
+     * indexes.
      * If the specified indexes are equal, the returned list is empty. 
      * The returned list is backed by this list, so non-structural changes in
      * the returned list are reflected in this list, and vice-versa. 
@@ -446,342 +712,821 @@ public class FastTable<E> extends FastCollection<E> implements
      * @param toIndex high endpoint (exclusive) of the subList.
      * @return a view of the specified range within this list.
      * 
-     * @throws IndexOutOfBoundsException if [code](fromIndex < 0 ||
-     *          toIndex > size || fromIndex > toIndex)[/code]
+     * @throws IndexOutOfBoundsException if <code>(fromIndex < 0 ||
+     *          toIndex > size || fromIndex > toIndex)</code>
      */
-    public List<E> subList(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex > size) || (fromIndex > toIndex))
-            throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
-                    + ", toIndex: " + toIndex + " for list of size: " + size);
-        return SubTable.valueOf(this, fromIndex, toIndex - fromIndex);
+    public SubTable<E> subList(int fromIndex, int toIndex) {
+        return new SubTable(this, fromIndex, toIndex - fromIndex);
     }
 
+    /////////////////////
+    // Implementation //
+    ////////////////////    
+    private static class Block<T> {
+
+        int offset; // Allows for fast shift.
+
+        T[] data = (T[]) new Object[C0];
+
+        T get(int i) {
+            return data[(i + offset) & M1];
+        }
+
+        void set(int i, T t) {
+            data[(i + offset) & M1] = t;
+        }
+
+    }
+
+    // Returns the "should be" position of the specified element in range [start, end] (ordered)
+    final int indexIfOrderedOf(E element, int start, int length) {
+        if (length == 0) return start;
+        int half = length >> 1;
+        return comparator().compare(element, get(start + half)) <= 0
+                ? indexIfOrderedOf(element, start, half)
+                : indexIfOrderedOf(element, start + half + 1, length - half - 1);
+    }
+
+    final void copy(int srcPos, int srcDest, int length) {
+        // TBD
+    }
+
+    final void ensureCapacity(int minCapacity) {
+        //TBD
+    }
+
+    ///////////////////
+    // Inner Classes //
+    ///////////////////  
     /**
-     * Sorts this table in place (quick sort) using this table 
-     * {@link FastCollection#getComparator() comparator}
-     * (smallest first).
-     * 
-     * @return <code>this</code>
+     * A view over a portion of a fast table (shared or not). 
+     * It is always possible to get a sub-table view over a shared table. 
+     * But shared views over sub-tables are not supported.
      */
-    public FastTable<E> sort() {
-        if (size > 1) {
-            quicksort(0, size - 1, this.getComparator());
-        }
-        return this;
-    }
-    
-    // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
-    //
-    private void quicksort(int first, int last, FastComparator cmp) {
-        int pivIndex = 0;
-        if (first < last) {
-            pivIndex = partition(first, last, cmp);
-            quicksort(first, (pivIndex - 1), cmp);
-            quicksort((pivIndex + 1), last, cmp);
-        }
-    }
+    public static final class SubTable<E> extends FastCollection<E> implements List<E>, RandomAccess {
 
-    private int partition(int f, int l, FastComparator cmp) {
-        int up, down;
-        E piv = get(f);
-        up = f;
-        down = l;
-        do {
-            while (cmp.compare(get(up), piv) <= 0 && up < l) {
-                up++;
-            }
-            while (cmp.compare(get(down), piv) > 0 && down > f) {
-                down--;
-            }
-            if (up < down) { // Swaps.
-                E temp = get(up);
-                set(up, get(down));
-                set(down, temp);
-            }
-        } while (down > up);
-        set(f, get(down));
-        set(down, piv);
-        return down;
-    }
+        private final List<E> that;
 
-    @Override
-    public final int size() {
-        return size;
-    }
+        private final FastTable<E> thatTable;
 
-    @Override
-    public final boolean contains(Object element) {
-        return indexOf(element) >= 0;
-    }
+        private final Shared<E> thatShared;
 
-    // Requires special handling during de-serialization process.
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        final int readSize = stream.readInt();
-        for (int i = 0; i < readSize; i++) {
-            addLast((E) stream.readObject());
-        }
-    }
+        private final int start;
 
-    // Requires special handling during serialization process.
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeInt(size);
-        for (int i = 0; i < size; i++) {
-            stream.writeObject(get(i));
-        }
-    }
+        private int length;
 
-    /**
-     * Increases this table capacity.
-     */
-    private void ensureCapacity(int capacity) {
-        if (this.capacity >= capacity) return;
-
-
-        final Block<E> block = blocks[size >> B1];
-
-
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
-            public void run() {
-                if (_capacity < C1) { // For small capacity, resize.
-                    _capacity <<= 1;
-                    E[] tmp = (E[]) new Object[_capacity];
-                    System.arraycopy(_low, 0, tmp, 0, _size);
-                    _low = tmp;
-                    _high[0] = tmp;
-                } else { // Add a new low block of 1024 elements.
-                    int j = _capacity >> B1;
-                    if (j >= _high.length) { // Resizes _high.
-                        E[][] tmp = (E[][]) new Object[_high.length * 2][];
-                        System.arraycopy(_high, 0, tmp, 0, _high.length);
-                        _high = tmp;
-                    }
-                    _high[j] = (E[]) new Object[C1];
-                    _capacity += C1;
-                }
-            }
-        });
-    }
-
-    /**
-     * This inner class implements a sub-table.
-     */
-    private static final class SubTable extends FastCollection implements List,
-            RandomAccess {
-
-        private static final ObjectFactory FACTORY = new ObjectFactory() {
-            protected Object create() {
-                return new SubTable();
-            }
-
-            protected void cleanup(Object obj) {
-                SubTable st = (SubTable) obj;
-                st._table = null;
-            }
-        };
-        private FastTable _table;
-        private int _offset;
-        private int _size;
-
-        public static SubTable valueOf(FastTable table, int offset, int size) {
-            SubTable subTable = (SubTable) FACTORY.object();
-            subTable._table = table;
-            subTable._offset = offset;
-            subTable._size = size;
-            return subTable;
+        // Sub-tables can only be based on fast tables or shared tables.
+        SubTable(List<E> that, int start, int length) {
+            if ((start < 0) || (start + length > that.size()) || (length > 0))
+                throw new IndexOutOfBoundsException("fromIndex: " + start
+                        + ", toIndex: " + (start + length)
+                        + " for list of size: " + that.size());
+            this.that = that;
+            this.thatTable = (that instanceof FastTable) ? (FastTable) that : null;
+            this.thatShared = (that instanceof Shared) ? (Shared) that : null;
+            this.start = start;
+            this.length = length;
         }
 
+        public Unmodifiable<E> unmodifiable() {
+            return new Unmodifiable<E>(this);
+        }
+
+        /**
+         * Throws UnsupportedOperationException; it is always possible to get 
+         * a sub-table view over a shared table, but shared views over 
+         * sub-tables are not supported.
+         * 
+         * @throws UnsupportedOperationException
+         */
+        public FastCollection<E> shared() {
+            throw new UnsupportedOperationException(
+                    "It is always possible to get a sub-table view over a shared"
+                    + " table. But shared views over sub-tables are not supported.");
+        }
+
+        @Override
+        public FastComparator<E> comparator() {
+            return thatTable != null ? thatTable.comparator() : thatShared.comparator();
+        }
+
+        @Override
+        public boolean isOrdered() {
+            return thatTable != null ? thatTable.isOrdered() : thatShared.isOrdered();
+        }
+
+        public <R> FastCollection<R> forEach(Functor<E, R> functor) {
+            return thatTable != null ? thatTable.forEach(functor, start, length)
+                    : thatShared.forEach(functor, start, length);
+        }
+
+        public void doWhile(Predicate<E> predicate) {
+            if (thatTable != null) thatTable.doWhile(predicate, start, length);
+            else thatShared.doWhile(predicate, start, length);
+        }
+
+        public boolean removeAll(Predicate<E> predicate) {
+            return thatTable != null ? thatTable.removeAll(predicate, start, length)
+                    : thatShared.removeAll(predicate, start, length);
+        }
+
+        public ListIterator<E> iterator() {
+            return new ListIteratorImpl(this, 0);
+        }
+
+        @Override
+        public boolean add(E element) {
+            that.add(start + length++, element);
+            return true;
+        }
+
+        @Override
+        public boolean remove(Object element) {
+            return thatTable != null ? thatTable.remove((E) element, start, length--)
+                    : thatShared.remove((E) element, start, length--);
+        }
+
+        @Override
+        public boolean contains(Object element) {
+            return thatTable != null ? thatTable.contains((E) element, start, length)
+                    : thatShared.contains((E) element, start, length);
+        }
+
+        @Override
+        public void clear() {
+            if (thatTable != null) thatTable.clear(start, length);
+            else
+                thatShared.clear(start, length);
+            length = 0;
+        }
+
+        @Override
         public int size() {
-            return _size;
+            return length;
         }
 
-        public boolean addAll(int index, Collection values) {
-            throw new UnsupportedOperationException(
-                    "Insertion not supported, thread-safe collections.");
+        //
+        // List Specifics 
+        //
+        public boolean addAll(int index, Collection<? extends E> c) {
+            length += c.size();
+            return that.addAll(index + start, c);
         }
 
-        public Object get(int index) {
-            if ((index < 0) || (index >= _size))
-                throw new IndexOutOfBoundsException("index: " + index);
-            return _table.get(index + _offset);
+        public E get(int index) {
+            return that.get(index + start);
         }
 
-        public Object set(int index, Object value) {
-            if ((index < 0) || (index >= _size))
-                throw new IndexOutOfBoundsException("index: " + index);
-            return _table.set(index + _offset, value);
+        public E set(int index, E element) {
+            return that.set(index + start, element);
         }
 
-        public void add(int index, Object element) {
-            throw new UnsupportedOperationException(
-                    "Insertion not supported, thread-safe collections.");
+        public void add(int index, E element) {
+            length++;
+            that.add(index + start, element);
         }
 
-        public Object remove(int index) {
-            throw new UnsupportedOperationException(
-                    "Deletion not supported, thread-safe collections.");
+        public E remove(int index) {
+            length--;
+            return that.remove(index + start);
         }
 
-        public int indexOf(Object value) {
-            final FastComparator comp = _table.getValueComparator();
-            for (int i = -1; ++i < _size;) {
-                if (comp.areEqual(value, _table.get(i + _offset)))
-                    return i;
-            }
-            return -1;
+        public int indexOf(Object o) {
+            return thatTable != null ? thatTable.indexOf((E) o, start, length)
+                    : thatShared.indexOf((E) o, start, length);
         }
 
-        public int lastIndexOf(Object value) {
-            final FastComparator comp = _table.getValueComparator();
-            for (int i = _size; --i >= 0;) {
-                if (comp.areEqual(value, _table.get(i + _offset)))
-                    return i;
-            }
-            return -1;
+        public int lastIndexOf(Object o) {
+            return thatTable != null ? thatTable.lastIndexOf((E) o, start, length)
+                    : thatShared.lastIndexOf((E) o, start, length);
         }
 
-        public ListIterator listIterator() {
-            return listIterator(0);
+        public ListIterator<E> listIterator() {
+            return new ListIteratorImpl(this, 0);
         }
 
-        public ListIterator listIterator(int index) {
-            if ((index >= 0) && (index <= _size)) {
-                return FastTableIterator.valueOf(_table, index + _offset,
-                        _offset, _offset + _size);
-            } else {
-                throw new IndexOutOfBoundsException("index: " + index
-                        + " for table of size: " + _size);
-            }
+        public ListIterator<E> listIterator(int index) {
+            return new ListIteratorImpl(this, index);
         }
 
-        public List subList(int fromIndex, int toIndex) {
-            if ((fromIndex < 0) || (toIndex > _size) || (fromIndex > toIndex))
-                throw new IndexOutOfBoundsException("fromIndex: " + fromIndex
-                        + ", toIndex: " + toIndex + " for list of size: "
-                        + _size);
-            return SubTable.valueOf(_table, _offset + fromIndex, toIndex
-                    - fromIndex);
+        public SubTable<E> subList(int fromIndex, int toIndex) {
+            return new SubTable(that, start + fromIndex, toIndex - fromIndex);
         }
+
     }
 
     /**
-     * This inner class implements a fast table iterator.
+     * An unmodifiable/{@link Immutable immutable} view over a table or 
+     * a sub-table. 
      */
-    private static final class FastTableIterator implements ListIterator {
+    public static final class Unmodifiable<E> extends FastCollection<E> implements List<E>, RandomAccess, Immutable {
 
-        private static final ObjectFactory FACTORY = new ObjectFactory() {
-            protected Object create() {
-                return new FastTableIterator();
+        private final FastCollection<E> that;
+
+        private final List<E> thatList;
+
+        Unmodifiable(FastCollection<E> that) {
+            this.that = that;
+            this.thatList = (List<E>) that;
+        }
+
+        public Unmodifiable<E> unmodifiable() {
+            return this;
+        }
+
+        public Unmodifiable<E> shared() {
+            return this; // Immutable instances can be shared.
+        }
+
+        @Override
+        public FastComparator<E> comparator() {
+            return that.comparator();
+        }
+
+        @Override
+        public boolean isOrdered() {
+            return that.isOrdered();
+        }
+
+        public <R> FastCollection<R> forEach(Functor<E, R> functor) {
+            return that.forEach(functor);
+        }
+
+        public void doWhile(Predicate<E> predicate) {
+            that.doWhile(predicate);
+        }
+
+        public boolean removeAll(Predicate<E> predicate) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        public ListIteratorImpl<E> iterator() {
+            return new ListIteratorImpl(this, 0);
+        }
+
+        @Override
+        public boolean add(E element) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        @Override
+        public boolean remove(Object element) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        @Override
+        public boolean contains(Object element) {
+            return that.contains(element);
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        @Override
+        public int size() {
+            return that.size();
+        }
+
+        //
+        // List Specifics 
+        //
+        public boolean addAll(int index, Collection<? extends E> c) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        public E get(int index) {
+            return thatList.get(index);
+        }
+
+        public E set(int index, E element) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        public void add(int index, E element) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        public E remove(int index) {
+            throw new UnsupportedOperationException("Unmodifiable.");
+        }
+
+        public int indexOf(Object o) {
+            return thatList.indexOf(o);
+        }
+
+        public int lastIndexOf(Object o) {
+            return thatList.lastIndexOf(o);
+        }
+
+        public ListIterator<E> listIterator() {
+            return new ListIteratorImpl(this, 0);
+        }
+
+        public ListIterator<E> listIterator(int index) {
+            return new ListIteratorImpl(this, index);
+        }
+
+        public Unmodifiable<E> subList(int fromIndex, int toIndex) {
+            if (that instanceof FastTable)
+                return ((FastTable) that).subList(fromIndex, toIndex).unmodifiable();
+            if (that instanceof SubTable)
+                return ((SubTable) that).subList(fromIndex, toIndex).unmodifiable();
+            throw new UnsupportedOperationException("SubList of " + that.getClass());
+        }
+
+    }
+
+    /**
+     * A shared view over a fast table. It uses {@link ReentrantReadWriteLock 
+     * read-write lock} in order to support concurrent read of the table.
+     * Iterators methods have been deprecated since they don't prevent 
+     * concurrent modifications. Closures (e.g. {@link FastTable#doWhile}) 
+     * are the preferred mean of iterating over a shared table.
+     */
+    public static final class Shared<E> extends FastCollection<E> implements List<E>, RandomAccess {
+
+        private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+
+        private final Lock r = rwl.readLock();
+
+        private final Lock w = rwl.writeLock();
+
+        final FastTable<E> that;
+
+        Shared(FastTable<E> that) {
+            this.that = that;
+        }
+
+        public Unmodifiable<E> unmodifiable() {
+            return new Unmodifiable(that); // shared().unmodifiable() equivalent to unmodifiable() 
+        }
+
+        public Shared<E> shared() {
+            return this;
+        }
+
+        @Override
+        public FastComparator<E> comparator() {
+            return that.comparator();
+        }
+
+        @Override
+        public boolean isOrdered() {
+            return that.isOrdered();
+        }
+
+        public <R> FastTable<R> forEach(Functor<E, R> functor) {
+            r.lock();
+            try {
+                return that.forEach(functor);
+            } finally {
+                r.unlock();
             }
+        }
 
-            protected void cleanup(Object obj) {
-                FastTableIterator i = (FastTableIterator) obj;
-                i._table = null;
-                i._low = null;
-                i._high = null;
+        public void doWhile(Predicate<E> predicate) {
+            r.lock();
+            try {
+                that.doWhile(predicate);
+            } finally {
+                r.unlock();
             }
-        };
-        private FastTable _table;
-        private int _currentIndex;
-        private int _start; // Inclusive.
-        private int _end; // Exclusive.
-        private int _nextIndex;
-        private Object[] _low;
-        private Object[][] _high;
+        }
 
-        public static FastTableIterator valueOf(FastTable table, int nextIndex,
-                int start, int end) {
-            FastTableIterator iterator = (FastTableIterator) FACTORY.object();
-            iterator._table = table;
-            iterator._start = start;
-            iterator._end = end;
-            iterator._nextIndex = nextIndex;
-            iterator._low = table._low;
-            iterator._high = table._high;
-            iterator._currentIndex = -1;
-            return iterator;
+        public boolean removeAll(Predicate<E> predicate) {
+            w.lock();
+            try {
+                return that.removeAll(predicate);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * @deprecated Use of closures recommended to iterate over {@link FastCollection}.
+         */
+        @Deprecated
+        public ListIterator<E> iterator() {
+            return new ListIteratorImpl(this, 0);
+        }
+
+        @Override
+        public boolean add(E element) {
+            w.lock();
+            try {
+                return that.add(element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        @Override
+        public boolean remove(Object element) {
+            w.lock();
+            try {
+                return that.remove(element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        @Override
+        public boolean contains(Object element) {
+            r.lock();
+            try {
+                return that.contains(element);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        @Override
+        public void clear() {
+            w.lock();
+            try {
+                that.clear();
+            } finally {
+                w.unlock();
+            }
+        }
+
+        @Override
+        public int size() {
+            r.lock();
+            try {
+                return that.size();
+            } finally {
+                r.unlock();
+            }
+        }
+
+        //
+        // List Specifics 
+        //
+        public boolean addAll(int index, Collection<? extends E> c) {
+            w.lock();
+            try {
+                return that.addAll(index, c);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        public E get(int index) {
+            r.lock();
+            try {
+                return that.get(index);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        public E set(int index, E element) {
+            w.lock();
+            try {
+                return that.set(index, element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        public void add(int index, E element) {
+            w.lock();
+            try {
+                that.add(index, element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        public E remove(int index) {
+            w.lock();
+            try {
+                return that.remove(index);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        public int indexOf(Object o) {
+            r.lock();
+            try {
+                return that.indexOf(o);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        public int lastIndexOf(Object o) {
+            r.lock();
+            try {
+                return that.lastIndexOf(o);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        /**
+         * @deprecated Use of closures recommended to iterate over {@link FastCollection}.
+         */
+        @Deprecated
+        public ListIterator<E> listIterator() {
+            return new ListIteratorImpl(this, 0);
+        }
+
+        /**
+         * @deprecated Use of closures recommended to iterate over {@link FastCollection}.
+         */
+        @Deprecated
+        public ListIterator<E> listIterator(int index) {
+            return new ListIteratorImpl(this, index);
+        }
+
+        public SubTable<E> subList(int fromIndex, int toIndex) {
+            return new SubTable(that, fromIndex, toIndex - fromIndex);
+        }
+
+        //
+        // Convenient method of FastTable exported here (e.g. Deque)
+        //
+        /**
+         * See {@link FastTable#getFirst() }
+         */
+        public E getFirst() {
+            r.lock();
+            try {
+                return that.getFirst();
+            } finally {
+                r.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#getLast() }
+         */
+        public E getLast() {
+            r.lock();
+            try {
+                return that.getLast();
+            } finally {
+                r.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#addFirst() }
+         */
+        public void addFirst(E element) {
+            w.lock();
+            try {
+                that.addFirst(element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#addLast() }
+         */
+        public void addLast(E element) {
+            w.lock();
+            try {
+                that.addLast(element);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#removeFirst() }
+         */
+        public E removeFirst() {
+            w.lock();
+            try {
+                return that.removeFirst();
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#removeLast() }
+         */
+        public E removeLast() {
+            w.lock();
+            try {
+                return that.removeLast();
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#pollFirst() }
+         */
+        public E pollFirst() {
+            w.lock();
+            try {
+                return that.pollFirst();
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#pollLast() }
+         */
+        public E pollLast() {
+            w.lock();
+            try {
+                return that.pollLast();
+            } finally {
+                w.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#peekFirst() }
+         */
+        public E peekFirst() {
+            r.lock();
+            try {
+                return that.peekFirst();
+            } finally {
+                r.unlock();
+            }
+        }
+
+        /**
+         * See {@link FastTable#peekLast() }
+         */
+        public E peekLast() {
+            r.lock();
+            try {
+                return that.peekLast();
+            } finally {
+                r.unlock();
+            }
+        }
+
+        //
+        // Methods useful for Sub-Tables Views over Shared tables.
+        //
+        final <R> FastTable<R> forEach(Functor<E, R> functor, int start, int length) {
+            r.lock();
+            try {
+                return that.forEach(functor, start, length);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        final void doWhile(Predicate<E> predicate, int start, int length) {
+            r.lock();
+            try {
+                that.doWhile(predicate, start, length);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        final boolean removeAll(Predicate<E> predicate, int start, int length) {
+            w.lock();
+            try {
+                return that.removeAll(predicate, start, length);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        final boolean remove(E e, int start, int length) {
+            w.lock();
+            try {
+                return that.remove(e, start, length);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        final boolean contains(E e, int start, int length) {
+            r.lock();
+            try {
+                return that.contains(e, start, length);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        final void clear(int start, int length) {
+            w.lock();
+            try {
+                that.clear(start, length);
+            } finally {
+                w.unlock();
+            }
+        }
+
+        final int indexOf(E e, int start, int length) {
+            r.lock();
+            try {
+                return that.indexOf(e, start, length);
+            } finally {
+                r.unlock();
+            }
+        }
+
+        final int lastIndexOf(E e, int start, int length) {
+            r.lock();
+            try {
+                return that.lastIndexOf(e, start, length);
+            } finally {
+                r.unlock();
+            }
+        }
+
+    }
+
+    /**
+     * This utility class provides an iterator over any list instance with 
+     * random access.
+     */
+    static final class ListIteratorImpl<E> implements ListIterator<E> {
+
+        private final List<E> that;
+
+        private int nextIndex;
+
+        private int currentIndex = -1;
+
+        private int end;
+
+        public ListIteratorImpl(List<E> that, int index) {
+            if ((index < 0) || (index > that.size()))
+                throw new IndexOutOfBoundsException();
+            this.that = that;
+            this.nextIndex = index;
+            this.end = that.size();
         }
 
         public boolean hasNext() {
-            return (_nextIndex != _end);
+            return (nextIndex < end);
         }
 
-        public Object next() {
-            if (_nextIndex == _end)
+        public E next() {
+            if (nextIndex >= end)
                 throw new NoSuchElementException();
-            final int i = _currentIndex = _nextIndex++;
-            return i < C1 ? _low[i] : _high[i >> B1][i & M1];
+            currentIndex = nextIndex++;
+            return that.get(currentIndex);
         }
 
         public int nextIndex() {
-            return _nextIndex;
+            return nextIndex;
         }
 
         public boolean hasPrevious() {
-            return _nextIndex != _start;
+            return nextIndex > 0;
         }
 
-        public Object previous() {
-            if (_nextIndex == _start)
+        public E previous() {
+            if (nextIndex <= 0)
                 throw new NoSuchElementException();
-            final int i = _currentIndex = --_nextIndex;
-            return i < C1 ? _low[i] : _high[i >> B1][i & M1];
+            currentIndex = --nextIndex;
+            return that.get(currentIndex);
         }
 
         public int previousIndex() {
-            return _nextIndex - 1;
+            return nextIndex - 1;
         }
 
-        public void add(Object o) {
-            _table.add(_nextIndex++, o);
-            _end++;
-            _currentIndex = -1;
+        public void add(E e) {
+            that.add(nextIndex++, e);
+            end++;
+            currentIndex = -1;
         }
 
-        public void set(Object o) {
-            if (_currentIndex >= 0) {
-                _table.set(_currentIndex, o);
+        public void set(E e) {
+            if (currentIndex >= 0) {
+                that.set(currentIndex, e);
             } else {
                 throw new IllegalStateException();
             }
         }
 
         public void remove() {
-            if (_currentIndex >= 0) {
-                _table.remove(_currentIndex);
-                _end--;
-                if (_currentIndex < _nextIndex) {
-                    _nextIndex--;
+            if (currentIndex >= 0) {
+                that.remove(currentIndex);
+                end--;
+                if (currentIndex < nextIndex) {
+                    nextIndex--;
                 }
-                _currentIndex = -1;
+                currentIndex = -1;
             } else {
                 throw new IllegalStateException();
             }
         }
+
     }
 
-    // Shifts element from the specified index to the right (higher indexes). 
-    private void shiftRight(int index, int shift) {
-        while (_size + shift >= _capacity) {
-            increaseCapacity();
-        }
-        for (int i = _size; --i >= index;) {
-            final int dest = i + shift;
-            _high[dest >> B1][dest & M1] = _high[i >> B1][i & M1];
-        }
-    }
-
-    // Shifts element from the specified index to the left (lower indexes). 
-    private void shiftLeft(int index, int shift) {
-        for (int i = index; i < _size; i++) {
-            final int dest = i - shift;
-            _high[dest >> B1][dest & M1] = _high[i >> B1][i & M1];
-        }
-    }
-
-    // For inlining of default comparator. 
-    private static boolean defaultEquals(Object o1, Object o2) {
-        return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
-    }
-    private static final long serialVersionUID = 1L;
 }

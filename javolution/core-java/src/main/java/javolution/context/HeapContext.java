@@ -35,6 +35,9 @@ import javolution.text.TypeFormat;
  */
 public abstract class HeapContext extends AllocatorContext<HeapContext> {
 
+    // Initialization always performed on the heap, since StackContext 
+    // requires this class to be initialized first.
+    
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).

@@ -299,6 +299,7 @@ javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=un
 javolution/core-java/src/main/java/javolution/lang/Functor.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Predicate.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain

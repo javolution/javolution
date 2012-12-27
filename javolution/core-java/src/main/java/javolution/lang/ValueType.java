@@ -42,7 +42,7 @@ import javolution.annotation.StackSafe;
  * @version 6.0, December 12, 2012
  */
 @StackSafe
-public interface ValueType<T extends ValueType> extends Immutable, Copyable<T> {
+public interface ValueType<T> extends Immutable, Copyable<T> {
     // All implementing classes should ensure that they are @StackSafe (inheritable annotation)
     // In particular, any static field has to be allocated on the heap (see HeapContext).
 }

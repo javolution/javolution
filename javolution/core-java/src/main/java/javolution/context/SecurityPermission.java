@@ -29,6 +29,9 @@ import javolution.annotation.StackSafe;
 @StackSafe
 public class SecurityPermission<T> {
 
+    // Start Initialization (forces allocation on the heap for static fields).
+    private static final HeapContext INIT_CTX = HeapContext.enter();
+
     public static SecurityPermission<?> ALL = new SecurityPermission(null);
 
     private final Class<T> category;
@@ -115,4 +118,8 @@ public class SecurityPermission<T> {
                 + (instance != null ? instance.hashCode() : 0);
     }
 
+   // End of class initialization.
+    static {
+        INIT_CTX.exit();
+    }
 }

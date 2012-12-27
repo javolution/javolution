@@ -146,7 +146,8 @@ public abstract class FastComparator<T> implements Comparator<T> {
     /**
      * Returns the hash code for the specified object (consistent with 
      * {@link #areEqual}). Two objects considered {@link #areEqual equal} have 
-     * the same hash code. 
+     * the same hash code. The hash code of <code>null</code> is always 
+     * <code>0</code>.
      * 
      * @param  obj the object to return the hashcode for.
      * @return the hashcode for the specified object.
