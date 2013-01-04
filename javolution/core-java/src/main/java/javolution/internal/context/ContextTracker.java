@@ -9,7 +9,6 @@
 package javolution.internal.context;
 
 import javolution.context.AbstractContext;
-import javolution.context.LogContext;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -22,12 +21,18 @@ import org.osgi.util.tracker.ServiceTracker;
 public final class ContextTracker<C extends AbstractContext> {
 
     ServiceTracker<C, C> tracker;
-    final Class<C> type;
-    final C defaultImpl;
 
-    public ContextTracker(Class<C> type, C defaultImpl) {
+    final Class<C> type;
+
+    final Class<C> defaultImplClass;
+
+    C defaultImpl;
+
+    // This constructor does not cause the initialization/creation of the 
+    // default implementation (avoid class initialization circularities.
+    public ContextTracker(Class<C> type, Class<C> defaultImplClass) {
         this.type = type;
-        this.defaultImpl = defaultImpl;
+        this.defaultImplClass = defaultImplClass;
     }
 
     public synchronized void activate(BundleContext bc) {
@@ -41,26 +46,30 @@ public final class ContextTracker<C extends AbstractContext> {
         tracker = null;
     }
 
-    public C getService(boolean waitForService) {
+    public synchronized C getService(boolean waitForService) {
         try {
-            ServiceTracker<C, C> trk = tracker;
-            if (trk != null) {
-                if (waitForService) {
-                    synchronized (this) {
-                        while (tracker == null) {
-                            this.wait();
-                        }
-                        trk = tracker;
-                    }
-                } else {
-                    return defaultImpl;
+            if (waitForService && (tracker == null)) {
+                while (tracker == null) {
+                    this.wait();
                 }
             }
-            C ctx = waitForService ? trk.waitForService(0) : trk.getService();
-            return (ctx != null) ? ctx : defaultImpl;
+            if (tracker != null) { // Activated.
+                if (waitForService) return tracker.waitForService(0);
+                C ctx = tracker.getService();
+                if (ctx != null) return ctx;
+            }
         } catch (InterruptedException ex) {
-            LogContext.error(ex);
+            // Stop waiting. 
+        }
+        // No OSGi service.
+        if (defaultImpl != null) return defaultImpl;
+        try {         
+            defaultImpl = defaultImplClass.newInstance();
             return defaultImpl;
+        } catch (InstantiationException ex) {
+            throw new RuntimeException(ex);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 
 /**
- * <p> This class represents a UTF-8 stream writer.</p>
+ * <p> A UTF-8 stream writer.</p>
  *
  * <p> This writer supports surrogate <code>char</code> pairs (representing
  *     characters in the range [U+10000 .. U+10FFFF]). It can also be used

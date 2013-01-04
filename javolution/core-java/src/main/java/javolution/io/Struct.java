@@ -14,13 +14,12 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import javolution.context.LocalParameter;
-import javolution.lang.Configurable;
 import javolution.lang.MathLib;
 import javolution.text.TextBuilder;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents a <code>C/C++ struct</code>; it confers
+ * <p> Equivalent to a  <code>C/C++ struct</code>; this class confers
  *     interoperability between Java classes and C/C++ struct.</p>
  *
  * <p> Unlike <code>C/C++</code>, the storage layout of Java objects is not

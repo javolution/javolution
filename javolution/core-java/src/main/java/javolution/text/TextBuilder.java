@@ -8,14 +8,11 @@
  */
 package javolution.text;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.io.Writer;
-import javolution.io.UTF8StreamWriter;
 import javolution.lang.MathLib;
 
 /**
- * <p> This class represents an {@link Appendable} text whose capacity expands 
+ * <p> An {@link Appendable} text whose capacity expands 
  *     gently without incurring expensive resize/copy operations ever.</p>
  *     
  * <p> This class is not intended for large documents manipulations which 

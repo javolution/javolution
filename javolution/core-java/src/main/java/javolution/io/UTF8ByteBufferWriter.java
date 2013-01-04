@@ -15,8 +15,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 
 /**
- * <p> This class represents a UTF-8 <code>j2me.nio.ByteBuffer</code> 
- *     writer.</p>
+ * <p> A UTF-8 <code>java.nio.ByteBuffer</code> writer.</p>
  *
  * <p> This writer supports surrogate <code>char</code> pairs (representing
  *     characters in the range [U+10000 .. U+10FFFF]). It can also be used

@@ -13,9 +13,8 @@ import javolution.annotation.StackSafe;
 import javolution.context.HeapContext;
 
 /**
- * <p> This utility class provides a {@link StackSafe} implementation of 
- *     the math library (and can be used when objects allocations are performed 
- *     on the stack).</p> 
+ * <p> An utility class providing a {@link StackSafe} implementation of 
+ *     the math library.</p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
@@ -24,87 +23,10 @@ import javolution.context.HeapContext;
 @StackSafe
 public final class MathLib {
 
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
-
     /**
      * Default constructor.
      */
     private MathLib() {
-    }
-
-    /**
-     * Returns a pseudo random <code>int</code> value in the range
-     * <code>[min, max]</code> (fast and thread-safe without synchronization).
-     * 
-     * @param min the minimum value inclusive.
-     * @param max the maximum value exclusive.
-     * @return a pseudo random number in the range <code>[min, max]</code>.
-     */
-    public static int random(int min, int max) {
-        int next = RANDOM.nextInt();
-        if ((next >= min) && (next <= max))
-            return next;
-        next += Integer.MIN_VALUE;
-        if ((next >= min) && (next <= max))
-            return next;
-        // We should not have interval overflow as the interval has to be less 
-        // or equal to Integer.MAX_VALUE (otherwise we would have exited before).
-        final int interval = 1 + max - min; // Positive.
-        if (interval <= 0)
-            throw new Error("Interval [" + min + ".." + max + "] error"); // In case.
-        return MathLib.abs(next % interval) + min;
-    }
-
-    private static final Random RANDOM = new Random();
-
-    /**
-     * Returns a pseudo random <code>long</code> value in the range
-     * <code>[min, max]</code> (fast and thread-safe without synchronization).
-     * 
-     * @param min the minimum value inclusive.
-     * @param max the maximum value inclusive.
-     * @return a pseudo random number in the range <code>[min, max]</code>.
-     */
-    public static long random(long min, long max) {
-        long next = RANDOM.nextLong();
-        if ((next >= min) && (next <= max))
-            return next;
-        next += Long.MIN_VALUE;
-        if ((next >= min) && (next <= max))
-            return next;
-        // We should not have interval overflow as the interval has to be less 
-        // or equal to Long.MAX_VALUE (otherwise we would have exited before).
-        final long interval = 1L + max - min; // Positive.
-        if (interval <= 0)
-            throw new Error("Interval error"); // Sanity check.
-        return MathLib.abs(next % interval) + min;
-    }
-
-    /**
-     * Returns a pseudo random <code>float</code> value in the range
-     * <code>[min, max]</code> (fast and thread-safe without synchronization).
-     * 
-     * @param min the minimum value inclusive.
-     * @param max the maximum value inclusive.
-     * @return a pseudo random number in the range <code>[min, max]</code>.
-     */
-    public static float random(float min, float max) {
-        return (float) random((double) min, (double) max);
-    }
-
-    /**
-     * Returns a pseudo random <code>double</code> value in the range
-     * <code>[min, max]</code> (fast and thread-safe without synchronization).
-     * 
-     * @param min the minimum value inclusive.
-     * @param max the maximum value inclusive.
-     * @return a pseudo random number in the range <code>[min, max]</code>.
-     */
-    public static double random(double min, double max) {
-        double next = RANDOM.nextDouble(); // 0.0 .. 1.0
-        return min + (next * max) - (next * min);
-        // Due to potential numeric errors, both min and max are possible.
     }
 
     /**
@@ -1021,18 +943,6 @@ public final class MathLib {
     }
 
     /**
-     * Returns a random number between zero and one.
-     *  
-     * @return  a <code>double</code> greater than or equal 
-     *          to <code>0.0</code> and less than <code>1.0</code>.
-     **/
-    public static double random() {
-        return random(0, Integer.MAX_VALUE) * NORMALIZATION_FACTOR;
-    }
-
-    private static final double NORMALIZATION_FACTOR = -1.0 / Integer.MIN_VALUE;
-
-    /**
      * Returns the absolute value of the specified <code>int</code> argument.
      *
      * @param i the <code>int</code> value.
@@ -1580,11 +1490,6 @@ public final class MathLib {
             y = Double.longBitsToDouble(yBits);
             return y * twom1000;
         }
-    }
-
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
     }
 
 }

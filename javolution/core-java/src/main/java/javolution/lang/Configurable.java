@@ -9,13 +9,14 @@
 package javolution.lang;
 
 import java.lang.reflect.Field;
+import javolution.annotation.StackSafe;
 import javolution.context.LogContext;
 import javolution.context.SecurityContext;
 import javolution.context.SecurityPermission;
 
 /**
- *  <p> This class identifies the element which are configurable in your 
- *      code without presupposing how this configuration is done.</p>
+ *  <p> An element which is configurable without presupposing how the
+ *      configuration is done.</p>
 
  *  <p> Does your class need to know or has to assume that the configuration is
  *      coming from system properties ??</p>
@@ -55,6 +56,7 @@ import javolution.context.SecurityPermission;
  * @version 6.0, December 12, 2012
  * @see     javolution.osgi.ConfigurableService
  */
+@StackSafe(initialization=false)
 public abstract class Configurable<T> {
 
     /**

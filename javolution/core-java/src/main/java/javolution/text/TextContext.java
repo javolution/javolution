@@ -10,13 +10,11 @@ package javolution.text;
 
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
-import javolution.context.HeapContext;
 import static javolution.internal.osgi.JavolutionActivator.TEXT_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
 
 /**
- * <p> This abstract class represents the current context for plain text 
- *     parsing/formatting.</p>
+ * <p> A context for plain text parsing/formatting.</p>
  * 
  * <p> As a minimum, implementations of this class should provide a {@link TextFormat} 
  *     for the following classes:
@@ -41,9 +39,6 @@ import javolution.lang.Configurable;
  * @version 6.0 December 12, 2012
  */
 public abstract class TextContext extends FormatContext<TextContext> {
-
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -119,10 +114,5 @@ public abstract class TextContext extends FormatContext<TextContext> {
     @Override
     public void exit() {
         super.exit();
-    }
-
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
     }
 }

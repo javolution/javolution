@@ -9,7 +9,7 @@
 package javolution.io;
 
 /**
- * <p> This class represents a <code>C/C++ union</code>; it works in the same
+ * <p> Equivalent to <code>C/C++ union</code>; this class works in the same
  *     way as {@link Struct} (sub-class) except that all members are mapped
  *     to the same location in memory.</p>
  * <p> Here is an example of C union: [code]

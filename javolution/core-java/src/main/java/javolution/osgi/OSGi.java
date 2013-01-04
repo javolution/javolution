@@ -13,9 +13,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 
 /**
- *  <p> This class represents a light OSGi framework which can be
- *      used to run bundles as "standard" java applications. This can 
- *      be particularly useful for testing/debugging purpose.
+ *  <p> A light OSGi framework which to run bundles as "standard" 
+ *      java applications (for testing/debugging purpose).
  *      It requires that the bundle activator classes are accessible (public)
  *      [code]
  *      public void main(String[] args) throws Exception {

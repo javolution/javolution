@@ -18,8 +18,8 @@ import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 
 /**
- *  <p> This class represents the service responsible for the configuration
- *      of {@link Configurable} elements.</p>
+ *  <p> A service responsible for the configuration of {@link Configurable}
+ *      elements.</p>
 
  *  <p> Bundles holding {@link Configurable} elements should register 
  *      a {@link ConfigurableService} to the framework as a ManagedService.

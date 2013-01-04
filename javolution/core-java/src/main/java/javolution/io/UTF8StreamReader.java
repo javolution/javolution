@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.io.Reader;
 
 /**
- * <p> This class represents a UTF-8 stream reader.</p>
+ * <p> A UTF-8 stream reader.</p>
  *
  * <p> This reader supports surrogate <code>char</code> pairs (representing
  *     characters in the range [U+10000 .. U+10FFFF]). It can also be used

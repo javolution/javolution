@@ -9,10 +9,10 @@
 package javolution.context;
 
 /**
- * <p> This abstract class represents a serializer/deserializer context.
- *     The actual format (plain text, XML, JSON, ...) is defined by sub-classes.
+ * <p> The parent class for all serializer/deserializer contexts.
+ *     The context format type (plain text, XML, JSON, ...) is specified by sub-classes.
  *     Implementations should be able to use reflection to retrieve the default 
- *     formats for classes annotated with the {@link javolution.annotation.Format
+ *     formats for the classes annotated with the {@link javolution.annotation.Format
  *     Format} tag.
  *     [code]
  *     @Format(text=Complex.TextFormat.class, xml=Complex.XMLFormat.class)

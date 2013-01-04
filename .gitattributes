@@ -296,6 +296,7 @@ javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#t
 javolution/core-java/src/main/java/javolution/io/package-info.java -text
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Factory.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Functor.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
@@ -317,12 +318,11 @@ javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastComparator.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/FastList.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/ReentrantLock.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLFormat.java -text svneol=unset#text/plain
@@ -362,10 +362,7 @@ javolution/core-java/src/main/javadoc/javolution/xml/sax/package.html -text
 javolution/core-java/src/main/javadoc/javolution/xml/stream/package.html -text
 javolution/core-java/src/main/javadoc/javolution/xml/ws/package.html -text
 javolution/core-java/src/main/javadoc/overview.html -text
-javolution/core-java/src/test/java/javolution/ContextTestSuite.java -text
-javolution/core-java/src/test/java/javolution/JavolutionTest.java -text
-javolution/core-java/src/test/java/javolution/StructTestSuite.java -text
-javolution/core-java/src/test/java/javolution/TypeFormatTestSuite.java -text
+javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text

@@ -1,12 +1,15 @@
 package javolution.util;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import javolution.annotation.StackSafe;
-import javolution.context.HeapContext;
+import javolution.context.LogContext;
+import javolution.lang.Configurable;
+import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents a comparator to be used for equality as well as 
- *     for ordering; instances of this class provide a hashcode function 
+ * <p> A comparator to be used for equality as well as for ordering.
+ *     Instances of this class provide a hashcode function 
  *     consistent with equal (if two objects {@link #areEqual
  *     are equal}, they have the same {@link #hashCodeOf hashcode}),
  *     equality with <code>null</code> values is supported.</p>
@@ -19,22 +22,53 @@ import javolution.context.HeapContext;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, April 23, 2009
  */
-@StackSafe
-public abstract class FastComparator<T> implements Comparator<T> {
+@StackSafe(initialization=false)
+public abstract class FastComparator<T> implements Comparator<T>, Serializable {
+    
+    /**
+     * Indicates if the system hash code should be rehashed. The default 
+     * value is set according to the result of a test performed during 
+     * class initialization. 
+     */
+    public static final Configurable<Boolean> REHASH_SYSTEM_HASHCODE 
+            = new Configurable(isPoorSystemHash()) {
+                
+        public void configure(CharSequence configuration) {
+            set(TypeFormat.parseBoolean(configuration));
+        }
+    };
 
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
+    private static boolean isPoorSystemHash() {
+        boolean[] dist = new boolean[64]; // Length power of 2.
+        for (int i = 0; i < dist.length; i++) {
+            dist[new Object().hashCode() & (dist.length - 1)] = true;
+        }
+        int occupied = 0;
+        for (int i = 0; i < dist.length;) {
+            occupied += dist[i++] ? 1 : 0; // Count occupied slots.
+        }
+        boolean rehash = occupied < (dist.length >> 2); // Less than 16 slots on 64.
+        if (rehash) LogContext.info("Poorly distributed system hash code - Rehashing recommended.");
+        return rehash;
+    }    
 
     /**
-     * Holds the default object comparator.
-     * Two objects o1 and o2 are considered {@link #areEqual equal} if and
+     * Returns the default comparator for instances of specified class.
+     * Two instances o1 and o2 are considered {@link #areEqual equal} if and
      * only if <code>o1.equals(o2)</code>. The {@link #compare} method 
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}. 
      */
-    public static final FastComparator<?> DEFAULT = new Default();
+    public static <T> FastComparator<T> defaultValue(Class<T> cls) {
+        return (FastComparator<T>) DEFAULT;
+    }
 
-    private static class Default extends FastComparator {
+    private static final FastComparator<?> DEFAULT = new Default();
+
+    /**
+     * The default comparator.
+     */
+    public static class Default<T> extends FastComparator<T> {
 
         public int hashCodeOf(Object obj) {
             return (obj == null) ? 0 : obj.hashCode();
@@ -51,14 +85,22 @@ public abstract class FastComparator<T> implements Comparator<T> {
     };
 
     /**
-     * Holds the identity comparator. Two objects o1 and o2 are considered 
-     * {@link #areEqual equal} if and only if <code>(o1 == o2)</code>. 
+     * Returns the identity comparator for instances of specified class.
+     * Two instances o1 and o2 are considered {@link #areEqual equal} 
+     * if and only if <code>(o1 == o2)</code>. 
      * The {@link #compare} method throws {@link ClassCastException} if the 
      * specified objects are not {@link Comparable}.
      */
-    public static final FastComparator<?> IDENTITY = new Identity();
+    public static <T> FastComparator<T> identityValue(Class<T> cls) {
+        return (FastComparator<T>) IDENTITY;
+    }
 
-    private static final class Identity extends FastComparator {
+    private static final FastComparator<?> IDENTITY = new Identity();
+
+    /**
+     * The identity comparator.
+     */
+    public static final class Identity<T> extends FastComparator<T> {
 
         public int hashCodeOf(Object obj) {
             return System.identityHashCode(obj);
@@ -75,13 +117,20 @@ public abstract class FastComparator<T> implements Comparator<T> {
     };
 
     /**
-     * Holds a lexicographic comparator for any {@link CharSequence}.
+     * Returns a lexicographic comparator for any {@link CharSequence}.
      * Hashcodes are calculated by taking a sample of few characters instead of 
      * the whole character sequence.
      */
-    public static final FastComparator<CharSequence> LEXICAL = new Lexical();
+    public static <T extends CharSequence> FastComparator<T> lexicalValue(Class<T> cls) {
+        return (FastComparator<T>) LEXICAL;
+    }
 
-    private static final class Lexical extends FastComparator<CharSequence> {
+    private static final FastComparator<CharSequence> LEXICAL = new Lexical();
+
+    /**
+     * A lexical comparator.
+     */    
+    public static final class Lexical<T extends CharSequence> extends FastComparator<T> {
 
         public int hashCodeOf(CharSequence csq) {
             if (csq == null)
@@ -123,9 +172,14 @@ public abstract class FastComparator<T> implements Comparator<T> {
     };
 
     /**
-     * Holds a fast comparator for <code>java.lang.String</code>.
+     * Returns an optimized comparator for <code>java.lang.String</code>
+     * instances.
      */
-    public static final FastComparator<String> STRING = new StringComparator();
+    public static FastComparator<String> stringValue() {
+        return STRING;
+    }
+
+    private static final FastComparator<String> STRING = new StringComparator();
 
     private static final class StringComparator extends FastComparator<String> {
 
@@ -177,10 +231,5 @@ public abstract class FastComparator<T> implements Comparator<T> {
      *         <code>null</code>.
      */
     public abstract int compare(T o1, T o2);
-
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 
 }

@@ -15,25 +15,21 @@ import javolution.annotation.Format;
 import javolution.context.HeapContext;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
-import javolution.lang.Immutable;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 import javolution.text.TypeFormat;
-import javolution.xml.XMLSerializable;
 
 /**
- * <p> This class represents a <b>unique</b> positive index which can be used 
- *     instead of <code>java.lang.Integer</code> for primitive data types 
- *     collections. 
- *     For example:[code]
+ * <p> A <b>unique</b> non-negative number which can be used for ordering.
+ *    For example:[code]
  *         class SparseVector<F> {
- *             FastMap<Index, F> _elements = new FastMap<Index, F>();
+ *             FastMap<Index, F> elements = new FastMap();
  *             ...
  *         }[/code]</p>
  *          
  * <p> Unicity is guaranteed and direct equality (<code>==</code>) can be used 
- *     in place of object equality (<code>Index.equals(Object)</code>).</p>
+ *     in place of object equality.</p>
  * 
  * <p> Indices have no adverse effect on the garbage collector (persistent 
  *     instances), but should not be used for large integer values as that  
@@ -43,8 +39,7 @@ import javolution.xml.XMLSerializable;
  * @version 5.1, July 26, 2007
  */
 @Format(text = Index.TextFormat.class)
-public final class Index extends Number implements
-        Comparable<Index>, Immutable, ValueType, XMLSerializable {
+public final class Index extends Number implements Comparable<Index>, ValueType {
 
     // Start Initialization (forces allocation on the heap for static fields).
     private static final HeapContext INIT_CTX = HeapContext.enter();
@@ -53,6 +48,7 @@ public final class Index extends Number implements
      * Holds the index zero (value <code>0</code>).
      */
     public static final Index ZERO = new Index(0);
+
     /**
      * Holds indices (to maintains unicity).
      */
@@ -64,10 +60,12 @@ public final class Index extends Number implements
             INSTANCES[i] = new Index(i);
         }
     }
+
     /**
      * Holds the number of indices preallocated (default <code>256</code>).
      */
     public static final Configurable<Integer> PREALLOCATED_MAX = new Configurable(INSTANCES.length) {
+
         @Override
         public void configure(CharSequence configuration) {
             int max = TypeFormat.parseInt(configuration);
@@ -76,7 +74,9 @@ public final class Index extends Number implements
             set(max);
             if (max > INSTANCES.length) Index.preallocate(max);
         }
+
     };
+
     /**
      * Holds the index value.
      */
@@ -92,12 +92,13 @@ public final class Index extends Number implements
     }
 
     /**
-     * Returns the unique index for the specified <code>int</code> value 
-     * (creating it as well as the indices toward {@link #ZERO zero} 
+     * Returns the unique index for the specified <code>int</code> non-negative
+     * value (creating it as well as the indices toward {@link #ZERO zero} 
      *  if they do not exist). 
      * 
      * @param value the index value.
      * @return the corresponding unique index.
+     * @throws IndexOutOfBoundsException if <code>value &lt; 0</code>
      */
     public static Index valueOf(int value) { // Short to be inlined.
         if (value >= INSTANCES.length) Index.preallocate(value + 1);
@@ -155,6 +156,22 @@ public final class Index extends Number implements
 
     ;
  
+    /**
+     * Returns the index after this one.
+     */
+    public Index next() {
+        return Index.valueOf(value+1);
+    }
+
+    /**
+     * Returns the index before this one.
+     * 
+     * @throws IndexOutOfBoundsException if (this == Index.ZERO)
+     */
+    public Index previous() {
+        return INSTANCES[value-1];
+    }
+
     /**
      * Returns the index value as <code>int</code>.
      * 
@@ -268,10 +285,12 @@ public final class Index extends Number implements
         public Appendable format(Index obj, Appendable dest) throws IOException {
             return TypeFormat.format(obj.intValue(), dest);
         }
+
     }
 
     // End of class initialization.
     static {
         INIT_CTX.exit();
     }
+
 }

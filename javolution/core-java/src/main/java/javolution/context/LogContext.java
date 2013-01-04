@@ -13,9 +13,8 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the current logging context. Typically, logging 
- *     contexts forward messages to the OSGi {@link org.osgi.service.log.LogService 
- *     LogService}. Beside their ease of use, they also provide additional 
+ * <p> A logging context integrated with OSGi {@link org.osgi.service.log.LogService 
+ *     LogService}. Beside their ease of use, this context provides additional 
  *     capabilities such as custom attachments, log level filtering, etc.
  *     [code]
  *     void performTransaction(UserID userId) {
@@ -48,9 +47,6 @@ import javolution.text.TypeFormat;
  * @version 6.0, December 12, 2012
  */
 public abstract class LogContext extends AbstractContext<LogContext> {
-
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
 
     /**
      * Defines the logging levels.
@@ -193,8 +189,4 @@ public abstract class LogContext extends AbstractContext<LogContext> {
         super.exit();
     }
 
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 }

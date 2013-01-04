@@ -11,10 +11,9 @@ package javolution.context;
 import javolution.lang.Configurable;
 
 /**
- * <p> This class represents a local parameter. The default value of 
- *     a local parameter is {@link Configurable configurable}. Its local value
- *     is given by the {@link LocalContext#valueOf} method and can be locally
- *     {@link LocalContext#setLocalValue overriden}.</p>
+ * <p> A local parameter with {@link Configurable configurable} default value. 
+ *     The current value is given by the {@link LocalContext#valueOf} method
+ *     and can be locally {@link LocalContext#setLocalValue overriden}.</p>
  * 
  * <p> The parameter default values is either the value specified at creation
  *     or a configuration value read from system properties. For example the

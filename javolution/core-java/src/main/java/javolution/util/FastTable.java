@@ -20,19 +20,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javolution.lang.Copyable;
 import javolution.lang.Functor;
 import javolution.lang.Immutable;
+import javolution.lang.MathLib;
 import javolution.lang.Predicate;
 
 /**
  * <p> A random access collection of ordered/unordered elements with fast 
- *     insertion/deletion and smooth capacity increase.</p>
+ *     insertion/deletion and smooth capacity increase (or decrease). 
+ *     The capacity of a fast table is automatically adjusted to best fit
+ *     its size (memory footprint minimization).</p>
  * 
  * <p> Instances of this class can advantageously replace {@link ArrayList},
- *     {@link LinkedList}, {@link Deque} and {@link TreeSet} in term 
+ *     {@link LinkedList}, {@link Deque} and {@link TreeSet} in terms 
  *     of adaptability, space or performance.</p>
  *     <img src="doc-files/list-add.png"/>
  *     
- *  <p> As for any {@link FastCollection} iterations are faster when performed
- *      using closures (and the notation will be shorter with JDK 8).
+ *  <p> As for any {@link FastCollection fast collection} iterations are faster
+ *      when performed using closures (and the notation is shorter with JDK 8).
  *      [code]
  *      FastTable<Person> persons = ...
  *      Person john = persons.findFirst(new Predicate<Person>() {
@@ -41,15 +44,17 @@ import javolution.lang.Predicate;
  *          }
  *      });
  *      [/code]</p>
- *     
- *  <p> {@link FastTable} supports {@link #sort sorting} in place (quick sort) 
+ *     p> Fast table supports {@link #sort sorting} in place (quick sort) 
  *      using the table {@link FastCollection#comparator() comparator}.
  *      If the table {@link FastCollection#isOrdered is ordered}, the 
- *      the {@link #add add} method keeps the collection sorted and the 
+ *      the {@link #add add} method keeps the collection ordered and the 
  *      implementation guaranteed log(n) time cost for the basic
  *      operations such as {@link #indexOf indexOf}, {@link #contains},
- *      and {@link #remove}.
- *      </p>
+ *      and {@link #remove}.</p>
+ * 
+ * <p>  Finally, fast table provides a {@link FastTable#shared shared} view 
+ *      using {@link ReentrantReadWriteLock read-write lock} to support 
+ *      concurrent reads (or closure-based iterations) with blocking.</p>  
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -72,7 +77,7 @@ public class FastTable<E> extends FastCollection<E> implements
     /**
      * Holds the block elements.
      */
-    private Block<E>[] blocks = new Block[1];
+    private Block<E>[] blocks = new Block[] { new Block(C0) };
 
     /**
      * Holds the current size.
@@ -85,19 +90,10 @@ public class FastTable<E> extends FastCollection<E> implements
     private int capacity;
 
     /**
-     * Creates an empty table.
+     * Creates an empty table whose capacity increments/decrements smoothly 
+     * without large resize operations to best fit the table current size.
      */
     public FastTable() {
-    }
-
-    /**
-     * Creates a table of specified initial capacity.
-     * 
-     * @param capacity the initial capacity.
-     */
-    public FastTable(int capacity) {
-        this();
-        ensureCapacity(capacity);
     }
 
     /**
@@ -106,7 +102,6 @@ public class FastTable<E> extends FastCollection<E> implements
      * @param that the elements  to be placed into this table.
      */
     public FastTable(Collection<? extends E> that) {
-        this(that.size());
         addAll(that);
     }
 
@@ -114,8 +109,6 @@ public class FastTable<E> extends FastCollection<E> implements
      * Returns an {@link Unmodifiable}/immutable view of this table.
      * Attempts to modify the table returned will result in an 
      * {@link UnsupportedOperationException} being thrown. 
-     * 
-     * @return an unmodifiable view over this table.
      */
     public Unmodifiable<E> unmodifiable() {
         return new Unmodifiable<E>(this);
@@ -202,7 +195,7 @@ public class FastTable<E> extends FastCollection<E> implements
             add(indexIfOrderedOf(element, 0, size), element);
             return true;
         }
-        ensureCapacity(size + 1);
+        if (capacity <= size) ensureCapacity(size + 1);
         blocks[size >> B1].set(size++, element);
         return true;
     }
@@ -249,14 +242,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     @Override
     public void clear() {
-        clear(0, size);
-        size = 0;
-    }
-
-    final void clear(int start, int length) {
-        for (int i = start, n = start + length; i < n;) {
-            blocks[i >> B1].set(i++, null); // TODO: Optimize.
-        }
+        removeRange(0, size);
     }
 
     @Override
@@ -303,10 +289,8 @@ public class FastTable<E> extends FastCollection<E> implements
                 || (toIndex > size))
             throw new IndexOutOfBoundsException("FastTable removeRange("
                     + fromIndex + ", " + toIndex + ") index out of bounds, size: " + size);
-        int shift = toIndex - fromIndex;
-        copy(toIndex, toIndex - shift, size - toIndex);
-        size -= shift;
-        clear(size, shift);
+        shiftLeftAfter(fromIndex, toIndex - fromIndex);
+        trimToSize();
     }
 
     /**
@@ -348,7 +332,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @param element the element to be added.
      */
     public void addLast(E element) {
-        ensureCapacity(size + 1);
+        if (capacity <= size) ensureCapacity(size + 1);
         blocks[size >> B1].set(size++, element);
     }
 
@@ -373,6 +357,7 @@ public class FastTable<E> extends FastCollection<E> implements
         if (size == 0) throw new NoSuchElementException();
         final E previous = blocks[--size >> B1].get(size);
         blocks[size >> B1].set(size, null);
+        trimToSize();
         return previous;
     }
 
@@ -473,7 +458,7 @@ public class FastTable<E> extends FastCollection<E> implements
     public FastTable<E> copy() {
         final FastComparator<E> comp = comparator();
         final boolean ordered = isOrdered();
-        final FastTable<E> newTable = new FastTable(size()) {
+        final FastTable<E> newTable = new FastTable() {
 
             @Override
             public boolean isOrdered() {
@@ -515,10 +500,9 @@ public class FastTable<E> extends FastCollection<E> implements
     public void add(int index, E element) {
         if (index > size)
             throw new IndexOutOfBoundsException("index: " + index);
-        ensureCapacity(size + 1);
-        copy(index, index + 1, size - index);
+        if (capacity <= size) ensureCapacity(size + 1);
+        shiftRightAfter(index, 1);
         blocks[index >> B1].set(index, element);
-        size++;
     }
 
     /**
@@ -540,7 +524,7 @@ public class FastTable<E> extends FastCollection<E> implements
             throw new IndexOutOfBoundsException("index: " + index);
         int shift = elements.size();
         ensureCapacity(size + shift);
-        copy(index, index + shift, size - index);
+        shiftRightAfter(index, shift);
         if (elements instanceof FastCollection) {
             ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
 
@@ -558,7 +542,6 @@ public class FastTable<E> extends FastCollection<E> implements
                 blocks[i >> B1].set(i, elementsIterator.next());
             }
         }
-        size += shift;
         return shift != 0;
     }
 
@@ -575,9 +558,8 @@ public class FastTable<E> extends FastCollection<E> implements
      */
     public E remove(int index) {
         final E previous = get(index);
-        copy(index, index - 1, size - index);
-        size--;
-        blocks[size >> B1].set(size, null);
+        shiftLeftAfter(index, 1);
+        trimToSize();
         return previous;
     }
 
@@ -719,45 +701,9 @@ public class FastTable<E> extends FastCollection<E> implements
         return new SubTable(this, fromIndex, toIndex - fromIndex);
     }
 
-    /////////////////////
-    // Implementation //
-    ////////////////////    
-    private static class Block<T> {
-
-        int offset; // Allows for fast shift.
-
-        T[] data = (T[]) new Object[C0];
-
-        T get(int i) {
-            return data[(i + offset) & M1];
-        }
-
-        void set(int i, T t) {
-            data[(i + offset) & M1] = t;
-        }
-
-    }
-
-    // Returns the "should be" position of the specified element in range [start, end] (ordered)
-    final int indexIfOrderedOf(E element, int start, int length) {
-        if (length == 0) return start;
-        int half = length >> 1;
-        return comparator().compare(element, get(start + half)) <= 0
-                ? indexIfOrderedOf(element, start, half)
-                : indexIfOrderedOf(element, start + half + 1, length - half - 1);
-    }
-
-    final void copy(int srcPos, int srcDest, int length) {
-        // TBD
-    }
-
-    final void ensureCapacity(int minCapacity) {
-        //TBD
-    }
-
-    ///////////////////
-    // Inner Classes //
-    ///////////////////  
+    //
+    // Views Inner Classes 
+    //  
     /**
      * A view over a portion of a fast table (shared or not). 
      * It is always possible to get a sub-table view over a shared table. 
@@ -854,9 +800,8 @@ public class FastTable<E> extends FastCollection<E> implements
 
         @Override
         public void clear() {
-            if (thatTable != null) thatTable.clear(start, length);
-            else
-                thatShared.clear(start, length);
+            if (thatTable != null) thatTable.removeRange(start, start + length);
+            else thatShared.removeRange(start, start + length);
             length = 0;
         }
 
@@ -960,7 +905,7 @@ public class FastTable<E> extends FastCollection<E> implements
             throw new UnsupportedOperationException("Unmodifiable.");
         }
 
-        public ListIteratorImpl<E> iterator() {
+        public ListIterator<E> iterator() {
             return new ListIteratorImpl(this, 0);
         }
 
@@ -1184,11 +1129,11 @@ public class FastTable<E> extends FastCollection<E> implements
         }
 
         public E set(int index, E element) {
-            w.lock();
+            r.lock(); // Ok to use read lock, no structural modification.
             try {
                 return that.set(index, element);
             } finally {
-                w.unlock();
+                r.unlock();
             }
         }
 
@@ -1371,6 +1316,18 @@ public class FastTable<E> extends FastCollection<E> implements
             }
         }
 
+        /**
+         * See {@link FastTable#removeRange() }
+         */
+        public void removeRange(int fromIndex, int toIndex) {
+            w.lock();
+            try {
+                that.removeRange(fromIndex, toIndex);
+            } finally {
+                w.unlock();
+            }
+        }
+
         //
         // Methods useful for Sub-Tables Views over Shared tables.
         //
@@ -1416,15 +1373,6 @@ public class FastTable<E> extends FastCollection<E> implements
                 return that.contains(e, start, length);
             } finally {
                 r.unlock();
-            }
-        }
-
-        final void clear(int start, int length) {
-            w.lock();
-            try {
-                that.clear(start, length);
-            } finally {
-                w.unlock();
             }
         }
 
@@ -1527,6 +1475,175 @@ public class FastTable<E> extends FastCollection<E> implements
             }
         }
 
+    }
+
+    //
+    // Internal Implementation. 
+    //    
+    private static final class Block<T> {
+
+        int offset; // Index of [0]
+
+        T[] data;
+        
+        Block(int length) {
+            data = (T[]) new Object[length];
+        }
+
+        T get(int i) {
+            return data[(i + offset) & (data.length - 1)];
+        }
+
+        void set(int i, T t) {
+            data[(i + offset) & (data.length - 1)] = t;
+        }
+
+        // Can only be called on block full.          
+        void shiftLeft(int n, Block<T> rightBlock) {
+            for (int i = 0; i < n; i++) {
+                data[offset++ & M1] = (rightBlock != null) ? rightBlock.get(i) : null;
+            }
+        }
+
+        // Can only be called on block full.          
+        void shiftRight(int n, Block<T> leftBlock) {
+            for (int i = 0; i < n; i++) {
+                data[--offset & M1] = (leftBlock != null) ? leftBlock.get(M1 - i) : null;
+            }
+        }
+
+    }
+ 
+    // Updates the size after shift. must ensure capacity before shift.
+    void shiftRightAfter(int index, int shift) {
+        if ((shift == 0) || (index == size)) return;
+        int bi = index >> B1;
+        if ((index & M1) == 0) { // Full block shift.
+            if (shift <= C1 / 2) {
+                for (int i = (size - 1 + shift) >> B1; i > bi; i--) {
+                    blocks[i].shiftRight(shift, blocks[i - 1]);
+                }
+                blocks[bi].shiftRight(shift, null);
+                size += shift;
+            } else if (shift < C1) { // Optimization (reduces shift to less than C1/2)
+                ensureCapacity(size + C1);
+                shiftRightAfter(index, C1);
+                shiftLeftAfter(index, C1 - shift);
+            } else { // Shifts blocks by swapping. 
+                int blockShift = shift >> B1;
+                int bl = (size - 1) >> B1;
+                for (int i = bl; i > bi; i--) {
+                    Block<E> tmp = blocks[i + blockShift];
+                    blocks[i + blockShift] = blocks[i];
+                    blocks[i] = tmp;
+                }
+                size += blockShift << B1;
+                shiftRightAfter(index, shift & M1);
+            }
+        } else {
+            int ir = (bi + 1) << B1;
+            ir = size < ir ? size : ir;
+            if (size > ir) { // Full block shift of left blocks.
+                shiftRightAfter(ir, shift); 
+            }
+            for (int i = ir - 1; i >= index; i--) {
+                set(i + shift, blocks[bi].get(i));
+            }
+            size += shift;
+        }
+    }
+
+    // Updates the size after shift. 
+    void shiftLeftAfter(int index, int shift) {
+        if ((shift == 0) || (index == size)) return;
+        int bi = index >> B1;
+        if ((index & M1) == 0) { // Full block shift.
+            int bl = (size - 1) >> B1;
+            if (shift <= C1 / 2) {
+                for (int i= bi; i < bl; i++)  {
+                    blocks[i].shiftLeft(shift & M1, blocks[i + 1]);
+                }
+                blocks[bl].shiftLeft(shift, null);
+                size -= shift;
+            } else if (shift < C1) { // Optimization (reduces shift to less than C1/2)
+                ensureCapacity(size + C1 - shift);
+                shiftRightAfter(index, C1 - shift);
+                shiftLeftAfter(index, C1);
+            } else { // Shifts blocks by swapping. 
+                int blockShift = shift >> B1;
+                blocks[bi] = new Block(C1); // Resets (for GC).
+                for (int i=1; i < blockShift; i++) {
+                    blocks[bi + i] = null; // See trimToSize.
+                    capacity -= C1;
+                }
+                for (int i = bi + blockShift; i <= bl; i++) {
+                    Block<E> tmp = blocks[i - blockShift];
+                    blocks[i - blockShift] = blocks[i];
+                    blocks[i] = tmp;
+                }
+                size -= blockShift << B1;
+                shiftLeftAfter(index, shift & M1);
+            }
+        } else {
+            int ir = (bi + 1) << B1;
+            ir = size < ir ? size : ir;
+            for (int i = index; i < ir; i++) {
+                blocks[bi].set(i, get(i + shift));
+            }   
+            if (size > ir) { // Full block shift of left blocks.
+                shiftLeftAfter(ir, shift); 
+            }
+            size += shift;
+        }
+    }
+
+    final void ensureCapacity(int min) {
+        if (capacity >= min) return;
+        if (capacity < C1) { // Resizes only the first block.
+            while (capacity < MathLib.min(C1, min)) {
+                capacity <<= 1;
+            } 
+            E[] tmp = (E[]) new Object[capacity];
+            Block<E> blocks0 = blocks[0];
+            int n = blocks0.data.length;
+            int start = blocks0.offset;
+            int end = start + size;
+            if (end > blocks0.data.length) { // Wraps around.
+                int length = end - n;
+                System.arraycopy(blocks0.data, 0, tmp, size - length, length);
+                end = n;
+            }
+            System.arraycopy(blocks0.data, start, tmp, 0, end - start);
+            blocks0.data = tmp;
+            blocks0.offset = 0;                      
+        }
+        // Increments capacity by adding new blocks.
+        if ((min >> B1) > blocks.length) { // blocks array too small.
+            Block<E>[] tmp = new Block[(min >> B1) * 2];
+            System.arraycopy(blocks, 0, tmp, 0, blocks.length);
+            blocks = tmp;
+        }
+        while (capacity < min) {
+            capacity += C1;
+            blocks[capacity >> B1] = new Block(C1); 
+        }
+    }
+
+    // Ensures capacity - size < 2 * C1 (at most one full block empty).
+    final void trimToSize() {
+        while (capacity - size >= 2 * C1) {
+            capacity -= C1;
+            blocks[capacity >> B1] = null; 
+        }
+    }
+    
+    // Returns the "should be" position of the specified element in range [start, end] (ordered)
+    final int indexIfOrderedOf(E element, int start, int length) {
+        if (length == 0) return start;
+        int half = length >> 1;
+        return comparator().compare(element, get(start + half)) <= 0
+                ? indexIfOrderedOf(element, start, half)
+                : indexIfOrderedOf(element, start + half + 1, length - half - 1);
     }
 
 }

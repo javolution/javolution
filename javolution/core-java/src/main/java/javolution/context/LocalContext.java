@@ -13,14 +13,13 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the current context holding parameters local
- *     {@link #valueOf values}.
+ * <p> A context holding local parameters {@link #valueOf values}.
  *     [code]
  *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
  *     ...
  *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         ctx.setLocalValue(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         ctx.set(ModuloInteger.MODULO, m); // No impact on other threads!
  *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
  *     } finally {
  *         ctx.exit(); // Reverts changes. 
@@ -34,9 +33,6 @@ import javolution.text.TypeFormat;
  * @version 6.0 December 12, 2012
  */
 public abstract class LocalContext extends AbstractContext<LocalContext> {
-
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -77,7 +73,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      */
     public static <T> T valueOf(LocalParameter<T> param) {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        return (ctx != null) ? ctx.getLocalValue(param) : param.get();
+        return (ctx != null) ? ctx.get(param) : param.get();
     }
 
     /**
@@ -88,7 +84,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * @throws SecurityException if the permission to override the specified 
      *         parameter is not granted.
      */
-    public abstract <T> void setLocalValue(LocalParameter<T> param, T localValue);
+    public abstract <T> void set(LocalParameter<T> param, T localValue);
 
     /**
      * Returns the value possibly overriden of the specified parameter 
@@ -96,7 +92,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * 
      * @param  param the local parameter whose local value is returned.
      */
-    protected abstract <T> T getLocalValue(LocalParameter<T> param);
+    protected abstract <T> T get(LocalParameter<T> param);
 
     /**
      * Exits the scope of this local context; reverts to the local settings 
@@ -110,8 +106,4 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
         super.exit();
     }
 
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 }

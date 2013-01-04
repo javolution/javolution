@@ -9,9 +9,9 @@
 package javolution.lang;
 
 /**
- * <p> This interface identifies classes whose instances are not subject or 
- *     susceptible to change or variation after creation. Once a class is 
- *     declared immutable, any subclass must ensure immutability as well.</p>
+ * <p> An object which is not subject or susceptible of change or variation 
+ *     after creation. Once a class is declared immutable, any subclass must 
+ *     ensure immutability as well.</p>
  *     
  * <p> {@link Immutable} objects can safely be used in a multi-threaded 
  *     environment and <b>do not require defensive copying</b>.

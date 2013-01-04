@@ -13,8 +13,8 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the current context able to take advantage 
- *     of concurrent algorithms on multi-processors systems.</p>
+ * <p> A context able to take advantage of concurrent algorithms on 
+ *     multi-processors systems.</p>
  *     
  * <p> When a thread enters a concurrent context, it may performs concurrent
  *     executions by calling the {@link #execute(Runnable)} static method.
@@ -25,11 +25,14 @@ import javolution.text.TypeFormat;
  *     ConcurrentContext ctx = ConcurrentContext.enter(); 
  *     try { 
  *         ctx.execute(new Runnable() {...}); 
- *         ctx.execute(...); // Shorter notation if closure are supported (JDK1.8) 
+ *         ctx.execute(new Runnable() {...});  
  *     } finally {
  *         ctx.exit(); // Waits for all concurrent executions to complete.
  *                     // Reexports any exception raised during concurrent executions. 
  *     }
+ *    [/code] or equivalent shorter notation:
+ *    [code]
+ *    ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});
  *    [/code]</p>
  *     
  * <p> Only after all concurrent executions are completed, is the current 
@@ -75,7 +78,7 @@ import javolution.text.TypeFormat;
  *                    }
  *                });
  *            } finally {
- *                ctx.exit();
+ *                ctx.exit(); // Joins.
  *            }
  *            // Merges results.
  *            for (int i=0, i1=0, i2=0; i < size; i++) {
@@ -97,8 +100,9 @@ import javolution.text.TypeFormat;
  *            }
  *        }
  *     }[/code]
- *      Here is another example using <code>execute(...)</code> convenience 
- *      method (Karatsuba recursive multiplication for large integers).
+ *      Here is another example using {@link #execute(java.lang.Runnable[]) 
+ *      execute(Runnable ...)} static method 
+ *     (Karatsuba recursive multiplication for large integers).
  *      [code]
  *     public LargeInteger multiply(LargeInteger that) {
  *         if (that._size <= 1) {
@@ -134,25 +138,22 @@ import javolution.text.TypeFormat;
  *    [/code]</p>
  *          
  * <p> Concurrency can be adjusted or disabled. The maximum concurrency 
- *     is defined by {@link #CONCURRENCY}. 
+ *     is defined by the {@link #CONCURRENCY} local parameter.. 
  *    [code]
  *    LocalContext ctx = LocalContext.enter(); 
  *    try { 
  *        // Performs analysis sequentially.
- *        ctx.override(ConcurrentContext.CONCURRENCY, 0);
+ *        ctx.set(ConcurrentContext.CONCURRENCY, 0);
  *        runAnalysis();  
- *     } finally {
+ *    } finally {
  *        ctx.exit(); // Back to previous concurrency settings.  
- *     }[/code]</p>
+ *    }[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
 public abstract class ConcurrentContext extends AbstractContext<ConcurrentContext> {
 
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
-    
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
@@ -219,8 +220,8 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
     public static void execute(Runnable... logics) {
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
-            for (int i = 0; i < logics.length; i++) {
-                ctx.execute(logics[i]);
+            for (Runnable logic : logics) {
+                ctx.execute(logic);
             }
         } finally {
             ctx.exit();
@@ -255,8 +256,4 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
         super.exit();
     }
 
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 }

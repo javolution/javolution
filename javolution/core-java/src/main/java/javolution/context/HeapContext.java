@@ -10,22 +10,33 @@ package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.HEAP_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
+import javolution.lang.Copyable;
+import javolution.lang.Factory;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This abstract class represents an {@link AllocatorContext} always 
- *     allocating from the heap (default Java allocation). This context 
- *     is useful for {@link javolution.annotation.StackSafe} classes to 
- *     ensure that static fields are allocated on the heap (even if class
- *     initialization occurs while in a {@link StackContext}).
+ * <p> An {@link AllocatorContext} always allocating from the heap (default). 
+ *     This context is useful for {@link javolution.annotation.StackSafe} 
+ *     classes to ensure that static fields can be updated even when 
+ *     allocations are performed on the stack.
  *     [code]
  *     @StackSafe
- *     class Foo {
- *        private static final HeapContext INIT_CTX = HeapContext.enter();
- *        static .... // All static fields are allocated on the heap. 
- *        ...
- *        ... 
- *        static { INIT_CTX.exit(); }
+ *     public class Text {
+ *         private static final FastMap<Text, Text> INTERN_INSTANCES ... 
+ *         public Text intern() {
+ *             if (!INTERN_INSTANCES.contains(this)) {
+ *                  final Text[] internText = new Text[1];
+ *                  HeapContext.execute(new Runnable() {
+ *                      public void run() {
+ *                           internText[0] = Text.copy(); // Heap.
+ *                           INTERN_INSTANCES.put(internText[0], internText[0]); 
+ *                      }
+ *                  });
+ *                  return internText[0];
+ *              }
+ *              ...
+ *         }
+ *         ...
  *     }
  *     [/code]</p>
  *
@@ -35,12 +46,9 @@ import javolution.text.TypeFormat;
  */
 public abstract class HeapContext extends AllocatorContext<HeapContext> {
 
-    // Initialization always performed on the heap, since StackContext 
-    // requires this class to be initialized first.
-    
     /**
      * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
+     * implementation of this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
 
@@ -58,26 +66,37 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
     }
 
     /**
-     * Enters a new heap context instance.
-     * 
-     * @return the new heap context implementation entered.
+     * Executes the specified logic allocating objects on the heap.
      */
-    public static HeapContext enter() {
+    public static void execute(Runnable logic) {
         HeapContext ctx = AbstractContext.current(HeapContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
+        if (ctx != null) {
+            ctx = HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        }
+        ctx.executeInContext(logic);
     }
 
     /**
-     * Exits the scope of this heap context; the current allocator context 
-     * is back to the allocator context before this context was entered.
-     * 
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
+     * Returns a new instance allocated on the heap and produced by the 
+     * specified factory (convenience method).
      */
-    @Override
-    public void exit() {
-        super.exit();
+    public static <T> T allocate(Factory<T> factory) {
+        HeapContext ctx = AbstractContext.current(HeapContext.class);
+        if (ctx != null) {
+            ctx = HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        }
+        return ctx.allocateInContext(factory);
     }
 
- }
+    /**
+     * Returns a copy of the specified object allocated on the heap
+     * (convenience method).
+     */
+    public static <T> T copy(Copyable<T> obj) {
+        HeapContext ctx = AbstractContext.current(HeapContext.class);
+        if (ctx != null) {
+            ctx = HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        }
+        return ctx.copyInContext(obj);
+    }
+}

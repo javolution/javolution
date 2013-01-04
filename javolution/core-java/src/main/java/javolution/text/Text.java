@@ -19,8 +19,8 @@ import javolution.util.FastMap;
 import javolution.xml.XMLSerializable;
 
 /**
- * <p> This class represents an immutable character sequence with 
- *     fast {@link #concat concatenation}, {@link #insert insertion} and 
+ * <p> An immutable character sequence with fast {@link #concat concatenation}, 
+ *     {@link #insert insertion} and 
  *     {@link #delete deletion} capabilities (O[Log(n)]) instead of 
  *     O[n] for StringBuffer/StringBuilder).</p>
  * <p> This class has the same methods as 
@@ -850,7 +850,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      *          <code>CharSequence</code> or a <code>String</code>.
      */
     public int compareTo(Object csq) {
-        return ((FastComparator) FastComparator.LEXICAL).compare(this, csq);
+        return FastComparator.lexicalValue(CharSequence.class).compare(this, (CharSequence) csq);
     }
 
     /**

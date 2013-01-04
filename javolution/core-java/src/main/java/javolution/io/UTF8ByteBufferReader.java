@@ -15,7 +15,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
- * <p> This class represents a UTF-8 <code>j2me.nio.ByteBuffer</code> reader.
+ * <p> A UTF-8 <code>java.nio.ByteBuffer</code> reader.
  *     </p>
  *
  * <p> This reader can be used for efficient decoding of native byte 

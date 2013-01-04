@@ -20,17 +20,17 @@ import javolution.context.LocalParameter;
 public final class LocalContextImpl extends LocalContext {
 
     @Override
-    public <T> void setLocalValue(LocalParameter<T> param, T localValue) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    protected <T> T getLocalValue(LocalParameter<T> param) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     protected LocalContext inner() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public <T> void set(LocalParameter<T> param, T localValue) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    protected <T> T get(LocalParameter<T> param) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

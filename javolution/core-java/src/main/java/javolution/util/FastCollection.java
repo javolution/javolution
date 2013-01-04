@@ -47,6 +47,8 @@ import javolution.text.TextContext;
  *      }
  *      [/code]</p>
  * 
+ * <p> All fast collections classes are {@link StackSafe Stack-Safe}.</p>
+ * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
@@ -94,11 +96,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /**
      * Returns the element comparator for this collection (default 
-     * {@link FastComparator#DEFAULT}). If this method is overriden,
+     * {@link FastComparator#defaultValue}). If this method is overriden,
      * it is possible that elements considered distinct using the 
      * default equality comparator, would appear to be equals as far 
      * as this collection is concerned. For example, a 
-     * {@link FastComparator#LEXICAL lexical comparator} considers that two 
+     * {@link FastComparator#lexicalValue lexical comparator} considers that two 
      * {@link CharSequence} are equals if they hold the same characters 
      * regardless of the {@link CharSequence} implementation.
      * A direct consequences is that fast collections equality/hashcode 
@@ -111,8 +113,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @see #hashCode()
      */
     public FastComparator<E> comparator() {
-        return (FastComparator<E>) FastComparator.DEFAULT;
+        return (FastComparator<E>) FastComparator.defaultValue(Object.class);
     }
+    
 
     /**
      * Indicates if this collecion is ordered (default <code>false</code>). 
@@ -509,8 +512,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        FastComparator<E> thatComparator = (obj instanceof FastCollection)
-                ? ((FastCollection) obj).comparator() : FastComparator.DEFAULT;
+        FastComparator thatComparator = (obj instanceof FastCollection)
+                ? ((FastCollection) obj).comparator() : FastComparator.defaultValue(Object.class);
         if (!this.comparator().equals(thatComparator)) return false;
         if (this instanceof Set) {
             if (!(obj instanceof Set)) return false;

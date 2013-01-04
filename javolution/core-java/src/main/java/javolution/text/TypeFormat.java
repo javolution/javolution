@@ -13,9 +13,8 @@ import javolution.annotation.StackSafe;
 import javolution.lang.MathLib;
 
 /**
- * <p> This class provides utility methods to parse 
- *     {@link CharSequence} into primitive types and to format 
- *     primitive types into any {@link Appendable}.</p>
+ * <p> Utility class to parse {@link CharSequence} into primitive types and 
+ *     to format primitive types into any {@link Appendable}.</p>
  *
  * <p> Methods from this class <b>do not create temporary objects</b> and
  *     are typically faster than standard library methods (see 

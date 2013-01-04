@@ -11,7 +11,7 @@ package javolution.text;
 import java.io.IOException;
 
 /**
- * <p> This abstract class represents the service for text parsing and formatting;
+ * <p> The service for plain text parsing and formatting;
  *     it supports {@link CharSequence} and {@link Appendable} interfaces 
  *     for greater flexibility.</p>
  * 

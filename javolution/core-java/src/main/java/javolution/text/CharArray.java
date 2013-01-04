@@ -11,8 +11,8 @@ package javolution.text;
 import javolution.util.FastComparator;
 
 /**
- * <p> This class represents a {@link CharSequence}
- *     backed up by a <code>char</code> array. Instances of this class are
+ * <p> A {@link CharSequence} backed up by a <code>char</code> array. 
+ *     Instances of this class are
  *     typically used/reused to provide <code>CharSequence</code> views 
  *     over existing character buffers.</p>
  *     

@@ -8,8 +8,6 @@
  */
 package javolution.lang;
 
-import javolution.annotation.StackSafe;
-
 /**
  * <p> This interface identifies objects which can be manipulated by 
  *     value; a JVM implementation may allocate instances of this class 
@@ -41,8 +39,5 @@ import javolution.annotation.StackSafe;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-@StackSafe
 public interface ValueType<T> extends Immutable, Copyable<T> {
-    // All implementing classes should ensure that they are @StackSafe (inheritable annotation)
-    // In particular, any static field has to be allocated on the heap (see HeapContext).
 }

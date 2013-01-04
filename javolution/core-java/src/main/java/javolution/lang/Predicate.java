@@ -12,7 +12,7 @@ import javolution.util.FastCollection;
 
 /**
  * <p> This interface represents a {@link Functor} specialization 
- *     which state or affirm as the attribute or quality of something.</p>
+ *     which states or affirms the attribute or quality of something.</p>
  * 
  * <p> This interface is particularly useful when working with 
  *     {@link FastCollection}.</p>

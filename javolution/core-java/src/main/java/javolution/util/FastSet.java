@@ -22,8 +22,7 @@ import javolution.lang.Reusable;
 
 
 /**
- * <p> This class represents a set collection backed by a {@link FastMap};
- *     smooth capacity increase and no rehashing ever performed.</p>
+ * <p> A hash set backed by a {@link FastMap}.</p>
  * 
  * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
  *     thread-safe fast iterations without using iterators. For example:[code]

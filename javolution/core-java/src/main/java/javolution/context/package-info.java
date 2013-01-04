@@ -40,12 +40,12 @@
        
    <p> Used properly <b>J</b>avolution's {@link AbstractContext contexts}
        greatly facilitate the separation of concerns. Contexts are fully 
-       integrated with OSGi and Javolution basic classes (for example the 
-       {@link javolution.lang.Configurable Configurable} class to reduce 
-       dependency between configuration and application code).</p>
+       integrated with OSGi (they are published services). Application 
+       may dynamically plug-in the right context for their environment (e.g. 
+       {@link SecurityContext}).</p>
      
  <h2><a name="PREDEFINED">Predefined Contexts:</a></h2>
-  <p> To start, here is the list of a few predefined contexts provided by this library.<ul>
+  <p> Here is the list of a few predefined contexts provided by this library.<ul>
       <li>{@link javolution.context.LocalContext LocalContext} - To define locally 
            scoped environment settings.</li>
       <li>{@link javolution.context.ConcurrentContext ConcurrentContext} - To take advantage of concurrent 
@@ -60,6 +60,7 @@
           concerns.</li>
       <li>{@link javolution.context.FormatContext FormatContext} - For objects serialization/deserialization, 
           e.g. {@link javolution.text.TextContext TextContext},  {@link javolution.xml.XMLContext XMLContext}.</li>
+      <li>...add your own</li>
       </ul>
   </p>
  */

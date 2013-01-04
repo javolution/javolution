@@ -13,9 +13,7 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> This class represents the current high-level security context (low level 
- *     security being addressed by the system security manager). It defines 
- *     whether or not {@link SecurityPermission} are granted or not.</p>
+ * <p> A high-level security context integrated with OSGi.</p>
  *     
  * <p> To ensure that your OSGi published system security context is always used, 
  *     the configurable parameter {@link #WAIT_FOR_SERVICE} should be set
@@ -27,9 +25,7 @@ import javolution.text.TypeFormat;
  *     SecurityContext ctx = SecurityContext.enter(); 
  *     try {
  *         ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
- *         ctx.grant(
- *             new SecurityPermission(Configurable.class, "configure", ConcurrentContext.CONCURRENCY), 
- *             adminCertificate);
+ *         ctx.grant(new SecurityPermission(Configurable.class, "configure", ConcurrentContext.CONCURRENCY), adminCertificate);
  *         ...
  *         ConcurrentContext.CONCURRENCY.configure("0"); // Ok (disables concurrency).
  *         ...
@@ -43,10 +39,7 @@ import javolution.text.TypeFormat;
  */
 public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
-
-    /**
+     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
@@ -130,8 +123,4 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
         super.exit();
     }
 
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 }

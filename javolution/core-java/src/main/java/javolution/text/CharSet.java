@@ -13,9 +13,9 @@ import javolution.lang.Immutable;
 import javolution.lang.MathLib;
 
 /**
- * <p> This class represents a set of characters.</p>
- * <p> Instances of this class are typically used for parsing purpose
- *     (faster than regular expressions for simple patterns). For example:[code]
+ * <p> A set of characters (typically used for parsing purpose where it is 
+ *     significantly faster than regular expressions for simple patterns).
+ *     For example:[code]
  *     // Integration with Text.
  *     Text number;
  *     int exponentIndex = num.indexOfAny(CharSet.valueOf('e', 'E'));

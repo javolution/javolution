@@ -25,41 +25,43 @@ import javolution.internal.context.StackContextImpl;
 import javolution.internal.text.TextContextImpl;
 import javolution.osgi.ConfigurableService;
 import javolution.text.TextContext;
+import javolution.util.Initializer;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ManagedService;
 
 /**
- * This class implements Javolution OSGi bundle activator.
- * It also provides a Javolution initialize routine which ensures that
- * all {@link StackSafe} classes are initialized before entering  
- * a {@link StackContext}.
+ * Javolution OSGi bundle activator.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
 public class JavolutionActivator implements BundleActivator {
-
+    
     public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER 
-            = new ContextTracker(ConcurrentContext.class, new ConcurrentContextImpl());
+            = new ContextTracker(ConcurrentContext.class, ConcurrentContextImpl.class);
     public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER 
-            = new ContextTracker(HeapContext.class, new HeapContextImpl());
+            = new ContextTracker(HeapContext.class, HeapContextImpl.class);
     public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER 
-            = new ContextTracker(LocalContext.class, new LocalContextImpl());
+            = new ContextTracker(LocalContext.class, LocalContextImpl.class);
     public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER 
-            = new ContextTracker(LogContext.class, new LogContextImpl());
+            = new ContextTracker(LogContext.class, LogContextImpl.class);
     public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER 
-            = new ContextTracker(SecurityContext.class, new SecurityContextImpl());
+            = new ContextTracker(SecurityContext.class, SecurityContextImpl.class);
     public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER 
-            = new ContextTracker(StackContext.class, new StackContextImpl());
+            = new ContextTracker(StackContext.class, StackContextImpl.class);
     public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER 
-            = new ContextTracker(TextContext.class, new TextContextImpl());
+            = new ContextTracker(TextContext.class, TextContextImpl.class);
     
     // Services provided by Javolution.
     private ServiceRegistration<ManagedService> configurableServiceRegistration;
    
     public void start(BundleContext bc) throws Exception {
+        
+        // Initialize all classes during bundle activation.
+        Initializer.initializeLoadedClasses(JavolutionActivator.class.getClassLoader());
+        
         CONCURRENT_CONTEXT_TRACKER.activate(bc);
         HEAP_CONTEXT_TRACKER.activate(bc);
         LOCAL_CONTEXT_TRACKER.activate(bc);

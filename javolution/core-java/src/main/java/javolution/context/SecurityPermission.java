@@ -9,10 +9,11 @@
 package javolution.context;
 
 import javolution.annotation.StackSafe;
+import javolution.lang.Factory;
 
 /**
- * This class represents a security permission associated to a specific 
- * class/action/instance. There are three levels of permission possible, at 
+ * A security permission associated to a specific class/action/instance. 
+ * There are three levels of permission possible, at 
  * the class/category level, at the action level and at the instance level.
  * Any permission granted/revoked at the higer level is explicitly 
  * granted/revoked at the lower level. The order in which the permission 
@@ -26,13 +27,13 @@ import javolution.annotation.StackSafe;
  * @version 6.0, December 12, 2012
  * @see SecurityContext
  */
-@StackSafe
+@StackSafe(initialization=false)
 public class SecurityPermission<T> {
 
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
-
-    public static SecurityPermission<?> ALL = new SecurityPermission(null);
+    /**
+     * Holds the global permission for anything.
+     */
+    public static final SecurityPermission<?> ALL = new SecurityPermission(null);
 
     private final Class<T> category;
 
@@ -118,8 +119,4 @@ public class SecurityPermission<T> {
                 + (instance != null ? instance.hashCode() : 0);
     }
 
-   // End of class initialization.
-    static {
-        INIT_CTX.exit();
-    }
 }

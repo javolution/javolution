@@ -11,90 +11,53 @@ package javolution.context;
 import javolution.annotation.StackSafe;
 
 /**
- * <p> This abstract class represents the root class for all contexts. 
+ * <p> The parent class for all contexts. 
  *     Contexts allow for cross cutting concerns (performance, logging, 
  *     security, ...) to be addressed at run-time without polluting the
  *     application code (<a href="http://en.wikipedia.org/wiki/Separation_of_concerns">
- *     Separation of Concerns</a>). 
- *     With contexts, you <i>Think Locally, Act Globally</i>.</p>
+ *     Separation of Concerns</a>). A context implementation/behavior is provided
+ *     at high-level (e.g. OSGi service) and impacts code execution
+ *     everywhere. With contexts, you <i>Think Locally, Act Globally!</i></p>
  *     
- * <p> Typically, a context is surrounded by a <code>try, 
- *     finally</code> block statement to ensure correct behavior in case 
- *     of exceptions being raised.
+ * <p> Context configuration is performed by a <code>try, finally</code> block 
+ *     statement and impacts only the thread within the scope.
  *     [code]
- *     MyContext ctx = MyContext.enter(); // Enters an inner instance 
- *     try {                              // (equivalent to AbstractContext.current(MyContext.class).inner().enterScope())
- *        ctx.memberMethod(...); // Instance configuration.
- *        ...
- *        MyContext.staticMethod(...); // Users methods (works with the last instance entered).
- *        ...
+ *     MyContext ctx = MyContext.enter(); // Enters a context scope. 
+ *     try {                             
+ *         ctx.configure(...); // Local configuration (optional).
+ *         ... // Thread executes using the configured context.
  *     } finally {
- *        ctx.exit();  // Exits context instance.
+ *         ctx.exit();
  *     }
  *     [/code]
- *     When running OSGi, the context implementation is retrieved from published
- *     services (if any). <a href="http://wiki.osgi.org/wiki/Avoid_Start_Order_Dependencies">
- *     To avoid start order dependencies</a> contexts methods can be configured to block
+ *     </p>
+ * 
+ * <p> When running OSGi, the context implementation is retrieved from published
+ *     services (if any). To avoid
+ *     <a href="http://wiki.osgi.org/wiki/Avoid_Start_Order_Dependencies">
+ *     start order dependencies</a> contexts methods can be configured to block
  *     until an implementation is published. For example, the java option  
  *     <code>-Djavolution.context.SecurityContext#WAIT_FOR_SERVICE=true</code>
  *     causes the security checks to block until a {@link SecurityContext}
  *     implementation is published.</p>
  * 
- * <p> Applications may enter specific (static) implementations of any context.
+ * <p> Applications may use custom (static) context implementations.
  *     [code]
  *     MyContext ctx = AbstractContext.enter(MyContextImpl.class); // Enter instance of specified class.
  *     try { 
- *        ...
+ *         ... // Execution in the scope of MyContextImpl
  *     } finally {
- *        ctx.exit();
+ *         ctx.exit();
  *     }
  *     [/code]</p>
  * 
- * <p> Contexts do not pause thread-safety issues. There is at most one thread 
- *     to configure them. Even so they are inherited by potentially multiple threads
- *     (see {@link ConcurrentContext}); these threads cannot modify their states. </p>
- * 
- * <p> Here are few examples of predefined context.
- *     [code]
- * 
- *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>(); 
- *     ...
- *     LocalContext.enter(); 
- *     try {
- *         LocalContext.override(ModuloInteger.MODULO, m); // No impact on other threads!
- *         z = x.times(y); // Multiplication modulo m.
- *     } finally {
- *         LocalContext.exit(); 
- *     }
- *
- *     Complex sum = Complex.ZERO;
- *     StackContext.enter(); // Allocates on the stack (if supported).
- *     try {
- *        for (int i=0; i < n; i++) {
- *           sum = sum.plus(v[i]); // All sums are stack allocated.
- *        }
- *        sum = StackContext.export(sum); // Copies outside of the stack.
- *     } finally {
- *        StackContext.exit(); // Resets stack.
- *     }
- * 
- *     LogContext.enter();
- *     try {
- *         LogContext.setHeader("My Logger");
- *         LogContext.enableInfo(true);
- *         ... 
- *         LogContext.info("My message"); 
- *     } finally {
- *         LogContext.exit(); // Back to previous LogContext settings. 
- *     }
- * 
- *     [/code]</p>
- * 
+ * <p> Contexts do not pause thread-safety issues. They can be inherited 
+ *     by multiple threads but only one thread will be able to configure them.</p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-@StackSafe
+@StackSafe(initialization=false)
 public abstract class AbstractContext<C extends AbstractContext> {
 
     /**

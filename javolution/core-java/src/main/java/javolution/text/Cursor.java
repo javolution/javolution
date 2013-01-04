@@ -9,7 +9,7 @@
 package javolution.text;
 
 /**
- * <p> This class represents a parsing cursor over characters. Cursor
+ * <p> A parsing cursor over the characters read. Cursor
  *     allows for token iterations over any {@link CharSequence}.
  *     [code]
  *     String str = "this is a test";

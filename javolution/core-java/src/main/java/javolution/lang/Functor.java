@@ -11,11 +11,11 @@ package javolution.lang;
 import javolution.util.FastCollection;
 
 /**
- * <p> This interface represents a functor that perform some operation 
- *     and returns the result of that operation.</p>
+ * <p> A function that perform some operation and returns the result of 
+ *     that operation.</p>
  * 
  * <p> This interface is particularly useful when working with 
- *     {@link FastCollection}.</p>
+ *     {@link FastCollection} or {@link StackContext}.</p>
  * 
  * @see <a href="http://en.wikipedia.org/wiki/Functor">Wikipedia: Functor<a>    
  *                  
