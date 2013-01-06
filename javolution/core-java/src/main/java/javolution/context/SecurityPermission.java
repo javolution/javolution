@@ -9,7 +9,6 @@
 package javolution.context;
 
 import javolution.annotation.StackSafe;
-import javolution.lang.Factory;
 
 /**
  * A security permission associated to a specific class/action/instance. 
@@ -41,28 +40,48 @@ public class SecurityPermission<T> {
 
     private final T instance;
 
+    /**
+     * Creates a security permission for all actions of the specified category.
+     */
     public SecurityPermission(Class<T> category) {
         this(category, null, null);
     }
 
+    /**
+     * Creates a security permission for the specified action of the 
+     * specified category.
+     */
     public SecurityPermission(Class<T> category, String action) {
         this(category, action, null);
     }
 
+    /**
+     * Creates a security permission for the specified instance and the 
+     * specified action of the specified category.
+     */
     public SecurityPermission(Class<T> category, String action, T instance) {
         this.category = category;
         this.action = action;
         this.instance = instance;
     }
 
+    /**
+     * Returns the permission category or <code>null</code> for all categories.
+     */
     public Class<T> getCategory() {
         return category;
     }
 
+    /**
+     * Returns the permission action or <code>null</code> for all actions.
+     */
     public String getAction() {
         return action;
     }
 
+    /**
+     * Returns the permission instance or <code>null</code> for all instances.
+     */
     public T getInstance() {
         return instance;
     }

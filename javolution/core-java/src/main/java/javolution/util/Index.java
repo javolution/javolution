@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.List;
 import javolution.annotation.Format;
+import javolution.annotation.StackSafe;
 import javolution.context.HeapContext;
+import javolution.context.StackContext;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
 import javolution.lang.ValueType;
@@ -35,14 +37,15 @@ import javolution.text.TypeFormat;
  *     instances), but should not be used for large integer values as that  
  *     would increase the permanent memory footprint significantly.</p> 
  * 
+ * <p> This class is {@link StackSafe} new unique indices are always allocated
+ *     on the heap even when executing in a {@link StackContext}.</p>
+ * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
 @Format(text = Index.TextFormat.class)
+@StackSafe(initialization = false)
 public final class Index extends Number implements Comparable<Index>, ValueType {
-
-    // Start Initialization (forces allocation on the heap for static fields).
-    private static final HeapContext INIT_CTX = HeapContext.enter();
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -54,7 +57,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      */
     private static Index[] INSTANCES = new Index[256];
 
-    static { // Allocation on the heap context.
+    static { 
         INSTANCES[0] = ZERO;
         for (int i = 1; i < INSTANCES.length; i++) {
             INSTANCES[i] = new Index(i);
@@ -64,15 +67,15 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
     /**
      * Holds the number of indices preallocated (default <code>256</code>).
      */
-    public static final Configurable<Integer> PREALLOCATED_MAX = new Configurable(INSTANCES.length) {
+    public static final Configurable<Integer> PREALLOCATED = new Configurable(INSTANCES.length) {
 
         @Override
         public void configure(CharSequence configuration) {
-            int max = TypeFormat.parseInt(configuration);
-            if (max <= 0)
+            int n = TypeFormat.parseInt(configuration);
+            if (n <= 0)
                 throw new IllegalArgumentException("Preallocated max cannot be zero or negative");
-            set(max);
-            if (max > INSTANCES.length) Index.preallocate(max);
+            this.set(n);
+            Index.allocateOnHeap(n);
         }
 
     };
@@ -101,7 +104,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @throws IndexOutOfBoundsException if <code>value &lt; 0</code>
      */
     public static Index valueOf(int value) { // Short to be inlined.
-        if (value >= INSTANCES.length) Index.preallocate(value + 1);
+        if (value >= INSTANCES.length) Index.allocateOnHeap(2 * value);
         return INSTANCES[value];
     }
 
@@ -135,32 +138,11 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
         return list;
     }
 
-    private static synchronized void preallocate(int nbr) {
-        if (nbr <= INSTANCES.length) return; // Already done.
-        HeapContext ctx = HeapContext.enter();
-        try {
-            int newLength = INSTANCES.length;
-            while (newLength < nbr) {
-                newLength *= 2;
-            }
-            Index[] tmp = new Index[newLength];
-            System.arraycopy(INSTANCES, 0, tmp, 0, INSTANCES.length);
-            for (int i = INSTANCES.length; i < newLength; i++) {
-                tmp[i] = new Index(i);
-            }
-            INSTANCES = tmp;
-        } finally {
-            ctx.exit();
-        }
-    }
-
-    ;
- 
     /**
      * Returns the index after this one.
      */
     public Index next() {
-        return Index.valueOf(value+1);
+        return Index.valueOf(value + 1);
     }
 
     /**
@@ -169,7 +151,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @throws IndexOutOfBoundsException if (this == Index.ZERO)
      */
     public Index previous() {
-        return INSTANCES[value-1];
+        return INSTANCES[value - 1];
     }
 
     /**
@@ -288,9 +270,22 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
 
     }
 
-    // End of class initialization.
-    static {
-        INIT_CTX.exit();
+    // Allocates on the heap at least min indices.
+    private static synchronized void allocateOnHeap(final int n) {
+        if (n <= INSTANCES.length) return; // Already done.
+        HeapContext.execute(new Runnable() {
+
+            public void run() {
+                Index[] tmp = new Index[n];
+                System.arraycopy(INSTANCES, 0, tmp, 0, INSTANCES.length);
+                for (int i = INSTANCES.length; i < n; i++) {
+                    tmp[i] = new Index(i);
+                }
+                INSTANCES = tmp;
+
+            }
+
+        });
     }
 
 }

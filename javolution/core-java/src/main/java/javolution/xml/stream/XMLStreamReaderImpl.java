@@ -13,18 +13,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
 import java.util.Map;
-import javax.realtime.MemoryArea;
-
-import javolution.context.ObjectFactory;
+import javolution.context.HeapContext;
 import javolution.io.UTF8StreamReader;
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.xml.sax.Attributes;
-
 
 /**
  * <p> This class represents a  {@link javolution.lang.Reusable reusable}
@@ -71,16 +64,16 @@ import javolution.xml.sax.Attributes;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
+public final class XMLStreamReaderImpl implements XMLStreamReader {
 
     /**
      * Holds the textual representation for events.
      */
-    static final String[] NAMES_OF_EVENTS = new String[] { "UNDEFINED",
-            "START_ELEMENT", "END_ELEMENT", "PROCESSING_INSTRUCTIONS",
-            "CHARACTERS", "COMMENT", "SPACE", "START_DOCUMENT", "END_DOCUMENT",
-            "ENTITY_REFERENCE", "ATTRIBUTE", "DTD", "CDATA", "NAMESPACE",
-            "NOTATION_DECLARATION", "ENTITY_DECLARATION" };
+    static final String[] NAMES_OF_EVENTS = new String[]{"UNDEFINED",
+        "START_ELEMENT", "END_ELEMENT", "PROCESSING_INSTRUCTIONS",
+        "CHARACTERS", "COMMENT", "SPACE", "START_DOCUMENT", "END_DOCUMENT",
+        "ENTITY_REFERENCE", "ATTRIBUTE", "DTD", "CDATA", "NAMESPACE",
+        "NOTATION_DECLARATION", "ENTITY_DECLARATION"};
 
     /**
      * Holds the reader buffer capacity.
@@ -91,11 +84,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
      * Holds the prolog if any.
      */
     CharArray _prolog;
-
-    /**
-     * Holds object factory when factory-produced.
-     */
-    ObjectFactory _objectFactory;
 
     /**
      * Holds the current index in the character buffer.
@@ -314,7 +302,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             throw new XMLStreamException(e);
         }
     }
-   
+
     /** 
      * Returns the current depth of the element. Outside the root element, 
      * the depth is 0. The depth is incremented by 1 when a start tag is
@@ -333,7 +321,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     public int getDepth() {
         return _depth;
     }
-    
+
     /**
      * Returns the qualified name of the current event.
      * 
@@ -437,366 +425,366 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             //
             switch (_state) {
 
-            case STATE_CHARACTERS:
-                while (true) { // Read characters data all at once.
+                case STATE_CHARACTERS:
+                    while (true) { // Read characters data all at once.
 
-                    if (c == '<') {
-                        int length = _index - _start - 1;
-                        if (length > 0) {
-                            if (_charactersPending) {
-                               _text.setArray(_data, _text.offset(), _text
-                                      .length()
-                                      + length); // Coalescing.
-                            } else {
-                               _text = newSeq(_start, length);
-                               _charactersPending = true;
-                           }
-                           _start = _index - 1; // Keeps '<' as part of markup.
-                        }   
-                        _state = STATE_MARKUP;
-                        break;
+                        if (c == '<') {
+                            int length = _index - _start - 1;
+                            if (length > 0) {
+                                if (_charactersPending) {
+                                    _text.setArray(_data, _text.offset(), _text
+                                            .length()
+                                            + length); // Coalescing.
+                                } else {
+                                    _text = newSeq(_start, length);
+                                    _charactersPending = true;
+                                }
+                                _start = _index - 1; // Keeps '<' as part of markup.
+                            }
+                            _state = STATE_MARKUP;
+                            break;
+                        }
+
+                        // Local character reading block.
+                        if ((_readIndex >= _readCount) && isEndOfStream())
+                            return _eventType;
+                        c = _readBuffer[_readIndex++];
+                        if (c <= '&')
+                            c = (c == '&') ? replaceEntity()
+                                    : (c < ' ') ? handleEndOfLine(c) : c;
+                        _data[_index++] = c;
                     }
+                    break;
 
-                    // Local character reading block.
-                    if ((_readIndex >= _readCount) && isEndOfStream())
-                        return _eventType;
-                    c = _readBuffer[_readIndex++];
-                    if (c <= '&')
-                        c = (c == '&') ? replaceEntity()
-                                : (c < ' ') ? handleEndOfLine(c) : c;
-                    _data[_index++] = c;
-                }
-                break;
+                case STATE_CDATA:
+                    while (true) { // Reads CDATA all at once.
 
-            case STATE_CDATA:
-                while (true) { // Reads CDATA all at once.
+                        if ((c == '>') && (_index - _start >= 3)
+                                && (_data[_index - 2] == ']')
+                                && (_data[_index - 3] == ']')) {
+                            _index -= 3;
+                            int length = _index - _start;
+                            if (length > 0) { // Not empty.
+                                if (_charactersPending) {
+                                    _text.setArray(_data, _text.offset(), _text
+                                            .length()
+                                            + length); // Coalescing.
+                                } else {
+                                    _text = newSeq(_start, length);
+                                    _charactersPending = true;
+                                }
+                            }
+                            _start = _index;
+                            _state = STATE_CHARACTERS;
+                            break;
+                        }
 
-                    if ((c == '>') && (_index - _start >= 3)
-                            && (_data[_index - 2] == ']')
-                            && (_data[_index - 3] == ']')) {
-                        _index -= 3;
-                        int length = _index - _start;
-                        if (length > 0) { // Not empty.
-                            if (_charactersPending) {
-                                _text.setArray(_data, _text.offset(), _text
-                                        .length()
-                                        + length); // Coalescing.
-                            } else {
-                                _text = newSeq(_start, length);
-                                _charactersPending = true;
+                        // Local character reading block.
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _readBuffer[_readIndex++];
+                        if (c < ' ')
+                            c = handleEndOfLine(c);
+                        _data[_index++] = c;
+                    }
+                    break;
+
+                case STATE_DTD:
+                    if (c == '>') {
+                        _text = newSeq(_start, _index - _start);
+                        _index = _start; // Do not keep DTD.
+                        _state = STATE_CHARACTERS;
+                        return _eventType = DTD;
+                    } else if (c == '[') {
+                        _state = STATE_DTD_INTERNAL;
+                    }
+                    break;
+
+                case STATE_DTD_INTERNAL:
+                    if (c == ']') {
+                        _state = STATE_DTD;
+                    }
+                    break;
+
+                case STATE_MARKUP: // Starts with '<'
+                    if (_index - _start == 2) {
+                        if (c == '/') {
+                            _start = _index = _index - 2;
+                            _state = STATE_CLOSE_TAGxREAD_ELEM_NAME;
+                            _prefixSep = -1;
+                            if (_charactersPending) { // Flush characters event.
+                                _charactersPending = false;
+                                return _eventType = CHARACTERS;
+                            }
+                        } else if (c == '?') {
+                            _start = _index = _index - 2;
+                            _state = STATE_PI;
+                            if (_charactersPending) { // Flush characters event.
+                                _charactersPending = false;
+                                return _eventType = CHARACTERS;
+                            }
+                        } else if (c != '!') { // Element tag (first letter).
+                            _data[_start] = c;
+                            _index = _start + 1;
+                            _state = STATE_OPEN_TAGxREAD_ELEM_NAME;
+                            _prefixSep = -1;
+                            if (_charactersPending) { // Flush character event.
+                                _charactersPending = false;
+                                return _eventType = CHARACTERS;
                             }
                         }
-                        _start = _index;
-                        _state = STATE_CHARACTERS;
-                        break;
-                    }
-
-                    // Local character reading block.
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _readBuffer[_readIndex++];
-                    if (c < ' ')
-                        c = handleEndOfLine(c);
-                    _data[_index++] = c;
-                }
-                break;
-
-            case STATE_DTD:
-                if (c == '>') {
-                    _text = newSeq(_start, _index - _start);
-                    _index = _start; // Do not keep DTD.
-                    _state = STATE_CHARACTERS;
-                    return _eventType = DTD;
-                } else if (c == '[') {
-                    _state = STATE_DTD_INTERNAL;
-                }
-                break;
-
-            case STATE_DTD_INTERNAL:
-                if (c == ']') {
-                    _state = STATE_DTD;
-                }
-                break;
-
-            case STATE_MARKUP: // Starts with '<'
-                if (_index - _start == 2) {
-                    if (c == '/') {
-                        _start = _index = _index - 2;
-                        _state = STATE_CLOSE_TAGxREAD_ELEM_NAME;
-                        _prefixSep = -1;
-                        if (_charactersPending) { // Flush characters event.
-                            _charactersPending = false;
-                            return _eventType = CHARACTERS;
-                        }
-                    } else if (c == '?') {
-                        _start = _index = _index - 2;
-                        _state = STATE_PI;
-                        if (_charactersPending) { // Flush characters event.
-                            _charactersPending = false;
-                            return _eventType = CHARACTERS;
-                        }
-                    } else if (c != '!') { // Element tag (first letter).
-                        _data[_start] = c;
-                        _index = _start + 1;
-                        _state = STATE_OPEN_TAGxREAD_ELEM_NAME;
-                        _prefixSep = -1;
+                    } else if ((_index - _start == 4) && (_data[_start + 1] == '!')
+                            && (_data[_start + 2] == '-')
+                            && (_data[_start + 3] == '-')) {
+                        _start = _index = _index - 4; // Removes <!--
+                        _state = STATE_COMMENT;
                         if (_charactersPending) { // Flush character event.
                             _charactersPending = false;
                             return _eventType = CHARACTERS;
                         }
+
+                    } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
+                            && (_data[_start + 2] == '[')
+                            && (_data[_start + 3] == 'C')
+                            && (_data[_start + 4] == 'D')
+                            && (_data[_start + 5] == 'A')
+                            && (_data[_start + 6] == 'T')
+                            && (_data[_start + 7] == 'A')
+                            && (_data[_start + 8] == '[')) {
+                        _start = _index = _index - 9; // Do not keep <![CDATA[
+                        _state = STATE_CDATA;
+
+                    } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
+                            && (_data[_start + 2] == 'D')
+                            && (_data[_start + 3] == 'O')
+                            && (_data[_start + 4] == 'C')
+                            && (_data[_start + 5] == 'T')
+                            && (_data[_start + 6] == 'Y')
+                            && (_data[_start + 7] == 'P')
+                            && (_data[_start + 8] == 'E')) {
+                        // Keeps <!DOCTYPE as part of DTD.
+                        _state = STATE_DTD;
+                    } else {
+                        // Ignores, e.g. <!ELEMENT <!ENTITY...
                     }
-                } else if ((_index - _start == 4) && (_data[_start + 1] == '!')
-                        && (_data[_start + 2] == '-')
-                        && (_data[_start + 3] == '-')) {
-                    _start = _index = _index - 4; // Removes <!--
-                    _state = STATE_COMMENT;
-                    if (_charactersPending) { // Flush character event.
-                        _charactersPending = false;
-                        return _eventType = CHARACTERS;
+                    break;
+
+                case STATE_COMMENT:
+                    while (true) { // Read comment all at once.
+
+                        if ((c == '>') && (_index - _start >= 3)
+                                && (_data[_index - 2] == '-')
+                                && (_data[_index - 3] == '-')) {
+                            _index -= 3; // Removes -->
+                            _text = newSeq(_start, _index - _start);
+                            _state = STATE_CHARACTERS;
+                            _index = _start; // Do not keep comments.
+                            return _eventType = COMMENT;
+                        }
+
+                        // Local character reading block.
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _readBuffer[_readIndex++];
+                        if (c < ' ')
+                            c = handleEndOfLine(c);
+                        _data[_index++] = c;
                     }
 
-                } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
-                        && (_data[_start + 2] == '[')
-                        && (_data[_start + 3] == 'C')
-                        && (_data[_start + 4] == 'D')
-                        && (_data[_start + 5] == 'A')
-                        && (_data[_start + 6] == 'T')
-                        && (_data[_start + 7] == 'A')
-                        && (_data[_start + 8] == '[')) {
-                    _start = _index = _index - 9; // Do not keep <![CDATA[
-                    _state = STATE_CDATA;
-
-                } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
-                        && (_data[_start + 2] == 'D')
-                        && (_data[_start + 3] == 'O')
-                        && (_data[_start + 4] == 'C')
-                        && (_data[_start + 5] == 'T')
-                        && (_data[_start + 6] == 'Y')
-                        && (_data[_start + 7] == 'P')
-                        && (_data[_start + 8] == 'E')) {
-                    // Keeps <!DOCTYPE as part of DTD.
-                    _state = STATE_DTD;
-                } else {
-                    // Ignores, e.g. <!ELEMENT <!ENTITY...
-                }
-                break;
-
-            case STATE_COMMENT:
-                while (true) { // Read comment all at once.
-
-                    if ((c == '>') && (_index - _start >= 3)
-                            && (_data[_index - 2] == '-')
-                            && (_data[_index - 3] == '-')) {
-                        _index -= 3; // Removes -->
+                case STATE_PI:
+                    if ((c == '>') && (_index - _start >= 2)
+                            && (_data[_index - 2] == '?')) {
+                        _index -= 2; // Removes ?>
                         _text = newSeq(_start, _index - _start);
                         _state = STATE_CHARACTERS;
-                        _index = _start; // Do not keep comments.
-                        return _eventType = COMMENT;
+                        _index = _start; // Do not keep processing instructions.
+                        return _eventType = PROCESSING_INSTRUCTION;
                     }
+                    break;
 
-                    // Local character reading block.
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _readBuffer[_readIndex++];
-                    if (c < ' ')
-                        c = handleEndOfLine(c);
-                    _data[_index++] = c;
-                }
+                // OPEN_TAG:
+                case STATE_OPEN_TAGxREAD_ELEM_NAME:
+                    while (true) { // Read element name all at once.
 
-            case STATE_PI:
-                if ((c == '>') && (_index - _start >= 2)
-                        && (_data[_index - 2] == '?')) {
-                    _index -= 2; // Removes ?>
-                    _text = newSeq(_start, _index - _start);
-                    _state = STATE_CHARACTERS;
-                    _index = _start; // Do not keep processing instructions.
-                    return _eventType = PROCESSING_INSTRUCTION;
-                }
-                break;
+                        if (c < '@') { // Else avoid multiple checks.
+                            if (c == '>') {
+                                _qName = newSeq(_start, --_index - _start);
+                                _start = _index;
+                                _state = STATE_CHARACTERS;
+                                processStartTag();
+                                _isEmpty = false;
+                                return _eventType = START_ELEMENT;
+                            } else if (c == '/') {
+                                _qName = newSeq(_start, --_index - _start);
+                                _start = _index;
+                                _state = STATE_OPEN_TAGxEMPTY_TAG;
+                                break;
+                            } else if (c == ':') {
+                                _prefixSep = _index - 1;
+                            } else if (c <= ' ') {
+                                _qName = newSeq(_start, --_index - _start);
+                                _state = STATE_OPEN_TAGxELEM_NAME_READ;
+                                break;
+                            }
+                        }
 
-            // OPEN_TAG:
-            case STATE_OPEN_TAGxREAD_ELEM_NAME:
-                while (true) { // Read element name all at once.
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _data[_index++] = _readBuffer[_readIndex++];
+                    }
+                    break;
 
-                    if (c < '@') { // Else avoid multiple checks.
-                        if (c == '>') {
-                            _qName = newSeq(_start, --_index - _start);
-                            _start = _index;
-                            _state = STATE_CHARACTERS;
-                            processStartTag();
-                            _isEmpty = false;
-                            return _eventType = START_ELEMENT;
-                        } else if (c == '/') {
-                            _qName = newSeq(_start, --_index - _start);
-                            _start = _index;
-                            _state = STATE_OPEN_TAGxEMPTY_TAG;
-                            break;
-                        } else if (c == ':') {
-                            _prefixSep = _index - 1;
-                        } else if (c <= ' ') {
-                            _qName = newSeq(_start, --_index - _start);
+                case STATE_OPEN_TAGxELEM_NAME_READ:
+                    if (c == '>') {
+                        _start = --_index;
+                        _state = STATE_CHARACTERS;
+                        processStartTag();
+                        _isEmpty = false;
+                        return _eventType = START_ELEMENT;
+                    } else if (c == '/') {
+                        _state = STATE_OPEN_TAGxEMPTY_TAG;
+                    } else if (c > ' ') {
+                        _start = _index - 1; // Includes current character.
+                        _attrPrefixSep = -1;
+                        _state = STATE_OPEN_TAGxREAD_ATTR_NAME;
+                    }
+                    break;
+
+                case STATE_OPEN_TAGxREAD_ATTR_NAME:
+                    while (true) { // Read attribute name all at once.
+
+                        if (c < '@') { // Else avoid multiple checks.
+                            if (c <= ' ') {
+                                _attrQName = newSeq(_start, --_index - _start);
+                                _state = STATE_OPEN_TAGxATTR_NAME_READ;
+                                break;
+                            } else if (c == '=') {
+                                _attrQName = newSeq(_start, --_index - _start);
+                                _state = STATE_OPEN_TAGxEQUAL_READ;
+                                break;
+                            } else if (c == ':') {
+                                _attrPrefixSep = _index - 1;
+                            }
+                        }
+
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        _data[_index++] = c = _readBuffer[_readIndex++];
+                    }
+                    break;
+
+                case STATE_OPEN_TAGxATTR_NAME_READ:
+                    if (c == '=') {
+                        --_index;
+                        _state = STATE_OPEN_TAGxEQUAL_READ;
+                    } else if (c > ' ') {
+                        throw new XMLStreamException("'=' expected", _location);
+                    }
+                    break;
+
+                case STATE_OPEN_TAGxEQUAL_READ:
+                    if (c == '\'') {
+                        _start = --_index;
+                        _state = STATE_OPEN_TAGxREAD_ATTR_VALUE_SIMPLE_QUOTE;
+                    } else if (c == '\"') {
+                        _start = --_index;
+                        _state = STATE_OPEN_TAGxREAD_ATTR_VALUE_DOUBLE_QUOTE;
+                    } else if (c > ' ') {
+                        throw new XMLStreamException("Quotes expected", _location);
+                    }
+                    break;
+
+                case STATE_OPEN_TAGxREAD_ATTR_VALUE_SIMPLE_QUOTE:
+                    while (true) { // Read attribute value all at once.
+
+                        if (c == '\'') {
+                            _attrValue = newSeq(_start, --_index - _start);
+                            processAttribute();
                             _state = STATE_OPEN_TAGxELEM_NAME_READ;
                             break;
                         }
+
+                        // Local character reading block.
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _readBuffer[_readIndex++];
+                        if (c == '&')
+                            c = replaceEntity();
+                        _data[_index++] = c;
                     }
+                    break;
 
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _data[_index++] = _readBuffer[_readIndex++];
-                }
-                break;
+                case STATE_OPEN_TAGxREAD_ATTR_VALUE_DOUBLE_QUOTE:
+                    while (true) { // Read attribute value all at once.
 
-            case STATE_OPEN_TAGxELEM_NAME_READ:
-                if (c == '>') {
-                    _start = --_index;
-                    _state = STATE_CHARACTERS;
-                    processStartTag();
-                    _isEmpty = false;
-                    return _eventType = START_ELEMENT;
-                } else if (c == '/') {
-                    _state = STATE_OPEN_TAGxEMPTY_TAG;
-                } else if (c > ' ') {
-                    _start = _index - 1; // Includes current character.
-                    _attrPrefixSep = -1;
-                    _state = STATE_OPEN_TAGxREAD_ATTR_NAME;
-                }
-                break;
-
-            case STATE_OPEN_TAGxREAD_ATTR_NAME:
-                while (true) { // Read attribute name all at once.
-
-                    if (c < '@') { // Else avoid multiple checks.
-                        if (c <= ' ') {
-                            _attrQName = newSeq(_start, --_index - _start);
-                            _state = STATE_OPEN_TAGxATTR_NAME_READ;
+                        if (c == '\"') {
+                            _attrValue = newSeq(_start, --_index - _start);
+                            processAttribute();
+                            _state = STATE_OPEN_TAGxELEM_NAME_READ;
                             break;
-                        } else if (c == '=') {
-                            _attrQName = newSeq(_start, --_index - _start);
-                            _state = STATE_OPEN_TAGxEQUAL_READ;
-                            break;
-                        } else if (c == ':') {
-                            _attrPrefixSep = _index - 1;
                         }
+
+                        // Local character reading block.
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _readBuffer[_readIndex++];
+                        if (c == '&')
+                            c = replaceEntity();
+                        _data[_index++] = c;
                     }
+                    break;
 
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    _data[_index++] = c = _readBuffer[_readIndex++];
-                }
-                break;
-
-            case STATE_OPEN_TAGxATTR_NAME_READ:
-                if (c == '=') {
-                    --_index;
-                    _state = STATE_OPEN_TAGxEQUAL_READ;
-                } else if (c > ' ') {
-                    throw new XMLStreamException("'=' expected", _location);
-                }
-                break;
-
-            case STATE_OPEN_TAGxEQUAL_READ:
-                if (c == '\'') {
-                    _start = --_index;
-                    _state = STATE_OPEN_TAGxREAD_ATTR_VALUE_SIMPLE_QUOTE;
-                } else if (c == '\"') {
-                    _start = --_index;
-                    _state = STATE_OPEN_TAGxREAD_ATTR_VALUE_DOUBLE_QUOTE;
-                } else if (c > ' ') {
-                    throw new XMLStreamException("Quotes expected", _location);
-                }
-                break;
-
-            case STATE_OPEN_TAGxREAD_ATTR_VALUE_SIMPLE_QUOTE:
-                while (true) { // Read attribute value all at once.
-
-                    if (c == '\'') {
-                        _attrValue = newSeq(_start, --_index - _start);
-                        processAttribute();
-                        _state = STATE_OPEN_TAGxELEM_NAME_READ;
-                        break;
+                case STATE_OPEN_TAGxEMPTY_TAG:
+                    if (c == '>') {
+                        _start = --_index;
+                        _state = STATE_CHARACTERS;
+                        processStartTag();
+                        _isEmpty = true;
+                        return _eventType = START_ELEMENT;
+                    } else {
+                        throw new XMLStreamException("'>' expected", _location);
                     }
-
-                    // Local character reading block.
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _readBuffer[_readIndex++];
-                    if (c == '&')
-                        c = replaceEntity();
-                    _data[_index++] = c;
-                }
-                break;
-
-            case STATE_OPEN_TAGxREAD_ATTR_VALUE_DOUBLE_QUOTE:
-                while (true) { // Read attribute value all at once.
-
-                    if (c == '\"') {
-                        _attrValue = newSeq(_start, --_index - _start);
-                        processAttribute();
-                        _state = STATE_OPEN_TAGxELEM_NAME_READ;
-                        break;
-                    }
-
-                    // Local character reading block.
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _readBuffer[_readIndex++];
-                    if (c == '&')
-                        c = replaceEntity();
-                    _data[_index++] = c;
-                }
-                break;
-
-            case STATE_OPEN_TAGxEMPTY_TAG:
-                if (c == '>') {
-                    _start = --_index;
-                    _state = STATE_CHARACTERS;
-                    processStartTag();
-                    _isEmpty = true;
-                    return _eventType = START_ELEMENT;
-                } else {
-                    throw new XMLStreamException("'>' expected", _location);
-                }
 
                 // CLOSE_TAG:
-            case STATE_CLOSE_TAGxREAD_ELEM_NAME:
-                while (true) { // Element name can be read all at once.
+                case STATE_CLOSE_TAGxREAD_ELEM_NAME:
+                    while (true) { // Element name can be read all at once.
 
-                    if (c < '@') { // Else avoid multiple checks.
-                        if (c == '>') {
-                            _qName = newSeq(_start, --_index - _start);
-                            _start = _index;
-                            _state = STATE_CHARACTERS;
-                            processEndTag();
-                            return _eventType = END_ELEMENT;
-                        } else if (c == ':') {
-                            _prefixSep = _index - 1;
-                        } else if (c <= ' ') {
-                            _qName = newSeq(_start, --_index - _start);
-                            _state = STATE_CLOSE_TAGxELEM_NAME_READ;
-                            break;
+                        if (c < '@') { // Else avoid multiple checks.
+                            if (c == '>') {
+                                _qName = newSeq(_start, --_index - _start);
+                                _start = _index;
+                                _state = STATE_CHARACTERS;
+                                processEndTag();
+                                return _eventType = END_ELEMENT;
+                            } else if (c == ':') {
+                                _prefixSep = _index - 1;
+                            } else if (c <= ' ') {
+                                _qName = newSeq(_start, --_index - _start);
+                                _state = STATE_CLOSE_TAGxELEM_NAME_READ;
+                                break;
+                            }
                         }
+
+                        if (_readIndex >= _readCount)
+                            reloadBuffer();
+                        c = _data[_index++] = _readBuffer[_readIndex++];
                     }
+                    break;
 
-                    if (_readIndex >= _readCount)
-                        reloadBuffer();
-                    c = _data[_index++] = _readBuffer[_readIndex++];
-                }
-                break;
+                case STATE_CLOSE_TAGxELEM_NAME_READ:
+                    if (c == '>') {
+                        _start = --_index;
+                        _state = STATE_CHARACTERS;
+                        processEndTag();
+                        return _eventType = END_ELEMENT;
+                    } else if (c > ' ') {
+                        throw new XMLStreamException("'>' expected", _location);
+                    }
+                    break;
 
-            case STATE_CLOSE_TAGxELEM_NAME_READ:
-                if (c == '>') {
-                    _start = --_index;
-                    _state = STATE_CHARACTERS;
-                    processEndTag();
-                    return _eventType = END_ELEMENT;
-                } else if (c > ' ') {
-                    throw new XMLStreamException("'>' expected", _location);
-                }
-                break;
-
-            default:
-                throw new XMLStreamException("State unknown: " + _state,
-                        _location);
+                default:
+                    throw new XMLStreamException("State unknown: " + _state,
+                            _location);
             }
         }
     }
@@ -845,7 +833,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
      *         and the event type (CHARACTERS or END_DOCUMENT) has been set.
      */
     private void reloadBuffer() throws XMLStreamException {
-        if (_reader == null) throw new XMLStreamException("Input not specified");
+        if (_reader == null)
+            throw new XMLStreamException("Input not specified");
         _location._column += _readIndex;
         _location._charactersRead += _readIndex;
         _readIndex = 0;
@@ -945,8 +934,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
                 throw new XMLStreamException("';' expected", _location);
         }
         // Ensures that the replacement string holds in the data buffer.
-        while (start + _entities.getMaxLength() >= _data.length)
+        while (start + _entities.getMaxLength() >= _data.length) {
             increaseDataBuffer();
+        }
 
         // Replaces the entity.
         int length = _entities.replaceEntity(_data, start, _index - start);
@@ -1026,7 +1016,6 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         _isEmpty = false;
         _location.reset();
         _namespaces.reset();
-        _objectFactory = null;
         _prolog = null;
         _readCount = 0;
         _reader = null;
@@ -1047,11 +1036,12 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
     }
 
     private CharArray newSeq2() {
-        MemoryArea.getMemoryArea(this).executeInArea(_createSeqLogic);
+        HeapContext.execute(_createSeqLogic);
         return _seqs[_seqsIndex++];
     }
 
     private final Runnable _createSeqLogic = new Runnable() {
+
         public void run() {
             if (_seqsCapacity >= _seqs.length) { // Resizes.
                 CharArray[] tmp = new CharArray[_seqs.length * 2];
@@ -1061,6 +1051,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             CharArray seq = new CharArray();
             _seqs[_seqsCapacity++] = seq;
         }
+
     };
 
     private CharArray[] _seqs = new CharArray[256];
@@ -1076,36 +1067,40 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
         //       This accumulation may cause resize of the data buffer if
         //       numerous elements at the same nesting level are separated by 
         //       spaces or indentation.
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
+
             public void run() {
                 char[] tmp = new char[_data.length * 2];
                 javolution.context.LogContext.info(new CharArray(
                         "XMLStreamReaderImpl: Data buffer increased to "
-                                + tmp.length));
+                        + tmp.length));
                 System.arraycopy(_data, 0, tmp, 0, _data.length);
                 _data = tmp;
             }
+
         });
     }
 
     // Increases statck.
     private void increaseStack() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
+
             public void run() {
                 CharArray[] tmp = new CharArray[_elemStack.length * 2];
                 javolution.context.LogContext.info(new CharArray(
                         "XMLStreamReaderImpl: CharArray stack increased to "
-                                + tmp.length));
+                        + tmp.length));
                 System.arraycopy(_elemStack, 0, tmp, 0, _elemStack.length);
                 _elemStack = tmp;
             }
+
         });
     }
 
     /**
      * This inner class represents the parser location.
      */
-    private final class LocationImpl implements Location, Reusable {
+    private final class LocationImpl implements Location {
 
         int _column;
 
@@ -1142,12 +1137,12 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             _column = 0;
             _charactersRead = 0;
         }
+
     }
 
     //////////////////////////////////////////
     // Implements XMLStreamReader Interface //
     //////////////////////////////////////////
-
     // Implements XMLStreamReader Interface.
     public void require(int type, CharSequence namespaceURI,
             CharSequence localName) throws XMLStreamException {
@@ -1215,11 +1210,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
 
     // Implements XMLStreamReader Interface.
     public void close() throws XMLStreamException {
-        if (_objectFactory != null) {
-            _objectFactory.recycle(this); // Automatic reset.
-        } else {
-            reset();
-        }
+
+        reset();
+
     }
 
     public int getAttributeCount() {
@@ -1531,31 +1524,32 @@ public final class XMLStreamReaderImpl implements XMLStreamReader, Reusable {
             while (i < maxIndex) {
                 char c = _prolog.array()[i++];
                 switch (state) {
-                case READ_EQUAL:
-                    if (c == '=') {
-                        state = READ_QUOTE;
-                    }
-                    break;
-                case READ_QUOTE:
-                    if (c == '"') {
-                        state = VALUE_DOUBLE_QUOTE;
-                        valueOffset = i;
-                    } else if (c == '\'') {
-                        state = VALUE_SIMPLE_QUOTE;
-                        valueOffset = i;
-                    }
-                    break;
-                case VALUE_SIMPLE_QUOTE:
-                    if (c == '\'')
-                        return newSeq(valueOffset, i - valueOffset - 1);
-                    break;
-                case VALUE_DOUBLE_QUOTE:
-                    if (c == '"')
-                        return newSeq(valueOffset, i - valueOffset - 1);
-                    break;
+                    case READ_EQUAL:
+                        if (c == '=') {
+                            state = READ_QUOTE;
+                        }
+                        break;
+                    case READ_QUOTE:
+                        if (c == '"') {
+                            state = VALUE_DOUBLE_QUOTE;
+                            valueOffset = i;
+                        } else if (c == '\'') {
+                            state = VALUE_SIMPLE_QUOTE;
+                            valueOffset = i;
+                        }
+                        break;
+                    case VALUE_SIMPLE_QUOTE:
+                        if (c == '\'')
+                            return newSeq(valueOffset, i - valueOffset - 1);
+                        break;
+                    case VALUE_DOUBLE_QUOTE:
+                        if (c == '"')
+                            return newSeq(valueOffset, i - valueOffset - 1);
+                        break;
                 }
             }
         }
         return null;
     }
+
 }

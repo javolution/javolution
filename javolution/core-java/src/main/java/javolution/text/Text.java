@@ -73,34 +73,46 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * Holds the default size for primitive blocks of characters.
      */
     private static final int BLOCK_SIZE = 1 << 5;
+
     /**
      * Holds the mask used to ensure a block boundary cesures.
      */
     private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
+
     /**
      * Holds the primitive text factory.
      */
     /**
      * Holds the texts interned in ImmortalMemory
      */
-    private static final FastMap INTERN_INSTANCES = new FastMap()
-            .setKeyComparator(FastComparator.LEXICAL);
+    private static final FastMap INTERN_INSTANCES = new FastMap() {
+
+        public FastComparator valueComparator() {
+            return FastComparator.LEXICAL;
+        }
+
+    };
+
     /**
      * Holds an empty character sequence.
      */
     public static final Text EMPTY = Text.intern("");
+
     /**
      * Holds the raw data (primitive) or <code>null</code> (composite).
      */
     private final char[] _data;
+
     /**
      * Holds the total number of characters.
      */
     private int _count;
+
     /**
      * Holds the head block of character (composite).
      */
     private Text _head;
+
     /**
      * Holds the tail block of character (composite).
      */
@@ -245,7 +257,9 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     public static Text valueOf(boolean b) {
         return b ? TRUE : FALSE;
     }
+
     private static final Text TRUE = Text.intern("true");
+
     private static final Text FALSE = Text.intern("false");
 
     /**
@@ -282,7 +296,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(int i, int radix) {
         TextBuilder tb = new TextBuilder();
-            return tb.append(i, radix).toText();
+        return tb.append(i, radix).toText();
     }
 
     /**
@@ -294,8 +308,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(long l) {
         TextBuilder tb = new TextBuilder();
-            return tb.append(l).toText();
-     }
+        return tb.append(l).toText();
+    }
 
     /**
      * Returns the radix representation of the specified <code>long</code>
@@ -307,8 +321,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(long l, int radix) {
         TextBuilder tb = new TextBuilder();
-             return tb.append(l, radix).toText();
-     }
+        return tb.append(l, radix).toText();
+    }
 
     /**
      * Returns the textual representation of the specified <code>float</code>
@@ -319,8 +333,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(float f) {
         TextBuilder tb = new TextBuilder();
-            return tb.append(f).toText();
-     }
+        return tb.append(f).toText();
+    }
 
     /**
      * Returns the textual representation of the specified <code>double</code>
@@ -331,8 +345,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     public static Text valueOf(double d) {
         TextBuilder tb = new TextBuilder();
-            return tb.append(d).toText();
-      }
+        return tb.append(d).toText();
+    }
 
     /**
      * Returns the textual representation of the specified <code>double</code>
@@ -352,8 +366,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     public static Text valueOf(double d, int digits, boolean scientific,
             boolean showZero) {
         TextBuilder tb = new TextBuilder();
-             return tb.append(d, digits, scientific, showZero).toText();
-     }
+        return tb.append(d, digits, scientific, showZero).toText();
+    }
 
     /**
      * Returns the length of this text.
@@ -850,7 +864,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      *          <code>CharSequence</code> or a <code>String</code>.
      */
     public int compareTo(Object csq) {
-        return FastComparator.lexicalValue(CharSequence.class).compare(this, (CharSequence) csq);
+        return FastComparator.LEXICAL.compare(this, (CharSequence) csq);
     }
 
     /**
@@ -918,6 +932,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
             throw new Error(e.getMessage());
         }
     }
+
     private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter()
             .setOutput(System.out);
 
@@ -1423,7 +1438,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         text._count = length;
         return text;
     }
- 
 
     /**
      * Returns a {@link javolution.context.AllocatorContext context allocated}
@@ -1439,4 +1453,5 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
         text._tail = tail;
         return text;
     }
+
 }

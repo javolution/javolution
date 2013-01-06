@@ -9,12 +9,11 @@
 package javolution.xml.sax;
 
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-
-import javolution.lang.Reflection;
-import javolution.lang.Reusable;
+import java.net.URL;
 import javolution.text.CharArray;
 import javolution.xml.stream.XMLStreamConstants;
 import javolution.xml.stream.XMLStreamException;
@@ -26,11 +25,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
-
-
-
-import java.lang.CharSequence;
-import java.lang.UnsupportedOperationException;
 
 /**
  * <p> This class provides a real-time SAX2-like XML parser; this parser is
@@ -52,7 +46,7 @@ import java.lang.UnsupportedOperationException;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, June 16, 2006
  */
-public class XMLReaderImpl implements XMLReader, Reusable {
+public class XMLReaderImpl implements XMLReader {
 
     /**
      * Holds the default handler instance.
@@ -175,11 +169,11 @@ public class XMLReaderImpl implements XMLReader, Reusable {
     public void parse(String systemId) throws IOException, SAXException {
         InputStream inStream;
         try {
-            Object url = NEW_URL.newInstance(systemId);
-            inStream = (InputStream) OPEN_STREAM.invoke(url);
+            URL url = new URL(systemId);
+            inStream = url.openStream();
         } catch (Exception urlException) { // Try as filename.
             try {
-                inStream = (InputStream) NEW_FILE_INPUT_STREAM.newInstance(systemId);
+                inStream = new FileInputStream(systemId);
             } catch (Exception fileException) {
                 throw new UnsupportedOperationException("Cannot parse "
                         + systemId);
@@ -187,15 +181,6 @@ public class XMLReaderImpl implements XMLReader, Reusable {
         }
         parse(inStream);
     }
-
-    private static final Reflection.Constructor NEW_URL = Reflection
-            .getInstance().getConstructor("java.net.URL(j2me.lang.String)");
-
-    private static final Reflection.Method OPEN_STREAM = Reflection
-            .getInstance().getMethod("java.net.URL.openStream()");
-
-    private static final Reflection.Constructor NEW_FILE_INPUT_STREAM = Reflection
-            .getInstance().getConstructor("j2me.io.FileInputStream(j2me.lang.String)");
 
     // Implements XMLReader interface.
     public void setContentHandler(ContentHandler handler) {

@@ -13,14 +13,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-
-import java.lang.CharSequence;
-import java.lang.IllegalStateException;
-import javax.realtime.MemoryArea;
-
-import javolution.context.ObjectFactory;
+import javolution.context.HeapContext;
 import javolution.io.UTF8StreamWriter;
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 
@@ -37,7 +31,7 @@ import javolution.text.TextBuilder;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
+public final class XMLStreamWriterImpl implements XMLStreamWriter {
 
     /** 
      * Holds the length of intermediate buffer.
@@ -123,12 +117,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
      * Indicates if the current object written is an attribute value.
      */
     private boolean _isAttributeValue;
-
-    /**
-     * Holds recycling factory if any.
-     */
-    ObjectFactory _objectFactory;
-
+    
     ////////////////////////
     // Temporary Settings //
     ////////////////////////
@@ -289,7 +278,6 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         _namespaces.reset();
         _nesting = 0;
         _noEmptyElementTag = false;
-        _objectFactory = null;
         _repairingPrefix = "ns";
         _utf8StreamWriter.reset();
         _writer = null;
@@ -395,12 +383,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
             }
             flush();
         }
-        if (_objectFactory != null) {
-            _objectFactory.recycle(this); // Implicit reset.
-        } else {
-            reset(); // Explicit reset.
-        }
-    }
+        reset(); // Explicit reset.
+     }
 
     // Implements XMLStreamWriter interface.
     public void flush() throws XMLStreamException {
@@ -779,7 +763,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
 
     // Resizes element stack  (same memory area as the writer).
     private void resizeElemStack() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
             public void run() {
                 final int oldLength = _qNames.length;
                 final int newLength = oldLength * 2;

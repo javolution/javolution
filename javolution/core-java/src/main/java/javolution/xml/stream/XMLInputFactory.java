@@ -10,10 +10,9 @@ package javolution.xml.stream;
 
 import java.io.InputStream;
 import java.io.Reader;
-
 import java.util.Map;
-
-import javolution.context.ObjectFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javolution.lang.Configurable;
 
 
@@ -53,11 +52,6 @@ import javolution.lang.Configurable;
  */
 public abstract class XMLInputFactory {
 
-    /**
-     * Holds the XMLInputFactory implementation (configurable).
-     */
-    public static final Configurable <Class<? extends XMLInputFactory>> 
-        CLASS = new Configurable <Class<? extends XMLInputFactory>> (Default.class) {};
 
     /**
      * The property that requires the parser to coalesce adjacent character data
@@ -95,8 +89,7 @@ public abstract class XMLInputFactory {
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
-        Class cls = (Class) CLASS.get();
-        return (XMLInputFactory) ObjectFactory.getInstance(cls).object();
+        return new Default();
     }
 
     /**
@@ -224,31 +217,11 @@ public abstract class XMLInputFactory {
         }
 
         private XMLStreamReaderImpl newReader() {
-            XMLStreamReaderImpl xmlReader = (XMLStreamReaderImpl) XML_READER_FACTORY
-                    .object();
+            XMLStreamReaderImpl xmlReader = new XMLStreamReaderImpl();
             if (_entities != null) {
                 xmlReader.setEntities(_entities);
             }
-            xmlReader._objectFactory = XML_READER_FACTORY;
             return xmlReader;
         }
     }
-
-    private static ObjectFactory XML_READER_FACTORY = new ObjectFactory() {
-
-        protected Object create() {
-            return new XMLStreamReaderImpl();
-        }
-
-        protected void cleanup(Object obj) {
-            ((XMLStreamReaderImpl) obj).reset();
-        }
-    };
-
-    // Allows instances of private classes to be factory produced. 
-    static {
-        ObjectFactory.setInstance(new ObjectFactory() {
-            protected Object create() {
-                return new Default();
-            } }, Default.class);
-    }}
+}

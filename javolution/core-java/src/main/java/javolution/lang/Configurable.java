@@ -10,7 +10,6 @@ package javolution.lang;
 
 import java.lang.reflect.Field;
 import javolution.annotation.StackSafe;
-import javolution.context.LogContext;
 import javolution.context.SecurityContext;
 import javolution.context.SecurityPermission;
 
@@ -37,7 +36,7 @@ import javolution.context.SecurityPermission;
  *                  = new Configurable(new Font("Arial", Font.BOLD, 18)) {
  *              @Override
  *              public void configure(CharSequence configuration) {
- *                  set(Font.decode(configuration));
+ *                  setDefaultValue(Font.decode(configuration));
  *              }
  *          };
  *      }[/code]
@@ -45,9 +44,9 @@ import javolution.context.SecurityPermission;
  *      data can come from anywhere, for example from the OSGI Configuration 
  *      Admin package. Low level code does not need to know.</p>
  * 
- * <p> The configuration initial value is either the explicit value specified 
- *     at construction or the configuration (parsed) value from the system 
- *     properties (the key is the full name of the class static field).
+ * <p> The configuration initial default value is either the explicit value 
+ *     specified at construction or the configuration (parsed) value from the
+ *     system properties (the key is the full name of the class static field).
  *     For example, running with the option 
  *     <code>-Dfoo.bar.Document#DEFAULT_FONT=Courier-BOLD-18</code> would set  
  *     the document default font to courier in the example above.</p>
@@ -56,7 +55,7 @@ import javolution.context.SecurityPermission;
  * @version 6.0, December 12, 2012
  * @see     javolution.osgi.ConfigurableService
  */
-@StackSafe(initialization=false)
+@StackSafe(initialization = false)
 public abstract class Configurable<T> {
 
     /**
@@ -87,8 +86,6 @@ public abstract class Configurable<T> {
 
     /**
      * Creates a configurable having the specified default value.
-     * 
-     * @param defaultValue 
      */
     protected Configurable(T defaultValue) {
         this.defaultValue = defaultValue;
@@ -96,11 +93,9 @@ public abstract class Configurable<T> {
                 Configurable.class, "configure", this);
         name = Configurable.nameOf(this);
         if (name != null) { // Reads system properties for default value.
-            try {
-                String configuration = System.getProperty(name);
+            String configuration = System.getProperty(name);
+            if (configuration != null) {
                 configure(configuration);
-            } catch (Throwable e) {
-                LogContext.error(e);
             }
         }
     }
@@ -126,7 +121,7 @@ public abstract class Configurable<T> {
     /**
      * Returns this configurable default value.
      */
-    public T get() {
+    public T getDefaultValue() {
         return defaultValue;
     }
 
@@ -143,7 +138,7 @@ public abstract class Configurable<T> {
      * @param defaultValue the new default value.
      * @throws SecurityException if the permission to configure this configurable is not granted.
      */
-    protected void set(T defaultValue) {
+    protected void setDefaultValue(T defaultValue) {
         SecurityContext.check(configurePermission);
         this.defaultValue = defaultValue;
     }

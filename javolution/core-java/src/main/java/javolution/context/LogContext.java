@@ -65,7 +65,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseBoolean(configuration));
+            setDefaultValue(TypeFormat.parseBoolean(configuration));
         }
 
     };
@@ -81,7 +81,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
         @Override
         public void configure(CharSequence configuration) {
             String str = configuration.toString();
-            set((str.length() != 0) ? Level.valueOf(str) : null);
+            setDefaultValue((str.length() != 0) ? Level.valueOf(str) : null);
         }
 
     };
@@ -100,7 +100,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static LogContext enter() {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
     }
 
     /**
@@ -111,7 +111,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void debug(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
         }
         ctx.log(Level.DEBUG, objs);
     }
@@ -124,7 +124,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void info(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
         }
         ctx.log(Level.INFO, objs);
     }
@@ -137,7 +137,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void warning(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
         }
         ctx.log(Level.WARNING, objs);
     }
@@ -151,7 +151,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public static void error(Object... objs) {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
         }
         ctx.log(Level.ERROR, objs);
     }
@@ -177,16 +177,5 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     protected abstract void log(Level level, Object... objs);
 
-    /**
-     * Exits the scope of this log context; reverts to the log settings 
-     * before this context was entered.
-     * 
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
-     */
-    @Override
-    public void exit() {
-        super.exit();
-    }
 
 }

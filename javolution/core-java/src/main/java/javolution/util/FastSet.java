@@ -8,235 +8,104 @@
  */
 package javolution.util;
 
-import java.io.IOException;
-
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-
-import javolution.context.ObjectFactory;
-import javolution.lang.Reusable;
-
-
+import javolution.lang.Functor;
+import javolution.lang.Predicate;
+import javolution.util.FastMap.KeySet;
 
 /**
- * <p> A hash set backed by a {@link FastMap}.</p>
+ * <p> Hash set with real-time behavior; smooth capacity increase and 
+ *     <i>thread-safe</i> behavior without external synchronization when
+ *     {@link #shared shared}. The capacity of a fast set is automatically 
+ *     adjusted to best fit its size (e.g. when a map is cleared its memory 
+ *     footprint is minimal).</p>
  * 
- * <p> {@link FastSet}, as for any {@link FastCollection} sub-class, supports
- *     thread-safe fast iterations without using iterators. For example:[code]
- *     for (FastSet.Record r = set.head(), end = set.tail(); (r = r.getNext()) != end;) {
- *         Object value = set.valueOf(r);    
- *     }[/code]</p>
+ * <p> Fast set, as for any {@link FastCollection} sub-class, supports
+ *     closure-based iterations.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.2, December 18, 2006
+ * @version 6.0.0, December 12, 2012
  */
-public class FastSet <E>  extends FastCollection <E>  implements Set <E> , Reusable {
-
-    /**
-     * Holds the set factory.
-     */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        public Object create() {
-            return new FastSet();
-        }
-
-    };
+public class FastSet<E> extends FastCollection<E> implements Set<E> {
 
     /**
      * Holds the backing map.
      */
-    private transient FastMap _map;
+    private final FastMap map;
 
     /**
-     * Creates a set of small initial capacity.
+     * Creates an empty set whose capacity increment or decrement smoothly
+     * without large resize/rehash operations.
      */
     public FastSet() {
-        this(new FastMap());
+        map = new FastMap<E, E>() {
+
+            @Override
+            public FastComparator<E> keyComparator() {
+                return FastSet.this.comparator();
+            }
+
+        };
     }
 
-    /**
-     * Creates a persistent set associated to the specified unique identifier
-     * (convenience method).
-     * 
-     * @param id the unique identifier for this map.
-     * @throws IllegalArgumentException if the identifier is not unique.
-     * @see javolution.context.PersistentContext.Reference
-     */
-    public FastSet(String id) {
-        this(new FastMap(id));
+    @Override
+    public FastCollection<E> unmodifiable() {
+        return map.keySet().unmodifiable();
     }
 
-    /**
-     * Creates a set of specified initial capacity; unless the set size 
-     * reaches the specified capacity, operations on this set will not allocate
-     * memory (no lazy object creation).
-     * 
-     * @param capacity the initial capacity.
-     */
-    public FastSet(int capacity) {
-        this(new FastMap(capacity));
+    @Override
+    public KeySet<E> shared() {
+        return map.shared().keySet();
     }
 
-    /**
-     * Creates a set containing the specified elements, in the order they
-     * are returned by the set iterator.
-     *
-     * @param elements the elements to be placed into this fast set.
-     */
-    public FastSet(Set <? extends E>  elements) {
-        this(new FastMap(elements.size()));
-        addAll(elements);
+    @Override
+    public <R> FastCollection<R> forEach(Functor<E, R> functor) {
+        return map.keySet().forEach(functor);
     }
 
-    /**
-     * Creates a set implemented using the specified map.
-     * 
-     * @param map the backing map.
-     */
-    private FastSet(FastMap map) {
-        _map = map;
+    @Override
+    public void doWhile(Predicate<E> predicate) {
+        map.keySet().doWhile(predicate);
     }
 
-    /**
-     * Returns a new, preallocated or {@link #recycle recycled} set instance
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}).
-     *
-     * @return a new, preallocated or recycled set instance.
-     */
-    public static  <E>  FastSet <E>  newInstance() {
-        return (FastSet <E> ) FACTORY.object();
-    }
-
-    /**
-     * Recycles a set {@link #newInstance() instance} immediately
-     * (on the stack when executing in a {@link javolution.context.StackContext
-     * StackContext}). 
-     */
-    public static void recycle(FastSet instance) {
-        FACTORY.recycle(instance);
-    }
-
-    /**
-     * Returns the number of elements in this set (its cardinality). 
-     *
-     * @return the number of elements in this set (its cardinality).
-     */
-    public final int size() {
-        return _map.size();
-    }
-
-    /**
-     * Adds the specified value to this set if it is not already present.
-     *
-     * @param value the value to be added to this set.
-     * @return <code>true</code> if this set did not already contain the 
-     *         specified element.
-     * @throws NullPointerException if the value is <code>null</code>.
-     */
-    public final boolean add( E  value) {
-        return _map.put(value, value) == null;
-    }
-
-    /**
-     * Returns an iterator over the elements in this set 
-     * (allocated on the stack when executed in a 
-     * {@link javolution.context.StackContext StackContext}).
-     *
-     * @return an iterator over this set values.
-     */
-    public Iterator <E> iterator() {
-        return _map.keySet().iterator();
-    }
-
-    // Overrides to return a set (JDK1.5+).
-    public  Set<E> unmodifiable() {
-        return ( Set<E> ) super.unmodifiable();
-    }
-
-    // Overrides (optimization).
-    public final void clear() {
-        _map.clear();
-    }
-
-    // Overrides (optimization).
-    public final boolean contains(Object o) {
-        return _map.containsKey(o);
-    }
-
-    // Overrides (optimization).
-    public final boolean remove(Object o) {
-        return _map.remove(o) != null;
-    }
-
-    /**
-     * Sets the comparator to use for value equality.
-     *
-     * @param comparator the value comparator.
-     * @return <code>this</code>
-     */
-    public FastSet <E>  setValueComparator(FastComparator <? super E>  comparator) {
-        _map.setKeyComparator(comparator);
-        return this;
+    @Override
+    public boolean removeAll(Predicate<E> predicate) {
+        return map.keySet().removeAll(predicate);
     }
     
-    // Overrides.
-    public FastComparator <? super E>  getValueComparator() {
-        return _map.getKeyComparator();
+    //
+    // Collection methods.
+    //
+    
+    @Override
+    public Iterator<E> iterator() {
+        return map.keySet().iterator();
     }
 
-    // Requires special handling during de-serialization process.
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        FastComparator cmp = (FastComparator) stream.readObject();
-        final int size = stream.readInt();        
-        _map = new FastMap(size);
-        this.setValueComparator(cmp);
-        for (int i = size; i-- != 0;) {
-            Object key = stream.readObject(); 
-            _map.put(key, key);
-        }
+    @Override
+    public int size() {
+        return map.size();
     }
 
-    // Requires special handling during serialization process.
-    private void writeObject(ObjectOutputStream stream) throws IOException {
-        stream.writeObject(getValueComparator());
-        stream.writeInt(size());
-        for (FastMap.Entry e = _map.head(), end = _map.tail(); 
-              (e = (FastMap.Entry) e.getNext()) != end;) {
-            stream.writeObject(e.getKey());
-        }
+    @Override
+    public boolean add(E value) {
+        return map.put(value, value) == null;
     }
 
-    // Implements FastCollection abstract method.
-    public final Record head() {
-        return _map.head();
+    @Override
+    public void clear() {
+        map.clear();
     }
 
-    // Implements FastCollection abstract method.
-    public final Record tail() {
-        return _map.tail();
+    @Override
+    public boolean contains(Object o) {
+        return map.containsKey(o);
     }
 
-    // Implements FastCollection abstract method.
-    public final  E  valueOf(Record record) {
-        return ( E ) ((FastMap.Entry) record).getKey();
+    @Override
+    public boolean remove(Object o) {
+        return map.remove(o) != null;
     }
 
-    // Implements FastCollection abstract method.
-    public final void delete(Record record) {
-        _map.remove(((FastMap.Entry) record).getKey());
-    }
-
-    // Implements FastCollection abstract method.
-    public  Set<E>  shared() {
-        _map.shared();
-        return this;
-    }
-
-    private static final long serialVersionUID = 1L;
 }

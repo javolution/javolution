@@ -18,7 +18,7 @@ import java.io.IOException;
  * <p> Instances of this class are typically retrieved from the 
  *     current {@link TextContext} (OSGi service or not).
  *     [code]
- *     @TextFormat(implementation=Complex.TextFormat.class) 
+ *     @Format(text=Complex.TextFormat.class) 
  *     public class Complex extends Number {
  *         public static Complex valueOf(CharSequence csq) {
  *             return TextContext.getFormat(Complex.class).parse(csq);
@@ -28,15 +28,15 @@ import java.io.IOException;
  *         }
  *         public static final class TextFormat extends javolution.text.TextFormat<Complex> { ... }
  *     }[/code]
- *     Default formats can be locally overriden.
+ *     Text formats can be locally overriden.
  *     [code]
  *     TextContext ctx = TextContext.enter();
  *     try {
  *          TextFormat<Complex> polarFormat = new TextFormat() {...};
- *          ctx.setFormat(polarFormat, Complex.class); // No impact on others threads.
+ *          ctx.setFormat(Complex.class, polarFormat); // No impact on others threads.
  *          System.out.println(complexMatrix); // Displays complex numbers in polar coordinates.
  *     } finally {
- *          TextContext.exit(); // Reverts to previous cartesian setting.
+ *          ctx.exit(); // Reverts to previous cartesian format for complex number.
  *     }[/code]
  * </p>
  *
@@ -59,8 +59,9 @@ public abstract class TextFormat<T>  {
      * @return the object parsed.
      * @throws IllegalArgumentException if the syntax of the specified 
      *         character sequence is incorrect.
+     * @throws UnsupportedOperationException if parsing is not supported.
      */
-    public abstract T parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException;
+    public abstract T parse(CharSequence csq, Cursor cursor);
 
     /**
      * Formats the specified object into an <code>Appendable</code> 
@@ -70,7 +71,7 @@ public abstract class TextFormat<T>  {
      * @return the specified <code>Appendable</code>.
      */
     public abstract Appendable format(T  obj, Appendable dest) throws IOException;
-    
+     
     /**
      * Convenience method to parse the whole character sequence; if there are 
      * unread extraneous characters after parsing then an exception is raised.

@@ -132,7 +132,7 @@ public abstract class WebServiceClient {
             http.setDoInput(true);
             _utf8Writer.setOutput(http.getOutputStream());
             /**/
-            _buffer.print(_utf8Writer);
+            _utf8Writer.append(_buffer);
             _utf8Writer.close();
 
             // Reads the response.
@@ -155,7 +155,7 @@ public abstract class WebServiceClient {
             _reader.close();
             _writer.reset();
             _out.reset();
-            _buffer.reset();
+            _buffer.clear();
             _utf8Writer.reset();
             _reader.reset();
         }

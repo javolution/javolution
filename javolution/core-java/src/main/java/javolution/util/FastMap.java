@@ -9,12 +9,15 @@
 package javolution.util;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javolution.context.LogContext;
 import javolution.lang.Copyable;
+import javolution.lang.Functor;
 import javolution.lang.Immutable;
 import javolution.lang.Predicate;
 
@@ -26,23 +29,22 @@ import javolution.lang.Predicate;
  *     footprint is minimal).</p>
  *     <img src="doc-files/map-put.png"/>
  * 
- * <p> Fast maps adapts to poorly distributed hash code automatically.
- *     The iteration order for the fast map is non-deterministic, 
+ * <p> The iteration order for the fast map is non-deterministic, 
  *     for a predictable insersion order, the  {@link #ordered ordered}
  *     view can be used.</p> 
  *     
  * <p> Fast maps may use custom {@link #keyComparator key comparator}
- *     or {@link #valueComparator value comparator} (<code>null</code> 
- *     keys are supported).
+ *     or {@link #valueComparator value comparator}, <code>null</code> 
+ *     keys are supported.
  *     [code]
  *     FastMap<Foo, Bar> identityMap = new FastMap() {
  *          public FastComparator<Foo> keyComparator() {
- *              return FastComparator.identityValue(Foo.class);
+ *              return FastComparator.IDENTITY;
  *          }
  *     }
  *     [/code]
  *     Fast maps can advantageously replace any of the standard 
- *     <code>java.util</code> maps.
+ *     <code>java.util</code> maps. For example:
  *     [code]
  *     Map<Foo, Bar> concurrentHashMap = new FastMap().shared(); // ConcurrentHashMap
  *     Map<Foo, Bar> linkedHashMap = new FastMap().ordered(); // LinkedHashMap
@@ -76,7 +78,7 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
 
     // Comparator for hash calculations, might be different from null
     // if either rehash is performed or the keyComparator is overloaded.
-    private final FastComparator<K> comparatorForHash;
+    private final FastComparator comparatorForHash;
 
     /**
      * Creates an empty map whose capacity increment or decrement smoothly
@@ -85,8 +87,8 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
     public FastMap() {
         System.arraycopy(NULL_BLOCKS, 0, blocks, 0, NULL_BLOCKS.length);
         FastComparator<K> keyComp = keyComparator();
-        comparatorForHash = (keyComp instanceof FastComparator.Default)
-                ? null : keyComp;
+        comparatorForHash = (keyComp == FastComparator.DEFAULT)
+                ? (REHASH_DEFAULT_HASHCODE ? REHASH_COMPARATOR : null) : keyComp;
     }
 
     /**
@@ -136,7 +138,7 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
      * the comparator of the {@link #keySet()} of this map.
      */
     public FastComparator<K> keyComparator() {
-        return null;
+        return (FastComparator<K>) FastComparator.DEFAULT;
     }
 
     /**
@@ -144,7 +146,7 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
      * of this map {@link #values() }.
      */
     public FastComparator<V> valueComparator() {
-        return null;
+        return (FastComparator<V>) FastComparator.DEFAULT;
     }
 
     //
@@ -387,6 +389,54 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
             this.that = that;
         }
 
+        public int size() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean isEmpty() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsKey(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsValue(Object value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V get(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V put(K key, V value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V remove(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void clear() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Set<K> keySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Collection<V> values() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Set<Entry<K, V>> entrySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
     }
 
     /**
@@ -410,6 +460,70 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
             }
         }
 
+        public V putIfAbsent(K key, V value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean remove(Object key, Object value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean replace(K key, V oldValue, V newValue) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V replace(K key, V value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public int size() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean isEmpty() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsKey(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsValue(Object value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V get(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V put(K key, V value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V remove(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void clear() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public KeySet<K> keySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Collection<V> values() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Set<Entry<K, V>> entrySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
     }
 
     /**
@@ -421,6 +535,54 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
 
         Ordered(FastMap<K, V> that) {
             this.that = that;
+        }
+
+        public int size() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean isEmpty() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsKey(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public boolean containsValue(Object value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V get(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V put(K key, V value) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public V remove(Object key) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void putAll(Map<? extends K, ? extends V> m) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public void clear() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Set<K> keySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Collection<V> values() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        public Set<Entry<K, V>> entrySet() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
     }
@@ -436,6 +598,36 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
             this.that = that;
         }
 
+        @Override
+        public FastCollection<K> unmodifiable() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public FastCollection<K> shared() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public <R> FastCollection<R> forEach(Functor<K, R> functor) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void doWhile(Predicate<K> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean removeAll(Predicate<K> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Iterator<K> iterator() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
     }
 
     /**
@@ -449,6 +641,36 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
             this.that = that;
         }
 
+        @Override
+        public FastCollection<Entry<K, V>> unmodifiable() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public FastCollection<Entry<K, V>> shared() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public <R> FastCollection<R> forEach(Functor<Entry<K, V>, R> functor) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void doWhile(Predicate<Entry<K, V>> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean removeAll(Predicate<Entry<K, V>> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Iterator<Entry<K, V>> iterator() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
     }
 
     /**
@@ -460,6 +682,36 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
 
         Values(FastMap<?, V> that) {
             this.that = that;
+        }
+
+        @Override
+        public FastCollection<V> unmodifiable() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public FastCollection<V> shared() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public <R> FastCollection<R> forEach(Functor<V, R> functor) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void doWhile(Predicate<V> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean removeAll(Predicate<V> predicate) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Iterator<V> iterator() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
     }
@@ -602,5 +854,48 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
                 ? ((key != null) ? key.hashCode() : 0)
                 : comparatorForHash.hashCodeOf((K) key);
     }
+
+    private static final boolean REHASH_DEFAULT_HASHCODE = FastMap.isPoorSystemHash();
+
+    private static boolean isPoorSystemHash() {
+        boolean[] dist = new boolean[64]; // Length power of 2.
+        for (int i = 0; i < dist.length; i++) {
+            dist[new Object().hashCode() & (dist.length - 1)] = true;
+        }
+        int occupied = 0;
+        for (int i = 0; i < dist.length;) {
+            occupied += dist[i++] ? 1 : 0; // Count occupied slots.
+        }
+        boolean rehash = occupied < (dist.length >> 2); // Less than 16 slots on 64.
+        if (rehash)
+            LogContext.info("Poorly distributed system hash code - Rehashing performed.");
+        return rehash;
+    }
+
+    private static final FastComparator<?> REHASH_COMPARATOR = new Rehash();
+
+    private static final class Rehash<T> extends FastComparator<T> {
+
+        public int hashCodeOf(T obj) {
+            if (obj == null)
+                return 0;
+            // Formula identical <code>java.util.HashMap</code> to ensures
+            // similar behavior for ill-conditioned hashcode keys.
+            int h = obj.hashCode();
+            h += ~(h << 9);
+            h ^= (h >>> 14);
+            h += (h << 4);
+            return h ^ (h >>> 10);
+        }
+
+        public boolean areEqual(T o1, T o2) {
+            return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
+        }
+
+        public int compare(T o1, T o2) {
+            return ((Comparable) o1).compareTo(o2);
+        }
+
+    };
 
 }

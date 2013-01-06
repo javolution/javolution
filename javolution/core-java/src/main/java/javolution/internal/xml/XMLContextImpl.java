@@ -6,52 +6,52 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.internal.text;
+package javolution.internal.xml;
 
 import javolution.annotation.Format;
-import javolution.text.TextContext;
-import javolution.text.TextFormat;
 import javolution.util.FastMap;
+import javolution.xml.XMLContext;
+import javolution.xml.XMLFormat;
 
 /**
- * Holds the default implementation of TextContext.
+ * Holds the default implementation of XMLContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public final class TextContextImpl extends TextContext {
+public final class XMLContextImpl extends XMLContext {
 
-    private final FastMap<Class, TextFormat> formats = new FastMap();
+    private final FastMap<Class, XMLFormat> formats = new FastMap();
 
     @Override
-    protected TextContext inner() {
-        TextContextImpl ctx = new TextContextImpl();
+    protected XMLContext inner() {
+        XMLContextImpl ctx = new XMLContextImpl();
         ctx.formats.putAll(formats);
         return ctx;
     }
 
     @Override
-    protected <T> TextFormat<T> getFormatInContext(Class<T> type) {
-        TextFormat tf = formats.get(type);
-        if (tf != null) return tf;
+    protected <T> XMLFormat<T> getFormatInContext(Class<T> type) {
+        XMLFormat xml = formats.get(type);
+        if (xml != null) return xml;
         Format format = type.getAnnotation(Format.class);
-        if ((format == null) || (format.text() == Format.UnsupportedTextFormat.class))
+        if ((format == null) || (format.xml() == Format.UnsupportedXMLFormat.class))
             return null;
-        Class<? extends TextFormat> formatClass = format.text();
+        Class<? extends XMLFormat> formatClass = format.xml();
         try {
-            tf = formatClass.newInstance();
+            xml = formatClass.newInstance();
             synchronized (formats) { // Required since possible concurrent use 
                 // (getFormatInContext is not a configuration method).
-                formats.put(type, tf);
+                formats.put(type, xml);
             }
-            return tf;
+            return xml;
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
     }
 
     @Override
-    public <T> void setFormat(Class<T> type, TextFormat<T> format) {
+    public <T> void setFormat(Class<T> type, XMLFormat<T> format) {
         formats.put(type, format);
     }
 

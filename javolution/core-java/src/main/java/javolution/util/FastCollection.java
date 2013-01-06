@@ -96,11 +96,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /**
      * Returns the element comparator for this collection (default 
-     * {@link FastComparator#defaultValue}). If this method is overriden,
-     * it is possible that elements considered distinct using the 
-     * default equality comparator, would appear to be equals as far 
-     * as this collection is concerned. For example, a 
-     * {@link FastComparator#lexicalValue lexical comparator} considers that two 
+     * {@link FastComparator#DEFAULT} FastComparator.DEFAULT). 
+     * If this method is overriden, it is possible that elements considered
+     * distinct using the default equality comparator, would appear to be 
+     * equals as far as this collection is concerned. For example, a 
+     * {@link FastComparator#LEXICAL lexical comparator} considers that two 
      * {@link CharSequence} are equals if they hold the same characters 
      * regardless of the {@link CharSequence} implementation.
      * A direct consequences is that fast collections equality/hashcode 
@@ -113,9 +113,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @see #hashCode()
      */
     public FastComparator<E> comparator() {
-        return (FastComparator<E>) FastComparator.defaultValue(Object.class);
-    }
-    
+        return (FastComparator<E>) FastComparator.DEFAULT;
+    }    
 
     /**
      * Indicates if this collecion is ordered (default <code>false</code>). 
@@ -513,7 +512,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         FastComparator thatComparator = (obj instanceof FastCollection)
-                ? ((FastCollection) obj).comparator() : FastComparator.defaultValue(Object.class);
+                ? ((FastCollection) obj).comparator() : FastComparator.DEFAULT;
         if (!this.comparator().equals(thatComparator)) return false;
         if (this instanceof Set) {
             if (!(obj instanceof Set)) return false;

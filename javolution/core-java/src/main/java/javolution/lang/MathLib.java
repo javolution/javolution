@@ -8,9 +8,7 @@
  */
 package javolution.lang;
 
-import java.util.Random;
 import javolution.annotation.StackSafe;
-import javolution.context.HeapContext;
 
 /**
  * <p> An utility class providing a {@link StackSafe} implementation of 

@@ -13,13 +13,13 @@ import javolution.lang.Configurable;
 import javolution.text.TypeFormat;
 
 /**
- * <p> A context holding local parameters {@link #valueOf values}.
+ * <p> A context holding local parameters.
  *     [code]
  *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
  *     ...
  *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         ctx.set(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         ctx.setLocalValue(ModuloInteger.MODULO, m); // No impact on other threads!
  *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
  *     } finally {
  *         ctx.exit(); // Reverts changes. 
@@ -42,7 +42,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseBoolean(configuration));
+            setDefaultValue(TypeFormat.parseBoolean(configuration));
         }
 
     };
@@ -62,48 +62,36 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return LOCAL_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.get()).inner().enterScope();
+                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
     }
 
     /**
      * Returns the local value of the specified parameter (its default
-     * value if it is not {@link LocalContext#setLocalValue overriden}).
+     * value if not {@link LocalContext#setLocalValue overriden}).
      * 
      * @param  param the local parameter whose local value is returned.
      */
-    public static <T> T valueOf(LocalParameter<T> param) {
+    public static <T> T getLocalValue(LocalParameter<T> param) {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        return (ctx != null) ? ctx.get(param) : param.get();
+        return (ctx != null) ? ctx.getLocalValueInContext(param) : param.getDefaultValue();
     }
 
     /**
-     * Overrides the value of the specified parameter. 
+     * Overrides the local value of the specified parameter. 
      * 
      * @param  param the local parameter whose local value is overriden.
      * @param  localValue the new local value.
      * @throws SecurityException if the permission to override the specified 
      *         parameter is not granted.
      */
-    public abstract <T> void set(LocalParameter<T> param, T localValue);
+    public abstract <T> void setLocalValue(LocalParameter<T> param, T localValue);
 
     /**
-     * Returns the value possibly overriden of the specified parameter 
+     * Returns the local value of the specified parameter 
      * (its default value if not {@link LocalContext#setLocalValue overriden}). 
      * 
      * @param  param the local parameter whose local value is returned.
      */
-    protected abstract <T> T get(LocalParameter<T> param);
-
-    /**
-     * Exits the scope of this local context; reverts to the local settings 
-     * before this context was entered.
-     * 
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
-     */
-    @Override
-    public void exit() {
-        super.exit();
-    }
+    protected abstract <T> T getLocalValueInContext(LocalParameter<T> param);
 
 }

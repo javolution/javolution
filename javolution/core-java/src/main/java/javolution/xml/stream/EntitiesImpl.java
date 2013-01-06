@@ -8,15 +8,11 @@
  */
 package javolution.xml.stream;
 
-import java.lang.CharSequence;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.util.FastCollection;
-import javolution.util.FastCollection.Record;
 
 /**
  * This class holds defined entities while parsing.
@@ -24,7 +20,7 @@ import javolution.util.FastCollection.Record;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, June 16, 2006
  */
-final class EntitiesImpl implements Reusable {
+final class EntitiesImpl  {
 
     /**
      * Holds maximum length.
@@ -138,9 +134,8 @@ final class EntitiesImpl implements Reusable {
         // Sets the maximum length for replacement text.
         Collection values = entityToReplacementText.values();
         if (values instanceof FastCollection) { // Avoids allocating iterators.
-             FastCollection fc = (FastCollection) values;
-             for (Record r=fc.head(), t=fc.tail(); (r = r.getNext())!= t;) {
-                 CharSequence value = (CharSequence) fc.valueOf(r);
+             FastCollection<CharSequence> fc = (FastCollection) values;
+             for (CharSequence value : fc) {
                  if (_maxLength < value.length()) {
                      _maxLength = value.length();
                  }

@@ -23,8 +23,10 @@ import javolution.text.TypeFormat;
  *     temporary objects, they cannot be used to store static members.
  *     More generally speaking, logic executing in a stack contexts should 
  *     ensure that stack allocated objects do not escape from
- *     their context scope. If necessary, stack objects can be exported using 
- *     the {@link #export} method.
+ *     their context scope. If necessary, stack objects can be copied to 
+ *     the heap using {@link HeapContext#copy copy} method. When executing 
+ *     a {@link Functor functor}, the function result is always copied 
+ *     to the calling context.
  *     [code]
  *     @StackSafe
  *     public class LargeInteger implements ValueType {
@@ -41,7 +43,7 @@ import javolution.text.TypeFormat;
  *             }
  *         });
  *         public LargeInteger sqrt() {
- *             return StackContext.evaluate(SQRT, this);
+ *             return StackContext.execute(SQRT, this);
  *         }
  *     }[/code]
  *     Classes/methods identified as {@link javolution.annotation.StackSafe 
@@ -60,7 +62,7 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseBoolean(configuration));
+            setDefaultValue(TypeFormat.parseBoolean(configuration));
         }
 
     };
@@ -72,58 +74,45 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
     }
 
     /**
+     * Enters a stack context instance (private since instances are not 
+     * configurable).
+     */
+    private static StackContext enter() {
+        StackContext ctx = AbstractContext.current(StackContext.class);
+        if (ctx != null) return ctx.inner().enterScope();
+        return STACK_CONTEXT_TRACKER.getService(
+                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+    }
+    
+    /**
      * Executes the specified logic allocating objects on the stack.
      */
     public static void execute(Runnable logic) {
-        StackContext ctx = AbstractContext.current(StackContext.class);
-        if (ctx != null) {
-            ctx = STACK_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        StackContext ctx = StackContext.enter();
+        try {
+            ctx.executeInContext(logic);
+        } finally {
+            ctx.exit();
         }
-        ctx.executeInContext(logic);
     }
         
     /**
-     * Exports the specified object to the outer allocator conter through 
-     * copy (convenience method).
+     * Executes the specified function allocating objects on the stack; the 
+     * function result is copied to calling context.
      */
-    public static <T> T export(Copyable<T> obj) {
-        AbstractContext ctx = AllocatorContext.currentAllocatorContext();
-        while (ctx != null) {
-            ctx = ctx.getOuter();
-            if (ctx instanceof AllocatorContext) 
-                return (T) ((AllocatorContext)ctx).copyInContext(obj);
+    public static <P,R extends Copyable> R execute(Functor<P,R> function, P parameter) {
+        StackContext ctx = StackContext.enter();
+        try {
+            return ctx.executeInContext(function, parameter);
+        } finally {
+            ctx.exit();
         }
-        return HeapContext.copy(obj);
-    }
+    }        
 
     /**
-     * Evaluates the specified function allocating objects on the stack; the 
-     * function result is copied to the current context (convenience method).
+     * Evaluates the specified function while allocating on the stack; the 
+     * function result is copied to the outer context.
      */
-    public static <P,R extends Copyable> R evaluate(Functor<P,R> function, P parameter) {
-        Evaluator<P, R> evaluator = new Evaluator(function, parameter);
-        StackContext.execute(evaluator);
-        return evaluator.result;
-    }
+    protected abstract <P,R extends Copyable> R executeInContext(Functor<P,R> function, P parameter);
 
-    // Runnable to allocate a new instance on the heap.
-    private static class Evaluator<P, R extends Copyable> implements Runnable {
-
-        private final Functor<P,R> function;
-        private final P parameter;
-        private final AllocatorContext allocatorContext;
-        R result;
-   
-        public Evaluator(Functor<P,R> function, P parameter) {
-            this.function = function;
-            this.parameter = parameter;
-            this.allocatorContext = AllocatorContext.currentAllocatorContext();
-        }
-
-        public void run() {
-            R r = function.evaluate(parameter);
-            result = (R) allocatorContext.copyInContext(r);
-        }
-
-    }
 }

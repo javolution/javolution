@@ -10,7 +10,6 @@ package javolution.xml.sax;
 
 import java.io.IOException;
 
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.Text;
 import org.xml.sax.Attributes;
@@ -43,7 +42,7 @@ import java.lang.CharSequence;
  * @version 4.0, June 16, 2005
  * @see <a href="http://www.saxproject.org"> SAX -- Simple API for XML</a> 
  */
-public final class SAX2ReaderImpl implements XMLReader, Reusable {
+public final class SAX2ReaderImpl implements XMLReader {
 
     /**
      * Holds the SAX2 default handler instance.

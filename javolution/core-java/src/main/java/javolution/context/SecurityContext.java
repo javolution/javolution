@@ -25,12 +25,12 @@ import javolution.text.TypeFormat;
  *     SecurityContext ctx = SecurityContext.enter(); 
  *     try {
  *         ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
- *         ctx.grant(new SecurityPermission(Configurable.class, "configure", ConcurrentContext.CONCURRENCY), adminCertificate);
+ *         ctx.grant(ConcurrentContext.CONCURRENCY.getOverridePermission(), adminCertificate);
  *         ...
  *         ConcurrentContext.CONCURRENCY.configure("0"); // Ok (disables concurrency).
  *         ...
  *     } finally {
- *         SecurityContext.exit(); // Back to previous security settings. 
+ *         ctx.exit(); // Back to previous security settings. 
  *     }
  *     [/code]</p>
  * 
@@ -47,7 +47,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseBoolean(configuration));
+            setDefaultValue(TypeFormat.parseBoolean(configuration));
         }
 
     };
@@ -66,7 +66,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     public static SecurityContext enter() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) return ctx.inner().enterScope();
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get()).inner().enterScope();
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
     }
 
     /**
@@ -78,7 +78,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     public static void check(SecurityPermission permission) {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) {
-            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
         }
         if (!ctx.isGranted(permission))
             throw new SecurityException(permission + " is not granted.");
@@ -112,15 +112,23 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     public abstract void revoke(SecurityPermission permission, Object certificate);
 
     /**
-     * Exits the scope of this security context; reverts to the security settings 
-     * before this context was entered.
+     * Grants the specified permission (convenience method).
      * 
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
+     * @param permission the permission to grant.
+     * @throws SecurityException if the specified permission cannot be granted.
      */
-    @Override
-    public void exit() {
-        super.exit();
+    public final void grant(SecurityPermission permission) {
+        grant(permission, null);
+    }
+
+    /**
+     * Revokes the specified permission (convenience method).
+     * 
+     * @param permission the permission to grant.
+     * @throws SecurityException if the specified permission cannot be revoked.
+     */
+    public final void revoke(SecurityPermission permission) {
+        revoke(permission, null);
     }
 
 }

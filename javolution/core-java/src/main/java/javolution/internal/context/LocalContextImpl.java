@@ -10,6 +10,7 @@ package javolution.internal.context;
 
 import javolution.context.LocalContext;
 import javolution.context.LocalParameter;
+import javolution.util.FastMap;
 
 /**
  * Holds the default implementation of LocalContext.
@@ -19,19 +20,30 @@ import javolution.context.LocalParameter;
  */
 public final class LocalContextImpl extends LocalContext {
 
+    private FastMap<LocalParameter<?>, Object> localSettings; 
+    private LocalContextImpl outer;
+    
     @Override
     protected LocalContext inner() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        LocalContextImpl ctx = new LocalContextImpl();
+        ctx.outer = this;
+        return ctx;
     }
 
     @Override
-    public <T> void set(LocalParameter<T> param, T localValue) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public <T> void setLocalValue(LocalParameter<T> param, T localValue) {
+        if (localSettings == null) {
+            localSettings = new FastMap();
+        }
+        localSettings.put(param, localValue);
     }
 
     @Override
-    protected <T> T get(LocalParameter<T> param) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    protected <T> T getLocalValueInContext(LocalParameter<T> param) {
+        if ((localSettings != null) && localSettings.containsKey(param)) 
+            return (T) localSettings.get(param); 
+        if (outer != null) return outer.getLocalValueInContext(param);
+        return param.getDefaultValue();
     }
 
 }

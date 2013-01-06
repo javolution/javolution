@@ -56,8 +56,13 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     /**
      * Holds the full name (String) to QName mapping.
      */
-    private static final FastMap FULL_NAME_TO_QNAME = new FastMap()
-            .setKeyComparator(FastComparator.LEXICAL).shared();
+    private static final FastMap FULL_NAME_TO_QNAME = new FastMap() {
+
+        public FastComparator keyComparator() {
+            return FastComparator.LEXICAL;
+        }
+
+    };
 
     /**
      * Creates a qualified name having the specified local name and namespace 
@@ -84,8 +89,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
         QName qName = (QName) FULL_NAME_TO_QNAME.get(name);
         return (qName != null) ? qName : QName.createNoNamespace(name.toString());
     }
-    
-    private static QName createNoNamespace(String name) {    
+
+    private static QName createNoNamespace(String name) {
         String localName = name;
         String namespaceURI = null;
         if (name.length() > 0 && name.charAt(0) == '{') { // Namespace URI.
@@ -122,16 +127,12 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     public static QName valueOf(CharSequence namespaceURI, CharSequence localName) {
         if (namespaceURI == null)
             return QName.valueOf(localName);
-        TextBuilder tmp = TextBuilder.newInstance();
-        try {
-            tmp.append('{');
-            tmp.append(namespaceURI);
-            tmp.append('}');
-            tmp.append(localName);
-            return QName.valueOf(tmp);
-        } finally {
-            TextBuilder.recycle(tmp);
-        }       
+        TextBuilder tmp = new TextBuilder();
+        tmp.append('{');
+        tmp.append(namespaceURI);
+        tmp.append('}');
+        tmp.append(localName);
+        return QName.valueOf(tmp);
     }
 
     /**

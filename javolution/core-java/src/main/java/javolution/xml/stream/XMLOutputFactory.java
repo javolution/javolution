@@ -11,7 +11,6 @@ package javolution.xml.stream;
 import java.io.OutputStream;
 import java.io.Writer;
 
-import javolution.context.ObjectFactory;
 import javolution.lang.Configurable;
 
 
@@ -51,12 +50,6 @@ import javolution.lang.Configurable;
  * @version 4.0, September 4, 2006
  */
 public abstract class XMLOutputFactory {
-
-    /**
-     * Holds the XMLOutputFactory implementation (configurable).
-     */
-    public static final Configurable <Class<? extends XMLOutputFactory>> CLASS
-        = new Configurable <Class<? extends XMLOutputFactory>> (Default.class) {};
 
     /**
      * Property used to set prefix defaulting on the output side
@@ -119,8 +112,7 @@ public abstract class XMLOutputFactory {
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
-        Class cls = (Class) CLASS.get();
-        return (XMLOutputFactory) ObjectFactory.getInstance(cls).object();
+        return new Default();
     }
 
     /**
@@ -234,9 +226,7 @@ public abstract class XMLOutputFactory {
         }
 
         private XMLStreamWriterImpl newWriter() {
-            XMLStreamWriterImpl xmlWriter = (XMLStreamWriterImpl) XML_WRITER_FACTORY
-                    .object();
-            xmlWriter._objectFactory = XML_WRITER_FACTORY;
+            XMLStreamWriterImpl xmlWriter = new XMLStreamWriterImpl();
             xmlWriter.setRepairingNamespaces(_isRepairingNamespaces
                     .booleanValue());
             xmlWriter.setRepairingPrefix(_repairingPrefix);
@@ -302,26 +292,4 @@ public abstract class XMLOutputFactory {
 
     }
 
-    /**
-     * Holds a factory producing reusable writer instances.
-     */
-    private static final ObjectFactory XML_WRITER_FACTORY = new ObjectFactory() {
-
-        protected Object create() {
-            return new XMLStreamWriterImpl();
-        }
-
-        protected void cleanup(Object obj) {
-            ((XMLStreamWriterImpl) obj).reset();
-        }
-
-    };
-
-    // Allows instances of private classes to be factory produced. 
-    static {
-        ObjectFactory.setInstance(new ObjectFactory() {
-            protected Object create() {
-                return new Default();
-            } }, Default.class);
-    }
 }

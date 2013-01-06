@@ -271,6 +271,7 @@ javolution/core-java/src/main/java/javolution/context/SecurityPermission.java -t
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/package-info.java -text
 javolution/core-java/src/main/java/javolution/internal/context/ConcurrentContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/context/ConcurrentThreadImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/context/ContextTracker.java -text
 javolution/core-java/src/main/java/javolution/internal/context/HeapContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/context/LocalContextImpl.java -text
@@ -285,6 +286,7 @@ javolution/core-java/src/main/java/javolution/internal/osgi/OSGiImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceReferenceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/text/TextContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/xml/XMLContextImpl.java -text
 javolution/core-java/src/main/java/javolution/io/AppendableWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/CharSequenceReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Struct.java -text svneol=unset#text/plain
@@ -325,6 +327,7 @@ javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset
 javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain

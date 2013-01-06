@@ -1,9 +1,8 @@
 package javolution.xml.stream;
 
 import java.lang.CharSequence;
-import javax.realtime.MemoryArea;
+import javolution.context.HeapContext;
 
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.Text;
 import javolution.xml.sax.Attributes;
@@ -14,7 +13,7 @@ import javolution.xml.sax.Attributes;
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  */
-final class AttributesImpl implements Attributes, Reusable {
+final class AttributesImpl implements Attributes {
 
     /**
      * Holds the local names.
@@ -189,7 +188,7 @@ final class AttributesImpl implements Attributes, Reusable {
     }
 
     private void increaseCapacity() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
             public void run() {
                 final int newCapacity = _length * 2;
 

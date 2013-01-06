@@ -64,7 +64,7 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * Holds the last context entered (thread-local). This instance is always
      * allocated on the heap (since allocator contexts are sub-classes).
      */
-    private static final ThreadLocal<AbstractContext> CURRENT = new ThreadLocal();
+    static final ThreadLocal<AbstractContext> CURRENT = new ThreadLocal();
 
     /**
      * Holds the outer context or <code>null</code> if none (root or not attached).

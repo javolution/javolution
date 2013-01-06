@@ -18,14 +18,11 @@ import javolution.context.HeapContext;
  */
 public final class HeapContextImpl extends HeapContext {
 
+    // TODO: Use RTSJ Heap Memory.
+    
     @Override
     protected void executeInContext(Runnable logic) {
-        this.enterScope();
-        try {
-            logic.run();
-        } finally {
-            this.exit();
-        }
+        logic.run();
     }
 
     @Override

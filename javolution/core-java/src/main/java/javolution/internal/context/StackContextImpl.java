@@ -9,6 +9,8 @@
 package javolution.internal.context;
 
 import javolution.context.StackContext;
+import javolution.lang.Copyable;
+import javolution.lang.Functor;
 
 /**
  * Holds the default implementation of StackContext.
@@ -18,19 +20,22 @@ import javolution.context.StackContext;
  */
 public final class StackContextImpl extends StackContext {
 
-   @Override
+    // TODO: Use RTSJ Scoped Memory.
+    
+    @Override
+    protected <P, R extends Copyable> R executeInContext(Functor<P, R> function, P parameter) {
+        return function.evaluate(parameter);
+    }
+
+    @Override
     protected void executeInContext(Runnable logic) {
-        this.enterScope();
-        try {
-            logic.run();
-        } finally {
-            this.exit();
-        }
+        logic.run();
     }
 
     @Override
     protected StackContext inner() {
         return this;
     }
+
 
 }

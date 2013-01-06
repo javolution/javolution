@@ -154,7 +154,7 @@ public class Struct {
      */
     public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter(4) {
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseInt(configuration));
+            setDefaultValue(TypeFormat.parseInt(configuration));
         }
     };
     /**

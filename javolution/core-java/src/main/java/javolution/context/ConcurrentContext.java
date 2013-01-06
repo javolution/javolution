@@ -138,12 +138,12 @@ import javolution.text.TypeFormat;
  *    [/code]</p>
  *          
  * <p> Concurrency can be adjusted or disabled. The maximum concurrency 
- *     is defined by the {@link #CONCURRENCY} local parameter.. 
+ *     is defined by the {@link #CONCURRENCY} local parameter. 
  *    [code]
  *    LocalContext ctx = LocalContext.enter(); 
  *    try { 
  *        // Performs analysis sequentially.
- *        ctx.set(ConcurrentContext.CONCURRENCY, 0);
+ *        ctx.setLocalValue(ConcurrentContext.CONCURRENCY, 0);
  *        runAnalysis();  
  *    } finally {
  *        ctx.exit(); // Back to previous concurrency settings.  
@@ -162,7 +162,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseBoolean(configuration));
+            setDefaultValue(TypeFormat.parseBoolean(configuration));
         }
 
     };
@@ -178,7 +178,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
 
         @Override
         public void configure(CharSequence configuration) {
-            set(TypeFormat.parseInt(configuration));
+            setDefaultValue(TypeFormat.parseInt(configuration));
         }
 
     };
@@ -198,7 +198,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
         ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return CONCURRENT_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.get()).inner().enterScope();
+                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
     }
 
     /**
@@ -252,8 +252,15 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      *         context.
      */
     @Override
-    public void exit() {
+    public void exit() { // Redefine here for documentation purpose.
         super.exit();
     }
 
+    /**
+     * Sets this concurrent context as the current context for the 
+     * current thread.
+     */
+    protected void setCurrent() {
+        CURRENT.set(this);
+    }
 }

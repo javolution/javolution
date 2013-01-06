@@ -8,13 +8,10 @@
  */
 package javolution.xml.stream;
 
-import java.lang.CharSequence;
 import java.util.Iterator;
-import javax.realtime.MemoryArea;
-
-import javolution.lang.Reusable;
+import javolution.context.HeapContext;
 import javolution.text.CharArray;
-import javolution.util.FastList;
+import javolution.util.FastTable;
 
 /**
  * This class represents the namespaces stack while parsing.
@@ -22,7 +19,7 @@ import javolution.util.FastList;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.2, April 2, 2005
  */
-final class NamespacesImpl implements Reusable, NamespaceContext {
+final class NamespacesImpl implements NamespaceContext {
 
     /** 
      * Holds the number of predefined namespaces.
@@ -141,7 +138,7 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
 
     // Implements NamespaceContext
     public Iterator getPrefixes(CharSequence namespaceURI) {
-        FastList prefixes = new FastList();
+        FastTable prefixes = new FastTable();
         for (int i = _namespacesCount[_nesting]; --i >= 0;) {
             if (_namespaces[i].equals(namespaceURI)) {
                 prefixes.add(_prefixes[i]);
@@ -173,7 +170,7 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
         CharArray prefixTmp = _prefixesTmp[index]; 
         if ((prefixTmp == null)
                 || (prefixTmp.array().length < prefixLength)) {
-            MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            HeapContext.execute(new Runnable() {
                 public void run() {
                     _prefixesTmp[index] = new CharArray().setArray(new char[prefixLength + 32], 0, 0);
                 }
@@ -189,7 +186,7 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
         CharArray namespaceTmp = _namespacesTmp[index]; 
         if ((namespaceTmp == null)
                 || (namespaceTmp.array().length < uriLength)) {
-            MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+            HeapContext.execute(new Runnable() {
                 public void run() {
                     _namespacesTmp[index] = new CharArray().setArray(new char[uriLength + 32], 0, 0);
                 }
@@ -242,7 +239,7 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
     }
 
     private void resizeNamespacesCount() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
             public void run() {
                 final int oldLength = _namespacesCount.length;
                 final int newLength = oldLength * 2;
@@ -257,7 +254,7 @@ final class NamespacesImpl implements Reusable, NamespaceContext {
 
     // Resizes prefix mapping  stack.
     private void resizePrefixStack() {
-        MemoryArea.getMemoryArea(this).executeInArea(new Runnable() {
+        HeapContext.execute(new Runnable() {
             public void run() {
                 final int oldLength = _prefixes.length;
                 final int newLength = oldLength * 2;

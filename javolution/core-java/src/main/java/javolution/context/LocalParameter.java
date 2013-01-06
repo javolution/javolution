@@ -12,7 +12,8 @@ import javolution.lang.Configurable;
 
 /**
  * <p> A local parameter with {@link Configurable configurable} default value. 
- *     The current value is given by the {@link LocalContext#valueOf} method
+ *     The current value is given by the local context method 
+ *     {@link LocalContext#getLocalValue}
  *     and can be locally {@link LocalContext#setLocalValue overriden}.</p>
  * 
  * <p> The parameter default values is either the value specified at creation
@@ -30,7 +31,8 @@ public abstract class LocalParameter<T> extends Configurable<T> {
      * (action <code>"override"</code>).
      * @see LocalContext#setLocalValue
      */
-    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION = new SecurityPermission(LocalParameter.class, "override");
+    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION
+            = new SecurityPermission(LocalParameter.class, "override");
 
     /**
      * Holds this instance override permission.
@@ -39,8 +41,6 @@ public abstract class LocalParameter<T> extends Configurable<T> {
 
     /**
      * Creates a local parameter having the specified default value (configurable).
-     * 
-     * @param defaultValue 
      */
     protected LocalParameter(T defaultValue) {
         super(defaultValue);

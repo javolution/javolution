@@ -8,12 +8,10 @@
  */
 package javolution.xml;
 
-import java.lang.CharSequence;
-
-import javolution.lang.Reflection;
 import javolution.text.CharArray;
 import javolution.text.Text;
 import javolution.text.TextBuilder;
+import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.xml.sax.Attributes;
 import javolution.xml.stream.XMLStreamException;
@@ -26,30 +24,30 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  * <p> This class represents the format base class for XML serialization and
  *     deserialization.</p>
  *     
- * <p> Application classes typically define a default XML format for their 
- *     instances using protected static {@link XMLFormat} class members.
- *     Formats are inherited by sub-classes. For example:[code]
- *     
+ * <p> Instances of this class are typically retrieved from the 
+ *     current {@link XMLContext} (OSGi service or not).
+ *     [code]
+ *     @Format(xml=Graphic.XMLFormat.class) 
  *     public abstract class Graphic implements XMLSerializable {
- *         private boolean _isVisible;
- *         private Paint _paint; // null if none.
- *         private Stroke _stroke; // null if none.
- *         private Transform _transform; // null if none.
+ *         private boolean isVisible;
+ *         private Paint paint; // null if none.
+ *         private Stroke stroke; // null if none.
+ *         private Transform transform; // null if none.
  *          
  *         // XML format with positional associations (members identified by their position),
  *         // see XML package description for examples of name associations.
- *         protected static final XMLFormat<Graphic> GRAPHIC_XML = new XMLFormat<Graphic>(Graphic.class) {
+ *         public static class XMLFormat extends javolution.xml.XMLFormat<Graphic> {
  *              public void write(Graphic g, OutputElement xml) {
- *                  xml.setAttribute("isVisible", g._isVisible); 
- *                  xml.add(g._paint); // First.
- *                  xml.add(g._stroke); // Second.
- *                  xml.add(g._transform); // Third.
+ *                  xml.setAttribute("isVisible", g.isVisible); 
+ *                  xml.add(g.paint); // First.
+ *                  xml.add(g.stroke); // Second.
+ *                  xml.add(g.transform); // Third.
  *              }
  *              public void read(InputElement xml, Graphic g) {
- *                  g._isVisible = xml.getAttribute("isVisible", true);
- *                  g._paint = xml.getNext();
- *                  g._stroke = xml.getNext();
- *                  g._transform = xml.getNext();
+ *                  g.isVisible = xml.getAttribute("isVisible", true);
+ *                  g.paint = xml.getNext();
+ *                  g.stroke = xml.getNext();
+ *                  g.transform = xml.getNext();
  *                  return g;
  *             }
  *         };
@@ -106,9 +104,8 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *     reader.close();[/code]
  *     </p>
  *     
- * <p> <i>Note:</i> Any type for which a text format is 
- *    {@link TextFormat#getInstance known} can be represented as 
- *    a XML attribute.</p>
+ * <p> <i>Note:</i> Any type for which a {@link TextFormat text format} is 
+ *     defined can be represented as a XML attribute.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
@@ -168,7 +165,7 @@ public abstract class XMLFormat <T>  {
      *    </ul></code>
      *    The default XML representation (java.lang.Object) consists of the
      *    of a "value" attribute holding its textual representation
-     *    (see {@link TextFormat#getInstance}).</p>
+     *    (see {@link TextFormat}).</p>
      *
      * @return the class/interface bound to this format.
      */
@@ -506,7 +503,7 @@ public abstract class XMLFormat <T>  {
             if (_isReaderAtNext)
                 throw new XMLStreamException(
                         "Attributes should be read before reading content");
-            return _reader.getAttributeValue(null, toCsq(name));
+            return _reader.getAttributeValue(null, name);
         }
 
         /**
@@ -662,9 +659,9 @@ public abstract class XMLFormat <T>  {
                 return defaultValue;
             // Parses attribute value.
             Class type = defaultValue.getClass();
-            TextFormat format = TextFormat.getInstance(type);
-            if (!format.isParsingSupported())
-                throw new XMLStreamException("No TextFormat instance for " + type);
+            TextFormat format = TextContext.getFormat(type);
+            if (format == null)
+                throw new XMLStreamException("No TextFormat defined for " + type);
             return ( T ) format.parse(value);
         }
 
@@ -732,7 +729,7 @@ public abstract class XMLFormat <T>  {
          */
         public void add(Object obj) throws XMLStreamException {
             if (obj == null) {
-                _writer.writeEmptyElement(toCsq(NULL));
+                _writer.writeEmptyElement(NULL);
                 return;
             }
 
@@ -763,7 +760,7 @@ public abstract class XMLFormat <T>  {
                 return;
 
             // Writes start element.
-            _writer.writeStartElement(toCsq(name));
+            _writer.writeStartElement(name);
 
             // Writes class attribute.
             Class cls = obj.getClass();
@@ -794,7 +791,7 @@ public abstract class XMLFormat <T>  {
                 return;
 
             // Writes start element.
-            _writer.writeStartElement(toCsq(uri), toCsq(localName));
+            _writer.writeStartElement(uri, localName);
 
             // Writes class attribute.
             Class cls = obj.getClass();
@@ -824,7 +821,7 @@ public abstract class XMLFormat <T>  {
                 return;
 
             // Writes start element.
-            _writer.writeStartElement(toCsq(name));
+            _writer.writeStartElement(name);
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
@@ -851,7 +848,7 @@ public abstract class XMLFormat <T>  {
                 return;
 
             // Writes start element.
-            _writer.writeStartElement(toCsq(uri), toCsq(localName));
+            _writer.writeStartElement(uri, localName);
 
             // Checks if reference written.
             XMLFormat xmlFormat = _binding.getFormat(cls);
@@ -888,7 +885,7 @@ public abstract class XMLFormat <T>  {
          * @param text the element text content or an empty sequence if none.
          */
         public void addText(String text) throws XMLStreamException {
-            _writer.writeCharacters(toCsq(text));
+            _writer.writeCharacters(text);
         }
 
         /**
@@ -902,7 +899,7 @@ public abstract class XMLFormat <T>  {
                 throws XMLStreamException {
             if (value == null)
                 return;
-            _writer.writeAttribute(toCsq(name), value);
+            _writer.writeAttribute(name, value);
         }
 
         /**
@@ -916,7 +913,7 @@ public abstract class XMLFormat <T>  {
                 throws XMLStreamException {
             if (value == null)
                 return;
-            _writer.writeAttribute(toCsq(name), toCsq(value));
+            _writer.writeAttribute(name, value);
         }
 
         /**
@@ -1014,7 +1011,7 @@ public abstract class XMLFormat <T>  {
          * {@link javolution.text.TextFormat#getInstance TextFormat}.
          * 
          * @param  name the name of the attribute.
-         * @param  value the <code>Boolean</code> value for the specified attribute
+         * @param  value the value for the specified attribute
          *         or <code>null</code> in which case the attribute is not set.
          */
         public void setAttribute(String name, Object value)
@@ -1022,9 +1019,7 @@ public abstract class XMLFormat <T>  {
             if (value == null)
                 return;
             Class type = value.getClass();
-            TextFormat format = TextFormat.getInstance(type);
-            setAttribute(name, (TextBuilder) format.format(value,
-                    _tmpTextBuilder.clear()));
+            setAttribute(name, _tmpTextBuilder.clear().append(value.toString()));
         }
 
         // Sets XML binding. 
@@ -1047,11 +1042,5 @@ public abstract class XMLFormat <T>  {
         }
     }
 
-    // For J2ME Compatibility.
-    private static CharSequence toCsq(Object str) {
-        /**/
-        if (true) return (CharSequence) str;
-        /**/
-        return str == null ? null : Text.valueOf(str);
-    }
+    
 }

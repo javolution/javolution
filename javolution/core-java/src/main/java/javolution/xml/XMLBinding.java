@@ -11,17 +11,14 @@ package javolution.xml;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
-import javolution.lang.Configurable;
-import javolution.lang.Reflection;
-import javolution.lang.Reusable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javolution.context.LogContext;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
+import javolution.text.TextContext;
 import javolution.text.TextFormat;
-import javolution.util.FastList;
 import javolution.util.FastMap;
-import javolution.util.FastSet;
-import javolution.util.FastTable;
 import javolution.xml.XMLFormat.InputElement;
 import javolution.xml.XMLFormat.OutputElement;
 import javolution.xml.stream.XMLStreamException;
@@ -112,7 +109,7 @@ import javolution.xml.stream.XMLStreamWriter;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
  */
-public class XMLBinding implements Reusable, XMLSerializable {
+public class XMLBinding implements XMLSerializable {
 
     /**
      * Holds the default instance used by readers/writers (thread-safe).
@@ -219,38 +216,42 @@ public class XMLBinding implements Reusable, XMLSerializable {
      */
     protected Class readClass(XMLStreamReader reader, boolean useAttributes)
             throws XMLStreamException {
-        QName classQName;
-        if (useAttributes) {
-            if (_classAttribute == null)
-                throw new XMLStreamException(
-                        "Binding has no class attribute defined, cannot retrieve class");
-            classQName = QName.valueOf(reader.getAttributeValue(_classAttribute
-                    .getNamespaceURI(), _classAttribute.getLocalName()));
-            if (classQName == null)
-                throw new XMLStreamException(
-                        "Cannot retrieve class (class attribute not found)");
-        } else {
-            classQName = QName.valueOf(reader.getNamespaceURI(), reader
-                    .getLocalName());
+        try {
+            QName classQName;
+            if (useAttributes) {
+                if (_classAttribute == null)
+                    throw new XMLStreamException(
+                            "Binding has no class attribute defined, cannot retrieve class");
+                classQName = QName.valueOf(reader.getAttributeValue(_classAttribute
+                        .getNamespaceURI(), _classAttribute.getLocalName()));
+                if (classQName == null)
+                    throw new XMLStreamException(
+                            "Cannot retrieve class (class attribute not found)");
+            } else {
+                classQName = QName.valueOf(reader.getNamespaceURI(), reader
+                        .getLocalName());
+            }
+
+            // Searches aliases with namespace URI.
+            Class cls = (Class) _aliasToClass.get(classQName);
+            if (cls != null)
+                return cls;
+
+            // Searches aliases without namespace URI.
+            cls = (Class) _aliasToClass.get(QName.valueOf(classQName.getLocalName()));
+            if (cls != null)
+                return cls;
+
+            // Finally convert the qualified name to a class (ignoring namespace URI).
+            cls = Class.forName(classQName.getLocalName().toString());
+            if (cls == null)
+                throw new XMLStreamException("Class " + classQName.getLocalName() + 
+                        " not found (see javolution.lang.Reflection to support additional class loader)");
+            _aliasToClass.put(classQName, cls);
+            return cls;
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
         }
-
-        // Searches aliases with namespace URI.
-        Class cls = (Class) _aliasToClass.get(classQName);
-        if (cls != null)
-            return cls;
-
-        // Searches aliases without namespace URI.
-        cls = (Class) _aliasToClass.get(QName.valueOf(classQName.getLocalName()));
-        if (cls != null)
-            return cls;
-
-        // Finally convert the qualified name to a class (ignoring namespace URI).
-        cls = Reflection.getInstance().getClass(classQName.getLocalName());
-        if (cls == null)
-            throw new XMLStreamException("Class " + classQName.getLocalName() + 
-                    " not found (see javolution.lang.Reflection to support additional class loader)");
-        _aliasToClass.put(classQName, cls);
-        return cls;
     }
 
     /**
@@ -301,8 +302,8 @@ public class XMLBinding implements Reusable, XMLSerializable {
     // Implements Reusable.
     public void reset() {
         _classAttribute = QName.valueOf("class");
-        _aliasToClass.reset();
-        _classToAlias.reset();
+        _aliasToClass.clear();
+        _classToAlias.clear();
     }
 
     //////////////////////////////////////////////////
@@ -322,9 +323,7 @@ public class XMLBinding implements Reusable, XMLSerializable {
         public Object newInstance(Class cls,
                 javolution.xml.XMLFormat.InputElement xml)
                 throws XMLStreamException {
-            TextFormat format = TextFormat.getInstance(cls);
-            if (!format.isParsingSupported())
-                throw new XMLStreamException("No XMLFormat or TextFormat (with parsing supported) for instances of " + cls);
+            TextFormat format = TextContext.getFormat(cls);
             CharArray value = xml.getAttribute("value");
             if (value == null) throw new XMLStreamException("Missing value attribute (to be able to parse the instance of " + cls + ")");
             return format.parse(value);

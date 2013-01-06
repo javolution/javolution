@@ -10,6 +10,7 @@ package javolution.internal.context;
 
 import javolution.context.SecurityContext;
 import javolution.context.SecurityPermission;
+import javolution.util.FastTable;
 
 /**
  * Holds the default implementation of SecurityContext.
@@ -18,25 +19,44 @@ import javolution.context.SecurityPermission;
  * @version 6.0, December 12, 2012
  */
 public final class SecurityContextImpl extends SecurityContext {
+    
+    private FastTable<Action> actions = new FastTable(); 
 
     @Override
     public boolean isGranted(SecurityPermission<?> permission) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        boolean isGranted = true;
+        for (Action a  : actions) {
+            if (a.permission.implies(permission)) isGranted = a.grant;
+        }
+        return isGranted;
     }
 
     @Override
     public void grant(SecurityPermission permission, Object certificate) throws SecurityException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Action a = new Action();
+        a.grant = true;
+        a.permission = permission;
+        actions.add(a);
     }
 
     @Override
     public void revoke(SecurityPermission permission, Object certificate) throws SecurityException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Action a = new Action();
+        a.grant = false;
+        a.permission = permission;
+        actions.add(a);
     }
 
     @Override
     protected SecurityContext inner() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        SecurityContextImpl ctx = new SecurityContextImpl();
+        ctx.actions.addAll(actions);
+        return ctx;
     }
 
+    // Represents the grant/revoke action performed. 
+    private static class Action {
+        boolean grant; // Else revoke.
+        SecurityPermission permission;
+    }
 }
