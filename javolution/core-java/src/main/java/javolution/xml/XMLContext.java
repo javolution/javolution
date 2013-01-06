@@ -12,12 +12,20 @@ import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
 import static javolution.internal.osgi.JavolutionActivator.XML_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
+import javolution.text.TextFormat;
 import javolution.text.TypeFormat;
 
 /**
- * <p> A context for plain xml serialization/deserialization. 
+ * <p> A context for xml serialization/deserialization. 
  *     The default xml format for any class is given by the 
  *     {@link javolution.annotation.Format Format} inheritable annotation.</p>
+ * 
+ * <p> A default xml format exists for the following predefined types:
+ *     <code><ul>
+ *       <li>java.lang.Object (value attribute parsed/formatted using {@link TextFormat})</li>
+ *       <li>java.util.Collection</li>
+ *       <li>java.util.Map</li>
+ *    </ul></code></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -49,21 +57,15 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
      * @return the new xml context implementation entered.
      */
     public static XMLContext enter() {
-        XMLContext ctx = AbstractContext.current(XMLContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+        return XMLContext.current().inner().enterScope();
     }
 
     /**
-     * Returns the xml format for the specified type or <code>null</code> 
-     * if none defined.
+     * Returns the xml format for the specified type; if none defined 
+     * the default object xml format (based on {@link TextFormat}) is returned.
      */
     public static <T> XMLFormat<T> getFormat(Class<T> type) {
-        XMLContext ctx = AbstractContext.current(XMLContext.class);
-        if (ctx != null) {
-            ctx = XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        return ctx.getFormatInContext(type);
+        return XMLContext.current().getFormatInContext(type);
     }
 
     /**
@@ -76,4 +78,12 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
      */
     protected abstract <T> XMLFormat<T> getFormatInContext(Class<T> type);
 
+    /**
+     * Returns the current xml context.
+     */
+    protected static XMLContext current() {
+        XMLContext ctx = AbstractContext.current(XMLContext.class);
+        if (ctx != null) return ctx;
+        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+    }
 }

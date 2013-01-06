@@ -12,16 +12,9 @@ package javolution.xml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-
-import java.lang.IllegalStateException;
-
-import javolution.context.ObjectFactory;
-import javolution.lang.Reusable;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
 import javolution.xml.stream.XMLStreamReaderImpl;
-
-
 
 /**
  * <p> This class restores objects which have been serialized in XML
@@ -37,24 +30,13 @@ import javolution.xml.stream.XMLStreamReaderImpl;
  *     while (reader.hasNext()) {
  *         Message message = reader.read("Message", Message.class);
  *     }
- *     reader.close(); // Reader is recycled, the underlying stream is closed.
+ *     reader.close(); // The underlying stream is closed.
  *     [/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public class XMLObjectReader implements Reusable {
-
-    /**
-     * Holds the associated factory.
-     */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        protected Object create() {
-            return new XMLObjectReader();
-        } 
-        
-    };
+public class XMLObjectReader  {
 
     /**
      * Hold the xml element used when parsing.
@@ -72,19 +54,13 @@ public class XMLObjectReader implements Reusable {
     private InputStream _inputStream;
 
     /**
-     * Indicates if factory produced.
-     */
-    private boolean _isFactoryProduced;
-
-    /**
-     * Returns a XML object reader (potentially recycled) having the specified
+     * Returns a XML object reader having the specified
      * input stream as input.
      * 
      * @param in the input stream.
      */
     public static XMLObjectReader newInstance(InputStream in) throws XMLStreamException {
-        XMLObjectReader reader = (XMLObjectReader) FACTORY.object();
-        reader._isFactoryProduced = true;
+        XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in);
         return reader;
     }
@@ -97,8 +73,7 @@ public class XMLObjectReader implements Reusable {
      * @param encoding the input stream encoding
      */
     public static XMLObjectReader newInstance(InputStream in, String encoding) throws XMLStreamException {
-        XMLObjectReader reader = (XMLObjectReader) FACTORY.object();
-        reader._isFactoryProduced = true;
+        XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in, encoding);
         return reader;
     }
@@ -110,19 +85,9 @@ public class XMLObjectReader implements Reusable {
      * @param in the reader source.
      */
     public static XMLObjectReader newInstance(Reader in) throws XMLStreamException {
-        XMLObjectReader reader = (XMLObjectReader) FACTORY.object();
-        reader._isFactoryProduced = true;
+        XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in);
         return reader;
-    }
-
-    /**
-     * Recycles the specified XMLObjectReader.
-     *
-     * @param that the instance to recycle.
-     */
-    public static void recycle(XMLObjectReader that) {
-        FACTORY.recycle(that);
     }
 
     /**
@@ -306,9 +271,6 @@ public class XMLObjectReader implements Reusable {
             } else if (_reader != null) {
                 _reader.close();
                 reset();
-            }
-            if (_isFactoryProduced) {
-                FACTORY.recycle(this);
             }
         } catch (IOException e) {
             throw new XMLStreamException(e);

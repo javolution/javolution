@@ -65,7 +65,15 @@ public class JavolutionActivator implements BundleActivator {
     // Services provided by Javolution.
     private ServiceRegistration<ManagedService> configurableServiceRegistration;
    
+    static abstract class LocalContextConfigurator extends LocalContext {
+         public static void configure() {
+             LocalContext.current().setLocalValue(null, INSTANCE);
+         }    
+    }
+
     public void start(BundleContext bc) throws Exception {
+        LocalContextConfigurator.configure();
+        
         INSTANCE = this;
         
         // Initialize all classes during bundle activation.

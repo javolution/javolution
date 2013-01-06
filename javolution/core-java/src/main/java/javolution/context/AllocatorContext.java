@@ -36,7 +36,7 @@ public abstract class AllocatorContext<C extends AllocatorContext> extends Abstr
      * Returns the current allocator context or <code>null</code> if none
      * (default heap allocation).
      */
-    public static AllocatorContext currentAllocatorContext() {
+    public static AllocatorContext current() {
         return AbstractContext.current(AllocatorContext.class);        
     }
 

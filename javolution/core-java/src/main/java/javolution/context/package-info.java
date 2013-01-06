@@ -63,5 +63,70 @@
       <li>...add your own</li>
       </ul>
   </p>
- */
+
+<h2><a name="FAQ">FAQ:</a></h2>
+<ol>
+    <a name="FAQ-1"></a>
+    <li><b>In my application I create new threads myself and I would like them to inherit 
+           the current context. How can I do that?</b>
+    <p> This can only be done if you enter a concurrent context and set up 
+        your thread as indicated below. Then the child thread inherits the context
+        stack of the parent thread (invariant even when the parent thread exits contexts scopes
+        or enters new ones).
+        [code]
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            MyThread myThread = new MyThread();
+            myThread.parentContext = ctx;
+            myThread.start(); // Autonomous thread inheriting an invariant view of the context stack.
+        } finally {
+           ctx.exit(); 
+        }
+        ...
+        class MyThread extends Thread {
+            ConcurrentContext parentContext;
+            public void run() {
+                parentContext.setCurrent(); 
+                ...
+            }
+        } 
+        [/code]</p>
+    </li>
+    <a name="FAQ-2"></a>
+    <li><b>To configure a context I need to enter a context and the configuration 
+          will impact only the current thread and possibly threads spawned from that 
+          thread (see above); would it be possible to perform 
+          global configurations impacting all running threads?</b>
+    <p> The right answer to that would be to publish an OSGi implementation 
+        of your customized context. Another possiblity is at start up; before 
+        entering any context to configure the root contexts as shown below.
+        It should be noted that with OSGi, this approach is not recommended 
+        since the global configuration will be lost if there is a new context 
+        implementation published (unlike local configurations).
+        [code]
+        static abstract class TextContextConfigurator extends TextContext {
+             public static void configure() {
+                 TextContext.current().setFormat(Complex.class, polar);
+             }    
+        }
+        public static void main(String [] args) {
+            TextContextConfigurator.configure();
+            ...
+        }
+        [/code] </p>
+    </li> 
+    <a name="FAQ-3"></a>
+    <li><b>I am writing an application using third party libraries. 
+          I cannot avoid GC unless I get the source and patch it to Javolution.
+          Can I still make my application real-time using {@link javolution.context.StackContext StackContext}?</b>
+    <p> You cannot get determinism using "any" library (including Java standard library) 
+    regardless of the garbage collector issue. Array resizing, lazy initialization, map rehashing (...)
+    would all introduce unexpected  delay, this is why Javolution comes with its own 
+    real-time collections implementation. Furthermore, {@link javolution.context.StackContext StackContext}
+    to be efficient will require a RTSJ runtime (ScopedMemory support).</p>
+    </li> 
+    
+ </ol>
+
+*/
 package javolution.context;

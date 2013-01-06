@@ -98,9 +98,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @return the new log context implementation entered.
      */
     public static LogContext enter() {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+        return LogContext.current().inner().enterScope();
     }
 
     /**
@@ -109,11 +107,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void debug(Object... objs) {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        ctx.log(Level.DEBUG, objs);
+        LogContext.current().log(Level.DEBUG, objs);
     }
 
     /**
@@ -122,11 +116,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void info(Object... objs) {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        ctx.log(Level.INFO, objs);
+        LogContext.current().log(Level.INFO, objs);
     }
 
     /**
@@ -135,11 +125,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void warning(Object... objs) {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        ctx.log(Level.WARNING, objs);
+        LogContext.current().log(Level.WARNING, objs);
     }
 
     /**
@@ -149,11 +135,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void error(Object... objs) {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) {
-            ctx = LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        ctx.log(Level.ERROR, objs);
+        LogContext.current().log(Level.ERROR, objs);
     }
 
     /**
@@ -177,5 +159,13 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     protected abstract void log(Level level, Object... objs);
 
+    /**
+     * Returns the current log context.
+     */
+    protected static LogContext current() {
+        LogContext ctx = AbstractContext.current(LogContext.class);
+        if (ctx != null) return ctx;
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+    }
 
 }

@@ -33,16 +33,16 @@ import javolution.xml.stream.XMLStreamException;
 public @interface Format {
     
     /**
-     * Returns the default text format implementation class.
-     * @return the text format implementation.
+     * Returns the plain text format implementation class.
      */
     Class<? extends TextFormat> text() default UnsupportedTextFormat.class;    
 
     /**
-     * Returns the default text format implementation class.
-     * @return the text format implementation.
+     * Returns the xml format implementation class (default based on 
+     * plain text format).
+     * @see XMLFormat.Default
      */
-    Class<? extends XMLFormat> xml() default UnsupportedXMLFormat.class;  ;
+    Class<? extends XMLFormat> xml() default XMLFormat.Default.class;  ;
     
    
     /**
@@ -60,20 +60,4 @@ public @interface Format {
         }        
     }
     
-    /**
-     * Defines the class when text formatting is not supported.  
-     */
-    public static final class UnsupportedXMLFormat extends XMLFormat {
-
-        @Override
-        public void write(Object obj, OutputElement xml) throws XMLStreamException {
-            throw new UnsupportedOperationException("XML Format Unkown.");
-        }
-
-        @Override
-        public void read(InputElement xml, Object obj) throws XMLStreamException {
-            throw new UnsupportedOperationException("XML Format Unknown.");
-        }
-        
-    }
 }

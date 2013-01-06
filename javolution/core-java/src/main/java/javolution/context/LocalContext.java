@@ -59,10 +59,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * @return the new local context implementation entered.
      */
     public static LocalContext enter() {
-        LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return LOCAL_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+        return LocalContext.current().inner().enterScope();
     }
 
     /**
@@ -93,5 +90,14 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * @param  param the local parameter whose local value is returned.
      */
     protected abstract <T> T getLocalValueInContext(LocalParameter<T> param);
+
+    /**
+     * Returns the current local context.
+     */
+    protected static LocalContext current() {
+        LocalContext ctx = AbstractContext.current(LocalContext.class);
+        if (ctx != null) return ctx;
+        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+    }
 
 }

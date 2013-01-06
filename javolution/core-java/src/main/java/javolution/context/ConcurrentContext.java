@@ -195,10 +195,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * @return the new concurrent context implementation entered.
      */
     public static ConcurrentContext enter() {
-        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return CONCURRENT_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+        return ConcurrentContext.current().inner().enterScope();
     }
 
     /**
@@ -258,9 +255,42 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
 
     /**
      * Sets this concurrent context as the current context for the 
-     * current thread.
+     * current thread. This method is particularly useful when users
+     * want to create their own threads and make them inherits the 
+     * current context stack. That inherited context stack remains 
+     * invariant for the child thread even when the parent thread exits
+     * contexts scopes or enter new ones.
+     * [code]
+     * ConcurrentContext ctx = ConcurrentContext.enter();
+     * try {
+     *     MyThread myThread = new MyThread();
+     *     myThread.parentContext = ctx;
+     *     myThread.start(); // Autonomous thread inheriting an invariant view of the context stack.
+     * } finally {
+     *    ctx.exit(); 
+     * }
+     * ...
+     * class MyThread extends Thread {
+     *     ConcurrentContext parentContext;
+     *     public void run() {
+     *         parentContext.setCurrent(); 
+     *         ...
+     *     }
+     * } 
+     * [/code]</p>
      */
-    protected void setCurrent() {
+    public void setCurrent() {
         CURRENT.set(this);
     }
-}
+
+    /**
+     * Returns the current concurrent context.
+     */
+    protected static ConcurrentContext current() {
+        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
+        if (ctx != null) return ctx;
+        return CONCURRENT_CONTEXT_TRACKER.getService(
+                WAIT_FOR_SERVICE.getDefaultValue());
+    }
+    
+ }

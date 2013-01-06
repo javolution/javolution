@@ -64,9 +64,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @return the new security context implementation entered. 
      */
     public static SecurityContext enter() {
-        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+        return SecurityContext.current().inner().enterScope();
     }
 
     /**
@@ -76,11 +74,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @throws SecurityException if the specified permission is not granted.
      */
     public static void check(SecurityPermission permission) {
-        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if (ctx != null) {
-            ctx = SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
-        }
-        if (!ctx.isGranted(permission))
+        if (!SecurityContext.current().isGranted(permission))
             throw new SecurityException(permission + " is not granted.");
     }
 
@@ -129,6 +123,15 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      */
     public final void revoke(SecurityPermission permission) {
         revoke(permission, null);
+    }
+
+    /**
+     * Returns the current security context. 
+     */
+    protected static SecurityContext current() {
+        SecurityContext ctx = AbstractContext.current(SecurityContext.class);
+        if (ctx != null) return ctx;
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
     }
 
 }

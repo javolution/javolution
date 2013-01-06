@@ -8,9 +8,6 @@
  */
 package javolution.xml;
 
-import java.lang.CharSequence;
-
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.util.FastComparator;
@@ -30,14 +27,18 @@ import javolution.xml.stream.XMLStreamException;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public class XMLReferenceResolver implements Reusable {
+public class XMLReferenceResolver  {
 
     /**
      * Holds object to identifier (FastTable.Index) mapping.
      */
-    private FastMap _objectToId = new FastMap()
-            .setKeyComparator(FastComparator.IDENTITY);
-
+    private FastMap _objectToId = new FastMap() {
+        @Override
+        public FastComparator keyComparator() {
+            return FastComparator.IDENTITY;
+        }
+    };
+  
     /**
      * Holds the objects (index to object mapping).
      */
@@ -139,21 +140,21 @@ public class XMLReferenceResolver implements Reusable {
             _objectToId.put(obj, id);
             _tmp.clear().append(id.intValue());
             if (_idURI == null) {
-                xml.getStreamWriter().writeAttribute(toCsq(_idName),
+                xml.getStreamWriter().writeAttribute(_idName,
                         _tmp);
             } else {
-                xml.getStreamWriter().writeAttribute(toCsq(_idURI),
-                        toCsq(_idName), _tmp);
+                xml.getStreamWriter().writeAttribute(_idURI,
+                        _idName, _tmp);
             }
             return false;
         }
         _tmp.clear().append(id.intValue());
         if (_refURI == null) {
             xml._writer
-                    .writeAttribute(toCsq(_refName), _tmp);
+                    .writeAttribute(_refName, _tmp);
         } else {
-            xml._writer.writeAttribute(toCsq(_refURI),
-                    toCsq(_refName), _tmp);
+            xml._writer.writeAttribute(_refURI,
+                    _refName, _tmp);
         }
         return true;
     }
@@ -172,7 +173,7 @@ public class XMLReferenceResolver implements Reusable {
     public Object readReference(XMLFormat.InputElement xml)
             throws XMLStreamException {
         CharArray value = xml._reader.getAttributeValue(
-                toCsq(_refURI), toCsq(_refName));
+                _refURI, _refName);
         if (value == null)
             return null;
         int ref = value.toInt();
@@ -193,7 +194,7 @@ public class XMLReferenceResolver implements Reusable {
     public void createReference(Object obj, XMLFormat.InputElement xml)
             throws XMLStreamException {
         CharArray value = xml._reader.getAttributeValue(
-                toCsq(_idURI), toCsq(_idName));
+                _idURI, _idName);
         if (value == null)
             return;
         int i = value.toInt();
@@ -203,7 +204,6 @@ public class XMLReferenceResolver implements Reusable {
         _idToObject.add(obj);
     }
 
-    // Implements Reusable.
     public void reset() {
         _idName = "id";
         _idURI = null;
@@ -214,8 +214,5 @@ public class XMLReferenceResolver implements Reusable {
         _counter = 0;
     }
 
-    private static CharSequence toCsq/**/(Object str) {
-        return QName.j2meToCharSeq(str);
-    }
 
 }

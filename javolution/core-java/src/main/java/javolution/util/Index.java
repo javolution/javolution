@@ -74,7 +74,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
             int n = TypeFormat.parseInt(configuration);
             if (n <= 0)
                 throw new IllegalArgumentException("Preallocated max cannot be zero or negative");
-            this.set(n);
+            this.setDefaultValue(n);
             Index.allocateOnHeap(n);
         }
 

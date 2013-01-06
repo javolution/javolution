@@ -25,7 +25,7 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *     deserialization.</p>
  *     
  * <p> Instances of this class are typically retrieved from the 
- *     current {@link XMLContext} (OSGi service or not).
+ *     {@link XMLContext} (OSGi service or not).
  *     [code]
  *     @Format(xml=Graphic.XMLFormat.class) 
  *     public abstract class Graphic implements XMLSerializable {
@@ -118,72 +118,10 @@ public abstract class XMLFormat <T>  {
     private static final String NULL = "Null";
 
     /**
-     * Holds the class associated to this format (static instances)
-     * or <code>null</code> if format is unbound.
-     */
-    private final Class <T>  _class;
-
-    /**
-     * Defines the default XML format bound to the specified class.
-     * If the specified class is <code>null</code> then the format is unbound
-     * (unbound formats are used by custom {@link XMLBinding binding} instances).
-     * The static binding is unique and can only be overriden by custom
-     * {@link XMLBinding}. For example:[code]
-     *    // Overrides default binding for java.util.Collection.
-     *    class MyBinding extends XMLBinding {
-     *        XMLFormat<Collection> collectionXML = new XMLFormat<Collection>(null) { ... }; // Unbound.
-     *        public XMLFormat getFormat(Class cls) {
-     *            if (Collection.isAssignableFrom(cls)) {
-     *                return collectionXML; // Overrides default XML format.
-     *            } else {
-     *                return super.getFormat(cls);
-     *            }
-     *        }
-     *    }[/code]
-     * 
-     * @param forClass the root class/interface to associate to this XML format
-     *        or <code>null</code> if this format is not bound.
-     * @throws IllegalArgumentException if a XMLFormat is already bound to 
-     *         the specified class.
+     * Default constructor.
      */
     protected XMLFormat() {
-        _class = null;
      }
-
-    /**
-     * <p> Returns the default format for the specified class/interface.
-     *     If there no direct mapping for the specified class, the mapping
-     *     for the specified class interfaces is searched, if none is found
-     *     the mapping for the parents classes is searched, if still none is
-     *     found the format for <code>java.lang.Object</code> is returned.</p>
-     *
-     * <p> A default xml format exists for the following predefined types:
-     *     <code><ul>
-     *       <li>java.lang.Object</li>
-     *       <li>java.util.Collection</li>
-     *       <li>java.util.Map</li>
-     *    </ul></code>
-     *    The default XML representation (java.lang.Object) consists of the
-     *    of a "value" attribute holding its textual representation
-     *    (see {@link TextFormat}).</p>
-     *
-     * @return the class/interface bound to this format.
-     */
-    public static  <T>  XMLFormat <T>  getInstance(Class <? extends T>  forClass) {
-        XMLFormat objectFormat = XMLBinding.OBJECT_XML; // Also forces initialization or XMLBinding.
-        XMLFormat xmlFormat = (XMLFormat) Reflection.getInstance().getField(forClass, XMLFormat.class, true);
-        return (xmlFormat != null) ? xmlFormat : objectFormat;
-    }
-
-    /**
-     * Returns the class/interface statically bound to this format or 
-     * <code>null</code> if none.
-     * 
-     * @return the class/interface bound to this format.
-     */
-    public final Class <T>  getBoundClass() {
-        return _class;
-    }
 
     /**
      * Indicates if the object serialized through this format can be referenced
@@ -238,18 +176,6 @@ public abstract class XMLFormat <T>  {
      */
     public abstract void read(InputElement xml,  T  obj)
             throws XMLStreamException;
-
-    /**
-     * Returns textual information about this format.
-     *
-     * @return this format textual information.
-     */
-    public String toString() {
-        Class boundClass = getBoundClass();
-        return (boundClass != null)
-                ? "Default XMLFormat for " + boundClass.getName()
-                : "Dynamic XMLtFormat (" + this.hashCode() + ")";
-    }
 
     /**
      * This class represents an input XML element (unmarshalling).
@@ -1042,5 +968,50 @@ public abstract class XMLFormat <T>  {
         }
     }
 
-    
+    /**
+     * Returns the default XML format for any object having a 
+     * {@link TextFormat plain text format}; this XML representation consists 
+     * of the plain text representation of the object as a "value" attribute.
+     */
+    public static class Default extends XMLFormat {
+
+        /**
+         * Default constructor.
+         */
+        public Default() {       
+        }
+        
+        @Override
+        public boolean isReferenceable() {
+            return false; // Always by value (immutable).
+        }
+
+        @Override
+        public Object newInstance(Class cls,
+                javolution.xml.XMLFormat.InputElement xml)
+                throws XMLStreamException {
+            TextFormat format = TextContext.getFormat(cls);
+            if (format == null)
+                throw new XMLStreamException("No TextFormat defined to parse instances of " + cls);                
+            CharArray value = xml.getAttribute("value");
+            if (value == null)
+                throw new XMLStreamException(
+                        "Missing value attribute (to be able to parse the instance of " + cls + ")");
+            return format.parse(value);
+        }
+
+        public void read(XMLFormat.InputElement xml, Object obj)
+                throws XMLStreamException {
+            // Do nothing.
+        }
+
+        public void write(Object obj, XMLFormat.OutputElement xml)
+                throws XMLStreamException {
+            TextBuilder tmp = new TextBuilder();
+            TextFormat tf = TextContext.getFormat(obj.getClass());
+            tf.format(obj, tmp);
+            xml.setAttribute("value", tmp);
+        }
+
+    };    
 }

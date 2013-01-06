@@ -9,6 +9,8 @@
 package javolution.text;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <p> The service for plain text parsing and formatting;
@@ -89,7 +91,24 @@ public abstract class TextFormat<T>  {
                 "Extraneous character(s) \"" + cursor.tail(csq) + "\"");
         return obj;
     }
- 
+    
+     /**
+     * Convenience method to format the specified object to a {@link TextBuilder};
+     * unlike the abstract format method, this method does not throw {@link IOException}.
+     * 
+     * @param obj the object to format.
+     * @param dest the appendable destination.
+     * @return the specified <code>TextBuilder</code>.
+     */
+    public TextBuilder format(T  obj, TextBuilder dest) {
+        try {
+            this.format(obj, (Appendable)dest);
+            return dest;
+        } catch (IOException e) {
+            throw new Error(e); // Cannot happens.
+        }
+    }
+
     /**
      * Convenience method to format the specified object to a {@link String}.
      * 
@@ -97,10 +116,8 @@ public abstract class TextFormat<T>  {
      * @return the formatting result as a string.
      */
     public String format(T obj)  {
-        try {
-            return this.format(obj, new TextBuilder()).toString();
-        } catch (IOException e) {
-            throw new Error(e); // Cannot happen when using TextBuilder.
-        }
+         return this.format(obj, new TextBuilder()).toString();
+        
     }
+       
 }

@@ -12,16 +12,9 @@ package javolution.xml;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-
-import java.lang.IllegalStateException;
-
-import javolution.context.ObjectFactory;
-import javolution.lang.Reusable;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamWriter;
 import javolution.xml.stream.XMLStreamWriterImpl;
-
-
 
 /**
  * <p> This class takes an object and formats it to XML; the resulting 
@@ -38,23 +31,13 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *         Message message = ...
  *         writer.write(message, "Message", Message.class);
  *     }
- *     writer.close(); // Writer is recycled, the underlying stream is closed.
+ *     writer.close(); // The underlying stream is closed.
  *     [/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public class XMLObjectWriter implements Reusable {
-
-    /**
-     * Holds the associated factory.
-     */
-    private static final ObjectFactory FACTORY = new ObjectFactory() {
-
-        protected Object create() {
-            return new XMLObjectWriter();
-        } 
-    };
+public class XMLObjectWriter {
 
     /**
      * Hold the xml element used when formatting.
@@ -73,11 +56,6 @@ public class XMLObjectWriter implements Reusable {
     private OutputStream _outputStream;
 
     /**
-     * Indicates if factory produced.
-     */
-    private boolean _isFactoryProduced;
-
-    /**
      * Default constructor.
      */
     public XMLObjectWriter() {
@@ -90,8 +68,7 @@ public class XMLObjectWriter implements Reusable {
      * @param out the output stream.
      */
     public static XMLObjectWriter newInstance(OutputStream out) throws XMLStreamException {
-        XMLObjectWriter writer = (XMLObjectWriter) FACTORY.object();
-        writer._isFactoryProduced = true;
+        XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out);
         return writer;
     }
@@ -104,8 +81,7 @@ public class XMLObjectWriter implements Reusable {
      * @param encoding the output stream encoding.
      */
     public static XMLObjectWriter newInstance(OutputStream out, String encoding) throws XMLStreamException {
-        XMLObjectWriter writer = (XMLObjectWriter) FACTORY.object();
-        writer._isFactoryProduced = true;
+        XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out, encoding);
         return writer;
     }
@@ -117,8 +93,7 @@ public class XMLObjectWriter implements Reusable {
      * @param out the writer output.
      */
     public static XMLObjectWriter newInstance(Writer out) throws XMLStreamException {
-        XMLObjectWriter writer = (XMLObjectWriter) FACTORY.object();
-        writer._isFactoryProduced = true;
+        XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out);
         return writer;
     }
@@ -314,9 +289,6 @@ public class XMLObjectWriter implements Reusable {
                 _xml._writer.close();
                 _writer.close();
                 reset();
-            }
-            if (_isFactoryProduced) {
-                FACTORY.recycle(this);
             }
             
         } catch (IOException e) {
