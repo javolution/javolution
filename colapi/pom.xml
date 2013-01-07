@@ -12,9 +12,9 @@
         <version>3</version>
     </parent>
     <scm>
-        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/colapi-1.0.1</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/colapi-1.0.1</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/tags/colapi-1.0.1</url>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/colapi-2.0</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/colapi-2.0</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/tags/colapi-2.0</url>
     </scm>
     
     <!-- ==================================================== -->
@@ -26,7 +26,7 @@
     <version>2.0-SNAPSHOT</version>  
     <name>Colapi</name>
     <url>http://javolution.org/colapi</url>
-    <description>Colapi - Maven Plugin to colorize Java source code in html files (e.g. javadoc).</description>
+    <description>Colapi - Maven Plugin to colorize Java source code examples in javadoc.</description>
     <licenses>
         <license>
             <name>BSD License</name>
