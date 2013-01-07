@@ -86,44 +86,52 @@ public class Colapi extends AbstractMojo {
     private String encoding;
 
     /**
-     * The code start tag (default "<code><pre>").
+     * The code start tag.
      * @parameter
-     *    expression="${colapi.start.tag}"
-     *    default-value="<code><pre>"
+     *    expression="${colapi.code.start}"
+     *    default-value="<div style=\"background: #ffffff; overflow:auto;width:auto;color:black;background:white;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;\"><pre style=\"margin: 0; line-height: 125%\">"
      */
-    private String startTag;
+    private String codeStart;
 
     /**
-     * The code end tag (default "</pre></code>").
+     * The code end tag.
      * @parameter
-     *    expression="${colapi.end.tag}"
-     *    default-value="</pre></code>"
+     *    expression="${colapi.code.end}"
+     *    default-value="</pre></div>"
      */
-    private String endTag;
+    private String codeEnd;
 
     /**
-     * The keyword color (combined RGB value).
+     * The keyword span tag.
      * @parameter
-     *    expression="${colapi.keyword.color}"
-     *    default-value="#7F0055"
+     *    expression="${colapi.keyword.span}"
+     *    default-value="<span style=\"color: #7F0055; font-weight: bold\">"
      */
-    private String keywordColor;
+    private String keywordSpan;
 
     /**
-     * The comment color (combined RGB value).
+     * The comment span tag.
      * @parameter
-     *    expression="${colapi.comment.color}"
-     *    default-value="#3F7F5F"
+     *    expression="${colapi.comment.span}"
+     *    default-value="<span style=\"color: #3F7F5F\">"
      */
-    private String commentColor;
+    private String commentSpan;
 
     /**
-     * The string color (combined RGB value).
+     * The string span tag.
      * @parameter
-     *    expression="${colapi.string.color}"
-     *    default-value="#0000A0"
+     *    expression="${colapi.string.span}"
+     *    default-value="<span style=\"color: #2a00ff\">"
      */
-    private String stringColor;
+    private String stringSpan;
+
+    /**
+     * The annotation span tag.
+     * @parameter
+     *    expression="${colapi.annotation.span}"
+     *    default-value="<span style=\"color: #808080; font-style: italic\">"
+     */
+    private String annotationSpan;
 
     public void execute() throws MojoExecutionException {
         if (!input.exists()) 
@@ -203,7 +211,7 @@ public class Colapi extends AbstractMojo {
                 case DATA:
                     if ((read == ']') && match("[code]")) {
                         _doc.setLength(_doc.length() - 6);
-                        _doc.append(startTag);
+                        _doc.append(codeStart);
                         hasBeenModified = true;
                         state = CODE;
                     }
@@ -215,16 +223,19 @@ public class Colapi extends AbstractMojo {
                         start = _doc.length() - 1;
                     } else if (read == '"') {
                         state = STRING_LITERAL;
-                        _doc.insert(_doc.length() - 1, "<font color=\"" + stringColor + "\">");
+                        _doc.insert(_doc.length() - 1, stringSpan);
                     } else if ((read == '/') && (_doc.charAt(_doc.length() - 2) == '/')) {
                         state = COMMENT;
-                        _doc.insert(_doc.length() - 2, "<font color=\"" + commentColor + "\">");
+                        _doc.insert(_doc.length() - 2, commentSpan);
+                    } else if (read == '@') {
+                        _doc.insert(_doc.length() - 12, annotationSpan);
+                        state = ANNOTATION;
                     }
                     break;
 
                 case STRING_LITERAL:
                     if ((read == '"') && (_doc.charAt(_doc.length() - 2) != '\\')) {
-                        _doc.append("</font>");
+                        _doc.append("</span>");
                         state = CODE;
                     }
                     break;
@@ -232,15 +243,15 @@ public class Colapi extends AbstractMojo {
                 case IDENTIFIER:
                     if ((read == ']') && match("[/code]")) {
                         _doc.setLength(_doc.length() - 7);
-                        _doc.append(endTag);
+                        _doc.append(codeEnd);
                         state = DATA;
                     } else if ((read == ']') && match("[code]")) {
                         getLog().error("Nested [code] tag found in file: " + file);
                     } else if (!Character.isJavaIdentifierPart((char) read)) { // End of identifier.
                         String name = _doc.substring(start, _doc.length() - 1);
                         if (IDENTIFIERS.contains(name)) { // Identifier found.
-                            _doc.insert(start + name.length(), "</b></font>");
-                            _doc.insert(start, "<font color=\"" + keywordColor + "\"><b>");
+                            _doc.insert(start + name.length(), "</span>");
+                            _doc.insert(start, keywordSpan);
                         }
                         state = CODE;
                     }
@@ -248,7 +259,14 @@ public class Colapi extends AbstractMojo {
 
                 case COMMENT:
                     if ((read == '\n') || (read == '\r')) {
-                        _doc.insert(_doc.length() - 1, "</font>");
+                        _doc.insert(_doc.length() - 1, "</span>");
+                        state = CODE;
+                    }
+                    break;
+                    
+                case ANNOTATION:
+                    if (!Character.isJavaIdentifierPart((char) read)) { // End of annotation.
+                        _doc.insert(_doc.length() - 1, "</span>");
                         state = CODE;
                     }
                     break;
@@ -299,6 +317,8 @@ public class Colapi extends AbstractMojo {
     private static final int COMMENT = 3; // Can only be end of line comments.
 
     private static final int STRING_LITERAL = 4;
+
+    private static final int ANNOTATION = 5;
 
     private static final String[] KEYWORDS = {"abstract", "continue", "for",
         "new", "switch", "assert", "default", "if", "package",
