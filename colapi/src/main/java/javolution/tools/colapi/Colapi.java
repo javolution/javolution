@@ -28,23 +28,25 @@
 package javolution.tools.colapi;
 
 import java.io.BufferedReader;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.regex.Pattern;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
 
 /**
  * The colapi mojo.
  *
  * @goal colorize
- * @phase site
+ * @phase prepare-package
  */
 public class Colapi extends AbstractMojo {
 
@@ -52,18 +54,29 @@ public class Colapi extends AbstractMojo {
      * The location of the directory containing the files to process
      * recurcively.
      * @parameter
-     *    expression="${colapi.directory}"
-     *    default-value="${project.build.directory}/site/apidocs"
+     *    expression="${colapi.input}"
+     *    default-value="${project.basedir}/src/main/java"
      */
-    private File directory;
+    private File input;
+
+    /**
+     * The location of the directory to whic the processed files are sent.
+     * @parameter
+     *    expression="${colapi.output}"
+     *    default-value="${project.build.directory}/colorized"
+     */
+    private File output;
+
     /**
      * The pathname filter of the files to colorize (regex).
      * The default value filters out all the files whose pathname
-     * does not terminate by .html
+     * does not terminate by .java
      * @parameter
-     *     default-value=".*\\.html$"
+     *     expression="${colapi.filter}"
+     *     default-value=".*\\.java$"
      */
     private String filter;
+
     /**
      * The files encoding.
      * @parameter
@@ -71,6 +84,23 @@ public class Colapi extends AbstractMojo {
      *    default-value="UTF-8"
      */
     private String encoding;
+
+    /**
+     * The code start tag (default "<code><pre>").
+     * @parameter
+     *    expression="${colapi.start.tag}"
+     *    default-value="<code><pre>"
+     */
+    private String startTag;
+
+    /**
+     * The code end tag (default "</pre></code>").
+     * @parameter
+     *    expression="${colapi.end.tag}"
+     *    default-value="</pre></code>"
+     */
+    private String endTag;
+
     /**
      * The keyword color (combined RGB value).
      * @parameter
@@ -78,6 +108,7 @@ public class Colapi extends AbstractMojo {
      *    default-value="#7F0055"
      */
     private String keywordColor;
+
     /**
      * The comment color (combined RGB value).
      * @parameter
@@ -85,31 +116,35 @@ public class Colapi extends AbstractMojo {
      *    default-value="#3F7F5F"
      */
     private String commentColor;
+
     /**
      * The string color (combined RGB value).
      * @parameter
-     *    expression="${colapi.comment.string}"
+     *    expression="${colapi.string.color}"
      *    default-value="#0000A0"
      */
     private String stringColor;
 
     public void execute() throws MojoExecutionException {
-        if (!directory.exists()) {
-            throw new MojoExecutionException("Directory: " + directory + " does not exist.");
-        }
+        if (!input.exists()) 
+            throw new MojoExecutionException("Directory: " + input + " does not exist.");
+        copyDirectory(input, output);
+        getLog().info("Colapi copied " + _copied  + " files from " + input + " to " + output);
         _pattern = Pattern.compile(filter);
         try {
-            if (directory.isDirectory()) {
-                processDirectory(directory);
+            if (output.isDirectory()) {
+                processDirectory(output);
             } else {
-                processFile(directory);
+                processFile(output);
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Could not colorize", e);
         } finally {
-            getLog().info("Colapi processed " + _processed + " files and modified " + _modified + " in directory " + directory);
+            getLog().info("Colapi colorized  " + _modified + " files in directory " + output);
+            getLog().info("javadoc plugin sourcepath should be set to " + output);
         }
     }
+
     private Pattern _pattern;
 
     private void processDirectory(File dir) throws Exception {
@@ -121,6 +156,7 @@ public class Colapi extends AbstractMojo {
                 }
                 return _pattern.matcher(pathname.getPath()).matches();
             }
+
         });
         for (int i = 0; i < files.length; i++) {
             processFile(files[i]);
@@ -130,6 +166,7 @@ public class Colapi extends AbstractMojo {
             public boolean accept(File pathname) {
                 return pathname.isDirectory();
             }
+
         });
         for (int i = 0; i < dirs.length; i++) {
             processDirectory(dirs[i]);
@@ -137,7 +174,6 @@ public class Colapi extends AbstractMojo {
     }
 
     private void processFile(File file) throws Exception {
-        _processed++;
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 new FileInputStream(file), encoding));
         _doc.setLength(0);
@@ -154,6 +190,8 @@ public class Colapi extends AbstractMojo {
                     _doc.append("&gt;");
                 } else if (read == '&') {
                     _doc.append("&amp;");
+                } else if (read == '@') {
+                    _doc.append("{@literal @}");
                 } else {
                     _doc.append((char) read);
                 }
@@ -165,7 +203,7 @@ public class Colapi extends AbstractMojo {
                 case DATA:
                     if ((read == ']') && match("[code]")) {
                         _doc.setLength(_doc.length() - 6);
-                        _doc.append("<code><pre>");
+                        _doc.append(startTag);
                         hasBeenModified = true;
                         state = CODE;
                     }
@@ -194,7 +232,7 @@ public class Colapi extends AbstractMojo {
                 case IDENTIFIER:
                     if ((read == ']') && match("[/code]")) {
                         _doc.setLength(_doc.length() - 7);
-                        _doc.append("</pre></code>");
+                        _doc.append(endTag);
                         state = DATA;
                     } else if ((read == ']') && match("[code]")) {
                         getLog().error("Nested [code] tag found in file: " + file);
@@ -229,8 +267,11 @@ public class Colapi extends AbstractMojo {
             }
         }
     }
-    private int _processed;
+
+    private int _copied;
+
     private int _modified;
+
     private StringBuffer _doc = new StringBuffer(10000);
 
     // Matches the end of the document with the specified string.
@@ -248,11 +289,17 @@ public class Colapi extends AbstractMojo {
         return true;
     }
     // Constants.
+
     private static final int DATA = 0;
+
     private static final int CODE = 1;
+
     private static final int IDENTIFIER = 2;
+
     private static final int COMMENT = 3; // Can only be end of line comments.
+
     private static final int STRING_LITERAL = 4;
+
     private static final String[] KEYWORDS = {"abstract", "continue", "for",
         "new", "switch", "assert", "default", "if", "package",
         "synchronized", "boolean", "do", "goto", "private", "this",
@@ -262,6 +309,7 @@ public class Colapi extends AbstractMojo {
         "char", "final", "interface", "static", "void", "class", "finally",
         "long", "strictfp", "volatile", "const", "float", "native",
         "super", "while"};
+
     private static final HashSet IDENTIFIERS = new HashSet();
 
     static {
@@ -269,4 +317,41 @@ public class Colapi extends AbstractMojo {
             IDENTIFIERS.add(KEYWORDS[i]);
         }
     }
+    // Copy directory - Source code from Java Tips 
+    // http://www.java-tips.org/java-se-tips/java.io/how-to-copy-a-directory-from-one-location-to-another-loc.html) 
+
+    public void copyDirectory(File sourceLocation, File targetLocation) throws MojoExecutionException {
+        try {
+            if (sourceLocation.isDirectory()) {
+                if (!targetLocation.exists()) {
+                    targetLocation.mkdir();
+                }
+
+                String[] children = sourceLocation.list();
+                for (int i = 0; i < children.length; i++) {
+                    copyDirectory(new File(sourceLocation, children[i]),
+                            new File(targetLocation, children[i]));
+                }
+            } else {
+
+                InputStream in = new FileInputStream(sourceLocation);
+                OutputStream out = new FileOutputStream(targetLocation);
+
+                // Copy the bits from instream to outstream
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                out.close();
+                _copied++;
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException(
+                    "Cannot copy files from " + sourceLocation + " to " + targetLocation, e);
+        } finally {
+        }
+    }
+
 }
