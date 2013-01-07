@@ -12,9 +12,9 @@
         <version>3</version>
     </parent>
     <scm>
-        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/colapi-2.0</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/colapi-2.0</developerConnection>
-        <url>http://java.net/projects/javolution/sources/svn/tags/colapi-2.0</url>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/tags/colapi-2.0-SNAPSHOT</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/tags/colapi-2.0-SNAPSHOT</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/tags/colapi-2.0-SNAPSHOT</url>
     </scm>
     
     <!-- ==================================================== -->
