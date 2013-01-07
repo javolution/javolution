@@ -37,8 +37,7 @@ import javolution.text.TypeFormat;
  *              ...
  *         }
  *         ...
- *     }
- *     [/code]</p>
+ *     }[/code]</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
