@@ -355,15 +355,6 @@ javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReaderImpl.jav
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
-javolution/core-java/src/main/javadoc/javolution/package.html -text
-javolution/core-java/src/main/javadoc/javolution/util/doc-files/list-add.png -text
-javolution/core-java/src/main/javadoc/javolution/util/doc-files/map-put.png -text
-javolution/core-java/src/main/javadoc/javolution/util/package.html -text
-javolution/core-java/src/main/javadoc/javolution/xml/doc-files/xmlDataBinding.png -text
-javolution/core-java/src/main/javadoc/javolution/xml/package.html -text
-javolution/core-java/src/main/javadoc/javolution/xml/sax/package.html -text
-javolution/core-java/src/main/javadoc/javolution/xml/stream/package.html -text
-javolution/core-java/src/main/javadoc/javolution/xml/ws/package.html -text
 javolution/core-java/src/main/javadoc/overview.html -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/index.html -text
