@@ -1,5 +1,5 @@
 /**
-<p> Provides real-time {@link javolution.context.Context} to facilitate 
+<p> Provides execution {@link javolution.context.AbstractContext contexts} to facilitate 
     separation of concerns and achieve higher level of performance and 
     code predictability.</p>
 
@@ -26,7 +26,7 @@
        but there is a rather simpler solution <b>"Context Programming"</b>!</p>
        
    <p> It does not require any particular tool, it basically says that every threads 
-       has a {@link AbstractContext context} which can be customized by someone else
+       has a {@link javolution.context.AbstractContext context} which can be customized by someone else
       (the one who knows what to do, when running OSGi it is typically a separate bundle).
        Then, your code looks a lot cleaner and is way more flexible as you don't have
        to worry about logging, security, performance etc. in your low level methods. 
@@ -38,11 +38,11 @@
        }[/code]
        </p>
        
-   <p> Used properly <b>J</b>avolution's {@link AbstractContext contexts}
+   <p> Used properly <b>J</b>avolution's {@link javolution.context.AbstractContext contexts}
        greatly facilitate the separation of concerns. Contexts are fully 
        integrated with OSGi (they are published services). Application 
        may dynamically plug-in the right context for their environment (e.g. 
-       {@link SecurityContext}).</p>
+       {@link javolution.context.SecurityContext SecurityContext}).</p>
      
  <h2><a name="PREDEFINED">Predefined Contexts:</a></h2>
   <p> Here is the list of a few predefined contexts provided by this library.<ul>
@@ -55,7 +55,7 @@
            to allocate on the stack (or RTSJ ScopedMemory).</li>
       <li>{@link javolution.context.LogContext LogContext} - For performant logging capabilities
            using either {@link org.osgi.service.log.LogService} or 
-          {@link javolution.util.StandardLog StandardLog} (when not running OSGi).</li>     
+          {@link java.util.logging.Logger Standard Logger} (when not running OSGi).</li>     
       <li>{@link javolution.context.SecurityContext SecurityContext} - To address application-level security 
           concerns.</li>
       <li>{@link javolution.context.FormatContext FormatContext} - For objects serialization/deserialization, 

@@ -9,6 +9,7 @@
 package javolution.lang;
 
 import javolution.util.FastCollection;
+import javolution.context.StackContext;
 
 /**
  * <p> A function that perform some operation and returns the result of 

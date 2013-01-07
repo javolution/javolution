@@ -47,7 +47,7 @@ import javolution.text.TypeFormat;
  *         }
  *     }[/code]
  *     Classes/methods identified as {@link javolution.annotation.StackSafe 
- *     @StackSafe} can be used in a stack context.</p>
+ *     StackSafe} can be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012

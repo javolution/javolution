@@ -258,6 +258,7 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.
 javolution/core-java/pom.xml -text
 javolution/core-java/src/main/java/javolution/annotation/Format.java -text
 javolution/core-java/src/main/java/javolution/annotation/StackSafe.java -text
+javolution/core-java/src/main/java/javolution/annotation/package-info.java -text
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AllocatorContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
@@ -287,6 +288,13 @@ javolution/core-java/src/main/java/javolution/internal/osgi/ServiceReferenceImpl
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/text/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/xml/XMLContextImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/xml/stream/AttributesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/xml/stream/EntitiesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/xml/stream/NamespacesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/xml/stream/XMLInputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/xml/stream/XMLOutputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/xml/stream/XMLStreamReaderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/xml/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/AppendableWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/CharSequenceReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Struct.java -text svneol=unset#text/plain
@@ -325,6 +333,7 @@ javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=uns
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLContext.java -text svneol=unset#text/plain
@@ -333,28 +342,25 @@ javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svn
 javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLReferenceResolver.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLSerializable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/sax/Attributes.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/ContentHandler.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/DefaultHandler.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/SAX2ReaderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/XMLReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/XMLReaderImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/AttributesImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/EntitiesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/stream/Location.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/NamespaceContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/NamespacesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLInputFactory.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/XMLInputFactoryService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLOutputFactory.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/XMLOutputFactoryService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamConstants.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamException.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReader.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReaderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
 javolution/core-java/src/main/javadoc/overview.html -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/index.html -text

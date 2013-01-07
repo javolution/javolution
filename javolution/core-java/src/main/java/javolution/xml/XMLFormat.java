@@ -8,17 +8,16 @@
  */
 package javolution.xml;
 
+import javolution.internal.xml.stream.XMLStreamReaderImpl;
+import javolution.internal.xml.stream.XMLStreamWriterImpl;
 import javolution.text.CharArray;
-import javolution.text.Text;
 import javolution.text.TextBuilder;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.xml.sax.Attributes;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
-import javolution.xml.stream.XMLStreamReaderImpl;
 import javolution.xml.stream.XMLStreamWriter;
-import javolution.xml.stream.XMLStreamWriterImpl;
 
 /**
  * <p> This class represents the format base class for XML serialization and
@@ -27,7 +26,7 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  * <p> Instances of this class are typically retrieved from the 
  *     {@link XMLContext} (OSGi service or not).
  *     [code]
- *     @Format(xml=Graphic.XMLFormat.class) 
+ *     @Format(xml=GraphicXML.class) 
  *     public abstract class Graphic implements XMLSerializable {
  *         private boolean isVisible;
  *         private Paint paint; // null if none.
@@ -36,7 +35,7 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *          
  *         // XML format with positional associations (members identified by their position),
  *         // see XML package description for examples of name associations.
- *         public static class XMLFormat extends javolution.xml.XMLFormat<Graphic> {
+ *         public static class GraphicXML extends XMLFormat<Graphic> {
  *              public void write(Graphic g, OutputElement xml) {
  *                  xml.setAttribute("isVisible", g.isVisible); 
  *                  xml.add(g.paint); // First.
@@ -51,7 +50,8 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *                  return g;
  *             }
  *         };
- *    }[/code]
+ *    }
+ *    [/code]
  *    
  * <p> Due to the sequential nature of XML serialization/deserialization, 
  *     formatting/parsing of XML attributes should always be performed before 
@@ -59,8 +59,8 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  * 
  * <p> The mapping between classes and XML formats can be overriden
  *     through {@link XMLBinding} instances.
- *     Here is an example of serialization/deserialization:[code]
- *     
+ *     Here is an example of serialization/deserialization:
+ *     [code]     
  *     // Creates a list holding diverse objects.
  *     List list = new ArrayList();
  *     list.add("John Doe");
@@ -80,7 +80,8 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *     OutputStream out = new FileOutputStream("C:/list.xml");
  *     XMLObjectWriter writer = new XMLObjectWriter().setOutput(out).setBinding(binding);
  *     writer.write(list, "MyList", ArrayList.class);
- *     writer.close();[/code]
+ *     writer.close();
+ *     [/code]
  *     
  *     Here is the output <code>list.xml</code> document produced:[code]
  *     
@@ -93,15 +94,17 @@ import javolution.xml.stream.XMLStreamWriterImpl;
  *             <Key class="String" value="TWO"/>
  *             <Value class="Integer" value="2"/>
  *         </Map>
- *     </MyList>[/code]
+ *     </MyList>
+ *     [/code]
  *     
- *     The list can be read back with the following code:[code]
- *     
+ *     The list can be read back with the following code:
+ *     [code]
  *     // Reads back to a FastTable instance.
  *     InputStream in = new FileInputStream("C:/list.xml");
  *     XMLObjectReader reader = new XMLObjectReader().setInput(in).setBinding(binding);
  *     FastTable table = reader.read("MyList", FastTable.class); 
- *     reader.close();[/code]
+ *     reader.close();
+ *     [/code]
  *     </p>
  *     
  * <p> <i>Note:</i> Any type for which a {@link TextFormat text format} is 
@@ -569,9 +572,7 @@ public abstract class XMLFormat <T>  {
 
         /**
          * Returns the attribute of same type as the specified
-         * default value. The default value 
-         * {@link javolution.text.TextFormat#getInstance TextFormat} is
-         * used to parse the attribute value.
+         * default value.
          *
          * @param  name the name of the attribute.
          * @param  defaultValue the value returned if the attribute is not found.
@@ -934,7 +935,7 @@ public abstract class XMLFormat <T>  {
 
         /**
          * Sets the specified attribute using its associated 
-         * {@link javolution.text.TextFormat#getInstance TextFormat}.
+         * {@link javolution.text.TextFormat TextFormat}.
          * 
          * @param  name the name of the attribute.
          * @param  value the value for the specified attribute

@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamWriter;
-import javolution.xml.stream.XMLStreamWriterImpl;
+import javolution.internal.xml.stream.XMLStreamWriterImpl;
 
 /**
  * <p> This class takes an object and formats it to XML; the resulting 

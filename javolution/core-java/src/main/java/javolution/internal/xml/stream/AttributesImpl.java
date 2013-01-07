@@ -1,4 +1,4 @@
-package javolution.xml.stream;
+package javolution.internal.xml.stream;
 
 import java.lang.CharSequence;
 import javolution.context.HeapContext;
@@ -13,7 +13,7 @@ import javolution.xml.sax.Attributes;
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  */
-final class AttributesImpl implements Attributes {
+public final class AttributesImpl implements Attributes {
 
     /**
      * Holds the local names.

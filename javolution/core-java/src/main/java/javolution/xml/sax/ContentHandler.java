@@ -13,8 +13,6 @@ import javolution.text.CharArray;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import java.lang.CharSequence;
-
 /**
  * <p> Receives notification of the logical content of a document.</p>
  * 

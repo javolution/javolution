@@ -1,5 +1,5 @@
 /**
-<p> Provides classes and interfaces to handle text.</p>
+<p> Text handling package.</p>
 <h2><a name="FAQ">FAQ:</a></h2>
 <ol>
     <a name="FAQ-1"></a>
@@ -26,22 +26,23 @@ to conserve memory.</b>
     <p> It all depends of the size of the text to append (the actual size of the
          document being appended has almost no impact in both cases).</p>
     <p> If the text being appended is large (or arbitrarily large) then using 
-        {@link javolution.text.Text Text} is preferable.<pre>{@code
-        class FastCollection {
+        {@link javolution.text.Text Text} is preferable.
+        [code]
+        class FastCollection<T> {
              public final Text toText() {
                  // We don't know the length of the text representation for
                  // the collection's elements, we use Text concatenation 
                  // to avoid copying what could be quite large.
                  Text text = Text.valueOf("{");
-                 for (Record r = head(), end = tail(); (r = r.getNext()) != end;) {
-                      text = text.plus(valueOf(r));
-                      if (r.getNext() != end) {
-                           text = text.plus(", ");
-                      }
+                 boolean isFirst = true;                      
+                 for (T e : this) {
+                      if (!isFirst) { text = text.plus(", "); isFirst = false; }                      
+                      text = text.plus(e);
                  }
                  return text.plus("}");
              }
-        }[/code]
+        }
+        [/code]
     </p>
     <p></p>
     <a name="FAQ-3"></a>
@@ -51,7 +52,8 @@ to conserve memory.</b>
 <code>"/proj/lodecase/src/com/lodecase/util/bar.java"</code>.
 Can the 'Text' class save us memory when strings
 have common prefixes?</b>
-    <p> It depends how you build your text. For example in following code:<pre>{@code
+    <p> It depends how you build your text. For example in following code:
+    [code]
    Text directoryName = Text.valueOf("/proj/lodecase/src/com/lodecase/util/");
    Text fooFileName = directoryName.plus("foo.java");
    Text barFileName = directoryName.plus("bar.java");[/code]

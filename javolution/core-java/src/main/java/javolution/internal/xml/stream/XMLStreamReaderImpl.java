@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.stream;
+package javolution.internal.xml.stream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +18,15 @@ import javolution.context.HeapContext;
 import javolution.io.UTF8StreamReader;
 import javolution.text.CharArray;
 import javolution.xml.sax.Attributes;
+import javolution.xml.stream.Location;
+import javolution.xml.stream.NamespaceContext;
+import javolution.xml.stream.XMLInputFactory;
+import javolution.xml.stream.XMLStreamConstants;
+import javolution.xml.stream.XMLStreamException;
+import javolution.xml.stream.XMLStreamReader;
 
 /**
- * <p> This class represents a  {@link javolution.lang.Reusable reusable}
- *     implementation of {@link XMLStreamReader}.</p>
+ * <p> This class represents an implementation of {@link XMLStreamReader}.</p>
  *  
  * <p> Except for the types being used ({@link CharArray CharArray}/
  *     {@link CharSequence CharSequence} instead of {@link String}) the 

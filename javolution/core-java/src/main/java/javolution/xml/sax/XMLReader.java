@@ -9,7 +9,6 @@
 package javolution.xml.sax;
 
 import java.io.IOException;
-
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;

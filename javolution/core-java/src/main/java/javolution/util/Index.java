@@ -20,6 +20,7 @@ import javolution.lang.Copyable;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
+import javolution.text.TextFormat;
 import javolution.text.TypeFormat;
 
 /**
@@ -43,7 +44,7 @@ import javolution.text.TypeFormat;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
-@Format(text = Index.TextFormat.class)
+@Format(text = Index.PlainText.class)
 @StackSafe(initialization = false)
 public final class Index extends Number implements Comparable<Index>, ValueType {
 
@@ -256,7 +257,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
     /**
      * Holds the default text format for indices (decimal value representation).
      */
-    public static class TextFormat extends javolution.text.TextFormat<Index> {
+    public static class PlainText extends TextFormat<Index> {
 
         @Override
         public Index parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {

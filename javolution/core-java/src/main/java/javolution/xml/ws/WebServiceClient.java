@@ -1,6 +1,6 @@
 /*
  * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
- * Copyright (C) 2007 - Javolution (http://javolution.org/)
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
  * All rights reserved.
  * 
  * Permission to use, copy, modify, and distribute this software is
@@ -9,10 +9,6 @@
 package javolution.xml.ws;
 
 import java.io.IOException;
-
-import java.lang.CharSequence;
-import java.lang.UnsupportedOperationException;
-
 import javolution.io.AppendableWriter;
 import javolution.io.UTF8StreamWriter;
 import javolution.text.Text;
@@ -25,7 +21,7 @@ import javolution.xml.stream.XMLStreamWriter;
 
 /**
  * <p> This class provides a simple web service client capable of leveraging  
- *     Javolution {@link javolution.xml XML marshalling/unmarshalling}.</p>
+ *     Javolution XML marshalling/unmarshalling.</p>
  *     
  * <p> Sub-classes may work from WSDL files, {@link javolution.xml.XMLFormat
  *     XMLFormat} or directly with the XML streams (StAX). For example:[code]
@@ -48,10 +44,6 @@ import javolution.xml.stream.XMLStreamWriter;
  *      > Hello World!
  *     [/code]</p>
  *     
- * <p><b>Note:</b> At this moment, this class is supported only on the J2SE 
- *                 platform. Soon, it will also be supported on mobile devices
- *                 through the CLDC/MIDP Generic Connection framework.</p>
- *           
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.2, September 16, 2007
  */

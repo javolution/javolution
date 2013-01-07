@@ -8,20 +8,15 @@
  */
 package javolution.xml.stream;
 
+import javolution.internal.xml.stream.XMLOutputFactoryImpl;
 import java.io.OutputStream;
 import java.io.Writer;
-
-import javolution.lang.Configurable;
 
 
 /**
  * <p> The class represents the factory for getting {@link XMLStreamWriter}
  *     intances.</p>
  * 
- * <p> The {@link #newInstance() default implementation} automatically 
- *     {@link ObjectFactory#recycle recycles} any writer which has been 
- *     {@link XMLStreamWriter#close() closed}.</p>
- *     
  * <P> Usage example:[code]
  *
  *     // Lets format to an appendable.
@@ -104,15 +99,14 @@ public abstract class XMLOutputFactory {
 
 
     /**
-     * Returns a new instance of the {@link #CLASS} output factory
+     * Returns a new instance of the output factory
      * implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}). The output factory
-     * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
+     * (see {@link #setProperty(String, Object)}). 
      * 
      * @return a new factory instance.
      */
     public static XMLOutputFactory newInstance() {
-        return new Default();
+        return new XMLOutputFactoryImpl();
     }
 
     /**
@@ -174,122 +168,5 @@ public abstract class XMLOutputFactory {
      *         <code>false</code> otherwise.
      */
     public abstract boolean isPropertySupported(String name);
-
-    /**
-     * This class represents the default implementation.
-     */
-    private static final class Default extends XMLOutputFactory {
-
-        // Property setting.
-        private Boolean _isRepairingNamespaces = Boolean.FALSE;
-
-        // Property setting.
-        private String _repairingPrefix = "ns";
-
-        // Property setting.
-        private Boolean _automaticEmptyElements = Boolean.FALSE;
-
-        // Property setting.
-        private Boolean _noEmptyElementTag = Boolean.FALSE;
-
-        // Property setting.
-        private String _indentation;
-
-        // Property setting.
-        private String _lineSeparator = "\n";
-
-        // Implements XMLOutputFactory abstract method.
-        public XMLStreamWriter createXMLStreamWriter(Writer writer)
-                throws XMLStreamException {
-            XMLStreamWriterImpl xmlWriter = newWriter();
-            xmlWriter.setOutput(writer);
-            return xmlWriter;
-        }
-
-        // Implements XMLOutputFactory abstract method.
-        public XMLStreamWriter createXMLStreamWriter(OutputStream stream)
-                throws XMLStreamException {
-            XMLStreamWriterImpl xmlWriter = newWriter();
-            xmlWriter.setOutput(stream);
-            return xmlWriter;
-        }
-
-        // Implements XMLOutputFactory abstract method.
-        public XMLStreamWriter createXMLStreamWriter(OutputStream stream,
-                String encoding) throws XMLStreamException {
-            if ((encoding == null) || encoding.equals("UTF-8")
-                    || encoding.equals("utf-8"))
-                return createXMLStreamWriter(stream);
-            XMLStreamWriterImpl xmlWriter = newWriter();
-            xmlWriter.setOutput(stream, encoding);
-            return xmlWriter;
-        }
-
-        private XMLStreamWriterImpl newWriter() {
-            XMLStreamWriterImpl xmlWriter = new XMLStreamWriterImpl();
-            xmlWriter.setRepairingNamespaces(_isRepairingNamespaces
-                    .booleanValue());
-            xmlWriter.setRepairingPrefix(_repairingPrefix);
-            xmlWriter.setIndentation(_indentation);
-            xmlWriter.setLineSeparator(_lineSeparator);
-            xmlWriter.setAutomaticEmptyElements(_automaticEmptyElements
-                    .booleanValue());
-            xmlWriter.setNoEmptyElementTag(_noEmptyElementTag
-                    .booleanValue());
-            return xmlWriter;
-        }
-
-        // Implements XMLOutputFactory abstract method.
-        public void setProperty(String name, Object value)
-                throws IllegalArgumentException {
-            if (name.equals(IS_REPAIRING_NAMESPACES)) {
-                _isRepairingNamespaces = (Boolean) value;
-            } else if (name.equals(REPAIRING_PREFIX)) {
-                _repairingPrefix = (String) value;
-            } else if (name.equals(AUTOMATIC_EMPTY_ELEMENTS)) {
-                _automaticEmptyElements = (Boolean) value;
-            } else if (name.equals(NO_EMPTY_ELEMENT_TAG)) {
-                _noEmptyElementTag = (Boolean) value;
-            } else if (name.equals(INDENTATION)) {
-                _indentation = (String) value;
-            } else if (name.equals(LINE_SEPARATOR)) {
-                _lineSeparator = (String) value;
-            } else {
-                throw new IllegalArgumentException("Property: " + name
-                        + " not supported");
-            }
-        }
-
-        // Implements XMLOutputFactory abstract method.
-        public Object getProperty(String name) throws IllegalArgumentException {
-            if (name.equals(IS_REPAIRING_NAMESPACES)) {
-                return _isRepairingNamespaces;
-            } else if (name.equals(REPAIRING_PREFIX)) {
-                return _repairingPrefix;
-            } else if (name.equals(AUTOMATIC_EMPTY_ELEMENTS)) {
-                return _automaticEmptyElements;
-            } else if (name.equals(NO_EMPTY_ELEMENT_TAG)) {
-                return _noEmptyElementTag;
-            } else if (name.equals(INDENTATION)) {
-                return _indentation;
-            } else if (name.equals(LINE_SEPARATOR)) {
-                return _lineSeparator;
-            } else {
-                throw new IllegalArgumentException("Property: " + name
-                        + " not supported");
-            }
-        }
-
-        // Implements XMLOutputFactory abstract method.
-        public boolean isPropertySupported(String name) {
-            return name.equals(IS_REPAIRING_NAMESPACES)
-                    || name.equals(REPAIRING_PREFIX)
-                    || name.equals(AUTOMATIC_EMPTY_ELEMENTS)
-                    || name.equals(NO_EMPTY_ELEMENT_TAG)
-                    || name.equals(INDENTATION)
-                    || name.equals(LINE_SEPARATOR);
-        }
-
-    }
 
 }

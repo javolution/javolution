@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javolution.lang.Copyable;
 import javolution.lang.Functor;
 import javolution.lang.Immutable;
@@ -29,9 +27,9 @@ import javolution.lang.Predicate;
  *     The capacity of a fast table is automatically adjusted to best fit
  *     its size (memory footprint minimization).</p>
  * 
- * <p> Instances of this class can advantageously replace {@link ArrayList},
- *     {@link LinkedList}, {@link Deque} and {@link TreeSet} in terms 
- *     of adaptability, space or performance.</p>
+ * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
+ *     {@link java.util.LinkedList LinkedList}, {@link java.util.Deque Deque} 
+ *      and {@link java.util.TreeSet TreeSet} in terms of adaptability, space or performance.</p>
  *     <img src="doc-files/list-add.png"/>
  *     
  *  <p> As for any {@link FastCollection fast collection} iterations are faster
@@ -53,8 +51,7 @@ import javolution.lang.Predicate;
  *      and {@link #remove}.</p>
  * 
  * <p>  Finally, fast table provides a {@link FastTable#shared shared} view 
- *      using {@link ReentrantReadWriteLock read-write lock} to support 
- *      concurrent reads (or closure-based iterations) with blocking.</p>  
+ *      which can be iterated over using closures and modified concurrently.</p>  
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -116,7 +113,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     /**
      * Returns a thread-safe read-write {@link Shared} view of this table.
-     * It uses {@link ReentrantReadWriteLock read-write lock} in order to support 
+     * It uses synchronization in order to support 
      * concurrent reads. Iterators methods have been deprecated since they
      * don't prevent concurrent modifications. Closures (e.g. {@link FastTable#doWhile}) 
      * are the preferred mean of iterating over a shared table.
@@ -984,19 +981,12 @@ public class FastTable<E> extends FastCollection<E> implements
     }
 
     /**
-     * A shared view over a fast table. It uses {@link ReentrantReadWriteLock 
-     * read-write lock} in order to support concurrent read of the table.
+     * A shared view over a fast table.
      * Iterators methods have been deprecated since they don't prevent 
      * concurrent modifications. Closures (e.g. {@link FastTable#doWhile}) 
      * are the preferred mean of iterating over a shared table.
      */
     public static final class Shared<E> extends FastCollection<E> implements List<E>, RandomAccess {
-
-        private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-
-        private final Lock r = rwl.readLock();
-
-        private final Lock w = rwl.writeLock();
 
         final FastTable<E> that;
 
@@ -1022,31 +1012,16 @@ public class FastTable<E> extends FastCollection<E> implements
             return that.isOrdered();
         }
 
-        public <R> FastTable<R> forEach(Functor<E, R> functor) {
-            r.lock();
-            try {
+        public synchronized <R> FastTable<R>  forEach(Functor<E, R> functor) {
                 return that.forEach(functor);
-            } finally {
-                r.unlock();
-            }
         }
 
-        public void doWhile(Predicate<E> predicate) {
-            r.lock();
-            try {
+        public synchronized void doWhile(Predicate<E> predicate) {
                 that.doWhile(predicate);
-            } finally {
-                r.unlock();
-            }
         }
 
-        public boolean removeAll(Predicate<E> predicate) {
-            w.lock();
-            try {
+        public synchronized boolean removeAll(Predicate<E> predicate) {
                 return that.removeAll(predicate);
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
@@ -1058,119 +1033,59 @@ public class FastTable<E> extends FastCollection<E> implements
         }
 
         @Override
-        public boolean add(E element) {
-            w.lock();
-            try {
+        public synchronized boolean add(E element) {
                 return that.add(element);
-            } finally {
-                w.unlock();
-            }
         }
 
         @Override
-        public boolean remove(Object element) {
-            w.lock();
-            try {
+        public synchronized boolean remove(Object element) {
                 return that.remove(element);
-            } finally {
-                w.unlock();
-            }
         }
 
         @Override
-        public boolean contains(Object element) {
-            r.lock();
-            try {
+        public synchronized boolean contains(Object element) {
                 return that.contains(element);
-            } finally {
-                r.unlock();
-            }
         }
 
         @Override
-        public void clear() {
-            w.lock();
-            try {
+        public synchronized void clear() {
                 that.clear();
-            } finally {
-                w.unlock();
-            }
         }
 
         @Override
-        public int size() {
-            r.lock();
-            try {
+        public synchronized int size() {
                 return that.size();
-            } finally {
-                r.unlock();
-            }
         }
 
         //
         // List Specifics 
         //
-        public boolean addAll(int index, Collection<? extends E> c) {
-            w.lock();
-            try {
+        public synchronized boolean addAll(int index, Collection<? extends E> c) {
                 return that.addAll(index, c);
-            } finally {
-                w.unlock();
-            }
         }
 
-        public E get(int index) {
-            r.lock();
-            try {
+        public synchronized E get(int index) {
                 return that.get(index);
-            } finally {
-                r.unlock();
-            }
         }
 
-        public E set(int index, E element) {
-            r.lock(); // Ok to use read lock, no structural modification.
-            try {
+        public synchronized E set(int index, E element) {
                 return that.set(index, element);
-            } finally {
-                r.unlock();
-            }
         }
 
-        public void add(int index, E element) {
-            w.lock();
-            try {
+        public synchronized void add(int index, E element) {
                 that.add(index, element);
-            } finally {
-                w.unlock();
-            }
         }
 
-        public E remove(int index) {
-            w.lock();
-            try {
+        public synchronized E remove(int index) {
                 return that.remove(index);
-            } finally {
-                w.unlock();
-            }
         }
 
-        public int indexOf(Object o) {
-            r.lock();
-            try {
+        public synchronized int indexOf(Object o) {
                 return that.indexOf(o);
-            } finally {
-                r.unlock();
-            }
         }
 
-        public int lastIndexOf(Object o) {
-            r.lock();
-            try {
+        public synchronized int lastIndexOf(Object o) {
                 return that.lastIndexOf(o);
-            } finally {
-                r.unlock();
-            }
         }
 
         /**
@@ -1199,199 +1114,109 @@ public class FastTable<E> extends FastCollection<E> implements
         /**
          * See {@link FastTable#getFirst() }
          */
-        public E getFirst() {
-            r.lock();
-            try {
+        public synchronized E getFirst() {
                 return that.getFirst();
-            } finally {
-                r.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#getLast() }
          */
-        public E getLast() {
-            r.lock();
-            try {
+        public synchronized E getLast() {
                 return that.getLast();
-            } finally {
-                r.unlock();
-            }
         }
 
         /**
-         * See {@link FastTable#addFirst() }
+         * See {@link FastTable#addFirst }
          */
-        public void addFirst(E element) {
-            w.lock();
-            try {
+        public synchronized void addFirst(E element) {
                 that.addFirst(element);
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
-         * See {@link FastTable#addLast() }
+         * See {@link FastTable#addLast }
          */
-        public void addLast(E element) {
-            w.lock();
-            try {
+        public synchronized void addLast(E element) {
                 that.addLast(element);
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#removeFirst() }
          */
-        public E removeFirst() {
-            w.lock();
-            try {
+        public synchronized E removeFirst() {
                 return that.removeFirst();
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#removeLast() }
          */
-        public E removeLast() {
-            w.lock();
-            try {
+        public synchronized E removeLast() {
                 return that.removeLast();
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#pollFirst() }
          */
-        public E pollFirst() {
-            w.lock();
-            try {
+        public synchronized E pollFirst() {
                 return that.pollFirst();
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#pollLast() }
          */
-        public E pollLast() {
-            w.lock();
-            try {
+        public synchronized E pollLast() {
                 return that.pollLast();
-            } finally {
-                w.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#peekFirst() }
          */
-        public E peekFirst() {
-            r.lock();
-            try {
+        public synchronized E peekFirst() {
                 return that.peekFirst();
-            } finally {
-                r.unlock();
-            }
         }
 
         /**
          * See {@link FastTable#peekLast() }
          */
-        public E peekLast() {
-            r.lock();
-            try {
+        public synchronized E peekLast() {
                 return that.peekLast();
-            } finally {
-                r.unlock();
-            }
         }
 
         /**
-         * See {@link FastTable#removeRange() }
+         * See {@link FastTable#removeRange }
          */
-        public void removeRange(int fromIndex, int toIndex) {
-            w.lock();
-            try {
+        public synchronized void removeRange(int fromIndex, int toIndex) {
                 that.removeRange(fromIndex, toIndex);
-            } finally {
-                w.unlock();
-            }
         }
 
         //
         // Methods useful for Sub-Tables Views over Shared tables.
         //
-        final <R> FastTable<R> forEach(Functor<E, R> functor, int start, int length) {
-            r.lock();
-            try {
+        final synchronized <R> FastTable<R> forEach(Functor<E, R> functor, int start, int length) {
                 return that.forEach(functor, start, length);
-            } finally {
-                r.unlock();
-            }
         }
 
-        final void doWhile(Predicate<E> predicate, int start, int length) {
-            r.lock();
-            try {
+        final synchronized void doWhile(Predicate<E> predicate, int start, int length) {
                 that.doWhile(predicate, start, length);
-            } finally {
-                r.unlock();
-            }
         }
 
-        final boolean removeAll(Predicate<E> predicate, int start, int length) {
-            w.lock();
-            try {
+        final synchronized boolean removeAll(Predicate<E> predicate, int start, int length) {
                 return that.removeAll(predicate, start, length);
-            } finally {
-                w.unlock();
-            }
         }
 
-        final boolean remove(E e, int start, int length) {
-            w.lock();
-            try {
+        final synchronized boolean remove(E e, int start, int length) {
                 return that.remove(e, start, length);
-            } finally {
-                w.unlock();
-            }
         }
 
-        final boolean contains(E e, int start, int length) {
-            r.lock();
-            try {
+        final synchronized boolean contains(E e, int start, int length) {
                 return that.contains(e, start, length);
-            } finally {
-                r.unlock();
-            }
         }
 
-        final int indexOf(E e, int start, int length) {
-            r.lock();
-            try {
+        final synchronized int indexOf(E e, int start, int length) {
                 return that.indexOf(e, start, length);
-            } finally {
-                r.unlock();
-            }
         }
 
-        final int lastIndexOf(E e, int start, int length) {
-            r.lock();
-            try {
+        final synchronized int lastIndexOf(E e, int start, int length) {
                 return that.lastIndexOf(e, start, length);
-            } finally {
-                r.unlock();
-            }
         }
 
     }

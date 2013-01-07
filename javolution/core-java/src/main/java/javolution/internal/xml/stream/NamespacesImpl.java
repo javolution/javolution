@@ -6,12 +6,13 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.stream;
+package javolution.internal.xml.stream;
 
 import java.util.Iterator;
 import javolution.context.HeapContext;
 import javolution.text.CharArray;
 import javolution.util.FastTable;
+import javolution.xml.stream.NamespaceContext;
 
 /**
  * This class represents the namespaces stack while parsing.
@@ -19,7 +20,7 @@ import javolution.util.FastTable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.2, April 2, 2005
  */
-final class NamespacesImpl implements NamespaceContext {
+public final class NamespacesImpl implements NamespaceContext {
 
     /** 
      * Holds the number of predefined namespaces.

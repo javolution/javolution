@@ -9,8 +9,6 @@
 package javolution.text;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * <p> The service for plain text parsing and formatting;
@@ -20,7 +18,7 @@ import java.util.logging.Logger;
  * <p> Instances of this class are typically retrieved from the 
  *     current {@link TextContext} (OSGi service or not).
  *     [code]
- *     @Format(text=Complex.TextFormat.class) 
+ *     @Format(text=Complex.PlainText.class) 
  *     public class Complex extends Number {
  *         public static Complex valueOf(CharSequence csq) {
  *             return TextContext.getFormat(Complex.class).parse(csq);
@@ -28,7 +26,7 @@ import java.util.logging.Logger;
  *         public String toString() {
  *             return TextContext.getFormat(Complex.class).format(this);
  *         }
- *         public static final class TextFormat extends javolution.text.TextFormat<Complex> { ... }
+ *         public static class PlainText extends TextFormat<Complex> { ... }
  *     }[/code]
  *     Text formats can be locally overriden.
  *     [code]

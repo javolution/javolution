@@ -8,9 +8,7 @@
  */
 package javolution.xml.stream;
 
-import java.lang.CharSequence;
 import java.util.Iterator;
-
 import javolution.text.CharArray;
 
 /**

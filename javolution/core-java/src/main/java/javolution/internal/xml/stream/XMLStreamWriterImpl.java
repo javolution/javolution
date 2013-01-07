@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.stream;
+package javolution.internal.xml.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,12 +17,14 @@ import javolution.context.HeapContext;
 import javolution.io.UTF8StreamWriter;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
+import javolution.xml.stream.XMLOutputFactory;
+import javolution.xml.stream.XMLStreamException;
+import javolution.xml.stream.XMLStreamWriter;
 
 
 
 /**
- * <p> This class represents a  {@link javolution.lang.Reusable reusable}
- *     implementation of {@link XMLStreamWriter}.</p>
+ * <p> This class represents an implementation of {@link XMLStreamWriter}.</p>
  *     
  * <p> The <code>writeCharacters</code> methods will escape &amp; , &lt; and 
  *     &gt;. For attribute values, the <code>writeAttribute</code> methods will

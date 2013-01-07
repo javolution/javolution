@@ -18,7 +18,6 @@ import java.lang.annotation.Target;
 import javolution.text.Cursor;
 import javolution.text.TextFormat;
 import javolution.xml.XMLFormat;
-import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> Annotation holding serializers/deserializers of a class.</p>
@@ -40,7 +39,6 @@ public @interface Format {
     /**
      * Returns the xml format implementation class (default based on 
      * plain text format).
-     * @see XMLFormat.Default
      */
     Class<? extends XMLFormat> xml() default XMLFormat.Default.class;  ;
     

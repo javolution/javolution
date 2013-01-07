@@ -8,22 +8,15 @@
  */
 package javolution.xml.stream;
 
+import javolution.internal.xml.stream.XMLInputFactoryImpl;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javolution.lang.Configurable;
 
 
 /**
  * <p> The class represents the factory for getting {@link XMLStreamReader}
  *     intances.
- *     
- * <p> The {@link #newInstance() default implementation} automatically 
- *     {@link ObjectFactory#recycle recycles} any reader which has been 
- *     {@link XMLStreamReader#close() closed}.</p>
- *     
+  *     
  * <P> Usage example:[code]
  * 
  *     // Lets read a CharSequence input.
@@ -34,7 +27,7 @@ import javolution.lang.Configurable;
  *     XMLInputFactory factory = XMLInputFactory.newInstance();
  *     factory.setProperty(XMLInputFactory.IS_COALESCING, true);
  *     
- *     // Creates a new reader (potentially recycled).
+ *     // Creates a new reader.
  *     XMLStreamReader reader = factory.createXMLStreamReader(in);
  *     
  *     // Parses XML.
@@ -81,15 +74,14 @@ public abstract class XMLInputFactory {
     }
 
     /**
-     * Returns a new instance of the {@link #CLASS} input factory
+     * Returns a new instance of the input factory
      * implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}). The input factory
-     * instance is allocated through {@link ObjectFactory#getInstance(Class)}.
+     * (see {@link #setProperty(String, Object)}).
      * 
      * @return a new factory instance.
      */
     public static XMLInputFactory newInstance() {
-        return new Default();
+        return new XMLInputFactoryImpl();
     }
 
     /**
@@ -154,74 +146,4 @@ public abstract class XMLInputFactory {
      *         <code>false</code> otherwise.
      */
     public abstract boolean isPropertySupported(String name);
-
-    /**
-     * This class represents the default factory implementation.
-     */
-    private static final class Default extends XMLInputFactory {
-
-        Map _entities = null;
-
-        // Implements XMLInputFactory abstract method.
-        public XMLStreamReader createXMLStreamReader(Reader reader)
-                throws XMLStreamException {
-            XMLStreamReaderImpl xmlReader = newReader();
-            xmlReader.setInput(reader);
-            return xmlReader;
-        }
-
-        // Implements XMLInputFactory abstract method.
-        public XMLStreamReader createXMLStreamReader(InputStream stream)
-                throws XMLStreamException {
-            XMLStreamReaderImpl xmlReader = newReader();
-            xmlReader.setInput(stream);
-            return xmlReader;
-        }
-
-        // Implements XMLInputFactory abstract method.
-        public XMLStreamReader createXMLStreamReader(InputStream stream,
-                String encoding) throws XMLStreamException {
-            XMLStreamReaderImpl xmlReader = newReader();
-            xmlReader.setInput(stream, encoding);
-            return xmlReader;
-        }
-
-        // Implements XMLInputFactory abstract method.
-        public void setProperty(String name, Object value)
-                throws IllegalArgumentException {
-            if (name.equals(IS_COALESCING)) {
-                // Do nothing, always coalescing.
-            } else if (name.equals(ENTITIES)) {
-                _entities = (Map) value;
-            } else {
-                throw new IllegalArgumentException("Property: " + name
-                        + " not supported");
-            }
-        }
-
-        // Implements XMLInputFactory abstract method.
-        public Object getProperty(String name) throws IllegalArgumentException {
-            if (name.equals(IS_COALESCING)) {
-                return Boolean.TRUE;
-            } else if (name.equals(ENTITIES)) {
-                return _entities;
-            } else {
-                throw new IllegalArgumentException("Property: " + name
-                        + " not supported");
-            }
-        }
-
-        // Implements XMLInputFactory abstract method.
-        public boolean isPropertySupported(String name) {
-            return name.equals(IS_COALESCING) || name.equals(ENTITIES);
-        }
-
-        private XMLStreamReaderImpl newReader() {
-            XMLStreamReaderImpl xmlReader = new XMLStreamReaderImpl();
-            if (_entities != null) {
-                xmlReader.setEntities(_entities);
-            }
-            return xmlReader;
-        }
-    }
 }

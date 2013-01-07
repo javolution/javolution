@@ -6,13 +6,14 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.xml.stream;
+package javolution.internal.xml.stream;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import javolution.text.CharArray;
 import javolution.util.FastCollection;
+import javolution.xml.stream.XMLStreamException;
 
 /**
  * This class holds defined entities while parsing.
@@ -20,7 +21,7 @@ import javolution.util.FastCollection;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, June 16, 2006
  */
-final class EntitiesImpl  {
+public final class EntitiesImpl  {
 
     /**
      * Holds maximum length.

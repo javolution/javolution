@@ -14,8 +14,6 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import java.lang.UnsupportedOperationException;
-
 /**
  * Default base class for real-time handling of XML events.
  *

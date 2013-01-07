@@ -43,10 +43,10 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>!javolution.internal.*,javolution.*,javax.realtime</Export-Package>
+                        <Export-Package>!javolution.internal.*,javolution.*</Export-Package>
                         <Private-Package>javolution.internal.*</Private-Package>
-                        <Bundle-Activator>javolution.internal.osgi.BundleActivatorImpl</Bundle-Activator>
-                        <Export-Service>javolution.xml.stream.XMLInputFactoryService,javolution.xml.stream.XMLOutputFactoryService</Export-Service>
+                        <Bundle-Activator>javolution.internal.osgi.JavolutionActivator</Bundle-Activator>
+                        <Export-Service>org.osgi.service.cm.ManagedService</Export-Service>
                     </instructions>
                 </configuration>
             </plugin>
@@ -74,7 +74,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>2.9</version>
+                <configuration>
+                   <sourcepath>${project.build.directory}/colorized</sourcepath>
+                   <excludePackageNames>*.internal</excludePackageNames>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -83,6 +87,15 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            
+            <!-- ======================================================= -->
+            <!--     Custom Javadoc plugin (for reports)                 -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.javolution</groupId>
+                <artifactId>colapi</artifactId>
+                <version>1.0.1-SNAPSHOT</version>
             </plugin>
 
         </plugins>

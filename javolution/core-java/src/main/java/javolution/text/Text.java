@@ -8,10 +8,9 @@
  */
 package javolution.text;
 
-import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Writer;
-import javolution.io.UTF8StreamWriter;
+import javolution.annotation.StackSafe;
+import javolution.context.HeapContext;
 import javolution.lang.MathLib;
 import javolution.lang.ValueType;
 import javolution.util.FastComparator;
@@ -47,11 +46,6 @@ import javolution.xml.XMLSerializable;
  *         final static Text TRUE = Text.intern("true");
  *         final static Text FALSE = Text.intern("false");
  *     [/code]</p>
- * <p> {@link Text} instances can be {@link #println printed out} directly 
- *     (no intermediate <code>String</code> allocated). For example:[code]
- *           FastTable myTable ...;
- *           myTable.toText().println(); // Prints to System.out
- *     [/code]</p>           
  *     
  * <p><i> Implementation Note: To avoid expensive copy operations , 
  *        {@link Text} instances are broken down into smaller immutable 
@@ -66,6 +60,7 @@ import javolution.xml.XMLSerializable;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
+@StackSafe(initialization = false)
 public final class Text implements CharSequence, Comparable, XMLSerializable,
         ValueType {
 
@@ -147,8 +142,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     /**
      * Returns the text representing the specified object.
-     * If the object is an instance of {@link Realtime} 
-     * then {@link Realtime#toText()} is returned.
      *
      * @param  obj the object to represent as text.
      * @return the textual representation of the specified object.
@@ -750,7 +743,7 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     /**
      * Returns a text equals to the specified string from a pool of
-     * unique text instances in <code>ImmortalMemory</code>.  
+     * unique text instances on the heap.  
      * 
      * @return an unique text instance allocated in <code>ImmortalMemory</code>.
      */
@@ -761,6 +754,14 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
 
     private static synchronized Text internImpl(final String str) {
         if (!INTERN_INSTANCES.containsKey(str)) { // Synchronized check.
+            HeapContext.execute(new Runnable() {
+
+                public void run() {
+                    Text txt = new Text(str);
+                    INTERN_INSTANCES.put(txt, txt);
+                }
+
+            });
             Text txt = new Text(str);
             INTERN_INSTANCES.put(txt, txt);
         }
@@ -909,78 +910,6 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
     private int getNbrOfLeaves() {
         return (_data == null)
                 ? _head.getNbrOfLeaves() + _tail.getNbrOfLeaves() : 1;
-    }
-
-    /**
-     * Prints out this text to <code>System.out</code> (UTF-8 encoding).
-     * This method is equivalent to:[code]
-     *     synchronized(OUT) {
-     *         print(OUT);
-     *         OUT.flush();
-     *     }
-     *     ...
-     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
-     * [/code]
-     */
-    public void print() {
-        try {
-            synchronized (SYSTEM_OUT_WRITER) {
-                print(SYSTEM_OUT_WRITER);
-                SYSTEM_OUT_WRITER.flush();
-            }
-        } catch (IOException e) { // Should never happen.
-            throw new Error(e.getMessage());
-        }
-    }
-
-    private static final UTF8StreamWriter SYSTEM_OUT_WRITER = new UTF8StreamWriter()
-            .setOutput(System.out);
-
-    /**
-     * Prints out this text to <code>System.out</code> and then terminates the
-     * line. This method is equivalent to:[code]
-     *     synchronized(OUT) {
-     *         println(OUT);
-     *         OUT.flush();
-     *     }
-     *     ...
-     *     static final OUT = new UTF8StreamWriter().setOutput(System.out);
-     * [/code]
-     */
-    public void println() {
-        try {
-            synchronized (SYSTEM_OUT_WRITER) {
-                println(SYSTEM_OUT_WRITER);
-                SYSTEM_OUT_WRITER.flush();
-            }
-        } catch (IOException e) { // Should never happen.
-            throw new Error(e.getMessage());
-        }
-    }
-
-    /**
-     * Prints out this text to the specified writer.
-     * 
-     * @param writer the destination writer.
-     */
-    public void print(Writer writer) throws IOException {
-        if (_data != null) { // Primitive
-            writer.write(_data, 0, _count);
-        } else { // Composite.
-            _head.print(writer);
-            _tail.print(writer);
-        }
-    }
-
-    /**
-     * Prints out this text to the specified writer and then terminates 
-     * the line.
-     * 
-     * @param writer the destination writer.
-     */
-    public void println(Writer writer) throws IOException {
-        print(writer);
-        writer.write('\n');
     }
 
     /**

@@ -22,6 +22,7 @@ import javolution.lang.Immutable;
 import javolution.lang.Predicate;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
+import javolution.text.TextFormat;
 
 /**
  * <p> A {@link javolution.annotation.StackSafe stack-safe}, 
@@ -53,7 +54,7 @@ import javolution.text.TextContext;
  * @version 6.0.0, December 12, 2012
  */
 @StackSafe
-@Format(text = FastCollection.TextFormat.class)
+@Format(text = FastCollection.PlainText.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /**
@@ -591,7 +592,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Holds the default text format for fast collections (parsing not supported).
      */
-    public static class TextFormat extends javolution.text.TextFormat<FastCollection> {
+    public static class PlainText extends TextFormat<FastCollection> {
 
         @Override
         public FastCollection parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {

@@ -8,8 +8,6 @@
  */
 package javolution.xml.stream;
 
-import java.lang.CharSequence;
-
 import javolution.text.CharArray;
 
 /**
@@ -42,7 +40,7 @@ import javolution.text.CharArray;
  *         }         
  *     }
  *     
- *     reader.close(); // Recycles the reader.
+ *     reader.close(); 
  *     inputStream.close(); // Underlying stream has to be closed explicitly.
  *     [/code] 
  *     

@@ -7,7 +7,7 @@
     provided that copyright notices are preserved (the full license text can be found 
     <a href="../../../LICENSE.txt">here</a>).</p>
 <p> <b><i>Javolution</i></b>'s users are encouraged to show their support with the
-    <a href="http://javolution.org"><img src="../../../css/img/javolution.png"></a> button.</p>
+    <a href="http://javolution.org"><img src="http://javolution.org/src/site/css/img/javolution.png"></a> button.</p>
 
 <a name="overview"></a>
 <h3><b>Overview:</b></h3>
@@ -31,19 +31,18 @@ Here are few important configuration parameters with their default values:
       <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#MAXIMUM_CONCURRENCY}</td>
-      <td style="vertical-align: top;">2 x (Number of Processors - 1)</td>
+      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext#CONCURRENCY}</td>
+      <td style="vertical-align: top;">2 * Number of Processors</td>
       <td style="vertical-align: top;">The maximum number of worker threads usable by 
                                        {@link javolution.context.ConcurrentContext ConcurrentContext}(none for single processors)</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.util.FastComparator#REHASH_SYSTEM_HASHCODE}</td>
-      <td style="vertical-align: top;"><code>true</code> or <code>false</code><br>
-                                       based upon the run-time platform<br> 
-                                       (small test performed at start-up)</td>
-      <td style="vertical-align: top;">Indicates if the system hash code requires rehashing 
-                                       (see <a href="javolution/util/FastMap.html">FastMap</a>)</td>
-    </tr>
+      <td style="vertical-align: top;">{any-context}#WAIT_FOR_SERVICE</td>
+      <td style="vertical-align: top;">false</td>
+      <td style="vertical-align: top;"> To avoid
+      <a href="http://wiki.osgi.org/wiki/Avoid_Start_Order_Dependencies">
+      start order dependencies</a> contexts can be configured to block
+      until an implementation is published.</tr>
   </tbody>
 </table>
 </body>

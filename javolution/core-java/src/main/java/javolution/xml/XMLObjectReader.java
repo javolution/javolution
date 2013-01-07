@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
-import javolution.xml.stream.XMLStreamReaderImpl;
+import javolution.internal.xml.stream.XMLStreamReaderImpl;
 
 /**
  * <p> This class restores objects which have been serialized in XML

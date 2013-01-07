@@ -16,6 +16,7 @@ import javolution.util.FastTable;
 import javolution.util.Index;
 import javolution.xml.stream.XMLStreamException;
 
+
 /**
  * <p> This class represents a resolver for XML cross references during 
  *     the marshalling/unmarshalling process.</p>
