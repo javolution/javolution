@@ -60,7 +60,7 @@ public class Colapi extends AbstractMojo {
     private File input;
 
     /**
-     * The location of the directory to whic the processed files are sent.
+     * The location of the directory to which the processed files are sent.
      * @parameter
      *    expression="${colapi.output}"
      *    default-value="${project.build.directory}/colorized"
@@ -340,7 +340,7 @@ public class Colapi extends AbstractMojo {
     // Copy directory - Source code from Java Tips 
     // http://www.java-tips.org/java-se-tips/java.io/how-to-copy-a-directory-from-one-location-to-another-loc.html) 
 
-    public void copyDirectory(File sourceLocation, File targetLocation) throws MojoExecutionException {
+    private void copyDirectory(File sourceLocation, File targetLocation) throws MojoExecutionException {
         try {
             if (sourceLocation.isDirectory()) {
                 if (!targetLocation.exists()) {

@@ -1,6 +1,7 @@
 * text=auto !eol
 colapi/pom.xml -text
 colapi/src/main/java/javolution/tools/colapi/Colapi.java -text
+colapi/src/main/java/javolution/tools/colapi/package-info.java -text
 colapi/src/site/apt/index.apt -text
 colapi/src/site/site.xml -text
 javolution/LICENSE.txt -text
