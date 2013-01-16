@@ -28,32 +28,31 @@ import javolution.text.TextFormat;
  * <p> A {@link javolution.annotation.StackSafe stack-safe}, 
  *     time-deterministics and closure-ready collections.</p>
  * 
- * <p> Whereas Java current evolution leads to more and more classes being parts 
- *     of the standard library; Javolution approach is quite the opposite. 
- *     It aims to provide only the quintessential classes from which all 
- *     others can be derived. For example, the following illustrates how  
- *     a {@link FastTable} can advantageously replace a 
- *     {@link java.util.TreeSet} both in terms of space and performance.
+ * <p> Fast collections views can be chained. The following illustrates
+ *     how to build a concurrently modifiable collection using a lexical 
+ *     comparator for element comparison.
  *     [code]
- *     class EmployeeSet extends FastTable<Employee> {
- *         public boolean add(Employee e) {
- *             return addIfAbsent(e); // Avoids duplicate.
+ *     FastTable<CharSequence> names 
+ *        = new FastTable<CharSequence>().usingComparator(FastComparator.LEXICAL).shared();
+ *     [/code]
+ * <p> Shared collections can be iterated/modified concurrently using closures 
+ *     (no concurrent modification exception possible). 
+ *     [code]
+ *     final TextBuilder txt = new TextBuilder();
+ *     names.doWhile(new Predicate<CharSequence>() { // Ok even if names (shared) is concurrently modified.
+ *         public Boolean evaluate(CharSequence csq) {
+ *              if (txt.size() != 0) tmp.append(", ");
+ *              txt.append(csq);
+ *              return true;
  *         }
- *         public boolean isOrdered() {
- *             return true; // Keeps elements ordered. 
- *         }
- *         public FastComparator<Employee> comparator() {
- *             return employeeComparator; // E.g. comparison based on names.
- *         }
- *      }
- *      [/code]</p>
- * 
- * <p> All fast collections classes are {@link StackSafe Stack-Safe}.</p>
+ *     });[/code]</p>
+ * <p> This class methods are all thread-safe if the fast collection is 
+ *     {@link #shared} (default implementation based on closure).</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@StackSafe
+@StackSafe(initialization=false)
 @Format(text = FastCollection.PlainText.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
@@ -70,25 +69,15 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * <p> If this collection is a {@link List} the instance returned is also 
      *     a list. If this collection is a {@link Set} the instance returned 
      *     is also a set.</p>
-     * 
-     * @return an unmodifiable view over this collection.
      */
     public abstract FastCollection<E> unmodifiable();
 
     /**
-     * <p> Returns a thread-safe read-write view of this collection.</p>
-     * <p> Having a shared collection does not mean that modifications made
-     *     by one thread are automatically viewed by others thread.
-     *     For this to happen the thread must obtain a shared lock, then 
-     *     all elements cached in its CPU registers or CPU cache are invalidated
-     *     and refreshed from main memory. When the thread releases the 
-     *     shared lock, all elements cached in its CPU registers or CPU cache are
-     *     flushed (written) to main memory. In a well-designed system, 
-     *     synchronization points should only occur when required.</p>
+     * <p> Returns a concurrent read-write view of this collection.</p>
      * <p> Iterators on {@link #shared} collections are deprecated as the may 
      *     raise {@link ConcurrentModificationException}.  {@link #doWhile 
      *     Closures} should be used to iterate over shared collections
-     *    (Note: All fast collection methods use closures to iterate).</p> 
+     *    (Note: All fast collection methods use closures internally to iterate).</p> 
      * <p> If this collection is a {@link List} the instance returned is also 
      *     a list. If this collection is a {@link Set} the instance returned 
      *     is also a set.</p>
@@ -96,42 +85,31 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public abstract FastCollection<E> shared();
 
     /**
-     * Returns the element comparator for this collection (default 
-     * {@link FastComparator#DEFAULT} FastComparator.DEFAULT). 
-     * If this method is overriden, it is possible that elements considered
-     * distinct using the default equality comparator, would appear to be 
-     * equals as far as this collection is concerned. For example, a 
-     * {@link FastComparator#LEXICAL lexical comparator} considers that two 
-     * {@link CharSequence} are equals if they hold the same characters 
-     * regardless of the {@link CharSequence} implementation.
-     * A direct consequences is that fast collections equality/hashcode 
-     * is linked to the collection comparator and two collections can be 
-     * considered equals only if they use the same comparators.
+     * <p> Returns a view over this collection using the specified comparator for
+     *     element equality and sorting (if supported).</p> 
+     * <p> For collection having custom comparators, it is possible that 
+     *     elements considered distinct using the default equality 
+     *     comparator, would appear to be equals as far as this collection is 
+     *     concerned. For example, a {@link FastComparator#LEXICAL lexical 
+     *     comparator} considers that two {@link CharSequence} are equals if they
+     *     hold the same characters regardless of the {@link CharSequence} 
+     *     implementation. On the other hands, for the 
+     *     {@link FastComparator#IDENTITY identity} comparator, two elements 
+     *     might be considered distinct even if the default object equality 
+     *     considers them equals.</p>  
      *
-     * @return the comparator to use for element equality (or ordering if 
-     *        the collection is ordered).
-     * @see #equals
-     * @see #hashCode()
+     * @param the comparator to use for element equality (or sorting if 
+     *         the collection is sorted).
+     * @see #comparator() 
      */
-    public FastComparator<E> comparator() {
-        return (FastComparator<E>) FastComparator.DEFAULT;
-    }    
-
-    /**
-     * Indicates if this collecion is ordered (default <code>false</code>). 
-     * Sub-classes for which this method returns <code>true</code>
-     * must ensure that the {@link #add} method keeps the collection ordered.
-     */
-    public boolean isOrdered() {
-        return false;
-    }
+    public abstract FastCollection<E> usingComparator(FastComparator<E> comparator);
 
     /***************************************************************************
      * Closures operations.
      */
     /**
-     * Applies the specified functor to this collection elements; returns the
-     * results of the evaluations different from <code>null</code>.
+     * Applies the specified functor to this collection elements; returns
+     * all the results of these evaluations different from <code>null</code>.
      */
     public abstract <R> FastCollection<R> forEach(final Functor<E, R> functor);
 
@@ -203,15 +181,14 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /***************************************************************************
      * Collections operations.
      */
-    /**
-     * Returns an iterator overs this collection element (for backward
-     * compatiblity with <code>java.util.Collection</code>).
-     * Fast collection operations do not use iterators but {@link #doWhile 
-     * closures} to iterate over the collections elements. Iterators on 
-     * {@link #shared} collections are deprecated as the may raise 
-     * {@link ConcurrentModificationException}. 
+
+   /**
+     * Returns the comparator used by the collection to perform element 
+     * comparison (or sorting). 
      */
-    public abstract Iterator<E> iterator();
+    public FastComparator<E> comparator() {
+        return (FastComparator<E>) FastComparator.DEFAULT;    
+    }
 
     /**
      * Returns the number of element in this collection. 
@@ -230,10 +207,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /**
-     * Adds the specified element; if the collection {@link #isOrdered is ordered}
-     * the ordering of the collection is maintained after the element is added.
+     * Adds the specified element.
      * 
-     * <p>Note: This default implementation throws 
+     * <p>Note: The default implementation throws 
      *          <code>UnsupportedOperationException</code>.</p>
      * 
      * @param element the element to be added to this collection.
@@ -241,7 +217,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      *         <code>Collection.add</code> method).
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
-    public boolean add(final E element) {
+    public boolean add(E element) {
         throw new UnsupportedOperationException();
     }
 
@@ -254,12 +230,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
     public boolean remove(final Object element) {
-        final FastComparator comp = comparator();
         final boolean[] found = new boolean[]{false};
         return removeAll(new Predicate<E>() {
-
+            FastComparator cmp = comparator();
             public Boolean evaluate(E param) {
-                if (!found[0] && comp.areEqual(element, param)) {
+                if (!found[0] && (cmp.areEqual(element, param))) {
                     found[0] = true;
                     return true;
                 }
@@ -303,12 +278,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      *         element;<code>false</code> otherwise.
      */
     public boolean contains(final Object element) {
-        final FastComparator comp = comparator();
         final boolean[] found = new boolean[]{false};
         this.doWhile(new Predicate<E>() {
-
+            FastComparator cmp = comparator();  
             public Boolean evaluate(E param) {
-                if (comp.areEqual(element, param)) {
+                if (cmp.areEqual(element, param)) {
                     found[0] = true;
                     return false; // Exits.
                 }
@@ -380,7 +354,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         that.doWhile(new Predicate<E>() {
 
             public Boolean evaluate(E param) {
-                if (!FastCollection.this.contains(param)) {
+                if (!contains(param)) {
                     containsAll[0] = false;
                     return false; // Exits.
                 }
@@ -495,13 +469,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Compares the specified object with this collection for equality.
      * If this collection is a set, returns <code>true</code> if the specified
-     * object is also a set, the two sets have the same size, they   
-     * use the same comparator and every member of the specified set
-     * is contained in this set using that common comparator.
+     * object is also a set, the two sets have the same size and every member 
+     * of the specified set is contained in this set using the default object equality.
      * If this collection is a list, returns <code>true</code> if and only 
      * if the specified object is also a list, both lists have the same size,
-     * they use the same comparator and all corresponding pairs of elements in
-     * the two lists are <i>equal</i> using their common comparator.
+     * and all corresponding pairs of elements in
+     * the two lists are <i>equal</i> using the default object equality.
      * If this collection is neither a list, nor a set, this method returns 
      * the default object equality (<code>this == obj</code>).
      *
@@ -512,25 +485,21 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        FastComparator thatComparator = (obj instanceof FastCollection)
-                ? ((FastCollection) obj).comparator() : FastComparator.DEFAULT;
-        if (!this.comparator().equals(thatComparator)) return false;
         if (this instanceof Set) {
             if (!(obj instanceof Set)) return false;
             Set that = (Set) obj;
             if (this.size() != that.size()) return false;
-            return (this.containsAll(that));
+            return (this.usingComparator((FastComparator<E>)FastComparator.DEFAULT).containsAll(that));
         } else if (this instanceof List) {
             final List that = (List) obj;
             if (this.size() != that.size()) return false;
             final boolean[] areEqual = new boolean[]{true};
-            final FastComparator<E> comp = this.comparator();
             this.doWhile(new Predicate<E>() {
 
                 Iterator<E> it = that.iterator();
 
                 public Boolean evaluate(E param) {
-                    if (it.hasNext() && comp.areEqual(param, it.next())) {
+                    if (it.hasNext() && ((param == null) ? it.next() == null : param.equals(it.next()))) {
                         return true;
                     }
                     areEqual[0] = false;
@@ -554,7 +523,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * <pre>
      *  int hashCode = 1;
      *  for (E e : list)
-     *      hashCode = 31*hashCode + comparator().hashCodeOf(e);
+     *      hashCode = 31*hashCode + (e == null) ? 0 : e.hashCode();
      * </pre>
      * If this collection is neither a list, nor a set the default object 
      * hashcode is returned.
@@ -562,12 +531,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Override
     public int hashCode() {
         final int[] hash = new int[1];
-        final FastComparator<E> comp = comparator();
         if (this instanceof Set) {
             this.doWhile(new Predicate<E>() {
 
                 public Boolean evaluate(E param) {
-                    hash[0] += comp.hashCodeOf(param);
+                    hash[0] += ((param == null) ? 0 : param.hashCode());
                     return true;
                 }
 
@@ -578,7 +546,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
             this.doWhile(new Predicate<E>() {
 
                 public Boolean evaluate(E param) {
-                    hash[0] = 31 * hash[0] + comp.hashCodeOf(param);
+                    hash[0] = 31 * hash[0] + ((param == null) ? 0 : param.hashCode());
                     return true;
                 }
 

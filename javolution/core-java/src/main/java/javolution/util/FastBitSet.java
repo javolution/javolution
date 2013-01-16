@@ -537,4 +537,9 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
         throw new UnsupportedOperationException("Closures should be used to iterate.");
     }
 
+    @Override
+    public FastCollection<Index> usingComparator(FastComparator<Index> comparator) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 }

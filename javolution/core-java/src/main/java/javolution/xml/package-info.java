@@ -11,72 +11,75 @@
 
 <p> Key Advantages:<ul>
     <li> Real-time characteristics with no adverse effect on memory footprint or 
-         garbage collection (e.g. it can be used for time critical communications).
-         {@link javolution.xml.XMLFormat XMLFormat} is basically a "smart" 
-         wrapper around our real-time StAX-like
-         {@link javolution.xml.stream.XMLStreamReader XMLStreamReader} and 
-         {@link javolution.xml.stream.XMLStreamWriter XMLStreamWriter}.</li>
+ garbage collection (e.g. it can be used for time critical communications).
+ {@link javolution.xml.XMLFormat XMLFormat} is basically a "smart" 
+ wrapper around our real-time StAX-like
+ {@link javolution.xml.stream.XMLStreamReader XMLStreamReader} and 
+ {@link javolution.xml.stream.XMLStreamWriter XMLStreamWriter}.</li>
     <li> Works directly with your existing Java classes, no need to create new classes
-         or customize your implementation in any way.</li>
+ or customize your implementation in any way.</li>
     <li> The XML representation can be high level and impervious to obfuscation
-         or changes to your implementation.</li>
+ or changes to your implementation.</li>
     <li> Performance on a par or better than default Java<sup>TM</sup> Serialization/Deserialization 
-         (See <a href="https://bindmark.dev.java.net/">bindmark</a> for performance comparison).</li>
+ (See <a href="https://bindmark.dev.java.net/">bindmark</a> for performance comparison).</li>
     <li> Small footprint, runs on any platform including Android.</li>
     <li> The XML mapping can be defined for a top class (or interface) and is automatically 
-         inherited by all sub-classes (or all implementing classes).</li>
+ inherited by all sub-classes (or all implementing classes).</li>
     <li> Supports object references (to avoid expanding objects already serialized).</li>
     </ul>
 </p>
 
 <p> The default XML format for a class is typically defined using 
     the <code>@Format</code> inheritable annotation tag. 
-    For example:[code]
-      @Format(xml=Graphic.XML.class)     
-      public abstract class Graphic implements XMLSerializable {
-          private boolean isVisible;
-          private Paint paint; // null if none.
-          private Stroke stroke; // null if none.
-          private Transform transform; // null if none.
-           
-          // Default XML format with name associations (members identified by an unique name).
-          // See XMLFormat for examples of positional associations.
-          public static class XML extends XMLFormat {
-               public void write(Graphic g, OutputElement xml) throws XMLStreamException {
-                   xml.setAttribute("isVisible", g.isVisible); 
-                   xml.add(g.paint, "Paint");
-                   xml.add(g.stroke, "Stroke");
-                   xml.add(g.transform, "Transform");
-               }
-               public void read(InputElement xml, Graphic g) throws XMLStreamException {
-                   g.isVisible = xml.getAttribute("isVisible", true);
-                   g.paint = xml.get("Paint");
-                   g.stroke = xml.get("Stroke");
-                   g.transform = xml.get("Transform");
-              }
-          };
-      }[/code]
-    Sub-classes may override the inherited XML format:[code]
-      @Format(xml=Area.XML.class)     
-      public class Area extends Graphic {
-          private Shape geometry;  
-        
-          // Adds geometry to format.
-          public static class XML extends XMLFormat<Area> {
-              XMLFormat graphicXML = new Graphic.XML();
-              public void write(Area area, OutputElement xml) throws XMLStreamException {
-                  graphicXML.write(area, xml); // Calls parent write.
-                  xml.add(area.geometry, "Geometry");
-              }
-              public void read(InputElement xml, Area area) throws XMLStreamException {
-                  graphicXML.read(xml, area); // Calls parent read.
-                  area.geometry = xml.get("Geometry");
-              }
-          };
-      }[/code]
+    For example:
+[code]
+@Format(xml=Graphic.XML.class)     
+public abstract class Graphic implements XMLSerializable {
+    private boolean isVisible;
+    private Paint paint; // null if none.
+    private Stroke stroke; // null if none.
+    private Transform transform; // null if none.
+   
+    // Default XML format with name associations (members identified by an unique name).
+    // See XMLFormat for examples of positional associations.
+    public static class XML extends XMLFormat {
+        public void write(Graphic g, OutputElement xml) throws XMLStreamException {
+            xml.setAttribute("isVisible", g.isVisible); 
+            xml.add(g.paint, "Paint");
+            xml.add(g.stroke, "Stroke");
+            xml.add(g.transform, "Transform");
+        }
+        public void read(InputElement xml, Graphic g) throws XMLStreamException {
+            g.isVisible = xml.getAttribute("isVisible", true);
+            g.paint = xml.get("Paint");
+            g.stroke = xml.get("Stroke");
+            g.transform = xml.get("Transform");
+        }
+    };
+}[/code]
+    Sub-classes may override the inherited XML format:
+[code]
+@Format(xml=Area.XML.class)     
+public class Area extends Graphic {
+    private Shape geometry;  
+
+    // Adds geometry to format.
+    public static class XML extends XMLFormat<Area> {
+        XMLFormat graphicXML = new Graphic.XML();
+        public void write(Area area, OutputElement xml) throws XMLStreamException {
+            graphicXML.write(area, xml); // Calls parent write.
+            xml.add(area.geometry, "Geometry");
+        }
+        public void read(InputElement xml, Area area) throws XMLStreamException {
+            graphicXML.read(xml, area); // Calls parent read.
+            area.geometry = xml.get("Geometry");
+        }
+    };
+}[/code]
     
-    The following writes a graphic area to a file, then reads it:[code]
-    
+The following writes a graphic area to a file, then reads it:
+
+[code]    
       // Creates some useful aliases for class names.
       XMLBinding binding = new XMLBinding();
       binding.setAlias(Color.class, "Color");
@@ -95,17 +98,18 @@
       reader.setBinding(binding);
       Area a = reader.read("Area", Area.class);
       reader.close();
-      [/code]
+[/code]
  
-    Here is an example of valid XML representation for an area:[code]
-      <Area isVisible="true">
-          <Paint type="Color" rgb="#F3EBC6" />
-          <Geometry type="Polygon">
-              <Vertex x="123" y="-34" />
-              <Vertex x="-43" y="-34" />
-              <Vertex x="-12" y="123" />
-          </Geometry>
-      </Area>[/code]
+    Here is an example of valid XML representation for an area:
+[code]
+<Area isVisible="true">
+    <Paint type="Color" rgb="#F3EBC6" />
+    <Geometry type="Polygon">
+        <Vertex x="123" y="-34" />
+        <Vertex x="-43" y="-34" />
+        <Vertex x="-12" y="123" />
+    </Geometry>
+</Area>[/code]
    
 </p>
 <p> The following table illustrates the variety of XML representations supported 
@@ -117,12 +121,13 @@
         <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML DATA</span></td>
       </tr>
       <tr>
-<td>[code] XMLFormat<Foo> XML = new XMLFormat<Foo>() {
+<td>[code]
+XMLFormat<Foo> XML = new XMLFormat<Foo>() {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
-        xml.setAttribute("text", foo.text); 
+         xml.setAttribute("text", foo.text); 
     }
     public void read(InputElement xml, Foo foo) throws XMLStreamException {
-        foo.text = xml.getAttribute("text", "");
+         foo.text = xml.getAttribute("text", "");
     }
 };[/code]</td>
 <td><pre>
@@ -132,7 +137,9 @@
       </tr>
       
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>() {
+<td>
+[code]
+XMLFormat<Foo> XML = new XMLFormat<Foo>() {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text); 
     }
@@ -149,10 +156,11 @@
       </tr>
 
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td>
+[code]
+XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
-        xml.addText(foo.text);
-        // or xml.getStreamWriter().writeCDATA(foo.text) to use CDATA block. 
+        xml.addText(foo.text); // or xml.getStreamWriter().writeCDATA(foo.text) to use CDATA block. 
     }
     public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.getText().toString(); // Content of a text-only element.
@@ -165,7 +173,9 @@
       </tr>
 
       <tr>
-<td>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td>
+[code]
+XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text"); 
     }
@@ -182,7 +192,9 @@
       </tr>
 
       <tr>
-<td><pre>[code]XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
+<td><pre>
+[code]
+XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text", String.class); 
     }
@@ -206,76 +218,77 @@
     private constructors (with constructor parameters set from the XML element)
     or even retrieved from a collection 
     (if the object is shared or unique). For example:
-        [code]
-        @Format(xml=Point.XML.class)     
-        public final class Point implements XMLSerializable { 
-            private int x;
-            private int y;
-            private Point() {}; // No-arg constructor not visible.
-            public static Point valueOf(int x, int y) { ... }
-            public static class XML = new XMLFormat<Point>() {
-                public boolean isReferencable() {
-                    return false; // Always manipulated by value.
-                }
-                public Point newInstance(Class<Point> cls, InputElement xml) throws XMLStreamException {
-                    return Point.valueOf(xml.getAttribute("x", 0), xml.getAttribute("y", 0)); 
-                }
-                public void write(Point point, OutputElement xml) throws XMLStreamException {
-                    xml.setAttribute("x", point.x);
-                    xml.setAttribute("y", point.y);
-                }
-                public void read(InputElement xml, Point point) throws XMLStreamException {
-                    // Do nothing immutable.
-                }
-            };
-        }[/code]
+[code]
+@Format(xml=Point.XML.class)     
+public final class Point implements XMLSerializable { 
+    private int x;
+    private int y;
+    private Point() {}; // No-arg constructor not visible.
+    public static Point valueOf(int x, int y) { ... }
+    public static class XML = new XMLFormat<Point>() {
+        public boolean isReferencable() {
+            return false; // Always manipulated by value.
+        }
+        public Point newInstance(Class<Point> cls, InputElement xml) throws XMLStreamException {
+             return Point.valueOf(xml.getAttribute("x", 0), xml.getAttribute("y", 0)); 
+        }
+        public void write(Point point, OutputElement xml) throws XMLStreamException {
+             xml.setAttribute("x", point.x);
+             xml.setAttribute("y", point.y);
+        }
+        public void read(InputElement xml, Point point) throws XMLStreamException {
+            // Do nothing immutable.
+        }
+    };
+}[/code]
 </p>
 
 <p> Document cross-references are supported, including circular references. 
-    Let's take for example:[code]
-        @Format(xml=Polygon.XML.class)     
-        public class Polygon implements Shape, XMLSerializable { 
-            private Point[] vertices;
-            public static class XML extends XMLFormat<Polygon> {
-                public void write(Polygon polygon, OutputElement xml) throws XMLStreamException {
-                    xml.setAttibutes("count", vertices.length);
-                    for (Point p : vertices) {
-                        xml.add(p, "Vertex", Point.class);
-                    }
-                }
-                public void read(InputElement xml, Polygon polygon) throws XMLStreamException {
-                    int count = xml.getAttributes("count", 0);
-                    polygon.vertices = new Point[count];
-                    for (int i=0; i < count; i++) {
-                        vertices[i] = xml.get("Vertex", Point.class);
-                    }
-                }
-            };
+    Let's take for example:
+[code]
+@Format(xml=Polygon.XML.class)     
+public class Polygon implements Shape, XMLSerializable { 
+    private Point[] vertices;
+    public static class XML extends XMLFormat<Polygon> {
+         public void write(Polygon polygon, OutputElement xml) throws XMLStreamException {
+             xml.setAttibutes("count", vertices.length);
+             for (Point p : vertices) {
+                 xml.add(p, "Vertex", Point.class);
+             }
+         }
+         public void read(InputElement xml, Polygon polygon) throws XMLStreamException {
+             int count = xml.getAttributes("count", 0);
+             polygon.vertices = new Point[count];
+             for (int i=0; i < count; i++) {
+                 vertices[i] = xml.get("Vertex", Point.class);
+             }
         }
-        Polygon[] polygons = new Polygon[] {p1, p2, p1};
-        ...
-        TextBuilder xml = TextBuilder.newInstance();
-        AppendableWriter out = new AppendableWriter().setOutput(xml)
-        XMLObjectWriter writer = XMLObjectWriter.newInstance(out);
-        writer.setXMLReferenceResolver(new XMLReferenceResolver()); // Enables cross-references.
-        writer.write(polygons, "Polygons", Polygon[].class); 
-        writer.close();
-        System.out.println(xml);
-        [/code]
+    };
+}
+Polygon[] polygons = new Polygon[] {p1, p2, p1};
+...
+TextBuilder xml = TextBuilder.newInstance();
+AppendableWriter out = new AppendableWriter().setOutput(xml)
+XMLObjectWriter writer = XMLObjectWriter.newInstance(out);
+writer.setXMLReferenceResolver(new XMLReferenceResolver()); // Enables cross-references.
+writer.write(polygons, "Polygons", Polygon[].class); 
+writer.close();
+System.out.println(xml);
+[/code]
     Prints the following (noticed that the first polygon and last one are being shared).
-      [code]
-      <Polygons length="3">
-          <Polygon id="0" count="3">
-              <Vertex x="123" y="-34" />  
-              <Vertex x="-43" y="-34" />
-              <Vertex x="-12" y="123" />
-          </Polygon>
-          <Polygon id="1" count="3">
-              <Vertex x="-43" y="-34" />
-              <Vertex x="123" y="-34" />
-              <Vertex x="-12" y="123" />
-          </Polygon>
-          <Polygon ref="0"/>
+[code]
+<Polygons length="3">
+   <Polygon id="0" count="3">
+      <Vertex x="123" y="-34" />  
+      <Vertex x="-43" y="-34" />
+      <Vertex x="-12" y="123" />
+   </Polygon>
+   <Polygon id="1" count="3">
+      <Vertex x="-43" y="-34" />
+      <Vertex x="123" y="-34" />
+      <Vertex x="-12" y="123" />
+   </Polygon>
+   <Polygon ref="0"/>
       </Polygons>[/code] 
 </p>
 
@@ -306,8 +319,8 @@ OutputElement.add(object, name, uri, class):
 InputElement.get(name, uri, class):
 
 1. if (!getStreamReader().getLocalName().equals(name) ||
-        !getStreamReader().getNamespaceURI().equals(uri)) return null
-        
+!getStreamReader().getNamespaceURI().equals(uri)) return null
+
 2. object = referenceResolver.readReference(inputElement)
    
 3. if (object != null) Goto 8 // Found reference

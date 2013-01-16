@@ -34,7 +34,7 @@ import javolution.text.TypeFormat;
  *     // Suppress Warnings (e.g. warnings have been identified as harmless)
  *     LogContext ctx = LogContext.enter();
  *     try {
- *          ctx.suppress(Level.WARNING); // Has no effect if WARNING/ERROR are already suppressed. 
+ *          ctx.setLevel(Level.ERROR); 
  *          ... 
  *          LogContext.warning(myObject, " is not initialized");
  *              // No log entries created and no message formatting. 
@@ -53,7 +53,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     public enum Level {
 
-        DEBUG, INFO, WARNING, ERROR
+        DEBUG, INFO, WARNING, ERROR, FATAL
 
     }
 
@@ -71,17 +71,17 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     };
 
     /**
-     * Holds the default suppress level (default <code>null</code> no log 
-     * suppressed). This level is configurable. For example, running with 
-     * the option <code>-Djavolution.context.LogContext#SUPPRESS=DEBUG</code>  
-     * causes debug information not to be logged. 
+     * Holds the logging level (default <code>DEBUG</code>).
+     * This level is configurable. For example, running with 
+     * the option <code>-Djavolution.context.LogContext#LEVEL=WARNING</code>  
+     * causes the debug/info not to be logged. 
      */
-    public static final Configurable<Level> SUPPRESS = new Configurable(null) {
+    public static final Configurable<Level> LEVEL = new Configurable(Level.DEBUG) {
 
         @Override
         public void configure(CharSequence configuration) {
             String str = configuration.toString();
-            setDefaultValue((str.length() != 0) ? Level.valueOf(str) : null);
+            setDefaultValue(Level.valueOf(str));
         }
 
     };
@@ -144,11 +144,12 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     public abstract void attach(Object property, Object propertyValue);
 
     /**
-     * Don't create log entries for message of specified level or below. 
+     * Set the logging level, messages below that level are not logged.
+     * Setting the level may decrease or increase the logging level.
      * 
-     * @param level the log context level being suppressed. 
+     * @param level the log context level. 
      */
-    public abstract void suppress(Level level);
+    public abstract void setLevel(Level level);
 
     /**
      * Logs the specified entry.

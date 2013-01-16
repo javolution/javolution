@@ -3,6 +3,7 @@ package javolution.util;
 import java.io.Serializable;
 import java.util.Comparator;
 import javolution.annotation.StackSafe;
+import javolution.lang.Copyable;
 
 /**
  * <p> A comparator to be used for equality as well as for ordering.
@@ -20,7 +21,7 @@ import javolution.annotation.StackSafe;
  * @version 6.0.0, December 12, 2012
  */
 @StackSafe(initialization = false)
-public abstract class FastComparator<T> implements Comparator<T>, Serializable {
+public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastComparator<T>>, Serializable {
 
     /**
      * Holds the default object comparator.
@@ -45,6 +46,10 @@ public abstract class FastComparator<T> implements Comparator<T>, Serializable {
             return ((Comparable) o1).compareTo(o2);
         }
 
+        public Default<T> copy() {
+            return this; // Unique instance always allocated on the heap.
+        }
+     
     };
 
     /**
@@ -70,6 +75,9 @@ public abstract class FastComparator<T> implements Comparator<T>, Serializable {
             return ((Comparable) o1).compareTo(o2);
         }
 
+        public Identity<T> copy() {
+            return this; // Unique instance always allocated on the heap.
+        }
     };
 
     /**
@@ -79,7 +87,7 @@ public abstract class FastComparator<T> implements Comparator<T>, Serializable {
      */
     public static final FastComparator<CharSequence> LEXICAL = new Lexical();
 
-    private static final class Lexical<T extends CharSequence> extends FastComparator<T> {
+    private static final class Lexical extends FastComparator<CharSequence> {
 
         public int hashCodeOf(CharSequence csq) {
             if (csq == null)
@@ -118,6 +126,9 @@ public abstract class FastComparator<T> implements Comparator<T>, Serializable {
             return left.length() - right.length();
         }
 
+        public Lexical copy() {
+            return this; // Unique instance always allocated on the heap.
+        }
     };
 
     /**
@@ -140,6 +151,9 @@ public abstract class FastComparator<T> implements Comparator<T>, Serializable {
             return left.compareTo(right);
         }
 
+        public StringComparator copy() {
+            return this; // Unique instance always allocated on the heap.
+        }
     };
 
     /**

@@ -27,23 +27,21 @@ to conserve memory.</b>
          document being appended has almost no impact in both cases).</p>
     <p> If the text being appended is large (or arbitrarily large) then using 
         {@link javolution.text.Text Text} is preferable.
-        [code]
-        class FastCollection<T> {
-             public final Text toText() {
-                 // We don't know the length of the text representation for
-                 // the collection's elements, we use Text concatenation 
-                 // to avoid copying what could be quite large.
-                 Text text = Text.valueOf("{");
-                 boolean isFirst = true;                      
-                 for (T e : this) {
-                      if (!isFirst) { text = text.plus(", "); isFirst = false; }                      
-                      text = text.plus(e);
-                 }
-                 return text.plus("}");
-             }
-        }
-        [/code]
-    </p>
+[code]
+class FastCollection<T> {
+     public final Text toText() {
+         // We don't know the length of the text representation for
+         // the collection's elements, we use Text concatenation 
+         // to avoid copying what could be quite large.
+         Text text = Text.valueOf("{");
+         boolean isFirst = true;      
+         for (T e : this) {
+              if (!isFirst) { text = text.plus(", "); isFirst = false; }      
+              text = text.plus(e);
+         }
+         return text.plus("}");
+     }
+}[/code]</p>
     <p></p>
     <a name="FAQ-3"></a>
     <li><b> In our project's use of strings, there are a lot of
@@ -53,10 +51,10 @@ to conserve memory.</b>
 Can the 'Text' class save us memory when strings
 have common prefixes?</b>
     <p> It depends how you build your text. For example in following code:
-    [code]
-   Text directoryName = Text.valueOf("/proj/lodecase/src/com/lodecase/util/");
-   Text fooFileName = directoryName.plus("foo.java");
-   Text barFileName = directoryName.plus("bar.java");[/code]
+[code]
+Text directoryName = Text.valueOf("/proj/lodecase/src/com/lodecase/util/");
+Text fooFileName = directoryName.plus("foo.java");
+Text barFileName = directoryName.plus("bar.java");[/code]
         The prefix (directoryName)is shared between <code>fooFileName</code> and <code>barFileName</code>.</p>
     <p> Text is a binary tree of blocks of characters. In the example,
         above, <code>fooFileName</code> is a node with <code>directoryName</code> for 

@@ -18,9 +18,9 @@
        instead of throwing a checked exception. Unfortunately, they are still plenty of cases
        where the separation of concerns is not as good as it could be. For example logging!
        Why low-level code need to know which logging facility to use 
-       (e.g. standard logging, Log4J library or anything else)? 
+       (e.g. standard logging, Log4J library; OSGi LogService or anything else)? 
        Why logging should have to be based upon the class hierarchy (standard logging)? 
-       Why can't I attach some relevant information to my logging content (e.g. user id, session #, etc.)? </p>
+       Why can't we attach some relevant information to my logging content (e.g. user id, session #, etc.)? </p>
    
    <p> Separation of concerns can be addressed through "Aspect Programming", 
        but there is a rather simpler solution <b>"Context Programming"</b>!</p>
@@ -30,13 +30,13 @@
       (the one who knows what to do, when running OSGi it is typically a separate bundle).
        Then, your code looks a lot cleaner and is way more flexible as you don't have
        to worry about logging, security, performance etc. in your low level methods. 
-       For example:[code]
-       void myMethod() {
-           ...
-           LogContext.info("Don't know where this is going to be logged to");
-           ...
-       }[/code]
-       </p>
+       For example:
+[code]
+void myMethod() {
+    ...
+    LogContext.info("Don't know where this is going to be logged to");
+    ...
+}[/code]</p>
        
    <p> Used properly <b>J</b>avolution's {@link javolution.context.AbstractContext contexts}
        greatly facilitate the separation of concerns. Contexts are fully 
@@ -54,8 +54,7 @@
            object allocation, e.g. {@link javolution.context.StackContext StackContext}
            to allocate on the stack (or RTSJ ScopedMemory).</li>
       <li>{@link javolution.context.LogContext LogContext} - For performant logging capabilities
-           using either {@link org.osgi.service.log.LogService} or 
-          {@link java.util.logging.Logger Standard Logger} (when not running OSGi).</li>     
+           using {@link org.osgi.service.log.LogService} when running OSGi.</li>     
       <li>{@link javolution.context.SecurityContext SecurityContext} - To address application-level security 
           concerns.</li>
       <li>{@link javolution.context.FormatContext FormatContext} - For objects serialization/deserialization, 
@@ -73,24 +72,24 @@
         your thread as indicated below. Then the child thread inherits the context
         stack of the parent thread (invariant even when the parent thread exits contexts scopes
         or enters new ones).
-        [code]
-        ConcurrentContext ctx = ConcurrentContext.enter();
-        try {
-            MyThread myThread = new MyThread();
-            myThread.parentContext = ctx;
-            myThread.start(); // Autonomous thread inheriting an invariant view of the context stack.
-        } finally {
-           ctx.exit(); 
-        }
+[code]
+ConcurrentContext ctx = ConcurrentContext.enter();
+try {
+    MyThread myThread = new MyThread();
+    myThread.parentContext = ctx;
+    myThread.start(); // Autonomous thread inheriting an invariant view of the context stack.
+} finally {
+    ctx.exit(); 
+}
+...
+class MyThread extends Thread {
+    ConcurrentContext parentContext;
+    public void run() {
+        parentContext.setCurrent(); 
         ...
-        class MyThread extends Thread {
-            ConcurrentContext parentContext;
-            public void run() {
-                parentContext.setCurrent(); 
-                ...
-            }
-        } 
-        [/code]</p>
+    }
+}[/code]</p>
+
     </li>
     <a name="FAQ-2"></a>
     <li><b>To configure a context I need to enter a context and the configuration 
@@ -103,17 +102,18 @@
         It should be noted that with OSGi, this approach is not recommended 
         since the global configuration will be lost if there is a new context 
         implementation published (unlike local configurations).
-        [code]
-        static abstract class TextContextConfigurator extends TextContext {
-             public static void configure() {
-                 TextContext.current().setFormat(Complex.class, polar);
-             }    
-        }
-        public static void main(String [] args) {
-            TextContextConfigurator.configure();
-            ...
-        }
-        [/code] </p>
+[code]
+class Main { 
+    static abstract class TextContextConfigurator extends TextContext {
+        public static void configure() {
+            TextContext.current().setFormat(Complex.class, polar);
+        }    
+    }
+    public static void main(String [] args) {
+        TextContextConfigurator.configure();
+        ...
+    }
+}[/code] </p>
     </li> 
     <a name="FAQ-3"></a>
     <li><b>I am writing an application using third party libraries. 

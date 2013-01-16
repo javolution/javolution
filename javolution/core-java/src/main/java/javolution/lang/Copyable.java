@@ -20,7 +20,9 @@ package javolution.lang;
 public interface Copyable<T> {
 
     /**
-     * Returns a deep copy of this object. 
+     * Returns a deep copy of this object. For unmovable objects (e.g. 
+     * static objects possibly unique allocated on the heap) this method
+     * should return <code>this</code>.
      * 
      * @return an object identical to this object but possibly allocated 
      *         in a different memory space.

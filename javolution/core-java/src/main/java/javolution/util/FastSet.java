@@ -15,11 +15,9 @@ import javolution.lang.Predicate;
 import javolution.util.FastMap.KeySet;
 
 /**
- * <p> Hash set with real-time behavior; smooth capacity increase and 
- *     <i>thread-safe</i> behavior without external synchronization when
- *     {@link #shared shared}. The capacity of a fast set is automatically 
- *     adjusted to best fit its size (e.g. when a map is cleared its memory 
- *     footprint is minimal).</p>
+ * <p> Set backed up by a {@link HashMap} and benefiting from the 
+ *     same characteristics (memory footprint adjusted to current size,
+ *     smooth capacity increase, etc).</p>
  * 
  * <p> Fast set, as for any {@link FastCollection} sub-class, supports
  *     closure-based iterations.</p>
@@ -106,6 +104,11 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     @Override
     public boolean remove(Object o) {
         return map.remove(o) != null;
+    }
+
+    @Override
+    public FastCollection<E> usingComparator(FastComparator<E> comparator) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }
