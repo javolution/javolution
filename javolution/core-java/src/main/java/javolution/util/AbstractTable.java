@@ -36,12 +36,12 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     public abstract FastComparator<E> comparator();
 
     public E getFirst() {
-        if (isEmpty()) throw new NoSuchElementException();
+        emptyCheck();
         return get(0);
     }
 
     public E getLast() {
-        if (isEmpty()) throw new NoSuchElementException();
+        emptyCheck();
         return get(size() - 1);
     }
 
@@ -67,23 +67,20 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     }
 
     public E removeFirst() {
-        if (isEmpty()) throw new NoSuchElementException();
-        E e = get(0);
+        E e = getFirst();
         shiftLeftAt(0, 1);
         return e;
     }
 
     public E removeLast() {
-        int i = size();
-        if (i == 0) throw new NoSuchElementException();
-        E e = get(--i);
-        shiftLeftAt(i, 1);
+        E e = getLast();
+        shiftLeftAt(size() - 1, 1);
         return e;
     }
 
     public E remove(int i) {
         E e = get(i);
-        shiftRightAt(i, 1);
+        shiftLeftAt(i, 1);
         return e;
     }
 
@@ -248,4 +245,9 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         set(down, piv);
         return down;
     }
+
+    private void emptyCheck() {
+         if (isEmpty()) throw new NoSuchElementException("Table empty");
+    }
+
 }

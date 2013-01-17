@@ -51,8 +51,8 @@ public class FastTableTest extends TestCase {
         long t = executionTimeOf(new Runnable() {
            public void run() {               
                ArrayList al = new ArrayList();
-               for (int i=0; i <= 160; i++) {
-                   al.add(0,this);
+               for (int i=0; i < 16; i++) {
+                   al.add(this);
                }
            }    
         });
@@ -63,7 +63,7 @@ public class FastTableTest extends TestCase {
         long t = executionTimeOf(new Runnable() {
            public void run() {               
                FastTable ft = new FastTable();
-               for (int i=0; i <= 160; i++) {
+               for (int i=0; i < 16; i++) {
                    ft.add(this);
                }
            } 
@@ -98,7 +98,7 @@ public class FastTableTest extends TestCase {
                  logic.run();
             }
         };
-        int n = 1000000;
+        int n = 10000000;
         long time = System.nanoTime();
         for (int i=0; i < n; i++) {
              logicA.run();
