@@ -38,12 +38,12 @@ public final class UnmodifiableTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
+    public void add(int index, E element) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public void shiftRightAt(int index, int shift) {
+    public E remove(int index) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 

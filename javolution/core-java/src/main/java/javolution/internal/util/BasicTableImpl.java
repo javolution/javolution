@@ -14,20 +14,14 @@ import javolution.util.AbstractTable;
 import javolution.util.FastComparator;
 
 /**
- * A basic table implementation. 
- * The actual implementation is dynamically
- * adjusted based on the table current size.
+ * A basic table implementation with fast insertion/delete capabilities. 
  */
 public final class BasicTableImpl<E> extends AbstractTable<E> {
 
-    private static final int BOUNDED_MAX_CAPACITY = 256; // Todo: Use configurable.
-
-    private BoundedTable<E> boundedTable;
-
-    private UnboundedTable<E> unboundedTable;
-
+    private static final int BOUNDED_CAPACITY = 256;
+    private Bounded<E> bounded;
+    private Unbounded<E> unbounded;
     private int size;
-
     private int capacity;
 
     public BasicTableImpl() {
@@ -40,46 +34,35 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
 
     @Override
     public E get(int index) {
-        rangeCheck(index);
-        return (unboundedTable == null) ? boundedTable.get(index) : unboundedTable.get(index);
+        if ((index < 0) && (index >= size)) throw indexError(index);
+        return (index < BOUNDED_CAPACITY) ? bounded.get(index) : unbounded.get(index);
     }
 
     @Override
     public E set(int index, E element) {
-        rangeCheck(index);
-        if (unboundedTable == null) {
-            E previous = boundedTable.get(index);
-            boundedTable.set(index, element);
-            return previous;
+        if ((index < 0) && (index >= size)) throw indexError(index);
+        return (index < BOUNDED_CAPACITY) ? bounded.set(index, element) : unbounded.set(index, element);
+    }
+
+    @Override
+    public void add(int index, E element) {
+        if ((index < 0) && (index > size)) throw indexError(index);
+        if (size >= capacity) upsize();
+        if (index < BOUNDED_CAPACITY) {
+            bounded.add(index, element, size++);
         } else {
-            E previous = unboundedTable.get(index);
-            unboundedTable.set(index, element);
-            return previous;
+            unbounded.add(index, element, size++);
         }
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
-        if (unboundedTable == null) {
-            boundedTable.copy(index + shift, index, size - index - shift);
-            size -= shift;
+    public E remove(int index) {
+        if ((index < 0) && (index >= size)) throw indexError(index);
+        if (size <= BOUNDED_CAPACITY) {
+            return bounded.remove(index, size--);
         } else {
-            unboundedTable.copy(index + shift, index, size - index - shift);
-            size -= shift;
-        }
-    }
-
-    @Override
-    public void shiftRightAt(int index, int shift) {
-        while (size + shift > capacity) {
-            resize();
-        }
-        if (unboundedTable == null) {
-            boundedTable.copy(index, index + shift, size - index);
-            size += shift;
-        } else {
-            unboundedTable.copy(index, index + shift, size - index);
-            size += shift;
+            if (size + BOUNDED_CAPACITY < capacity) unbounded.downsize();
+            return unbounded.remove(index, size--);
         }
     }
 
@@ -91,8 +74,8 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
     @Override
     public BasicTableImpl<E> copy() {
         BasicTableImpl<E> that = new BasicTableImpl<E>();
-        for (int i = 0; i < size;) {
-            E e = get(i++);
+        for (int i = 0; i < size; i++) {
+            E e = (i < BOUNDED_CAPACITY) ? bounded.get(i) : unbounded.get(i);
             that.add((e instanceof Copyable) ? ((Copyable<E>) e).copy() : e);
         }
         return that;
@@ -103,114 +86,152 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
     //
     @Override
     public boolean add(E element) {
-        if (size >= capacity) resize();
-        if (unboundedTable == null) {
-            boundedTable.set(size++, element);
+        if (size >= capacity) upsize();
+        if (size < BOUNDED_CAPACITY) {
+            bounded.add(element, size++);
         } else {
-            unboundedTable.set(size++, element);
+            unbounded.add(element, size++);
         }
         return true;
+    }
+
+    @Override
+    public void addLast(E element) {
+        add(element);
     }
 
     //
     // Utilities.
     //
-    private void resize() {
-        boundedTable = (boundedTable == null) ? new BoundedTable(16) : boundedTable.resize();
-        capacity = boundedTable.capacity();
-    }
-
-    private void rangeCheck(int index) {
-        if ((index < 0) && (index >= size))
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
-    }
-
-    // Raw table (no check performed)
-    private static abstract class RawTable<E> {
-
-        public abstract int capacity();
-
-        public abstract E get(int index);
-
-        public abstract void set(int index, E element);
-
-        public abstract void copy(int srcPos, int destPos, int length);
-
-        public abstract RawTable<E> resize();
-
+    private void upsize() {
+        if (capacity < BOUNDED_CAPACITY) {
+            if (bounded == null) {
+                capacity = 16;
+                bounded = new Bounded(capacity);
+            } else {
+                capacity = bounded.upsize();
+            }
+        } else { // Unbounded.
+            if (unbounded == null) {
+                unbounded = new Unbounded(bounded);
+            }
+            capacity = unbounded.upsize();
+        }
     }
 
     // Table whose capacity is bounded.
-    private static final class BoundedTable<E> extends RawTable<E> {
+    private static final class Bounded<E> {
 
         private int offset; // Index of first element (modulo data.length - 1)
-
         private E[] data;
-
         private int mask;
 
-        public BoundedTable(int capacity) { // Empty table. 
+        public Bounded(int capacity) { // Empty table. 
             data = (E[]) new Object[capacity];
             mask = data.length - 1;
         }
 
-        @Override
-        public int capacity() {
-            return data.length;
+        public void add(E element, int size) {
+            data[(size + offset) & mask] = element;
         }
 
-        @Override
         public E get(int index) {
             return data[(index + offset) & mask];
         }
 
-        @Override
-        public void set(int index, E element) {
-            data[(index + offset) & mask] = element;
+        public E set(int index, E element) {
+            int i = (index + offset) & mask;
+            E previous = data[i];
+            data[i] = element;
+            return previous;
+        }
+        
+        public void add(int index, E element, int size) {
+            if (index >= (size >> 1)) {
+                int first = (index + offset) & mask;
+                shiftRight(first, size - index);
+                data[first] = element;
+            } else {
+                int last = (index + --offset) & mask;
+                shiftLeft(last, index);
+                data[last] = element;
+            }
+        }
+     
+        public E remove(int index, int size) {
+            int i = (index + offset) & mask;
+            E removed = data[i];
+            if (index >= (size >> 1)) {
+                int last = (size - 1 + offset) & mask;
+                shiftLeft(last , size - 1 - index);
+            } else {
+                shiftRight(offset++ & mask, index);
+            }
+            return removed;
+        }
+      
+        private void shiftRight(int first, int length) {
+            if (length == 0) return; // Nothing to shift.
+            int w = first + length - data.length;
+            if (w >= 0) { // Wrapping.
+                System.arraycopy(data, 0, data, 1, w);
+                data[0] = data[mask];
+                length -= ++w;
+            }
+            System.arraycopy(data, first, data, first + 1, length);
         }
 
-        @Override
-        public void copy(int srcPos, int destPos, int length) {
-            System.arraycopy(data, srcPos, data, destPos, length);
+        private void shiftLeft(int last, int length) {
+            if (length == 0) return; // Nothing to shift.
+            int w = length - last - 1;
+            if (w >= 0) { // Wrapping.
+                System.arraycopy(data, data.length - w, data, data.length - w - 1, w);
+                data[mask] = data[0];
+                length -= ++w;
+            }
+            System.arraycopy(data, last - length + 1, data, last - length, length);
         }
 
-        @Override
-        public BoundedTable<E> resize() {
+        public int upsize() { // Returns new capacity.
             data = Arrays.copyOf(data, data.length * 2);
             mask = data.length - 1;
-            return this;
+            return data.length;
         }
-
     }
 
     // Table whose capacity is unbounded.
-    private static final class UnboundedTable<E> extends RawTable<E> {
+    private static final class Unbounded<E> {
 
-        @Override
-        public int capacity() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public Unbounded(Bounded bounded) { // Empty table. 
         }
 
-        @Override
         public E get(int index) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override
-        public void set(int index, E element) {
+        public int upsize() { // Returns new capacity.
+            return 0;
+        }
+
+        public int downsize() { // Returns new capacity.
+            return 0;
+        }
+
+        public E set(int index, E element) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override
-        public void copy(int srcPos, int destPos, int length) {
+        public void add(int index, E element, int size) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override
-        public RawTable<E> resize() {
+        public E remove(int index, int size) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
+        public boolean add(E element, int size) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
     }
 
 }

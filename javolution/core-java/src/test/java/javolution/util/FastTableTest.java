@@ -9,105 +9,61 @@
 package javolution.util;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.List;
 import javolution.context.LogContext;
-import junit.framework.TestCase;
+import javolution.lang.Functor;
+import javolution.lang.MultiVariable;
 
-public class FastTableTest extends TestCase {
-    
-    public FastTableTest(String testName) {
-        super(testName);
-    }
-    
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-    
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+public class FastTableTest {
 
-    public void testArrayListCreation() {
-        long t = executionTimeOf(new Runnable() {
-           public void run() {               
-               new ArrayList();
-           } 
-        });
-        LogContext.info("ArrayList creation: ",  t, " ns");
-    }
-        
-    public void testFastTableCreation() {
-        long t = executionTimeOf(new Runnable() {
-           public void run() {               
-               new FastTable();
-           } 
-        });
-        LogContext.info("FastTable creation: ",  t, " ns");
-    }
-        
-    public void testArrayListCreateAndAdd() {
-        long t = executionTimeOf(new Runnable() {
-           public void run() {               
-               ArrayList al = new ArrayList();
-               for (int i=0; i < 16; i++) {
-                   al.add(this);
-               }
-           }    
-        });
-        LogContext.info("ArrayList create and add: ",  t, " ns");
-    }
-        
-    public void testFastTableCreateAndAdd() {
-        long t = executionTimeOf(new Runnable() {
-           public void run() {               
-               FastTable ft = new FastTable();
-               for (int i=0; i < 16; i++) {
-                   ft.add(this);
-               }
-           } 
-        });
-        LogContext.info("FastTable creation and add: ",  t, " ns");
-    }
-        
-    /**
-     * Test of forEach method, of class FastTable.
-     */
-    public void testAdd() {
-        if (true) return;
-        System.out.println("Test Add");
-        FastTable ft = new FastTable();
-        for (int i=0; i < 10; i++) {
-            ft.add("INT " + i);
+    private static final int MAX_SIZE = 250;
+    
+    private Performeter performeter = new Performeter();
+
+    // Functor creating an array list.
+    Functor<Void, List<Index>> arrayListCreation = new Functor<Void, List<Index>>() {
+        public List<Index> evaluate(Void param) {
+            return performeter.isNOP() ? null : new ArrayList<Index>();
         }
-        System.out.println(ft);
-    }
-
-    static volatile double x;
-    private static long executionTimeOf(final Runnable logic) {
-        final Random r = new Random();
-        Runnable logicA = new Runnable() {
-            public void run() {
-                 x = r.nextGaussian();
+    };
+    // Functor creating a fast table.
+    Functor<Void, List<Index>> fastTableCreation = new Functor<Void, List<Index>>() {
+        public List<Index> evaluate(Void param) {
+            return performeter.isNOP() ? null : new FastTable<Index>();
+        }
+    };
+    // Functor adding n indices to a list.
+    Functor<MultiVariable<Index, List<Index>>, Void> addToList = new Functor<MultiVariable<Index, List<Index>>, Void>() {
+        public Void evaluate(MultiVariable<Index, List<Index>> param) {
+            List<Index> list = param.getRight();
+            for (Index i = Index.ZERO; i != param.getLeft(); i = i.next()) {
+                if (!performeter.isNOP()) list.add(i);
             }
-        };
-        Runnable logicB = new Runnable() {
-            public void run() {
-                 x = r.nextGaussian();
-                 logic.run();
-            }
-        };
-        int n = 10000000;
-        long time = System.nanoTime();
-        for (int i=0; i < n; i++) {
-             logicA.run();
+            return null;
         }
-        long timeA = System.nanoTime();
-        for (int i=0; i < n; i++) {
-             logicB.run();
-        }
-        long timeB = System.nanoTime();
-        return (timeB - timeA - (timeA - time)) / n;
+    };
+
+
+    public void testCreation() {
+        long ns = performeter.measure(fastTableCreation);
+        long alns = performeter.measure(arrayListCreation);
+        LogContext.info("FastTable Creation: ", ns, " ns (", alns, " ns for ArrayList)");
     }
+
+
+    public void testListAdd() {
+        for (int i = 16; i <= MAX_SIZE; i *= 2) {
+            // Validation.
+            List<Index> al= new ArrayList();
+            addToList.evaluate(new MultiVariable(Index.valueOf(i), al));
+            List<Index> ft = new FastTable();
+            addToList.evaluate(new MultiVariable(Index.valueOf(i), ft));
+            assert (al.equals(ft));
+
+            long ns = performeter.measure(addToList, Index.valueOf(i), fastTableCreation);
+            long alns = performeter.measure(addToList, Index.valueOf(i), arrayListCreation);
+            LogContext.info("FastTable Add ", i, " elements: ", ns, " ns (", alns, " ns for ArrayList)");
+        }
+    }
+
 }

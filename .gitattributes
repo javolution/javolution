@@ -320,6 +320,7 @@ javolution/core-java/src/main/java/javolution/lang/Factory.java -text svneol=uns
 javolution/core-java/src/main/java/javolution/lang/Functor.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/MultiVariable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Predicate.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
@@ -375,6 +376,7 @@ javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
 javolution/core-java/src/main/javadoc/overview.html -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
+javolution/core-java/src/test/java/javolution/util/Performeter.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text

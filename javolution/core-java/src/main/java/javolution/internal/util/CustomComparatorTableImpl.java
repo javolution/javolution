@@ -16,48 +16,48 @@ import javolution.util.FastComparator;
  */
 public final class CustomComparatorTableImpl<E> extends AbstractTable<E> {
 
-        private final AbstractTable<E> that;
+    private final AbstractTable<E> that;
 
-        private final FastComparator<E> comparator;
+    private final FastComparator<E> comparator;
 
-        public CustomComparatorTableImpl(AbstractTable<E> that, FastComparator<E> comparator) {
-            this.that = that;
-            this.comparator = comparator;
-        }
+    public CustomComparatorTableImpl(AbstractTable<E> that, FastComparator<E> comparator) {
+        this.that = that;
+        this.comparator = comparator;
+    }
 
-        @Override
-        public int size() {
-            return that.size();
-        }
+    @Override
+    public int size() {
+        return that.size();
+    }
 
-        @Override
-        public E get(int index) {
-            return that.get(index);
-        }
+    @Override
+    public E get(int index) {
+        return that.get(index);
+    }
 
-        @Override
-        public E set(int index, E element) {
-            return that.set(index, element);
-        }
+    @Override
+    public E set(int index, E element) {
+        return that.set(index, element);
+    }
 
-        @Override
-        public void shiftLeftAt(int index, int shift) {
-            that.shiftLeftAt(index, shift);
-        }
+    @Override
+    public void add(int index, E element) {
+        that.add(index, element);
+    }
 
-        @Override
-        public void shiftRightAt(int index, int shift) {
-            that.shiftRightAt(index, shift);
-        }
+    @Override
+    public E remove(int index) {
+        return that.remove(index);
+    }
 
-        @Override
-        public FastComparator<E> comparator() {
-            return comparator;
-        }
+    @Override
+    public FastComparator<E> comparator() {
+        return comparator;
+    }
 
-        @Override
-        public CustomComparatorTableImpl<E> copy() {
-            return new CustomComparatorTableImpl<E>(that.copy(), comparator.copy());
-        }
+    @Override
+    public CustomComparatorTableImpl<E> copy() {
+        return new CustomComparatorTableImpl<E>(that.copy(), comparator.copy());
+    }
 
 }

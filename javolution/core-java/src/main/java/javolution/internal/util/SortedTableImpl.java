@@ -38,15 +38,16 @@ public final class SortedTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
-        that.shiftLeftAt(index, shift);
+    public void add(int index, E element) {
+       throw new UnsupportedOperationException(
+            "Sorted tables don't allow arbitrary insertions (add(E) should be used)");
     }
 
     @Override
-    public void shiftRightAt(int index, int shift) {
-        that.shiftRightAt(index, shift);
+    public E remove(int index) {
+        return that.remove(index);
     }
-
+    
     @Override
     public FastComparator<E> comparator() {
         return that.comparator();
@@ -64,27 +65,8 @@ public final class SortedTableImpl<E> extends AbstractTable<E> {
     @Override
     public boolean add(E element) {
         int i = indexIfSortedOf(element, comparator(), 0, size());
-        shiftRightAt(i, 1);
-        set(i, element);
+        that.add(i, element);
         return true;
-    }
-
-    @Override
-    public void addFirst(E element) {
-        throw new UnsupportedOperationException(
-            "Sorted tables don't allow arbitrary insertions (add(E) should be used)");
-    }
-
-    @Override
-    public void addLast(E element) {
-        throw new UnsupportedOperationException(
-            "Sorted tables don't allow arbitrary insertions (add(E) should be used)");
-    }
-
-    @Override
-    public void add(int i, E element) {
-        throw new UnsupportedOperationException(
-            "Sorted tables don't allow arbitrary insertions (add(E) should be used)");
     }
     
     @Override

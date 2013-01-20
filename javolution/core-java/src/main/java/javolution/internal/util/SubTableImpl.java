@@ -37,35 +37,29 @@ public final class SubTableImpl<E> extends AbstractTable<E> {
 
     @Override
     public E get(int index) {
-        if ((index < 0) || (index >= size()))
-            throw new IndexOutOfBoundsException();
+        if ((index < 0) && (index >= size())) throw indexError(index);
         return that.get(index + fromIndex);
     }
 
     @Override
     public E set(int index, E element) {
-        if ((index < 0) || (index >= size()))
-            throw new IndexOutOfBoundsException();
+        if ((index < 0) && (index >= size())) throw indexError(index);
         return that.set(index + fromIndex, element);
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
-        if ((index < 0) || (index + shift > size()))
-            throw new IndexOutOfBoundsException();
-        that.shiftLeftAt(index + fromIndex, shift);
-        toIndex -= shift;
-
+    public void add(int index, E element) {
+        if ((index < 0) && (index > size())) throw indexError(index);
+        that.add(index + fromIndex, element);
     }
 
     @Override
-    public void shiftRightAt(int index, int shift) {
-        if ((index < 0) || (index > size()))
-            throw new IndexOutOfBoundsException();
-        that.shiftRightAt(index + fromIndex, shift);
-        toIndex += shift;
+    public E remove(int index) {
+        if ((index < 0) && (index >= size())) throw indexError(index);
+        toIndex--;
+        return that.remove(index + fromIndex);
     }
-
+    
     @Override
     public FastComparator<E> comparator() {
         return that.comparator();
@@ -76,4 +70,15 @@ public final class SubTableImpl<E> extends AbstractTable<E> {
         return new SubTableImpl(that.copy(), fromIndex, toIndex);
     }
 
+  // 
+    // Overrides methods impacted.
+    //
+    
+    @Override
+    public void removeRange(int fromIndex, int toIndex) { 
+        if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex) || (toIndex > size())) 
+            throw rangeError(fromIndex, toIndex);
+        that.removeRange(this.fromIndex + fromIndex, this.fromIndex + toIndex);
+    }            
+    
 }

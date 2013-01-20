@@ -48,19 +48,19 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
+    public void add(int index, E element) {
         synchronized (that) {
-            that.shiftLeftAt(index, shift);
+            that.add(index, element);
         }
     }
 
     @Override
-    public void shiftRightAt(int index, int shift) {
+    public E remove(int index) {
         synchronized (that) {
-            that.shiftRightAt(index, shift);
+            return that.remove(index);
         }
     }
-    
+
     // 
     // Overrides methods impacted.
     //
@@ -101,13 +101,6 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public void add(int i, E element) {
-        synchronized (that) {
-            that.add(i, element);
-        }
-    }
-
-    @Override
     public E removeFirst() {
         synchronized (that) {
             return that.removeFirst();
@@ -118,13 +111,6 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
     public E removeLast() {
         synchronized (that) {
             return that.removeLast();
-        }
-    }
-
-    @Override
-    public E remove(int i) {
-        synchronized (that) {
-            return that.remove(i);
         }
     }
 

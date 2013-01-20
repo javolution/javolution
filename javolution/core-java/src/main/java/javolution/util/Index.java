@@ -200,8 +200,30 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @return  a negative integer, zero, or a positive integer as this index
      *          is less than, equal to, or greater than the specified index.
      */
-    public final int compareTo(Index that) {
+    public int compareTo(Index that) {
         return this.value - ((Index) that).value;
+    }
+
+    /**
+     * Compares this index with the specified integer value for order.  Returns a
+     * negative integer, zero, or a positive integer as this index is less
+     * than, equal to, or greater than the specified value.
+     *
+     * @param   value the value to be compared.
+     * @return  a negative integer, zero, or a positive integer as this index
+     *          is less than, equal to, or greater than the specified value.
+     */
+    public int compareTo(int value) {
+        return this.value - value;
+    }
+
+    /**
+     * Indicates if this index is zero.
+     * 
+     * @return <code>this == ZERO</code> 
+     */
+    public boolean isZero() {
+        return this == ZERO;
     }
 
     /**

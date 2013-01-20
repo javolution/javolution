@@ -29,22 +29,26 @@ public final class ReverseTableImpl<E> extends AbstractTable<E> {
 
     @Override
     public E get(int index) {
+        if ((index < 0) && (index >= size())) throw indexError(index);
         return that.get(size() - 1 - index);
     }
 
     @Override
     public E set(int index, E element) {
+        if ((index < 0) && (index >= size())) throw indexError(index);
         return that.set(size() - 1 - index, element);
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
-        that.shiftLeftAt(size() - index - shift, shift);
+    public void add(int index, E element) {
+        if ((index < 0) && (index > size())) throw indexError(index);
+        that.add(size() - 1 - index, element);
     }
 
     @Override
-    public void shiftRightAt(int index, int shift) {
-        that.shiftRightAt(size() - index, shift);
+    public E remove(int index) {
+        if ((index < 0) && (index >= size())) throw indexError(index);
+        return that.remove(size() - 1 - index);
     }
 
     @Override
@@ -56,5 +60,16 @@ public final class ReverseTableImpl<E> extends AbstractTable<E> {
     public ReverseTableImpl<E> copy() {
         return new ReverseTableImpl<E> (that.copy());
     }
-
+    
+    // 
+    // Overrides methods impacted.
+    //
+    
+    @Override
+    public void removeRange(int fromIndex, int toIndex) { 
+        if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex) || (toIndex > size())) 
+            throw rangeError(fromIndex, toIndex);
+        that.removeRange(size() - toIndex, size() - fromIndex);
+    }    
+    
 }

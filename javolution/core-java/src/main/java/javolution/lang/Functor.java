@@ -8,12 +8,33 @@
  */
 package javolution.lang;
 
-import javolution.util.FastCollection;
 import javolution.context.StackContext;
+import javolution.util.FastCollection;
 
 /**
  * <p> A function that perform some operation and returns the result of 
  *     that operation.</p>
+ * 
+ * <p> Multifunctors (functors taking an arbitrary numbers of arguments) 
+ *     can be constructed using the {@link MultiVariable} class.
+ *     Functors taking or returning no argument may be constructed using the 
+ *     standard {@link Void} class.  
+ *  [code]
+ *  // Functor adding n indices to a list.
+ *  Functor<MultiVariable<Index, List<Index>>, Void> addToList = new Functor<MultiVariable<Index, List<Index>>, Void>() {
+ *      public Void evaluate(MultiVariable<Index, List<Index>> param) {
+ *          List<Index> list = param.getRight();
+ *          for (Index i = Index.ZERO; i != param.getLeft(); i = i.next()) {
+ *              list.add(i);
+ *          }
+ *          return null;
+ *      }
+ *  };
+ *  ...
+ *  FastTable<Index> list = new FastTable();
+ *  addToList.evaluate(new MultiVariable(Index.valueOf(100), list));
+ *  ...
+ *  [/code] 
  * 
  * <p> This interface is particularly useful when working with 
  *     {@link FastCollection} or {@link StackContext}.</p>

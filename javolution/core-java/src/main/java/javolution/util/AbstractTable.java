@@ -19,7 +19,7 @@ import javolution.lang.Predicate;
  * The parent class for all table implementations.
  * 
  * Note: This class implementation is frozen to avoid breaking up sub-classes
- *       relying upon the default behavior of the non-abstract methods.
+ *       relying upon the behavior of its non-abstract methods.
  */
 public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
@@ -29,58 +29,44 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
     public abstract E set(int index, E element);
 
-    public abstract void shiftLeftAt(int index, int shift);
+    public abstract void add(int index, E element);
 
-    public abstract void shiftRightAt(int index, int shift);
+    public abstract E remove(int index);
 
     public abstract FastComparator<E> comparator();
 
     public E getFirst() {
-        emptyCheck();
+        if (isEmpty()) emptyError();
         return get(0);
     }
 
     public E getLast() {
-        emptyCheck();
+        if (isEmpty()) emptyError();
         return get(size() - 1);
     }
 
     public boolean add(E element) {
-        int i = size();
-        shiftRightAt(i, 1);
-        set(i, element);
+        add(size(), element);
         return true;
     }
 
     public void addFirst(E element) {
-        shiftRightAt(0, 1);
-        set(0, element);
+        add(0, element);
     }
 
     public void addLast(E element) {
-        add(element);
-    }
-
-    public void add(int i, E element) {
-        shiftRightAt(i, 1);
-        set(i, element);
+        add(size(), element);
     }
 
     public E removeFirst() {
         E e = getFirst();
-        shiftLeftAt(0, 1);
+        remove(0);
         return e;
     }
 
     public E removeLast() {
         E e = getLast();
-        shiftLeftAt(size() - 1, 1);
-        return e;
-    }
-
-    public E remove(int i) {
-        E e = get(i);
-        shiftLeftAt(i, 1);
+        remove(size() - 1);
         return e;
     }
 
@@ -107,13 +93,20 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         return true;
     }
 
-    
-    public final boolean isEmpty() {
+    public void removeRange(int fromIndex, int toIndex) {
+        if ((fromIndex < 0) || (toIndex < 0) || (fromIndex > toIndex) || (toIndex > size()))
+            throw rangeError(fromIndex, toIndex);
+        for (int i = toIndex; i > fromIndex;) {
+            remove(--i);
+        }
+    }
+
+    public boolean isEmpty() {
         return size() == 0;
     }
 
-    public final void clear() {
-        shiftRightAt(0, size());
+    public void clear() {
+        removeRange(0, size());
     }
 
     public <R> FastTable<R> forEach(Functor<E, R> functor) {
@@ -145,12 +138,10 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     public boolean addAll(final Collection<? extends E> elements) {
         if (elements instanceof FastCollection) {
             ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
-
                 public Boolean evaluate(E param) {
                     add(param);
                     return true;
                 }
-
             });
         } else { // Use iterator since we have no choice.
             Iterator<? extends E> it = elements.iterator();
@@ -160,24 +151,22 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         }
         return !elements.isEmpty();
     }
-    
+
     public boolean addAll(final int index, final Collection<? extends E> elements) {
         if (elements instanceof FastCollection) {
             ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
-
                 int i = index;
 
                 public Boolean evaluate(E param) {
                     add(i++, param);
                     return true;
                 }
-
             });
         } else { // Use iterator since we have no choice.
             Iterator<? extends E> it = elements.iterator();
             int i = index;
             while (it.hasNext()) {
-                add(i, it.next());
+                add(i++, it.next());
             }
         }
         return !elements.isEmpty();
@@ -246,8 +235,17 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         return down;
     }
 
-    private void emptyCheck() {
-         if (isEmpty()) throw new NoSuchElementException("Table empty");
+    protected NoSuchElementException emptyError() {
+        return new NoSuchElementException("Empty Table");
     }
 
+    protected IndexOutOfBoundsException indexError(int index) {
+        return new IndexOutOfBoundsException(
+                "index: " + index + ", size: " + size());
+    }
+
+    protected IndexOutOfBoundsException rangeError(int fromIndex, int toIndex) {
+        return new IndexOutOfBoundsException(
+                "fromIndex: " + fromIndex + ", toIndex: " + toIndex + ", size: " + size());
+    }
 }

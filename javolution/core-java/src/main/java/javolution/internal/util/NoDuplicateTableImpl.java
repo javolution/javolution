@@ -8,8 +8,6 @@
  */
 package javolution.internal.util;
 
-import java.util.Arrays;
-import javolution.lang.MathLib;
 import javolution.util.AbstractTable;
 import javolution.util.FastComparator;
 
@@ -40,41 +38,14 @@ public final class NoDuplicateTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public void shiftLeftAt(int index, int shift) {
-        that.shiftLeftAt(index, shift);
-    }
-
-    @Override
-    public void shiftRightAt(int index, int shift) {
-        that.shiftRightAt(index, shift);
-    }
-
-    // 
-    // Overrides methods impacted.
-    //
-    
-    @Override
-    public boolean add(E element) {
-        if (indexOf(element) >= 0) return false; // Already present.
-        return that.add(element);
-    }
-
-    @Override
-    public void addFirst(E element) {
+    public void add(int index, E element) {
         if (indexOf(element) >= 0) return; // Already present.
-        that.addFirst(element);
+        that.add(index, element);
     }
 
     @Override
-    public void addLast(E element) {
-        if (indexOf(element) >= 0) return; // Already present.
-        that.addLast(element);
-    }
-
-    @Override
-    public void add(int i, E element) {
-        if (indexOf(element) >= 0) return; // Already present.
-        that.add(i, element);
+    public E remove(int index) {
+        return that.remove(index);
     }
 
     @Override
@@ -87,4 +58,13 @@ public final class NoDuplicateTableImpl<E> extends AbstractTable<E> {
         return new NoDuplicateTableImpl<E>(that.copy());
     }
 
+    // 
+    // Overrides methods impacted.
+    //
+    
+    @Override
+    public boolean add(E element) { // Overriden to return false.
+        if (indexOf(element) >= 0) return false; // Already present.
+        return that.add(element);
+    }
 }
