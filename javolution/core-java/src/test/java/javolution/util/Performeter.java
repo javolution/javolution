@@ -16,45 +16,45 @@ import javolution.lang.MultiVariable;
  */
 public class Performeter {
 
-    volatile boolean nop;
+    volatile boolean doPerform = true;
  
-    private static long TIME_PER_MEASURE_IN_NS = 1000000000; // One second.
+    private static long TIME_PER_MEASURE_IN_NS = 1000 * 1000 * 500L; // 500 ms.
     
     /**
      * Indicates if the operation to be measured is actually performed.
      */
-    public boolean isNOP() {
-        return nop;
+    public boolean doPerform() {
+        return doPerform;
     }
 
     /**
      * Measure the execution of the specified functor critical operations in 
      * nanosecond.
-     * The functor is executed first with {@link #isNOP} set to <code>true</code>,
-     * then set to <code>false</code>, the execution time is the second time 
-     * minus the first one. Parameters of a functor can be a functor itself 
-     * to be evaluated recurcively.
+     * The functor is executed first with {@link #doPerform} set to <code>false</code>,
+     * then it is set to <code>true</code>, the execution time is the second execution
+     * time minus the first one. Parameters of a functor can be functors themselves 
+     * in which case they are evaluated.
      */
     public long measure(Functor functor, Object... params) {
         measure(false, functor, params); // Class initialization.
         System.gc();
-        long nopExecutionTime = measure(true, functor, params);
+        long nopExecutionTime = measure(false, functor, params);
         System.gc();
-        long totalExecutionTime = measure(false, functor, params);
+        long totalExecutionTime = measure(true, functor, params);
         return totalExecutionTime - nopExecutionTime;        
     }
     
-    private long measure(boolean isNOP, Functor functor, Object... params) {
+    private long measure(boolean doPerform, Functor functor, Object... params) {
         long startTime = System.nanoTime();
         int count = 0;
         long executionTime;
         while (true) {
             Object param = evaluateParams(0, params);
             try {
-                nop = isNOP;
+                this.doPerform = doPerform;
                 functor.evaluate(param);
             } finally {
-                nop = false;
+                this.doPerform = true;
             }
             count++;
             executionTime = System.nanoTime() - startTime;

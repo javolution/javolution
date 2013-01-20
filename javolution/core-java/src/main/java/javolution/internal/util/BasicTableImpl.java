@@ -18,7 +18,10 @@ import javolution.util.FastComparator;
  */
 public final class BasicTableImpl<E> extends AbstractTable<E> {
 
-    private static final int BOUNDED_CAPACITY = 256;
+    private static final int BOUNDED_CAPACITY_MIN = 16;
+    private static final int BOUNDED_CAPACITY_BITS = 10;
+    private static final int BOUNDED_CAPACITY = 1 << BOUNDED_CAPACITY_BITS;
+    private static final int BOUNDED_CAPACITY_MASK = BOUNDED_CAPACITY - 1;
     private Bounded<E> bounded;
     private Unbounded<E> unbounded;
     private int size;
@@ -48,7 +51,7 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
     public void add(int index, E element) {
         if ((index < 0) && (index > size)) throw indexError(index);
         if (size >= capacity) upsize();
-        if (index < BOUNDED_CAPACITY) {
+        if (size < BOUNDED_CAPACITY) {
             bounded.add(index, element, size++);
         } else {
             unbounded.add(index, element, size++);
@@ -106,7 +109,7 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
     private void upsize() {
         if (capacity < BOUNDED_CAPACITY) {
             if (bounded == null) {
-                capacity = 16;
+                capacity = BOUNDED_CAPACITY_MIN;
                 bounded = new Bounded(capacity);
             } else {
                 capacity = bounded.upsize();
@@ -145,9 +148,9 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
             data[i] = element;
             return previous;
         }
-        
+
         public void add(int index, E element, int size) {
-            if (index >= (size >> 1)) {
+            if (index * 2 >= size) {
                 int first = (index + offset) & mask;
                 shiftRight(first, size - index);
                 data[first] = element;
@@ -157,19 +160,19 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
                 data[last] = element;
             }
         }
-     
+
         public E remove(int index, int size) {
             int i = (index + offset) & mask;
             E removed = data[i];
-            if (index >= (size >> 1)) {
+            if (index * 2 >= size) {
                 int last = (size - 1 + offset) & mask;
-                shiftLeft(last , size - 1 - index);
+                shiftLeft(last, size - 1 - index);
             } else {
                 shiftRight(offset++ & mask, index);
             }
             return removed;
         }
-      
+
         private void shiftRight(int first, int length) {
             if (length == 0) return; // Nothing to shift.
             int w = first + length - data.length;
@@ -193,7 +196,12 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
         }
 
         public int upsize() { // Returns new capacity.
-            data = Arrays.copyOf(data, data.length * 2);
+            E[] tmp = (E[]) new Object[data.length * 2];
+            int first = offset & mask;
+            System.arraycopy(data, first, tmp, 0, data.length - first);
+            System.arraycopy(data, 0, tmp, data.length - first, first);
+            data = tmp;
+            offset = 0;
             mask = data.length - 1;
             return data.length;
         }
@@ -202,27 +210,39 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
     // Table whose capacity is unbounded.
     private static final class Unbounded<E> {
 
+        private Bounded<E>[] data;
+        private int length;
+
         public Unbounded(Bounded bounded) { // Empty table. 
+            data = (Bounded<E>[]) new Bounded[]{bounded};
+            length = 1;
         }
 
         public E get(int index) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        public int upsize() { // Returns new capacity.
-            return 0;
-        }
-
-        public int downsize() { // Returns new capacity.
-            return 0;
+            return data[index >> BOUNDED_CAPACITY_BITS].get(index);
         }
 
         public E set(int index, E element) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            return data[index >> BOUNDED_CAPACITY_BITS].set(index, element);
         }
 
+        // Called only if size >= BOUNDED_CAPACITY
         public void add(int index, E element, int size) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            int i = index >> BOUNDED_CAPACITY_BITS;
+            int s = size >> BOUNDED_CAPACITY_BITS;
+            for (int j = s; j > i; j--) {
+                data[j].offset--; // Full shift right.
+                data[j].set(0, data[j - 1].get(BOUNDED_CAPACITY_MASK));
+            }
+            Bounded<E> bounded = data[i];
+            int j = index & BOUNDED_CAPACITY_MASK;
+            if (s == i) { // Insertion in last bounded table.
+                bounded.add(j, element, size & BOUNDED_CAPACITY_MASK);
+            } else { // Bounded table at full capacity.
+                E first = bounded.get(0); // Keep first (overwritten by insertion at full capacity).
+                bounded.add(j, element, BOUNDED_CAPACITY);
+                if (j != 0) bounded.set(0, first);
+            }
         }
 
         public E remove(int index, int size) {
@@ -230,7 +250,21 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
         }
 
         public boolean add(E element, int size) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            data[size >> BOUNDED_CAPACITY_BITS].add(element, size & BOUNDED_CAPACITY_MASK);
+            return true;
+        }
+
+        public int upsize() { // Returns new capacity.
+            if (length >= data.length) {
+                data = Arrays.copyOf(data, data.length * 2);
+            }
+            data[length++] = new Bounded<E>(BOUNDED_CAPACITY);
+            return length << BOUNDED_CAPACITY_BITS;
+        }
+
+        public int downsize() { // Returns new capacity.
+            data[--length] = null;
+            return length << BOUNDED_CAPACITY_BITS;
         }
     }
 
