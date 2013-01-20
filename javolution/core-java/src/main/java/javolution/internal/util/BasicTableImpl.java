@@ -236,7 +236,7 @@ public final class BasicTableImpl<E> extends AbstractTable<E> {
             }
             Bounded<E> bounded = data[i];
             int j = index & BOUNDED_CAPACITY_MASK;
-            if (s == i) { // Insertion in last bounded table.
+            if (s == i) { // Insertion in last bounded table (not full capacity).
                 bounded.add(j, element, size & BOUNDED_CAPACITY_MASK);
             } else { // Bounded table at full capacity.
                 E first = bounded.get(0); // Keep first (overwritten by insertion at full capacity).
