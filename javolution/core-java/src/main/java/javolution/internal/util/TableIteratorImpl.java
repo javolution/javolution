@@ -26,8 +26,6 @@ public final class TableIteratorImpl<E> implements ListIterator<E> {
     private int end;
 
     public TableIteratorImpl(AbstractTable<E> that, int index) {
-        if ((index < 0) || (index > that.size()))
-            throw new IndexOutOfBoundsException();
         this.that = that;
         this.nextIndex = index;
         this.end = that.size();

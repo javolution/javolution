@@ -17,6 +17,9 @@ import javolution.util.FastTable;
 
 /**
  * A shared view over a table allowing concurrent modifications.
+ * Closure-based iterations use local table copies to avoid being 
+ * impacted by concurrent modifications and not to block concurrent 
+ * writes while iterating.
  */
 public final class SharedTableImpl<E> extends AbstractTable<E> {
 
@@ -24,6 +27,13 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
 
     public SharedTableImpl(AbstractTable<E> that) {
         this.that = that;
+    }
+
+    @Override
+    public void clear() {
+        synchronized (that) {
+            that.clear();
+        }
     }
 
     @Override
@@ -61,10 +71,16 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
         }
     }
 
-    // 
-    // Overrides methods impacted.
+    @Override
+    public SharedTableImpl<E> copy() {
+        synchronized (that) {
+            return new SharedTableImpl<E>(that.copy());
+        }
+    }
+
     //
-    
+    // Non-abstract methods should forwards to actual table (unless default implementation is ok).
+    //
     @Override
     public E getFirst() {
         synchronized (that) {
@@ -143,24 +159,31 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public boolean removeLastOccurrence(Object obj) {
-        synchronized (that) {
-            return that.removeLastOccurrence((E) obj);
-        }
-    }
-
-    @Override
     public <R> FastTable<R> forEach(Functor<E, R> functor) {
+        final FastTableImpl copy = new FastTableImpl();
         synchronized (that) {
-            return that.forEach(functor);
+            that.doWhile(new Predicate<E>() {
+                public Boolean evaluate(E param) {
+                    copy.addLast(that);
+                    return true;
+                }
+            });
         }
+        return copy.forEach(functor);
     }
 
     @Override
     public void doWhile(Predicate<E> predicate) {
+        final FastTableImpl copy = new FastTableImpl();
         synchronized (that) {
-            that.doWhile(predicate);
+            that.doWhile(new Predicate<E>() {
+                public Boolean evaluate(E param) {
+                    copy.addLast(that);
+                    return true;
+                }
+            });
         }
+        copy.doWhile(predicate);
     }
 
     @Override
@@ -216,12 +239,4 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
     public FastComparator<E> comparator() {
         return that.comparator();
     }
-
-    @Override
-    public SharedTableImpl<E> copy() {
-        synchronized (that) {
-            return new SharedTableImpl<E>(that.copy());
-        }
-    }
-
 }

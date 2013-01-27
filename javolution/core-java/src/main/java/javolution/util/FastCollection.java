@@ -52,7 +52,7 @@ import javolution.text.TextFormat;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@StackSafe(initialization=false)
+@StackSafe(initialization = false)
 @Format(text = FastCollection.PlainText.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
@@ -137,11 +137,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public boolean retainAll(final Predicate<E> predicate) {
         return removeAll(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 return !predicate.evaluate(param);
             }
-
         });
     }
 
@@ -151,11 +149,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public FastCollection<E> findAll(final Predicate<E> predicate) {
         return forEach(new Functor<E, E>() {
-
             public E evaluate(E param) {
                 return predicate.evaluate(param) ? param : null;
             }
-
         });
     }
 
@@ -165,7 +161,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public E findFirst(final Predicate<E> predicate) {
         final Object[] found = new Object[1];
         doWhile(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 if (predicate.evaluate(param)) {
                     found[0] = param;
@@ -173,7 +168,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                 }
                 return true;
             }
-
         });
         return (E) found[0];
     }
@@ -181,13 +175,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /***************************************************************************
      * Collections operations.
      */
-
-   /**
+    /**
      * Returns the comparator used by the collection to perform element 
      * comparison (or sorting). 
      */
     public FastComparator<E> comparator() {
-        return (FastComparator<E>) FastComparator.DEFAULT;    
+        return (FastComparator<E>) FastComparator.DEFAULT;
     }
 
     /**
@@ -196,12 +189,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public int size() {
         final int[] count = new int[1];
         this.doWhile(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 count[0]++;
                 return true;
             }
-
         });
         return count[0];
     }
@@ -233,6 +224,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         final boolean[] found = new boolean[]{false};
         return removeAll(new Predicate<E>() {
             FastComparator cmp = comparator();
+
             public Boolean evaluate(E param) {
                 if (!found[0] && (cmp.areEqual(element, param))) {
                     found[0] = true;
@@ -240,7 +232,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                 }
                 return false;
             }
-
         });
     }
 
@@ -251,11 +242,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public void clear() {
         removeAll(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 return true;
             }
-
         });
     }
 
@@ -280,7 +269,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public boolean contains(final Object element) {
         final boolean[] found = new boolean[]{false};
         this.doWhile(new Predicate<E>() {
-            FastComparator cmp = comparator();  
+            FastComparator cmp = comparator();
+
             public Boolean evaluate(E param) {
                 if (cmp.areEqual(element, param)) {
                     found[0] = true;
@@ -288,7 +278,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                 }
                 return true;
             }
-
         });
         return found[0];
     }
@@ -319,14 +308,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     private boolean addAllFast(FastCollection that) {
         final boolean[] modified = new boolean[]{false};
         that.doWhile(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 if (add(param)) {
                     modified[0] = true;
                 }
                 return true;
             }
-
         });
         return modified[0];
     }
@@ -352,7 +339,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     private boolean containsAllFast(final FastCollection<E> that) {
         final boolean[] containsAll = new boolean[]{true};
         that.doWhile(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 if (!contains(param)) {
                     containsAll[0] = false;
@@ -360,7 +346,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                 }
                 return true;
             }
-
         });
         return containsAll[0];
     }
@@ -376,11 +361,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public boolean removeAll(final Collection<?> that) {
         return this.removeAll(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 return that.contains(param);
             }
-
         });
     }
 
@@ -394,11 +377,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public boolean retainAll(final Collection<?> that) {
         return this.retainAll(new Predicate<E>() {
-
             public Boolean evaluate(E param) {
                 return that.contains(param);
             }
-
         });
     }
 
@@ -433,7 +414,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         final T[][] result = (T[][]) new Object[1][];
         final int[] size = new int[1];
         doWhile(new Predicate<E>() { // Synchronized if Shared instance.
-
             int i;
 
             { // Instance initializer.
@@ -447,7 +427,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                 result[0][i++] = (T) param;
                 return true;
             }
-
         });
         if (result[0].length > size[0]) {
             result[0][size[0]] = null; // As per Collection contract.
@@ -489,13 +468,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
             if (!(obj instanceof Set)) return false;
             Set that = (Set) obj;
             if (this.size() != that.size()) return false;
-            return (this.usingComparator((FastComparator<E>)FastComparator.DEFAULT).containsAll(that));
+            return (this.usingComparator((FastComparator<E>) FastComparator.DEFAULT).containsAll(that));
         } else if (this instanceof List) {
             final List that = (List) obj;
             if (this.size() != that.size()) return false;
             final boolean[] areEqual = new boolean[]{true};
             this.doWhile(new Predicate<E>() {
-
                 Iterator<E> it = that.iterator();
 
                 public Boolean evaluate(E param) {
@@ -505,7 +483,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                     areEqual[0] = false;
                     return false; // Exits.
                 }
-
             });
             return areEqual[0];
         } else {
@@ -533,23 +510,19 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         final int[] hash = new int[1];
         if (this instanceof Set) {
             this.doWhile(new Predicate<E>() {
-
                 public Boolean evaluate(E param) {
                     hash[0] += ((param == null) ? 0 : param.hashCode());
                     return true;
                 }
-
             });
             return hash[0];
         } else if (this instanceof List) {
             hash[0] = 1;
             this.doWhile(new Predicate<E>() {
-
                 public Boolean evaluate(E param) {
                     hash[0] = 31 * hash[0] + ((param == null) ? 0 : param.hashCode());
                     return true;
                 }
-
             });
             return hash[0];
         } else {
@@ -568,10 +541,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         }
 
         @Override
-        public Appendable format(FastCollection fc, final Appendable dest) throws IOException {
-            dest.append('{');
-            fc.doWhile(new  Predicate<Object>() {
-
+        public Appendable format(final FastCollection fc, final Appendable dest) throws IOException {
+            dest.append('[');
+            fc.doWhile(new Predicate<Object>() {
                 boolean isFirst = true;
 
                 public Boolean evaluate(Object param) {
@@ -592,11 +564,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
                         throw new RuntimeException(error);
                     }
                 }
-
             });
-            return dest.append('}');
+            return dest.append(']');
         }
-
     }
-
 }

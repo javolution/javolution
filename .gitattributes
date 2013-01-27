@@ -288,8 +288,8 @@ javolution/core-java/src/main/java/javolution/internal/osgi/OSGiImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceReferenceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/text/TextContextImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/BasicTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/CustomComparatorTableImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/util/FastTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/NoDuplicateTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/ReverseTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/SharedTableImpl.java -text
@@ -376,7 +376,7 @@ javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
 javolution/core-java/src/main/javadoc/overview.html -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
-javolution/core-java/src/test/java/javolution/util/Performeter.java -text
+javolution/core-java/src/test/java/javolution/util/Perfometer.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text

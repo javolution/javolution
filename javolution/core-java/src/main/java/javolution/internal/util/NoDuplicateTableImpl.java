@@ -8,8 +8,14 @@
  */
 package javolution.internal.util;
 
+import java.util.Collection;
+import java.util.Iterator;
+import javolution.lang.Functor;
+import javolution.lang.Predicate;
 import javolution.util.AbstractTable;
+import javolution.util.FastCollection;
 import javolution.util.FastComparator;
+import javolution.util.FastTable;
 
 /**
  * A view for which elements are not added if already present.
@@ -49,22 +55,128 @@ public final class NoDuplicateTableImpl<E> extends AbstractTable<E> {
     }
 
     @Override
-    public FastComparator<E> comparator() {
-        return that.comparator();
-    }
-
-    @Override
     public NoDuplicateTableImpl<E> copy() {
         return new NoDuplicateTableImpl<E>(that.copy());
     }
 
-    // 
-    // Overrides methods impacted.
     //
-    
+    // Non-abstract methods should forward to the actual table (unless impacted).
+    //
     @Override
-    public boolean add(E element) { // Overriden to return false.
+    public void clear() {
+        that.clear();
+    }
+
+    @Override
+    public E getFirst() {
+        return that.getFirst();
+    }
+
+    @Override
+    public E getLast() {
+        return that.getLast();
+    }
+
+    @Override
+    public boolean add(E element) {
         if (indexOf(element) >= 0) return false; // Already present.
         return that.add(element);
+    }
+
+    @Override
+    public void addFirst(E element) {
+        if (indexOf(element) >= 0) return; // Already present.
+        that.addFirst(element);
+    }
+
+    @Override
+    public void addLast(E element) {
+        if (indexOf(element) >= 0) return; // Already present.
+        that.addLast(element);
+    }
+
+    @Override
+    public E removeFirst() {
+        return that.removeFirst();
+    }
+
+    @Override
+    public E removeLast() {
+        return that.removeLast();
+    }
+
+    @Override
+    public E pollFirst() {
+        return that.pollFirst();
+    }
+
+    @Override
+    public E pollLast() {
+        return that.pollLast();
+    }
+
+    @Override
+    public E peekFirst() {
+        return that.peekFirst();
+    }
+
+    @Override
+    public E peekLast() {
+        return that.peekLast();
+    }
+
+    @Override
+    public <R> FastTable<R> forEach(Functor<E, R> functor) {
+        return that.forEach(functor);
+    }
+
+    @Override
+    public void doWhile(Predicate<E> predicate) {
+        that.doWhile(predicate);
+    }
+
+    @Override
+    public boolean removeAll(Predicate<E> predicate) {
+        return that.removeAll(predicate);
+    }
+
+    @Override
+    public boolean addAll(final Collection<? extends E> elements) {
+        return super.addAll(elements);
+    }
+
+    @Override
+    public boolean addAll(final int index, final Collection<? extends E> elements) {
+        return super.addAll(index, elements);
+    }
+
+    @Override
+    public boolean contains(E element) {
+        return that.contains(element);
+    }
+
+    @Override
+    public boolean remove(E element) {
+        return that.remove(element);
+    }
+
+    @Override
+    public int indexOf(E element) {
+        return that.indexOf(element);
+    }
+
+    @Override
+    public int lastIndexOf(E element) {
+        return that.lastIndexOf(element);
+    }
+
+    @Override
+    public void sort() {
+        that.sort();
+    }
+
+    @Override
+    public FastComparator<E> comparator() {
+        return that.comparator();
     }
 }
