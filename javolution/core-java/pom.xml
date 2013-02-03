@@ -69,6 +69,22 @@
             </plugin>
 
             <!-- ======================================================= -->
+            <!--     Custom Javadoc plugin (for reports)                 -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.javolution</groupId>
+                <artifactId>colapi</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>colorize</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+  
+            <!-- ======================================================= -->
             <!--     Javadoc packaging  (for IDE)                        -->
             <!-- ======================================================= -->  
             <plugin>
@@ -89,15 +105,6 @@
                 </executions>
             </plugin>
             
-            <!-- ======================================================= -->
-            <!--     Custom Javadoc plugin (for reports)                 -->
-            <!-- ======================================================= -->
-            <plugin>
-                <groupId>org.javolution</groupId>
-                <artifactId>colapi</artifactId>
-                <version>2.0</version>
-            </plugin>
-  
         </plugins>
     </build>
 </project>
