@@ -192,23 +192,26 @@
                                 That being accomplished through:
                                 <UL>
                                     <LI> High <A HREF="src/site/doc/benchmark_java.html">performance</A> and time-deterministic (real-time)
-                                        <A HREF="target/site/apidocs/javolution/util/package-summary.html#package_description">util</A> /
-                                        <A HREF="target/site/apidocs/javolution/lang/package-summary.html#package_description">lang</A> /
-                                        <A HREF="target/site/apidocs/javolution/text/package-summary.html#package_description">text</A> /
-                                        <A HREF="target/site/apidocs/javolution/io/package-summary.html#package_description">io</A> /
-                                        <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">xml</A> base classes.</LI>
-                                    <LI> <A HREF="target/site/apidocs/javolution/context/package-summary.html#package_description">Context</A> programming
+                                        <A HREF="core-java/target/apidocs/javolution/util/package-summary.html#package_description">util</A> /
+                                        <A HREF="core-java/target/apidocs/javolution/lang/package-summary.html#package_description">lang</A> /
+                                        <A HREF="core-java/target/apidocs/javolution/text/package-summary.html#package_description">text</A> /
+                                        <A HREF="core-java/target/apidocs/javolution/io/package-summary.html#package_description">io</A> /
+                                        <A HREF="core-java/target/apidocs/javolution/xml/package-summary.html#package_description">xml</A> base classes.
+                                        <B><I>Javolution</I></B> is the first library to provide fractal-based implementation of common 
+                                        classes <IMG SRC="src/site/css/img/new.gif" />. For small size the performance is on-par with standard implementations, but for larger size 
+                                        the difference is significant.</LI>
+                                    <LI> <A HREF="core-java/target/apidocs/javolution/context/package-summary.html#package_description">Context</A> programming
                                         in order to achieve true separation of concerns (logging, performance, etc).</LI>
-                                    <LI> A <A HREF="target/site/apidocs/javolution/testing/package-summary.html#package_description">testing</A> framework
+                                    <LI> A <A HREF="core-java/target/apidocs/javolution/testing/package-summary.html#package_description">testing</A> framework
                                         addressing not only unit tests but also performance and regression tests as well.</LI>
                                     <LI> Straightforward and low-level parallel computing capabilities
-                                        with <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
-                                    <LI> <A HREF="target/site/apidocs/javolution/io/Struct.html">Struct</A> and
-                                        <A HREF="target/site/apidocs/javolution/io/Union.html">Union</A> base classes for
+                                        with <A HREF="core-java/target/apidocs/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
+                                    <LI> <A HREF="core-java/target/apidocs/javolution/io/Struct.html">Struct</A> and
+                                        <A HREF="core-java/target/apidocs/javolution/io/Union.html">Union</A> base classes for
                                         direct interfacing with native applications (e.g. C/C++).</LI>
-                                    <LI> World's fastest and first hard real-time <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
+                                    <LI> World's fastest and first hard real-time <A HREF="core-java/target/apidocs/javolution/xml/package-summary.html#package_description">XML marshalling/unmarshalling</A>
                                         facility.</LI>
-                                    <LI> Simple yet flexible <A HREF="target/site/apidocs/javolution/lang/Configurable.html">configuration</A> management
+                                    <LI> Simple yet flexible <A HREF="core-java/target/apidocs/javolution/lang/Configurable.html">configuration</A> management
                                         of your application.</LI>
                                     <LI> <IMG SRC="src/site/css/img/new.gif" /> <B><I>Javolution</I></B> makes it easy to port <b>any</b> Java application 
                                          to C++ for native compilation (maven based) or to write Java-Like code directly in C++ 
@@ -275,17 +278,17 @@
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
                                         are simple to use, even simpler than most JDK classes.
                                         You don't need to guess the capacity of a
-                                        <A HREF="target/site/apidocs/javolution/text/TextBuilder.html">TextBuilder</A>,
-                                        <A HREF="target/site/apidocs/javolution/util/FastTable.html">FastTable</A> or a
-                                        <A HREF="target/site/apidocs/javolution/util/FastMap.html">FastMap</A>, their
+                                        <A HREF="core-java/target/apidocs/javolution/text/TextBuilder.html">TextBuilder</A>,
+                                        <A HREF="core-java/target/apidocs/javolution/util/FastTable.html">FastTable</A> or a
+                                        <A HREF="core-java/target/apidocs/javolution/util/FastMap.html">FastMap</A>, their
                                         size expand gently without ever incurring expensive resize/copy or rehash
                                         operations (unlike <code>StringBuilder</code>, <code>ArrayList</code>  or <code>HashMap</code>).
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body">Developers may achieve true separation of
-                                        concerns (e.g. logging, configuration) through <A HREF="target/site/apidocs/javolution/context/package-summary.html#package_description">Context Programming</A>
-                                        or by using classes such as <A HREF="target/site/apidocs/javolution/lang/Configurable.html">Configurable</A>.</LI>
+                                        concerns (e.g. logging, configuration) through <A HREF="core-java/target/apidocs/javolution/context/package-summary.html#package_description">Context Programming</A>
+                                        or by using classes such as <A HREF="core-java/target/apidocs/javolution/lang/Configurable.html">Configurable</A>.</LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> classes
-                                        are fast, very fast (e.g. <A HREF="target/site/apidocs/javolution/text/Text.html">Text</A>
+                                        are fast, very fast (e.g. <A HREF="core-java/target/apidocs/javolution/text/Text.html">Text</A>
                                         insertion/deletion in <code>O[Log(n)]</code> instead of <code>O[n]</code> for standard
                                         <code>StringBuffer/StringBuilder</code>).
                                         <BR> </LI>
@@ -297,29 +300,29 @@
                                         memory leak when used with Java Real-Time extension).
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> makes it easy for
-                                        <A HREF="target/site/apidocs/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
+                                        <A HREF="core-java/target/apidocs/javolution/context/ConcurrentContext.html">concurrent algorithms</A>
                                         to take advantage of multi-processors systems.
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>'s real-time collection classes
-                                        (<A HREF="target/site/apidocs/javolution/util/FastMap.html">map</A>,
-                                        <A HREF="target/site/apidocs/javolution/util/FastList.html">list</A>,
-                                        <A HREF="target/site/apidocs/javolution/util/FastTable.html">table</A> and
-                                        <A HREF="target/site/apidocs/javolution/util/FastSet.html">set</A>)
+                                        (<A HREF="core-java/target/apidocs/javolution/util/FastMap.html">map</A>,
+                                        <A HREF="core-java/target/apidocs/javolution/util/FastList.html">list</A>,
+                                        <A HREF="core-java/target/apidocs/javolution/util/FastTable.html">table</A> and
+                                        <A HREF="core-java/target/apidocs/javolution/util/FastSet.html">set</A>)
                                         can be used in place of most standard collection classes and provide
-                                        numerous additional <A HREF="target/site/apidocs/javolution/util/package-summary.html#package_description">capabilities</A>.<BR> </LI>
+                                        numerous additional <A HREF="core-java/target/apidocs/javolution/util/package-summary.html#package_description">capabilities</A>.<BR> </LI>
                                     <LI CLASS="simplespacer_body">Any Java class can be
                                         serialized/deserialized in
-                                        <A HREF="target/site/apidocs/javolution/xml/XMLFormat.html">XML format</A> <b>in any
+                                        <A HREF="core-java/target/apidocs/javolution/xml/XMLFormat.html">XML format</A> <b>in any
                                             form you may want</b>, also no need to implement Serializable or for the
                                         platform to support serialization</LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>
-                                        provides <A HREF="target/site/apidocs/javolution/io/Struct.html">Struct</A> and
-                                        <A HREF="target/site/apidocs/javolution/io/Union.html">Union</A> classes for
+                                        provides <A HREF="core-java/target/apidocs/javolution/io/Struct.html">Struct</A> and
+                                        <A HREF="core-java/target/apidocs/javolution/io/Union.html">Union</A> classes for
                                         direct interoperability with C/C++ applications.
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body">Most <B><I>Javolution</I></B> classes are <B>stateless</B> (state passed through parameters to methods or 
-                                         available through <A HREF="target/site/apidocs/javolution/context/package-summary.html#package_description">context</A> classes).
-                                        There is no static instance, orchestration classes (the high level classes holding the state) are typically created on-demand and <A HREF="target/site/apidocs/javolution/lang/Recyclable.html">recyclable</A>.
+                                         available through <A HREF="core-java/target/apidocs/javolution/context/package-summary.html#package_description">context</A> classes).
+                                        There is no static instance, orchestration classes (the high level classes holding the state) are typically created on-demand and <A HREF="core-java/target/apidocs/javolution/lang/Recyclable.html">recyclable</A>.
                                         This design approach makes Javolution and any product based on Javolution highly parrallelizable with no need for synchronization.
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> can be either a <B>Pure
@@ -337,11 +340,11 @@
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - September 16, 2012</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - February 3, 2013</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
-                                <DIV ALIGN="center"><A HREF="target/site/apidocs/index.html"><IMG HEIGHT="51"
+                                <DIV ALIGN="center"><A HREF="core-java/target/apidocs/index.html"><IMG HEIGHT="51"
                                                                                                   BORDER="0"
                                                                                                   SRC="src/site/css/img/browseapi.jpg"
                                                                                                   WIDTH="198"></A>
@@ -556,7 +559,7 @@
                                 and <A HREF="http://www.netbeans.org/">NetBeans</A> <BR>
                                 <SPAN CLASS="style13">Plug-In:</SPAN>
                                 <A HREF="http://javolution.org/javoclipse-1_0_48.zip">JavoClipse (v1.0.48)</A>
-                                - Eclipse plug-in to generate <A HREF="target/site/apidocs/javolution/xml/package-summary.html#package_description">xml formats</A>
+                                - Eclipse plug-in to generate <A HREF="core-java/target/apidocs/javolution/xml/package-summary.html#package_description">xml formats</A>
                                 from source code.<BR>
                                 <I>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     (questions/comments can be sent directly to the javoclipse
@@ -740,6 +743,10 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
+                                    <LI CLASS="simplespacer_body"><B>Februar 3, 2013: Javolution 6.0.0-SNAPSHOT</B><BR>
+                                        First glimpse to the first fractal collection (FastTable), others fractal 
+                                        classes (TextBuilder, FastMap) coming soon...
+                                    </LI>
                                     <LI CLASS="simplespacer_body"><B>September 16, 2012: Javolution 6.0.0-SNAPSHOT</B><BR>
                                         This release makes it easy for Java developers to translate their Java code to C++ 
                                         or to write Java-Like C++ code without knowledge of the C++ intricacies. 
@@ -758,18 +765,18 @@
                                     <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
                                         Major Relase! Here are the most important changes:<UL>
                                             <LI> Separation of concerns: Two new
-                                                <A HREF="target/site/apidocs/javolution/context/Context.html">contexts</A> have been added, the
-                                                <A HREF="target/site/apidocs/javolution/context/AllocatorContext.html">AllocatorContext</A>
-                                                and the <A HREF="target/site/apidocs/javolution/context/SecurityContext.html">SecurityContext</A>.</LI>
+                                                <A HREF="core-java/target/apidocs/javolution/context/Context.html">contexts</A> have been added, the
+                                                <A HREF="core-java/target/apidocs/javolution/context/AllocatorContext.html">AllocatorContext</A>
+                                                and the <A HREF="core-java/target/apidocs/javolution/context/SecurityContext.html">SecurityContext</A>.</LI>
                                             <LI> The <code>PoolContext</code> (too generic) has been replaced by the
-                                                <A HREF="target/site/apidocs/javolution/context/StackContext.html">StackContext</A> whose
+                                                <A HREF="core-java/target/apidocs/javolution/context/StackContext.html">StackContext</A> whose
                                                 implementation can be based on thread-local queues (default) or <code>ScopedMemory</code> (RTSJ).</LI>
                                             <LI> The <code>RealtimeObject</code> base class is superceeded by
-                                                the <A HREF="target/site/apidocs/javolution/lang/Realtime.html">Realtime</A> interface.</LI>
-                                            <LI> New <A HREF="target/site/apidocs/javolution/lang/ValueType.html">ValueType</A> interface for
+                                                the <A HREF="core-java/target/apidocs/javolution/lang/Realtime.html">Realtime</A> interface.</LI>
+                                            <LI> New <A HREF="core-java/target/apidocs/javolution/lang/ValueType.html">ValueType</A> interface for
                                                 immutable objects which can be referenced by copy and can always be allocated
                                                 on the "stack"!</LI>
-                                            <LI> New <A HREF="target/site/apidocs/javolution/context/ArrayFactory.html">ArrayFactory</A> to
+                                            <LI> New <A HREF="core-java/target/apidocs/javolution/context/ArrayFactory.html">ArrayFactory</A> to
                                                 allocates/recycle variable sizes arrays. "Stack" allocation is independent
                                                 from the array's size and significantly faster than "heap" allocation.</LI>
                                         </UL>
@@ -784,7 +791,7 @@
                                         the RTSJ Memory Model. If any container (collection, context, etc.)
                                         is allocated in a non-heap memory area and its capacity increases,
                                         the extension part is allocated in the same memory area
-                                        (see also <A HREF="target/site/apidocs/javolution/lang/Reusable.html">Reusable</A>) [3.7.0] <BR>
+                                        (see also <A HREF="core-java/target/apidocs/javolution/lang/Reusable.html">Reusable</A>) [3.7.0] <BR>
                                     </LI>
 
                                     <LI CLASS="simplespacer_body"><B> September 26, 2005: Javolution 3.6 </B><BR>
@@ -811,7 +818,7 @@
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : January 7, 2013<BR>
+                                Revision      : February 3, 2013<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
