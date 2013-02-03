@@ -16,20 +16,20 @@ import org.osgi.framework.ServiceRegistration;
 /**
  *  Holds minimalist service registration implementation.
  */
-public class ServiceRegistrationImpl implements ServiceRegistration {
+public class ServiceRegistrationImpl<S> implements ServiceRegistration<S> {
     
    /////////////////////////////////////////////////////////////////////////////
    // Converted from ServiceRegistrationImpl.hpp (C++)
    //
 
-   ServiceReferenceImpl serviceReference;
+   ServiceReferenceImpl<S> serviceReference;
 
-    public ServiceRegistrationImpl(ServiceReferenceImpl serviceReference) {
+    public ServiceRegistrationImpl(ServiceReferenceImpl<S> serviceReference) {
        this.serviceReference = serviceReference;
     }
 
     @Override
-    public ServiceReference getReference() {
+    public ServiceReference<S> getReference() {
         return serviceReference;
     }
 
@@ -46,7 +46,7 @@ public class ServiceRegistrationImpl implements ServiceRegistration {
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void setProperties(Dictionary dctnr) {
+    public void setProperties(Dictionary<String, ? > dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

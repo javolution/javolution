@@ -8,19 +8,7 @@
  */
 package javolution.xml;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javolution.context.LogContext;
-import javolution.text.CharArray;
-import javolution.text.TextBuilder;
-import javolution.text.TextContext;
-import javolution.text.TextFormat;
 import javolution.util.FastMap;
-import javolution.xml.XMLFormat.InputElement;
-import javolution.xml.XMLFormat.OutputElement;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
 import javolution.xml.stream.XMLStreamWriter;
@@ -124,12 +112,12 @@ public class XMLBinding implements XMLSerializable {
     /**
      * Holds the class to alias (QName) mapping.
      */
-    private final FastMap _classToAlias = new FastMap();
+    private final FastMap<Class<?>, QName> _classToAlias = new FastMap<Class<?>, QName>();
 
     /**
      * Holds the alias (QName) to class mapping.
      */
-    private final FastMap _aliasToClass = new FastMap();
+    private final FastMap<QName, Class<?>> _aliasToClass = new FastMap<QName, Class<?>>();
 
     /**
      * Default constructor.
@@ -143,7 +131,7 @@ public class XMLBinding implements XMLSerializable {
      * @param cls the class being aliased.
      * @param qName the qualified name.
      */
-    public void setAlias(Class cls, QName qName) {
+    public void setAlias(Class<?> cls, QName qName) {
         _classToAlias.put(cls, qName);
         _aliasToClass.put(qName, cls);
     }
@@ -155,7 +143,7 @@ public class XMLBinding implements XMLSerializable {
      * @param cls the class being aliased.
      * @param alias the alias for the specified class.
      */
-    public final void setAlias(Class cls, String alias) {
+    public final void setAlias(Class<?> cls, String alias) {
         setAlias(cls, QName.valueOf(alias));
     }
 
@@ -188,10 +176,8 @@ public class XMLBinding implements XMLSerializable {
      * 
      * @param forClass the class for which the XML format is returned.
      * @return the XML format for the specified class (never <code>null</code>).
-     * @throws XMLStreamException if there is no format for the
-     *         specified class.
      */
-    protected XMLFormat getFormat(Class forClass) throws XMLStreamException  {
+    protected  XMLFormat<?> getFormat(Class<?> forClass) throws XMLStreamException  {
          return XMLContext.getFormat(forClass);
     }
 
@@ -214,7 +200,7 @@ public class XMLBinding implements XMLSerializable {
      * @return the corresponding class.
      * @throws XMLStreamException 
      */
-    protected Class readClass(XMLStreamReader reader, boolean useAttributes)
+    protected Class<?> readClass(XMLStreamReader reader, boolean useAttributes)
             throws XMLStreamException {
         try {
             QName classQName;
@@ -233,12 +219,12 @@ public class XMLBinding implements XMLSerializable {
             }
 
             // Searches aliases with namespace URI.
-            Class cls = (Class) _aliasToClass.get(classQName);
+            Class<?> cls = _aliasToClass.get(classQName);
             if (cls != null)
                 return cls;
 
             // Searches aliases without namespace URI.
-            cls = (Class) _aliasToClass.get(QName.valueOf(classQName.getLocalName()));
+            cls = _aliasToClass.get(QName.valueOf(classQName.getLocalName()));
             if (cls != null)
                 return cls;
 
@@ -272,7 +258,7 @@ public class XMLBinding implements XMLSerializable {
      *        specified by the user then attributes have to be used).
      * @throws XMLStreamException 
      */
-    protected void writeClass(Class cls, XMLStreamWriter writer,
+    protected void writeClass(Class<?> cls, XMLStreamWriter writer,
             boolean useAttributes) throws XMLStreamException {
         QName qName = (QName) _classToAlias.get(cls);
         String name = qName != null ? qName.toString() : cls.getName();
@@ -280,11 +266,10 @@ public class XMLBinding implements XMLSerializable {
             if (_classAttribute == null)
                 return;
             if (_classAttribute.getNamespaceURI() == null) {
-                writer.writeAttribute(_classAttribute.getLocalName(),
-                        QName.j2meToCharSeq(name));
+                writer.writeAttribute(_classAttribute.getLocalName(), name);
             } else {
                 writer.writeAttribute(_classAttribute.getNamespaceURI(),
-                        _classAttribute.getLocalName(), QName.j2meToCharSeq(name));
+                        _classAttribute.getLocalName(), name);
             }
         } else {
             if (qName != null) {
@@ -294,7 +279,7 @@ public class XMLBinding implements XMLSerializable {
             		writer.writeStartElement(qName.getNamespaceURI(), qName.getLocalName());
             	}
             } else {
-                writer.writeStartElement(QName.j2meToCharSeq(name));
+                writer.writeStartElement(name);
             }
         }
     }
@@ -305,4 +290,5 @@ public class XMLBinding implements XMLSerializable {
         _classToAlias.clear();
     }
 
+    private static final long serialVersionUID = 6611041662550083919L;
 }

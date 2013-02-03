@@ -14,7 +14,7 @@ import javolution.annotation.StackSafe;
  * A security permission associated to a specific class/action/instance. 
  * There are three levels of permission possible, at 
  * the class/category level, at the action level and at the instance level.
- * Any permission granted/revoked at the higer level is explicitly 
+ * Any permission granted/revoked at the higher level is explicitly 
  * granted/revoked at the lower level. The order in which the permission 
  * are granted/revoked is important. For example, it is possible to grant 
  * a permission at the class level, then to revoke it at the action or 
@@ -32,7 +32,7 @@ public class SecurityPermission<T> {
     /**
      * Holds the global permission for anything.
      */
-    public static final SecurityPermission<?> ALL = new SecurityPermission(null);
+    public static final SecurityPermission<Object> ALL = new SecurityPermission<Object>(null);
 
     private final Class<T> category;
 
@@ -119,7 +119,7 @@ public class SecurityPermission<T> {
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (!(obj instanceof SecurityPermission)) return false;
-        SecurityPermission that = (SecurityPermission) obj;
+        SecurityPermission<?> that = (SecurityPermission<?>) obj;
         if ((category == null) && (that.category != null)) return false;
         if ((category != null) && (!category.equals(that.category)))
             return false;

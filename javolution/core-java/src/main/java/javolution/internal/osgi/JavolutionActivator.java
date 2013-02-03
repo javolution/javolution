@@ -43,21 +43,21 @@ import org.osgi.util.tracker.ServiceTracker;
 public class JavolutionActivator implements BundleActivator {
     
     public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER 
-            = new ContextTracker(ConcurrentContext.class, ConcurrentContextImpl.class);
+            = new ContextTracker<ConcurrentContext>(ConcurrentContext.class, ConcurrentContextImpl.class);
     public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER 
-            = new ContextTracker(HeapContext.class, HeapContextImpl.class);
+            = new ContextTracker<HeapContext>(HeapContext.class, HeapContextImpl.class);
     public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER 
-            = new ContextTracker(LocalContext.class, LocalContextImpl.class);
+            = new ContextTracker<LocalContext>(LocalContext.class, LocalContextImpl.class);
     public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER 
-            = new ContextTracker(LogContext.class, LogContextImpl.class);
+            = new ContextTracker<LogContext>(LogContext.class, LogContextImpl.class);
     public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER 
-            = new ContextTracker(SecurityContext.class, SecurityContextImpl.class);
+            = new ContextTracker<SecurityContext>(SecurityContext.class, SecurityContextImpl.class);
     public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER 
-            = new ContextTracker(StackContext.class, StackContextImpl.class);
+            = new ContextTracker<StackContext>(StackContext.class, StackContextImpl.class);
     public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER 
-            = new ContextTracker(TextContext.class, TextContextImpl.class);
+            = new ContextTracker<TextContext>(TextContext.class, TextContextImpl.class);
     public final static ContextTracker<XMLContext> XML_CONTEXT_TRACKER 
-            = new ContextTracker(XMLContext.class, XMLContextImpl.class);
+            = new ContextTracker<XMLContext>(XMLContext.class, XMLContextImpl.class);
 
     private ServiceTracker<LogService, LogService> logServiceTracker;
     private static JavolutionActivator INSTANCE;
@@ -80,7 +80,7 @@ public class JavolutionActivator implements BundleActivator {
         Initializer.initializeLoadedClasses(JavolutionActivator.class.getClassLoader());
         
         // Tracks the OSGi log service
-        logServiceTracker = new ServiceTracker(bc, LogService.class.getName(), null);
+        logServiceTracker = new ServiceTracker<LogService, LogService>(bc, LogService.class.getName(), null);
         logServiceTracker.open();
         
         CONCURRENT_CONTEXT_TRACKER.activate(bc);

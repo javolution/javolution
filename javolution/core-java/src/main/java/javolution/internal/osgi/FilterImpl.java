@@ -36,8 +36,8 @@ class FilterImpl implements Filter{
     }
 
     @Override
-    public boolean match(ServiceReference reference) {
-        ServiceReferenceImpl sri = (ServiceReferenceImpl) reference;
+    public boolean match(ServiceReference<?> reference) {
+        ServiceReferenceImpl<?> sri = (ServiceReferenceImpl<?>) reference;
         return sri.serviceName.equals(className);
     }
 
@@ -50,15 +50,16 @@ class FilterImpl implements Filter{
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
-    public boolean match(Dictionary dctnr) {
+    public boolean match(Dictionary<String, ? > dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public boolean matchCase(Dictionary dctnr) {
+    public boolean matchCase(Dictionary<String, ? > dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    @Override
     public boolean matches(Map<String, ?> map) {
         throw new UnsupportedOperationException("Not supported yet.");
     }

@@ -24,7 +24,7 @@ import org.osgi.service.log.LogService;
  */
 public final class LogContextImpl extends LogContext {
 
-    private final FastMap properties = new FastMap();
+    private final FastMap<Object,Object> properties = new FastMap<Object, Object>();
 
     private Level level; // Null to use configurable LEVEL.
 

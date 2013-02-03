@@ -20,6 +20,10 @@ import javolution.lang.Predicate;
  * 
  * Note: This class implementation is frozen to avoid breaking up sub-classes
  *       relying upon the behavior of its non-abstract methods.
+ *       
+ * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 6.0.0, December 12, 2012
+ * @see FastTable
  */
 public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
@@ -142,6 +146,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     }
 
     /** See {@link FastTable#addAll(java.util.Collection) } */
+    @SuppressWarnings("unchecked")
     public boolean addAll(final Collection<? extends E> elements) {
         if (elements instanceof FastCollection) {
             ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
@@ -160,6 +165,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     }
 
     /** See {@link FastTable#addAll(int, java.util.Collection) } */
+    @SuppressWarnings("unchecked")
     public boolean addAll(final int index, final Collection<? extends E> elements) {
         if (elements instanceof FastCollection) {
             ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
@@ -221,6 +227,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     }
 
     /** See {@link FastTable#comparator() } */
+    @SuppressWarnings("unchecked")
     public FastComparator<E> comparator() {
         return (FastComparator<E>) FastComparator.DEFAULT;
     }

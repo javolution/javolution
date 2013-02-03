@@ -25,7 +25,7 @@ import javolution.util.FastMap;
  */
 public final class TextContextImpl extends TextContext {
 
-    private final FastMap<Class, TextFormat> formats = new FastMap();
+    private final FastMap<Class<?>, TextFormat<?>> formats = new FastMap<Class<?>, TextFormat<?>>();
 
     @Override
     protected TextContext inner() {
@@ -34,15 +34,18 @@ public final class TextContextImpl extends TextContext {
         return ctx;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected <T> TextFormat<T> getFormatInContext(Class<T> type) {
-        TextFormat tf = formats.get(type);
-        if (tf != null) return tf;
+        TextFormat<T> tf = (TextFormat<T>) formats.get(type);
+        if (tf != null)
+            return tf;
         Format format = type.getAnnotation(Format.class);
-        if ((format != null) && (format.text() != Format.UnsupportedTextFormat.class)) {
-            Class<? extends TextFormat> formatClass = format.text();
+        if ((format != null)
+                && (format.text() != Format.UnsupportedTextFormat.class)) {
+            Class<? extends TextFormat<?>> formatClass = format.text();
             try {
-                tf = formatClass.newInstance();
+                tf = (TextFormat<T>) formatClass.newInstance();
                 synchronized (formats) { // Required since possible concurrent use 
                     // (getFormatInContext is not a configuration method).
                     formats.put(type, tf);
@@ -53,7 +56,7 @@ public final class TextContextImpl extends TextContext {
             }
         }
         // Check predefined formats.
-        return PREDEFINED.get(type);
+        return (TextFormat<T>) PREDEFINED.get(type);
 
     }
 
@@ -65,12 +68,13 @@ public final class TextContextImpl extends TextContext {
     ////////////////////////
     // PREDEFINED FORMATS //
     ////////////////////////
-    private static final FastMap<Class, TextFormat> PREDEFINED = new FastMap();
+    private static final FastMap<Class<?>, TextFormat<?>> PREDEFINED = new FastMap<Class<?>, TextFormat<?>>();
 
     static {
         PREDEFINED.put(Boolean.class, new TextFormat<Boolean>() {
 
-            public Appendable format(Boolean obj, Appendable dest) throws IOException {
+            public Appendable format(Boolean obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.booleanValue(), dest);
             }
 
@@ -82,7 +86,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Character.class, new TextFormat<Character>() {
 
-            public Appendable format(Character obj, Appendable dest) throws IOException {
+            public Appendable format(Character obj, Appendable dest)
+                    throws IOException {
                 return dest.append(obj.charValue());
             }
 
@@ -94,7 +99,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Byte.class, new TextFormat<Byte>() {
 
-            public Appendable format(Byte obj, Appendable dest) throws IOException {
+            public Appendable format(Byte obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.byteValue(), dest);
             }
 
@@ -106,7 +112,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Short.class, new TextFormat<Short>() {
 
-            public Appendable format(Short obj, Appendable dest) throws IOException {
+            public Appendable format(Short obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.shortValue(), dest);
             }
 
@@ -118,7 +125,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Integer.class, new TextFormat<Integer>() {
 
-            public Appendable format(Integer obj, Appendable dest) throws IOException {
+            public Appendable format(Integer obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.intValue(), dest);
             }
 
@@ -130,7 +138,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Long.class, new TextFormat<Long>() {
 
-            public Appendable format(Long obj, Appendable dest) throws IOException {
+            public Appendable format(Long obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.longValue(), dest);
             }
 
@@ -142,7 +151,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Float.class, new TextFormat<Float>() {
 
-            public Appendable format(Float obj, Appendable dest) throws IOException {
+            public Appendable format(Float obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.floatValue(), dest);
             }
 
@@ -154,7 +164,8 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(Double.class, new TextFormat<Double>() {
 
-            public Appendable format(Double obj, Appendable dest) throws IOException {
+            public Appendable format(Double obj, Appendable dest)
+                    throws IOException {
                 return TypeFormat.format(obj.doubleValue(), dest);
             }
 
@@ -166,30 +177,34 @@ public final class TextContextImpl extends TextContext {
 
         PREDEFINED.put(String.class, new TextFormat<String>() {
 
-            public Appendable format(String obj, Appendable dest) throws IOException {
+            public Appendable format(String obj, Appendable dest)
+                    throws IOException {
                 return dest.append(obj);
             }
 
             public String parse(CharSequence csq, Cursor cursor) {
-                CharSequence tmp = csq.subSequence(cursor.getIndex(), csq.length());
+                CharSequence tmp = csq.subSequence(cursor.getIndex(),
+                        csq.length());
                 cursor.setIndex(csq.length());
                 return tmp.toString();
             }
 
         });
 
-        PREDEFINED.put(Class.class, new TextFormat<Class>() {
+        PREDEFINED.put(Class.class, new TextFormat<Class<?>>() {
 
-            public Appendable format(Class obj, Appendable dest) throws IOException {
+            public Appendable format(Class<?> obj, Appendable dest)
+                    throws IOException {
                 return dest.append(obj.getName());
             }
 
-            public Class parse(CharSequence csq, Cursor cursor) {
+            public Class<?> parse(CharSequence csq, Cursor cursor) {
                 CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
                 try {
                     return Class.forName(name.toString());
                 } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Class " + name + " Not Found");
+                    throw new IllegalArgumentException("Class " + name
+                            + " Not Found");
                 }
             }
 

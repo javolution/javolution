@@ -9,7 +9,6 @@
 package javolution.internal.util;
 
 import javolution.lang.Copyable;
-import javolution.text.TextBuilder;
 import javolution.util.AbstractTable;
 
 /**
@@ -21,6 +20,7 @@ import javolution.util.AbstractTable;
  * This implementation ensures that no more than 3/4 of the table capacity is
  * ever wasted. 
  */
+@SuppressWarnings("unchecked")
 public final class FastTableImpl<E> extends AbstractTable<E> {
 
     private static final int SHIFT = 10;

@@ -55,6 +55,7 @@ import javolution.context.SecurityPermission;
  * @version 6.0, December 12, 2012
  * @see     javolution.osgi.ConfigurableService
  */
+@SuppressWarnings("rawtypes")
 @StackSafe(initialization = false)
 public abstract class Configurable<T> {
 
@@ -67,7 +68,8 @@ public abstract class Configurable<T> {
      * instances. Also, the general permission to update any configurable 
      * may be revoked but granted only for specific instances.
      */
-    public static SecurityPermission<Configurable> CONFIGURE_PERMISSION = new SecurityPermission(Configurable.class, "configure");
+    public static SecurityPermission<Configurable> CONFIGURE_PERMISSION 
+       = new SecurityPermission<Configurable>(Configurable.class, "configure");
 
     /**
      * Holds the configurable default value.

@@ -38,7 +38,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -85,7 +85,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
 
     /**
      * Returns the local value of the specified parameter 
-     * (its default value if not {@link LocalContext#setLocalValue overriden}). 
+     * (its default value if not {@link LocalContext#setLocalValue overridden}). 
      * 
      * @param  param the local parameter whose local value is returned.
      */

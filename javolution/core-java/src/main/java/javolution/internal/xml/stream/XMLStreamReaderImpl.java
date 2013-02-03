@@ -383,7 +383,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
      * @param entities the entities to replacement texts mapping 
      *        (both must be <code>CharSequence</code> instances).
      */
-    public void setEntities(Map entities) {
+    public void setEntities(Map<?,?> entities) {
         _entities.setEntitiesMapping(entities);
     }
 

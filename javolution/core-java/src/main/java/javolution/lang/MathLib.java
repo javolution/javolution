@@ -908,11 +908,7 @@ public final class MathLib {
      * @return <code>x<sup>y</sup></code>
      **/
     public static double pow(double x, double y) {
-        /**/
-        /* */ // Use java.lang.Math value. 
-        if (true) return Math.pow(x, y);
-        /**/
-        /**/ // Else (J2ME) use close approximation (+/- LSB)
+        // Use close approximation (+/- LSB)
         if ((x < 0) && (y == (int) y))
             return (((int) y) & 1) == 0 ? pow(-x, y) : -pow(-x, y);
         return MathLib.exp(y * MathLib.log(x));

@@ -9,11 +9,10 @@
 package javolution.internal.util;
 
 import java.util.Collection;
-import java.util.Iterator;
+
 import javolution.lang.Functor;
 import javolution.lang.Predicate;
 import javolution.util.AbstractTable;
-import javolution.util.FastCollection;
 import javolution.util.FastComparator;
 import javolution.util.FastTable;
 

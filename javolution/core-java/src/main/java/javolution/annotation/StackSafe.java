@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  *     new objects on the stack.</p>
  * 
  * <p> Classes with no static field and whose only dependencies are stack-safe
- *     classes are themself stack-safe. A class with static fields can be 
+ *     classes are themselves stack-safe. A class with static fields can be 
  *     stack-safe only if it can ensure that its static fields cannot leak 
  *     stack-allocated objects. In other words all its static fields 
  *     are updated using the {@link javolution.context.HeapContext 

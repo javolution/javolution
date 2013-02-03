@@ -55,6 +55,7 @@ import javolution.text.TextFormat;
 @StackSafe(initialization = false)
 @Format(text = FastCollection.PlainText.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
+ 
 
     /**
      * Default constructor.  
@@ -158,6 +159,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Returns the first element matching the specified predicate.
      */
+    @SuppressWarnings("unchecked")
     public E findFirst(final Predicate<E> predicate) {
         final Object[] found = new Object[1];
         doWhile(new Predicate<E>() {
@@ -179,6 +181,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Returns the comparator used by the collection to perform element 
      * comparison (or sorting). 
      */
+    @SuppressWarnings("unchecked")
     public FastComparator<E> comparator() {
         return (FastComparator<E>) FastComparator.DEFAULT;
     }
@@ -223,10 +226,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public boolean remove(final Object element) {
         final boolean[] found = new boolean[]{false};
         return removeAll(new Predicate<E>() {
-            FastComparator cmp = comparator();
+            FastComparator<E> cmp = comparator();
 
+            @SuppressWarnings("unchecked")
             public Boolean evaluate(E param) {
-                if (!found[0] && (cmp.areEqual(element, param))) {
+                if (!found[0] && (cmp.areEqual((E)element, param))) {
                     found[0] = true;
                     return true;
                 }
@@ -269,10 +273,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     public boolean contains(final Object element) {
         final boolean[] found = new boolean[]{false};
         this.doWhile(new Predicate<E>() {
-            FastComparator cmp = comparator();
+            FastComparator<E> cmp = comparator();
 
+            @SuppressWarnings("unchecked")
             public Boolean evaluate(E param) {
-                if (cmp.areEqual(element, param)) {
+                if (cmp.areEqual((E)element, param)) {
                     found[0] = true;
                     return false; // Exits.
                 }
@@ -292,9 +297,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
+    @SuppressWarnings("unchecked")
     public boolean addAll(final Collection<? extends E> that) {
         if (that instanceof FastCollection)
-            return addAllFast((FastCollection) that);
+            return addAllFast((FastCollection<E>) that);
         boolean modified = false;
         Iterator<? extends E> it = that.iterator();
         while (it.hasNext()) {
@@ -305,7 +311,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return modified;
     }
 
-    private boolean addAllFast(FastCollection that) {
+    private boolean addAllFast(FastCollection<E> that) {
         final boolean[] modified = new boolean[]{false};
         that.doWhile(new Predicate<E>() {
             public Boolean evaluate(E param) {
@@ -326,9 +332,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return <code>true</code> if this collection contains all of the elements
      *         of the specified collection; <code>false</code> otherwise.
      */
+    @SuppressWarnings("unchecked")
     public boolean containsAll(final Collection<?> that) {
         if (that instanceof FastCollection)
-            return containsAllFast((FastCollection) that);
+            return containsAllFast((FastCollection<E>) that);
         for (Object e : that) {
             if (!contains(e))
                 return false;
@@ -410,6 +417,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return an array containing this collections elements.
      * @throws IndexOutOfBoundsException  if <code>array.length < size()</code> 
      */
+    @SuppressWarnings("unchecked")
     public <T> T[] toArray(final T[] array) { // Support concurrent modifications if Shared.
         final T[][] result = (T[][]) new Object[1][];
         final int[] size = new int[1];
@@ -461,16 +469,17 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return <code>true</code> if both collection are considered equals;
      *        <code>false</code> otherwise. 
      */
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (this instanceof Set) {
             if (!(obj instanceof Set)) return false;
-            Set that = (Set) obj;
+            Set<E> that = (Set<E>) obj;
             if (this.size() != that.size()) return false;
             return (this.usingComparator((FastComparator<E>) FastComparator.DEFAULT).containsAll(that));
         } else if (this instanceof List) {
-            final List that = (List) obj;
+            final List<E> that = (List<E>) obj;
             if (this.size() != that.size()) return false;
             final boolean[] areEqual = new boolean[]{true};
             this.doWhile(new Predicate<E>() {
@@ -533,19 +542,20 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Holds the default text format for fast collections (parsing not supported).
      */
-    public static class PlainText extends TextFormat<FastCollection> {
+    public static class PlainText extends TextFormat<FastCollection<Object>> {
 
         @Override
-        public FastCollection parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
+        public FastCollection<Object> parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
             throw new UnsupportedOperationException("Parsing Of Generic FastCollection Not supported");
         }
 
         @Override
-        public Appendable format(final FastCollection fc, final Appendable dest) throws IOException {
+        public Appendable format(final FastCollection<Object> fc, final Appendable dest) throws IOException {
             dest.append('[');
             fc.doWhile(new Predicate<Object>() {
                 boolean isFirst = true;
 
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 public Boolean evaluate(Object param) {
                     try {
                         if (!isFirst) {
@@ -568,4 +578,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
             return dest.append(']');
         }
     }
+
+    
+    private static final long serialVersionUID = -492488199200216508L;
 }

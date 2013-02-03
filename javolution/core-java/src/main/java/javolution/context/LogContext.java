@@ -61,7 +61,8 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -76,7 +77,8 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * the option <code>-Djavolution.context.LogContext#LEVEL=WARNING</code>  
      * causes the debug/info not to be logged. 
      */
-    public static final Configurable<Level> LEVEL = new Configurable(Level.DEBUG) {
+    public static final Configurable<Level> LEVEL = new Configurable<Level>(
+            Level.DEBUG) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -89,8 +91,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
     /**
      * Default constructor.
      */
-    protected LogContext() {
-    }
+    protected LogContext() {}
 
     /**
      * Enters a new log context instance.
@@ -165,8 +166,10 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     protected static LogContext current() {
         LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null) return ctx;
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+        if (ctx != null)
+            return ctx;
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE
+                .getDefaultValue());
     }
 
 }

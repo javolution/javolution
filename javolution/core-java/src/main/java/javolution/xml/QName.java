@@ -13,11 +13,9 @@ import java.lang.CharSequence;
 
 import javolution.lang.Immutable;
 import javolution.text.CharArray;
-import javolution.text.Text;
 import javolution.text.TextBuilder;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
-import javolution.xml.stream.XMLStreamException;
 
 /**
  * <p> This class represents unique identifiers for XML elements (tags) or 
@@ -56,9 +54,10 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     /**
      * Holds the full name (String) to QName mapping.
      */
-    private static final FastMap FULL_NAME_TO_QNAME = new FastMap() {
+    private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME 
+         = new FastMap<CharSequence, QName>() {
 
-        public FastComparator keyComparator() {
+        public FastComparator<CharSequence> keyComparator() {
             return FastComparator.LEXICAL;
         }
 
@@ -219,7 +218,7 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      *         (start > end) || (end > this.length())</code>
      */
     public CharSequence subSequence(int start, int end) {
-        return QName.j2meToCharSeq(_toString.substring(start, end));
+        return _toString.substring(start, end);
     }
 
     //Maintains unicity.
@@ -227,12 +226,6 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
         return QName.valueOf(_toString);
     }
 
-    // For J2ME Compatibility.
-    static CharSequence j2meToCharSeq(Object str) {
-        /**/
-        if (true) return (CharSequence) str;
-        /**/
-        return str == null ? null : Text.valueOf(str);
-    }
-
+    private static final long serialVersionUID = -6126031630693748647L;
+  
 }

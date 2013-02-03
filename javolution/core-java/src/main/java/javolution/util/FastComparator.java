@@ -21,7 +21,8 @@ import javolution.lang.Copyable;
  * @version 6.0.0, December 12, 2012
  */
 @StackSafe(initialization = false)
-public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastComparator<T>>, Serializable {
+public abstract class FastComparator<T> implements Comparator<T>,
+        Copyable<FastComparator<T>>, Serializable {
 
     /**
      * Holds the default object comparator.
@@ -30,9 +31,9 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
      * throws {@link ClassCastException} if the specified objects are not
      * {@link Comparable}. 
      */
-    public static final FastComparator<?> DEFAULT = new Default();
+    public static final FastComparator<Object> DEFAULT = new Default();
 
-    private static class Default<T> extends FastComparator<T> {
+    private static final class Default extends FastComparator<Object> {
 
         public int hashCodeOf(Object obj) {
             return (obj == null) ? 0 : obj.hashCode();
@@ -42,14 +43,16 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
             return (o1 == null) ? (o2 == null) : (o1 == o2) || o1.equals(o2);
         }
 
+        @SuppressWarnings("unchecked")
         public int compare(Object o1, Object o2) {
-            return ((Comparable) o1).compareTo(o2);
+            return ((Comparable<Object>) o1).compareTo(o2);
         }
 
-        public Default<T> copy() {
+        public Default copy() {
             return this; // Unique instance always allocated on the heap.
         }
-     
+
+        private static final long serialVersionUID = 3071226918360740529L;
     };
 
     /**
@@ -59,10 +62,9 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
      * The {@link #compare} method throws {@link ClassCastException} if the 
      * specified objects are not {@link Comparable}.
      */
-    public static final FastComparator<?> IDENTITY = new Identity();
+    public static final FastComparator<Object> IDENTITY = new Identity();
 
-    private static final class Identity<T> extends FastComparator<T> {
-
+    private static final class Identity extends FastComparator<Object> {
         public int hashCodeOf(Object obj) {
             return System.identityHashCode(obj);
         }
@@ -71,13 +73,16 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
             return o1 == o2;
         }
 
+        @SuppressWarnings("unchecked")
         public int compare(Object o1, Object o2) {
-            return ((Comparable) o1).compareTo(o2);
+            return ((Comparable<Object>) o1).compareTo(o2);
         }
 
-        public Identity<T> copy() {
+        public Identity copy() {
             return this; // Unique instance always allocated on the heap.
         }
+
+        private static final long serialVersionUID = 7945597637298349867L;
     };
 
     /**
@@ -96,9 +101,8 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
             if (length == 0)
                 return 0;
             return csq.charAt(0) + csq.charAt(length - 1) * 31
-                    + csq.charAt(length >> 1) * 1009
-                    + csq.charAt(length >> 2) * 27583
-                    + csq.charAt(length - 1 - (length >> 2)) * 73408859;
+                    + csq.charAt(length >> 1) * 1009 + csq.charAt(length >> 2)
+                    * 27583 + csq.charAt(length - 1 - (length >> 2)) * 73408859;
         }
 
         public boolean areEqual(CharSequence csq1, CharSequence csq2) {
@@ -129,6 +133,8 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
         public Lexical copy() {
             return this; // Unique instance always allocated on the heap.
         }
+
+        private static final long serialVersionUID = -3910379694278449866L;
     };
 
     /**
@@ -144,7 +150,8 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
         }
 
         public boolean areEqual(String str1, String str2) {
-            return (str1 == null) ? (str2 == null) : (str1 == str2) || str1.equals(str2);
+            return (str1 == null) ? (str2 == null) : (str1 == str2)
+                    || str1.equals(str2);
         }
 
         public int compare(String left, String right) {
@@ -154,6 +161,8 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
         public StringComparator copy() {
             return this; // Unique instance always allocated on the heap.
         }
+
+        private static final long serialVersionUID = -2913706666731177359L;
     };
 
     /**
@@ -191,4 +200,5 @@ public abstract class FastComparator<T> implements Comparator<T>, Copyable<FastC
      */
     public abstract int compare(T o1, T o2);
 
+    private static final long serialVersionUID = 6573304489580066811L;
 }

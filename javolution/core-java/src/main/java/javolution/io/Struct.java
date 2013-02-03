@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
 import javolution.context.LocalParameter;
 import javolution.lang.MathLib;
 import javolution.text.TextBuilder;
@@ -152,7 +153,7 @@ public class Struct {
      * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter(4) {
+    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter<Integer>(4) {
         public void configure(CharSequence configuration) {
             setDefaultValue(TypeFormat.parseInt(configuration));
         }
@@ -521,8 +522,9 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
+    @SuppressWarnings("unchecked")
     protected <S extends Struct> S[] array(S[] structs) {
-        Class structClass = null;
+        Class<?> structClass = null;
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {
             _index = 0;
@@ -609,6 +611,7 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
+    @SuppressWarnings("unchecked")
     protected <M extends Member> M[] array(
             M[] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
@@ -663,16 +666,16 @@ public class Struct {
         _resetIndex = resetIndexSaved;
         return (M[]) arrayMember;
     }
-    private static final Class BOOL = new Bool[0].getClass();
-    private static final Class SIGNED_8 = new Signed8[0].getClass();
-    private static final Class UNSIGNED_8 = new Unsigned8[0].getClass();
-    private static final Class SIGNED_16 = new Signed16[0].getClass();
-    private static final Class UNSIGNED_16 = new Unsigned16[0].getClass();
-    private static final Class SIGNED_32 = new Signed32[0].getClass();
-    private static final Class UNSIGNED_32 = new Unsigned32[0].getClass();
-    private static final Class SIGNED_64 = new Signed64[0].getClass();
-    private static final Class FLOAT_32 = new Float32[0].getClass();
-    private static final Class FLOAT_64 = new Float64[0].getClass();
+    private static final Class<? extends Bool[]> BOOL = new Bool[0].getClass();
+    private static final Class<? extends Signed8[]> SIGNED_8 = new Signed8[0].getClass();
+    private static final Class<? extends Unsigned8[]> UNSIGNED_8 = new Unsigned8[0].getClass();
+    private static final Class<? extends Signed16[]> SIGNED_16 = new Signed16[0].getClass();
+    private static final Class<? extends Unsigned16[]> UNSIGNED_16 = new Unsigned16[0].getClass();
+    private static final Class<? extends Signed32[]> SIGNED_32 = new Signed32[0].getClass();
+    private static final Class<? extends Unsigned32[]> UNSIGNED_32 = new Unsigned32[0].getClass();
+    private static final Class<? extends Signed64[]> SIGNED_64 = new Signed64[0].getClass();
+    private static final Class<? extends Float32[]> FLOAT_32 = new Float32[0].getClass();
+    private static final Class<? extends Float64[]> FLOAT_64 = new Float64[0].getClass();
 
     /**
      * Defines the specified two-dimensional array member. For predefined
@@ -1536,27 +1539,27 @@ public class Struct {
     /**
      * This class represents a 8 bits {@link Enum}.
      */
-    public class Enum8<T extends Enum> extends Member {
+    public class Enum8<T extends Enum<T>> extends Member {
 
-        private final Enum/*T*/[] _values;
+        private final T[] _values;
 
-        public Enum8(Enum/*T*/[] values) {
+        public Enum8(T[] values) {
             super(8, 1);
             _values = values;
         }
 
-        public Enum8(Enum/*T*/[] values, int nbrOfBits) {
+        public Enum8(T[] values, int nbrOfBits) {
             super(nbrOfBits, 1);
             _values = values;
         }
 
-        public Enum/*T*/ get() {
+        public T get() {
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().get(index);
             return _values[0xFF & get(1, word)];
         }
 
-        public void set(Enum/*T*/ e) {
+        public void set(T e) {
             int value = e.ordinal();
             if (_values[value] != e)
                 throw new IllegalArgumentException(
@@ -1574,27 +1577,27 @@ public class Struct {
     /**
      * This class represents a 16 bits {@link Enum}.
      */
-    public class Enum16<T extends Enum> extends Member {
+    public class Enum16<T extends Enum<T>> extends Member {
 
-        private final Enum/*T*/[] _values;
+        private final T[] _values;
 
-        public Enum16(Enum/*T*/[] values) {
+        public Enum16(T[] values) {
             super(16, 2);
             _values = values;
         }
 
-        public Enum16(Enum/*T*/[] values, int nbrOfBits) {
+        public Enum16(T[] values, int nbrOfBits) {
             super(nbrOfBits, 2);
             _values = values;
         }
 
-        public Enum/*T*/ get() {
+        public T get() {
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().getShort(index);
             return _values[0xFFFF & get(2, word)];
         }
 
-        public void set(Enum/*T*/ e) {
+        public void set(T e) {
             int value = e.ordinal();
             if (_values[value] != e)
                 throw new IllegalArgumentException(
@@ -1612,27 +1615,27 @@ public class Struct {
     /**
      * This class represents a 32 bits {@link Enum}.
      */
-    public class Enum32<T extends Enum> extends Member {
+    public class Enum32<T extends Enum<T>> extends Member {
 
-        private final Enum/*T*/[] _values;
+        private final T[] _values;
 
-        public Enum32(Enum/*T*/[] values) {
+        public Enum32(T[] values) {
             super(32, 4);
             _values = values;
         }
 
-        public Enum32(Enum/*T*/[] values, int nbrOfBits) {
+        public Enum32(T[] values, int nbrOfBits) {
             super(nbrOfBits, 4);
             _values = values;
         }
 
-        public Enum/*T*/ get() {
+        public T get() {
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().getInt(index);
             return _values[get(4, word)];
         }
 
-        public void set(Enum/*T*/ e) {
+        public void set(T e) {
             int value = e.ordinal();
             if (_values[value] != e)
                 throw new IllegalArgumentException(
@@ -1650,27 +1653,27 @@ public class Struct {
     /**
      * This class represents a 64 bits {@link Enum}.
      */
-    public class Enum64<T extends Enum> extends Member {
+    public class Enum64<T extends Enum<T>> extends Member {
 
-        private final Enum/*T*/[] _values;
+        private final T[] _values;
 
-        public Enum64(Enum/*T*/[] values) {
+        public Enum64(T[] values) {
             super(64, 8);
             _values = values;
         }
 
-        public Enum64(Enum/*T*/[] values, int nbrOfBits) {
+        public Enum64(T[] values, int nbrOfBits) {
             super(nbrOfBits, 8);
             _values = values;
         }
 
-        public Enum/*T*/ get() {
+        public T get() {
             final int index = getByteBufferPosition() + offset();
             long word = getByteBuffer().getLong(index);
             return _values[(int) get(8, word)];
         }
 
-        public void set(Enum/*T*/ e) {
+        public void set(T e) {
             long value = e.ordinal();
             if (_values[(int) value] != e)
                 throw new IllegalArgumentException(

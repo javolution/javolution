@@ -12,27 +12,29 @@ import javolution.lang.Configurable;
 
 /**
  * <p> A local parameter with {@link Configurable configurable} default value. 
- *     The current value is given by the local context method 
- *     {@link LocalContext#getLocalValue}
- *     and can be locally {@link LocalContext#setLocalValue overriden}.</p>
+ *     The current value is given by the local context method
+ *     {@link LocalContext#getLocalValue} and can be locally
+ *     {@link LocalContext#setLocalValue overridden}.</p>
  * 
- * <p> The parameter default values is either the value specified at creation
- *     or a configuration value read from system properties. For example the
- *     java option <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
+ * <p> The parameter default values is either the value specified at creation 
+ *     or a configuration value read from system properties. For example the 
+ *     java option <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code> 
  *     disables concurrency.</p>
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
+@SuppressWarnings("rawtypes")
 public abstract class LocalParameter<T> extends Configurable<T> {
 
     /**
-     * Holds the general permission to override a local parameter 
-     * (action <code>"override"</code>).
+     * Holds the general permission to override a local parameter (action <code>
+     * "override"</code>).
+     * 
      * @see LocalContext#setLocalValue
      */
-    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION
-            = new SecurityPermission(LocalParameter.class, "override");
+    public static final SecurityPermission<LocalParameter> OVERRIDE_PERMISSION = new SecurityPermission<LocalParameter>(
+            LocalParameter.class, "override");
 
     /**
      * Holds this instance override permission.
@@ -40,11 +42,13 @@ public abstract class LocalParameter<T> extends Configurable<T> {
     private final SecurityPermission<LocalParameter> overridePermission;
 
     /**
-     * Creates a local parameter having the specified default value (configurable).
+     * Creates a local parameter having the specified default value
+     * (configurable).
      */
     protected LocalParameter(T defaultValue) {
         super(defaultValue);
-        overridePermission = new SecurityPermission(LocalParameter.class, "override", this);
+        overridePermission = new SecurityPermission<LocalParameter>(
+                LocalParameter.class, "override", this);
     }
 
     /**

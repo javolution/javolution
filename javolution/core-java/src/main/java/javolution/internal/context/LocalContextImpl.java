@@ -33,11 +33,12 @@ public final class LocalContextImpl extends LocalContext {
     @Override
     public <T> void setLocalValue(LocalParameter<T> param, T localValue) {
         if (localSettings == null) {
-            localSettings = new FastMap();
+            localSettings = new FastMap<LocalParameter<?>, Object>();
         }
         localSettings.put(param, localValue);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected <T> T getLocalValueInContext(LocalParameter<T> param) {
         if ((localSettings != null) && localSettings.containsKey(param)) 

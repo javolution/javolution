@@ -57,19 +57,19 @@ import javolution.annotation.StackSafe;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-@StackSafe(initialization=false)
-public abstract class AbstractContext<C extends AbstractContext> {
+@StackSafe(initialization = false)
+public abstract class AbstractContext<C extends AbstractContext<C>> {
 
     /**
      * Holds the last context entered (thread-local). This instance is always
      * allocated on the heap (since allocator contexts are sub-classes).
      */
-    static final ThreadLocal<AbstractContext> CURRENT = new ThreadLocal();
+    static final ThreadLocal<AbstractContext<?>> CURRENT = new ThreadLocal<AbstractContext<?>>();
 
     /**
      * Holds the outer context or <code>null</code> if none (root or not attached).
      */
-    private AbstractContext outer;
+    private AbstractContext<?> outer;
 
     /**
      * Default constructor. 
@@ -82,20 +82,22 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * been entered.
      */
     protected static AbstractContext<?> current() {
-        return AbstractContext.CURRENT.get();
+	return AbstractContext.CURRENT.get();
     }
 
     /**
      * Returns the current context of specified type or <code>null</code> if none. 
      */
-    protected static <T extends AbstractContext> T current(Class<T> type) {
-        AbstractContext ctx = AbstractContext.CURRENT.get();
-        while (true) {
-            if (ctx == null) return null;
-            if (type.isInstance(ctx))
-                return (T) ctx;
-            ctx = ctx.outer;
-        }
+    @SuppressWarnings("unchecked")
+    protected static <T extends AbstractContext<T>> T current(Class<T> type) {
+	AbstractContext<?> ctx = AbstractContext.CURRENT.get();
+	while (true) {
+	    if (ctx == null)
+		return null;
+	    if (type.isInstance(ctx))
+		return (T) ctx;
+	    ctx = ctx.outer;
+	}
     }
 
     /**
@@ -111,15 +113,15 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * @throws SecurityException 
      *         if <code>SecurityPermission(impl, "enter")</code> is not granted. 
      */
-    public static <T extends AbstractContext> T enter(Class<T> impl) {
-        SecurityContext.check(new SecurityPermission(impl, "enter"));
-        try {
-            return (T) impl.newInstance().enterScope();
-        } catch (InstantiationException e) {
-            throw new IllegalArgumentException("Invalid context implementation " + impl, e);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Invalid context implementation " + impl, e);
-        }
+    public static <T extends AbstractContext<T>> T enter(Class<T> impl) {
+	SecurityContext.check(new SecurityPermission<T>(impl, "enter"));
+	try {
+	    return impl.newInstance().enterScope();
+	} catch (InstantiationException e) {
+	    throw new IllegalArgumentException("Invalid context implementation " + impl, e);
+	} catch (IllegalAccessException e) {
+	    throw new IllegalArgumentException("Invalid context implementation " + impl, e);
+	}
     }
 
     /**
@@ -130,20 +132,21 @@ public abstract class AbstractContext<C extends AbstractContext> {
      *         context.
      */
     public void exit() {
-        if (this != AbstractContext.CURRENT.get())
-            throw new IllegalStateException("This context is not the current context");
-        AbstractContext.CURRENT.set(outer);
-        outer = null;
+	if (this != AbstractContext.CURRENT.get())
+	    throw new IllegalStateException("This context is not the current context");
+	AbstractContext.CURRENT.set(outer);
+	outer = null;
     }
 
     /**
      * Enters the scope of this context which becomes the current context; 
      * the previous current context becomes the outer of this context. 
      */
+    @SuppressWarnings("unchecked")
     protected C enterScope() {
-        outer = AbstractContext.CURRENT.get();
-        AbstractContext.CURRENT.set(this);
-        return (C) this;
+	outer = AbstractContext.CURRENT.get();
+	AbstractContext.CURRENT.set(this);
+	return (C) this;
     }
 
     /**
@@ -151,7 +154,7 @@ public abstract class AbstractContext<C extends AbstractContext> {
      * context has no outer context (top context).
      */
     protected AbstractContext<?> getOuter() {
-        return outer;
+	return outer;
     }
 
     /**

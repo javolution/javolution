@@ -198,6 +198,7 @@ public class XMLObjectReader  {
      * @throws XMLStreamException if <code>hasNext() == false</code>
      * @see    XMLFormat.InputElement#getNext()
      */
+    @SuppressWarnings("unchecked")
     public  <T>  T  read() throws XMLStreamException {
         return ( T )_xml.getNext();
     }
@@ -211,6 +212,7 @@ public class XMLObjectReader  {
      *         local name does not match.
      * @see    XMLFormat.InputElement#get(String)
      */
+    @SuppressWarnings("unchecked")
     public  <T>  T  read(String name) throws XMLStreamException {
         return ( T ) _xml.get(name);
     }
@@ -225,6 +227,7 @@ public class XMLObjectReader  {
      *         name/uri does not match.
      * @see    XMLFormat.InputElement#get(String, String)
      */
+    @SuppressWarnings("unchecked")
     public  <T>  T  read(String localName, String uri)
             throws XMLStreamException {
         return ( T ) _xml.get(localName, uri);

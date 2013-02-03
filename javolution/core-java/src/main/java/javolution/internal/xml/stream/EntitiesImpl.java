@@ -21,6 +21,7 @@ import javolution.xml.stream.XMLStreamException;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, June 16, 2006
  */
+@SuppressWarnings("rawtypes")
 public final class EntitiesImpl  {
 
     /**
@@ -31,7 +32,7 @@ public final class EntitiesImpl  {
     /**
      * Holds the user defined entities mapping.
      */
-    private Map _entitiesMapping;
+    private Map<?,?> _entitiesMapping;
 
     /**
      * Default constructor.
@@ -131,11 +132,12 @@ public final class EntitiesImpl  {
      * @param entityToReplacementText the entity (e.g. "copy") to replacement 
      *        text (e.g. "©") mapping (both CharSequence).
      */
+    @SuppressWarnings("unchecked")
     public void setEntitiesMapping(Map entityToReplacementText) {
         // Sets the maximum length for replacement text.
         Collection values = entityToReplacementText.values();
         if (values instanceof FastCollection) { // Avoids allocating iterators.
-             FastCollection<CharSequence> fc = (FastCollection) values;
+             FastCollection<CharSequence> fc = (FastCollection<CharSequence>) values;
              for (CharSequence value : fc) {
                  if (_maxLength < value.length()) {
                      _maxLength = value.length();

@@ -76,16 +76,14 @@ public final class TableIteratorImpl<E> implements ListIterator<E> {
     }
 
     public void remove() {
-        if (currentIndex >= 0) {
-            that.remove(currentIndex);
-            end--;
-            if (currentIndex < nextIndex) {
-                nextIndex--;
-            }
-            currentIndex = -1;
-        } else {
+        if (currentIndex < 0)
             throw new IllegalStateException();
+        that.remove(currentIndex);
+        end--;
+        if (currentIndex < nextIndex) {
+            nextIndex--;
         }
+        currentIndex = -1;
     }
 
 }

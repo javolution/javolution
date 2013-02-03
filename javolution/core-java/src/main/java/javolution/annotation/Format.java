@@ -34,19 +34,19 @@ public @interface Format {
     /**
      * Returns the plain text format implementation class.
      */
-    Class<? extends TextFormat> text() default UnsupportedTextFormat.class;    
+    Class<? extends TextFormat<?>> text() default UnsupportedTextFormat.class;    
 
     /**
      * Returns the xml format implementation class (default based on 
      * plain text format).
      */
-    Class<? extends XMLFormat> xml() default XMLFormat.Default.class;  ;
-    
+    Class<? extends XMLFormat<?>> xml() default XMLFormat.Default.class;  ;
+   
    
     /**
      * Defines the class when text formatting is not supported.  
      */
-    public static final class UnsupportedTextFormat extends TextFormat {
+    public static final class UnsupportedTextFormat extends TextFormat<Object> {
         @Override
         public Object parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
             throw new UnsupportedOperationException("TextFormat Unknown.");

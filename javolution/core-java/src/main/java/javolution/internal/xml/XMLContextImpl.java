@@ -23,9 +23,10 @@ import javolution.xml.stream.XMLStreamException;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
+@SuppressWarnings("rawtypes")
 public final class XMLContextImpl extends XMLContext {
 
-    private final FastMap<Class, XMLFormat> formats = new FastMap();
+    private final FastMap<Class<?>, XMLFormat<?>> formats = new FastMap<Class<?>, XMLFormat<?>>();
 
     @Override
     protected XMLContext inner() {
@@ -34,10 +35,12 @@ public final class XMLContextImpl extends XMLContext {
         return ctx;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected <T> XMLFormat<T> getFormatInContext(Class<T> type) {
         XMLFormat xml = formats.get(type);
-        if (xml != null) return xml;
+        if (xml != null)
+            return xml;
         Format format = type.getAnnotation(Format.class);
         if ((format != null) && (format.xml() != XMLFormat.Default.class)) {
             Class<? extends XMLFormat> formatClass = format.xml();
@@ -53,8 +56,10 @@ public final class XMLContextImpl extends XMLContext {
             }
         }
         // Check predefined format as last resource.
-        if (Map.class.isAssignableFrom(type)) return MAP_XML;
-        if (Collection.class.isAssignableFrom(type)) return COLLECTION_XML;
+        if (Map.class.isAssignableFrom(type))
+            return MAP_XML;
+        if (Collection.class.isAssignableFrom(type))
+            return COLLECTION_XML;
         return OBJECT_XML;
     }
 
@@ -71,7 +76,7 @@ public final class XMLContextImpl extends XMLContext {
      * The XML representation consists of the text representation of the object
      * as a "value" attribute.
      */
-     private static final XMLFormat OBJECT_XML = new XMLFormat.Default();
+    private static final XMLFormat OBJECT_XML = new XMLFormat.Default();
 
     /**
      * Holds the default XML representation for <code>java.util.Collection</code>
@@ -82,6 +87,7 @@ public final class XMLContextImpl extends XMLContext {
      */
     private static final XMLFormat COLLECTION_XML = new XMLFormat() {
 
+        @SuppressWarnings("unchecked")
         public void read(XMLFormat.InputElement xml, Object obj)
                 throws XMLStreamException {
             Collection collection = (Collection) obj;
@@ -118,6 +124,7 @@ public final class XMLContextImpl extends XMLContext {
      */
     private static final XMLFormat MAP_XML = new XMLFormat() {
 
+        @SuppressWarnings("unchecked")
         public void read(XMLFormat.InputElement xml, Object obj)
                 throws XMLStreamException {
             final Map map = (Map) obj;

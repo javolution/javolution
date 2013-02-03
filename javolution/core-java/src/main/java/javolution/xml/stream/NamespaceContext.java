@@ -50,6 +50,6 @@ public interface NamespaceContext {
      * @throws IllegalArgumentException if <code>namespaceURI</code> is
      *         <code>null</code>
      */
-    Iterator getPrefixes(CharSequence namespaceURI);
+    Iterator<CharArray> getPrefixes(CharSequence namespaceURI);
     
 }

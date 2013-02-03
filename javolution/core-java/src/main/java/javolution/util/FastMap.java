@@ -93,17 +93,6 @@ public class FastMap<K, V> implements Map<K, V>, Copyable<FastMap<K, V>> {
     }
 
     /**
-     * Creates a map containing the specified entries, in the order they
-     * are returned by the map iterator.
-     *
-     * @param map the map whose entries are to be placed into this map.
-     */
-    public FastMap(Map<? extends K, ? extends V> map) {
-        this();
-        putAll(map);
-    }
-
-    /**
      * Returns an {@link Unmodifiable}/Immutable view of this map.
      * Attempts to modify the map returned will result in an 
      * {@link UnsupportedOperationException} being thrown. 

@@ -33,7 +33,7 @@ import javolution.util.FastComparator;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, January 10, 2007
  */
-public final class CharArray implements CharSequence, Comparable {
+public final class CharArray implements CharSequence, Comparable<CharSequence> {
 
     /**
      * Holds the character array.
@@ -279,8 +279,8 @@ public final class CharArray implements CharSequence, Comparable {
      * @throws  ClassCastException if the specifed object is not a
      *          <code>CharSequence</code>.
      */
-    public int compareTo(Object seq) {
-        return ((FastComparator) FastComparator.LEXICAL).compare(this, seq);
+    public int compareTo(CharSequence seq) {
+        return FastComparator.LEXICAL.compare(this, seq);
     }
 
     /**

@@ -42,7 +42,7 @@ public class BundleImpl implements Bundle{
     String symbolicName;
     BundleActivator activator;
     int state;
-    ArrayList<ServiceReferenceImpl> serviceReferences;
+    ArrayList<ServiceReferenceImpl<?>> serviceReferences;
     ArrayList<ServiceListener> serviceListeners;
     ArrayList<String> serviceListenerFilters;
     BundleContext context; // Null when not active. This context is set by the framework.
@@ -55,7 +55,7 @@ public class BundleImpl implements Bundle{
         this.symbolicName = symbolicName;
         this.activator = activator;
         this.state = Bundle.RESOLVED;
-        this.serviceReferences = new ArrayList<ServiceReferenceImpl>();
+        this.serviceReferences = new ArrayList<ServiceReferenceImpl<?>>();
         this.serviceListeners = new ArrayList<ServiceListener>();
         this.serviceListenerFilters = new ArrayList<String>();
     }
@@ -134,8 +134,8 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public Dictionary getHeaders() {
-        Hashtable headers = new Hashtable();
+    public Dictionary<String, String> getHeaders() {
+        Hashtable<String, String> headers = new Hashtable<String, String>();
         headers.put(Constants.BUNDLE_NAME, symbolicName);
         headers.put(Constants.BUNDLE_VENDOR, "com.thalesraytheon");
         headers.put(Constants.BUNDLE_VERSION, "N/A");
@@ -146,7 +146,7 @@ public class BundleImpl implements Bundle{
 
     private void unregisterServices() {
         for (int i = 0; i < serviceReferences.size(); i++) {
-            ServiceReferenceImpl serviceReference = serviceReferences.get(i);
+            ServiceReferenceImpl<?> serviceReference = serviceReferences.get(i);
             // Fire event to listeners from all bundles.
             ServiceEvent serviceEvent = new ServiceEvent(ServiceEvent.UNREGISTERING, serviceReference);
             osgi.fireServiceEvent(serviceEvent);
@@ -192,12 +192,12 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public ServiceReference[] getRegisteredServices() {
+    public ServiceReference<?>[] getRegisteredServices() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public ServiceReference[] getServicesInUse() {
+    public ServiceReference<?>[] getServicesInUse() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -212,22 +212,22 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public Dictionary getHeaders(String string) {
+    public Dictionary<String,String> getHeaders(String string) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public Class loadClass(String string) throws ClassNotFoundException {
+    public Class<?> loadClass(String string) throws ClassNotFoundException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public Enumeration getResources(String string) throws IOException {
+    public Enumeration<URL> getResources(String string) throws IOException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public Enumeration getEntryPaths(String string) {
+    public Enumeration<String> getEntryPaths(String string) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -242,7 +242,7 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public Enumeration findEntries(String string, String string1, boolean bln) {
+    public Enumeration<URL> findEntries(String string, String string1, boolean bln) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

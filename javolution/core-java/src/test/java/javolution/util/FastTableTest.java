@@ -105,7 +105,7 @@ public class FastTableTest {
         }
     };
 
-    public void testCreation() {
+    public void ttestCreation() {
         long ns = perfometer.measure(newFastTable);
         long alns = perfometer.measure(newArrayList);
         long llns = perfometer.measure(newLinkedList);
@@ -113,7 +113,7 @@ public class FastTableTest {
                 alns, " ns for ArrayList, ", llns, " ns for LinkedList)");
     }
 
-    public void testAddToList() {
+    public void ttestAddToList() {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(addToList, i, newFastTable);
             long alns = perfometer.measure(addToList, i, newArrayList);
@@ -123,7 +123,7 @@ public class FastTableTest {
         }
     }
 
-    public void testInsertToList() {
+    public void ttestInsertToList() {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(insertToList, i, newFastTable);
             long alns = perfometer.measure(insertToList, i, newArrayList);
@@ -133,7 +133,7 @@ public class FastTableTest {
         }
     }
 
-    public void testRemoveFromList() {
+    public void ttestRemoveFromList() {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(removeFromList, i, addToList, i, newFastTable);
             long alns = perfometer.measure(removeFromList, i, addToList, i, newArrayList);
@@ -143,7 +143,7 @@ public class FastTableTest {
         }
     }
 
-    public void testAddFirstToList() {
+    public void ttestAddFirstToList() {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(addFirstToList, i, newFastTable);
             long alns = perfometer.measure(addFirstToList, i, newArrayList);
@@ -154,8 +154,8 @@ public class FastTableTest {
     }
 
     public void testListOperations() {
-        List<Integer> ft = new FastTable();
-        List<Integer> al = new ArrayList();
+        List<Integer> ft = new FastTable<Integer>();
+        List<Integer> al = new ArrayList<Integer>();
         for (long start = System.nanoTime(), time = start;
                 time < start + 2 * ONE_SECOND_IN_NS; time = System.nanoTime()) {
             long seed = random.nextLong();
@@ -169,8 +169,8 @@ public class FastTableTest {
     }
 
     public void testDequeuOperations() {
-        Deque<Integer> ft = new FastTable();
-        Deque<Integer> ad = new ArrayDeque();
+        Deque<Integer> ft = new FastTable<Integer>();
+        Deque<Integer> ad = new ArrayDeque<Integer>();
         for (long start = System.nanoTime(), time = start;
                 time < start + 2 * ONE_SECOND_IN_NS; time = System.nanoTime()) {
             long seed = random.nextLong();
@@ -182,9 +182,9 @@ public class FastTableTest {
         }
         LogContext.info("FastTable - Deque Operations Validated!");
     }
-    private static boolean areEquals(Deque left, Deque right) {
+    private static boolean areEquals(Deque<?> left, Deque<?> right) {
         if (left.size() != right.size()) return false;
-        for (Iterator il = left.iterator(), ir = right.iterator(); il.hasNext();) {
+        for (Iterator<?> il = left.iterator(), ir = right.iterator(); il.hasNext();) {
             if (!il.next().equals(ir.next())) return false;
         }
         return true;            

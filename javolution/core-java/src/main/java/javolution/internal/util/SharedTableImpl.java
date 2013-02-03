@@ -160,11 +160,11 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
 
     @Override
     public <R> FastTable<R> forEach(Functor<E, R> functor) {
-        final FastTableImpl copy = new FastTableImpl();
+        final FastTableImpl<E> copy = new FastTableImpl<E>();
         synchronized (that) {
             that.doWhile(new Predicate<E>() {
                 public Boolean evaluate(E param) {
-                    copy.addLast(that);
+                    copy.addLast(param);
                     return true;
                 }
             });
@@ -174,11 +174,11 @@ public final class SharedTableImpl<E> extends AbstractTable<E> {
 
     @Override
     public void doWhile(Predicate<E> predicate) {
-        final FastTableImpl copy = new FastTableImpl();
+        final FastTableImpl<E> copy = new FastTableImpl<E>();
         synchronized (that) {
             that.doWhile(new Predicate<E>() {
                 public Boolean evaluate(E param) {
-                    copy.addLast(that);
+                    copy.addLast(param);
                     return true;
                 }
             });

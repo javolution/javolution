@@ -20,7 +20,7 @@ import javolution.util.FastTable;
  */
 public final class SecurityContextImpl extends SecurityContext {
     
-    private FastTable<Action> actions = new FastTable(); 
+    private FastTable<Action> actions = new FastTable<Action>(); 
 
     @Override
     public boolean isGranted(SecurityPermission<?> permission) {
@@ -32,7 +32,7 @@ public final class SecurityContextImpl extends SecurityContext {
     }
 
     @Override
-    public void grant(SecurityPermission permission, Object certificate) throws SecurityException {
+    public void grant(SecurityPermission<?> permission, Object certificate) throws SecurityException {
         Action a = new Action();
         a.grant = true;
         a.permission = permission;
@@ -40,7 +40,7 @@ public final class SecurityContextImpl extends SecurityContext {
     }
 
     @Override
-    public void revoke(SecurityPermission permission, Object certificate) throws SecurityException {
+    public void revoke(SecurityPermission<?> permission, Object certificate) throws SecurityException {
         Action a = new Action();
         a.grant = false;
         a.permission = permission;
@@ -57,6 +57,6 @@ public final class SecurityContextImpl extends SecurityContext {
     // Represents the grant/revoke action performed. 
     private static class Action {
         boolean grant; // Else revoke.
-        SecurityPermission permission;
+        SecurityPermission<?> permission;
     }
 }

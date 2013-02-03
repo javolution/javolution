@@ -41,7 +41,7 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
 
         @Override
         public void configure(CharSequence configuration) {

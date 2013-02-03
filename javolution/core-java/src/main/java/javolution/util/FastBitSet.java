@@ -10,8 +10,13 @@ package javolution.util;
 
 import java.util.Iterator;
 import java.util.Set;
+
+import javolution.internal.util.FastBitSetImpl;
+import javolution.internal.util.BitSetIteratorImpl;
+import javolution.internal.util.SharedBitSetImpl;
+import javolution.internal.util.UnmodifiableBitSetImpl;
+import javolution.lang.Copyable;
 import javolution.lang.Functor;
-import javolution.lang.MathLib;
 import javolution.lang.Predicate;
 
 /**
@@ -21,23 +26,24 @@ import javolution.lang.Predicate;
  *     a set of {@link Index indices} and obeys the collection semantic
  *     for methods such as {@link #size} (cardinality) or {@link #equals}
  *     (same set of indices).</p>
- * 
+ *   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 5.3, February 24, 2008
+ * @version 6.0.0, December 12, 2012
  */
-public class FastBitSet extends FastCollection<Index> implements Set<Index> {
+public class FastBitSet extends FastCollection<Index> implements Set<Index>,
+        Copyable<FastBitSet> {
 
     /**
-     * Holds the bits (64 bits per long).
+     * The actual implementation.
      */
-    private long[] bits;
+    private final AbstractBitSet impl;
 
     /**
-     * Creates a bit set of small initial capacity. All bits are initially 
-     * {@code false}.
+     * Creates an empty bit set whose capacity increments/decrements smoothly
+     * without large resize operations to best fit the set current size.
      */
     public FastBitSet() {
-        this(64);
+        impl = new FastBitSetImpl(0);
     }
 
     /**
@@ -49,23 +55,14 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @param bitSize the initial capacity in bits.
      */
     public FastBitSet(int bitSize) {
-        bits = new long[((bitSize - 1) >> 6) + 1];
+        impl = new FastBitSetImpl(bitSize);
     }
 
     /**
-     * Adds the specified index to this set. This method is equivalent 
-     * to <code>set(index.intValue())</code>.
-     * 
-     * @param index the integer value to be added to this set.
-     * @return {@code true} if this set did not contains the specified
-     *         index; {@code false} otherwise.
+     * Creates a bit set using the specified implementation.
      */
-    @Override
-    public boolean add(Index index) {
-        int bitIndex = index.intValue();
-        if (this.get(bitIndex)) return false; // Already there.
-        set(bitIndex);
-        return true;
+    protected FastBitSet(AbstractBitSet impl) {
+        this.impl = impl;
     }
 
     /**
@@ -76,10 +73,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @param that the second bit set.
      */
     public void and(FastBitSet that) {
-        final int n = MathLib.min(this.bits.length, that.bits.length);
-        for (int i = 0; i < n; ++i) {
-            this.bits[i] &= that.bits[i];
-        }
+        impl.and(that.impl);
     }
 
     /**
@@ -91,10 +85,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @param that the second bit set
      */
     public void andNot(FastBitSet that) {
-        int i = Math.min(this.bits.length, that.bits.length);
-        while (--i >= 0) {
-            this.bits[i] &= ~that.bits[i];
-        }
+        impl.andNot(that.impl);
     }
 
     /**
@@ -104,11 +95,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @return the number of bits being set.
      */
     public int cardinality() {
-        int sum = 0;
-        for (int i = 0; i < bits.length; i++) {
-            sum += MathLib.bitCount(bits[i]);
-        }
-        return sum;
+        return impl.cardinality();
     }
 
     /**
@@ -116,7 +103,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      */
     @Override
     public void clear() {
-        bits = new long[1];
+        impl.clear();
     }
 
     /**
@@ -127,10 +114,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code index < 0}
      */
     public void clear(int bitIndex) {
-        int longIndex = bitIndex >> 6;
-        if (longIndex >= bits.length)
-            return;
-        bits[longIndex] &= ~(1L << bitIndex);
+        impl.clear(bitIndex);
     }
 
     /**
@@ -145,21 +129,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     public void clear(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex < fromIndex))
             throw new IndexOutOfBoundsException();
-        int i = fromIndex >>> 6;
-        if (i >= bits.length)
-            return; // Ensures that i < _length
-        int j = toIndex >>> 6;
-        if (i == j) {
-            bits[i] &= ((1L << fromIndex) - 1) | (-1L << toIndex);
-            return;
-        }
-        bits[i] &= (1L << fromIndex) - 1;
-        if (j < bits.length) {
-            bits[j] &= -1L << toIndex;
-        }
-        for (int k = i + 1; (k < j) && (k < bits.length); k++) {
-            bits[k] = 0;
-        }
+        impl.clear(fromIndex, toIndex);
     }
 
     /**
@@ -169,9 +139,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void flip(int bitIndex) {
-        int i = bitIndex >> 6;
-        setLength(i + 1);
-        bits[i] ^= 1L << bitIndex;
+        impl.flip(bitIndex);
     }
 
     /**
@@ -185,18 +153,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     public void flip(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex < fromIndex))
             throw new IndexOutOfBoundsException();
-        int i = fromIndex >>> 6;
-        int j = toIndex >>> 6;
-        setLength(j + 1);
-        if (i == j) {
-            bits[i] ^= (-1L << fromIndex) & ((1L << toIndex) - 1);
-            return;
-        }
-        bits[i] ^= -1L << fromIndex;
-        bits[j] ^= (1L << toIndex) - 1;
-        for (int k = i + 1; k < j; k++) {
-            bits[k] ^= -1;
-        }
+        impl.flip(fromIndex, toIndex);
     }
 
     /**
@@ -208,8 +165,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public boolean get(int bitIndex) {
-        int i = bitIndex >> 6;
-        return (i >= bits.length) ? false : (bits[i] & (1L << bitIndex)) != 0;
+        return impl.get(bitIndex);
     }
 
     /**
@@ -224,13 +180,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     public FastBitSet get(int fromIndex, int toIndex) {
         if (fromIndex < 0 || fromIndex > toIndex)
             throw new IndexOutOfBoundsException();
-        FastBitSet bitSet = new FastBitSet();
-        int length = MathLib.min(bits.length, (toIndex >>> 6) + 1);
-        bitSet.setLength(length);
-        System.arraycopy(bits, 0, bitSet.bits, 0, length);
-        bitSet.clear(0, fromIndex);
-        bitSet.clear(toIndex, length << 6);
-        return bitSet;
+        return new FastBitSet(impl.get(fromIndex, toIndex));
     }
 
     /**
@@ -241,13 +191,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @return {@code true} if the sets intersect; {@code false} otherwise.
      */
     public boolean intersects(FastBitSet that) {
-        int i = MathLib.min(this.bits.length, that.bits.length);
-        while (--i >= 0) {
-            if ((bits[i] & that.bits[i]) != 0) {
-                return true;
-            }
-        }
-        return false;
+        return impl.intersects(that.impl);
     }
 
     /**
@@ -260,13 +204,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @return the index of the highest set bit plus one.
      */
     public int length() {
-        for (int i = bits.length; --i >= 0;) {
-            long l = bits[i];
-            if (l != 0) {
-                return i << 6 + 64 - MathLib.numberOfTrailingZeros(l);
-            }
-        }
-        return 0;
+        return impl.length();
     }
 
     /**
@@ -278,21 +216,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code fromIndex < 0} 
      */
     public int nextClearBit(int fromIndex) {
-        int offset = fromIndex >> 6;
-        long mask = 1L << fromIndex;
-        while (offset < bits.length) {
-            long h = bits[offset];
-            do {
-                if ((h & mask) == 0) {
-                    return fromIndex;
-                }
-                mask <<= 1;
-                fromIndex++;
-            } while (mask != 0);
-            mask = 1;
-            offset++;
-        }
-        return fromIndex;
+        return impl.nextClearBit(fromIndex);
     }
 
     /**
@@ -308,20 +232,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code fromIndex < 0} 
      */
     public int nextSetBit(int fromIndex) {
-        int offset = fromIndex >> 6;
-        long mask = 1L << fromIndex;
-        while (offset < bits.length) {
-            long h = bits[offset];
-            do {
-                if ((h & mask) != 0)
-                    return fromIndex;
-                mask <<= 1;
-                fromIndex++;
-            } while (mask != 0);
-            mask = 1;
-            offset++;
-        }
-        return -1;
+        return impl.nextSetBit(fromIndex);
     }
 
     /**
@@ -332,12 +243,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @param that the second bit set.
      */
     public void or(FastBitSet that) {
-        if (that.bits.length > this.bits.length) {
-            setLength(that.bits.length);
-        }
-        for (int i = that.bits.length; --i >= 0;) {
-            bits[i] |= that.bits[i];
-        }
+        impl.or(that.impl);
     }
 
     /**
@@ -348,11 +254,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void set(int bitIndex) {
-        int i = bitIndex >> 6;
-        if (i >= bits.length) {
-            setLength(i + 1);
-        }
-        bits[i] |= 1L << bitIndex;
+        impl.set(bitIndex);
     }
 
     /**
@@ -363,11 +265,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void set(int bitIndex, boolean value) {
-        if (value) {
-            set(bitIndex);
-        } else {
-            clear(bitIndex);
-        }
+        impl.set(bitIndex, value);
     }
 
     /**
@@ -382,18 +280,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     public void set(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex < fromIndex))
             throw new IndexOutOfBoundsException();
-        int i = fromIndex >>> 6;
-        int j = toIndex >>> 6;
-        setLength(j + 1);
-        if (i == j) {
-            bits[i] |= (-1L << fromIndex) & ((1L << toIndex) - 1);
-            return;
-        }
-        bits[i] |= -1L << fromIndex;
-        bits[j] |= (1L << toIndex) - 1;
-        for (int k = i + 1; k < j; k++) {
-            bits[k] = -1;
-        }
+        impl.set(fromIndex, toIndex);
     }
 
     /**
@@ -406,12 +293,24 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void set(int fromIndex, int toIndex, boolean value) {
-        if (value) {
-            set(fromIndex, toIndex);
-        } else {
-            clear(fromIndex, toIndex);
-        }
+        impl.set(fromIndex, toIndex, value);
     }
+
+    /**
+     * Performs the logical XOR operation on this bit set and the one specified.
+     * In other words, builds the symmetric remainder of the two sets 
+     * (the elements that are in one set, but not in the other).  
+     * The result is stored into this bit set.
+     *
+     * @param that the second bit set.
+     */
+    public void xor(FastBitSet that) {
+        impl.xor(that.impl);
+    }
+
+    //
+    // FastCollection<Index> Methods
+    //
 
     /**
      * Returns the cardinality of this bit set (number of bits set).
@@ -429,117 +328,98 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     }
 
     /**
-     * Performs the logical XOR operation on this bit set and the one specified.
-     * In other words, builds the symmetric remainder of the two sets 
-     * (the elements that are in one set, but not in the other).  
-     * The result is stored into this bit set.
-     *
-     * @param that the second bit set.
+     * Adds the specified index to this set. This method is equivalent 
+     * to <code>set(index.intValue())</code>.
+     * 
+     * @param index the object to be added to this set.
+     * @return {@code true} if this set did not contains the specified
+     *         index; {@code false} otherwise.
      */
-    public void xor(FastBitSet that) {
-        if (that.bits.length > this.bits.length) {
-            setLength(that.bits.length);
-        }
-        for (int i = that.bits.length; --i >= 0;) {
-            bits[i] ^= that.bits[i];
-        }
-    }
-
-    // Optimization.
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof FastBitSet))
-            return false;
-        FastBitSet that = (FastBitSet) obj;
-        int n = MathLib.min(this.bits.length, that.bits.length);
-        for (int i = 0; i < n; ++i) {
-            if (bits[i] != that.bits[i])
-                return false;
-        }
-        for (int i = n; i < this.bits.length; i++) {
-            if (this.bits[i] != 0)
-                return false;
-        }
-        for (int i = n; i < that.bits.length; i++) {
-            if (that.bits[i] != 0)
-                return false;
-        }
-        return true;
-    }
-
-    // Optimization.
-    @Override
-    public int hashCode() {
-        int h = 0;
-        for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            h += i;
-        }
-        return h;
+    public boolean add(Index index) {
+        return !impl.getAndSet(index.intValue(), true);
     }
 
     /**
-     * Sets the new length of the table (all new bits are <code>false</code>).
-     *
-     * @param newLength the new length of the table.
+     * Indicates if the specified object/index is in this set. 
+     * This method is equivalent to <code>get(index.intValue())</code>.
+     * 
+     * @param index the object to be tested.
+     * @return {@code true} if this set contains the specified
+     *         index; {@code false} otherwise.
      */
-    private void setLength(final int newLength) {
-        if (bits.length >= newLength) return; // No need.
-        long[] tmp = new long[newLength];
-        System.arraycopy(bits, 0, tmp, 0, bits.length);
-        bits = tmp;
+    @Override
+    public boolean contains(Object index) {
+        if (!(index instanceof Index)) return false;
+        return impl.get(((Index)index).intValue());        
     }
     
-    //
-    // FastCollection Methods
-    //
-
+    /**
+     * Removes the specified index from this set. This method is equivalent 
+     * to <code>clear(index.intValue())</code>.
+     * 
+     * @param index the object to be removed from this set.
+     * @return {@code true} if this set contained the specified
+     *         index; {@code false} otherwise.
+     */
     @Override
-    public FastCollection<Index> unmodifiable() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean remove(Object index) {
+        if (!(index instanceof Index)) return false;
+        return impl.getAndSet(((Index)index).intValue(), false);
+    }
+    
+    @Override
+    public FastBitSet copy() {
+        return new FastBitSet(impl.copy());
     }
 
     @Override
-    public FastCollection<Index> shared() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean equals(Object obj) {
+        if (obj instanceof FastBitSet)
+            return impl.equals(((FastBitSet) obj).impl);
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return impl.hashCode();
+    }
+
+    @Override
+    public FastBitSet unmodifiable() {
+        return new FastBitSet(new UnmodifiableBitSetImpl(impl));
+    }
+
+    @Override
+    public FastBitSet shared() {
+        return new FastBitSet(new SharedBitSetImpl(impl));
     }
 
     @Override
     public <R> FastCollection<R> forEach(Functor<Index, R> functor) {
-        FastTable<R> results = new FastTable();
-        for (int i=nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            R result = functor.evaluate(Index.valueOf(i));
-            if (result != null) results.add(result);
-        }
-        return results;
+        return impl.forEach(functor);
     }
 
     @Override
     public void doWhile(Predicate<Index> predicate) {
-        for (int i=nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            if (!predicate.evaluate(Index.valueOf(i))) return;
-        }
+        impl.doWhile(predicate);
     }
 
     @Override
     public boolean removeAll(Predicate<Index> predicate) {
-        boolean modified = false;
-        for (int i=nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            if (predicate.evaluate(Index.valueOf(i))) {
-                clear(i);
-                modified = true;
-            }
-        }
-        return modified;
+        return impl.removeAll(predicate);
     }
 
     @Override
     public Iterator<Index> iterator() {
-        throw new UnsupportedOperationException("Closures should be used to iterate.");
+        return new BitSetIteratorImpl(impl, 0);
     }
 
     @Override
-    public FastCollection<Index> usingComparator(FastComparator<Index> comparator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public FastCollection<Index> usingComparator(
+            FastComparator<Index> comparator) {
+        throw new UnsupportedOperationException("Not supported.");
     }
 
+    private static final long serialVersionUID = 6452172317804380908L;
 }

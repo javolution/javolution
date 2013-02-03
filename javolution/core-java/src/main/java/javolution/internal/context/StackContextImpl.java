@@ -23,7 +23,7 @@ public final class StackContextImpl extends StackContext {
     // TODO: Use RTSJ Scoped Memory.
     
     @Override
-    protected <P, R extends Copyable> R executeInContext(Functor<P, R> function, P parameter) {
+    protected <P, R extends Copyable<R>> R executeInContext(Functor<P, R> function, P parameter) {
         return function.evaluate(parameter);
     }
 

@@ -19,7 +19,7 @@ import javolution.xml.stream.XMLStreamReader;
  * This class represents the default factory implementation.
  */
 public final class XMLInputFactoryImpl extends XMLInputFactory {
-    Map _entities = null;
+    Map<?,?> _entities = null;
 
     // Implements XMLInputFactory abstract method.
     public XMLStreamReader createXMLStreamReader(Reader reader) throws XMLStreamException {
@@ -43,12 +43,12 @@ public final class XMLInputFactoryImpl extends XMLInputFactory {
     }
 
     // Implements XMLInputFactory abstract method.
+    @SuppressWarnings("unchecked")
     public void setProperty(String name, Object value) throws IllegalArgumentException {
         if (name.equals(IS_COALESCING)) {
             // Do nothing, always coalescing.
-            // Do nothing, always coalescing.
         } else if (name.equals(ENTITIES)) {
-            _entities = (Map) value;
+            _entities = (Map<Object,Object>) value;
         } else {
             throw new IllegalArgumentException("Property: " + name + " not supported");
         }

@@ -68,10 +68,6 @@ public abstract class WebServiceClient {
      * Default constructor (address not set).
      */
     public WebServiceClient() {
-        /**/
-        if (true) return;
-        /**/
-        throw new UnsupportedOperationException("J2ME Not Supported Yet");
     }
 
     /**
@@ -80,13 +76,11 @@ public abstract class WebServiceClient {
      * @param address the service full address. 
      */
     public WebServiceClient setAddress(String address) {
-        /**/    
         try {
             _url = new java.net.URL(address);
         } catch (java.net.MalformedURLException e) {
             throw new IllegalArgumentException("Malformed URL: " + address);
         }
-        /**/
         return this;
     }
 

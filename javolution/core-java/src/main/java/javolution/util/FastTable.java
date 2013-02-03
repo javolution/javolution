@@ -52,8 +52,8 @@ import javolution.lang.Predicate;
  * </ol>
  * Views can be chained, for example:
  * [code]
- * FastTable<Session> sessions = new FastTable().shared(); // Table which can be concurrently accessed/modified.
- * FastTable<Item> items = new FastTable().sorted().noDuplicate(); // Table of sorted items with no duplicate.
+ * FastTable<Session> sessions = FastTable.newInstance().shared(); // Table which can be concurrently accessed/modified.
+ * FastTable<Item> items = FastTable.newInstance().sorted().noDuplicate(); // Table of sorted items with no duplicate.
  *     // Sorted tables have faster {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods.
  * FastTable<String> names ...
  * names.usingComparator(FastComparator.LEXICAL).reverse().sort(); // Sorts the names in reverse alphabetical order.
@@ -83,8 +83,8 @@ import javolution.lang.Predicate;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastTable<E> extends FastCollection<E> implements
-        List<E>, Deque<E>, RandomAccess, Copyable<FastTable<E>> {
+public class FastTable<E> extends FastCollection<E> implements List<E>,
+        Deque<E>, RandomAccess, Copyable<FastTable<E>> {
 
     /**
      * The actual implementation.
@@ -96,7 +96,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * without large resize operations to best fit the table current size.
      */
     public FastTable() {
-        impl = new FastTableImpl();
+        impl = new FastTableImpl<E>();
     }
 
     /**
@@ -108,7 +108,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     @Override
     public FastTable<E> unmodifiable() {
-        return new FastTable(new UnmodifiableTableImpl<E>(impl));
+        return new FastTable<E>(new UnmodifiableTableImpl<E>(impl));
     }
 
     /**
@@ -121,12 +121,12 @@ public class FastTable<E> extends FastCollection<E> implements
      *     concurrent writes while iterating.</p>
      */
     public FastTable<E> shared() {
-        return new FastTable(new SharedTableImpl<E>(impl));
+        return new FastTable<E>(new SharedTableImpl<E>(impl));
     }
 
     @Override
     public FastTable<E> usingComparator(FastComparator<E> comp) {
-        return new FastTable(new CustomComparatorTableImpl<E>(impl, comp));
+        return new FastTable<E>(new CustomComparatorTableImpl<E>(impl, comp));
     }
 
     /**
@@ -141,9 +141,10 @@ public class FastTable<E> extends FastCollection<E> implements
      * @throws UnsupportedOperationException if this table is not empty.
      */
     public FastTable<E> sorted() {
-        if (!isEmpty()) throw new UnsupportedOperationException(
+        if (!isEmpty())
+            throw new UnsupportedOperationException(
                     "Sorted view requires the table to be initially empty");
-        return new FastTable(new SortedTableImpl<E>(impl));
+        return new FastTable<E>(new SortedTableImpl<E>(impl));
     }
 
     /**
@@ -152,7 +153,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * last element and finish by the first.</p>
      */
     public FastTable<E> reverse() {
-        return new FastTable(new ReverseTableImpl<E>(impl));
+        return new FastTable<E>(new ReverseTableImpl<E>(impl));
     }
 
     /**
@@ -165,7 +166,7 @@ public class FastTable<E> extends FastCollection<E> implements
         if (!isEmpty())
             throw new UnsupportedOperationException(
                     "No duplicate view requires the tables to be initially empty");
-        return new FastTable(new NoDuplicateTableImpl<E>(impl));
+        return new FastTable<E>(new NoDuplicateTableImpl<E>(impl));
     }
 
     /**
@@ -193,7 +194,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     @Override
     public ListIterator<E> iterator() {
-        return new TableIteratorImpl(impl, 0);
+        return new TableIteratorImpl<E>(impl, 0);
     }
 
     /**
@@ -218,6 +219,7 @@ public class FastTable<E> extends FastCollection<E> implements
      *         element; <code>false</code> otherwise.
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public final boolean remove(Object element) {
         return impl.remove((E) element);
@@ -231,6 +233,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @return <code>true</code> if this collection contains the specified
      *         element;<code>false</code> otherwise.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public final boolean contains(Object element) {
         return impl.contains((E) element);
@@ -275,7 +278,7 @@ public class FastTable<E> extends FastCollection<E> implements
      */
     @Override
     public FastTable<E> copy() {
-        return new FastTable(impl.copy());
+        return new FastTable<E>(impl.copy());
     }
 
     //                      //////////////////
@@ -325,7 +328,8 @@ public class FastTable<E> extends FastCollection<E> implements
      * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt; size())</code>
      */
     @Override
-    public final boolean addAll(final int index, final Collection<? extends E> elements) {
+    public final boolean addAll(final int index,
+            final Collection<? extends E> elements) {
         return impl.addAll(index, elements);
     }
 
@@ -378,6 +382,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @return the index in this table of the first occurrence of the specified
      *         element, or -1 if this table does not contain this element.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public final int indexOf(Object element) {
         return impl.indexOf((E) element);
@@ -391,6 +396,7 @@ public class FastTable<E> extends FastCollection<E> implements
      * @return the index in this table of the last occurrence of the specified
      *         element, or -1 if this table does not contain this element.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public final int lastIndexOf(Object element) {
         return impl.lastIndexOf((E) element);
@@ -419,8 +425,9 @@ public class FastTable<E> extends FastCollection<E> implements
     @Override
     public ListIterator<E> listIterator(int index) {
         if ((index < 0) || (index > size()))
-            throw new IndexOutOfBoundsException("index: " + index + ", size: " + size());
-        return new TableIteratorImpl(impl, index);
+            throw new IndexOutOfBoundsException("index: " + index + ", size: "
+                    + size());
+        return new TableIteratorImpl<E>(impl, index);
     }
 
     /**
@@ -438,7 +445,7 @@ public class FastTable<E> extends FastCollection<E> implements
     public FastTable<E> subList(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex > size()) || (fromIndex > toIndex))
             throw new IndexOutOfBoundsException(); // As per List.subList contract.
-        return new FastTable(new SubTableImpl(impl, fromIndex, toIndex));
+        return new FastTable<E>(new SubTableImpl<E>(impl, fromIndex, toIndex));
     }
 
     //                      ///////////////////
@@ -518,7 +525,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     @Override
     public final boolean offer(E e) {
-         return offerLast(e);
+        return offerLast(e);
     }
 
     @Override
@@ -538,7 +545,7 @@ public class FastTable<E> extends FastCollection<E> implements
 
     @Override
     public final E peek() {
-       return peekFirst();
+        return peekFirst();
     }
 
     @Override
@@ -555,4 +562,6 @@ public class FastTable<E> extends FastCollection<E> implements
     public Iterator<E> descendingIterator() {
         return reverse().iterator();
     }
+
+    private static final long serialVersionUID = 7415541512853301683L;
 }

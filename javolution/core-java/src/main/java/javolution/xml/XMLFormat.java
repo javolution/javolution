@@ -113,7 +113,7 @@ import javolution.xml.stream.XMLStreamWriter;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
  */
-public abstract class XMLFormat <T>  {
+public abstract class XMLFormat<T> {
 
     /**
      * Holds <code>null</code> representation.
@@ -124,7 +124,7 @@ public abstract class XMLFormat <T>  {
      * Default constructor.
      */
     protected XMLFormat() {
-     }
+    }
 
     /**
      * Indicates if the object serialized through this format can be referenced
@@ -136,7 +136,7 @@ public abstract class XMLFormat <T>  {
      * @see XMLReferenceResolver
      */
     public boolean isReferenceable() {
-        return true;
+	return true;
     }
 
     /**
@@ -150,15 +150,14 @@ public abstract class XMLFormat <T>  {
      * @param xml the XML input element.
      * @return the object corresponding to the specified XML element.
      */
-    public  T  newInstance(Class <T>  cls, InputElement xml)
-            throws XMLStreamException {
-        try {
-            return cls.newInstance();
-        } catch (InstantiationException e) {
-            throw new XMLStreamException(e);
-        } catch (IllegalAccessException e) {
-            throw new XMLStreamException(e);
-        }
+    public T newInstance(Class<? extends T> cls, InputElement xml) throws XMLStreamException {
+	try {
+	    return cls.newInstance();
+	} catch (InstantiationException e) {
+	    throw new XMLStreamException(e);
+	} catch (IllegalAccessException e) {
+	    throw new XMLStreamException(e);
+	}
     }
 
     /**
@@ -167,8 +166,7 @@ public abstract class XMLFormat <T>  {
      * @param obj the object to format.
      * @param xml the <code>XMLElement</code> destination.
      */
-    public abstract void write( T  obj, OutputElement xml)
-            throws XMLStreamException;
+    public abstract void write(T obj, OutputElement xml) throws XMLStreamException;
 
     /**
      * Parses an XML input element into the specified object. 
@@ -177,796 +175,766 @@ public abstract class XMLFormat <T>  {
      * @param obj the object created through {@link #newInstance}
      *        and to setup from the specified XML element.
      */
-    public abstract void read(InputElement xml,  T  obj)
-            throws XMLStreamException;
+    public abstract void read(InputElement xml, T obj) throws XMLStreamException;
 
     /**
      * This class represents an input XML element (unmarshalling).
      */
+    @SuppressWarnings("unchecked")
     public static final class InputElement {
 
-        /**
-         * Holds the stream reader.
-         */
-        final XMLStreamReaderImpl _reader = new XMLStreamReaderImpl();
+	/**
+	 * Holds the stream reader.
+	 */
+	final XMLStreamReaderImpl _reader = new XMLStreamReaderImpl();
 
-        /**
-         * Holds the XML binding.
-         */
-        private XMLBinding _binding;
+	/**
+	 * Holds the XML binding.
+	 */
+	private XMLBinding _binding;
 
-        /**
-         * Holds the reference resolver.
-         */
-        private XMLReferenceResolver _referenceResolver;
+	/**
+	 * Holds the reference resolver.
+	 */
+	private XMLReferenceResolver _referenceResolver;
 
-        /**
-         * Indicates if the reader is currently positioned on the next element.
-         */
-        private boolean _isReaderAtNext;
+	/**
+	 * Indicates if the reader is currently positioned on the next element.
+	 */
+	private boolean _isReaderAtNext;
 
-        /**
-         * Default constructor.
-         */
-        InputElement() {
-            reset();
-        }
+	/**
+	 * Default constructor.
+	 */
+	InputElement() {
+	    reset();
+	}
 
-        /**
-         * Returns the StAX-like stream reader (provides complete control 
-         * over the unmarshalling process).
-         * 
-         * @return the stream reader.
-         */
-        public XMLStreamReader getStreamReader() {
-            return _reader;
-        }
+	/**
+	 * Returns the StAX-like stream reader (provides complete control 
+	 * over the unmarshalling process).
+	 * 
+	 * @return the stream reader.
+	 */
+	public XMLStreamReader getStreamReader() {
+	    return _reader;
+	}
 
-        /**
-         * Indicates if more nested XML element can be read. This method 
-         * positions the {@link #getStreamReader reader} at the start of the
-         * next XML element to be read (if any).
-         *
-         * @return <code>true</code> if there is more XML element to be read; 
-         *         <code>false</code> otherwise.
-         */
-        public boolean hasNext() throws XMLStreamException {
-            if (!_isReaderAtNext) {
-                _isReaderAtNext = true;
-                _reader.nextTag();
-            }
-            return _reader.getEventType() == XMLStreamReader.START_ELEMENT;
-        }
+	/**
+	 * Indicates if more nested XML element can be read. This method 
+	 * positions the {@link #getStreamReader reader} at the start of the
+	 * next XML element to be read (if any).
+	 *
+	 * @return <code>true</code> if there is more XML element to be read; 
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean hasNext() throws XMLStreamException {
+	    if (!_isReaderAtNext) {
+		_isReaderAtNext = true;
+		_reader.nextTag();
+	    }
+	    return _reader.getEventType() == XMLStreamReader.START_ELEMENT;
+	}
 
-        /**
-         * Returns the next object whose type is identified by the local name
-         * and URI of the current XML element.
-         *
-         * @return the next nested object which can be <code>null</code>.
-         * @throws XMLStreamException if <code>hasNext() == false</code>.
-         */
-        public <T>   T  getNext() throws XMLStreamException {
-            if (!hasNext()) // Asserts isReaderAtNext == true
-                throw new XMLStreamException("No more element to read", _reader.getLocation());
+	/**
+	 * Returns the next object whose type is identified by the local name
+	 * and URI of the current XML element.
+	 *
+	 * @return the next nested object which can be <code>null</code>.
+	 * @throws XMLStreamException if <code>hasNext() == false</code>.
+	 */
+        public <T> T getNext() throws XMLStreamException {
+	    if (!hasNext()) // Asserts isReaderAtNext == true
+		throw new XMLStreamException("No more element to read", _reader.getLocation());
 
-            // Checks for null.
-            if (_reader.getLocalName().equals(NULL)) {
-                if (_reader.next() != XMLStreamReader.END_ELEMENT)
-                    throw new XMLStreamException("Non Empty Null Element");
-                _isReaderAtNext = false;
-                return null;
-            }
+	    // Checks for null.
+	    if (_reader.getLocalName().equals(NULL)) {
+		if (_reader.next() != XMLStreamReader.END_ELEMENT)
+		    throw new XMLStreamException("Non Empty Null Element");
+		_isReaderAtNext = false;
+		return null;
+	    }
 
-            Object ref = readReference();
-            if (ref != null)
-                return ( T ) ref;
+	    Object ref = readReference();
+	    if (ref != null)
+		return (T) ref;
 
-            // Retrieves object's class from element tag.
-            Class cls = _binding.readClass(_reader, false);
-            return ( T ) readInstanceOf(cls);
-        }
+	    // Retrieves object's class from element tag.
+	    Class<?> cls = _binding.readClass(_reader, false);
+	    return readInstanceOf(cls);
+	}
 
-        /**
-         * Returns the object whose type is identified by a XML class attribute
-         * only if the XML element has the specified local name.
-         *
-         * @param name the local name of the next element.
-         * @return the next nested object or <code>null</code>.
-         */
-        public <T>   T  get(String name) throws XMLStreamException {
-            if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(name))
-                return null;
+	/**
+	 * Returns the object whose type is identified by a XML class attribute
+	 * only if the XML element has the specified local name.
+	 *
+	 * @param name the local name of the next element.
+	 * @return the next nested object or <code>null</code>.
+	 */
+	public <T> T get(String name) throws XMLStreamException {
+	    if (!hasNext()// Asserts isReaderAtNext == true
+		    || !_reader.getLocalName().equals(name))
+		return null;
 
-            Object ref = readReference();
-            if (ref != null)
-                return ( T ) ref;
+	    Object ref = readReference();
+	    if (ref != null)
+		return (T) ref;
 
-            // Retrieves object's class from class attribute.
-            Class cls = _binding.readClass(_reader, true);
-            return ( T ) readInstanceOf(cls);
-        }
+	    // Retrieves object's class from class attribute.
+	    Class<?> cls = _binding.readClass(_reader, true);
+	    return readInstanceOf(cls);
+	}
 
-        /**
-         * Returns the object whose type is identified by a XML class attribute
-         * only if the XML element has the specified local name and URI.
-         *
-         * @param localName the local name.
-         * @param uri the namespace URI or <code>null</code>.
-         * @return the next nested object or <code>null</code>.
-         */
-        public <T>   T  get(String localName, String uri)
-                throws XMLStreamException {
-            if (uri == null)
-                return ( T ) get(localName);
+	/**
+	 * Returns the object whose type is identified by a XML class attribute
+	 * only if the XML element has the specified local name and URI.
+	 *
+	 * @param localName the local name.
+	 * @param uri the namespace URI or <code>null</code>.
+	 * @return the next nested object or <code>null</code>.
+	 */
+	public <T> T get(String localName, String uri) throws XMLStreamException {
+	    if (uri == null)
+		return (T) get(localName);
 
-            if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
-                return null;
+	    if (!hasNext()// Asserts isReaderAtNext == true
+		    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
+		return null;
 
-            Object ref = readReference();
-            if (ref != null)
-                return ( T ) ref;
+	    Object ref = readReference();
+	    if (ref != null)
+		return (T) ref;
 
-            // Retrieves object's class from class attribute.
-            Class cls = _binding.readClass(_reader, true);
-            return ( T ) readInstanceOf(cls);
-        }
+	    // Retrieves object's class from class attribute.
+	    Class<?> cls = _binding.readClass(_reader, true);
+	    return readInstanceOf(cls);
+	}
 
-        /**
-         * Returns the object of specified type only if the XML element has the
-         * specified local name. 
-         *      
-         * @param name the local name of the element to match.
-         * @param cls the class identifying the format of the object to return.
-         * @return the next nested object or <code>null</code>.
-         */
-        public <T>   T  get(String name, Class <T>  cls)
-                throws XMLStreamException {
-            if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(name))
-                return null;
+	/**
+	 * Returns the object of specified type only if the XML element has the
+	 * specified local name. 
+	 *      
+	 * @param name the local name of the element to match.
+	 * @param cls the class identifying the format of the object to return.
+	 * @return the next nested object or <code>null</code>.
+	 */
+	public <T> T get(String name, Class<T> cls) throws XMLStreamException {
+	    if (!hasNext()// Asserts isReaderAtNext == true
+		    || !_reader.getLocalName().equals(name))
+		return null;
 
-            Object ref = readReference();
-            if (ref != null)
-                return ( T ) ref;
+	    Object ref = readReference();
+	    if (ref != null)
+		return (T) ref;
 
-            return ( T ) readInstanceOf(cls);
-        }
+	    return readInstanceOf(cls);
+	}
 
-        /**
-         * Returns the object of specified type only if the 
-         * XML element has the specified local name and namespace URI.
-         *      
-         * @param localName the local name.
-         * @param uri the namespace URI or <code>null</code>.
-         * @param cls the class identifying the format of the object to return.
-         * @return the next nested object or <code>null</code>.
-         */
-        public <T>   T  get(String localName, String uri,
-                Class <T>  cls) throws XMLStreamException {
-            if (uri == null)
-                return get(localName, cls);
+	/**
+	 * Returns the object of specified type only if the 
+	 * XML element has the specified local name and namespace URI.
+	 *      
+	 * @param localName the local name.
+	 * @param uri the namespace URI or <code>null</code>.
+	 * @param cls the class identifying the format of the object to return.
+	 * @return the next nested object or <code>null</code>.
+	 */
+	public <T> T get(String localName, String uri, Class<T> cls) throws XMLStreamException {
+	    if (uri == null)
+		return get(localName, cls);
 
-            if (!hasNext()// Asserts isReaderAtNext == true
-                    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
-                return null;
+	    if (!hasNext()// Asserts isReaderAtNext == true
+		    || !_reader.getLocalName().equals(localName) || !_reader.getNamespaceURI().equals(uri))
+		return null;
 
-            Object ref = readReference();
-            if (ref != null)
-                return ( T ) ref;
+	    Object ref = readReference();
+	    if (ref != null)
+		return (T) ref;
 
-            return ( T ) readInstanceOf(cls);
-        }
+	    return readInstanceOf(cls);
+	}
 
-        // Returns the referenced object if any.
-        private Object readReference() throws XMLStreamException {
-            if (_referenceResolver == null)
-                return null;
-            Object ref = _referenceResolver.readReference(this);
-            if (ref == null)
-                return null;
-            if (_reader.next() != XMLStreamReader.END_ELEMENT)
-                throw new XMLStreamException("Non Empty Reference Element");
-            _isReaderAtNext = false;
-            return ref;
-        }
+	// Returns the referenced object if any.
+	private Object readReference() throws XMLStreamException {
+	    if (_referenceResolver == null)
+		return null;
+	    Object ref = _referenceResolver.readReference(this);
+	    if (ref == null)
+		return null;
+	    if (_reader.next() != XMLStreamReader.END_ELEMENT)
+		throw new XMLStreamException("Non Empty Reference Element");
+	    _isReaderAtNext = false;
+	    return ref;
+	}
 
-        // Builds object of specified class.
-        private Object readInstanceOf(Class cls) throws XMLStreamException {
+	// Builds object of specified class.
+	@SuppressWarnings("rawtypes")
+    private <T> T readInstanceOf(Class cls) throws XMLStreamException {
 
-            // Retrieves format.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
+	    // Retrieves format.
+	    XMLFormat xmlFormat = _binding.getFormat(cls);
 
-            // Creates object.
-            _isReaderAtNext = false; // Makes attributes accessible.
-            Object obj = xmlFormat.newInstance(cls, this);
+	    // Creates object.
+	    _isReaderAtNext = false; // Makes attributes accessible.
+	    Object obj = xmlFormat.newInstance(cls, this);
 
-            // Adds reference (before reading to support circular reference).
-            if (_referenceResolver != null) {
-                _referenceResolver.createReference(obj, this);
-            }
+	    // Adds reference (before reading to support circular reference).
+	    if (_referenceResolver != null) {
+		_referenceResolver.createReference(obj, this);
+	    }
 
-            // Parses xml.
-            xmlFormat.read(this, obj);
-            if (hasNext()) // Asserts _isReaderAtNext == true
-                throw new XMLStreamException("Incomplete element reading",
-                        _reader.getLocation());
-            _isReaderAtNext = false; // Skips end element.
-            return obj;
-        }
+	    // Parses xml.
+	    xmlFormat.read(this, obj);
+	    if (hasNext()) // Asserts _isReaderAtNext == true
+		throw new XMLStreamException("Incomplete element reading", _reader.getLocation());
+	    _isReaderAtNext = false; // Skips end element.
+	    return (T) obj;
+	}
 
-        /**
-         * Returns the content of a text-only element (equivalent to 
-         * {@link javolution.xml.stream.XMLStreamReader#getElementText 
-         * getStreamReader().getElementText()}).
-         *
-         * @return the element text content or an empty sequence if none.
-         */
-        public CharArray getText() throws XMLStreamException {
-            CharArray txt = _reader.getElementText();
-            _isReaderAtNext = true; // End element is next.
-            return txt;
-        }
+	/**
+	 * Returns the content of a text-only element (equivalent to 
+	 * {@link javolution.xml.stream.XMLStreamReader#getElementText 
+	 * getStreamReader().getElementText()}).
+	 *
+	 * @return the element text content or an empty sequence if none.
+	 */
+	public CharArray getText() throws XMLStreamException {
+	    CharArray txt = _reader.getElementText();
+	    _isReaderAtNext = true; // End element is next.
+	    return txt;
+	}
 
-        /**
-         * Returns the attributes for this XML input element.
-         *
-         * @return the attributes mapping.
-         */
-        public Attributes getAttributes() throws XMLStreamException {
-            if (_isReaderAtNext)
-                throw new XMLStreamException(
-                        "Attributes should be read before content");
-            return _reader.getAttributes();
-        }
+	/**
+	 * Returns the attributes for this XML input element.
+	 *
+	 * @return the attributes mapping.
+	 */
+	public Attributes getAttributes() throws XMLStreamException {
+	    if (_isReaderAtNext)
+		throw new XMLStreamException("Attributes should be read before content");
+	    return _reader.getAttributes();
+	}
 
-        /**
-         * Searches for the attribute having the specified name.
-         *
-         * @param  name the name of the attribute.
-         * @return the value for the specified attribute or <code>null</code>
-         *         if the attribute is not found.
-         */
-        public CharArray getAttribute(String name) throws XMLStreamException {
-            if (_isReaderAtNext)
-                throw new XMLStreamException(
-                        "Attributes should be read before reading content");
-            return _reader.getAttributeValue(null, name);
-        }
+	/**
+	 * Searches for the attribute having the specified name.
+	 *
+	 * @param  name the name of the attribute.
+	 * @return the value for the specified attribute or <code>null</code>
+	 *         if the attribute is not found.
+	 */
+	public CharArray getAttribute(String name) throws XMLStreamException {
+	    if (_isReaderAtNext)
+		throw new XMLStreamException("Attributes should be read before reading content");
+	    return _reader.getAttributeValue(null, name);
+	}
 
-        /**
-         * Returns the specified <code>String</code> attribute.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue a default value.
-         * @return the value for the specified attribute or
-         *         the <code>defaultValue</code> if the attribute is not found.
-         */
-        public String getAttribute(String name, String defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toString() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>String</code> attribute.
+	 *
+	 * @param  name the name of the attribute.
+	 * @param  defaultValue a default value.
+	 * @return the value for the specified attribute or
+	 *         the <code>defaultValue</code> if the attribute is not found.
+	 */
+	public String getAttribute(String name, String defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toString() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>boolean</code> attribute.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>boolean</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public boolean getAttribute(String name, boolean defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toBoolean() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>boolean</code> attribute.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>boolean</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public boolean getAttribute(String name, boolean defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toBoolean() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>char</code> attribute.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>char</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public char getAttribute(String name, char defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            if (value == null)
-                return defaultValue;
-            if (value.length() != 1)
-                throw new XMLStreamException(
-                        "Single character expected (read '" + value + "')");
-            return value.charAt(0);
-        }
+	/**
+	 * Returns the specified <code>char</code> attribute.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>char</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public char getAttribute(String name, char defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    if (value == null)
+		return defaultValue;
+	    if (value.length() != 1)
+		throw new XMLStreamException("Single character expected (read '" + value + "')");
+	    return value.charAt(0);
+	}
 
-        /**
-         * Returns the specified <code>byte</code> attribute. This method handles
-         * string formats that are used to represent octal and hexadecimal numbers.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>byte</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public byte getAttribute(String name, byte defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? (byte) value.toInt() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>byte</code> attribute. This method handles
+	 * string formats that are used to represent octal and hexadecimal numbers.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>byte</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public byte getAttribute(String name, byte defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? (byte) value.toInt() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>short</code> attribute. This method handles
-         * string formats that are used to represent octal and hexadecimal numbers.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>short</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public short getAttribute(String name, short defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? (short) value.toInt() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>short</code> attribute. This method handles
+	 * string formats that are used to represent octal and hexadecimal numbers.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>short</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public short getAttribute(String name, short defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? (short) value.toInt() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>int</code> attribute. This method handles
-         * string formats that are used to represent octal and hexadecimal numbers.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>int</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public int getAttribute(String name, int defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toInt() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>int</code> attribute. This method handles
+	 * string formats that are used to represent octal and hexadecimal numbers.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>int</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public int getAttribute(String name, int defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toInt() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>long</code> attribute. This method handles
-         * string formats that are used to represent octal and hexadecimal numbers.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>long</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public long getAttribute(String name, long defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toLong() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>long</code> attribute. This method handles
+	 * string formats that are used to represent octal and hexadecimal numbers.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>long</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public long getAttribute(String name, long defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toLong() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>float</code> attribute.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>float</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public float getAttribute(String name, float defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toFloat() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>float</code> attribute.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>float</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public float getAttribute(String name, float defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toFloat() : defaultValue;
+	}
 
-        /**
-         * Returns the specified <code>double</code> attribute.
-         *
-         * @param  name the name of the attribute searched for.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the <code>double</code> value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public double getAttribute(String name, double defaultValue)
-                throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            return (value != null) ? value.toDouble() : defaultValue;
-        }
+	/**
+	 * Returns the specified <code>double</code> attribute.
+	 *
+	 * @param  name the name of the attribute searched for.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the <code>double</code> value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public double getAttribute(String name, double defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    return (value != null) ? value.toDouble() : defaultValue;
+	}
 
-        /**
-         * Returns the attribute of same type as the specified
-         * default value.
-         *
-         * @param  name the name of the attribute.
-         * @param  defaultValue the value returned if the attribute is not found.
-         * @return the parse value for the specified attribute or
-         *         the default value if the attribute is not found.
-         */
-        public <T>   T  getAttribute(String name,
-                 T  defaultValue) throws XMLStreamException {
-            CharArray value = getAttribute(name);
-            if (value == null)
-                return defaultValue;
-            // Parses attribute value.
-            Class type = defaultValue.getClass();
-            TextFormat format = TextContext.getFormat(type);
-            if (format == null)
-                throw new XMLStreamException("No TextFormat defined for " + type);
-            return ( T ) format.parse(value);
-        }
+	/**
+	 * Returns the attribute of same type as the specified
+	 * default value.
+	 *
+	 * @param  name the name of the attribute.
+	 * @param  defaultValue the value returned if the attribute is not found.
+	 * @return the parse value for the specified attribute or
+	 *         the default value if the attribute is not found.
+	 */
+	public <T> T getAttribute(String name, T defaultValue) throws XMLStreamException {
+	    CharArray value = getAttribute(name);
+	    if (value == null)
+		return defaultValue;
+	    // Parses attribute value.
+	    Class<?> type = defaultValue.getClass();
+	    TextFormat<?> format = TextContext.getFormat(type);
+	    if (format == null)
+		throw new XMLStreamException("No TextFormat defined for " + type);
+	    return (T) format.parse(value);
+	}
 
-        // Sets XML binding. 
-        void setBinding(XMLBinding xmlBinding) {
-            _binding = xmlBinding;
-        }
+	// Sets XML binding. 
+	void setBinding(XMLBinding xmlBinding) {
+	    _binding = xmlBinding;
+	}
 
-        // Sets XML reference resolver. 
-        void setReferenceResolver(XMLReferenceResolver xmlReferenceResolver) {
-            _referenceResolver = xmlReferenceResolver;
-        }
+	// Sets XML reference resolver. 
+	void setReferenceResolver(XMLReferenceResolver xmlReferenceResolver) {
+	    _referenceResolver = xmlReferenceResolver;
+	}
 
-        // Resets for reuse.
-        void reset() {
-            _binding = XMLBinding.DEFAULT;
-            _isReaderAtNext = false;
-            _reader.reset();
-            _referenceResolver = null;
-        }
+	// Resets for reuse.
+	void reset() {
+	    _binding = XMLBinding.DEFAULT;
+	    _isReaderAtNext = false;
+	    _reader.reset();
+	    _referenceResolver = null;
+	}
     }
 
     /**
      * This class represents an output XML element (marshalling).
      */
+    @SuppressWarnings("unchecked")
     public static final class OutputElement {
 
-        /**
-         * Holds the stream writer.
-         */
-        final XMLStreamWriterImpl _writer = new XMLStreamWriterImpl();
+	/**
+	 * Holds the stream writer.
+	 */
+	final XMLStreamWriterImpl _writer = new XMLStreamWriterImpl();
 
-        /**
-         * Holds the XML binding.
-         */
-        private XMLBinding _binding;
+	/**
+	 * Holds the XML binding.
+	 */
+	private XMLBinding _binding;
 
-        /**
-         * Holds the reference resolver.
-         */
-        private XMLReferenceResolver _referenceResolver;
+	/**
+	 * Holds the reference resolver.
+	 */
+	private XMLReferenceResolver _referenceResolver;
 
-        /**
-         * Default constructor.
-         */
-        OutputElement() {
-            reset();
-        }
+	/**
+	 * Default constructor.
+	 */
+	OutputElement() {
+	    reset();
+	}
 
-        /**
-         * Returns the StAX-like stream writer (provides complete control over
-         * the marshalling process).
-         * 
-         * @return the stream writer.
-         */
-        public XMLStreamWriter getStreamWriter() {
-            return _writer;
-        }
+	/**
+	 * Returns the StAX-like stream writer (provides complete control over
+	 * the marshalling process).
+	 * 
+	 * @return the stream writer.
+	 */
+	public XMLStreamWriter getStreamWriter() {
+	    return _writer;
+	}
 
-        /**
-         * Adds the specified object or <code>null</code> as an anonymous 
-         * nested element of unknown type. 
-         *
-         * @param obj the object added as nested element or <code>null</code>.
-         */
-        public void add(Object obj) throws XMLStreamException {
-            if (obj == null) {
-                _writer.writeEmptyElement(NULL);
-                return;
-            }
+	/**
+	 * Adds the specified object or <code>null</code> as an anonymous 
+	 * nested element of unknown type. 
+	 *
+	 * @param obj the object added as nested element or <code>null</code>.
+	 */
+	public void add(Object obj) throws XMLStreamException {
+	    if (obj == null) {
+		_writer.writeEmptyElement(NULL);
+		return;
+	    }
 
-            // Writes start element.
-            Class cls = obj.getClass();
-            _binding.writeClass(obj.getClass(), _writer, false);
+	    // Writes start element.
+	    Class<?> cls = obj.getClass();
+	    _binding.writeClass(cls, _writer, false);
 
-            // Checks if reference written.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj))
-                return;
+	    // Checks if reference written.
+	    XMLFormat<Object> xmlFormat = (XMLFormat<Object>) _binding.getFormat(cls);
+	    if (xmlFormat.isReferenceable() && writeReference(obj))
+		return;
 
-            xmlFormat.write(obj, this);
-            _writer.writeEndElement();
-        }
+	    xmlFormat.write(obj, this);
+	    _writer.writeEndElement();
+	}
 
-        /**
-         * Adds the specified object as a named nested element of unknown type
-         * (<code>null</code> objects are ignored).
-         * The nested XML element contains a class attribute identifying
-         * the object type.
-         *
-         * @param obj the object added as nested element or <code>null</code>.
-         * @param name the name of the nested element.
-         */
-        public void add(Object obj, String name) throws XMLStreamException {
-            if (obj == null)
-                return;
+	/**
+	 * Adds the specified object as a named nested element of unknown type
+	 * (<code>null</code> objects are ignored).
+	 * The nested XML element contains a class attribute identifying
+	 * the object type.
+	 *
+	 * @param obj the object added as nested element or <code>null</code>.
+	 * @param name the name of the nested element.
+	 */
+	public void add(Object obj, String name) throws XMLStreamException {
+	    if (obj == null)
+		return;
 
-            // Writes start element.
-            _writer.writeStartElement(name);
+	    // Writes start element.
+	    _writer.writeStartElement(name);
 
-            // Writes class attribute.
-            Class cls = obj.getClass();
-            _binding.writeClass(cls, _writer, true);
+	    // Writes class attribute.
+	    Class<?> cls = obj.getClass();
+	    _binding.writeClass(cls, _writer, true);
 
-            // Checks if reference written.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj))
-                return;
+	    // Checks if reference written.
+	    XMLFormat<Object> xmlFormat = (XMLFormat<Object>) _binding.getFormat(cls);
+	    if (xmlFormat.isReferenceable() && writeReference(obj))
+		return;
 
-            xmlFormat.write(obj, this);
-            _writer.writeEndElement();
-        }
+	    xmlFormat.write(obj, this);
+	    _writer.writeEndElement();
+	}
 
-        /**
-         * Adds the specified object as a fully qualified nested element of 
-         * unknown type (<code>null</code> objects are ignored). 
-         * The nested XML element contains a class attribute identifying
-         * the object type.
-         *
-         * @param obj the object added as nested element or <code>null</code>.
-         * @param localName the local name of the nested element.
-         * @param uri the namespace URI of the nested element.
-         */
-        public void add(Object obj, String localName, String uri)
-                throws XMLStreamException {
-            if (obj == null)
-                return;
+	/**
+	 * Adds the specified object as a fully qualified nested element of 
+	 * unknown type (<code>null</code> objects are ignored). 
+	 * The nested XML element contains a class attribute identifying
+	 * the object type.
+	 *
+	 * @param obj the object added as nested element or <code>null</code>.
+	 * @param localName the local name of the nested element.
+	 * @param uri the namespace URI of the nested element.
+	 */
+	public void add(Object obj, String localName, String uri) throws XMLStreamException {
+	    if (obj == null)
+		return;
 
-            // Writes start element.
-            _writer.writeStartElement(uri, localName);
+	    // Writes start element.
+	    _writer.writeStartElement(uri, localName);
 
-            // Writes class attribute.
-            Class cls = obj.getClass();
-            _binding.writeClass(cls, _writer, true);
+	    // Writes class attribute.
+	    Class<?> cls = obj.getClass();
+	    _binding.writeClass(cls, _writer, true);
 
-            // Checks if reference written.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj))
-                return;
+	    // Checks if reference written.
+	    XMLFormat<Object> xmlFormat = (XMLFormat<Object>) _binding.getFormat(cls);
+	    if (xmlFormat.isReferenceable() && writeReference(obj))
+		return;
 
-            xmlFormat.write(obj, this);
-            _writer.writeEndElement();
-        }
+	    xmlFormat.write(obj, this);
+	    _writer.writeEndElement();
+	}
 
-        /**
-         * Adds the specified object as a named nested element of specified  
-         * actual type (<code>null</code> objects are ignored).
-         * The nested XML element does not contain any class attribute.
-         *
-         * @param obj the object added as nested element or <code>null</code>.
-         * @param name the name of the nested element.
-         * @param cls the class identifying the format of the specified object.
-         */
-        public <T>  void add( T  obj, String name, Class <T>  cls)
-                throws XMLStreamException {
-            if (obj == null)
-                return;
+	/**
+	 * Adds the specified object as a named nested element of specified  
+	 * actual type (<code>null</code> objects are ignored).
+	 * The nested XML element does not contain any class attribute.
+	 *
+	 * @param obj the object added as nested element or <code>null</code>.
+	 * @param name the name of the nested element.
+	 * @param cls the class identifying the format of the specified object.
+	 */
+	public <T> void add(T obj, String name, Class<T> cls) throws XMLStreamException {
+	    if (obj == null)
+		return;
 
-            // Writes start element.
-            _writer.writeStartElement(name);
+	    // Writes start element.
+	    _writer.writeStartElement(name);
 
-            // Checks if reference written.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj))
-                return;
+	    // Checks if reference written.
+	    XMLFormat<T> xmlFormat = (XMLFormat<T>) _binding.getFormat(cls);
+	    if (xmlFormat.isReferenceable() && writeReference(obj))
+		return;
 
-            xmlFormat.write(obj, this);
-            _writer.writeEndElement();
-        }
+	    xmlFormat.write(obj, this);
+	    _writer.writeEndElement();
+	}
 
-        /**
-         * Adds the specified object as a fully qualified nested element of
-         * specified actual type (<code>null</code> objects are ignored). 
-         * The nested XML element does not contain any class attribute.
-         *
-         * @param obj the object added as nested element or <code>null</code>.
-         * @param localName the local name of the nested element.
-         * @param uri the namespace URI of the nested element.
-         * @param cls the class identifying the format of the specified object.
-         */
-        public <T>  void add( T  obj, String localName, String uri,
-                Class <T>  cls) throws XMLStreamException {
-            if (obj == null)
-                return;
+	/**
+	 * Adds the specified object as a fully qualified nested element of
+	 * specified actual type (<code>null</code> objects are ignored). 
+	 * The nested XML element does not contain any class attribute.
+	 *
+	 * @param obj the object added as nested element or <code>null</code>.
+	 * @param localName the local name of the nested element.
+	 * @param uri the namespace URI of the nested element.
+	 * @param cls the class identifying the format of the specified object.
+	 */
+	public <T> void add(T obj, String localName, String uri, Class<T> cls) throws XMLStreamException {
+	    if (obj == null)
+		return;
 
-            // Writes start element.
-            _writer.writeStartElement(uri, localName);
+	    // Writes start element.
+	    _writer.writeStartElement(uri, localName);
 
-            // Checks if reference written.
-            XMLFormat xmlFormat = _binding.getFormat(cls);
-            if (xmlFormat.isReferenceable() && writeReference(obj))
-                return;
+	    // Checks if reference written.
+	    XMLFormat<T> xmlFormat = (XMLFormat<T>) _binding.getFormat(cls);
+	    if (xmlFormat.isReferenceable() && writeReference(obj))
+		return;
 
-            xmlFormat.write(obj, this);
-            _writer.writeEndElement();
-        }
+	    xmlFormat.write(obj, this);
+	    _writer.writeEndElement();
+	}
 
-        // Returns true if reference written.
-        private boolean writeReference(Object obj) throws XMLStreamException {
-            if ((_referenceResolver == null) || !_referenceResolver.writeReference(obj, this))
-                return false;
-            _writer.writeEndElement();
-            return true; // Reference written.
-        }
+	// Returns true if reference written.
+	private boolean writeReference(Object obj) throws XMLStreamException {
+	    if ((_referenceResolver == null) || !_referenceResolver.writeReference(obj, this))
+		return false;
+	    _writer.writeEndElement();
+	    return true; // Reference written.
+	}
 
-        /**
-         * Adds the content of a text-only element (equivalent to {@link 
-         * javolution.xml.stream.XMLStreamWriter#writeCharacters(CharSequence) 
-         * getStreamWriter().writeCharacters(text)}).
-         *
-         * @param text the element text content or an empty sequence if none.
-         */
-        public void addText(CharSequence text) throws XMLStreamException {
-            _writer.writeCharacters(text);
-        }
+	/**
+	 * Adds the content of a text-only element (equivalent to {@link 
+	 * javolution.xml.stream.XMLStreamWriter#writeCharacters(CharSequence) 
+	 * getStreamWriter().writeCharacters(text)}).
+	 *
+	 * @param text the element text content or an empty sequence if none.
+	 */
+	public void addText(CharSequence text) throws XMLStreamException {
+	    _writer.writeCharacters(text);
+	}
 
-        /**
-         * Equivalent to {@link #addText(CharSequence)} 
-         * (for J2ME compatibility).
-         *
-         * @param text the element text content or an empty sequence if none.
-         */
-        public void addText(String text) throws XMLStreamException {
-            _writer.writeCharacters(text);
-        }
+	/**
+	 * Equivalent to {@link #addText(CharSequence)} 
+	 * (for J2ME compatibility).
+	 *
+	 * @param text the element text content or an empty sequence if none.
+	 */
+	public void addText(String text) throws XMLStreamException {
+	    _writer.writeCharacters(text);
+	}
 
-        /**
-         * Sets the specified <code>CharSequence</code> attribute
-         * (<code>null</code> values are ignored).
-         *
-         * @param  name the attribute name.
-         * @param  value the attribute value or <code>null</code>.
-         */
-        public void setAttribute(String name, CharSequence value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            _writer.writeAttribute(name, value);
-        }
+	/**
+	 * Sets the specified <code>CharSequence</code> attribute
+	 * (<code>null</code> values are ignored).
+	 *
+	 * @param  name the attribute name.
+	 * @param  value the attribute value or <code>null</code>.
+	 */
+	public void setAttribute(String name, CharSequence value) throws XMLStreamException {
+	    if (value == null)
+		return;
+	    _writer.writeAttribute(name, value);
+	}
 
-        /**
-         * Sets the specified <code>String</code> attribute
-         * (<code>null</code> values are ignored).
-         *
-         * @param  name the attribute name.
-         * @param  value the attribute value.
-         */
-        public void setAttribute(String name, String value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            _writer.writeAttribute(name, value);
-        }
+	/**
+	 * Sets the specified <code>String</code> attribute
+	 * (<code>null</code> values are ignored).
+	 *
+	 * @param  name the attribute name.
+	 * @param  value the attribute value.
+	 */
+	public void setAttribute(String name, String value) throws XMLStreamException {
+	    if (value == null)
+		return;
+	    _writer.writeAttribute(name, value);
+	}
 
-        /**
-         * Sets the specified <code>boolean</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>boolean</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, boolean value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
-        private TextBuilder _tmpTextBuilder = new TextBuilder();
+	/**
+	 * Sets the specified <code>boolean</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>boolean</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, boolean value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>char</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>char</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, char value)
-                throws XMLStreamException {
-            setAttribute(name, (TextBuilder) _tmpTextBuilder.clear().append(
-                    value));
-        }
+	private TextBuilder _tmpTextBuilder = new TextBuilder();
 
-        /**
-         * Sets the specified <code>byte</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>byte</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, byte value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>char</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>char</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, char value) throws XMLStreamException {
+	    setAttribute(name, (TextBuilder) _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>short</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>short</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, short value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>byte</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>byte</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, byte value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>int</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>int</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, int value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>short</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>short</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, short value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>long</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>long</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, long value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>int</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>int</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, int value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>float</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>float</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, float value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>long</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>long</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, long value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified <code>double</code> attribute.
-         * 
-         * @param  name the attribute name.
-         * @param  value the <code>double</code> value for the specified attribute.
-         */
-        public void setAttribute(String name, double value)
-                throws XMLStreamException {
-            setAttribute(name, _tmpTextBuilder.clear().append(value));
-        }
+	/**
+	 * Sets the specified <code>float</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>float</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, float value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        /**
-         * Sets the specified attribute using its associated 
-         * {@link javolution.text.TextFormat TextFormat}.
-         * 
-         * @param  name the name of the attribute.
-         * @param  value the value for the specified attribute
-         *         or <code>null</code> in which case the attribute is not set.
-         */
-        public void setAttribute(String name, Object value)
-                throws XMLStreamException {
-            if (value == null)
-                return;
-            Class type = value.getClass();
-            setAttribute(name, _tmpTextBuilder.clear().append(value.toString()));
-        }
+	/**
+	 * Sets the specified <code>double</code> attribute.
+	 * 
+	 * @param  name the attribute name.
+	 * @param  value the <code>double</code> value for the specified attribute.
+	 */
+	public void setAttribute(String name, double value) throws XMLStreamException {
+	    setAttribute(name, _tmpTextBuilder.clear().append(value));
+	}
 
-        // Sets XML binding. 
-        void setBinding(XMLBinding xmlBinding) {
-            _binding = xmlBinding;
-        }
+	/**
+	 * Sets the specified attribute using its associated 
+	 * {@link javolution.text.TextFormat TextFormat}.
+	 * 
+	 * @param  name the name of the attribute.
+	 * @param  value the value for the specified attribute
+	 *         or <code>null</code> in which case the attribute is not set.
+	 */
+	public void setAttribute(String name, Object value) throws XMLStreamException {
+	    if (value == null)
+		return;
+	    setAttribute(name, _tmpTextBuilder.clear().append(value.toString()));
+	}
 
-        // Sets XML reference resolver. 
-        void setReferenceResolver(XMLReferenceResolver xmlReferenceResolver) {
-            _referenceResolver = xmlReferenceResolver;
-        }
+	// Sets XML binding. 
+	void setBinding(XMLBinding xmlBinding) {
+	    _binding = xmlBinding;
+	}
 
-        // Resets for reuse.
-        void reset() {
-            _binding = XMLBinding.DEFAULT;
-            _writer.reset();
-            _writer.setRepairingNamespaces(true);
-            _writer.setAutomaticEmptyElements(true);
-            _referenceResolver = null;
-        }
+	// Sets XML reference resolver. 
+	void setReferenceResolver(XMLReferenceResolver xmlReferenceResolver) {
+	    _referenceResolver = xmlReferenceResolver;
+	}
+
+	// Resets for reuse.
+	void reset() {
+	    _binding = XMLBinding.DEFAULT;
+	    _writer.reset();
+	    _writer.setRepairingNamespaces(true);
+	    _writer.setAutomaticEmptyElements(true);
+	    _referenceResolver = null;
+	}
     }
 
     /**
@@ -974,45 +942,42 @@ public abstract class XMLFormat <T>  {
      * {@link TextFormat plain text format}; this XML representation consists 
      * of the plain text representation of the object as a "value" attribute.
      */
-    public static class Default extends XMLFormat {
+    public static class Default extends XMLFormat<Object> {
 
-        /**
-         * Default constructor.
-         */
-        public Default() {       
-        }
-        
-        @Override
-        public boolean isReferenceable() {
-            return false; // Always by value (immutable).
-        }
+	/**
+	 * Default constructor.
+	 */
+	public Default() {
+	}
 
-        @Override
-        public Object newInstance(Class cls,
-                javolution.xml.XMLFormat.InputElement xml)
-                throws XMLStreamException {
-            TextFormat format = TextContext.getFormat(cls);
-            if (format == null)
-                throw new XMLStreamException("No TextFormat defined to parse instances of " + cls);                
-            CharArray value = xml.getAttribute("value");
-            if (value == null)
-                throw new XMLStreamException(
-                        "Missing value attribute (to be able to parse the instance of " + cls + ")");
-            return format.parse(value);
-        }
+	@Override
+	public boolean isReferenceable() {
+	    return false; // Always by value (immutable).
+	}
 
-        public void read(XMLFormat.InputElement xml, Object obj)
-                throws XMLStreamException {
-            // Do nothing.
-        }
+	@Override
+	public Object newInstance(Class<?> cls, javolution.xml.XMLFormat.InputElement xml) throws XMLStreamException {
+	    TextFormat<?> format = TextContext.getFormat(cls);
+	    if (format == null)
+		throw new XMLStreamException("No TextFormat defined to parse instances of " + cls);
+	    CharArray value = xml.getAttribute("value");
+	    if (value == null)
+		throw new XMLStreamException("Missing value attribute (to be able to parse the instance of " + cls
+		        + ")");
+	    return format.parse(value);
+	}
 
-        public void write(Object obj, XMLFormat.OutputElement xml)
-                throws XMLStreamException {
-            TextBuilder tmp = new TextBuilder();
-            TextFormat tf = TextContext.getFormat(obj.getClass());
-            tf.format(obj, tmp);
-            xml.setAttribute("value", tmp);
-        }
+	public void read(XMLFormat.InputElement xml, Object obj) throws XMLStreamException {
+	    // Do nothing.
+	}
 
-    };    
+	@SuppressWarnings("unchecked")
+        public void write(Object obj, XMLFormat.OutputElement xml) throws XMLStreamException {
+	    TextBuilder tmp = new TextBuilder();
+	    TextFormat<?> tf = TextContext.getFormat(obj.getClass());
+	    ((TextFormat<Object>)tf).format(obj, tmp);
+	    xml.setAttribute("value", tmp);
+	}
+
+    };
 }

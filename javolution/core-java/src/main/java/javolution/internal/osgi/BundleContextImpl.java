@@ -62,26 +62,26 @@ public class BundleContextImpl implements BundleContext {
     }
 
     @Override
-    public ServiceRegistration registerService(String serviceName, Object service, Dictionary dctnr) {
-        ServiceReferenceImpl serviceReference =
-                new ServiceReferenceImpl(bundle, serviceName, service);
+    public ServiceRegistration<?> registerService(String serviceName, Object service, Dictionary<String, ? > dctnr) {
+        ServiceReferenceImpl<Object> serviceReference =
+                new ServiceReferenceImpl<Object>(bundle, serviceName, service);
         bundle.serviceReferences.add(serviceReference);
         // Fire service event.
         ServiceEvent serviceEvent = new ServiceEvent(ServiceEvent.REGISTERED, serviceReference);
         osgi.fireServiceEvent(serviceEvent);
-        return new ServiceRegistrationImpl(serviceReference);
+        return new ServiceRegistrationImpl<Object>(serviceReference);
     }
 
-    @Override
-    public ServiceReference[] getServiceReferences(String clazz, String filterExpression) throws InvalidSyntaxException {
+	@Override
+    public ServiceReference<?>[] getServiceReferences(String clazz, String filterExpression) throws InvalidSyntaxException {
         Filter filter = (filterExpression != null) ? this.createFilter(filterExpression) : null;
 
         // Searches all bundles.
-        ArrayList<ServiceReference> services = new ArrayList<ServiceReference>();
+        ArrayList<ServiceReference<?>> services = new ArrayList<ServiceReference<?>>();
         for (int i = 0; i < osgi.bundles.size(); i++) {
             BundleImpl aBundle =  (BundleImpl) osgi.bundles.get(i);
             for (int j = 0; j < aBundle.serviceReferences.size(); j++) {
-                ServiceReferenceImpl serviceReference = aBundle.serviceReferences.get(j);
+                ServiceReferenceImpl<?> serviceReference = aBundle.serviceReferences.get(j);
                 if (!serviceReference.serviceName.equals(clazz))
                     continue; // No match.
                 if ((filter != null) && (!filter.match(serviceReference)))
@@ -96,8 +96,8 @@ public class BundleContextImpl implements BundleContext {
     }
 
     @Override
-    public Object getService(ServiceReference sr) {
-        ServiceReferenceImpl sri = (ServiceReferenceImpl) sr;
+    public <S> S getService(ServiceReference<S> sr) {
+        ServiceReferenceImpl<S> sri = (ServiceReferenceImpl<S>) sr;
         return sri.service;
     }
 
@@ -107,7 +107,7 @@ public class BundleContextImpl implements BundleContext {
     }
 
     @Override
-    public boolean ungetService(ServiceReference reference) {
+    public boolean ungetService(ServiceReference<?> reference) {
         return false;
     }
 
@@ -117,9 +117,9 @@ public class BundleContextImpl implements BundleContext {
     }
 
     @Override
-    public ServiceReference getServiceReference(String clazz) {
+    public ServiceReference<?> getServiceReference(String clazz) {
          try {
-              ServiceReference[] refs = getServiceReferences(clazz, null);
+              ServiceReference<?>[] refs = getServiceReferences(clazz, null);
               return (refs == null) ? null : refs[0];
          } catch (InvalidSyntaxException e) {
               LogContext.error(e);
@@ -176,12 +176,12 @@ public class BundleContextImpl implements BundleContext {
     }
 
     @Override
-    public ServiceRegistration registerService(String[] strings, Object o, Dictionary dctnr) {
+    public ServiceRegistration<?> registerService(String[] strings, Object o, Dictionary<String, ? > dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public ServiceReference[] getAllServiceReferences(String string, String string1) {
+    public ServiceReference<?>[] getAllServiceReferences(String string, String string1) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

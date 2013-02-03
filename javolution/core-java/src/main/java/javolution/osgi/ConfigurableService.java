@@ -43,7 +43,7 @@ import org.osgi.service.cm.ManagedService;
  */
 public class ConfigurableService implements ManagedService {
 
-    private Dictionary properties = new Hashtable();
+    private Dictionary<String, Object> properties = new Hashtable<String, Object>();
 
     /**
      * Creates a configurable service having the specified PID identifier.
@@ -59,7 +59,7 @@ public class ConfigurableService implements ManagedService {
      *
      * @return the associated properties.
      */
-    public Dictionary getProperties() {
+    public Dictionary<String, ?> getProperties() {
         return properties;
     }
 
@@ -71,11 +71,11 @@ public class ConfigurableService implements ManagedService {
      */
     public void updated(Dictionary<String, ?> configuration) throws ConfigurationException {
         if (configuration == null) return; // No configuration data.      
-        Enumeration e = configuration.keys();
+        Enumeration<String> e = configuration.keys();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
             String textValue = (String) configuration.get(name);
-            Configurable cfg = ConfigurableService.configurableFor(name);
+            Configurable<?> cfg = ConfigurableService.configurableFor(name);
             if (cfg != null) {
                 try {
                     cfg.configure(textValue);
@@ -94,18 +94,18 @@ public class ConfigurableService implements ManagedService {
      * @param name the static field full name
      * @return the corresponding configurable or <code>null</code>
      */
-    public static Configurable configurableFor(String name) {
+    public static Configurable<?> configurableFor(String name) {
         try {
             int sep = name.lastIndexOf('#');
             if (sep < 0) return null; // Not a configurable.
             String className = name.substring(0, sep);
             String fieldName = name.substring(sep + 1);
-            Class cls = Class.forName(className);
+            Class<?> cls = Class.forName(className);
             if (cls == null) {
                 LogContext.warning("Class " + className + " not found");
                 return null;
             }
-            Configurable cfg = (Configurable) cls.getDeclaredField(fieldName).get(null);
+            Configurable<?> cfg = (Configurable<?>) cls.getDeclaredField(fieldName).get(null);
             if (cfg == null) {
                 LogContext.warning("Configurable " + name + " not found");
             }

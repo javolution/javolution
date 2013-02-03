@@ -65,7 +65,7 @@ public class OSGiImpl extends OSGi {
     }
 
     void fireServiceEvent(ServiceEvent serviceEvent) {
-        ServiceReferenceImpl serviceReference = (ServiceReferenceImpl) serviceEvent.getServiceReference();
+        ServiceReferenceImpl<?> serviceReference = (ServiceReferenceImpl<?>) serviceEvent.getServiceReference();
         String serviceName = serviceReference.serviceName;
         String filter = "(" + Constants.OBJECTCLASS + "=" + serviceName + ")";
         for (int i = 0; i < bundles.size(); i++) {

@@ -10,7 +10,6 @@ package javolution.context;
 
 import javolution.lang.Copyable;
 import javolution.lang.Factory;
-import javolution.lang.Functor;
 
 /**
  * <p> The parent class for all memory allocation contexts.
@@ -24,7 +23,7 @@ import javolution.lang.Functor;
  * @link HeapContext
  * @link StackContext
  */
-public abstract class AllocatorContext<C extends AllocatorContext> extends AbstractContext<C> {
+public abstract class AllocatorContext<C extends AllocatorContext<C>> extends AbstractContext<C> {
 
     /**
      * Default constructor.
@@ -36,8 +35,9 @@ public abstract class AllocatorContext<C extends AllocatorContext> extends Abstr
      * Returns the current allocator context or <code>null</code> if none
      * (default heap allocation).
      */
-    public static AllocatorContext current() {
-        return AbstractContext.current(AllocatorContext.class);        
+    @SuppressWarnings("unchecked")
+    public static AllocatorContext<?> current() {
+	return AbstractContext.current(AllocatorContext.class);
     }
 
     /**
@@ -45,15 +45,15 @@ public abstract class AllocatorContext<C extends AllocatorContext> extends Abstr
      * allocator context.
      */
     protected abstract void executeInContext(Runnable logic);
-    
+
     /**
      * Returns a new instance allocated using this allocator context
      * (convenience method).
      */
     protected <T> T allocateInContext(Factory<T> factory) {
-        Allocator<T> allocator = new Allocator(factory);
-        executeInContext(allocator);
-        return allocator.instance;
+	Allocator<T> allocator = new Allocator<T>(factory);
+	executeInContext(allocator);
+	return allocator.instance;
     }
 
     /**
@@ -61,43 +61,43 @@ public abstract class AllocatorContext<C extends AllocatorContext> extends Abstr
      * context (convenience method).
      */
     protected <T> T copyInContext(Copyable<T> obj) {
-        Copier<T> copier = new Copier(obj);
-        executeInContext(copier);
-        return copier.objCopy;
+	Copier<T> copier = new Copier<T>(obj);
+	executeInContext(copier);
+	return copier.objCopy;
     }
 
     // Runnable to allocate a new instance on the heap.
     private static class Allocator<T> implements Runnable {
 
-        private final Factory<T> factory;
+	private final Factory<T> factory;
 
-        T instance;
+	T instance;
 
-        public Allocator(Factory<T> factory) {
-            this.factory = factory;
-        }
+	public Allocator(Factory<T> factory) {
+	    this.factory = factory;
+	}
 
-        public void run() {
-            instance = factory.create();
-        }
+	public void run() {
+	    instance = factory.create();
+	}
 
     }
 
     // Runnable to allocate a new instance on the heap.
     private static class Copier<T> implements Runnable {
 
-        private final Copyable<T> obj;
+	private final Copyable<T> obj;
 
-        T objCopy;
+	T objCopy;
 
-        public Copier(Copyable<T> obj) {
-            this.obj = obj;
-        }
+	public Copier(Copyable<T> obj) {
+	    this.obj = obj;
+	}
 
-        public void run() {
-            objCopy = obj.copy();
-        }
+	public void run() {
+	    objCopy = obj.copy();
+	}
 
     }
-    
+
 }

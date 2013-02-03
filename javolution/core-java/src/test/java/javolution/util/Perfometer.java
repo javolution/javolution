@@ -24,7 +24,8 @@ public class Perfometer {
     /**
      * Hold the measure time duration in nanosecond.
      */
-    public static final LocalParameter<Long> MEASURE_DURATION_NS = new LocalParameter(1000 * 1000 * 100L) {
+    public static final LocalParameter<Long> MEASURE_DURATION_NS = new LocalParameter<Long>(
+            1000 * 1000 * 1000L) {
         @Override
         public void configure(CharSequence configuration) {
             this.setDefaultValue(TypeFormat.parseLong(configuration));
@@ -46,7 +47,7 @@ public class Perfometer {
      * time minus the first one. Parameters of a functor can be functors themselves 
      * in which case they are evaluated recursively before each measure.
      */
-    public long measure(Functor functor, Object... params) {
+    public long measure(Functor<?,?> functor, Object... params) {
         measure(true, functor, params); // Class initialization.
         System.gc();
         long nopExecutionTime = measure(false, functor, params);
@@ -55,7 +56,8 @@ public class Perfometer {
         return performExecutionTime - nopExecutionTime;
     }
 
-    private long measure(boolean doPerform, Functor functor, Object... params) {
+    @SuppressWarnings("unchecked")
+    private long measure(boolean doPerform, Functor<?,?> functor, Object... params) {
         long startTime = System.nanoTime();
         int count = 0;
         long executionTime;
@@ -65,7 +67,7 @@ public class Perfometer {
             try {
                 this.doPerform = doPerform;
                 cumulatedTime -= System.nanoTime();
-                functor.evaluate(param);
+                ((Functor<Object,?>)functor).evaluate(param);
             } finally {
                 cumulatedTime += System.nanoTime();
                 this.doPerform = true;
@@ -78,14 +80,16 @@ public class Perfometer {
         return cumulatedTime / count;
     }
 
+    @SuppressWarnings("unchecked")
     private Object evaluateParams(int i, Object... params) {
-        if (i >= params.length) return null;
+        if (i >= params.length)
+            return null;
         Object param = params[i];
         Object next = evaluateParams(++i, params);
         if (param instanceof Functor) {
-            return ((Functor) param).evaluate(next);
+            return ((Functor<Object,Object>) param).evaluate(next);
         } else if (next != null) {
-            return new MultiVariable(param, next);
+            return new MultiVariable<Object,Object>(param, next);
         } else {
             return param;
         }

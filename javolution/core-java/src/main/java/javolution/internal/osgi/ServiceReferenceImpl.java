@@ -14,7 +14,7 @@ import org.osgi.framework.ServiceReference;
 /**
  *  Holds minimalist service reference implementation.
  */
-public class ServiceReferenceImpl implements ServiceReference {
+public class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
    /////////////////////////////////////////////////////////////////////////////
    // Converted from ServiceReferenceImpl.hpp (C++)
@@ -23,9 +23,9 @@ public class ServiceReferenceImpl implements ServiceReference {
 
    String serviceName;
 
-   Object service;
+   S service;
 
-   public ServiceReferenceImpl(Bundle bundle, String serviceName, Object service) {
+   public ServiceReferenceImpl(Bundle bundle, String serviceName, S service) {
         this.bundle = bundle;
         this.serviceName = serviceName;
         this.service = service;

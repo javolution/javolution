@@ -64,7 +64,7 @@ public final class SubTableImpl<E> extends AbstractTable<E> {
     
     @Override
     public SubTableImpl<E> copy() {
-        return new SubTableImpl(that.copy(), fromIndex, toIndex);
+        return new SubTableImpl<E>(that.copy(), fromIndex, toIndex);
     }    
 
     //

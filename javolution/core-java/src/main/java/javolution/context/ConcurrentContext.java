@@ -158,7 +158,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -174,7 +174,7 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter(Runtime.getRuntime().availableProcessors()) {
+    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter<Integer>(Runtime.getRuntime().availableProcessors()) {
 
         @Override
         public void configure(CharSequence configuration) {

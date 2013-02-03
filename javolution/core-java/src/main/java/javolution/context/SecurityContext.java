@@ -43,7 +43,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable(false) {
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -73,7 +73,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to check.
      * @throws SecurityException if the specified permission is not granted.
      */
-    public static void check(SecurityPermission permission) {
+    public static void check(SecurityPermission<?> permission) {
         if (!SecurityContext.current().isGranted(permission))
             throw new SecurityException(permission + " is not granted.");
     }
@@ -93,7 +93,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be granted.
      */
-    public abstract void grant(SecurityPermission permission, Object certificate);
+    public abstract void grant(SecurityPermission<?> permission, Object certificate);
 
     /**
      * Revokes the specified permission.
@@ -103,7 +103,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public abstract void revoke(SecurityPermission permission, Object certificate);
+    public abstract void revoke(SecurityPermission<?> permission, Object certificate);
 
     /**
      * Grants the specified permission (convenience method).
@@ -111,7 +111,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to grant.
      * @throws SecurityException if the specified permission cannot be granted.
      */
-    public final void grant(SecurityPermission permission) {
+    public final void grant(SecurityPermission<?> permission) {
         grant(permission, null);
     }
 
@@ -121,7 +121,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to grant.
      * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public final void revoke(SecurityPermission permission) {
+    public final void revoke(SecurityPermission<?> permission) {
         revoke(permission, null);
     }
 

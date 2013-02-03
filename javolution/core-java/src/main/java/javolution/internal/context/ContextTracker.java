@@ -18,19 +18,19 @@ import org.osgi.util.tracker.ServiceTracker;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public final class ContextTracker<C extends AbstractContext> {
+public final class ContextTracker<C extends AbstractContext<C>> {
 
     ServiceTracker<C, C> tracker;
 
     final Class<C> type;
 
-    final Class<C> defaultImplClass;
+    final Class<? extends C> defaultImplClass;
 
     C defaultImpl;
 
     // This constructor does not cause the initialization/creation of the 
     // default implementation (avoid class initialization circularities.
-    public ContextTracker(Class<C> type, Class<C> defaultImplClass) {
+    public ContextTracker(Class<C> type, Class<? extends C> defaultImplClass) {
         this.type = type;
         this.defaultImplClass = defaultImplClass;
     }
