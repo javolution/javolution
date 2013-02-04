@@ -30,8 +30,7 @@ import javolution.text.TypeFormat;
  *     [code]
  *     @StackSafe
  *     public class LargeInteger implements ValueType {
- *         static final Functor<LargeInteger, LargeInteger> SQRT 
- *                 = new Functor<LargeInteger, LargeInteger>() {
+ *         static final Functor<LargeInteger, LargeInteger> SQRT = new Functor<LargeInteger, LargeInteger>() {
  *             public LargeInteger evaluate(LargeInteger that) {
  *                 LargeInteger result = ZERO;
  *                 LargeInteger k = that.shiftRight(this.bitLength() / 2)); // First approximation.
@@ -43,10 +42,11 @@ import javolution.text.TypeFormat;
  *             }
  *         });
  *         public LargeInteger sqrt() {
- *             return StackContext.execute(SQRT, this);
+ *             return StackContext.execute(SQRT, this); // Does not generate garbage on RTSJ platforms!
  *         }
- *     }[/code]
- *     Classes/methods identified as {@link javolution.annotation.StackSafe 
+ *     }[/code]</p>
+ * 
+ * <p> Classes/methods identified as {@link javolution.annotation.StackSafe 
  *     StackSafe} can be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>

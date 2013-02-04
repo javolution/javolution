@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 import javolution.context.LogContext;
+import javolution.internal.osgi.JavolutionActivator;
 import javolution.lang.Functor;
 import javolution.lang.MultiVariable;
 
@@ -25,12 +26,14 @@ import javolution.lang.MultiVariable;
  */
 public class FastTableTest {
 
+    static final boolean INITIALIZE_ALL = JavolutionActivator.initializeAll();
+
     private static final long ONE_SECOND_IN_NS = 1000 * 1000 * 1000L;
 
     private Perfometer perfometer = new Perfometer();
 
     private Random random = new Random();
-
+    
     /** Functor creating a fast table. */
     Functor<Void, List<Index>> newFastTable = new Functor<Void, List<Index>>() {
         public List<Index> evaluate(Void param) {
