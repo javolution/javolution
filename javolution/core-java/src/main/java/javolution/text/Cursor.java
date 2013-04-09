@@ -358,7 +358,7 @@ public class Cursor  {
      * @return <code>this</code>
      */
     public final Cursor increment(int i) {
-        index++;
+        index += i;
         return this;
     }
 
