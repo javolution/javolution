@@ -6,121 +6,115 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util;
+package javolution.util.service;
 
-import javolution.lang.Copyable;
-import javolution.lang.Functor;
 import javolution.lang.Predicate;
-import javolution.util.FastCollection;
+import javolution.util.FastBitSet;
 import javolution.util.FastTable;
 import javolution.util.Index;
 
 /**
- * The parent class for all bit set implementations.
+ * The set of related functionalities which can be used/reused to 
+ * implement bit-sets collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  * @see FastTable
  */
-public abstract class AbstractBitSet implements Copyable<AbstractBitSet> {
-
+public interface BitSetService {
+     
     //
     // Read Accessors.
     //
 
-    /** Returns the packed bits of this bit set as <code>long[]</code> */
-    public abstract long[] toBits();
-
     /** See {@link FastBitSet#cardinality() } */
-    public abstract int cardinality();
+    int cardinality();
 
     /** See {@link FastBitSet#get(int) } */
-    public abstract boolean get(int bitIndex);
+    boolean get(int bitIndex);
 
     /** See {@link FastBitSet#get(int, int) } */
-    public abstract AbstractBitSet get(int fromIndex, int toIndex);
+    BitSetService get(int fromIndex, int toIndex);
 
     /** See {@link FastBitSet#intersects(FastBitSet) } */
-    public abstract boolean intersects(AbstractBitSet that);
+    boolean intersects(BitSetService that);
 
     /** See {@link FastBitSet#length() } */
-    public abstract int length();
+    int length();
 
     //
     // Iterations
     //
 
     /** See {@link FastBitSet#nextClearBit(int) } */
-    public abstract int nextClearBit(int fromIndex);
+    int nextClearBit(int fromIndex);
     
     /** See {@link FastBitSet#nextSetBit(int) } */
-    public abstract int nextSetBit(int fromIndex);
-
-    /** See {@link FastBitSet#forEach(Functor) } */
-    public abstract <R> FastCollection<R> forEach(Functor<Index, R> functor);
+    int nextSetBit(int fromIndex);
 
     /** See {@link FastBitSet#doWhile(Predicate) } */
-    public abstract void doWhile(Predicate<Index> predicate);
+    void doWhile(Predicate<Index> predicate);
 
     /** See {@link FastBitSet#removeAll(Predicate) } */
-    public abstract boolean removeAll(Predicate<Index> predicate);
+    boolean removeAll(Predicate<Index> predicate);
 
     //
     // Clear/Set/Flip Operations
     //
 
     /** See {@link FastBitSet#clear() } */
-    public abstract void clear();
+    void clear();
     
     /** See {@link FastBitSet#clear(int) } */
-    public abstract void clear(int bitIndex);
+    void clear(int bitIndex);
 
     /** See {@link FastBitSet#clear(int, int) } */
-    public abstract void clear(int fromIndex, int toIndex);
+    void clear(int fromIndex, int toIndex);
     
     /** Clear or sets the specified bit, returns <code>true</code> 
      * if previously set; <code>false</code> otherwise. */
-    public abstract boolean getAndSet(int bitIndex, boolean value);
+    boolean getAndSet(int bitIndex, boolean value);
     
     /** See {@link FastBitSet#set(int) } */
-    public abstract void set(int bitIndex);
+    void set(int bitIndex);
 
     /** See {@link FastBitSet#set(int, boolean) } */
-    public abstract void set(int bitIndex, boolean value);
+    void set(int bitIndex, boolean value);
 
     /** See {@link FastBitSet#set(int, int) } */
-    public abstract void set(int fromIndex, int toIndex);
+    void set(int fromIndex, int toIndex);
     
     /** See {@link FastBitSet#set(int, int, boolean) } */
-    public abstract void set(int fromIndex, int toIndex, boolean value);
+    void set(int fromIndex, int toIndex, boolean value);
 
     /** See {@link FastBitSet#flip(int) } */
-    public abstract void flip(int bitIndex);
+    void flip(int bitIndex);
 
     /** See {@link FastBitSet#flip(int, int) } */
-    public abstract void flip(int fromIndex, int toIndex);
+    void flip(int fromIndex, int toIndex);
     
     //
     // Logical Operations
     //
 
     /** See {@link FastBitSet#and(FastBitSet) } */
-    public abstract void and(AbstractBitSet that);
+    void and(BitSetService that);
 
     /** See {@link FastBitSet#andNot(FastBitSet) } */
-    public abstract void andNot(AbstractBitSet that);
+    void andNot(BitSetService that);
 
     /** See {@link FastBitSet#or(FastBitSet) } */
-    public abstract void or(AbstractBitSet that);
+    void or(BitSetService that);
 
     /** See {@link FastBitSet#xor(FastBitSet) } */
-    public abstract void xor(AbstractBitSet that);
+    void xor(BitSetService that);
     
-    //
-    // Miscalleneous.
-    // 
-
-    /** See {@link FastBitSet#equals(Object) } */
-    public abstract boolean equals(AbstractBitSet that);
-
+     //
+     // Misc.
+     //
+    
+    /** Returns the <code>long[]</code> representation of this bitset 
+     * (new array) */
+    long[] toLongArray();
+                  
 }

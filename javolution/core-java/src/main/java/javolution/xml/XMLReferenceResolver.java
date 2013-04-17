@@ -33,17 +33,13 @@ public class XMLReferenceResolver  {
     /**
      * Holds object to identifier (FastTable.Index) mapping.
      */
-    private FastMap _objectToId = new FastMap() {
-        @Override
-        public FastComparator keyComparator() {
-            return FastComparator.IDENTITY;
-        }
-    };
-  
+    private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>()
+            .usingKeyComparator(FastComparator.IDENTITY);
+ 
     /**
      * Holds the objects (index to object mapping).
      */
-    private FastTable _idToObject = new FastTable();
+    private FastTable<Object> _idToObject = new FastTable<Object>();
 
     /**
      * Holds the id counter.

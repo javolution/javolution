@@ -6,14 +6,20 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util;
+package javolution.internal.util.table;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import javolution.lang.Copyable;
+
 import javolution.lang.Functor;
 import javolution.lang.Predicate;
+import javolution.util.FastCollection;
+import javolution.util.FastComparator;
+import javolution.util.FastTable;
+import javolution.util.service.ComparatorService;
+import javolution.util.service.TableService;
 
 /**
  * The parent class for all table implementations.
@@ -25,7 +31,7 @@ import javolution.lang.Predicate;
  * @version 6.0.0, December 12, 2012
  * @see FastTable
  */
-public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
+public abstract class AbstractTableImpl<E> implements TableService<E>, Serializable {
 
     /** See {@link FastTable#size() } */
     public abstract int size();
@@ -45,6 +51,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
     //
     // Non-Abstract methods.
     //
+    
     /** See {@link FastTable#clear() } */
     public void clear() {
         removeAll(new Predicate<E>() {
@@ -202,7 +209,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
     /** See {@link FastTable#size() } */
     public int indexOf(E element) {
-        FastComparator<E> cmp = comparator();
+        ComparatorService<E> cmp = comparator();
         for (int i = 0, size = size(); i < size; i++) {
             if (cmp.areEqual(element, get(i))) return i;
         }
@@ -211,7 +218,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
     /** See {@link FastTable#lastIndexOf(java.lang.Object) } */
     public int lastIndexOf(E element) {
-        FastComparator<E> cmp = comparator();
+        ComparatorService<E> cmp = comparator();
         for (int i = size(); i > 0;) {
             if (cmp.areEqual(element, get(--i))) return i;
         }
@@ -228,8 +235,8 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
     /** See {@link FastTable#comparator() } */
     @SuppressWarnings("unchecked")
-    public FastComparator<E> comparator() {
-        return (FastComparator<E>) FastComparator.DEFAULT;
+    public ComparatorService<E> comparator() {
+        return (ComparatorService<E>) FastComparator.DEFAULT.getService();
     }
 
     /** Throws NoSuchElementException */
@@ -245,7 +252,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
 
     // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
     //
-    private void quicksort(int first, int last, FastComparator<E> cmp) {
+    private void quicksort(int first, int last, ComparatorService<E> cmp) {
         if (first < last) {
             int pivIndex = partition(first, last, cmp);
             quicksort(first, (pivIndex - 1), cmp);
@@ -253,7 +260,7 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         }
     }
 
-    private int partition(int f, int l, FastComparator<E> cmp) {
+    private int partition(int f, int l, ComparatorService<E> cmp) {
         int up, down;
         E piv = get(f);
         up = f;
@@ -275,4 +282,6 @@ public abstract class AbstractTable<E> implements Copyable<AbstractTable<E>> {
         set(down, piv);
         return down;
     }
- }
+ 
+    private static final long serialVersionUID = -2761567438888847243L;
+}

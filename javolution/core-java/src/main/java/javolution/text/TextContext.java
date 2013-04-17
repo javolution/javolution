@@ -69,19 +69,19 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * Returns the plain text format for the specified type or <code>null</code> 
      * if none defined.
      */
-    public static <T> TextFormat<T> getFormat(Class<T> type) {
+    public static <T> TextFormat<T> getFormat(Class<? extends T> type) {
         return TextContext.current().getFormatInContext(type);
     }
 
     /**
      * Sets the plain text format for the specified type (and its sub-types).
      */
-    public abstract <T> void setFormat(Class<T> type, TextFormat<T> format);
+    public abstract <T> void setFormat(Class<? extends T> type, TextFormat<T> format);
 
     /**
      * Returns the plain text format for the specified type.
      */
-    protected abstract <T> TextFormat<T> getFormatInContext(Class<T> type);
+    protected abstract <T> TextFormat<T> getFormatInContext(Class<? extends T> type);
 
     /**
      * Returns the current text context.

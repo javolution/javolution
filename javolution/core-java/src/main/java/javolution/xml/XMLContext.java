@@ -64,19 +64,19 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
      * Returns the xml format for the specified type; if none defined 
      * the default object xml format (based on {@link TextFormat}) is returned.
      */
-    public static <T> XMLFormat<T> getFormat(Class<T> type) {
+    public static <T> XMLFormat<T> getFormat(Class<? extends T> type) {
         return XMLContext.current().getFormatInContext(type);
     }
 
     /**
      * Sets the xml format for the specified type (and its sub-types).
      */
-    public abstract <T> void setFormat(Class<T> type, XMLFormat<T> format);
+    public abstract <T> void setFormat(Class<? extends T> type, XMLFormat<T> format);
 
     /**
      * Returns the xml format for the specified type.
      */
-    protected abstract <T> XMLFormat<T> getFormatInContext(Class<T> type);
+    protected abstract <T> XMLFormat<T> getFormatInContext(Class<? extends T> type);
 
     /**
      * Returns the current xml context.

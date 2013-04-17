@@ -14,26 +14,27 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-import javolution.internal.util.CustomComparatorTableImpl;
-import javolution.internal.util.FastTableImpl;
-import javolution.internal.util.NoDuplicateTableImpl;
-import javolution.internal.util.ReverseTableImpl;
-import javolution.internal.util.SharedTableImpl;
-import javolution.internal.util.SortedTableImpl;
-import javolution.internal.util.SubTableImpl;
-import javolution.internal.util.TableIteratorImpl;
-import javolution.internal.util.UnmodifiableTableImpl;
-import javolution.lang.Copyable;
-import javolution.lang.Functor;
+
+import javolution.internal.util.table.CustomComparatorTableImpl;
+import javolution.internal.util.table.FractalTableImpl;
+import javolution.internal.util.table.NoDuplicateTableImpl;
+import javolution.internal.util.table.ReverseTableImpl;
+import javolution.internal.util.table.SharedTableImpl;
+import javolution.internal.util.table.SortedTableImpl;
+import javolution.internal.util.table.SubTableImpl;
+import javolution.internal.util.table.TableIteratorImpl;
+import javolution.internal.util.table.UnmodifiableTableImpl;
 import javolution.lang.Predicate;
+import javolution.util.service.TableService;
 
 /**
  * <p> A random access collection of ordered/unordered elements with fast
  * insertion/deletion and smooth (time bounded) capacity increase/decrease.
  * The implementation (fractal based) ensures that basic operations <b>worst</b> 
  * execution time is in <i><b>O(log(size))</b></i> even for arbitrary insertions 
- * or deletions. Also, the capacity of a fast table is automatically adjusted to
- * best fit its size (no more than 3/4 of the table capacity is ever wasted).</p>
+ * or deletions. The capacity of a fast table is automatically 
+ * adjusted to best fit its size (e.g. when a table is cleared its memory 
+ * footprint is minimal).</p>
  * <img src="doc-files/list-add.png"/>
  *
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
@@ -52,8 +53,8 @@ import javolution.lang.Predicate;
  * </ol>
  * Views can be chained, for example:
  * [code]
- * FastTable<Session> sessions = FastTable.newInstance().shared(); // Table which can be concurrently accessed/modified.
- * FastTable<Item> items = FastTable.newInstance().sorted().noDuplicate(); // Table of sorted items with no duplicate.
+ * FastTable<Session> sessions = new FastTable<Session>().shared(); // Table which can be concurrently accessed/modified.
+ * FastTable<Item> items = new FastTable<Item>().sorted().noDuplicate(); // Table of sorted items with no duplicate.
  *     // Sorted tables have faster {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods.
  * FastTable<String> names ...
  * names.usingComparator(FastComparator.LEXICAL).reverse().sort(); // Sorts the names in reverse alphabetical order.
@@ -78,55 +79,76 @@ import javolution.lang.Predicate;
  * [/code]</p>
  *
  * <p> Note: Most of this class methods are final, the actual behavior is defined by
- * the table "plugable" implementation (see {@link FastTable#FastTable(AbstractTable)}.</p>
+ * the table "plugable" implementation (see {@link FastTable#FastTable(TableService)}.</p>
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
 public class FastTable<E> extends FastCollection<E> implements List<E>,
-        Deque<E>, RandomAccess, Copyable<FastTable<E>> {
+        Deque<E>, RandomAccess {
 
     /**
-     * The actual implementation.
+     * Holds table service implementation.
      */
-    private final AbstractTable<E> impl;
+    private final TableService<E> service;
 
     /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
      */
     public FastTable() {
-        impl = new FastTableImpl<E>();
+        service = new FractalTableImpl<E>();
     }
 
     /**
-     * Creates a fast table backed up by the specified implementation.
+     * Creates a table backed up by the specified implementation.
      */
-    protected FastTable(AbstractTable<E> impl) {
-        this.impl = impl;
+    protected FastTable(TableService<E> service) {
+        this.service = service;
     }
+
+    /**
+     *  Returns the service implementation of this table.
+     */
+    protected TableService<E> getService() {
+        return service;
+    }
+
+    /***************************************************************************
+     * Table views.
+     */
 
     @Override
     public FastTable<E> unmodifiable() {
-        return new FastTable<E>(new UnmodifiableTableImpl<E>(impl));
-    }
-
-    /**
-     * <p> Returns a concurrent read-write view of this collection.</p>
-     * <p> Iterators on {@link #shared} collections are deprecated as the may 
-     *     raise {@link ConcurrentModificationException} and should be 
-     *     replaced by closure-based iterations (e.g. {@link #doWhile doWhile}).
-     *     Closure-based iterations use local snapshot copies of the table 
-     *     to avoid being impacted by concurrent modifications and not to block
-     *     concurrent writes while iterating.</p>
-     */
-    public FastTable<E> shared() {
-        return new FastTable<E>(new SharedTableImpl<E>(impl));
+        return new FastTable<E>(new UnmodifiableTableImpl<E>(service));
     }
 
     @Override
+    public FastTable<E> shared() {
+        return new FastTable<E>(new SharedTableImpl<E>(service));
+    }
+
+    /**
+      * <p> Returns a view over this table using the specified comparator for
+      *     element equality and sorting.</p> 
+      * <p> For collection having custom comparators, it is possible that 
+      *     elements considered distinct using the default equality 
+      *     comparator, would appear to be equals as far as this collection is 
+      *     concerned. For example, a {@link FastComparator#LEXICAL lexical 
+      *     comparator} considers that two {@link CharSequence} are equals if they
+      *     hold the same characters regardless of the {@link CharSequence} 
+      *     implementation. On the other hands, for the 
+      *     {@link FastComparator#IDENTITY identity} comparator, two elements 
+      *     might be considered distinct even if the default object equality 
+      *     considers them equals.</p>  
+      *
+      * @param the comparator to use for element equality (or sorting if 
+      *         the collection is sorted).
+      * @see #comparator() 
+      */
     public FastTable<E> usingComparator(FastComparator<E> comp) {
-        return new FastTable<E>(new CustomComparatorTableImpl<E>(impl, comp));
+        return new FastTable<E>(new CustomComparatorTableImpl<E>(service,
+                comp.getService()));
     }
 
     /**
@@ -144,7 +166,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         if (!isEmpty())
             throw new UnsupportedOperationException(
                     "Sorted view requires the table to be initially empty");
-        return new FastTable<E>(new SortedTableImpl<E>(impl));
+        return new FastTable<E>(new SortedTableImpl<E>(service));
     }
 
     /**
@@ -153,7 +175,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      * last element and finish by the first.</p>
      */
     public FastTable<E> reverse() {
-        return new FastTable<E>(new ReverseTableImpl<E>(impl));
+        return new FastTable<E>(new ReverseTableImpl<E>(service));
     }
 
     /**
@@ -166,87 +188,215 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         if (!isEmpty())
             throw new UnsupportedOperationException(
                     "No duplicate view requires the tables to be initially empty");
-        return new FastTable<E>(new NoDuplicateTableImpl<E>(impl));
+        return new FastTable<E>(new NoDuplicateTableImpl<E>(service));
     }
 
-    /**
-     * Returns this table comparator.
+    @Override
+    public FastTable<E> subList(int fromIndex, int toIndex) {
+        if ((fromIndex < 0) || (toIndex > size()) || (fromIndex > toIndex))
+            throw new IndexOutOfBoundsException(); // As per List.subList contract.
+        return new FastTable<E>(
+                new SubTableImpl<E>(service, fromIndex, toIndex));
+    }
+
+    /***************************************************************************
+     * Closures.
      */
+
     @Override
-    public FastComparator<E> comparator() {
-        return impl.comparator();
+    public void doWhile(Predicate<E> predicate) {
+        service.doWhile(predicate);
     }
 
     @Override
-    public final <R> FastTable<R> forEach(Functor<E, R> functor) {
-        return impl.forEach(functor);
+    public boolean removeAll(Predicate<E> predicate) {
+        return service.removeAll(predicate);
     }
 
-    @Override
-    public final void doWhile(Predicate<E> predicate) {
-        impl.doWhile(predicate);
-    }
-
-    @Override
-    public final boolean removeAll(Predicate<E> predicate) {
-        return impl.removeAll(predicate);
-    }
-
-    @Override
-    public ListIterator<E> iterator() {
-        return new TableIteratorImpl<E>(impl, 0);
-    }
-
-    /**
-     * Adds the specified element to this table; although the default 
-     * implementation appends the element to the end it is not forced to
-     * ({@link #addLast} should be used for that purpose).
-     *
-     * @param element the element to be added to this table.
-     * @return <code>true</code> if the element has been added;
-     *         <code>false</code> otherwise.
+    /***************************************************************************
+     * List operations.
      */
+
     @Override
-    public final boolean add(E element) {
-        return impl.add(element);
+    public void add(int index, E element) {
+        service.add(index, element);
     }
 
-    /**
-     * Removes the first occurrence in this collection of the specified element.
-     *
-     * @param element the element to be removed from this collection.
-     * @return <code>true</code> if this collection contained the specified
-     *         element; <code>false</code> otherwise.
-     * @throws UnsupportedOperationException if the collection is not modifiable.
-     */
+    @Override
+    public boolean addAll(final int index, Collection<? extends E> elements) {
+        return subList(index, index).addAll(elements);
+    }
+
+    @Override
+    public E remove(int index) {
+        return service.remove(index);
+    }
+
+    @Override
+    public E get(int index) {
+        return service.get(index);
+    }
+
+    @Override
+    public E set(int index, E element) {
+        return service.set(index, element);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    public final boolean remove(Object element) {
-        return impl.remove((E) element);
+    public int indexOf(Object element) {
+        return service.indexOf((E) element);
     }
 
-    /**
-     * Indicates if this collection contains the specified element.
-     *
-     * @param element the element whose presence in this collection
-     *                is to be tested.
-     * @return <code>true</code> if this collection contains the specified
-     *         element;<code>false</code> otherwise.
-     */
     @SuppressWarnings("unchecked")
     @Override
-    public final boolean contains(Object element) {
-        return impl.contains((E) element);
+    public final int lastIndexOf(Object element) {
+        return service.lastIndexOf((E) element);
     }
 
     @Override
-    public final void clear() {
-        impl.clear();
+    public Iterator<E> iterator() {
+        return listIterator();
     }
 
     @Override
-    public final int size() {
-        return impl.size();
+    public ListIterator<E> listIterator() {
+        return new TableIteratorImpl<E>(service, 0);
+    }
+
+    @Override
+    public ListIterator<E> listIterator(int index) {
+        if ((index < 0) || (index > size()))
+            throw new IndexOutOfBoundsException("index: " + index + ", size: "
+                    + size());
+        return new TableIteratorImpl<E>(service, index);
+    }
+
+    /***************************************************************************
+     * Deque operations.
+     */
+
+    @Override
+    public E getFirst() {
+        return service.getFirst();
+    }
+
+    @Override
+    public E getLast() {
+        return service.getLast();
+    }
+
+    @Override
+    public void addFirst(E element) {
+        service.addFirst(element);
+    }
+
+    @Override
+    public void addLast(E element) {
+        service.addLast(element);
+    }
+
+    @Override
+    public E removeFirst() {
+        return service.removeFirst();
+    }
+
+    @Override
+    public E removeLast() {
+        return service.removeLast();
+    }
+
+    @Override
+    public E pollFirst() {
+        return service.pollFirst();
+    }
+
+    @Override
+    public E pollLast() {
+        return service.pollLast();
+    }
+
+    @Override
+    public E peekFirst() {
+        return service.peekFirst();
+    }
+
+    @Override
+    public E peekLast() {
+        return service.peekLast();
+    }
+
+    @Override
+    public boolean offerFirst(E e) {
+        addFirst(e);
+        return true;
+    }
+
+    @Override
+    public boolean offerLast(E e) {
+        addLast(e);
+        return true;
+    }
+
+    @Override
+    public boolean removeFirstOccurrence(Object obj) {
+        return remove(obj);
+    }
+
+    @Override
+    public boolean removeLastOccurrence(Object obj) {
+        return reverse().remove(obj);
+    }
+
+    @Override
+    public boolean offer(E e) {
+        return offerLast(e);
+    }
+
+    @Override
+    public E remove() {
+        return removeFirst();
+    }
+
+    @Override
+    public E poll() {
+        return pollFirst();
+    }
+
+    @Override
+    public E element() {
+        return getFirst();
+    }
+
+    @Override
+    public E peek() {
+        return peekFirst();
+    }
+
+    @Override
+    public void push(E e) {
+        addFirst(e);
+    }
+
+    @Override
+    public E pop() {
+        return removeFirst();
+    }
+
+    @Override
+    public Iterator<E> descendingIterator() {
+        return reverse().iterator();
+    }
+
+    /***************************************************************************
+     * Misc.
+     */
+
+    /**
+     * Sorts this table in place (quick sort). 
+     */
+    public void sort() {
+        service.sort();
     }
 
     /**
@@ -258,310 +408,10 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      * @throws IndexOutOfBoundsException if <code>(fromIndex &lt; 0) || 
      *         (toIndex &lt; 0) || (fromIndex &gt; toIndex) || (toIndex &gt; size())</code>
      */
-    public final void removeRange(int fromIndex, int toIndex) {
-        this.subList(fromIndex, toIndex).clear();
+    public void removeRange(int fromIndex, int toIndex) {
+        subList(fromIndex, toIndex).clear();
     }
 
-    /**
-     * Sorts this table in place (quick sort).
-     */
-    public final void sort() {
-        impl.sort();
-    }
+    private static final long serialVersionUID = 9153496416654421848L;
 
-    /**
-     * Returns a deep copy of this object.
-     *
-     * @return an object identical to this object but possibly allocated
-     *         in a different memory space.
-     * @see Copyable
-     */
-    @Override
-    public FastTable<E> copy() {
-        return new FastTable<E>(impl.copy());
-    }
-
-    //                      //////////////////
-    //                      // List Methods //
-    //                      //////////////////
-    /**
-     * Inserts the specified element at the specified position in this table.
-     * Shifts the element currently at that position
-     * (if any) and any subsequent elements to the right (adds one to their
-     * indices).
-     *
-     * @param index   the index at which the specified element is to be inserted.
-     * @param element the element to be inserted.
-     * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt; size())</code>
-     */
-    @Override
-    public final void add(int index, E element) {
-        impl.add(index, element);
-    }
-
-    /**
-     * Appends all of the elements in the specified collection to the end of
-     * this collection, in the order that they are returned by {@link #doWhile}
-     * or the collection's iterator (if the specified collection is not
-     * a fast collection).
-     *
-     * @param that collection whose elements are to be added to this collection.
-     * @return <code>true</code> if this collection changed as a result of
-     *         the call; <code>false</code> otherwise.
-     */
-    @Override
-    public final boolean addAll(final Collection<? extends E> that) {
-        return impl.addAll(that);
-    }
-
-    /**
-     * Inserts all of the elements in the specified collection into this
-     * table at the specified position. Shifts the element currently at that
-     * position and any subsequent elements to the right
-     * (increases their indices).
-     *
-     * @param index    the index at which to insert first element from the specified
-     *                 collection.
-     * @param elements the elements to be inserted into this list.
-     * @return <code>true</code> if this list changed as a result of the call;
-     *         <code>false</code> otherwise.
-     * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt; size())</code>
-     */
-    @Override
-    public final boolean addAll(final int index,
-            final Collection<? extends E> elements) {
-        return impl.addAll(index, elements);
-    }
-
-    /**
-     * Removes the element at the specified position from this table.
-     * Shifts any subsequent elements to the left (subtracts one
-     * from their indices). Returns the element that was removed from the
-     * table.
-     *
-     * @param index the index of the element to removed.
-     * @return the element previously at the specified position.
-     * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt;= size())</code>
-     */
-    @Override
-    public final E remove(int index) {
-        return impl.remove(index);
-    }
-
-    /**
-     * Returns the element at the specified index.
-     *
-     * @param index index of element to return.
-     * @return the element at the specified position in this list.
-     * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt;= size())</code>
-     */
-    @Override
-    public final E get(int index) {
-        return impl.get(index);
-    }
-
-    /**
-     * Replaces the element at the specified position in this table with the
-     * specified element.
-     *
-     * @param index   index of element to replace.
-     * @param element element to be stored at the specified position.
-     * @return previous element.
-     * @throws IndexOutOfBoundsException if <code>(index &lt; 0) || (index &gt;= size())</code>
-     */
-    @Override
-    public final E set(int index, E element) {
-        return impl.set(index, element);
-    }
-
-    /**
-     * Returns the index in this table of the first occurrence of the specified
-     * element, or -1 if this table does not contain this element.
-     *
-     * @param element the element to search for.
-     * @return the index in this table of the first occurrence of the specified
-     *         element, or -1 if this table does not contain this element.
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public final int indexOf(Object element) {
-        return impl.indexOf((E) element);
-    }
-
-    /**
-     * Returns the index in this table of the last occurrence of the specified
-     * element, or -1 if this table does not contain this element.
-     *
-     * @param element the element to search for.
-     * @return the index in this table of the last occurrence of the specified
-     *         element, or -1 if this table does not contain this element.
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public final int lastIndexOf(Object element) {
-        return impl.lastIndexOf((E) element);
-    }
-
-    /**
-     * Returns a list iterator over the elements in this list.
-     *
-     * @return an iterator over this list values.
-     */
-    @Override
-    public ListIterator<E> listIterator() {
-        return listIterator(0);
-    }
-
-    /**
-     * Returns a list iterator from the specified position.
-     *
-     * @param index the index of first value to be returned from the
-     *              list iterator (by a call to the <code>next</code> method).
-     * @return a list iterator of the elements in this table
-     *         starting at the specified position in this list.
-     * @throws IndexOutOfBoundsException if the index is out of range
-     *         <code>(index &lt; 0) || (index &gt; size())[/code]
-     */
-    @Override
-    public ListIterator<E> listIterator(int index) {
-        if ((index < 0) || (index > size()))
-            throw new IndexOutOfBoundsException("index: " + index + ", size: "
-                    + size());
-        return new TableIteratorImpl<E>(impl, index);
-    }
-
-    /**
-     * Returns a view of the portion of this table between the specified
-     * indexes.
-     *
-     * @param fromIndex low endpoint (inclusive) of the subList.
-     * @param toIndex   high endpoint (exclusive) of the subList.
-     * @return a view of the specified range within this list.
-     *
-     * @throws IndexOutOfBoundsException if <code>(fromIndex &lt; 0) ||
-     *        (toIndex &gt; size || fromIndex &gt; toIndex)</code>
-     */
-    @Override
-    public FastTable<E> subList(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex > size()) || (fromIndex > toIndex))
-            throw new IndexOutOfBoundsException(); // As per List.subList contract.
-        return new FastTable<E>(new SubTableImpl<E>(impl, fromIndex, toIndex));
-    }
-
-    //                      ///////////////////
-    //                      // Deque Methods //
-    //                      ///////////////////
-    @Override
-    public final E getFirst() {
-        return impl.getFirst();
-    }
-
-    @Override
-    public final E getLast() {
-        return impl.getLast();
-    }
-
-    @Override
-    public final void addFirst(E element) {
-        impl.addFirst(element);
-    }
-
-    @Override
-    public final void addLast(E element) {
-        impl.addLast(element);
-    }
-
-    @Override
-    public final E removeFirst() {
-        return impl.removeFirst();
-    }
-
-    @Override
-    public final E removeLast() {
-        return impl.removeLast();
-    }
-
-    @Override
-    public final E pollFirst() {
-        return impl.pollFirst();
-    }
-
-    @Override
-    public final E pollLast() {
-        return impl.pollLast();
-    }
-
-    @Override
-    public final E peekFirst() {
-        return impl.peekFirst();
-    }
-
-    @Override
-    public final E peekLast() {
-        return impl.peekLast();
-    }
-
-    @Override
-    public final boolean offerFirst(E e) {
-        addFirst(e);
-        return true;
-    }
-
-    @Override
-    public final boolean offerLast(E e) {
-        addLast(e);
-        return true;
-    }
-
-    @Override
-    public final boolean removeFirstOccurrence(Object obj) {
-        return remove(obj);
-    }
-
-    @Override
-    public final boolean removeLastOccurrence(Object obj) {
-        return reverse().remove(obj);
-    }
-
-    @Override
-    public final boolean offer(E e) {
-        return offerLast(e);
-    }
-
-    @Override
-    public final E remove() {
-        return removeFirst();
-    }
-
-    @Override
-    public final E poll() {
-        return pollFirst();
-    }
-
-    @Override
-    public final E element() {
-        return getFirst();
-    }
-
-    @Override
-    public final E peek() {
-        return peekFirst();
-    }
-
-    @Override
-    public final void push(E e) {
-        addFirst(e);
-    }
-
-    @Override
-    public final E pop() {
-        return removeFirst();
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        return reverse().iterator();
-    }
-
-    private static final long serialVersionUID = 7415541512853301683L;
 }

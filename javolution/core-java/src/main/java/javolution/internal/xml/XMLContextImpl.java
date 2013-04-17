@@ -37,7 +37,7 @@ public final class XMLContextImpl extends XMLContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> XMLFormat<T> getFormatInContext(Class<T> type) {
+    protected <T> XMLFormat<T> getFormatInContext(Class<? extends T> type) {
         XMLFormat xml = formats.get(type);
         if (xml != null)
             return xml;
@@ -64,7 +64,7 @@ public final class XMLContextImpl extends XMLContext {
     }
 
     @Override
-    public <T> void setFormat(Class<T> type, XMLFormat<T> format) {
+    public <T> void setFormat(Class<? extends T> type, XMLFormat<T> format) {
         formats.put(type, format);
     }
 

@@ -36,7 +36,7 @@ public final class TextContextImpl extends TextContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> TextFormat<T> getFormatInContext(Class<T> type) {
+    protected <T> TextFormat<T> getFormatInContext(Class<? extends T> type) {
         TextFormat<T> tf = (TextFormat<T>) formats.get(type);
         if (tf != null)
             return tf;
@@ -61,7 +61,7 @@ public final class TextContextImpl extends TextContext {
     }
 
     @Override
-    public <T> void setFormat(Class<T> type, TextFormat<T> format) {
+    public <T> void setFormat(Class<? extends T> type, TextFormat<T> format) {
         formats.put(type, format);
     }
 

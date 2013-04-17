@@ -11,13 +11,12 @@ package javolution.util;
 import java.util.Iterator;
 import java.util.Set;
 
-import javolution.internal.util.FastBitSetImpl;
-import javolution.internal.util.BitSetIteratorImpl;
-import javolution.internal.util.SharedBitSetImpl;
-import javolution.internal.util.UnmodifiableBitSetImpl;
-import javolution.lang.Copyable;
-import javolution.lang.Functor;
+import javolution.internal.util.bitset.BitSetIteratorImpl;
+import javolution.internal.util.bitset.BitSetServiceImpl;
+import javolution.internal.util.bitset.SharedBitSet;
+import javolution.internal.util.bitset.UnmodifiableBitSet;
 import javolution.lang.Predicate;
+import javolution.util.service.BitSetService;
 
 /**
  * <p> A table of bits equivalent to a packed set of non-negative numbers.</p>
@@ -30,20 +29,19 @@ import javolution.lang.Predicate;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastBitSet extends FastCollection<Index> implements Set<Index>,
-        Copyable<FastBitSet> {
+public class FastBitSet extends FastCollection<Index> implements Set<Index> {
 
     /**
      * The actual implementation.
      */
-    private final AbstractBitSet impl;
+    private final BitSetService impl;
 
     /**
      * Creates an empty bit set whose capacity increments/decrements smoothly
      * without large resize operations to best fit the set current size.
      */
     public FastBitSet() {
-        impl = new FastBitSetImpl(0);
+        impl = new BitSetServiceImpl(0);
     }
 
     /**
@@ -55,13 +53,13 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
      * @param bitSize the initial capacity in bits.
      */
     public FastBitSet(int bitSize) {
-        impl = new FastBitSetImpl(bitSize);
+        impl = new BitSetServiceImpl(bitSize);
     }
 
     /**
      * Creates a bit set using the specified implementation.
      */
-    protected FastBitSet(AbstractBitSet impl) {
+    protected FastBitSet(BitSetService impl) {
         this.impl = impl;
     }
 
@@ -126,9 +124,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    public void clear(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex < fromIndex))
-            throw new IndexOutOfBoundsException();
+    public void clear(int fromIndex, int toIndex) {     
         impl.clear(fromIndex, toIndex);
     }
 
@@ -151,8 +147,6 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
     public void flip(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex < fromIndex))
-            throw new IndexOutOfBoundsException();
         impl.flip(fromIndex, toIndex);
     }
 
@@ -177,9 +171,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    public FastBitSet get(int fromIndex, int toIndex) {
-        if (fromIndex < 0 || fromIndex > toIndex)
-            throw new IndexOutOfBoundsException();
+    public FastBitSet get(int fromIndex, int toIndex) {     
         return new FastBitSet(impl.get(fromIndex, toIndex));
     }
 
@@ -367,37 +359,15 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
         if (!(index instanceof Index)) return false;
         return impl.getAndSet(((Index)index).intValue(), false);
     }
-    
-    @Override
-    public FastBitSet copy() {
-        return new FastBitSet(impl.copy());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof FastBitSet)
-            return impl.equals(((FastBitSet) obj).impl);
-        return super.equals(obj);
-    }
-
-    @Override
-    public int hashCode() {
-        return impl.hashCode();
-    }
-
+ 
     @Override
     public FastBitSet unmodifiable() {
-        return new FastBitSet(new UnmodifiableBitSetImpl(impl));
+        return new FastBitSet(new UnmodifiableBitSet(impl));
     }
 
     @Override
     public FastBitSet shared() {
-        return new FastBitSet(new SharedBitSetImpl(impl));
-    }
-
-    @Override
-    public <R> FastCollection<R> forEach(Functor<Index, R> functor) {
-        return impl.forEach(functor);
+        return new FastBitSet(new SharedBitSet(impl));
     }
 
     @Override
@@ -416,10 +386,9 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index>,
     }
 
     @Override
-    public FastCollection<Index> usingComparator(
-            FastComparator<Index> comparator) {
-        throw new UnsupportedOperationException("Not supported.");
+    public FastBitSet copy() {
+        return this.get(0, length());
     }
 
-    private static final long serialVersionUID = 6452172317804380908L;
+    private static final long serialVersionUID = 4802095227816638334L;
 }
