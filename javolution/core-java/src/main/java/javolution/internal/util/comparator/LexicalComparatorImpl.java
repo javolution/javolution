@@ -8,14 +8,12 @@
  */
 package javolution.internal.util.comparator;
 
-import java.io.Serializable;
-
-import javolution.util.service.ComparatorService;
+import javolution.util.FastComparator;
 
 /**
  * The lexical comparator implementation.
  */
-public final class LexicalComparatorImpl implements ComparatorService<CharSequence>, Serializable {
+public final class LexicalComparatorImpl extends FastComparator<CharSequence> {
 
     @Override
     public int hashCodeOf(CharSequence csq) {
@@ -56,5 +54,5 @@ public final class LexicalComparatorImpl implements ComparatorService<CharSequen
         return left.length() - right.length();
     }
 
-    private static final long serialVersionUID = 1217966333277654645L;
+    private static final long serialVersionUID = -2258910672193027753L;
 }

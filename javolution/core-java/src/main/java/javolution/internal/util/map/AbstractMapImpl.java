@@ -9,7 +9,6 @@
 package javolution.internal.util.map;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javolution.util.service.CollectionService;
@@ -21,7 +20,7 @@ import javolution.util.service.MapService;
  */
 public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Serializable {
     
-    @Override
+     @Override
     public boolean containsKey(K key) {
         return false;
     }
@@ -98,41 +97,6 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
         // TODO Auto-generated method stub
         return null;
     }
-
-    //
-    // Entry implementation.
-    //
-
-    public static final class EntryImpl<K, V> implements Map.Entry<K, V> {
-
-        final K key;
-
-        V value;
-
-        int hash;
-
-        EntryImpl(K key, V value, int hash) {
-            this.key = key;
-            this.value = value;
-            this.hash = hash;
-        }
-
-        @Override
-        public K getKey() {
-            return key;
-        }
-
-        @Override
-        public V getValue() {
-            return value;
-        }
-
-        @Override
-        public V setValue(V value) {
-            V previous = this.value;
-            this.value = value;
-            return previous;
-        }
-
-    }    
+ 
+    private static final long serialVersionUID = -9147091489108467045L; 
 }

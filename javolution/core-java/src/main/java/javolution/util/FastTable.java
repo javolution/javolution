@@ -25,6 +25,7 @@ import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
 import javolution.lang.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -88,7 +89,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
 
     /**
-     * Holds table service implementation.
+     * Holds the actual table service implementation.
      */
     private final TableService<E> service;
 
@@ -105,13 +106,6 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
     protected FastTable(TableService<E> service) {
         this.service = service;
-    }
-
-    /**
-     *  Returns the service implementation of this table.
-     */
-    protected TableService<E> getService() {
-        return service;
     }
 
     /***************************************************************************
@@ -147,8 +141,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
       * @see #comparator() 
       */
     public FastTable<E> usingComparator(FastComparator<E> comp) {
-        return new FastTable<E>(new CustomComparatorTableImpl<E>(service,
-                comp.getService()));
+        return new FastTable<E>(new CustomComparatorTableImpl<E>(service, comp));
     }
 
     /**
@@ -412,6 +405,12 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         subList(fromIndex, toIndex).clear();
     }
 
+    @Override
+    protected TableService<E> getService() {
+        return service;
+    }
+    
     private static final long serialVersionUID = 9153496416654421848L;
+
 
 }

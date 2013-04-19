@@ -8,192 +8,264 @@
  */
 package javolution.internal.util.table;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import javolution.lang.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
- * A shared view over a table allowing concurrent modifications.
- * Closure-based iterations use local table copies to avoid being 
- * impacted by concurrent modifications and not to block concurrent 
- * writes while iterating.
+ * A shared view over a table allowing concurrent access and sequential updates.
  */
 public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
 
     private final TableService<E> that;
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private final Lock read = rwl.readLock();
+    private final Lock write = rwl.writeLock();
 
     public SharedTableImpl(TableService<E> that) {
         this.that = that;
     }
 
     @Override
-    public void clear() {
-        synchronized (that) {
-            that.clear();
-        }
-    }
-
-    @Override
     public int size() {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.size();
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public E get(int index) {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.get(index);
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public E set(int index, E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.set(index, element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public void add(int index, E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             that.add(index, element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E remove(int index) {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.remove(index);
+        } finally {
+            write.unlock();
         }
     }
 
-    //
-    // Non-abstract methods should forwards to actual table (unless default implementation is ok).
-    //
+    @Override
+    public void clear() {
+        write.lock();
+        try {
+            that.clear();
+        } finally {
+            write.unlock();
+        }
+    }
+
     @Override
     public E getFirst() {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.getFirst();
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public E getLast() {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.getLast();
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public boolean add(E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.add(element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public void addFirst(E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             that.addFirst(element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public void addLast(E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             that.addLast(element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E removeFirst() {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.removeFirst();
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E removeLast() {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.removeLast();
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E pollFirst() {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.pollFirst();
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E pollLast() {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.pollLast();
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public E peekFirst() {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.peekFirst();
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public E peekLast() {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.peekLast();
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public void doWhile(Predicate<E> predicate) {
-        final FractalTableImpl<E> copy = new FractalTableImpl<E>();
-        synchronized (that) {
-            that.doWhile(new Predicate<E>() {
-                public Boolean evaluate(E param) {
-                    copy.addLast(param);
-                    return true;
-                }
-            });
+        read.lock();
+        try {
+            that.doWhile(predicate);
+        } finally {
+            read.unlock();
         }
-        copy.doWhile(predicate);
     }
 
     @Override
     public boolean removeAll(Predicate<E> predicate) {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.removeAll(predicate);
+        } finally {
+            write.unlock();
+        }
+    }
+
+    @Override
+    public boolean contains(E element) {
+        read.lock();
+        try {
+            return that.contains(element);
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public boolean remove(E element) {
-        synchronized (that) {
+        write.lock();
+        try {
             return that.remove(element);
+        } finally {
+            write.unlock();
         }
     }
 
     @Override
     public int indexOf(E element) {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.indexOf(element);
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public int lastIndexOf(E element) {
-        synchronized (that) {
+        read.lock();
+        try {
             return that.lastIndexOf(element);
+        } finally {
+            read.unlock();
         }
     }
 
     @Override
     public void sort() {
-        synchronized (that) {
+        write.lock();
+        try {
             that.sort();
+        } finally {
+            write.unlock();
         }
     }
 

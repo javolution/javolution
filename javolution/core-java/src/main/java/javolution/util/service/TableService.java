@@ -8,7 +8,6 @@
  */
 package javolution.util.service;
 
-import javolution.util.FastTable;
 
 /**
  * The set of related functionalities which can be used/reused to 
@@ -16,7 +15,6 @@ import javolution.util.FastTable;
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @see FastTable
  */
 public interface TableService<E> extends CollectionService<E> {
 
@@ -83,7 +81,7 @@ public interface TableService<E> extends CollectionService<E> {
     /** Returns the comparator to be used for element ordering/comparisons } */
     ComparatorService<E> comparator();
     
-    /** See {@link FastTable#sort() } */
+    /** Sorts in place this table using this table {@link #comparator() comparator}. */
     void sort();
                    
 }

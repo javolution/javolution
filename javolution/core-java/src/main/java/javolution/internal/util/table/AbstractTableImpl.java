@@ -9,13 +9,10 @@
 package javolution.internal.util.table;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import javolution.lang.Functor;
 import javolution.lang.Predicate;
-import javolution.util.FastCollection;
 import javolution.util.FastComparator;
 import javolution.util.FastTable;
 import javolution.util.service.ComparatorService;
@@ -33,26 +30,26 @@ import javolution.util.service.TableService;
  */
 public abstract class AbstractTableImpl<E> implements TableService<E>, Serializable {
 
-    /** See {@link FastTable#size() } */
+    @Override
     public abstract int size();
 
-    /** See {@link FastTable#get(int)  } */
+    @Override
     public abstract E get(int index);
 
-    /** See {@link FastTable#set(int, java.lang.Object)  } */
+    @Override
     public abstract E set(int index, E element);
 
-    /** See {@link FastTable#add(int, java.lang.Object) } */
+    @Override
     public abstract void add(int index, E element);
 
-    /** See {@link FastTable#remove(int) } */
+    @Override
     public abstract E remove(int index);
 
     //
     // Non-Abstract methods.
     //
     
-    /** See {@link FastTable#clear() } */
+    @Override
     public void clear() {
         removeAll(new Predicate<E>() {
             public Boolean evaluate(E param) {
@@ -61,86 +58,76 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         });
     }
 
-    /** See {@link FastTable#getFirst() } */
+    @Override
     public E getFirst() {
         if (size() == 0) emptyError();
         return get(0);
     }
 
-    /** See {@link FastTable#getLast() } */
+    @Override
     public E getLast() {
         if (size() == 0) emptyError();
         return get(size() - 1);
     }
 
-    /** See {@link FastTable#add(java.lang.Object) } */
+    @Override
     public boolean add(E element) {
         add(size(), element);
         return true;
     }
 
-    /** See {@link FastTable#addFirst(java.lang.Object) } */
+    @Override
     public void addFirst(E element) {
         add(0, element);
     }
 
-    /** See {@link FastTable#addLast(java.lang.Object) } */
+    @Override
     public void addLast(E element) {
         add(size(), element);
     }
 
-    /** See {@link FastTable#removeFirst() } */
+    @Override
     public E removeFirst() {
         E e = getFirst();
         remove(0);
         return e;
     }
 
-    /** See {@link FastTable#removeLast() } */
+    @Override
     public E removeLast() {
         E e = getLast();
         remove(size() - 1);
         return e;
     }
 
-    /** See {@link FastTable#pollFirst() } */
+    @Override
     public E pollFirst() {
         return (size() == 0) ? null : removeFirst();
     }
 
-    /** See {@link FastTable#pollLast() } */
+    @Override
     public E pollLast() {
         return (size() == 0) ? null : removeLast();
     }
 
-    /** See {@link FastTable#peekFirst() } */
+    @Override
     public E peekFirst() {
         return (size() == 0) ? null : getFirst();
     }
 
-    /** See {@link FastTable#peekLast() } */
+    @Override
     public E peekLast() {
         return (size() == 0) ? null : getLast();
     }
 
-    /** See {@link FastTable#forEach(javolution.lang.Functor) } */
-    public <R> FastTable<R> forEach(Functor<E, R> functor) {
-        FastTable<R> results = new FastTable<R>();
-        for (int i = 0, size = size(); i < size;) {
-            R result = functor.evaluate(get(i++));
-            if (result != null) results.addLast(result);
-        }
-        return results;
-    }
-
-    /** See {@link FastTable#doWhile(javolution.lang.Predicate) } */
+    @Override
     public void doWhile(Predicate<E> predicate) {
         for (int i = 0, size = size(); i < size;) {
             if (!predicate.evaluate(get(i++))) return;
         }
     }
 
-    /** See {@link FastTable#removeAll(javolution.lang.Predicate) } */
+    @Override
     public boolean removeAll(Predicate<E> predicate) {
         boolean modified = false;
         for (int i = size(); i > 0;) {
@@ -152,54 +139,13 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return modified;
     }
 
-    /** See {@link FastTable#addAll(java.util.Collection) } */
-    @SuppressWarnings("unchecked")
-    public boolean addAll(final Collection<? extends E> elements) {
-        if (elements instanceof FastCollection) {
-            ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
-                public Boolean evaluate(E param) {
-                    add(param);
-                    return true;
-                }
-            });
-        } else { // Use iterator since we have no choice.
-            Iterator<? extends E> it = elements.iterator();
-            while (it.hasNext()) {
-                add(it.next());
-            }
-        }
-        return !elements.isEmpty();
-    }
-
-    /** See {@link FastTable#addAll(int, java.util.Collection) } */
-    @SuppressWarnings("unchecked")
-    public boolean addAll(final int index, final Collection<? extends E> elements) {
-        if (elements instanceof FastCollection) {
-            ((FastCollection<E>) elements).doWhile(new Predicate<E>() {
-                int i = index;
-
-                public Boolean evaluate(E param) {
-                    add(i++, param);
-                    return true;
-                }
-            });
-        } else { // Use iterator since we have no choice.
-            Iterator<? extends E> it = elements.iterator();
-            int i = index;
-            while (it.hasNext()) {
-                add(i++, it.next());
-            }
-        }
-        return !elements.isEmpty();
-    }
-
-    /** See {@link FastTable#contains(java.lang.Object) } */
+    @Override
     public boolean contains(E element) {
         int i = indexOf(element);
         return (i < 0) ? false : true;
     }
 
-    /** See {@link FastTable#remove(java.lang.Object) } */
+    @Override
     public boolean remove(E element) {
         int i = indexOf(element);
         if (i < 0) return false;
@@ -207,7 +153,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return true;
     }
 
-    /** See {@link FastTable#size() } */
+    @Override
     public int indexOf(E element) {
         ComparatorService<E> cmp = comparator();
         for (int i = 0, size = size(); i < size; i++) {
@@ -216,7 +162,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return -1;
     }
 
-    /** See {@link FastTable#lastIndexOf(java.lang.Object) } */
+    @Override
     public int lastIndexOf(E element) {
         ComparatorService<E> cmp = comparator();
         for (int i = size(); i > 0;) {
@@ -225,7 +171,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return -1;
     }
 
-    /** See {@link FastTable#sort() } */
+    @Override
     public void sort() {
         int size = size();
         if (size > 1) {
@@ -233,12 +179,17 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         }
     }
 
-    /** See {@link FastTable#comparator() } */
+    @Override
     @SuppressWarnings("unchecked")
     public ComparatorService<E> comparator() {
-        return (ComparatorService<E>) FastComparator.DEFAULT.getService();
+        return (ComparatorService<E>) FastComparator.DEFAULT;
     }
 
+    @Override
+    public Iterator<E> iterator() {
+        return new TableIteratorImpl<E>(this, 0);
+    }
+    
     /** Throws NoSuchElementException */
     protected void emptyError() {
         throw new NoSuchElementException("Empty Table");
@@ -283,5 +234,5 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return down;
     }
  
-    private static final long serialVersionUID = -2761567438888847243L;
+    private static final long serialVersionUID = 2516824163907613972L;
 }

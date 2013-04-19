@@ -8,14 +8,13 @@
  */
 package javolution.internal.util.comparator;
 
-import java.io.Serializable;
-
-import javolution.util.service.ComparatorService;
+import javolution.util.FastComparator;
 
 /**
  * The string comparator implementation.
  */
-public final class StringComparatorImpl implements ComparatorService<String>, Serializable {
+public final class StringComparatorImpl extends FastComparator<String> {
+
 
     @Override
     public int hashCodeOf(String str) {
@@ -32,6 +31,6 @@ public final class StringComparatorImpl implements ComparatorService<String>, Se
     public int compare(String left, String right) {
         return left.compareTo(right);
     }
-    
-    private static final long serialVersionUID = -4956453216020126658L;
+
+    private static final long serialVersionUID = -9139132919876170673L;
 }

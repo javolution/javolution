@@ -52,8 +52,9 @@ public final class CustomComparatorTableImpl<E> extends AbstractTableImpl<E> {
     }
  
     //
-    // Non-abstract methods should forward to the actual table (unless impacted).
+    // All non-abstract methods should forward to the actual table unless impacted.
     //
+    
     @Override
     public void clear() {
         that.clear();

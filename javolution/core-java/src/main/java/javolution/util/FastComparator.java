@@ -25,8 +25,8 @@ import javolution.util.service.ComparatorService;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@StackSafe
-public class FastComparator<T> implements Comparator<T>, Serializable {
+@StackSafe(initialization=false)
+public abstract class FastComparator<T> implements ComparatorService<T>, Comparator<T>, Serializable {
 
     /**
      * Holds the default object comparator.
@@ -36,7 +36,7 @@ public class FastComparator<T> implements Comparator<T>, Serializable {
      * specified objects are not {@link Comparable}.
      */
     public static final FastComparator<Object> DEFAULT 
-        = new FastComparator<Object>(new DefaultComparatorImpl<Object>());
+        = new DefaultComparatorImpl<Object>();
 
     /**
      * Holds the identity object comparator.
@@ -46,7 +46,7 @@ public class FastComparator<T> implements Comparator<T>, Serializable {
      * specified objects are not {@link Comparable}.
      */
     public static final FastComparator<Object> IDENTITY 
-        = new FastComparator<Object>(new IdentityComparatorImpl<Object>());
+        = new IdentityComparatorImpl<Object>();
 
     /**
      * Holds a lexicographic comparator for any {@link CharSequence}.
@@ -54,25 +54,19 @@ public class FastComparator<T> implements Comparator<T>, Serializable {
      * the whole character sequence.
      */
     public static final FastComparator<CharSequence> LEXICAL 
-        = new FastComparator<CharSequence>(new LexicalComparatorImpl());
+        = new LexicalComparatorImpl();
     
     /**
      * Holds an optimized comparator for <code>java.lang.String</code>
      * instances.
      */
     public static final FastComparator<String> STRING 
-        = new FastComparator<String>(new StringComparatorImpl());
+        = new StringComparatorImpl();
         
     /**
-     * Holds the service implementation.
+     * Default constructor.
      */
-    private final ComparatorService<T> service;
-        
-    /**
-     * Creates a comparator implemented by the specified service.
-     */
-    public FastComparator(ComparatorService<T> service) {
-        this.service = service;
+    protected FastComparator() {
     }
        
     /**
@@ -83,7 +77,7 @@ public class FastComparator<T> implements Comparator<T>, Serializable {
      * {@link Comparable}. 
      */
     public static <T> FastComparator<T> defaultFor(Class<T> type) {
-        return new FastComparator<T>(new DefaultComparatorImpl<T>());
+        return new DefaultComparatorImpl<T>();
     }
        
 
@@ -95,36 +89,8 @@ public class FastComparator<T> implements Comparator<T>, Serializable {
      * {@link Comparable}. 
      */
     public static <T> FastComparator<T> identityFor(Class<T> type) {
-        return new FastComparator<T>(new IdentityComparatorImpl<T>());
+        return new IdentityComparatorImpl<T>();
     }
 
-    /**
-     * Returns the comparator service implementation.
-     */
-    public ComparatorService<T> getService() {
-        return service;
-    }
-       
-    /**
-     * See {@link ComparatorService#hashCodeOf(Object)}.
-     */
-    public int hashCodeOf(T obj) {
-        return service.hashCodeOf(obj);
-    }
-
-    /**
-     * See {@link ComparatorService#areEqual(Object, Object)}.
-     */
-    public boolean areEqual(T o1, T o2) {
-        return service.areEqual(o1, o2);
-    }
-
-    /**
-     * See {@link ComparatorService#compare(Object, Object)}.
-     */
-    public int compare(T o1, T o2) {
-        return service.compare(o1, o2);
-    }
-    
-    private static final long serialVersionUID = 953664997000330872L;    
+    private static final long serialVersionUID = 2220525989833293006L;
 }

@@ -8,16 +8,14 @@
  */
 package javolution.internal.util.comparator;
 
-import java.io.Serializable;
-
-import javolution.util.service.ComparatorService;
+import javolution.util.FastComparator;
 
 /**
  * The default comparator implementation.
  */
-public final class DefaultComparatorImpl<E> implements ComparatorService<E>, Serializable {
+public final class DefaultComparatorImpl<E> extends FastComparator<E> {
 
-     @Override
+    @Override
     public int hashCodeOf(E obj) {
         return (obj == null) ? 0 : obj.hashCode();
     }
@@ -33,5 +31,5 @@ public final class DefaultComparatorImpl<E> implements ComparatorService<E>, Ser
         return ((Comparable<E>) o1).compareTo(o2);
     }
 
-    private static final long serialVersionUID = -8001529317496419213L;
+    private static final long serialVersionUID = 8845552369093136047L;
 }

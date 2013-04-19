@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javolution.internal.util.map.BasicMapImpl;
-import javolution.lang.Functor;
 import javolution.lang.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
 /**
@@ -30,9 +30,8 @@ import javolution.util.service.MapService;
  *     for a predictable insertion order, the  {@link #ordered ordered}
  *     view can be used (equivalent to {@link LinkedHashMap}).</p> 
  *     
- * <p> Fast maps may use custom {@link #usingKeyComparator key comparator}
- *     or {@link #usingValueComparator value comparator}, <code>null</code> 
- *     keys are supported.
+ * <p> Fast maps may use custom {@link #usingKeyComparator key comparator}, 
+ *     <code>null</code> keys are supported.
  *     [code]
  *     FastMap<Foo, Bar> identityMap = new FastMap<Foo, Bar>().usingKeyComparator(FastComparator.IDENTITY);
  *     [/code]
@@ -51,18 +50,24 @@ import javolution.util.service.MapService;
  */
 public class FastMap<K, V> implements Map<K, V> {
 
-
     /**
-     * Holds map service implementation.
+     * Holds the actual map service implementation.
      */
     private final MapService<K, V> service;
     
     /**
-     * Creates an empty map whose capacity increment or decrement smoothly
+     * Creates an empty map whose capacity increments or decrements smoothly
      * without large resize/rehash operations.
      */
     public FastMap() {
         service = new BasicMapImpl<K,V>();
+    }
+
+    /**
+     * Creates a map backed up by the specified implementation.
+     */
+    protected FastMap(MapService<K, V> service) {
+        this.service = service;
     }
 
     /***************************************************************************
@@ -234,7 +239,7 @@ public class FastMap<K, V> implements Map<K, V> {
      * reflected in the set, and vice-versa.
      */
     public KeySet<K> keySet() {
-        return new KeySet<K>(this);
+        return new KeySet<K>(service.keySet());
     }
 
     /**
@@ -243,7 +248,7 @@ public class FastMap<K, V> implements Map<K, V> {
      * reflected in the collection, and vice-versa. 
      */
     public Values<V> values() {
-        return new Values<V>(this);
+        return new Values<V>(service.values());
     }
 
     /**
@@ -252,7 +257,7 @@ public class FastMap<K, V> implements Map<K, V> {
      * reflected in the set, and vice-versa. 
      */
     public EntrySet<K, V> entrySet() {
-        return new EntrySet<K, V>(this);
+        return new EntrySet<K, V>(service.entrySet());
     }
 
     /**
@@ -283,42 +288,18 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     public static final class KeySet<K> extends FastCollection<K> implements Set<K> {
 
-        final FastMap<K, ?> that;
+        private final CollectionService<K> service;
 
-        KeySet(FastMap<K, ?> that) {
-            this.that = that;
+        private KeySet(CollectionService<K> service) {
+            this.service = service;
         }
 
         @Override
-        public FastCollection<K> unmodifiable() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        protected CollectionService<K> getService() {
+            return service;
         }
-
-        @Override
-        public FastCollection<K> shared() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public <R> FastCollection<R> forEach(Functor<K, R> functor) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void doWhile(Predicate<K> predicate) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean removeAll(Predicate<K> predicate) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Iterator<K> iterator() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
+        
+        private static final long serialVersionUID = 5965229814125983593L;
     }
 
     /**
@@ -326,43 +307,18 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     public static final class EntrySet<K, V> extends FastCollection<Entry<K, V>> implements Set<Entry<K, V>> {
 
-        final FastMap<K, V> that;
+        private final CollectionService<Entry<K, V>> service;
 
-        EntrySet(FastMap<K, V> that) {
-            this.that = that;
+        private EntrySet(CollectionService<Entry<K, V>> service) {
+            this.service = service;
         }
 
         @Override
-        public FastCollection<Entry<K, V>> unmodifiable() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        protected CollectionService<Entry<K, V>> getService() {
+            return service;
         }
 
-        @Override
-        public FastCollection<Entry<K, V>> shared() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public <R> FastCollection<R> forEach(Functor<Entry<K, V>, R> functor) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void doWhile(Predicate<Entry<K, V>> predicate) {
-            if (that.size() == 0) return;
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean removeAll(Predicate<Entry<K, V>> predicate) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Iterator<Entry<K, V>> iterator() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
+        private static final long serialVersionUID = -3956521670593088014L;
     }
 
     /**
@@ -370,41 +326,17 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     public static final class Values<V> extends FastCollection<V> {
 
-        final FastMap<?, V> that;
+        private final CollectionService<V> service;
 
-        Values(FastMap<?, V> that) {
-            this.that = that;
+        private Values(CollectionService<V> service) {
+            this.service = service;
         }
 
         @Override
-        public FastCollection<V> unmodifiable() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        protected CollectionService<V> getService() {
+            return service;
         }
-
-        @Override
-        public FastCollection<V> shared() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public <R> FastCollection<R> forEach(Functor<V, R> functor) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void doWhile(Predicate<V> predicate) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean removeAll(Predicate<V> predicate) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Iterator<V> iterator() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-        
+            
+        private static final long serialVersionUID = -424158623485419456L;
     }
 }

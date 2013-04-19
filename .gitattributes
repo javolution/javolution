@@ -289,29 +289,19 @@ javolution/core-java/src/main/java/javolution/internal/osgi/OSGiImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceReferenceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/osgi/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/text/TextContextImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/BitSetIteratorImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/CustomComparatorTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/FastBitSetImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/FastTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/NoDuplicateTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/ReverseTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/SharedBitSetImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/SharedTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/SortedTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/SubTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/TableIteratorImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/UnmodifiableBitSetImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/UnmodifiableTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetIteratorImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/SharedBitSet.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/UnmodifiableBitSet.java -text
+javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/DefaultComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/StringComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/AbstractMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/BasicMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/EntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/EntrySetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/AbstractTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/CustomComparatorTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/FractalTableImpl.java -text svneol=unset#text/plain

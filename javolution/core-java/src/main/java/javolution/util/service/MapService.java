@@ -8,9 +8,8 @@
  */
 package javolution.util.service;
 
+import java.util.Iterator;
 import java.util.Map.Entry;
-
-import javolution.util.FastMap;
 
 /**
  * The set of related map functionalities which can be used/reused to implement 
@@ -18,7 +17,7 @@ import javolution.util.FastMap;
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @see FastMap
+ * @see javolution.util.FastMap#FastMap()
  */
 public interface MapService<K, V>  {
 
@@ -26,47 +25,47 @@ public interface MapService<K, V>  {
     // Map interface.
     // 
     
-    /** See {@link FastMap#clear} */
+    /** See {@link java.util.Map#clear} */
     void clear();
 
-    /** See {@link FastMap#containsKey} */
+    /** See {@link java.util.Map#containsKey} */
     boolean containsKey(K key);
     
-    /** See {@link FastMap#get} */
+    /** See {@link java.util.Map#get} */
     V get(K key);
 
-    /** See {@link FastMap#put} */
+    /** See {@link java.util.Map#put} */
     V put(K key, V value);
     
-    /** See {@link FastMap#remove} */
+    /** See {@link java.util.Map#remove} */
     V remove(K key);
 
-    /** See {@link FastMap#size} */
+    /** See {@link java.util.Map#size} */
     int size();
     
-    /** See {@link FastMap#entrySet()} */
+    /** See {@link java.util.Map#entrySet()} */
     CollectionService<Entry<K,V>> entrySet();
 
-    /** See {@link FastMap#values()} */
+    /** See {@link java.util.Map#values()} */
     CollectionService<V> values();
 
-    /** See {@link FastMap#keySet()} */
+    /** See {@link java.util.Map#keySet()} */
     CollectionService<K> keySet();
 
     //
     // ConcurrentMap Interface
     //
     
-    /** See {@link FastMap#putIfAbsent(Object, Object)} */
+    /** See {@link java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)} */
     V putIfAbsent(K key, V value);
     
-    /** See {@link FastMap#remove(Object, Object)} */
+    /** See {@link java.util.concurrent.ConcurrentMap#remove(Object, Object)} */
     boolean remove(K key, V value);
     
-    /** See {@link FastMap#replace(Object, Object)} */
+    /** See {@link java.util.concurrent.ConcurrentMap#replace(Object, Object)} */
     V replace(K key, V value);
     
-    /** See {@link FastMap#replace(Object, Object, Object)} */
+    /** See {@link java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)} */
     boolean replace(K key, V oldValue, V newValue);
 
     
@@ -74,7 +73,9 @@ public interface MapService<K, V>  {
     // Misc.
     //       
 
-    /** Returns the comparator to be used for key comparisons } */
+    /** Returns the comparator to be used for key comparisons and hash-code calculations. */
     ComparatorService<K> keyComparator();
         
- }
+    /** Returns an iterator over the entries of this map. */
+    Iterator<Entry<K,V>> entriesIterator();
+   }

@@ -8,8 +8,6 @@
  */
 package javolution.internal.util.table;
 
-import java.util.Collection;
-
 import javolution.lang.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
@@ -124,16 +122,6 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     @Override
     public boolean removeAll(Predicate<E> predicate) {
         return that.removeAll(predicate);
-    }
-
-    @Override
-    public boolean addAll(final Collection<? extends E> elements) {
-        return super.addAll(elements);
-    }
-
-    @Override
-    public boolean addAll(final int index, final Collection<? extends E> elements) {
-        return super.addAll(index, elements);
     }
 
     @Override

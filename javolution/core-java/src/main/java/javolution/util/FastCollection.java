@@ -18,6 +18,8 @@ import java.util.Set;
 
 import javolution.annotation.Format;
 import javolution.annotation.StackSafe;
+import javolution.internal.util.collection.SharedCollectionImpl;
+import javolution.internal.util.collection.UnmodifiableCollectionImpl;
 import javolution.lang.Copyable;
 import javolution.lang.Functor;
 import javolution.lang.Immutable;
@@ -25,6 +27,7 @@ import javolution.lang.Predicate;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
+import javolution.util.service.CollectionService;
 
 /**
  * <p> A closure-ready collection.</p>
@@ -75,6 +78,11 @@ public abstract class FastCollection<E> implements
      */
     protected FastCollection() {}
 
+    /**
+     * Returns the collection service backing up this collection.
+     */
+    protected abstract CollectionService<E> getService();
+
 
     /***************************************************************************
      * Collection views.
@@ -85,14 +93,41 @@ public abstract class FastCollection<E> implements
      *     Attempts to modify the returned collection result in an 
      *     {@link UnsupportedOperationException} being thrown.</p> 
      */
-    public abstract FastCollection<E> unmodifiable();
+    public FastCollection<E> unmodifiable() {
+        return new FastCollection<E>() {
+            CollectionService<E> service = new UnmodifiableCollectionImpl<E>(FastCollection.this.getService());
+
+            @Override
+            protected CollectionService<E> getService() {
+                return service;
+            }
+            
+            private static final long serialVersionUID = -2037354762526261781L;
+        };
+     
+    }
+    
     /**
      * <p> Returns a concurrent read-write view of this collection.</p>
      * <p> Iterators on {@link #shared} collections are deprecated as the may 
      *     raise {@link ConcurrentModificationException}.  {@link #doWhile 
-     *     Closures} should be used to iterate over shared collections.</p> 
+     *     Closures} should be used to iterate over shared collections.
+     *     Closure-based {@link #doWhile(Predicate)} iterations over shared 
+     *     collections allow for concurrent read (read-write lock).</p> 
      */
-    public abstract FastCollection<E> shared();
+    public FastCollection<E> shared() {
+        return new FastCollection<E>() {
+            CollectionService<E> service = new SharedCollectionImpl<E>(FastCollection.this.getService());
+
+            @Override
+            protected CollectionService<E> getService() {
+                return service;
+            }
+
+            private static final long serialVersionUID = -2037354762526261781L;
+        };
+     
+    }
     
 
     /***************************************************************************
@@ -103,7 +138,9 @@ public abstract class FastCollection<E> implements
      * Iterates this collection elements until the specified predicate 
      * returns <code>false</code>.
      */
-    public abstract void doWhile(Predicate<E> predicate);
+    public void doWhile(Predicate<E> predicate) {
+        getService().doWhile(predicate);
+    }
 
     /**
      * Removes from this collection all the elements matching the specified 
@@ -112,7 +149,9 @@ public abstract class FastCollection<E> implements
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    public abstract boolean removeAll(Predicate<E> predicate);
+    public boolean removeAll(Predicate<E> predicate) {
+         return getService().removeAll(predicate);
+    }
 
     /**
      * Retains from this collection all the elements matching the specified 
@@ -168,14 +207,7 @@ public abstract class FastCollection<E> implements
      * Returns the number of element in this collection. 
      */
     public int size() {
-        final int[] count = new int[1];
-        this.doWhile(new Predicate<E>() {
-            public Boolean evaluate(E param) {
-                count[0]++;
-                return true;
-            }
-        });
-        return count[0];
+        return getService().size();
     }
 
     /**
@@ -183,16 +215,13 @@ public abstract class FastCollection<E> implements
      * element to the end of the collection it is not forced to do so 
      * (e.g. if the collection is ordered).
      * 
-     * <p>Note: The default implementation throws 
-     *          <code>UnsupportedOperationException</code>.</p>
-     * 
      * @param element the element to be added to this collection.
      * @return <code>true</code> (as per the general contract of the
      *         <code>Collection.add</code> method).
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
     public boolean add(E element) {
-        throw new UnsupportedOperationException();
+        return getService().add(element);
     }
 
     /**
@@ -203,18 +232,9 @@ public abstract class FastCollection<E> implements
      *         element; <code>false</code> otherwise.
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
-    public boolean remove(final Object element) {
-        final boolean[] found = new boolean[]{false};
-        return removeAll(new Predicate<E>() {
-            FastComparator<Object> cmp = FastComparator.DEFAULT;
-            public Boolean evaluate(E param) {
-                if (!found[0] && (cmp.areEqual(element, param))) {
-                    found[0] = true;
-                    return true;
-                }
-                return false;
-            }
-        });
+    @SuppressWarnings("unchecked")
+    public boolean remove(Object element) {
+        return getService().remove((E)element);
     }
 
     /**
@@ -223,11 +243,7 @@ public abstract class FastCollection<E> implements
      * @throws UnsupportedOperationException if not supported.
      */
     public void clear() {
-        removeAll(new Predicate<E>() {
-            public Boolean evaluate(E param) {
-                return true;
-            }
-        });
+        getService().clear();
     }
 
     /**
@@ -248,19 +264,9 @@ public abstract class FastCollection<E> implements
      * @return <code>true</code> if this collection contains the specified
      *         element;<code>false</code> otherwise.
      */
+    @SuppressWarnings("unchecked")
     public boolean contains(final Object element) {
-        final boolean[] found = new boolean[]{false};
-        this.doWhile(new Predicate<E>() {
-            FastComparator<Object> cmp = FastComparator.DEFAULT;
-            public Boolean evaluate(E param) {
-                if (cmp.areEqual(element, param)) {
-                    found[0] = true;
-                    return false; // Exits.
-                }
-                return true;
-            }
-        });
-        return found[0];
+        return getService().contains((E)element);
     }
     
 
@@ -459,6 +465,15 @@ public abstract class FastCollection<E> implements
         }
     }
 
+    /** 
+     * Returns an iterator over this collection. For shared collection 
+     * closure (e.g. {@link #doWhile(Predicate)}) should be used instead o
+     * iterators (or Java 1.5 simplified loop)
+     */
+    public Iterator<E> iterator() {
+        return getService().iterator();
+    }      
+    
     /***************************************************************************
      * Misc.
      */

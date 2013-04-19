@@ -8,8 +8,6 @@
  */
 package javolution.internal.util.table;
 
-import java.util.Collection;
-
 import javolution.lang.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
@@ -64,6 +62,7 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
     //
     // Non-abstract methods should forward to the actual table (unless impacted).
     //
+    
     @Override
     public void clear() {
         super.clear();
@@ -132,16 +131,6 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
     @Override
     public boolean removeAll(Predicate<E> predicate) {
         return super.removeAll(predicate);
-    }
-
-    @Override
-    public boolean addAll(final Collection<? extends E> elements) {
-        return super.addAll(elements);
-    }
-
-    @Override
-    public boolean addAll(final int index, final Collection<? extends E> elements) {
-        return super.addAll(index, elements);
     }
 
     @Override

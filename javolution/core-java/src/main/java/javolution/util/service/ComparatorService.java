@@ -12,11 +12,10 @@ import javolution.annotation.ThreadSafe;
 
 /**
  * The set of related collection functionalities which can be used/reused to 
- * implement comparators.
+ * implement collections/maps elements comparators.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @see FastCollection
  */
 @ThreadSafe
 public interface ComparatorService<T> {

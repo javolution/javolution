@@ -10,7 +10,6 @@ package javolution.util.service;
 
 import javolution.lang.Predicate;
 import javolution.util.FastBitSet;
-import javolution.util.FastTable;
 import javolution.util.Index;
 
 /**
