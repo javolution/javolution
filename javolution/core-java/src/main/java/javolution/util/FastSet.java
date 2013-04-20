@@ -10,12 +10,24 @@ package javolution.util;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import javolution.internal.util.collection.SharedCollectionImpl;
+import javolution.internal.util.collection.UnmodifiableCollectionImpl;
+import javolution.internal.util.map.CustomKeyComparatorMapImpl;
+import javolution.internal.util.map.FractalMapImpl;
+import javolution.internal.util.map.SharedMapImpl;
+import javolution.internal.util.map.UnmodifiableMapImpl;
+import javolution.internal.util.table.FractalTableImpl;
 import javolution.lang.Functor;
 import javolution.lang.Predicate;
 import javolution.util.FastMap.KeySet;
+import javolution.util.service.CollectionService;
+import javolution.util.service.MapService;
+import javolution.util.service.TableService;
 
 /**
- * <p> Set backed up by a {@link HashMap} and benefiting from the 
+ * <p> Set backed up by a fractal map and benefiting from the 
  *     same characteristics (memory footprint adjusted to current size,
  *     smooth capacity increase, etc).</p>
  * 
@@ -28,87 +40,42 @@ import javolution.util.FastMap.KeySet;
 public class FastSet<E> extends FastCollection<E> implements Set<E> {
 
     /**
-     * Holds the backing map.
+     * Holds the actual map service implementation.
      */
-    private final FastMap map;
+    private final MapService<E, Void> service;
 
     /**
-     * Creates an empty set whose capacity increment or decrement smoothly
-     * without large resize/rehash operations.
+     * Creates an empty set whose capacity increments/decrements smoothly
+     * without large resize operations to best fit the set current size.
      */
     public FastSet() {
-        map = new FastMap<E, E>() {
+        service = new FractalMapImpl<E, Void>();
+    }
 
-            @Override
-            public FastComparator<E> keyComparator() {
-                return FastSet.this.comparator();
-            }
+    /**
+     * Creates a set backed up by the specified implementation.
+     */
+    protected FastSet(MapService<E, Void> service) {
+        this.service = service;
+    } 
 
-        };
+    @Override
+    public FastSet<E> unmodifiable() {
+        return new FastSet<E>(new UnmodifiableMapImpl<E, Void>(service));
     }
 
     @Override
-    public FastCollection<E> unmodifiable() {
-        return map.keySet().unmodifiable();
+    public FastSet<E> shared() {
+        return new FastSet<E>(new SharedMapImpl<E, Void>(service, new ReentrantReadWriteLock()));
+    }
+
+    public FastSet<E> usingComparator(FastComparator<E> comparator) {
+        return new FastSet<E>(new CustomKeyComparatorMapImpl<E, Void>(service, comparator));
     }
 
     @Override
-    public KeySet<E> shared() {
-        return map.shared().keySet();
-    }
-
-    @Override
-    public <R> FastCollection<R> forEach(Functor<E, R> functor) {
-        return map.keySet().forEach(functor);
-    }
-
-    @Override
-    public void doWhile(Predicate<E> predicate) {
-        map.keySet().doWhile(predicate);
-    }
-
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return map.keySet().removeAll(predicate);
-    }
-    
-    //
-    // Collection methods.
-    //
-    
-    @Override
-    public Iterator<E> iterator() {
-        return map.keySet().iterator();
-    }
-
-    @Override
-    public int size() {
-        return map.size();
-    }
-
-    @Override
-    public boolean add(E value) {
-        return map.put(value, value) == null;
-    }
-
-    @Override
-    public void clear() {
-        map.clear();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return map.containsKey(o);
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        return map.remove(o) != null;
-    }
-
-    @Override
-    public FastCollection<E> usingComparator(FastComparator<E> comparator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    protected CollectionService<E> getService() {
+        return service.keySet();
     }
 
 }

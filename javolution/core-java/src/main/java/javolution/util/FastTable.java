@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javolution.internal.util.table.CustomComparatorTableImpl;
 import javolution.internal.util.table.FractalTableImpl;
@@ -25,7 +26,6 @@ import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
 import javolution.lang.Predicate;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -119,7 +119,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
 
     @Override
     public FastTable<E> shared() {
-        return new FastTable<E>(new SharedTableImpl<E>(service));
+        return new FastTable<E>(new SharedTableImpl<E>(service, new ReentrantReadWriteLock()));
     }
 
     /**

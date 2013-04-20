@@ -19,7 +19,7 @@ import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
- * The parent class for all table implementations.
+ * Parent class to facilitate TableService custom implementations.
  * 
  * Note: This class implementation is frozen to avoid breaking up sub-classes
  *       relying upon the behavior of its non-abstract methods.
@@ -141,8 +141,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
 
     @Override
     public boolean contains(E element) {
-        int i = indexOf(element);
-        return (i < 0) ? false : true;
+        return (indexOf(element) < 0) ? false : true;
     }
 
     @Override
@@ -184,12 +183,12 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     public ComparatorService<E> comparator() {
         return (ComparatorService<E>) FastComparator.DEFAULT;
     }
-
+ 
     @Override
     public Iterator<E> iterator() {
         return new TableIteratorImpl<E>(this, 0);
     }
-    
+       
     /** Throws NoSuchElementException */
     protected void emptyError() {
         throw new NoSuchElementException("Empty Table");

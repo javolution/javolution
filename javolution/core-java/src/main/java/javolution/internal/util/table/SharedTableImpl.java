@@ -8,6 +8,8 @@
  */
 package javolution.internal.util.table;
 
+import java.io.Serializable;
+import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -18,17 +20,18 @@ import javolution.util.service.TableService;
 /**
  * A shared view over a table allowing concurrent access and sequential updates.
  */
-public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
+public final class SharedTableImpl<E> implements TableService<E>, Serializable {
 
     private final TableService<E> that;
-    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    private final Lock read = rwl.readLock();
-    private final Lock write = rwl.writeLock();
+    private final Lock read;
+    private final Lock write;
 
-    public SharedTableImpl(TableService<E> that) {
+    public SharedTableImpl(TableService<E> that, ReentrantReadWriteLock readWriteLock) {
         this.that = that;
+        this.read  = readWriteLock.readLock();
+        this.write = readWriteLock.writeLock();        
     }
-
+    
     @Override
     public int size() {
         read.lock();
@@ -274,5 +277,44 @@ public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
         return that.comparator();
     }
 
-    private static final long serialVersionUID = 2003570192853175381L;
+    @Override
+    @Deprecated
+    public Iterator<E> iterator() {
+        final Iterator<E> thatIterator = that.iterator();
+        return new Iterator<E>() {
+
+            @Override
+            public boolean hasNext() {
+                read.lock();
+                try {
+                    return thatIterator.hasNext();
+                } finally {
+                    read.unlock();
+                }
+            }
+
+            @Override
+            public E next() {
+                read.lock();
+                try {
+                    return thatIterator.next();
+                } finally {
+                    read.unlock();
+                }
+            }
+
+            @Override
+            public void remove() {
+                write.lock();
+                try {
+                    thatIterator.remove();
+                } finally {
+                    write.unlock();
+                }
+            }
+
+        };
+    }
+
+    private static final long serialVersionUID = 7829529537179984988L;
 }

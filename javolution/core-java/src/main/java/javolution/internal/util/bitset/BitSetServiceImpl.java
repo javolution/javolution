@@ -11,8 +11,6 @@ package javolution.internal.util.bitset;
 import java.io.Serializable;
 
 import javolution.lang.MathLib;
-import javolution.lang.Predicate;
-import javolution.util.Index;
 import javolution.util.service.BitSetService;
 
 /**
@@ -123,26 +121,6 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
             offset++;
         }
         return -1;
-    }
-
-    @Override
-    public void doWhile(Predicate<Index> predicate) {
-        for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            if (!predicate.evaluate(Index.valueOf(i)))
-                return;
-        }
-    }
-
-    @Override
-    public boolean removeAll(Predicate<Index> predicate) {
-        boolean modified = false;
-        for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-            if (predicate.evaluate(Index.valueOf(i))) {
-                clear(i);
-                modified = true;
-            }
-        }
-        return modified;
     }
 
     //

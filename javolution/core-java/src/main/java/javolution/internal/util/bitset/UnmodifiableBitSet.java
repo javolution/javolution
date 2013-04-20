@@ -10,8 +10,6 @@ package javolution.internal.util.bitset;
 
 import java.io.Serializable;
 
-import javolution.lang.Predicate;
-import javolution.util.Index;
 import javolution.util.service.BitSetService;
 
 /**
@@ -58,16 +56,6 @@ public class UnmodifiableBitSet implements BitSetService, Serializable {
     @Override
     public int nextSetBit(int fromIndex) {
         return impl.nextSetBit(fromIndex);
-    }
-
-    @Override
-    public void doWhile(Predicate<Index> predicate) {
-        impl.doWhile(predicate);
-    }
-
-    @Override
-    public boolean removeAll(Predicate<Index> predicate) {
-        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override

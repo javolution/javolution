@@ -19,36 +19,47 @@ import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
 
 /**
- * The parent class for all table implementations.
+ * Parent class to facilitate MapService custom implementations.
  */
 public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Serializable {
     
-    /** Returns the entry for the specified key (or <code>null</code> if none). */
-    public abstract Map.Entry<K,V> getEntry(K key);
+    @Override
+    public abstract int size();    
+    
+    /** Indicates if this map contains the specified key using the specified hash value. */
+    public abstract boolean containsKey(K key, int hash);
 
-    /** Returns iterator over entries */
+    /** Returns the value for the specified key using the specified hash value. */
+    public abstract V get(K key, int hash);
+
+    /** Associates the specified key and value using the specified hash value. */
+    public abstract V put(K key, V value, int hash);
+
+    /** Removes the specified key using the specified hash value. */
+    public abstract V remove(K key, int hash);
+
+    /** Returns the entry for the specified key (or <code>null</code> if none). */    /** Returns iterator over entries */
     public abstract Iterator<Map.Entry<K,V>> entriesIterator();
 
     @Override
-    public boolean containsKey(K key) {        
-        return getEntry(key) != null;
+    public boolean containsKey(K key) {
+        return containsKey(key, keyComparator().hashCodeOf(key));
     }
 
     @Override
     public V get(K key) {
-        Entry<K, V> entry = getEntry(key);
-        return (entry != null) ? entry.getValue() : null;
+        return get(key, keyComparator().hashCodeOf(key));
     }
 
     @Override
-    public abstract V put(K key, V value);
-
-
-    @Override
-    public abstract V remove(K key);
+    public V put(K key, V value) {
+        return put(key, value, keyComparator().hashCodeOf(key));
+    }
 
     @Override
-    public abstract int size();
+    public V remove(K key) {
+        return remove(key, keyComparator().hashCodeOf(key));
+    }
 
     @Override
     public CollectionService<Entry<K, V>> entrySet() {
@@ -101,4 +112,5 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
         return (ComparatorService<K>) FastComparator.DEFAULT;
     }
  
-}
+    private static final long serialVersionUID = 6261409427238347224L;
+  }

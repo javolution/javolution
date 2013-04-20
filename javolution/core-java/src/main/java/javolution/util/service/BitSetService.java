@@ -51,12 +51,6 @@ public interface BitSetService {
     /** See {@link FastBitSet#nextSetBit(int) } */
     int nextSetBit(int fromIndex);
 
-    /** See {@link FastBitSet#doWhile(Predicate) } */
-    void doWhile(Predicate<Index> predicate);
-
-    /** See {@link FastBitSet#removeAll(Predicate) } */
-    boolean removeAll(Predicate<Index> predicate);
-
     //
     // Clear/Set/Flip Operations
     //

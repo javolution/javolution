@@ -8,14 +8,15 @@
  */
 package javolution.internal.util.map;
 
-import java.util.Map;
-
-import javolution.util.service.ComparatorService;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 
 /**
  * A simple implementation of a map
  */
-public final class BasicMapImpl<K, V> extends AbstractMapImpl<K, V> {
+public final class FractalMapImpl<K, V> extends AbstractMapImpl<K, V> {
 
     // Emptiness level. Can be 1 (load factor 0.5), 2 (load factor 0.25) or any greater value.
     private static final int EMPTINESS_LEVEL = 2;
@@ -27,12 +28,85 @@ public final class BasicMapImpl<K, V> extends AbstractMapImpl<K, V> {
 
     @SuppressWarnings("unchecked")
     private EntryImpl<K, V>[] entries = (EntryImpl<K, V>[]) new EntryImpl[INITIAL_BLOCK_CAPACITY];
-
+    
     @SuppressWarnings("unchecked")
     @Override
     public void clear() {
         entries = (EntryImpl<K, V>[]) new EntryImpl[INITIAL_BLOCK_CAPACITY];
         count = 0;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return containsKey(key, key != null ? key.hashCode() : 0);
+    }
+
+    @Override
+    public V get(K key) {
+        return get(key, key != null ? key.hashCode() : 0);
+    }
+
+    @Override
+    public V put(K key, V value) {
+        return put(key, value, key != null ? key.hashCode() : 0);
+    }
+
+    @Override
+    public V remove(K key) {
+        return remove(key, key != null ? key.hashCode() : 0);
+    }
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public Iterator<Entry<K, V>> entriesIterator() {
+        return new Iterator<Entry<K, V>>() {
+            private EntryImpl<K,V>[] packedEntries = getPackedEntries();
+            private int nextIndex = 0;
+            private int currentIndex = -1;
+            @Override
+            public boolean hasNext() {
+                return nextIndex < packedEntries.length;
+            }
+
+            @Override
+            public Entry<K, V> next() {
+                if (nextIndex >= packedEntries.length)
+                    throw new NoSuchElementException();
+                currentIndex = nextIndex++;
+                return packedEntries[currentIndex];
+            }
+
+            @Override
+            public void remove() {
+                if (currentIndex < 0)
+                    throw new IllegalStateException();
+                FractalMapImpl.this.remove(packedEntries[currentIndex].getKey());
+                currentIndex = -1;               
+            }
+            
+            @SuppressWarnings("unchecked")
+            private EntryImpl<K,V>[] getPackedEntries() {
+                EntryImpl<K,V>[] tmp = (EntryImpl<K,V>[]) new EntryImpl[count];
+                int j = 0;
+                for (int i=0; i < tmp.length;) {
+                    while (entries[j] == null) {
+                        if (++j >= entries.length) 
+                            throw new ConcurrentModificationException();
+                    }
+                    tmp[i++] = entries[j++];                    
+                }
+                while (j < entries.length) {
+                    if (entries[j++] != null)
+                        throw new ConcurrentModificationException();
+                }
+                return tmp;
+            }
+            
+        };
     }
 
     //
@@ -123,6 +197,6 @@ public final class BasicMapImpl<K, V> extends AbstractMapImpl<K, V> {
             i = (i + 1) & mask;
         }
     }
-
-   
+    
+    private static final long serialVersionUID = 4514437185395950293L;
 }

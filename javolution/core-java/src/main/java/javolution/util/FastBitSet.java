@@ -17,12 +17,13 @@ import javolution.internal.util.bitset.SharedBitSet;
 import javolution.internal.util.bitset.UnmodifiableBitSet;
 import javolution.lang.Predicate;
 import javolution.util.service.BitSetService;
+import javolution.util.service.CollectionService;
 
 /**
  * <p> A table of bits equivalent to a packed set of non-negative numbers.</p>
  * 
- * <p> This class is integrated with the collection framework (as 
- *     a set of {@link Index indices} and obeys the collection semantic
+ * <p> This class is integrated with the collection framework as 
+ *     a set of {@link Index indices and obeys the collection semantic
  *     for methods such as {@link #size} (cardinality) or {@link #equals}
  *     (same set of indices).</p>
  *   
@@ -301,65 +302,9 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     }
 
     //
-    // FastCollection<Index> Methods
+    // FastCollection methods override.
     //
-
-    /**
-     * Returns the cardinality of this bit set (number of bits set).
-     * 
-     * <P>Note: Unlike {@code java.util.BitSet} this method does not 
-     *          returns an approximation of the number of bits of space 
-     *          actually in use. This method is compliant with 
-     *          java.util.Collection meaning for size().</p>
-     *
-     * @return the cardinality of this bit set.
-     */
-    @Override
-    public int size() {
-        return cardinality();
-    }
-
-    /**
-     * Adds the specified index to this set. This method is equivalent 
-     * to <code>set(index.intValue())</code>.
-     * 
-     * @param index the object to be added to this set.
-     * @return {@code true} if this set did not contains the specified
-     *         index; {@code false} otherwise.
-     */
-    @Override
-    public boolean add(Index index) {
-        return !impl.getAndSet(index.intValue(), true);
-    }
-
-    /**
-     * Indicates if the specified object/index is in this set. 
-     * This method is equivalent to <code>get(index.intValue())</code>.
-     * 
-     * @param index the object to be tested.
-     * @return {@code true} if this set contains the specified
-     *         index; {@code false} otherwise.
-     */
-    @Override
-    public boolean contains(Object index) {
-        if (!(index instanceof Index)) return false;
-        return impl.get(((Index)index).intValue());        
-    }
     
-    /**
-     * Removes the specified index from this set. This method is equivalent 
-     * to <code>clear(index.intValue())</code>.
-     * 
-     * @param index the object to be removed from this set.
-     * @return {@code true} if this set contained the specified
-     *         index; {@code false} otherwise.
-     */
-    @Override
-    public boolean remove(Object index) {
-        if (!(index instanceof Index)) return false;
-        return impl.getAndSet(((Index)index).intValue(), false);
-    }
- 
     @Override
     public FastBitSet unmodifiable() {
         return new FastBitSet(new UnmodifiableBitSet(impl));
@@ -371,24 +316,66 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
     }
 
     @Override
-    public void doWhile(Predicate<Index> predicate) {
-        impl.doWhile(predicate);
-    }
-
-    @Override
-    public boolean removeAll(Predicate<Index> predicate) {
-        return impl.removeAll(predicate);
-    }
-
-    @Override
-    public Iterator<Index> iterator() {
-        return new BitSetIteratorImpl(impl, 0);
-    }
-
-    @Override
     public FastBitSet copy() {
         return this.get(0, length());
     }
 
-    private static final long serialVersionUID = 4802095227816638334L;
+    @Override
+    protected CollectionService<Index> getService() {
+        return new CollectionService<Index>() {
+
+            @Override
+            public void clear() {
+                impl.clear();                
+            }
+            
+            @Override
+            public int size() {
+                return cardinality();
+            }
+
+            @Override
+            public boolean add(Index index) {
+                return !impl.getAndSet(index.intValue(), true);
+            }
+
+            @Override
+            public boolean contains(Index index) {
+                return impl.get(index.intValue());        
+            }
+            
+            @Override
+            public boolean remove(Index index) {
+                return impl.getAndSet(index.intValue(), false);
+            }
+   
+            @Override
+            public void doWhile(Predicate<Index> predicate) {
+                for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
+                    if (!predicate.evaluate(Index.valueOf(i)))
+                        return;
+                }
+            }
+
+            @Override
+            public boolean removeAll(Predicate<Index> predicate) {
+                boolean modified = false;
+                for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
+                    if (predicate.evaluate(Index.valueOf(i))) {
+                        impl.clear(i);
+                        modified = true;
+                    }
+                }
+                return modified;
+            }
+            
+            @Override
+            public Iterator<Index> iterator() {
+                return new BitSetIteratorImpl(impl, 0);
+            }
+
+        };
+    }
+
+    private static final long serialVersionUID = 2947704388849012297L;
 }

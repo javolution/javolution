@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import javolution.internal.util.map.BasicMapImpl;
+import javolution.internal.util.map.FractalMapImpl;
 import javolution.lang.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
@@ -61,7 +61,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * without large resize/rehash operations.
      */
     public FastMap() {
-        service = new BasicMapImpl<K, V>();
+        service = new FractalMapImpl<K, V>();
     }
 
     /**

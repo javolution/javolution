@@ -9,6 +9,7 @@
 package javolution.internal.util.table;
 
 
+
 /**
  * A fractal-based implementation of a table with fast insertion/deletion 
  * capabilities regardless of the collection size. 
@@ -18,8 +19,7 @@ package javolution.internal.util.table;
  * This implementation ensures that no more than 3/4 of the table capacity is
  * ever wasted. 
  */
-@SuppressWarnings("unchecked")
-public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
+public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
 
     private static final int SHIFT = 10;
 
@@ -42,12 +42,14 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
         return size;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public E get(int index) {
         if ((index < 0) && (index >= size)) indexError(index);
         return (E) fractal.get(index);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public E set(int index, E element) {
         if ((index < 0) && (index >= size)) indexError(index);
@@ -73,6 +75,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public E remove(int index) {
         if (index == 0) return removeFirst();
@@ -93,6 +96,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     //
     // Optimizations.
     //
+    
     @Override
     public boolean add(E element) {
         addLast(element);
@@ -113,6 +117,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
         fractal.set(size++, element);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public E removeFirst() {
         if (size == 0) emptyError();
@@ -123,6 +128,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
         return first;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public E removeLast() {
         if (size == 0) emptyError();
@@ -377,4 +383,5 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     private static final long serialVersionUID = 8016235981181245144L;
+
 }

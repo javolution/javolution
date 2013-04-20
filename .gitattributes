@@ -300,10 +300,13 @@ javolution/core-java/src/main/java/javolution/internal/util/comparator/IdentityC
 javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/StringComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/AbstractMapImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/internal/util/map/BasicMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/CustomKeyComparatorMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/EntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/EntrySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/FractalMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/KeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/SharedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/UnmodifiableMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/AbstractTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/CustomComparatorTableImpl.java -text

@@ -8,19 +8,34 @@
  */
 package javolution.util;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import javolution.internal.util.map.CustomKeyComparatorMapImpl;
+import javolution.internal.util.map.SharedMapImpl;
+import javolution.internal.util.map.UnmodifiableMapImpl;
+import javolution.internal.util.table.CustomComparatorTableImpl;
+import javolution.internal.util.table.FractalTableImpl;
+import javolution.internal.util.table.NoDuplicateTableImpl;
+import javolution.internal.util.table.SharedTableImpl;
+import javolution.internal.util.table.SortedTableImpl;
+import javolution.internal.util.table.UnmodifiableTableImpl;
 import javolution.lang.Functor;
 import javolution.lang.Predicate;
 import javolution.util.FastMap.KeySet;
+import javolution.util.service.CollectionService;
+import javolution.util.service.MapService;
+import javolution.util.service.TableService;
 
 /**
- * <p> Set backed up by an ordered {@link FastTable} and benefiting from the 
+ * <p> Set backed up by an ordered table and benefiting from the 
  *     same characteristics (memory footprint adjusted to current size,
  *     smooth capacity increase, etc).</p>
  * 
- * <p> Fast set, as for any {@link FastCollection} sub-class, supports
+ * <p> Fast sorted set, as for any {@link FastCollection} sub-class, supports
  *     closure-based iterations.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -31,83 +46,76 @@ public class FastSortedSet<E> extends FastCollection<E> implements SortedSet<E> 
     /**
      * Holds the backing table.
      */
-    private final FastTable table;
+    private final TableService<E> service;
 
     /**
      * Creates an empty set whose capacity increment or decrement smoothly
      * without large resize/rehash operations.
      */
     public FastSortedSet() {
-        table = new FastTable<E>() {
-
-            @Override
-            public FastComparator<E> comparator() {
-                return FastSortedSet.this.comparator();
-            }
-
-        };
+        service = new NoDuplicateTableImpl<E>(new SortedTableImpl<E>(new FractalTableImpl<E>()));
     }
 
     /**
-     * Creates an empty set backed by the specified ordered table.
+     * Creates a sorted set backed up by the specified implementation.
      */
-    private FastSortedSet(FastTable table) {
-        this.table = table;
+    protected FastSortedSet(TableService<E> service) {
+        this.service = service;
     } 
 
     @Override
-    public FastCollection<E> unmodifiable() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public FastSortedSet<E> unmodifiable() {
+        return new FastSortedSet<E>(new UnmodifiableTableImpl<E>(service));
     }
 
     @Override
-    public FastCollection<E> shared() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public FastSortedSet<E> shared() {
+        return new FastSortedSet<E>(new SharedTableImpl<E>(service, new ReentrantReadWriteLock()));
+    }
+
+    public FastSortedSet<E> usingComparator(FastComparator<E> comparator) {
+        return new FastSortedSet<E>(new CustomComparatorTableImpl<E>(service, comparator));
     }
 
     @Override
-    public FastCollection<E> usingComparator(FastComparator<E> comparator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    protected TableService<E> getService() {
+        return service;
     }
 
     @Override
-    public <R> FastCollection<R> forEach(Functor<E, R> functor) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Comparator<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public Iterator<E> iterator() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     public SortedSet<E> subSet(E fromElement, E toElement) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public SortedSet<E> headSet(E toElement) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public SortedSet<E> tailSet(E fromElement) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public E first() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public E last() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO Auto-generated method stub
+        return null;
     }
-            
-  
+ 
 }

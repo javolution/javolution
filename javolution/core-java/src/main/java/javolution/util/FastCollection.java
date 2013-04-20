@@ -15,6 +15,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javolution.annotation.Format;
 import javolution.annotation.StackSafe;
@@ -117,7 +118,8 @@ public abstract class FastCollection<E> implements
      */
     public FastCollection<E> shared() {
         return new FastCollection<E>() {
-            CollectionService<E> service = new SharedCollectionImpl<E>(FastCollection.this.getService());
+            CollectionService<E> service 
+               = new SharedCollectionImpl<E>(FastCollection.this.getService(), new ReentrantReadWriteLock());
 
             @Override
             protected CollectionService<E> getService() {

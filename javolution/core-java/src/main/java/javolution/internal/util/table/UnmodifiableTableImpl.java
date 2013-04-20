@@ -8,6 +8,9 @@
  */
 package javolution.internal.util.table;
 
+import java.io.Serializable;
+import java.util.Iterator;
+
 import javolution.lang.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
@@ -15,7 +18,8 @@ import javolution.util.service.TableService;
 /**
  * An unmodifiable view over a table.
  */
-public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
+public final class UnmodifiableTableImpl<E> implements TableService<E>,
+        Serializable {
 
     private final TableService<E> that;
 
@@ -53,7 +57,7 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
     //
     @Override
     public void clear() {
-        super.clear();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
@@ -68,47 +72,47 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public boolean add(E element) {
-        return super.add(element);
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public void addFirst(E element) {
-        super.addFirst(element);
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public void addLast(E element) {
-        super.addLast(element);
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public E removeFirst() {
-        return super.removeFirst();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public E removeLast() {
-        return super.removeLast();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public E pollFirst() {
-        return super.pollFirst();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public E pollLast() {
-        return super.pollLast();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public E peekFirst() {
-        return that.peekFirst();
+        return (size() == 0) ? null : getFirst();
     }
 
     @Override
     public E peekLast() {
-        return that.peekLast();
+        return (size() == 0) ? null : getLast();
     }
 
     @Override
@@ -118,7 +122,7 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public boolean removeAll(Predicate<E> predicate) {
-        return super.removeAll(predicate);
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
@@ -128,7 +132,7 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public boolean remove(E element) {
-        return super.remove(element);
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
@@ -143,13 +147,36 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public void sort() {
-        super.sort();
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public ComparatorService<E> comparator() {
         return that.comparator();
-    }    
+    }
 
-    private static final long serialVersionUID = -2474743491162283998L;
+    @Override
+    public Iterator<E> iterator() {
+        final Iterator<E> thatIterator = that.iterator();
+        return new Iterator<E>() {
+
+            @Override
+            public boolean hasNext() {
+                return thatIterator.hasNext();
+            }
+
+            @Override
+            public E next() {
+                return thatIterator.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Unmodifiable");
+            }
+
+        };
+    }
+
+    private static final long serialVersionUID = 7449328167407252680L;
 }

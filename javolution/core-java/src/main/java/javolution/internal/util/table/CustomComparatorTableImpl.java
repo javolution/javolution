@@ -154,6 +154,6 @@ public final class CustomComparatorTableImpl<E> extends AbstractTableImpl<E> {
     public ComparatorService<E> comparator() {
         return comparator;
     }        
-
-    private static final long serialVersionUID = -275528446664193249L;
+ 
+    private static final long serialVersionUID = 271844575007335534L;
 }

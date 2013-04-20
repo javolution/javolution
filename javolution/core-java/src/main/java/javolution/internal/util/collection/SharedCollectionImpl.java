@@ -23,12 +23,13 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
         Serializable {
 
     private final CollectionService<E> that;
-    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    private final Lock read = rwl.readLock();
-    private final Lock write = rwl.writeLock();
+    private final Lock read;
+    private final Lock write;
 
-    public SharedCollectionImpl(CollectionService<E> that) {
+    public SharedCollectionImpl(CollectionService<E> that, ReentrantReadWriteLock readWriteLock) {
         this.that = that;
+        this.read  = readWriteLock.readLock();
+        this.write = readWriteLock.writeLock();        
     }
 
     @Override

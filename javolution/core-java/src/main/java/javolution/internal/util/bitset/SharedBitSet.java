@@ -10,8 +10,6 @@ package javolution.internal.util.bitset;
 
 import java.io.Serializable;
 
-import javolution.lang.Predicate;
-import javolution.util.Index;
 import javolution.util.service.BitSetService;
 
 /**
@@ -71,20 +69,6 @@ public class SharedBitSet implements BitSetService, Serializable {
     public int nextSetBit(int fromIndex) {
         synchronized (impl) {
             return impl.nextSetBit(fromIndex);
-        }
-    }
-
-    @Override
-    public void doWhile(Predicate<Index> predicate) {
-        synchronized (impl) {
-            impl.doWhile(predicate);
-        }
-    }
-
-    @Override
-    public boolean removeAll(Predicate<Index> predicate) {
-        synchronized (impl) {
-            return impl.removeAll(predicate);
         }
     }
 
