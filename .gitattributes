@@ -293,6 +293,7 @@ javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetIterato
 javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/SharedBitSet.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/UnmodifiableBitSet.java -text
+javolution/core-java/src/main/java/javolution/internal/util/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/DefaultComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
@@ -302,6 +303,8 @@ javolution/core-java/src/main/java/javolution/internal/util/map/AbstractMapImpl.
 javolution/core-java/src/main/java/javolution/internal/util/map/BasicMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/EntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/EntrySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/KeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/AbstractTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/CustomComparatorTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/FractalTableImpl.java -text svneol=unset#text/plain

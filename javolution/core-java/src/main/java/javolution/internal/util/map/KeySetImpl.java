@@ -13,18 +13,17 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javolution.lang.Predicate;
-import javolution.util.FastComparator;
 import javolution.util.service.CollectionService;
 
 /**
- * The entries view over a map.
+ * The keys view over a map.
  */
-public final class EntrySetImpl<K, V> implements
-        CollectionService<Map.Entry<K, V>>, Serializable {
+public final class KeySetImpl<K, V> implements
+        CollectionService<K>, Serializable {
 
     private final AbstractMapImpl<K, V> map;
 
-    public EntrySetImpl(AbstractMapImpl<K, V> map) {
+    public KeySetImpl(AbstractMapImpl<K, V> map) {
         this.map = map;
     }
 
@@ -39,34 +38,35 @@ public final class EntrySetImpl<K, V> implements
     }
 
     @Override
-    public boolean add(Map.Entry<K, V> entry) {
+    public boolean add(K key) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean contains(Map.Entry<K, V> entry) {
-        V value = map.get(entry.getKey());
-        return FastComparator.DEFAULT.areEqual(entry.getValue(), value);
+    public boolean contains(K key) {
+        return map.containsKey(key);
     }
 
     @Override
-    public boolean remove(Map.Entry<K, V> entry) {
-        return map.remove(entry.getKey(), entry.getValue());
+    public boolean remove(K key) {
+        if (!map.containsKey(key)) return false;
+        map.remove(key);
+        return true;
     }
 
     @Override
-    public void doWhile(Predicate<Map.Entry<K, V>> predicate) {
+    public void doWhile(Predicate<K> predicate) {
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (!predicate.evaluate(i.next()))
+            if (!predicate.evaluate(i.next().getKey()))
                 return;
         }
     }
 
     @Override
-    public boolean removeAll(Predicate<Map.Entry<K, V>> predicate) {
+    public boolean removeAll(Predicate<K> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (predicate.evaluate(i.next())) {
+            if (predicate.evaluate(i.next().getKey())) {
                 i.remove();
                 hasChanged = true;
             }
@@ -75,9 +75,26 @@ public final class EntrySetImpl<K, V> implements
     }
 
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
-        return map.entriesIterator();
+    public Iterator<K> iterator() {
+        return new Iterator<K>() {
+            final Iterator<Map.Entry<K, V>> entriesIterator = map.entriesIterator();
+            @Override
+            public boolean hasNext() {
+                return entriesIterator.hasNext();
+            }
+
+            @Override
+            public K next() {
+                return entriesIterator.next().getKey();
+            }
+
+            @Override
+            public void remove() {
+                entriesIterator.remove();                
+            }
+            
+        };
     }
 
-    private static final long serialVersionUID = 6545160313862150259L;
+    private static final long serialVersionUID = -2146924466361188899L;
 }

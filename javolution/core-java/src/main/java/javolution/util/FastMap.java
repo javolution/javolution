@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 import javolution.internal.util.map.BasicMapImpl;
 import javolution.lang.Predicate;
@@ -33,7 +34,7 @@ import javolution.util.service.MapService;
  * <p> Fast maps may use custom {@link #usingKeyComparator key comparator}, 
  *     <code>null</code> keys are supported.
  *     [code]
- *     FastMap<Foo, Bar> identityMap = new FastMap<Foo, Bar>().usingKeyComparator(FastComparator.IDENTITY);
+ *     FastMap<Foo, Bar> identityMap = new FastMap<Foo, Bar>().usingKeyComparator(FastComparator.identityFor(Foo.class));
  *     [/code]
  *     Fast maps can advantageously replace any of the standard 
  *     <code>java.util</code> maps. For example:
@@ -48,19 +49,19 @@ import javolution.util.service.MapService;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastMap<K, V> implements Map<K, V> {
+public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
 
     /**
      * Holds the actual map service implementation.
      */
     private final MapService<K, V> service;
-    
+
     /**
      * Creates an empty map whose capacity increments or decrements smoothly
      * without large resize/rehash operations.
      */
     public FastMap() {
-        service = new BasicMapImpl<K,V>();
+        service = new BasicMapImpl<K, V>();
     }
 
     /**
@@ -73,7 +74,7 @@ public class FastMap<K, V> implements Map<K, V> {
     /***************************************************************************
      * Map views.
      */
-    
+
     /**
      * Returns an unmodifiable view of this map.
      * Attempts to modify the map returned or the map elements (keys, values, 
@@ -137,7 +138,7 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     @SuppressWarnings("unchecked")
     public boolean containsKey(Object key) {
-        return service.containsKey((K)key);
+        return service.containsKey((K) key);
     }
 
     /**
@@ -149,7 +150,7 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     @SuppressWarnings("unchecked")
     public boolean containsValue(Object value) {
-        return service.values().contains((V)value);
+        return service.values().contains((V) value);
     }
 
     /**
@@ -161,7 +162,7 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     @SuppressWarnings("unchecked")
     public V get(Object key) {
-        return service.get((K)key);
+        return service.get((K) key);
     }
 
     /**
@@ -194,20 +195,20 @@ public class FastMap<K, V> implements Map<K, V> {
     public void putAll(Map<? extends K, ? extends V> map) {
         Set<?> entries = map.entrySet();
         if (entries instanceof FastCollection) {
-            FastCollection<Map.Entry<K, V>> fc =
-                    (FastCollection<Map.Entry<K, V>>) entries;
+            FastCollection<Map.Entry<K, V>> fc = (FastCollection<Map.Entry<K, V>>) entries;
             fc.doWhile(new Predicate<Map.Entry<K, V>>() {
 
-                public Boolean evaluate(Entry<K, V> param) {
-                    put(param.getKey(), param.getValue());
+                public Boolean evaluate(Entry<K, V> entry) {
+                    put(entry.getKey(), entry.getValue());
                     return true;
                 }
 
             });
-        }
-        for (Iterator<?> i = map.entrySet().iterator(); i.hasNext();) {
-            Map.Entry<K, V> e = (Map.Entry<K, V>) i.next();
-            put(e.getKey(), e.getValue());
+        } else {
+            for (Iterator<?> i = map.entrySet().iterator(); i.hasNext();) {
+                Map.Entry<K, V> entry = (Map.Entry<K, V>) i.next();
+                put(entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -222,7 +223,7 @@ public class FastMap<K, V> implements Map<K, V> {
      */
     @SuppressWarnings("unchecked")
     public V remove(Object key) {
-        return service.remove((K)key);
+        return service.remove((K) key);
     }
 
     /**
@@ -260,33 +261,36 @@ public class FastMap<K, V> implements Map<K, V> {
         return new EntrySet<K, V>(service.entrySet());
     }
 
-    /**
-     * Associates the specified value only if the specified key is not already
-     * associated. This is equivalent to:[code]
-     *   if (!map.containsKey(key))
-     *       return map.put(key, value);
-     *   else
-     *       return map.get(key);[/code]
-     * except that for shared maps the action is performed atomically.
-     * For shared maps, this method guarantees that if two threads try to 
-     * put the same key concurrently only one of them will succeed.
-     *
-     * @param key the key with which the specified value is to be associated.
-     * @param value the value to be associated with the specified key.
-     * @return the previous value associated with specified key, or
-     *         <code>null</code> if there was no mapping for key. A
-     *         <code>null</code> return can also indicate that the map
-     *         previously associated <code>null</code> with the specified key.
-     * @throws NullPointerException if the key is <code>null</code>.
+    /***************************************************************************
+     * ConcurrentMap Interface.
      */
+
+    @Override
     public V putIfAbsent(K key, V value) {
         return service.putIfAbsent(key, value);
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean remove(Object key, Object value) {
+        return service.remove((K) key, (V)value);
+    }
+
+    @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+        return service.replace(key, oldValue, newValue);
+    }
+
+    @Override
+    public V replace(K key, V value) {
+        return service.replace(key, value);
+    }
+    
     /**
      * A fast collection view over the map keys.
      */
-    public static final class KeySet<K> extends FastCollection<K> implements Set<K> {
+    public static final class KeySet<K> extends FastCollection<K> implements
+            Set<K> {
 
         private final CollectionService<K> service;
 
@@ -298,14 +302,15 @@ public class FastMap<K, V> implements Map<K, V> {
         protected CollectionService<K> getService() {
             return service;
         }
-        
+
         private static final long serialVersionUID = 5965229814125983593L;
     }
 
     /**
      * A fast collection view over the map entries.
      */
-    public static final class EntrySet<K, V> extends FastCollection<Entry<K, V>> implements Set<Entry<K, V>> {
+    public static final class EntrySet<K, V> extends
+            FastCollection<Entry<K, V>> implements Set<Entry<K, V>> {
 
         private final CollectionService<Entry<K, V>> service;
 
@@ -336,7 +341,9 @@ public class FastMap<K, V> implements Map<K, V> {
         protected CollectionService<V> getService() {
             return service;
         }
-            
+
         private static final long serialVersionUID = -424158623485419456L;
     }
+
+  
 }

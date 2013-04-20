@@ -8,7 +8,6 @@
  */
 package javolution.util.service;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
@@ -75,7 +74,5 @@ public interface MapService<K, V>  {
 
     /** Returns the comparator to be used for key comparisons and hash-code calculations. */
     ComparatorService<K> keyComparator();
-        
-    /** Returns an iterator over the entries of this map. */
-    Iterator<Entry<K,V>> entriesIterator();
-   }
+
+}

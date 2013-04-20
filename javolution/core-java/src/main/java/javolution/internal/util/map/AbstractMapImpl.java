@@ -9,8 +9,11 @@
 package javolution.internal.util.map;
 
 import java.io.Serializable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import javolution.util.FastComparator;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
@@ -20,83 +23,82 @@ import javolution.util.service.MapService;
  */
 public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Serializable {
     
-     @Override
-    public boolean containsKey(K key) {
-        return false;
+    /** Returns the entry for the specified key (or <code>null</code> if none). */
+    public abstract Map.Entry<K,V> getEntry(K key);
+
+    /** Returns iterator over entries */
+    public abstract Iterator<Map.Entry<K,V>> entriesIterator();
+
+    @Override
+    public boolean containsKey(K key) {        
+        return getEntry(key) != null;
     }
 
     @Override
     public V get(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        Entry<K, V> entry = getEntry(key);
+        return (entry != null) ? entry.getValue() : null;
     }
 
     @Override
-    public V put(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    public abstract V put(K key, V value);
 
 
     @Override
-    public V remove(K key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    public abstract V remove(K key);
 
     @Override
-    public int size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public abstract int size();
 
     @Override
     public CollectionService<Entry<K, V>> entrySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new EntrySetImpl<K, V>(this);
     }
 
     @Override
     public CollectionService<V> values() {
-        // TODO Auto-generated method stub
-        return null;
+        return new ValuesImpl<K, V>(this);
     }
 
     @Override
     public CollectionService<K> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new KeySetImpl<K, V>(this);
     }
 
     @Override
     public V putIfAbsent(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        return (!containsKey(key)) ? put(key, value) : get(key);
     }
 
     @Override
     public boolean remove(K key, V value) {
-        // TODO Auto-generated method stub
-        return false;
+        if (containsKey(key) && get(key).equals(value)) {
+              remove(key);
+              return true;
+        } else {
+           return false;
+        }
     }
 
     @Override
     public V replace(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        return (containsKey(key)) ? put(key, value) : null;
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        // TODO Auto-generated method stub
-        return false;
+        if (containsKey(key) && get(key).equals(oldValue)) {
+            put(key, newValue);
+            return true;
+        } else {
+            return false;
+        }
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public ComparatorService<K> keyComparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return (ComparatorService<K>) FastComparator.DEFAULT;
     }
  
-    private static final long serialVersionUID = -9147091489108467045L; 
 }

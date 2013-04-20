@@ -541,5 +541,5 @@ public abstract class FastCollection<E> implements
         }
     }
 
-    private static final long serialVersionUID = 7538575267772575813L;
+    private static final long serialVersionUID = 586810942305431721L;
 }

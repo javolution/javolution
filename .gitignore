@@ -1,6 +1,7 @@
 colapi/target
 javolution/.project
 javolution/core-cpp/target
+javolution/core-java/*.settings
 javolution/core-java/.classpath
 javolution/core-java/.project
 javolution/core-java/target
