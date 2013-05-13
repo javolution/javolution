@@ -42,13 +42,16 @@ public interface MapService<K, V>  {
     /** See {@link java.util.Map#size} */
     int size();
     
-    /** See {@link java.util.Map#entrySet()} */
+    /** Same as {@link java.util.Map#entrySet()} except it does support the
+     * <code>add</code> and <code>addAll</code> operations. */
     CollectionService<Entry<K,V>> entrySet();
 
-    /** See {@link java.util.Map#values()} */
+    /** Same as {@link java.util.Map#values()} */
     CollectionService<V> values();
 
-    /** See {@link java.util.Map#keySet()} */
+    /** Same as {@link java.util.Map#keySet()} except it does support the
+     * <code>add</code> and <code>addAll</code> operations (the corresponding 
+     * entry in the map has a <code>null</code> value). */
     CollectionService<K> keySet();
 
     //
@@ -72,7 +75,9 @@ public interface MapService<K, V>  {
     // Misc.
     //       
 
-    /** Returns the comparator to be used for key comparisons and hash-code calculations. */
+    /** 
+     * Returns the comparator to be used for key comparisons / hash-code calculations.
+     */
     ComparatorService<K> keyComparator();
 
 }

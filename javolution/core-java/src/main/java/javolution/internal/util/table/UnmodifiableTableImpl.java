@@ -11,7 +11,7 @@ package javolution.internal.util.table;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
@@ -151,11 +151,6 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public ComparatorService<E> comparator() {
-        return that.comparator();
-    }
-
-    @Override
     public Iterator<E> iterator() {
         final Iterator<E> thatIterator = that.iterator();
         return new Iterator<E>() {
@@ -178,5 +173,19 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
         };
     }
 
+    @Override
+    public void setComparator(ComparatorService<E> cmp) {
+        throw new UnsupportedOperationException("Unmodifiable");
+    }
+
+    //
+    // If no impact, forwards to inner table.
+    // 
+  
+    @Override
+    public ComparatorService<E> getComparator() {
+        return that.getComparator();
+    }
+    
     private static final long serialVersionUID = 7449328167407252680L;
 }

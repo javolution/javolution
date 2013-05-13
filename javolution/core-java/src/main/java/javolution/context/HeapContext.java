@@ -11,8 +11,8 @@ package javolution.context;
 import static javolution.internal.osgi.JavolutionActivator.HEAP_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
-import javolution.lang.Factory;
 import javolution.text.TypeFormat;
+import javolution.util.function.Factory;
 
 /**
  * <p> An {@link AllocatorContext} always allocating from the heap (default). 

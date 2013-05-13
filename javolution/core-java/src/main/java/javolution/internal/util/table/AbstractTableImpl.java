@@ -12,9 +12,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import javolution.lang.Predicate;
-import javolution.util.FastComparator;
-import javolution.util.FastTable;
+import javolution.util.function.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
@@ -26,12 +24,17 @@ import javolution.util.service.TableService;
  *       
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @see FastTable
  */
 public abstract class AbstractTableImpl<E> implements TableService<E>, Serializable {
-
+    
     @Override
     public abstract int size();
+
+    @Override
+    public abstract void clear();
+
+    @Override
+    public abstract void add(int index, E element);
 
     @Override
     public abstract E get(int index);
@@ -40,40 +43,33 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     public abstract E set(int index, E element);
 
     @Override
-    public abstract void add(int index, E element);
-
-    @Override
     public abstract E remove(int index);
-
-    //
-    // Non-Abstract methods.
-    //
     
     @Override
-    public void clear() {
-        removeAll(new Predicate<E>() {
-            public Boolean evaluate(E param) {
-                return true;
-            }
-        });
+    public abstract void setComparator(ComparatorService<E> cmp);
+    //
+    // Methods with default implementation.
+    //
+    
+    
+    @Override
+    public boolean add(E element) {
+        addLast(element);
+        return true;
     }
 
     @Override
     public E getFirst() {
-        if (size() == 0) emptyError();
+        if (size() == 0)
+            emptyError();
         return get(0);
     }
 
     @Override
     public E getLast() {
-        if (size() == 0) emptyError();
+        if (size() == 0)
+            emptyError();
         return get(size() - 1);
-    }
-
-    @Override
-    public boolean add(E element) {
-        add(size(), element);
-        return true;
     }
 
     @Override
@@ -123,7 +119,8 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     @Override
     public void doWhile(Predicate<E> predicate) {
         for (int i = 0, size = size(); i < size;) {
-            if (!predicate.evaluate(get(i++))) return;
+            if (!predicate.evaluate(get(i++)))
+                return;
         }
     }
 
@@ -147,25 +144,28 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     @Override
     public boolean remove(E element) {
         int i = indexOf(element);
-        if (i < 0) return false;
+        if (i < 0)
+            return false;
         remove(i);
         return true;
     }
 
     @Override
     public int indexOf(E element) {
-        ComparatorService<E> cmp = comparator();
+        ComparatorService<E> cmp = getComparator();
         for (int i = 0, size = size(); i < size; i++) {
-            if (cmp.areEqual(element, get(i))) return i;
+            if (cmp.areEqual(element, get(i)))
+                return i;
         }
         return -1;
     }
 
     @Override
     public int lastIndexOf(E element) {
-        ComparatorService<E> cmp = comparator();
+        ComparatorService<E> cmp = getComparator();
         for (int i = size(); i > 0;) {
-            if (cmp.areEqual(element, get(--i))) return i;
+            if (cmp.areEqual(element, get(--i)))
+                return i;
         }
         return -1;
     }
@@ -174,21 +174,15 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     public void sort() {
         int size = size();
         if (size > 1) {
-            quicksort(0, size - 1, comparator());
+            quicksort(0, size - 1, getComparator());
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public ComparatorService<E> comparator() {
-        return (ComparatorService<E>) FastComparator.DEFAULT;
-    }
- 
-    @Override
     public Iterator<E> iterator() {
         return new TableIteratorImpl<E>(this, 0);
     }
-       
+
     /** Throws NoSuchElementException */
     protected void emptyError() {
         throw new NoSuchElementException("Empty Table");
@@ -196,8 +190,8 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
 
     /** Throws IndexOutOfBoundsException */
     protected void indexError(int index) {
-        throw new IndexOutOfBoundsException(
-                "index: " + index + ", size: " + size());
+        throw new IndexOutOfBoundsException("index: " + index + ", size: "
+                + size());
     }
 
     // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
@@ -232,6 +226,6 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         set(down, piv);
         return down;
     }
- 
-    private static final long serialVersionUID = 2516824163907613972L;
+  
+    private static final long serialVersionUID = -4148136304080489337L;
 }

@@ -14,9 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javolution.internal.util.table.CustomComparatorTableImpl;
 import javolution.internal.util.table.FractalTableImpl;
 import javolution.internal.util.table.NoDuplicateTableImpl;
 import javolution.internal.util.table.ReverseTableImpl;
@@ -25,17 +23,17 @@ import javolution.internal.util.table.SortedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
 
 /**
  * <p> A random access collection of ordered/unordered elements with fast
  * insertion/deletion and smooth (time bounded) capacity increase/decrease.
- * The implementation (fractal based) ensures that basic operations <b>worst</b> 
- * execution time is in <i><b>O(log(size))</b></i> even for arbitrary insertions 
- * or deletions. The capacity of a fast table is automatically 
- * adjusted to best fit its size (e.g. when a table is cleared its memory 
- * footprint is minimal).</p>
+ * The default implementation (fractal based) ensures that basic operations 
+ * <b>worst</b> execution time is in <i><b>O(log(size))</b></i> even 
+ * for arbitrary insertions or deletions. The capacity of a fast table 
+ * is automatically adjusted to best fit its size (e.g. when a table is cleared
+ * its memory footprint is minimal).</p>
  * <img src="doc-files/list-add.png"/>
  *
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
@@ -48,7 +46,6 @@ import javolution.util.service.TableService;
  *    <li>{@link #unmodifiable} - View which does not allow for the modification of the table.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications (iterations should be performed using closures).</li>
  *    <li>{@link #sorted} - View for which elements are inserted according to their sorting order.</li>
- *    <li>{@link #usingComparator} - View for which elements comparison and sorting use the specified comparator.</li>
  *    <li>{@link #reverse} - View for which elements are in the reverse order.</li>
  *    <li>{@link #noDuplicate} - View for which elements are not added if already present.</li>
  * </ol>
@@ -57,30 +54,37 @@ import javolution.util.service.TableService;
  * FastTable<Session> sessions = new FastTable<Session>().shared(); // Table which can be concurrently accessed/modified.
  * FastTable<Item> items = new FastTable<Item>().sorted().noDuplicate(); // Table of sorted items with no duplicate.
  *     // Sorted tables have faster {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods.
- * FastTable<String> names ...
- * names.usingComparator(FastComparator.LEXICAL).reverse().sort(); // Sorts the names in reverse alphabetical order.
+ *     
+ * FastTable<CharSequence> names = new FastTable<CharSequence>.setComparator(FastComparator.LEXICAL); // Use lexical comparator for object equality/comparison.
+ * ...
+ * names.reverse().sort(); // Sorts the names in reverse alphabetical order.
  * names.shared().subList(0, mames.size() / 2); // Provides a view over the first half of a shared table.
  * names.shared().subList(mames.size() / 2, names.size()); // Provides a view over the second half of a shared table.
- * names.subList(start, end).shared(); // Provides a concurrently modifiable view over a part of a table (which is different from above).
+ * names.subList(start, end).shared(); // Provides a concurrently modifiable view over a part of a table (which is different from the above).
  * [/code]</p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations are faster
- * when performed using closures (and the notation will be shorter with JDK 8).
- * They are also the preferred mean of iterating over {@link FastTable#shared shared}
- * tables, there are no concurrent modification exception possible! Closure 
- * based iterations over shared tables use local copies of the table to avoid 
- * blocking concurrent writes and being impacted by concurrent modifications. 
+ * when performed using closures (and the notation will be shorter with Java 8).
+ * This is also the preferred mean of iterating over {@link FastTable#shared shared}
+ * tables as concurrent modification exceptions cannot occur ! 
  * [code]
- * FastTable<Person> persons = ...
- * Person john = persons.findFirst(new Predicate<Person>() { // Thread-safe if persons is shared.
- *     public Boolean evaluate(Person person) {
- *         return person.getName().equals("John");
- *     }
- * });
- * [/code]</p>
- *
- * <p> Note: Most of this class methods are final, the actual behavior is defined by
- * the table "plugable" implementation (see {@link FastTable#FastTable(TableService)}.</p>
+ * FastTable<Person> persons = new FastTable<Person>().shared();
+ * ...
+ * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
+ *     return persons.findAny(new Predicate<Person>() { 
+ *         public Boolean evaluate(Person person) {
+ *             return (person.getName().equals(name));
+ *         }
+ *     });
+ * }
+ * [/code]
+ * The code above can be simplified using Java 8.
+ * [code]
+ * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
+ *     return persons.findAny(person -> person.getName().equals(name));
+ * }
+ * [/code]
+ * </p>
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -119,29 +123,13 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
 
     @Override
     public FastTable<E> shared() {
-        return new FastTable<E>(new SharedTableImpl<E>(service, new ReentrantReadWriteLock()));
+        return new FastTable<E>(new SharedTableImpl<E>(service));
     }
 
-    /**
-      * <p> Returns a view over this table using the specified comparator for
-      *     element equality and sorting.</p> 
-      * <p> For collection having custom comparators, it is possible that 
-      *     elements considered distinct using the default equality 
-      *     comparator, would appear to be equals as far as this collection is 
-      *     concerned. For example, a {@link FastComparator#LEXICAL lexical 
-      *     comparator} considers that two {@link CharSequence} are equals if they
-      *     hold the same characters regardless of the {@link CharSequence} 
-      *     implementation. On the other hands, for the 
-      *     {@link FastComparator#IDENTITY identity} comparator, two elements 
-      *     might be considered distinct even if the default object equality 
-      *     considers them equals.</p>  
-      *
-      * @param the comparator to use for element equality (or sorting if 
-      *         the collection is sorted).
-      * @see #comparator() 
-      */
-    public FastTable<E> usingComparator(FastComparator<E> comp) {
-        return new FastTable<E>(new CustomComparatorTableImpl<E>(service, comp));
+    @Override
+    public FastTable<E> setComparator(FastComparator<? super E> cmp) {
+        service.setComparator(cmp);
+        return this;
     }
 
     /**
@@ -190,20 +178,6 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
             throw new IndexOutOfBoundsException(); // As per List.subList contract.
         return new FastTable<E>(
                 new SubTableImpl<E>(service, fromIndex, toIndex));
-    }
-
-    /***************************************************************************
-     * Closures.
-     */
-
-    @Override
-    public void doWhile(Predicate<E> predicate) {
-        service.doWhile(predicate);
-    }
-
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return service.removeAll(predicate);
     }
 
     /***************************************************************************

@@ -242,7 +242,7 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     }
 
     //
-    // Logical Operations
+    // Operators Operations
     //
 
     @Override

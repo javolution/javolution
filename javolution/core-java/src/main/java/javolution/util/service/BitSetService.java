@@ -8,9 +8,8 @@
  */
 package javolution.util.service;
 
-import javolution.lang.Predicate;
 import javolution.util.FastBitSet;
-import javolution.util.Index;
+import javolution.util.FastTable;
 
 /**
  * The set of related functionalities which can be used/reused to 
@@ -87,7 +86,7 @@ public interface BitSetService {
     void flip(int fromIndex, int toIndex);
     
     //
-    // Logical Operations
+    // Operators Operations
     //
 
     /** See {@link FastBitSet#and(FastBitSet) } */

@@ -41,6 +41,12 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
     /** Returns the entry for the specified key (or <code>null</code> if none). */    /** Returns iterator over entries */
     public abstract Iterator<Map.Entry<K,V>> entriesIterator();
 
+
+    @Override
+    public void clear() {
+        
+    }
+
     @Override
     public boolean containsKey(K key) {
         return containsKey(key, keyComparator().hashCodeOf(key));
@@ -106,11 +112,11 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
         }
     }
     
-    @SuppressWarnings("unchecked")
     @Override
     public ComparatorService<K> keyComparator() {
-        return (ComparatorService<K>) FastComparator.DEFAULT;
+        return FastComparator.standard();
     }
  
     private static final long serialVersionUID = 6261409427238347224L;
+
   }

@@ -10,9 +10,9 @@ package javolution.util;
 
 import javolution.context.LocalContext;
 import javolution.context.LocalParameter;
-import javolution.lang.Functor;
-import javolution.lang.MultiVariable;
 import javolution.text.TypeFormat;
+import javolution.util.function.Function;
+import javolution.util.function.MultiVariable;
 
 /**
  * Utility class to measure execution time with high precision.
@@ -47,7 +47,7 @@ public class Perfometer {
      * time minus the first one. Parameters of a functor can be functors themselves 
      * in which case they are evaluated recursively before each measure.
      */
-    public long measure(Functor<?,?> functor, Object... params) {
+    public long measure(Function<?,?> functor, Object... params) {
         measure(true, functor, params); // Class initialization.
         System.gc();
         long nopExecutionTime = measure(false, functor, params);
@@ -57,7 +57,7 @@ public class Perfometer {
     }
 
     @SuppressWarnings("unchecked")
-    private long measure(boolean doPerform, Functor<?,?> functor, Object... params) {
+    private long measure(boolean doPerform, Function<?,?> functor, Object... params) {
         long startTime = System.nanoTime();
         int count = 0;
         long executionTime;
@@ -67,7 +67,7 @@ public class Perfometer {
             try {
                 this.doPerform = doPerform;
                 cumulatedTime -= System.nanoTime();
-                ((Functor<Object,?>)functor).evaluate(param);
+                ((Function<Object,?>)functor).evaluate(param);
             } finally {
                 cumulatedTime += System.nanoTime();
                 this.doPerform = true;
@@ -86,8 +86,8 @@ public class Perfometer {
             return null;
         Object param = params[i];
         Object next = evaluateParams(++i, params);
-        if (param instanceof Functor) {
-            return ((Functor<Object,Object>) param).evaluate(next);
+        if (param instanceof Function) {
+            return ((Function<Object,Object>) param).evaluate(next);
         } else if (next != null) {
             return new MultiVariable<Object,Object>(param, next);
         } else {

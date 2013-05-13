@@ -6,19 +6,15 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.lang;
+package javolution.util.function;
 
 /**
- * <p> A producer of instances of a particular class.</p>
+ * <p> An operation upon a single operand yielding a result of the same 
+ *     type.</p>
  *                  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Factory<T> {
+public interface UnaryOperator<T> extends Function<T, T> {
 
-    /**
-     * Returns a new instance.
-     */
-    T create();
-    
 }

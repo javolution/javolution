@@ -309,10 +309,10 @@ javolution/core-java/src/main/java/javolution/internal/util/map/SharedMapImpl.ja
 javolution/core-java/src/main/java/javolution/internal/util/map/UnmodifiableMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/AbstractTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/table/CustomComparatorTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/FractalTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/NoDuplicateTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/ReverseTableImpl.java -text
+javolution/core-java/src/main/java/javolution/internal/util/table/SetTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/SharedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/SortedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/SubTableImpl.java -text
@@ -337,12 +337,8 @@ javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#t
 javolution/core-java/src/main/java/javolution/io/package-info.java -text
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Factory.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Functor.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/MultiVariable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Predicate.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain
@@ -366,6 +362,14 @@ javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svne
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Factory.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Operator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Operators.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/UnaryOperator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain

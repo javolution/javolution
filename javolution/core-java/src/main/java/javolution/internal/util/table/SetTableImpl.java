@@ -15,13 +15,13 @@ import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
- * A sorted view over a table.
+ * A set view over a table.
  */
-public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
+public final class SetTableImpl<E> extends AbstractTableImpl<E> {
 
     private final TableService<E> that;
 
-    public SortedTableImpl(TableService<E> that) {
+    public SetTableImpl(TableService<E> that) {
         this.that = that;
     }
 
@@ -33,6 +33,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     public boolean add(E element) {
         ComparatorService<E> cmp = getComparator();
         int i = indexIfSortedOf(element, cmp, 0, size());
+        if ((i < size()) && cmp.areEqual(element, get(i))) return false; // Already there.
         that.add(i, element);
         return true;
     }
@@ -70,7 +71,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     //
     // If no impact, forwards to inner table.
     // 
-
+  
     @Override
     public ComparatorService<E> getComparator() {
         return that.getComparator();
@@ -182,13 +183,13 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     }
     
     // Utility to find the "should be" position of the specified element.
-    private int indexIfSortedOf(E element, ComparatorService<? super E> comparator, int start, int length) {
+    public int indexIfSortedOf(E element, ComparatorService<? super E> comparator, int start, int length) {
         if (length == 0) return start;
         int half = length >> 1;
         return (comparator.compare(element, get(start + half)) <= 0)
                 ? indexIfSortedOf(element, comparator, start, half)
                 : indexIfSortedOf(element, comparator, start + half + 1, length - half - 1);
     }
-
+    
     private static final long serialVersionUID = 6158589683915294638L;
 }

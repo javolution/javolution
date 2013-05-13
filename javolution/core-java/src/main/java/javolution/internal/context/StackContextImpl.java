@@ -10,7 +10,7 @@ package javolution.internal.context;
 
 import javolution.context.StackContext;
 import javolution.lang.Copyable;
-import javolution.lang.Functor;
+import javolution.util.function.Function;
 
 /**
  * Holds the default implementation of StackContext.
@@ -23,7 +23,7 @@ public final class StackContextImpl extends StackContext {
     // TODO: Use RTSJ Scoped Memory.
     
     @Override
-    protected <P, R extends Copyable<R>> R executeInContext(Functor<P, R> function, P parameter) {
+    protected <P, R extends Copyable<R>> R executeInContext(Function<P, R> function, P parameter) {
         return function.evaluate(parameter);
     }
 

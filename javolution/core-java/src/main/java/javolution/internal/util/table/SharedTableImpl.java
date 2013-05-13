@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
@@ -26,8 +26,9 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
     private final Lock read;
     private final Lock write;
 
-    public SharedTableImpl(TableService<E> that, ReentrantReadWriteLock readWriteLock) {
+    public SharedTableImpl(TableService<E> that) {
         this.that = that;
+        ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
         this.read  = readWriteLock.readLock();
         this.write = readWriteLock.writeLock();        
     }
@@ -273,11 +274,6 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public ComparatorService<E> comparator() {
-        return that.comparator();
-    }
-
-    @Override
     @Deprecated
     public Iterator<E> iterator() {
         final Iterator<E> thatIterator = that.iterator();
@@ -316,5 +312,21 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
         };
     }
 
-    private static final long serialVersionUID = 7829529537179984988L;
+    //
+    // If no impact, forwards to inner table.
+    // 
+
+    @Override
+    public ComparatorService<E> getComparator() {
+        return that.getComparator();
+    }
+    
+    @Override
+    public void setComparator(ComparatorService<E> cmp) {
+        that.setComparator(cmp);
+    }   
+    
+    private static final long serialVersionUID = -849409915565893024L;
+
+  
 }

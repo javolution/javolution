@@ -10,7 +10,9 @@ package javolution.util.service;
 
 import java.util.Iterator;
 
-import javolution.lang.Predicate;
+import javolution.util.function.Operator;
+import javolution.util.function.Function;
+import javolution.util.function.Predicate;
 
 
 /**
@@ -47,20 +49,47 @@ public interface CollectionService<E> {
     //
     // Closure-based iterations.
     // 
-    
+
     /** 
      * Iterates this collection elements until the specified predicate 
      * returns <code>false</code>. 
+     * 
+     * @param predicate the predicate being evaluated.
+     * @return <code>true</code> if all the predicate evaluation have returned
+     *         <code>true</code>; otherwise returns <code>false</code>  
      */
-    void doWhile(Predicate<E> predicate);
+    boolean doWhile(Predicate<? super E> predicate);
 
     /** 
-     *  Removes from this collection all the elements matching the specified 
+     * Removes from this collection all the elements matching the specified 
      * predicate.
      * 
      * @return <code>true</code> if this collection changed as a result of 
      *         the call; <code>false</code> otherwise.
      */
-    boolean removeAll(Predicate<E> predicate);
+    boolean removeAll(Predicate<? super E> predicate);
 
+    /** Returns the elements matching the given predicate. */
+    CollectionService<E> filter(Predicate<? super E> predicate);
+    
+    /** Returns the elements results of applying the given function. */
+    <R> CollectionService<R> map(Function<? super E, ? extends R> function);
+    
+    /** Performs a reduction on the elements of this collection. */       
+    E reduce(Operator<E> reducer);                       
+    
+    //
+    // Misc.
+    //       
+
+    /** 
+     * Returns the comparator to be used for element ordering/comparisons.
+     */
+    ComparatorService<? super E> getComparator();
+
+    /** 
+     * Sets the comparator to be used for element ordering/comparisons.
+     */
+    void setComparator(ComparatorService<? super E> cmp);
+ 
 }

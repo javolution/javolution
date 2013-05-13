@@ -9,7 +9,7 @@
 package javolution.context;
 
 import javolution.lang.Copyable;
-import javolution.lang.Factory;
+import javolution.util.function.Factory;
 
 /**
  * <p> The parent class for all memory allocation contexts.

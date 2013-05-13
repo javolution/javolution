@@ -8,6 +8,8 @@
  */
 package javolution.internal.util.table;
 
+import javolution.util.FastComparator;
+import javolution.util.service.ComparatorService;
 
 
 /**
@@ -34,6 +36,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     private int capacity; // Actual memory allocated is usually far less than
     // capacity since inner fractal tables can be null.
 
+    private ComparatorService<E> comparator = FastComparator.standard();
+    
     public FractalTableImpl() {
     }
 
@@ -93,15 +97,19 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         return removed;
     }
 
+    @Override
+    public ComparatorService<E> getComparator() {
+        return comparator;
+    }
+
+    @Override
+    public void setComparator(ComparatorService<E> cmp) {
+        comparator = cmp;
+    }
+    
     //
     // Optimizations.
     //
-    
-    @Override
-    public boolean add(E element) {
-        addLast(element);
-        return true;
-    }
 
     @Override
     public void addFirst(E element) {

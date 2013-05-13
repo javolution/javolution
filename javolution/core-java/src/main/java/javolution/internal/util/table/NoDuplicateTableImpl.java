@@ -8,18 +8,71 @@
  */
 package javolution.internal.util.table;
 
-import javolution.lang.Predicate;
+import java.io.Serializable;
+import java.util.Iterator;
+
+import javolution.util.function.Predicate;
+import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
  * A view for which elements are not added if already present.
  */
-public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E> {
+public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializable  {
 
     private final TableService<E> that;
 
     public NoDuplicateTableImpl(TableService<E> that) {
         this.that = that;
+    }
+
+    // 
+    // Impacted methods.
+    //
+
+    @Override
+    public boolean add(E element) {
+        if (indexOf(element) >= 0) return false; // Already present.
+        return that.add(element);
+    }
+
+    //
+    // If no impact, forwards to inner table.
+    // 
+  
+    @Override
+    public ComparatorService<E> getComparator() {
+        return that.getComparator();
+    }
+    
+    @Override
+    public void setComparator(ComparatorService<E> cmp) {
+        that.setComparator(cmp);
+    }
+   
+    @Override
+    public boolean contains(E element) {
+        return that.contains(element);
+    }
+
+    @Override
+    public boolean remove(E element) {
+        return that.remove(element);
+    }
+
+    @Override
+    public int indexOf(E element) {
+        return that.indexOf(element);
+    }
+
+    @Override
+    public int lastIndexOf(E element) {
+        return that.lastIndexOf(element);
+    }
+
+    @Override
+    public void sort() {
+        that.sort();
     }
 
     @Override
@@ -39,7 +92,6 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public void add(int index, E element) {
-        if (indexOf(element) >= 0) return; // Already present.
         that.add(index, element);
     }
 
@@ -48,12 +100,24 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E> {
         return that.remove(index);
     }
 
-    //
-    // Non-abstract methods should forward to the actual table (unless impacted).
-    //
     @Override
     public void clear() {
         that.clear();
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return that.iterator();
+    }
+
+    @Override
+    public void doWhile(Predicate<E> predicate) {
+        that.doWhile(predicate);
+    }
+
+    @Override
+    public boolean removeAll(Predicate<E> predicate) {
+        return that.removeAll(predicate);
     }
 
     @Override
@@ -67,20 +131,12 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public boolean add(E element) {
-        if (indexOf(element) >= 0) return false; // Already present.
-        return that.add(element);
-    }
-
-    @Override
     public void addFirst(E element) {
-        if (indexOf(element) >= 0) return; // Already present.
         that.addFirst(element);
     }
 
     @Override
     public void addLast(E element) {
-        if (indexOf(element) >= 0) return; // Already present.
         that.addLast(element);
     }
 
@@ -114,40 +170,6 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E> {
         return that.peekLast();
     }
 
-    @Override
-    public void doWhile(Predicate<E> predicate) {
-        that.doWhile(predicate);
-    }
+    private static final long serialVersionUID = -7558760040127099825L;
 
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return that.removeAll(predicate);
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return that.contains(element);
-    }
-
-    @Override
-    public boolean remove(E element) {
-        return that.remove(element);
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return that.indexOf(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return that.lastIndexOf(element);
-    }
-
-    @Override
-    public void sort() {
-        that.sort();
-    }
-
-    private static final long serialVersionUID = 1237474308888949481L;
 }

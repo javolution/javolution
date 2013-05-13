@@ -11,12 +11,12 @@ package javolution.util;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.List;
+
 import javolution.annotation.Format;
 import javolution.annotation.StackSafe;
 import javolution.context.HeapContext;
 import javolution.context.StackContext;
 import javolution.lang.Configurable;
-import javolution.lang.Copyable;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
@@ -46,7 +46,7 @@ import javolution.text.TypeFormat;
  */
 @Format(text = Index.PlainText.class)
 @StackSafe(initialization = false)
-public final class Index extends Number implements Comparable<Index>, ValueType {
+public final class Index extends Number implements Comparable<Index>, ValueType<Index> {
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -68,7 +68,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
     /**
      * Holds the number of indices preallocated (default <code>256</code>).
      */
-    public static final Configurable<Integer> PREALLOCATED = new Configurable(INSTANCES.length) {
+    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(INSTANCES.length) {
 
         @Override
         public void configure(CharSequence configuration) {
@@ -118,7 +118,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @return <code>[start .. end[</code>
      */
     public static List<Index> rangeOf(int start, int end) {
-        FastTable<Index> list = new FastTable();
+        FastTable<Index> list = new FastTable<Index>();
         for (int i = start; i < end; i++) {
             list.add(Index.valueOf(i));
         }
@@ -132,7 +132,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @return <code>{indices[0], indices[1], ...}</code>
      */
     public static List<Index> valuesOf(int... indices) {
-        FastTable<Index> list = new FastTable();
+        FastTable<Index> list = new FastTable<Index>();
         for (int i : indices) {
             list.add(Index.valueOf(i));
         }
@@ -263,7 +263,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * 
      * @return <code>this</code>
      */
-    public Copyable copy() {
+    public Index copy() {
         return this;
     }
 
@@ -311,4 +311,5 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
         });
     }
 
+    private static final long serialVersionUID = -3074527329717548267L;
 }

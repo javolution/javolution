@@ -11,9 +11,10 @@ package javolution.internal.context;
 import java.util.Map.Entry;
 import javolution.context.LogContext;
 import javolution.internal.osgi.JavolutionActivator;
-import javolution.lang.Predicate;
 import javolution.text.TextBuilder;
 import javolution.util.FastMap;
+import javolution.util.function.Predicate;
+
 import org.osgi.service.log.LogService;
 
 /**

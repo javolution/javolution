@@ -77,11 +77,10 @@ public interface TableService<E> extends CollectionService<E> {
     //
     // Misc.
     //       
-
-    /** Returns the comparator to be used for element ordering/comparisons } */
-    ComparatorService<E> comparator();
-    
-    /** Sorts in place this table using this table {@link #comparator() comparator}. */
+  
+    /** 
+     * Sorts this table in place. 
+     */
     void sort();
                    
 }

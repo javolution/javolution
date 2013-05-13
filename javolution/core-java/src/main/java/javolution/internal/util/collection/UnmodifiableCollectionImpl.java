@@ -11,8 +11,9 @@ package javolution.internal.util.collection;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 
 /**
  * An unmodifiable view over a table.
@@ -52,12 +53,12 @@ public final class UnmodifiableCollectionImpl<E> implements
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        that.doWhile(predicate);
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return that.doWhile(predicate);
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -84,5 +85,15 @@ public final class UnmodifiableCollectionImpl<E> implements
         };
     }
 
-    private static final long serialVersionUID = 6545160313862150259L;
+    @Override
+    public ComparatorService<? super E> getComparator() {
+        return that.getComparator();
+    }
+    
+    @Override
+    public void setComparator(ComparatorService<? super E> cmp) {
+        throw new UnsupportedOperationException("Unmodifiable");
+    }
+ 
+    private static final long serialVersionUID = 278852354797494219L;
 }

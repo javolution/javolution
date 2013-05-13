@@ -11,8 +11,8 @@ package javolution.context;
 import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
-import javolution.lang.Functor;
 import javolution.text.TypeFormat;
+import javolution.util.function.Function;
 
 /**
  * <p> A stack memory allocator context (using RTSJ <code>ScopedMemory</code>
@@ -25,12 +25,12 @@ import javolution.text.TypeFormat;
  *     ensure that stack allocated objects do not escape from
  *     their context scope. If necessary, stack objects can be copied to 
  *     the heap using {@link HeapContext#copy copy} method. When executing 
- *     a {@link Functor functor}, the function result is always copied 
+ *     a {@link Function functor}, the function result is always copied 
  *     to the calling context.
  *     [code]
  *     @StackSafe
  *     public class LargeInteger implements ValueType {
- *         static final Functor<LargeInteger, LargeInteger> SQRT = new Functor<LargeInteger, LargeInteger>() {
+ *         static final Function<LargeInteger, LargeInteger> SQRT = new Function<LargeInteger, LargeInteger>() {
  *             public LargeInteger evaluate(LargeInteger that) {
  *                 LargeInteger result = ZERO;
  *                 LargeInteger k = that.shiftRight(this.bitLength() / 2)); // First approximation.
@@ -100,7 +100,7 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      * Executes the specified function allocating objects on the stack; the 
      * function result is copied to calling context.
      */
-    public static <P,R extends Copyable<R>> R execute(Functor<P,R> function, P parameter) {
+    public static <P,R extends Copyable<R>> R execute(Function<P,R> function, P parameter) {
         StackContext ctx = StackContext.enter();
         try {
             return ctx.executeInContext(function, parameter);
@@ -113,6 +113,6 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      * Evaluates the specified function while allocating on the stack; the 
      * function result is copied to the outer context.
      */
-    protected abstract <P,R extends Copyable<R>> R executeInContext(Functor<P,R> function, P parameter);
+    protected abstract <P,R extends Copyable<R>> R executeInContext(Function<P,R> function, P parameter);
 
 }

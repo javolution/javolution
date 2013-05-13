@@ -18,9 +18,9 @@ import javolution.util.service.ComparatorService;
  *     equality with <code>null</code> values is supported.</p>
  *     
  * <p> {@link FastComparator} can be employed with {@link FastMap} (e.g. 
- *     custom key comparators for identity maps, value retrieval using keys
- *     of a different class that the map keys) or with {@link FastCollection}
- *     classes.</p>
+ *     {@link FastComparator#IDENTITY} for identity maps, value retrieval 
+ *     using keys of a different class that the map keys) or with 
+ *     {@link FastCollection} classes.</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -29,21 +29,13 @@ import javolution.util.service.ComparatorService;
 public abstract class FastComparator<T> implements ComparatorService<T>, Comparator<T>, Serializable {
 
     /**
-     * Holds the default object comparator.
-     * Two instances o1 and o2 are considered {@link #areEqual equal} 
-     * if and only if <code>(o1 == o2)</code>. 
-     * The {@link #compare} method throws {@link ClassCastException} if the 
-     * specified objects are not {@link Comparable}.
+     * Holds a standard comparator for any object.
      */
-    public static final FastComparator<Object> DEFAULT 
+    public static final FastComparator<Object> STANDARD 
         = new DefaultComparatorImpl<Object>();
 
     /**
-     * Holds the identity object comparator.
-     * Two instances o1 and o2 are considered {@link #areEqual equal} 
-     * if and only if <code>(o1 == o2)</code>. 
-     * The {@link #compare} method throws {@link ClassCastException} if the 
-     * specified objects are not {@link Comparable}.
+     * Holds an identity comparator for any object.
      */
     public static final FastComparator<Object> IDENTITY 
         = new IdentityComparatorImpl<Object>();
@@ -68,29 +60,6 @@ public abstract class FastComparator<T> implements ComparatorService<T>, Compara
      */
     protected FastComparator() {
     }
-       
-    /**
-     * Returns the default comparator for instances of the specified class.
-     * Two instances o1 and o2 are considered {@link #areEqual equal} if and
-     * only if <code>o1.equals(o2)</code>. The {@link #compare} method 
-     * throws {@link ClassCastException} if the specified objects are not
-     * {@link Comparable}. 
-     */
-    public static <T> FastComparator<T> defaultFor(Class<T> type) {
-        return new DefaultComparatorImpl<T>();
-    }
-       
 
-    /**
-     * Returns the identity comparator for instances of the specified class.
-     * Two instances o1 and o2 are considered {@link #areEqual equal} if and
-     * only if <code>o1.equals(o2)</code>. The {@link #compare} method 
-     * throws {@link ClassCastException} if the specified objects are not
-     * {@link Comparable}. 
-     */
-    public static <T> FastComparator<T> identityFor(Class<T> type) {
-        return new IdentityComparatorImpl<T>();
-    }
-
-    private static final long serialVersionUID = 2220525989833293006L;
+    private static final long serialVersionUID = -7225629198872713338L;
 }

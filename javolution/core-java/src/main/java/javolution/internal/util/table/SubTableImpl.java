@@ -8,7 +8,9 @@
  */
 package javolution.internal.util.table;
 
-import javolution.lang.Predicate;
+import java.util.Iterator;
+
+import javolution.util.function.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
@@ -29,6 +31,10 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
         this.toIndex = toIndex;
     }
 
+    // 
+    // Impacted methods.
+    //
+    
     @Override
     public int size() {
         return toIndex - fromIndex;
@@ -59,13 +65,61 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
         return that.remove(index + fromIndex);
     }
   
-    //
-    // Non-abstract methods should forward to the actual table (unless impacted).
-    //
-    
+    @Override
+    public boolean add(E element) {
+        return super.add(element);
+    }
+
+    @Override
+    public boolean contains(E element) {
+        return super.contains(element);
+    }
+
+    @Override
+    public boolean remove(E element) {
+        return super.remove(element);
+    }
+
+    @Override
+    public int indexOf(E element) {
+        return super.indexOf(element);
+    }
+
+    @Override
+    public int lastIndexOf(E element) {
+        return super.lastIndexOf(element);
+    }
+
+    @Override
+    public void sort() {
+        super.sort();
+    }
+   
     @Override
     public void clear() {
-        super.clear();
+        super.removeAll(new Predicate<E>() {
+
+            @Override
+            public Boolean evaluate(E param) {
+                return true;
+            }
+            
+        });
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return super.iterator();
+    }
+
+    @Override
+    public void doWhile(Predicate<E> predicate) {
+        super.doWhile(predicate);
+    }
+
+    @Override
+    public boolean removeAll(Predicate<E> predicate) {
+        return super.removeAll(predicate);
     }
 
     @Override
@@ -76,11 +130,6 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
     @Override
     public E getLast() {
         return super.getLast();
-    }
-
-    @Override
-    public boolean add(E element) {
-        return super.add(element);
     }
 
     @Override
@@ -122,46 +171,20 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
     public E peekLast() {
         return super.peekLast();
     }
+  
+    //
+    // If no impact, forwards to inner table.
+    // 
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        super.doWhile(predicate);
+    public ComparatorService<E> getComparator() {
+        return that.getComparator();
     }
-
+    
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return super.removeAll(predicate);
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return super.contains(element);
-    }
-
-    @Override
-    public boolean remove(E element) {
-        return super.remove(element);
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return super.indexOf(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return super.lastIndexOf(element);
-    }
-
-    @Override
-    public void sort() {
-        super.sort();
-    }
-
-    @Override
-    public ComparatorService<E> comparator() {
-        return that.comparator();
-    }    
-
-    private static final long serialVersionUID = 8338476320898612841L;
+    public void setComparator(ComparatorService<E> cmp) {
+        that.setComparator(cmp);
+    }  
+ 
+    private static final long serialVersionUID = -1596693663009102664L;
 }

@@ -6,13 +6,13 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.lang;
+package javolution.util.function;
 
 /**
  * <p> An object holding multiple variables; typically used to create 
- *     {@link Functor multifunctors}.</p>
+ *     {@link Function multi-parameters functions}.</p>
  * 
- * <p> Multivariable may be composed to represent an unbounded number of 
+ * <p> Multi-variables may be composed to represent an unbounded number of 
  *     variables. For example.
  *     [code]
  *     MultiVariable<Double, MultiVariable<Integer, Boolean>> tertiaryVariable
@@ -28,7 +28,7 @@ public class MultiVariable<L, R> {
     private final R right;
 
     /**
-     * Returns a multi-variables holding the specified objects (possibly 
+     * Returns a multi-variable holding the specified objects (possibly 
      * multi-variables themselves). 
      */
     public MultiVariable(L left, R right) {

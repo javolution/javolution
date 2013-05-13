@@ -15,15 +15,16 @@ import javolution.internal.util.bitset.BitSetIteratorImpl;
 import javolution.internal.util.bitset.BitSetServiceImpl;
 import javolution.internal.util.bitset.SharedBitSet;
 import javolution.internal.util.bitset.UnmodifiableBitSet;
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.BitSetService;
 import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 
 /**
  * <p> A table of bits equivalent to a packed set of non-negative numbers.</p>
  * 
  * <p> This class is integrated with the collection framework as 
- *     a set of {@link Index indices and obeys the collection semantic
+ *     a set of {@link Index indices} and obeys the collection semantic
  *     for methods such as {@link #size} (cardinality) or {@link #equals}
  *     (same set of indices).</p>
  *   
@@ -350,15 +351,16 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
             }
    
             @Override
-            public void doWhile(Predicate<Index> predicate) {
+            public boolean doWhile(Predicate<? super Index> predicate) {
                 for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
                     if (!predicate.evaluate(Index.valueOf(i)))
-                        return;
+                        return false;
                 }
+                return true;
             }
 
             @Override
-            public boolean removeAll(Predicate<Index> predicate) {
+            public boolean removeAll(Predicate<? super Index> predicate) {
                 boolean modified = false;
                 for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
                     if (predicate.evaluate(Index.valueOf(i))) {
@@ -372,6 +374,16 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
             @Override
             public Iterator<Index> iterator() {
                 return new BitSetIteratorImpl(impl, 0);
+            }
+
+            @Override
+            public ComparatorService<? super Index> getComparator() {
+                return FastComparator.IDENTITY;
+            }
+
+            @Override
+            public void setComparator(ComparatorService<? super Index> cmp) {
+                throw new UnsupportedOperationException();                
             }
 
         };

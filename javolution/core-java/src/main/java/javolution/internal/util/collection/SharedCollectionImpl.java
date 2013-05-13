@@ -13,8 +13,9 @@ import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javolution.lang.Predicate;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 
 /**
  * A shared view over a collection allowing concurrent access and sequential updates.
@@ -26,8 +27,9 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
     private final Lock read;
     private final Lock write;
 
-    public SharedCollectionImpl(CollectionService<E> that, ReentrantReadWriteLock readWriteLock) {
+    public SharedCollectionImpl(CollectionService<E> that) {
         this.that = that;
+        ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
         this.read  = readWriteLock.readLock();
         this.write = readWriteLock.writeLock();        
     }
@@ -83,17 +85,17 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
+    public boolean doWhile(Predicate<? super E> predicate) {
         read.lock();
         try {
-            that.doWhile(predicate);
+            return that.doWhile(predicate);
         } finally {
             read.unlock();
         }
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         write.lock();
         try {
             return that.removeAll(predicate);
@@ -141,6 +143,16 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
         };
     }
 
-    private static final long serialVersionUID = -1167317648000125119L;
+    @Override
+    public ComparatorService<? super E> getComparator() {
+        return that.getComparator();
+    }
+
+    @Override
+    public void setComparator(ComparatorService<? super E> cmp) {
+        that.setComparator(cmp);      
+    }
+    
+    private static final long serialVersionUID = 6737935331276281598L;
 
 }

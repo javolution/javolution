@@ -18,8 +18,8 @@ import java.util.ListIterator;
 import java.util.Random;
 import javolution.context.LogContext;
 import javolution.internal.osgi.JavolutionActivator;
-import javolution.lang.Functor;
-import javolution.lang.MultiVariable;
+import javolution.util.function.Function;
+import javolution.util.function.MultiVariable;
 
 /**
  * Validation and performance tests of FastTable.
@@ -34,29 +34,29 @@ public class FastTableTest {
 
     private Random random = new Random();
     
-    /** Functor creating a fast table. */
-    Functor<Void, List<Index>> newFastTable = new Functor<Void, List<Index>>() {
+    /** Function creating a fast table. */
+    Function<Void, List<Index>> newFastTable = new Function<Void, List<Index>>() {
         public List<Index> evaluate(Void param) {
             return perfometer.doPerform() ? new FastTable<Index>() : null;
         }
     };
 
-    /** Functor creating an array list.*/
-    Functor<Void, List<Index>> newArrayList = new Functor<Void, List<Index>>() {
+    /** Function creating an array list.*/
+    Function<Void, List<Index>> newArrayList = new Function<Void, List<Index>>() {
         public List<Index> evaluate(Void param) {
             return perfometer.doPerform() ? new ArrayList<Index>() : null;
         }
     };
 
-    /** Functor creating a linked list. */
-    Functor<Void, List<Index>> newLinkedList = new Functor<Void, List<Index>>() {
+    /** Function creating a linked list. */
+    Function<Void, List<Index>> newLinkedList = new Function<Void, List<Index>>() {
         public List<Index> evaluate(Void param) {
             return perfometer.doPerform() ? new LinkedList<Index>() : null;
         }
     };
 
-    /** Functor adding n elements to a list and returning that list. */
-    Functor<MultiVariable<Integer, List<Index>>, List<Index>> addToList = new Functor<MultiVariable<Integer, List<Index>>, List<Index>>() {
+    /** Function adding n elements to a list and returning that list. */
+    Function<MultiVariable<Integer, List<Index>>, List<Index>> addToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
         public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
@@ -68,8 +68,8 @@ public class FastTableTest {
         }
     };
 
-    /** Functor inserting n elements to a list and returning that list. */
-    Functor<MultiVariable<Integer, List<Index>>, List<Index>> insertToList = new Functor<MultiVariable<Integer, List<Index>>, List<Index>>() {
+    /** Function inserting n elements to a list and returning that list. */
+    Function<MultiVariable<Integer, List<Index>>, List<Index>> insertToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
         public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
@@ -82,8 +82,8 @@ public class FastTableTest {
         }
     };
 
-    /** Functor removing n elements from a list and returning that list. */
-    Functor<MultiVariable<Integer, List<Index>>, List<Index>> removeFromList = new Functor<MultiVariable<Integer, List<Index>>, List<Index>>() {
+    /** Function removing n elements from a list and returning that list. */
+    Function<MultiVariable<Integer, List<Index>>, List<Index>> removeFromList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
         public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
@@ -95,8 +95,8 @@ public class FastTableTest {
         }
     };
 
-    /** Functor inserting n elements to a list and returning that list. */
-    Functor<MultiVariable<Integer, List<Index>>, List<Index>> addFirstToList = new Functor<MultiVariable<Integer, List<Index>>, List<Index>>() {
+    /** Function inserting n elements to a list and returning that list. */
+    Function<MultiVariable<Integer, List<Index>>, List<Index>> addFirstToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
         public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
