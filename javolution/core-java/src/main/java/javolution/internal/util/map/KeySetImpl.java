@@ -57,7 +57,7 @@ public final class KeySetImpl<K, V> implements
     @Override
     public void doWhile(Predicate<K> predicate) {
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (!predicate.evaluate(i.next().getKey()))
+            if (!predicate.apply(i.next().getKey()))
                 return;
         }
     }
@@ -66,7 +66,7 @@ public final class KeySetImpl<K, V> implements
     public boolean removeAll(Predicate<K> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (predicate.evaluate(i.next().getKey())) {
+            if (predicate.apply(i.next().getKey())) {
                 i.remove();
                 hasChanged = true;
             }

@@ -16,7 +16,7 @@ import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
 
 /**
- * An unmodifiable view over a table.
+ * An unmodifiable view over a collection.
  */
 public final class UnmodifiableCollectionImpl<E> implements
         CollectionService<E>, Serializable {
@@ -94,6 +94,18 @@ public final class UnmodifiableCollectionImpl<E> implements
     public void setComparator(ComparatorService<? super E> cmp) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
- 
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        CollectionService<E>[] tmp = that.trySplit(n);
+        if (tmp == null) return null;
+        UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length]; 
+       for (int i=0; i < tmp.length; i++) {
+           unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]); 
+       }
+        return unmodifiables;
+    }
+    
     private static final long serialVersionUID = 278852354797494219L;
 }

@@ -24,7 +24,7 @@ public final class StackContextImpl extends StackContext {
     
     @Override
     protected <P, R extends Copyable<R>> R executeInContext(Function<P, R> function, P parameter) {
-        return function.evaluate(parameter);
+        return function.apply(parameter);
     }
 
     @Override

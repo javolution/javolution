@@ -67,7 +67,7 @@ public class Perfometer {
             try {
                 this.doPerform = doPerform;
                 cumulatedTime -= System.nanoTime();
-                ((Function<Object,?>)functor).evaluate(param);
+                ((Function<Object,?>)functor).apply(param);
             } finally {
                 cumulatedTime += System.nanoTime();
                 this.doPerform = true;
@@ -87,7 +87,7 @@ public class Perfometer {
         Object param = params[i];
         Object next = evaluateParams(++i, params);
         if (param instanceof Function) {
-            return ((Function<Object,Object>) param).evaluate(next);
+            return ((Function<Object,Object>) param).apply(next);
         } else if (next != null) {
             return new MultiVariable<Object,Object>(param, next);
         } else {

@@ -18,5 +18,28 @@ import javolution.util.service.CollectionService;
  * @version 6.0, December 12, 2012
  */
 public interface Operator<T> extends Function<CollectionService<T>, T> {
+        
+    /**
+     * An operator always returning <code>true</code>.
+     */
+    public static final Operator<Boolean> TRUE = new Operator<Boolean>() {
 
+        @Override
+        public Boolean apply(CollectionService<Boolean> booleans) {
+            return true;
+        }
+        
+    };
+ 
+    /**
+     * An operator always returning <code>false</code>.
+     */
+    public static final Operator<Boolean> FALSE = new Operator<Boolean>() {
+
+        @Override
+        public Boolean apply(CollectionService<Boolean> booleans) {
+            return false;
+        }
+        
+    };
 }

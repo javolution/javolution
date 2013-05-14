@@ -24,5 +24,28 @@ import javolution.util.FastCollection;
  * @version 6.0, December 12, 2012
  */
 public interface Predicate<P> extends Function<P, Boolean> {
+    
+    /**
+     * A predicate always returning <code>true</code>.
+     */
+    public static final Predicate<Object> TRUE = new Predicate<Object>() {
 
+        @Override
+        public Boolean apply(Object param) {
+            return true;
+        }
+        
+    };
+
+    /**
+     * A predicate always returning <code>false</code>.
+     */
+    public static final Predicate<Object> FALSE = new Predicate<Object>() {
+
+        @Override
+        public Boolean apply(Object param) {
+            return false;
+        }
+        
+    };
 }

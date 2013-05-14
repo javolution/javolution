@@ -353,7 +353,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
             @Override
             public boolean doWhile(Predicate<? super Index> predicate) {
                 for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-                    if (!predicate.evaluate(Index.valueOf(i)))
+                    if (!predicate.apply(Index.valueOf(i)))
                         return false;
                 }
                 return true;
@@ -363,7 +363,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
             public boolean removeAll(Predicate<? super Index> predicate) {
                 boolean modified = false;
                 for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-                    if (predicate.evaluate(Index.valueOf(i))) {
+                    if (predicate.apply(Index.valueOf(i))) {
                         impl.clear(i);
                         modified = true;
                     }

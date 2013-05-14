@@ -26,11 +26,11 @@ import javolution.util.FastCollection;
 public interface Function<P, R> {
 
     /**
-     * Returns the result of an evaluation on the specified parameter. 
+     * Returns the result of applying the function the specified parameter. 
      * 
      * @param param the parameter object on which the evaluation is performed. 
      * @return the result of the evaluation.
      */
-    R evaluate(P param);
+    R apply(P param);
 
 }

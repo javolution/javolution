@@ -293,6 +293,8 @@ javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetIterato
 javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/SharedBitSet.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/UnmodifiableBitSet.java -text
+javolution/core-java/src/main/java/javolution/internal/util/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/DefaultComparatorImpl.java -text svneol=unset#text/plain
@@ -366,8 +368,9 @@ javolution/core-java/src/main/java/javolution/util/function/Factory.java -text s
 javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Operator.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/function/Operators.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/ParallelOperators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/SequentialOperators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/UnaryOperator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text

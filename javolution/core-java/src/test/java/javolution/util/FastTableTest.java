@@ -36,28 +36,28 @@ public class FastTableTest {
     
     /** Function creating a fast table. */
     Function<Void, List<Index>> newFastTable = new Function<Void, List<Index>>() {
-        public List<Index> evaluate(Void param) {
+        public List<Index> apply(Void param) {
             return perfometer.doPerform() ? new FastTable<Index>() : null;
         }
     };
 
     /** Function creating an array list.*/
     Function<Void, List<Index>> newArrayList = new Function<Void, List<Index>>() {
-        public List<Index> evaluate(Void param) {
+        public List<Index> apply(Void param) {
             return perfometer.doPerform() ? new ArrayList<Index>() : null;
         }
     };
 
     /** Function creating a linked list. */
     Function<Void, List<Index>> newLinkedList = new Function<Void, List<Index>>() {
-        public List<Index> evaluate(Void param) {
+        public List<Index> apply(Void param) {
             return perfometer.doPerform() ? new LinkedList<Index>() : null;
         }
     };
 
     /** Function adding n elements to a list and returning that list. */
     Function<MultiVariable<Integer, List<Index>>, List<Index>> addToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
-        public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
+        public List<Index> apply(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
@@ -70,7 +70,7 @@ public class FastTableTest {
 
     /** Function inserting n elements to a list and returning that list. */
     Function<MultiVariable<Integer, List<Index>>, List<Index>> insertToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
-        public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
+        public List<Index> apply(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
@@ -84,7 +84,7 @@ public class FastTableTest {
 
     /** Function removing n elements from a list and returning that list. */
     Function<MultiVariable<Integer, List<Index>>, List<Index>> removeFromList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
-        public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
+        public List<Index> apply(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
@@ -97,7 +97,7 @@ public class FastTableTest {
 
     /** Function inserting n elements to a list and returning that list. */
     Function<MultiVariable<Integer, List<Index>>, List<Index>> addFirstToList = new Function<MultiVariable<Integer, List<Index>>, List<Index>>() {
-        public List<Index> evaluate(MultiVariable<Integer, List<Index>> param) {
+        public List<Index> apply(MultiVariable<Integer, List<Index>> param) {
             int n = param.getLeft();
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {

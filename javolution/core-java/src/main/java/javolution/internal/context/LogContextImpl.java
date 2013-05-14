@@ -54,7 +54,7 @@ public final class LogContextImpl extends LogContext {
         final TextBuilder msg = new TextBuilder();
         properties.entrySet().doWhile(new Predicate<Entry<Object, Object>>() {
 
-            public Boolean evaluate(Entry<Object, Object> e) {
+            public Boolean apply(Entry<Object, Object> e) {
                 msg.append('[');
                 msg.append(e.getKey());
                 msg.append(": ");

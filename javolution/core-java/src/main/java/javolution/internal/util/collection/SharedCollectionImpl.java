@@ -34,6 +34,12 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
         this.write = readWriteLock.writeLock();        
     }
 
+    private SharedCollectionImpl(CollectionService<E> that, Lock read, Lock write) {
+        this.that = that;
+        this.read  = read;
+        this.write = write;        
+    }
+
     @Override
     public int size() {
         read.lock();
@@ -153,6 +159,19 @@ public final class SharedCollectionImpl<E> implements CollectionService<E>,
         that.setComparator(cmp);      
     }
     
+    @SuppressWarnings("unchecked")
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        CollectionService<E>[] tmp = that.trySplit(n);
+        if (tmp == null) return null;
+        SharedCollectionImpl<E>[] shareds= new SharedCollectionImpl[tmp.length]; 
+       for (int i=0; i < tmp.length; i++) {
+           shareds[i] = new SharedCollectionImpl<E>(tmp[i], read, write); 
+       }
+        return shareds;
+    }
+    
     private static final long serialVersionUID = 6737935331276281598L;
+
 
 }

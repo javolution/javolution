@@ -207,7 +207,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
             FastCollection<Map.Entry<K, V>> fc = (FastCollection<Map.Entry<K, V>>) entries;
             fc.doWhile(new Predicate<Map.Entry<K, V>>() {
 
-                public Boolean evaluate(Entry<K, V> entry) {
+                public Boolean apply(Entry<K, V> entry) {
                     put(entry.getKey(), entry.getValue());
                     return true;
                 }

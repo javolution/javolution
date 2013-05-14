@@ -10,14 +10,12 @@ package javolution.util.service;
 
 import java.util.Iterator;
 
-import javolution.util.function.Operator;
-import javolution.util.function.Function;
 import javolution.util.function.Predicate;
 
 
 /**
  * The set of related collection functionalities which can be used/reused to 
- * implement generic collections.
+ * implement collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -25,7 +23,7 @@ import javolution.util.function.Predicate;
 public interface CollectionService<E> {
 
     //
-    // Collection interface.
+    // Fundamental collections methods.
     // 
     
     /** See {@link java.util.Collection#size}*/
@@ -55,7 +53,7 @@ public interface CollectionService<E> {
      * returns <code>false</code>. 
      * 
      * @param predicate the predicate being evaluated.
-     * @return <code>true</code> if all the predicate evaluation have returned
+     * @return <code>true</code> if all the predicate evaluations have returned
      *         <code>true</code>; otherwise returns <code>false</code>  
      */
     boolean doWhile(Predicate<? super E> predicate);
@@ -68,19 +66,19 @@ public interface CollectionService<E> {
      *         the call; <code>false</code> otherwise.
      */
     boolean removeAll(Predicate<? super E> predicate);
-
-    /** Returns the elements matching the given predicate. */
-    CollectionService<E> filter(Predicate<? super E> predicate);
-    
-    /** Returns the elements results of applying the given function. */
-    <R> CollectionService<R> map(Function<? super E, ? extends R> function);
-    
-    /** Performs a reduction on the elements of this collection. */       
-    E reduce(Operator<E> reducer);                       
     
     //
     // Misc.
     //       
+
+    /** 
+     * Splits this collection in <code>n</code> sub-collections.
+     * 
+     * @param n the number of sub-collection to return.
+     * @return the sub-collection or <code>null</code> if the collection 
+     *         cannot be split. 
+     */
+    CollectionService<E>[] trySplit(int n);
 
     /** 
      * Returns the comparator to be used for element ordering/comparisons.

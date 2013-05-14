@@ -57,7 +57,7 @@ public final class EntrySetImpl<K, V> implements
     @Override
     public void doWhile(Predicate<Map.Entry<K, V>> predicate) {
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (!predicate.evaluate(i.next()))
+            if (!predicate.apply(i.next()))
                 return;
         }
     }
@@ -66,7 +66,7 @@ public final class EntrySetImpl<K, V> implements
     public boolean removeAll(Predicate<Map.Entry<K, V>> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (predicate.evaluate(i.next())) {
+            if (predicate.apply(i.next())) {
                 i.remove();
                 hasChanged = true;
             }

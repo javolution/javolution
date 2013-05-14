@@ -100,7 +100,7 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
         super.removeAll(new Predicate<E>() {
 
             @Override
-            public Boolean evaluate(E param) {
+            public Boolean apply(E param) {
                 return true;
             }
             

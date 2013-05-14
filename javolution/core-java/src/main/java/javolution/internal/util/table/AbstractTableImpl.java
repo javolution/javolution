@@ -119,7 +119,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     @Override
     public void doWhile(Predicate<E> predicate) {
         for (int i = 0, size = size(); i < size;) {
-            if (!predicate.evaluate(get(i++)))
+            if (!predicate.apply(get(i++)))
                 return;
         }
     }
@@ -128,7 +128,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     public boolean removeAll(Predicate<E> predicate) {
         boolean modified = false;
         for (int i = size(); i > 0;) {
-            if (predicate.evaluate(get(--i))) {
+            if (predicate.apply(get(--i))) {
                 remove(i);
                 modified = true;
             }

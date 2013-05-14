@@ -65,7 +65,7 @@ public final class ValuesImpl<K, V> implements
     @Override
     public void doWhile(Predicate<V> predicate) {
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (!predicate.evaluate(i.next().getValue()))
+            if (!predicate.apply(i.next().getValue()))
                 return;
         }
     }
@@ -74,7 +74,7 @@ public final class ValuesImpl<K, V> implements
     public boolean removeAll(Predicate<V> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (predicate.evaluate(i.next().getValue())) {
+            if (predicate.apply(i.next().getValue())) {
                 i.remove();
                 hasChanged = true;
             }
