@@ -8,44 +8,23 @@
  */
 package javolution.util.function;
 
-import javolution.util.FastCollection;
-
 /**
- * <p> This interface represents a {@link Function} specialization 
- *     which states or affirms the attribute or quality of something.</p>
+ * <p> A function which states or affirms the attribute or quality of something.</p>
  * 
- * <p> This interface is particularly useful when working with 
- *     {@link FastCollection}.</p>
- * 
- * @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
+  * <p> Note: In future version this interface may derive from 
+ *           {@code Function<P, Boolean>}.</p>
+ *           
+* @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
  * Wikipedia: Predicate<a>    
  *                  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Predicate<P> extends Function<P, Boolean> {
-    
+public interface Predicate<P>  {
+     
     /**
-     * A predicate always returning <code>true</code>.
+     * Test the specified parameter.
      */
-    public static final Predicate<Object> TRUE = new Predicate<Object>() {
-
-        @Override
-        public Boolean apply(Object param) {
-            return true;
-        }
-        
-    };
-
-    /**
-     * A predicate always returning <code>false</code>.
-     */
-    public static final Predicate<Object> FALSE = new Predicate<Object>() {
-
-        @Override
-        public Boolean apply(Object param) {
-            return false;
-        }
-        
-    };
+    boolean test(P param);
+  
 }

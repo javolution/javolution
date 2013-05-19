@@ -8,15 +8,9 @@
  */
 package javolution.util.function;
 
-import javolution.context.StackContext;
-import javolution.util.FastCollection;
-
 /**
  * <p> A function that perform some operation and returns the result of 
  *     that operation.</p>
- * 
- * <p> This interface is particularly useful when working with 
- *     {@link FastCollection} or {@link StackContext}.</p>
  * 
  * @see <a href="http://en.wikipedia.org/wiki/Function_(computer_science)">Wikipedia: Function<a>    
  *                  
@@ -26,7 +20,7 @@ import javolution.util.FastCollection;
 public interface Function<P, R> {
 
     /**
-     * Returns the result of applying the function the specified parameter. 
+     * Returns the result of applying the function to the specified parameter. 
      * 
      * @param param the parameter object on which the evaluation is performed. 
      * @return the result of the evaluation.

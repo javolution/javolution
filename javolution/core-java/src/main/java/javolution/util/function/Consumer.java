@@ -8,13 +8,21 @@
  */
 package javolution.util.function;
 
+
 /**
- * <p> An operation upon a single operand yielding a result of the same 
- *     type.</p>
- *                  
+ * <p> A special type of function which does not return anything.</p>
+ * 
+ * <p> Note: In future version this interface may derive from 
+ *           {@code Function<P, Void>}.</p>
+ *           
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface UnaryOperator<T> extends Function<T, T> {
+public interface Consumer<P> {
+
+    /**
+     * Accepts an input value.
+     */
+    void accept(P param);
 
 }

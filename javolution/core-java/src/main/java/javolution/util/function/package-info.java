@@ -1,7 +1,7 @@
 /**
 <p> Provides basic function types for lambda expressions and method references.</p>
     All functions are hierarchically organized (e.g. {@link Predicate} and 
-    {@link Factory} are derived from {@link Function}). Functions may take an
+    {@link Supplier} are derived from {@link Function}). Functions may take an
     arbitrary number of arguments using the {@link MultiVariable} class or no
     argument at all using the standard {@link Void} class.  
     [code]

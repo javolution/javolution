@@ -11,10 +11,17 @@ package javolution.util.function;
 /**
  * <p> A function which returns instances of a particular class.</p>
  *                  
+ * <p> Note: In future version this interface may derive from 
+ *           {@code Function<Void, R>}.</p>
+ *           
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Factory<T> extends Function<Void, T> {
+public interface Supplier<R> {
 
+    /**
+     * Returns an object.
+     */
+    R get();
     
 }
