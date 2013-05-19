@@ -377,6 +377,7 @@ javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -t
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/ComparatorService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/MapService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/OperatorService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/TableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
