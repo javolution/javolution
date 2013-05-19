@@ -58,7 +58,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     }
 
     @Override
-    public FastSet<E> setComparator(FastComparator<E> cmp) {
+    public FastSet<E> setComparator(Comparators<E> cmp) {
         super.setComparator(cmp);
         return this;
     }

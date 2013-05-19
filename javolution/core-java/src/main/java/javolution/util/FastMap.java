@@ -108,14 +108,14 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * If the map is not empty, this operation may result in the rehashing 
      * of all the map's entries.
      */
-    public FastMap<K, V> setKeyComparator(FastComparator<? super K> cmp) {
+    public FastMap<K, V> setKeyComparator(Comparators<? super K> cmp) {
         return null; // TODO
     }
 
     /**
      * Sets the value comparator to be used by this map.
      */
-    public FastMap<K, V> setValueComparator(FastComparator<? super V> cmp) {
+    public FastMap<K, V> setValueComparator(Comparators<? super V> cmp) {
         return null; // TODO
     }
     

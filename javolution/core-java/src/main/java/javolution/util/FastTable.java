@@ -17,7 +17,7 @@ import java.util.RandomAccess;
 
 import javolution.internal.util.table.FractalTableImpl;
 import javolution.internal.util.table.NoDuplicateTableImpl;
-import javolution.internal.util.table.ReverseTableImpl;
+import javolution.internal.util.table.ReversedTableImpl;
 import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SortedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
@@ -40,21 +40,21 @@ import javolution.util.service.TableService;
  * {@link java.util.LinkedList LinkedList}, {@link java.util.ArrayDeque ArrayDeque}
  * and even {@link java.util.TreeSet TreeSet} in terms of adaptability, space or performance.
  * Null elements are supported and fast tables can be concurrently accessed using
- * their {@link #shared() shared} views. The following predefined views are provided.
+ * their {@link #shared() shared} views. On top of all the views inherited from FastCollection 
+ * (such as {@link #unmodifiable unmodifiable}, {@link #shared}, {@link FastCollection#filtered filtered},
+ * {@link FastCollection#mapped mapped} or {@link FastCollection#noDuplicate differeninoDuplicate}), fast tables
+ * support the following specific views:
  * <ol>
  *    <li>{@link #subList} - View on a portion of the table.</li>
- *    <li>{@link #unmodifiable} - View which does not allow for the modification of the table.</li>
- *    <li>{@link #shared} - View allowing concurrent modifications (iterations should be performed using closures).</li>
- *    <li>{@link #sorted} - View for which elements are inserted according to their sorting order.</li>
+ *    <li>{@link #sorted} - View keeping its elements sorted (sorted tables have faster 
+ *        {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods).
+ *    .</li>
  *    <li>{@link #reverse} - View for which elements are in the reverse order.</li>
- *    <li>{@link #noDuplicate} - View for which elements are not added if already present.</li>
  * </ol>
- * Views can be chained, for example:
+ * Here are few examples of chaining using table views:
  * [code]
  * FastTable<Session> sessions = new FastTable<Session>().shared(); // Table which can be concurrently accessed/modified.
- * FastTable<Item> items = new FastTable<Item>().sorted().noDuplicate(); // Table of sorted items with no duplicate.
- *     // Sorted tables have faster {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods.
- *     
+ * FastTable<Item> items = new FastTable<Item>().sorted().noDuplicate(); // Equivalent to FastSortedSet except it is a list!
  * FastTable<CharSequence> names = new FastTable<CharSequence>.setComparator(FastComparator.LEXICAL); // Use lexical comparator for object equality/comparison.
  * ...
  * names.reverse().sort(); // Sorts the names in reverse alphabetical order.
@@ -64,24 +64,24 @@ import javolution.util.service.TableService;
  * [/code]</p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations are faster
- * when performed using closures (and the notation will be shorter with Java 8).
+ * when performed using closures (and the notation is shorter with Java 8).
  * This is also the preferred mean of iterating over {@link FastTable#shared shared}
- * tables as concurrent modification exceptions cannot occur ! 
+ * tables since <code>ConcurrentModificationException</code> cannot occur ! 
  * [code]
  * FastTable<Person> persons = new FastTable<Person>().shared();
  * ...
  * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
- *     return persons.findAny(new Predicate<Person>() { 
- *         public Boolean evaluate(Person person) {
+ *     return persons.filtered(new Predicate<Person>() { 
+ *         public boolean test(Person person) {
  *             return (person.getName().equals(name));
  *         }
- *     });
+ *     }).peek();
  * }
  * [/code]
  * The code above can be simplified using Java 8.
  * [code]
  * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
- *     return persons.findAny(person -> person.getName().equals(name));
+ *     return persons.filtered(person -> person.getName().equals(name)).peek();
  * }
  * [/code]
  * </p>
@@ -126,37 +126,26 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return new FastTable<E>(new SharedTableImpl<E>(service));
     }
 
-    @Override
-    public FastTable<E> setComparator(FastComparator<? super E> cmp) {
-        service.setComparator(cmp);
-        return this;
-    }
-
     /**
-     * <p> Returns a view that keeps this table (initially empty) sorted. 
+     * Sorts this table and returns a view that keeps the table sorted. 
      * Having a sorted table improved significantly the
      * performance of the methods {@link #indexOf(java.lang.Object) indexOf},
-     * {@link #contains contains} and {@link #remove(java.lang.Object) remove}.</p>
-     * <p> Using this view, inserting elements at specific positions
-     * will raise {@link UnsupportedOperationException}.
+     * {@link #contains contains} and {@link #remove(java.lang.Object) remove}.
      *
-     * @see #sort()
      * @throws UnsupportedOperationException if this table is not empty.
      */
-    public FastTable<E> sorted() {
-        if (!isEmpty())
-            throw new UnsupportedOperationException(
-                    "Sorted view requires the table to be initially empty");
+    public FastTable<E> sort() {
+        service.sort();
         return new FastTable<E>(new SortedTableImpl<E>(service));
     }
 
     /**
-     * <p> Returns a view for which the elements are in reverse order.
+     * Returns a view for which the elements are in reverse order.
      * Iterating on this view (iterator or closure) will start from the
      * last element and finish by the first.</p>
      */
     public FastTable<E> reverse() {
-        return new FastTable<E>(new ReverseTableImpl<E>(service));
+        return new FastTable<E>(new ReversedTableImpl<E>(service));
     }
 
     /**

@@ -378,7 +378,7 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
 
             @Override
             public ComparatorService<? super Index> getComparator() {
-                return FastComparator.IDENTITY;
+                return Comparators.IDENTITY;
             }
 
             @Override
