@@ -357,7 +357,6 @@ javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/Comparators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/FastComparator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svneol=unset#text/plain
