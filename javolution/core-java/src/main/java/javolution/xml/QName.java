@@ -14,7 +14,7 @@ import java.lang.CharSequence;
 import javolution.lang.Immutable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.FastMap;
 
 /**
@@ -57,8 +57,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME 
          = new FastMap<CharSequence, QName>() {
 
-        public FastComparator<CharSequence> keyComparator() {
-            return FastComparator.LEXICAL;
+        public Comparators<CharSequence> keyComparator() {
+            return Comparators.LEXICAL;
         }
 
     };

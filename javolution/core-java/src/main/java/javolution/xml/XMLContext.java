@@ -36,15 +36,9 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
-
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE 
+    = new Configurable<Boolean>(false);
+    
     /**
      * Default constructor.
      */
@@ -84,6 +78,6 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
     protected static XMLContext current() {
         XMLContext ctx = AbstractContext.current(XMLContext.class);
         if (ctx != null) return ctx;
-        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
 }
