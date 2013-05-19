@@ -13,6 +13,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import javolution.context.LogContext;
 import javolution.lang.Configurable;
+import javolution.text.TextContext;
+import javolution.text.TextFormat;
+
 import org.osgi.framework.Constants;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -69,16 +72,19 @@ public class ConfigurableService implements ManagedService {
      * @param configuration
      * @throws ConfigurationException
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void updated(Dictionary<String, ?> configuration) throws ConfigurationException {
         if (configuration == null) return; // No configuration data.      
         Enumeration<String> e = configuration.keys();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
             String textValue = (String) configuration.get(name);
-            Configurable<?> cfg = ConfigurableService.configurableFor(name);
+            Configurable cfg = ConfigurableService.configurableFor(name);
             if (cfg != null) {
                 try {
-                    cfg.configure(textValue);
+                    TextFormat format = TextContext.getFormat(cfg.get().getClass());
+                    Object newValue = format.parse(textValue);
+                    cfg.reconfigure(newValue);
                 } catch (IllegalArgumentException error) {
                     throw new ConfigurationException(name, "Cannot be configured", error);
                 }

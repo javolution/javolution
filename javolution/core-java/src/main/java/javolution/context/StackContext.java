@@ -11,7 +11,6 @@ package javolution.context;
 import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
-import javolution.text.TypeFormat;
 import javolution.util.function.Function;
 
 /**
@@ -47,7 +46,7 @@ import javolution.util.function.Function;
  *     }[/code]</p>
  * 
  * <p> Classes/methods identified as {@link javolution.annotation.StackSafe 
- *     StackSafe} can be used in a stack context.</p>
+ *     StackSafe} can safely be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -58,14 +57,8 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
 
     /**
      * Default constructor.
@@ -81,7 +74,7 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
         StackContext ctx = AbstractContext.current(StackContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return STACK_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefaultValue()).inner().enterScope();
+                WAIT_FOR_SERVICE.get()).inner().enterScope();
     }
     
     /**

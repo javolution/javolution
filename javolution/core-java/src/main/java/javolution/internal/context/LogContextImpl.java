@@ -49,12 +49,12 @@ public final class LogContextImpl extends LogContext {
 
     @Override
     protected void log(Level level, Object... objs) {
-        Level thisLevel = (this.level != null) ? this.level : LEVEL.getDefaultValue();
+        Level thisLevel = (this.level != null) ? this.level : LEVEL.get();
         if (level.compareTo(thisLevel) < 0) return;
         final TextBuilder msg = new TextBuilder();
         properties.entrySet().doWhile(new Predicate<Entry<Object, Object>>() {
 
-            public Boolean apply(Entry<Object, Object> e) {
+            public boolean test(Entry<Object, Object> e) {
                 msg.append('[');
                 msg.append(e.getKey());
                 msg.append(": ");

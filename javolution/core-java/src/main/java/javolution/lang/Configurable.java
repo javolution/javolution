@@ -8,10 +8,8 @@
  */
 package javolution.lang;
 
-import java.lang.reflect.Field;
 import javolution.annotation.StackSafe;
 import javolution.context.SecurityContext;
-import javolution.context.SecurityPermission;
 
 /**
  *  <p> An element which is configurable without presupposing how the
@@ -25,139 +23,84 @@ import javolution.context.SecurityPermission;
  *  <p> Let's compare the following examples:
  *      [code]
  *      class Document {
- *          private static final Font DEFAULT_FONT
- *              = Font.decode(System.getProperty("DEFAULT_FONT") != null ?
+ *          private static final Font FONT
+ *              = Font.decode(System.getProperty("FONT") != null ?
  *                  System.getProperty("DEFAULT_FONT") : "Arial-BOLD-18");
  *      }[/code]
  *      With the following:
  *      [code]
  *      class Document {
- *          public static final Configurable<Font> DEFAULT_FONT 
- *                  = new Configurable(new Font("Arial", Font.BOLD, 18)) {
- *              @Override
- *              public void configure(CharSequence configuration) {
- *                  setDefaultValue(Font.decode(configuration));
- *              }
- *          };
+ *          public static final Configurable<Font> FONT 
+ *                  = new Configurable<Font>(new Font("Arial", Font.BOLD, 18));
  *      }[/code]
  *      Not only the second example is cleaner, but the actual configuration
- *      data can come from anywhere, for example from the OSGI Configuration 
- *      Admin package. Low level code does not need to know.</p>
- * 
- * <p> The configuration initial default value is either the explicit value 
- *     specified at construction or the configuration (parsed) value from the
- *     system properties (the key is the full name of the class static field).
- *     For example, running with the option 
- *     <code>-Dfoo.bar.Document#DEFAULT_FONT=Courier-BOLD-18</code> would set  
- *     the document default font to courier in the example above.</p>
- *       
+ *      data can come from anywhere, for example during bundle activation,
+ *      from the system properties, etc. Low level code does not need to know.</p>
+ *  *       
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  * @see     javolution.osgi.ConfigurableService
  */
-@SuppressWarnings("rawtypes")
-@StackSafe(initialization = false)
-public abstract class Configurable<T> {
+@StackSafe
+public class Configurable<T> {
 
     /**
-     * Holds the general permission to configure a configurable instance
-     * (action <code>"configure"</code>).
+     * Holds the general permission to reconfigure configurables values
+     * (action <code>"reconfigure"</code>).
      * Whether or not that permission is granted depends on the current 
      * {@link SecurityContext}. It is possible that the general permission 
-     * to update any configurable is granted but revoked for specific 
-     * instances. Also, the general permission to update any configurable 
-     * may be revoked but granted only for specific instances.
+     * to reconfigure a configurable is granted but revoked for a specific 
+     * instance. Also, the general permission to reconfigure a configurable 
+     * may be revoked but granted only for a specific instance.
      */
-    public static SecurityPermission<Configurable> CONFIGURE_PERMISSION 
-       = new SecurityPermission<Configurable>(Configurable.class, "configure");
+    public static Permission<Configurable<?>> RECONFIGURE_PERMISSION 
+       = new Permission<Configurable<?>>(Configurable.class, "reconfigure");
 
     /**
-     * Holds the configurable default value.
+     * Holds the reconfigure permission.
      */
-    private T defaultValue;
+    private final Permission<Configurable<T>> reconfigurePermission;
 
     /**
-     * Holds the full name of the configurable (name of the class member).
+     * Holds the configurable value.
      */
-    private final String name;
+    private T value;
 
     /**
-     * Holds this instance configure permission.
+     * Creates a configurable having the specified value.
      */
-    private final SecurityPermission<Configurable> configurePermission;
-
-    /**
-     * Creates a configurable having the specified default value.
-     */
-    protected Configurable(T defaultValue) {
-        this.defaultValue = defaultValue;
-        configurePermission = new SecurityPermission<Configurable>(
-                Configurable.class, "configure", this);
-        name = Configurable.nameOf(this);
-        if (name != null) { // Reads system properties for default value.
-            String configuration = System.getProperty(name);
-            if (configuration != null) {
-                configure(configuration);
-            }
-        }
+    public Configurable(T value) {
+        reconfigurePermission = new Permission<Configurable<T>>(
+                Configurable.class, "reconfigure", this);
+        this.value = value;
     }
 
     /**
-     * Configures this configurable from the specified textual configuration.
-     * Decoding and meaning of the configuration may vary according to the
-     * configurable instance.
-     * 
-     * @param configuration the configuration text.
-     * @throws SecurityException if the permission to configure this configurable is not granted.
-     * @throws IllegalArgumentException if the specified configuration if not valid.
+     * Returns this configurable value.
      */
-    public abstract void configure(CharSequence configuration);
-
-    /**
-     * Returns the name of this configurable (full name of the class static field).
-     */
-    public String name() {
-        return name;
-    }
-
-    /**
-     * Returns this configurable default value.
-     */
-    public T getDefaultValue() {
-        return defaultValue;
+    public T get() {
+        return value;
     }
 
     /**
      * Returns the permission to configure this instance.
      */
-    public SecurityPermission<Configurable> getConfigurePermission() {
-        return configurePermission;
+    public Permission<Configurable<T>> getReconfigurePermission() {
+        return reconfigurePermission;
     }
 
     /**
-     * Sets the configuration default value.
+     * Reconfigures this instance with the specified new value.
+     * This method should be overridden if reconfiguration triggers 
+     * more processing than just setting the configurable value.
      * 
-     * @param defaultValue the new default value.
-     * @throws SecurityException if the permission to configure this configurable is not granted.
+     * @param newValue the new value.
+     * @throws SecurityException if the permission to reconfigure this 
+     *         configurable is not granted.
      */
-    protected void setDefaultValue(T defaultValue) {
-        SecurityContext.check(configurePermission);
-        this.defaultValue = defaultValue;
-    }
-
-    // Returns the full name of this configurable (field name)
-    private static String nameOf(Configurable<?> param) {
-        Class<?> paramClass = param.getClass();
-        Class<?> enclosingClass = paramClass.getEnclosingClass();
-        Field[] fields = enclosingClass.getDeclaredFields();
-        String name = null;
-        for (Field field : fields) {
-            if (field.getDeclaringClass().equals(paramClass)) {
-                name = field.getName();
-                break;
-            }
-        }
-        return name;
+    public void reconfigure(T newValue) {
+        SecurityContext.check(reconfigurePermission);
+        this.value = newValue;
     }
 
 }

@@ -13,7 +13,7 @@ import javolution.annotation.StackSafe;
 import javolution.context.HeapContext;
 import javolution.lang.MathLib;
 import javolution.lang.ValueType;
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.FastMap;
 import javolution.xml.XMLSerializable;
 
@@ -60,9 +60,9 @@ import javolution.xml.XMLSerializable;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@StackSafe(initialization = false)
-public final class Text implements CharSequence, Comparable, XMLSerializable,
-        ValueType {
+@StackSafe
+public final class Text implements CharSequence, Comparable<CharSequence>, XMLSerializable,
+        ValueType<Text> {
 
     /**
      * Holds the default size for primitive blocks of characters.
@@ -82,8 +82,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      */
     private static final FastMap INTERN_INSTANCES = new FastMap() {
 
-        public FastComparator valueComparator() {
-            return FastComparator.LEXICAL;
+        public Comparators valueComparator() {
+            return Comparators.LEXICAL;
         }
 
     };
@@ -864,8 +864,8 @@ public final class Text implements CharSequence, Comparable, XMLSerializable,
      * @throws  ClassCastException if the specifed object is not a
      *          <code>CharSequence</code> or a <code>String</code>.
      */
-    public int compareTo(Object csq) {
-        return FastComparator.LEXICAL.compare(this, (CharSequence) csq);
+    public int compareTo(CharSequence csq) {
+        return Comparators.LEXICAL.compare(this, csq);
     }
 
     /**

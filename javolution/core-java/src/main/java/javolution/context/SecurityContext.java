@@ -10,7 +10,7 @@ package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
-import javolution.text.TypeFormat;
+import javolution.lang.Permission;
 
 /**
  * <p> A high-level security context integrated with OSGi.</p>
@@ -43,14 +43,8 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
 
     /**
      * Default constructor.
@@ -73,7 +67,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to check.
      * @throws SecurityException if the specified permission is not granted.
      */
-    public static void check(SecurityPermission<?> permission) {
+    public static void check(Permission<?> permission) {
         if (!SecurityContext.current().isGranted(permission))
             throw new SecurityException(permission + " is not granted.");
     }
@@ -83,7 +77,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *
      * @param permission the permission to check.
      */
-    public abstract boolean isGranted(SecurityPermission<?> permission);
+    public abstract boolean isGranted(Permission<?> permission);
 
     /**
      * Grants the specified permission.
@@ -93,7 +87,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be granted.
      */
-    public abstract void grant(SecurityPermission<?> permission, Object certificate);
+    public abstract void grant(Permission<?> permission, Object certificate);
 
     /**
      * Revokes the specified permission.
@@ -103,7 +97,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      *        <code>null</code> if none.
      * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public abstract void revoke(SecurityPermission<?> permission, Object certificate);
+    public abstract void revoke(Permission<?> permission, Object certificate);
 
     /**
      * Grants the specified permission (convenience method).
@@ -111,7 +105,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to grant.
      * @throws SecurityException if the specified permission cannot be granted.
      */
-    public final void grant(SecurityPermission<?> permission) {
+    public final void grant(Permission<?> permission) {
         grant(permission, null);
     }
 
@@ -121,7 +115,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @param permission the permission to grant.
      * @throws SecurityException if the specified permission cannot be revoked.
      */
-    public final void revoke(SecurityPermission<?> permission) {
+    public final void revoke(Permission<?> permission) {
         revoke(permission, null);
     }
 
@@ -131,7 +125,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     protected static SecurityContext current() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) return ctx;
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
 
 }

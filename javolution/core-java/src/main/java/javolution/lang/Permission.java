@@ -6,12 +6,12 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.context;
+package javolution.lang;
 
 import javolution.annotation.StackSafe;
 
 /**
- * A security permission associated to a specific class/action/instance. 
+ * A permission associated to a specific class/action/instance. 
  * There are three levels of permission possible, at 
  * the class/category level, at the action level and at the instance level.
  * Any permission granted/revoked at the higher level is explicitly 
@@ -26,15 +26,15 @@ import javolution.annotation.StackSafe;
  * @version 6.0, December 12, 2012
  * @see SecurityContext
  */
-@StackSafe(initialization=false)
-public class SecurityPermission<T> {
+@StackSafe
+public class Permission<T> {
 
     /**
      * Holds the global permission for anything.
      */
-    public static final SecurityPermission<Object> ALL = new SecurityPermission<Object>(null);
+    public static final Permission<Object> ALL = new Permission<Object>(null);
 
-    private final Class<T> category;
+    private final Class<? super T> category;
 
     private final String action;
 
@@ -43,7 +43,7 @@ public class SecurityPermission<T> {
     /**
      * Creates a security permission for all actions of the specified category.
      */
-    public SecurityPermission(Class<T> category) {
+    public Permission(Class<? super T> category) {
         this(category, null, null);
     }
 
@@ -51,7 +51,7 @@ public class SecurityPermission<T> {
      * Creates a security permission for the specified action of the 
      * specified category.
      */
-    public SecurityPermission(Class<T> category, String action) {
+    public Permission(Class<? super T> category, String action) {
         this(category, action, null);
     }
 
@@ -59,7 +59,7 @@ public class SecurityPermission<T> {
      * Creates a security permission for the specified instance and the 
      * specified action of the specified category.
      */
-    public SecurityPermission(Class<T> category, String action, T instance) {
+    public Permission(Class<? super T> category, String action, T instance) {
         this.category = category;
         this.action = action;
         this.instance = instance;
@@ -68,7 +68,7 @@ public class SecurityPermission<T> {
     /**
      * Returns the permission category or <code>null</code> for all categories.
      */
-    public Class<T> getCategory() {
+    public Class<? super T> getCategory() {
         return category;
     }
 
@@ -95,7 +95,7 @@ public class SecurityPermission<T> {
      *         implies that the specified permission is granted/revoked;
      *         <code>false</code> otherwise.
      */
-    public boolean implies(SecurityPermission<?> that) {
+    public boolean implies(Permission<?> that) {
         if (category == null) return true;
         if (!category.isAssignableFrom(that.category)) return false;
         if (action == null) return true;
@@ -118,8 +118,8 @@ public class SecurityPermission<T> {
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
-        if (!(obj instanceof SecurityPermission)) return false;
-        SecurityPermission<?> that = (SecurityPermission<?>) obj;
+        if (!(obj instanceof Permission)) return false;
+        Permission<?> that = (Permission<?>) obj;
         if ((category == null) && (that.category != null)) return false;
         if ((category != null) && (!category.equals(that.category)))
             return false;

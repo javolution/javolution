@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
@@ -114,7 +114,7 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
     
     @Override
     public ComparatorService<K> keyComparator() {
-        return FastComparator.standard();
+        return Comparators.standard();
     }
  
     private static final long serialVersionUID = 6261409427238347224L;

@@ -8,7 +8,6 @@
  */
 package javolution.internal.util.table;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -20,7 +19,7 @@ import javolution.util.service.TableService;
 /**
  * A shared view over a table allowing concurrent access and sequential updates.
  */
-public final class SharedTableImpl<E> implements TableService<E>, Serializable {
+public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
 
     private final TableService<E> that;
     private final Lock read;
@@ -204,17 +203,17 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
+    public boolean doWhile(Predicate<? super E> predicate) {
         read.lock();
         try {
-            that.doWhile(predicate);
+            return that.doWhile(predicate);
         } finally {
             read.unlock();
         }
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         write.lock();
         try {
             return that.removeAll(predicate);
@@ -312,21 +311,35 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
         };
     }
 
-    //
-    // If no impact, forwards to inner table.
-    // 
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        read.lock();
+        try {
+            return trySplitDefault(n);
+        } finally {
+            read.unlock();
+        } 
+    }
 
     @Override
-    public ComparatorService<E> getComparator() {
-        return that.getComparator();
+    public ComparatorService<? super E> getComparator() {
+        read.lock();
+        try {
+            return that.getComparator();
+        } finally {
+            read.unlock();
+        } 
     }
     
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
-        that.setComparator(cmp);
+    public void setComparator(ComparatorService<? super E> cmp) {
+        write.lock();
+        try {
+            that.setComparator(cmp);
+        } finally {
+            write.unlock();
+        }       
     }   
-    
-    private static final long serialVersionUID = -849409915565893024L;
 
-  
+    private static final long serialVersionUID = -1788031404105375117L;    
 }

@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
@@ -46,7 +46,7 @@ public final class EntrySetImpl<K, V> implements
     @Override
     public boolean contains(Map.Entry<K, V> entry) {
         V value = map.get(entry.getKey());
-        return FastComparator.DEFAULT.areEqual(entry.getValue(), value);
+        return Comparators.DEFAULT.areEqual(entry.getValue(), value);
     }
 
     @Override

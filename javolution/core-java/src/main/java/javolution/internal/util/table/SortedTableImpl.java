@@ -21,7 +21,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     private final TableService<E> that;
 
-    public SortedTableImpl(TableService<E> that) {
+    public SortedTableImpl(TableService<E> that, boolean allowDuplicate) {
         this.that = that;
     }
 
@@ -31,24 +31,23 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public boolean add(E element) {
-        ComparatorService<E> cmp = getComparator();
-        int i = indexIfSortedOf(element, cmp, 0, size());
+        int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         that.add(i, element);
         return true;
     }
 
     @Override
     public int indexOf(E element) {
-        ComparatorService<E> cmp = getComparator();
-        int i = indexIfSortedOf(element, cmp, 0, size());
+        ComparatorService<? super E> cmp = getComparator();
+        int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) return i;
         return -1;
     }
 
     @Override
     public int lastIndexOf(E element) {
-        ComparatorService<E> cmp = getComparator();
-        int i = indexIfSortedOf(element, cmp, 0, size());
+        ComparatorService<? super E> cmp = getComparator();
+        int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) {
             while ((++i < size()) && cmp.areEqual(element, get(i))) {
             }
@@ -59,33 +58,62 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
    
     @Override
     public boolean contains(E element) {
-        return super.contains(element);
+        return containsDefault(element);
     }
 
     @Override
     public boolean remove(E element) {
-        return super.remove(element);
+        return removeDefault(element);
     }
 
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplit(n);
+    }
+        
+    @Override
+    public void sort() {
+        // Do nothing, already sorted.
+    }
+    
+    @Override
+    public E set(int index, E element) {
+        throw new UnsupportedOperationException(
+                "Sorted view do not allow elements to be inserted at specific positions.");
+    }
+
+    @Override
+    public void add(int index, E element) {
+        throw new UnsupportedOperationException(
+                "Sorted view do not allow elements to be inserted at specific positions.");
+    }
+
+    @Override
+    public void addFirst(E element) {
+        throw new UnsupportedOperationException(
+                "Sorted view do not allow elements to be inserted at specific positions.");
+    }
+
+    @Override
+    public void addLast(E element) {
+        throw new UnsupportedOperationException(
+                "Sorted view do not allow elements to be inserted at specific positions.");
+    }
+    
     //
     // If no impact, forwards to inner table.
     // 
 
     @Override
-    public ComparatorService<E> getComparator() {
+    public ComparatorService<? super E> getComparator() {
         return that.getComparator();
     }
     
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
+    public void setComparator(ComparatorService<? super E> cmp) {
         that.setComparator(cmp);
     }   
-    
-    @Override
-    public void sort() {
-        that.sort();
-    }
-
+ 
     @Override
     public int size() {
         return that.size();
@@ -96,15 +124,6 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
         return that.get(index);
     }
 
-    @Override
-    public E set(int index, E element) {
-        return that.set(index, element);
-    }
-
-    @Override
-    public void add(int index, E element) {
-        that.add(index, element);
-    }
 
     @Override
     public E remove(int index) {
@@ -122,12 +141,12 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        that.doWhile(predicate);
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return that.doWhile(predicate);
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         return that.removeAll(predicate);
     }
 
@@ -139,16 +158,6 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     @Override
     public E getLast() {
         return that.getLast();
-    }
-
-    @Override
-    public void addFirst(E element) {
-        that.addFirst(element);
-    }
-
-    @Override
-    public void addLast(E element) {
-        that.addLast(element);
     }
 
     @Override
@@ -181,14 +190,17 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
         return that.peekLast();
     }
     
-    // Utility to find the "should be" position of the specified element.
-    private int indexIfSortedOf(E element, ComparatorService<? super E> comparator, int start, int length) {
+    /**
+     *  Utility to find the "should be" position of the specified element.
+     */
+    public static <E> int indexIfSortedOf(E element, TableService<E> table, int start, int length) {
         if (length == 0) return start;
         int half = length >> 1;
-        return (comparator.compare(element, get(start + half)) <= 0)
-                ? indexIfSortedOf(element, comparator, start, half)
-                : indexIfSortedOf(element, comparator, start + half + 1, length - half - 1);
+       ComparatorService<? super E> comparator = table.getComparator();
+        return (comparator.compare(element, table.get(start + half)) <= 0)
+                ? indexIfSortedOf(element, table, start, half)
+                : indexIfSortedOf(element, table, start + half + 1, length - half - 1);
     }
-
-    private static final long serialVersionUID = 6158589683915294638L;
+    
+    private static final long serialVersionUID = 5579306002545263788L;
 }

@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
@@ -46,7 +46,7 @@ public final class ValuesImpl<K, V> implements
     @Override
     public boolean contains(V value) {
         for (Iterator<V> i = iterator(); i.hasNext();) {
-            if (FastComparator.DEFAULT.areEqual(i.next(), value)) return true;
+            if (Comparators.DEFAULT.areEqual(i.next(), value)) return true;
         }
         return false;
     }
@@ -54,7 +54,7 @@ public final class ValuesImpl<K, V> implements
     @Override
     public boolean remove(V value) {
         for (Iterator<V> i = iterator(); i.hasNext();) {
-            if (FastComparator.DEFAULT.areEqual(i.next(), value)) {
+            if (Comparators.DEFAULT.areEqual(i.next(), value)) {
                 i.remove();
                 return true;
             }

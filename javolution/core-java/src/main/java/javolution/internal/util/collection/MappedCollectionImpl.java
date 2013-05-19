@@ -11,7 +11,7 @@ package javolution.internal.util.collection;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 import javolution.util.function.Function;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
@@ -27,7 +27,7 @@ public final class MappedCollectionImpl<E,R> implements
     
     private final  Function<? super E, ? extends R> function;
     
-    private ComparatorService<? super R> comparator = FastComparator.STANDARD;
+    private ComparatorService<? super R> comparator = Comparators.STANDARD;
 
     public MappedCollectionImpl(CollectionService<E> that, 
             Function<? super E, ? extends R> function) {

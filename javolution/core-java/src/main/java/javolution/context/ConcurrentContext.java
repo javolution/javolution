@@ -10,7 +10,6 @@ package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
-import javolution.text.TypeFormat;
 
 /**
  * <p> A context able to take advantage of concurrent algorithms on 
@@ -152,20 +151,15 @@ import javolution.text.TypeFormat;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class ConcurrentContext extends AbstractContext<ConcurrentContext> {
+public abstract class ConcurrentContext extends
+        AbstractContext<ConcurrentContext> {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
+     * implementation (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
 
     /**
      * Holds the maximum number of concurrent threads usable 
@@ -174,20 +168,13 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter<Integer>(Runtime.getRuntime().availableProcessors()) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseInt(configuration));
-        }
-
-    };
+    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter<Integer>(
+            Runtime.getRuntime().availableProcessors());
 
     /**
      * Default constructor.
      */
-    protected ConcurrentContext() {
-    }
+    protected ConcurrentContext() {}
 
     /**
      * Enters a new concurrent context instance.
@@ -287,10 +274,11 @@ public abstract class ConcurrentContext extends AbstractContext<ConcurrentContex
      * Returns the current concurrent context.
      */
     protected static ConcurrentContext current() {
-        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
-        if (ctx != null) return ctx;
-        return CONCURRENT_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.getDefaultValue());
+        ConcurrentContext ctx = AbstractContext
+                .current(ConcurrentContext.class);
+        if (ctx != null)
+            return ctx;
+        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
-    
- }
+
+}

@@ -10,7 +10,6 @@ package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOG_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
-import javolution.text.TypeFormat;
 
 /**
  * <p> A logging context integrated with OSGi {@link org.osgi.service.log.LogService 
@@ -62,14 +61,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * implementation this class (default configuration <code>false</code>).
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
+            false);
 
     /**
      * Holds the logging level (default <code>DEBUG</code>).
@@ -78,16 +70,8 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * causes the debug/info not to be logged. 
      */
     public static final Configurable<Level> LEVEL = new Configurable<Level>(
-            Level.DEBUG) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            String str = configuration.toString();
-            setDefaultValue(Level.valueOf(str));
-        }
-
-    };
-
+            Level.DEBUG);
+    
     /**
      * Default constructor.
      */
@@ -168,8 +152,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null)
             return ctx;
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE
-                .getDefaultValue());
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
 
 }

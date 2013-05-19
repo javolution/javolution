@@ -9,7 +9,6 @@
 package javolution.internal.context;
 
 import javolution.context.ConcurrentContext;
-import javolution.context.LocalContext;
 import javolution.lang.MathLib;
 
 /**
@@ -21,7 +20,7 @@ import javolution.lang.MathLib;
 public final class ConcurrentContextImpl extends ConcurrentContext {
 
     // Gets all the concurrent threads ready for executions.
-    private static final int NB_THREADS = ConcurrentContext.CONCURRENCY.getDefaultValue();
+    private static final int NB_THREADS = ConcurrentContext.CONCURRENCY.get();
 
     private static final ConcurrentThreadImpl[] EXECUTORS = new ConcurrentThreadImpl[NB_THREADS];
 
@@ -43,7 +42,7 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
     @Override
     protected ConcurrentContext inner() {
         ConcurrentContextImpl ctx = new ConcurrentContextImpl();
-        int n = LocalContext.getLocalValue(ConcurrentContext.CONCURRENCY);
+        int n = ConcurrentContext.CONCURRENCY.get();
         ctx.concurrency = MathLib.min(n, NB_THREADS); 
         return ctx;
     }

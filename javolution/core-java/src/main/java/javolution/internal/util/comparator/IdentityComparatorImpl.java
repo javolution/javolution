@@ -8,12 +8,14 @@
  */
 package javolution.internal.util.comparator;
 
-import javolution.util.FastComparator;
+import java.io.Serializable;
+
+import javolution.util.service.ComparatorService;
 
 /**
  * The lexical comparator implementation.
  */
-public final class IdentityComparatorImpl<E> extends FastComparator<E> {
+public final class IdentityComparatorImpl<E> implements ComparatorService<E>, Serializable {
 
     @Override
     public int hashCodeOf(Object obj) {
@@ -31,5 +33,5 @@ public final class IdentityComparatorImpl<E> extends FastComparator<E> {
         return ((Comparable<Object>) o1).compareTo(o2);
     }   
 
-    private static final long serialVersionUID = -5453435627116001181L;
+    private static final long serialVersionUID = -8716468453685126721L;
 }

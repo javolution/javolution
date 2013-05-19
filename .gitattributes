@@ -270,7 +270,6 @@ javolution/core-java/src/main/java/javolution/context/LocalContext.java -text sv
 javolution/core-java/src/main/java/javolution/context/LocalParameter.java -text
 javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/SecurityPermission.java -text
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/package-info.java -text
 javolution/core-java/src/main/java/javolution/internal/context/ConcurrentContextImpl.java -text
@@ -297,9 +296,9 @@ javolution/core-java/src/main/java/javolution/internal/util/collection/FilteredC
 javolution/core-java/src/main/java/javolution/internal/util/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/internal/util/comparator/DefaultComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/comparator/StandardComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/StringComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/AbstractMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/CustomKeyComparatorMapImpl.java -text svneol=unset#text/plain
@@ -313,8 +312,7 @@ javolution/core-java/src/main/java/javolution/internal/util/map/ValuesImpl.java 
 javolution/core-java/src/main/java/javolution/internal/util/table/AbstractTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/FractalTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/table/NoDuplicateTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/table/ReverseTableImpl.java -text
-javolution/core-java/src/main/java/javolution/internal/util/table/SetTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/table/ReversedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/SharedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/SortedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/table/SubTableImpl.java -text
@@ -341,6 +339,7 @@ javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneo
 javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Permission.java -text
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain

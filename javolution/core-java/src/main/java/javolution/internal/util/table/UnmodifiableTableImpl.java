@@ -8,7 +8,6 @@
  */
 package javolution.internal.util.table;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
 import javolution.util.function.Predicate;
@@ -18,25 +17,13 @@ import javolution.util.service.TableService;
 /**
  * An unmodifiable view over a table.
  */
-public final class UnmodifiableTableImpl<E> implements TableService<E>,
-        Serializable {
+public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
 
     private final TableService<E> that;
 
     public UnmodifiableTableImpl(TableService<E> that) {
         this.that = that;
     }
-
-    @Override
-    public int size() {
-        return that.size();
-    }
-
-    @Override
-    public E get(int index) {
-        return that.get(index);
-    }
-
     @Override
     public E set(int index, E element) {
         throw new UnsupportedOperationException("Unmodifiable");
@@ -52,22 +39,9 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
-    //
-    // Non-abstract methods should forward to the actual table (unless impacted).
-    //
     @Override
     public void clear() {
         throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public E getFirst() {
-        return that.getFirst();
-    }
-
-    @Override
-    public E getLast() {
-        return that.getLast();
     }
 
     @Override
@@ -106,43 +80,13 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public E peekFirst() {
-        return (size() == 0) ? null : getFirst();
-    }
-
-    @Override
-    public E peekLast() {
-        return (size() == 0) ? null : getLast();
-    }
-
-    @Override
-    public void doWhile(Predicate<E> predicate) {
-        that.doWhile(predicate);
-    }
-
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return that.contains(element);
     }
 
     @Override
     public boolean remove(E element) {
         throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return that.indexOf(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return that.lastIndexOf(element);
     }
 
     @Override
@@ -174,18 +118,73 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
+    public void setComparator(ComparatorService<? super E> cmp) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplitDefault(n);
+    }
+    
     //
     // If no impact, forwards to inner table.
     // 
   
     @Override
-    public ComparatorService<E> getComparator() {
+    public int size() {
+        return that.size();
+    }
+
+    @Override
+    public E get(int index) {
+        return that.get(index);
+    }
+
+    @Override
+    public ComparatorService<? super E> getComparator() {
         return that.getComparator();
     }
+
+    @Override
+    public int indexOf(E element) {
+        return that.indexOf(element);
+    }
+
+    @Override
+    public int lastIndexOf(E element) {
+        return that.lastIndexOf(element);
+    }
     
-    private static final long serialVersionUID = 7449328167407252680L;
+    @Override
+    public E getFirst() {
+        return that.getFirst();
+    }
+
+    @Override
+    public E getLast() {
+        return that.getLast();
+    }
+
+    @Override
+    public E peekFirst() {
+        return that.peekFirst();
+    }
+
+    @Override
+    public E peekLast() {
+        return that.peekLast();
+    }
+
+    @Override
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return that.doWhile(predicate);
+    }
+    
+    @Override
+    public boolean contains(E element) {
+        return that.contains(element);
+    }
+
+    private static final long serialVersionUID = -800081761156821069L;
 }

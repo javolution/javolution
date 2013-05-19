@@ -31,7 +31,7 @@ public final class LocalContextImpl extends LocalContext {
     }
 
     @Override
-    public <T> void setLocalValue(LocalParameter<T> param, T localValue) {
+    public <T> void override(LocalParameter<T> param, T localValue) {
         if (localSettings == null) {
             localSettings = new FastMap<LocalParameter<?>, Object>();
         }
@@ -44,7 +44,7 @@ public final class LocalContextImpl extends LocalContext {
         if ((localSettings != null) && localSettings.containsKey(param)) 
             return (T) localSettings.get(param); 
         if (outer != null) return outer.getLocalValueInContext(param);
-        return param.getDefaultValue();
+        return param.getDefault().get();
     }
 
 }

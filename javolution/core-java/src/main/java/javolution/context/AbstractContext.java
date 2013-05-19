@@ -9,6 +9,7 @@
 package javolution.context;
 
 import javolution.annotation.StackSafe;
+import javolution.lang.Permission;
 
 /**
  * <p> The parent class for all contexts. 
@@ -43,7 +44,7 @@ import javolution.annotation.StackSafe;
  * 
  * <p> Applications may use custom (static) context implementations.
  *     [code]
- *     MyContext ctx = AbstractContext.enter(MyContextImpl.class); // Enter instance of specified class.
+ *     MyContext ctx = AbstractContext.enter(MyContextImpl.class); // Enters custom instance.
  *     try { 
  *         ... // Execution in the scope of MyContextImpl
  *     } finally {
@@ -52,12 +53,13 @@ import javolution.annotation.StackSafe;
  *     [/code]</p>
  * 
  * <p> Contexts do not pause thread-safety issues. They can be inherited 
- *     by multiple threads but only one thread will be able to configure them.</p>
+ *     by multiple threads but only the entering thread will be able to configure 
+ *     them.</p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-@StackSafe(initialization = false)
+@StackSafe
 public abstract class AbstractContext<C extends AbstractContext<C>> {
 
     /**
@@ -114,7 +116,7 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      *         if <code>SecurityPermission(impl, "enter")</code> is not granted. 
      */
     public static <T extends AbstractContext<T>> T enter(Class<T> impl) {
-	SecurityContext.check(new SecurityPermission<T>(impl, "enter"));
+	SecurityContext.check(new Permission<T>(impl, "enter"));
 	try {
 	    return impl.newInstance().enterScope();
 	} catch (InstantiationException e) {
@@ -163,5 +165,7 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      * from its parent. 
      */
     protected abstract C inner();
+    
+    
 
 }

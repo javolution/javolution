@@ -17,11 +17,11 @@ import javolution.util.service.TableService;
 /**
  * A reverse view over a table.
  */
-public final class ReverseTableImpl<E> extends AbstractTableImpl<E> {
+public final class ReversedTableImpl<E> extends AbstractTableImpl<E> {
 
     private final TableService<E> that;
 
-    public ReverseTableImpl(TableService<E> that) {
+    public ReversedTableImpl(TableService<E> that) {
         this.that = that;
     }
     
@@ -61,90 +61,95 @@ public final class ReverseTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return super.iterator();
+        return iteratorDefault();
     }
 
     @Override
     public boolean add(E element) {
-        return super.add(element);
+        return addDefault(element);
     }
 
     @Override
     public void sort() {
-        super.sort();
+        sortDefault();
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        super.doWhile(predicate);
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return doWhileDefault(predicate);
     }
     
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return super.removeAll(predicate);
+    public boolean removeAll(Predicate<? super E> predicate) {
+        return removeAllDefault(predicate);
     }
 
     @Override
     public E getFirst() {
-        return super.getFirst();
+        return getFirstDefault();
     }
 
     @Override
     public E getLast() {
-        return super.getLast();
+        return getLastDefault();
     }
 
     @Override
     public void addFirst(E element) {
-        super.addFirst(element);
+        addFirstDefault(element);
     }
 
     @Override
     public void addLast(E element) {
-        super.addLast(element);
+        addLastDefault(element);
     }
 
     @Override
     public E removeFirst() {
-        return super.removeFirst();
+        return removeFirstDefault();
     }
 
     @Override
     public E removeLast() {
-        return super.removeLast();
+        return removeLastDefault();
     }
 
     @Override
     public E pollFirst() {
-        return super.pollFirst();
+        return pollFirstDefault();
     }
 
     @Override
     public E pollLast() {
-        return super.pollLast();
+        return pollLastDefault();
     }
 
     @Override
     public E peekFirst() {
-        return super.peekFirst();
+        return peekFirstDefault();
     }
 
     @Override
     public E peekLast() {
-        return super.peekLast();
+        return peekLastDefault();
     }    
 
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplitDefault(n);
+    }
+    
     //
     // If no impact, forwards to inner table.
     // 
     
     @Override
-    public ComparatorService<E> getComparator() {
+    public ComparatorService<? super E> getComparator() {
         return that.getComparator();
     }
     
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
+    public void setComparator(ComparatorService<? super E> cmp) {
         that.setComparator(cmp);
     }
     
@@ -168,5 +173,5 @@ public final class ReverseTableImpl<E> extends AbstractTableImpl<E> {
         return that.remove(element);
     }
 
-    private static final long serialVersionUID = -3471317207858863000L;
+    private static final long serialVersionUID = -3742752971523397049L;
 }

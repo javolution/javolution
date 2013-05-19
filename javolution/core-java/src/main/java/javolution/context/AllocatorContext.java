@@ -9,7 +9,7 @@
 package javolution.context;
 
 import javolution.lang.Copyable;
-import javolution.util.function.Factory;
+import javolution.util.function.Supplier;
 
 /**
  * <p> The parent class for all memory allocation contexts.
@@ -50,7 +50,7 @@ public abstract class AllocatorContext<C extends AllocatorContext<C>> extends Ab
      * Returns a new instance allocated using this allocator context
      * (convenience method).
      */
-    protected <T> T allocateInContext(Factory<T> factory) {
+    protected <T> T allocateInContext(Supplier<T> factory) {
 	Allocator<T> allocator = new Allocator<T>(factory);
 	executeInContext(allocator);
 	return allocator.instance;
@@ -69,16 +69,16 @@ public abstract class AllocatorContext<C extends AllocatorContext<C>> extends Ab
     // Runnable to allocate a new instance on the heap.
     private static class Allocator<T> implements Runnable {
 
-	private final Factory<T> factory;
+	private final Supplier<T> factory;
 
 	T instance;
 
-	public Allocator(Factory<T> factory) {
+	public Allocator(Supplier<T> factory) {
 	    this.factory = factory;
 	}
 
 	public void run() {
-	    instance = factory.create();
+	    instance = factory.get();
 	}
 
     }

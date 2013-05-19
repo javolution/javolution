@@ -12,12 +12,13 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import javolution.lang.MathLib;
 import javolution.util.function.Predicate;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
- * Parent class to facilitate TableService custom implementations.
+ * Parent class to facilitate implementations of custom tables/views.
  * 
  * Note: This class implementation is frozen to avoid breaking up sub-classes
  *       relying upon the behavior of its non-abstract methods.
@@ -26,106 +27,73 @@ import javolution.util.service.TableService;
  * @version 6.0.0, December 12, 2012
  */
 public abstract class AbstractTableImpl<E> implements TableService<E>, Serializable {
-    
-    @Override
-    public abstract int size();
-
-    @Override
-    public abstract void clear();
-
-    @Override
-    public abstract void add(int index, E element);
-
-    @Override
-    public abstract E get(int index);
-
-    @Override
-    public abstract E set(int index, E element);
-
-    @Override
-    public abstract E remove(int index);
-    
-    @Override
-    public abstract void setComparator(ComparatorService<E> cmp);
+      
     //
-    // Methods with default implementation.
+    // Default implementation.
     //
-    
-    
-    @Override
-    public boolean add(E element) {
+        
+    final boolean addDefault(E element) {
         addLast(element);
         return true;
     }
 
-    @Override
-    public E getFirst() {
+    final E getFirstDefault() {
         if (size() == 0)
             emptyError();
         return get(0);
     }
 
-    @Override
-    public E getLast() {
+    final E getLastDefault() {
         if (size() == 0)
             emptyError();
         return get(size() - 1);
     }
-
-    @Override
-    public void addFirst(E element) {
+    
+    final void addFirstDefault(E element) {
         add(0, element);
     }
 
-    @Override
-    public void addLast(E element) {
+     final void addLastDefault(E element) {
         add(size(), element);
     }
 
-    @Override
-    public E removeFirst() {
+    final E removeFirstDefault() {
         E e = getFirst();
         remove(0);
         return e;
     }
 
-    @Override
-    public E removeLast() {
+    final E removeLastDefault() {
         E e = getLast();
         remove(size() - 1);
         return e;
     }
 
-    @Override
-    public E pollFirst() {
+    final E pollFirstDefault() {
         return (size() == 0) ? null : removeFirst();
     }
 
-    @Override
-    public E pollLast() {
+    final E pollLastDefault() {
         return (size() == 0) ? null : removeLast();
     }
 
-    @Override
-    public E peekFirst() {
+    final E peekFirstDefault() {
         return (size() == 0) ? null : getFirst();
     }
 
-    @Override
-    public E peekLast() {
+    final E peekLastDefault() {
         return (size() == 0) ? null : getLast();
     }
 
-    @Override
-    public void doWhile(Predicate<E> predicate) {
+    final boolean doWhileDefault(Predicate<? super E> predicate) {
         for (int i = 0, size = size(); i < size;) {
             if (!predicate.apply(get(i++)))
-                return;
+                return false;
         }
+        return true;
     }
 
-    @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    final boolean removeAllDefault(Predicate<? super E> predicate) {
         boolean modified = false;
         for (int i = size(); i > 0;) {
             if (predicate.apply(get(--i))) {
@@ -136,13 +104,11 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return modified;
     }
 
-    @Override
-    public boolean contains(E element) {
+    final boolean containsDefault(E element) {
         return (indexOf(element) < 0) ? false : true;
     }
 
-    @Override
-    public boolean remove(E element) {
+    final boolean removeDefault(E element) {
         int i = indexOf(element);
         if (i < 0)
             return false;
@@ -150,9 +116,8 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return true;
     }
 
-    @Override
-    public int indexOf(E element) {
-        ComparatorService<E> cmp = getComparator();
+     final int indexOfDefault(E element) {
+        ComparatorService<? super E> cmp = getComparator();
         for (int i = 0, size = size(); i < size; i++) {
             if (cmp.areEqual(element, get(i)))
                 return i;
@@ -160,9 +125,8 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return -1;
     }
 
-    @Override
-    public int lastIndexOf(E element) {
-        ComparatorService<E> cmp = getComparator();
+     final int lastIndexOfDefault(E element) {
+        ComparatorService<? super E> cmp = getComparator();
         for (int i = size(); i > 0;) {
             if (cmp.areEqual(element, get(--i)))
                 return i;
@@ -170,19 +134,33 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         return -1;
     }
 
-    @Override
-    public void sort() {
+    final void sortDefault() {
         int size = size();
         if (size > 1) {
             quicksort(0, size - 1, getComparator());
         }
     }
 
-    @Override
-    public Iterator<E> iterator() {
+    final Iterator<E> iteratorDefault() {
         return new TableIteratorImpl<E>(this, 0);
     }
 
+    @SuppressWarnings("unchecked")
+    final TableService<E>[] trySplitDefault(int n) {
+        int size = size();
+        int length = MathLib.min(n, size);
+        if (length < 2)  return null; // No split.
+        TableService<E>[] subTables = new TableService[length];
+        int div = size / length;
+        int start = 0;
+        for (int i=0; i < length - 1; i++) {
+            subTables[i] = new SubTableImpl<E>(this, start, start + div);
+            start += div;
+        }
+        subTables[length-1] = new SubTableImpl<E>(this, start, size - start);
+        return subTables;
+    }    
+    
     /** Throws NoSuchElementException */
     protected void emptyError() {
         throw new NoSuchElementException("Empty Table");
@@ -196,7 +174,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
 
     // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
     //
-    private void quicksort(int first, int last, ComparatorService<E> cmp) {
+    private void quicksort(int first, int last, ComparatorService<? super E> cmp) {
         if (first < last) {
             int pivIndex = partition(first, last, cmp);
             quicksort(first, (pivIndex - 1), cmp);
@@ -204,7 +182,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         }
     }
 
-    private int partition(int f, int l, ComparatorService<E> cmp) {
+    private int partition(int f, int l, ComparatorService<? super E> cmp) {
         int up, down;
         E piv = get(f);
         up = f;
@@ -226,6 +204,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         set(down, piv);
         return down;
     }
+
+    private static final long serialVersionUID = -3556502691724909437L;
   
-    private static final long serialVersionUID = -4148136304080489337L;
 }

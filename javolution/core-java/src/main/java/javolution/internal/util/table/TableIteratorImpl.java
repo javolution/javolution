@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 import javolution.util.service.TableService;
 
 /**
- * An iterator over a table.
+ * A generic iterator over a table.
  */
 public final class TableIteratorImpl<E> implements ListIterator<E> {
 

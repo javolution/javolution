@@ -64,40 +64,40 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
         toIndex--;
         return that.remove(index + fromIndex);
     }
-  
+      
     @Override
     public boolean add(E element) {
-        return super.add(element);
+        return addDefault(element);
     }
 
     @Override
     public boolean contains(E element) {
-        return super.contains(element);
+        return containsDefault(element);
     }
 
     @Override
     public boolean remove(E element) {
-        return super.remove(element);
+        return removeDefault(element);
     }
 
     @Override
     public int indexOf(E element) {
-        return super.indexOf(element);
+        return indexOfDefault(element);
     }
 
     @Override
     public int lastIndexOf(E element) {
-        return super.lastIndexOf(element);
+        return lastIndexOfDefault(element);
     }
 
     @Override
     public void sort() {
-        super.sort();
+        sortDefault();
     }
    
     @Override
     public void clear() {
-        super.removeAll(new Predicate<E>() {
+        removeAllDefault(new Predicate<E>() {
 
             @Override
             public Boolean apply(E param) {
@@ -109,82 +109,87 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return super.iterator();
+        return iteratorDefault();
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        super.doWhile(predicate);
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return doWhileDefault(predicate);
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
-        return super.removeAll(predicate);
+    public boolean removeAll(Predicate<? super E> predicate) {
+        return removeAllDefault(predicate);
     }
 
     @Override
     public E getFirst() {
-        return super.getFirst();
+        return getFirstDefault();
     }
 
     @Override
     public E getLast() {
-        return super.getLast();
+        return getLastDefault();
     }
 
     @Override
     public void addFirst(E element) {
-        super.addFirst(element);
+        addFirstDefault(element);
     }
 
     @Override
     public void addLast(E element) {
-        super.addLast(element);
+        addLastDefault(element);
     }
 
     @Override
     public E removeFirst() {
-        return super.removeFirst();
+        return removeFirstDefault();
     }
 
     @Override
     public E removeLast() {
-        return super.removeLast();
+        return removeLastDefault();
     }
 
     @Override
     public E pollFirst() {
-        return super.pollFirst();
+        return pollFirstDefault();
     }
 
     @Override
     public E pollLast() {
-        return super.pollLast();
+        return pollLastDefault();
     }
 
     @Override
     public E peekFirst() {
-        return super.peekFirst();
+        return peekFirstDefault();
     }
 
     @Override
     public E peekLast() {
-        return super.peekLast();
+        return peekLastDefault();
     }
   
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplitDefault(n);
+    }
+
     //
     // If no impact, forwards to inner table.
     // 
 
     @Override
-    public ComparatorService<E> getComparator() {
+    public ComparatorService<? super E> getComparator() {
         return that.getComparator();
     }
     
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
+    public void setComparator(ComparatorService<? super E> cmp) {
         that.setComparator(cmp);
     }  
  
-    private static final long serialVersionUID = -1596693663009102664L;
+    private static final long serialVersionUID = 475452359149518413L;
 }

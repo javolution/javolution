@@ -8,9 +8,12 @@
  */
 package javolution.internal.util.table;
 
-import javolution.util.FastComparator;
-import javolution.util.service.ComparatorService;
+import java.util.Iterator;
 
+import javolution.util.Comparators;
+import javolution.util.function.Predicate;
+import javolution.util.service.ComparatorService;
+import javolution.util.service.TableService;
 
 /**
  * A fractal-based implementation of a table with fast insertion/deletion 
@@ -21,7 +24,7 @@ import javolution.util.service.ComparatorService;
  * This implementation ensures that no more than 3/4 of the table capacity is
  * ever wasted. 
  */
-public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
+public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
 
     private static final int SHIFT = 10;
 
@@ -36,10 +39,9 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     private int capacity; // Actual memory allocated is usually far less than
     // capacity since inner fractal tables can be null.
 
-    private ComparatorService<E> comparator = FastComparator.standard();
-    
-    public FractalTableImpl() {
-    }
+    private ComparatorService<? super E> comparator = Comparators.STANDARD;
+
+    public FractalTableImpl() {}
 
     @Override
     public int size() {
@@ -49,14 +51,16 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     @SuppressWarnings("unchecked")
     @Override
     public E get(int index) {
-        if ((index < 0) && (index >= size)) indexError(index);
+        if ((index < 0) && (index >= size))
+            indexError(index);
         return (E) fractal.get(index);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public E set(int index, E element) {
-        if ((index < 0) && (index >= size)) indexError(index);
+        if ((index < 0) && (index >= size))
+            indexError(index);
         return (E) fractal.set(index, element);
     }
 
@@ -67,7 +71,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         } else if (index == size) {
             addLast(element);
         } else {
-            if ((index < 0) || (index > size)) indexError(index);
+            if ((index < 0) || (index > size))
+                indexError(index);
             checkUpsize();
             if (index >= (size >> 1)) {
                 fractal.shiftRight(element, index, size - index);
@@ -82,9 +87,12 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     @SuppressWarnings("unchecked")
     @Override
     public E remove(int index) {
-        if (index == 0) return removeFirst();
-        if (index == (size - 1)) return removeLast();
-        if ((index < 0) || (index >= size)) indexError(index);
+        if (index == 0)
+            return removeFirst();
+        if (index == (size - 1))
+            return removeLast();
+        if ((index < 0) || (index >= size))
+            indexError(index);
         E removed = (E) fractal.get(index);
         if (index >= (size >> 1)) {
             fractal.shiftLeft(null, size - 1, size - index - 1);
@@ -98,15 +106,15 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     }
 
     @Override
-    public ComparatorService<E> getComparator() {
+    public ComparatorService<? super E> getComparator() {
         return comparator;
     }
 
     @Override
-    public void setComparator(ComparatorService<E> cmp) {
+    public void setComparator(ComparatorService<? super E> cmp) {
         comparator = cmp;
     }
-    
+
     //
     // Optimizations.
     //
@@ -128,7 +136,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     @SuppressWarnings("unchecked")
     @Override
     public E removeFirst() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         E first = (E) fractal.set(0, null);
         fractal.offset++;
         size--;
@@ -139,7 +148,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     @SuppressWarnings("unchecked")
     @Override
     public E removeLast() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         E last = (E) fractal.set(--size, null);
         checkDownsize();
         return last;
@@ -155,8 +165,10 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
     //
     // Utilities.
     //
+
     private void checkUpsize() {
-        if (size >= capacity) upsize();
+        if (size >= capacity)
+            upsize();
     }
 
     private void upsize() {
@@ -204,13 +216,16 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         }
 
         public Object get(int index) {
-            Object fractal = data[((index + offset) >> shift) & (data.length - 1)];
-            return (shift == 0) ? fractal : ((FractalTable) fractal).get(index + offset);
+            Object fractal = data[((index + offset) >> shift)
+                    & (data.length - 1)];
+            return (shift == 0) ? fractal : ((FractalTable) fractal).get(index
+                    + offset);
         }
 
         public Object set(int index, Object element) {
             int i = ((index + offset) >> shift) & (data.length - 1);
-            if (shift != 0) return F(i).set(index + offset, element);
+            if (shift != 0)
+                return F(i).set(index + offset, element);
             Object previous = data[i];
             data[i] = element;
             return previous;
@@ -230,7 +245,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
             int i = (offset >> shift);
             System.arraycopy(data, i, tmp, i, data.length - i);
             System.arraycopy(data, 0, tmp, data.length, i);
-            if (shift > 0) tmp[data.length + i] = F(i).extract(0, offset);
+            if (shift > 0)
+                tmp[data.length + i] = F(i).extract(0, offset);
             data = tmp;
             return this;
         }
@@ -284,7 +300,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
                 System.arraycopy(data, head, data, head + 1, n);
                 data[head] = inserted;
             } else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift local to inner table.
-                F(head >> shift).shiftRight(inserted, head, length);             // (no wrapping).
+                F(head >> shift).shiftRight(inserted, head, length); // (no wrapping).
             } else {
                 int high = tail >> shift;
                 int low = (high != 0) ? high - 1 : data.length - 1;
@@ -315,7 +331,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
                 System.arraycopy(data, tail - n + 1, data, tail - n, n);
                 data[tail] = inserted;
             } else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift local to inner table.
-                F(head >> shift).shiftLeft(inserted, tail, length);              // (no wrapping).
+                F(head >> shift).shiftLeft(inserted, tail, length); // (no wrapping).
             } else {
                 int low = head >> shift;
                 int high = (low != data.length - 1) ? low + 1 : 0;
@@ -333,7 +349,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         /** Extracts the specified elements if any.
          Nothing extracted if length (modulo capacity) is zero.*/
         public FractalTable extract(int first, int length) {
-            FractalTable result = new FractalTable(shift, new Object[data.length], offset);
+            FractalTable result = new FractalTable(shift,
+                    new Object[data.length], offset);
             int mask = (data.length << shift) - 1;
             int head = (first + offset) & mask;
             int tail = (first + offset + length) & mask;
@@ -378,7 +395,8 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         }
 
         private FractalTable allocate(int i) {
-            FractalTable fractal = new FractalTable(shift - SHIFT, new Object[1 << SHIFT], 0);
+            FractalTable fractal = new FractalTable(shift - SHIFT,
+                    new Object[1 << SHIFT], 0);
             data[i] = fractal;
             return fractal;
         }
@@ -390,6 +408,91 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E>  {
         }
     }
 
-    private static final long serialVersionUID = 8016235981181245144L;
 
+    //
+    // Use default implementation.
+    //
+    
+    @Override
+    public int indexOf(E element) {
+        return indexOfDefault(element);
+    }
+
+    @Override
+    public int lastIndexOf(E element) {
+        return lastIndexOfDefault(element);
+    }
+
+    @Override
+    public E getFirst() {
+        return getFirstDefault();
+    }
+
+    @Override
+    public E getLast() {
+        return getLastDefault();
+    }
+
+    @Override
+    public E pollFirst() {
+        return pollFirstDefault();
+    }
+
+    @Override
+    public E pollLast() {
+        return pollLastDefault();
+    }
+
+    @Override
+    public E peekFirst() {
+        return peekFirstDefault();
+    }
+
+    @Override
+    public E peekLast() {
+        return peekLastDefault();
+    }
+
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplitDefault(n);
+    }
+
+    @Override
+    public void sort() {
+        sortDefault();
+
+    }
+
+    @Override
+    public boolean add(E element) {
+        return addDefault(element);
+    }
+
+    @Override
+    public boolean contains(E element) {
+        return containsDefault(element);
+    }
+
+    @Override
+    public boolean remove(E element) {
+        return removeDefault(element);
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return iteratorDefault();
+    }
+
+    @Override
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return doWhileDefault(predicate);
+    }
+
+    @Override
+    public boolean removeAll(Predicate<? super E> predicate) {
+        return removeAllDefault(predicate);
+    }
+
+    private static final long serialVersionUID = -617802996049308154L;
 }

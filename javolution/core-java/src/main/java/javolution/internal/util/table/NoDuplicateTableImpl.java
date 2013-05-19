@@ -8,7 +8,6 @@
  */
 package javolution.internal.util.table;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
 import javolution.util.function.Predicate;
@@ -18,7 +17,7 @@ import javolution.util.service.TableService;
 /**
  * A view for which elements are not added if already present.
  */
-public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializable  {
+public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E>  {
 
     private final TableService<E> that;
 
@@ -36,20 +35,44 @@ public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializ
         return that.add(element);
     }
 
+    @Override
+    public void addFirst(E element) {
+        if (indexOf(element) < 0) {
+            that.addFirst(element);
+        }
+    }
+
+    @Override
+    public void addLast(E element) {
+        if (indexOf(element) < 0) {
+            that.addLast(element);
+        }
+    }
+    
+    @Override
+    public E set(int index, E element) {
+        if (indexOf(element) < 0) {
+            return that.set(index, element);
+        }
+        return get(index);
+    }
+
+    @Override
+    public void add(int index, E element) {
+        if (indexOf(element) < 0) {
+            that.add(index, element);
+        }
+    }
+
+    @Override
+    public TableService<E>[] trySplit(int n) {
+        return trySplitDefault(n);
+    }    
+    
     //
     // If no impact, forwards to inner table.
     // 
   
-    @Override
-    public ComparatorService<E> getComparator() {
-        return that.getComparator();
-    }
-    
-    @Override
-    public void setComparator(ComparatorService<E> cmp) {
-        that.setComparator(cmp);
-    }
-   
     @Override
     public boolean contains(E element) {
         return that.contains(element);
@@ -86,16 +109,6 @@ public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializ
     }
 
     @Override
-    public E set(int index, E element) {
-        return that.set(index, element);
-    }
-
-    @Override
-    public void add(int index, E element) {
-        that.add(index, element);
-    }
-
-    @Override
     public E remove(int index) {
         return that.remove(index);
     }
@@ -111,12 +124,12 @@ public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializ
     }
 
     @Override
-    public void doWhile(Predicate<E> predicate) {
-        that.doWhile(predicate);
+    public boolean doWhile(Predicate<? super E> predicate) {
+        return that.doWhile(predicate);
     }
 
     @Override
-    public boolean removeAll(Predicate<E> predicate) {
+    public boolean removeAll(Predicate<? super E> predicate) {
         return that.removeAll(predicate);
     }
 
@@ -128,16 +141,6 @@ public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializ
     @Override
     public E getLast() {
         return that.getLast();
-    }
-
-    @Override
-    public void addFirst(E element) {
-        that.addFirst(element);
-    }
-
-    @Override
-    public void addLast(E element) {
-        that.addLast(element);
     }
 
     @Override
@@ -170,6 +173,16 @@ public final class NoDuplicateTableImpl<E>  implements TableService<E>, Serializ
         return that.peekLast();
     }
 
-    private static final long serialVersionUID = -7558760040127099825L;
+    @Override
+    public ComparatorService<? super E> getComparator() {
+        return that.getComparator();
+    }
+    
+    @Override
+    public void setComparator(ComparatorService<? super E> cmp) {
+        that.setComparator(cmp);
+    }
 
+    private static final long serialVersionUID = 2896938407273267989L;
+ 
 }

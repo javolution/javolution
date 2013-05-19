@@ -8,7 +8,7 @@
  */
 package javolution.text;
 
-import javolution.util.FastComparator;
+import javolution.util.Comparators;
 
 /**
  * <p> A {@link CharSequence} backed up by a <code>char</code> array. 
@@ -275,12 +275,12 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      * sequence lexicographically.
      *
      * @param   seq the character sequence to be compared.
-     * @return  <code>{@link FastComparator#LEXICAL}.compare(this, seq)</code>
+     * @return  <code>{@link Comparators#LEXICAL}.compare(this, seq)</code>
      * @throws  ClassCastException if the specifed object is not a
      *          <code>CharSequence</code>.
      */
     public int compareTo(CharSequence seq) {
-        return FastComparator.LEXICAL.compare(this, seq);
+        return Comparators.LEXICAL.compare(this, seq);
     }
 
     /**

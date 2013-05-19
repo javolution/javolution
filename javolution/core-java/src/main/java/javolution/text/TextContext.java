@@ -41,15 +41,9 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
-
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE 
+       = new Configurable<Boolean>(false);
+    
     /**
      * Default constructor.
      */
@@ -89,7 +83,7 @@ public abstract class TextContext extends FormatContext<TextContext> {
     protected static TextContext current() {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null) return ctx;
-        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
 
 }

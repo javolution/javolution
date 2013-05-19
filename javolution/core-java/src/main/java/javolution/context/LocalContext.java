@@ -10,16 +10,19 @@ package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER;
 import javolution.lang.Configurable;
-import javolution.text.TypeFormat;
 
 /**
- * <p> A context holding local parameters.
+ * <p> A context holding local parameters values.
  *     [code]
- *     public static LocalParameter<LargeInteger> MODULO = new LocalParameter<LargeInteger>() { ... }; 
+ *     public class ModuloInteger {
+ *         public static final LocalParameter<LargeInteger> MODULO 
+ *             = new LocalParameter<LargeInteger>(ONE.minus());
+ *         ...
+ *     }     
  *     ...
  *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         ctx.setLocalValue(ModuloInteger.MODULO, m); // No impact on other threads!
+ *         ctx.override(ModuloInteger.MODULO, m); // No impact on other threads!
  *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
  *     } finally {
  *         ctx.exit(); // Reverts changes. 
@@ -38,15 +41,9 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(false) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseBoolean(configuration));
-        }
-
-    };
-
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
+    
     /**
      * Default constructor.
      */
@@ -63,25 +60,14 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
     }
 
     /**
-     * Returns the local value of the specified parameter (its default
-     * value if not {@link LocalContext#setLocalValue overriden}).
-     * 
-     * @param  param the local parameter whose local value is returned.
-     */
-    public static <T> T getLocalValue(LocalParameter<T> param) {
-        LocalContext ctx = AbstractContext.current(LocalContext.class);
-        return (ctx != null) ? ctx.getLocalValueInContext(param) : param.getDefaultValue();
-    }
-
-    /**
      * Overrides the local value of the specified parameter. 
      * 
-     * @param  param the local parameter whose local value is overriden.
+     * @param  param the local parameter whose local value is overridden.
      * @param  localValue the new local value.
      * @throws SecurityException if the permission to override the specified 
      *         parameter is not granted.
      */
-    public abstract <T> void setLocalValue(LocalParameter<T> param, T localValue);
+    public abstract <T> void override(LocalParameter<T> param, T localValue);
 
     /**
      * Returns the local value of the specified parameter 
@@ -97,7 +83,7 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
     protected static LocalContext current() {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
         if (ctx != null) return ctx;
-        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.getDefaultValue());
+        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
     }
 
 }
