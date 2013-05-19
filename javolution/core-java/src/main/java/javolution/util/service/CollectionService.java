@@ -8,6 +8,7 @@
  */
 package javolution.util.service;
 
+import java.util.Comparator;
 import java.util.Iterator;
 
 import javolution.util.function.Predicate;
@@ -15,7 +16,7 @@ import javolution.util.function.Predicate;
 
 /**
  * The set of related collection functionalities which can be used/reused to 
- * implement collections.
+ * implement {@link FastCollection}.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -78,16 +79,16 @@ public interface CollectionService<E> {
      * @return the sub-collection or <code>null</code> if the collection 
      *         cannot be split. 
      */
-    CollectionService<E>[] trySplit(int n);
+    CollectionService<CollectionService<E>> trySplit(int n);
 
     /** 
      * Returns the comparator to be used for element ordering/comparisons.
      */
-    ComparatorService<? super E> getComparator();
+    Comparator<? super E> getComparator();
 
     /** 
      * Sets the comparator to be used for element ordering/comparisons.
      */
-    void setComparator(ComparatorService<? super E> cmp);
+    void setComparator(Comparator<? super E> cmp);
  
 }

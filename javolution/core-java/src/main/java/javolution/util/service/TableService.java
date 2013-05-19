@@ -78,7 +78,13 @@ public interface TableService<E> extends CollectionService<E> {
     // Misc.
     //       
   
-    /** 
+    /**
+     * Returns multiple views (split) over this table. 
+     */
+    @Override
+    TableService<E>[] trySplit(int n);
+    
+    /**
      * Sorts this table in place. 
      */
     void sort();

@@ -8,17 +8,31 @@
  */
 package javolution.util.service;
 
+import java.util.Comparator;
+
 import javolution.annotation.ThreadSafe;
+import javolution.annotation.StackSafe;
+import javolution.util.Comparators;
+import javolution.util.FastCollection;
+import javolution.util.FastMap;
 
 /**
- * The set of related collection functionalities which can be used/reused to 
- * implement collections/maps elements comparators.
+ * <p> A comparator to be used for equality as well as for ordering.
+ *     Instances of this class provide a hashcode function 
+ *     consistent with equal (if two objects {@link #areEqual
+ *     are equal}, they have the same {@link #hashCodeOf hashcode}),
+ *     equality with <code>null</code> values is supported.</p>
+ *     
+ * <p> Comparators can be employed with {@link FastMap} (e.g. 
+ *     {@link Comparators#IDENTITY} for identity maps) or with 
+ *     {@link FastCollection} classes.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
 @ThreadSafe
-public interface ComparatorService<T> {
+@StackSafe
+public interface ComparatorService<T> extends Comparator<T> {
 
     /**
      * Returns the hash code for the specified object (consistent with 
@@ -29,7 +43,7 @@ public interface ComparatorService<T> {
      * @param  obj the object to return the hashcode for.
      * @return the hashcode for the specified object.
      */
-    int hashCodeOf(T obj);
+     int hashCodeOf(T obj);
 
     /**
      * Indicates if the specified objects can be considered equal.
@@ -39,7 +53,7 @@ public interface ComparatorService<T> {
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-    boolean areEqual(T o1, T o2);
+     boolean areEqual(T o1, T o2);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
