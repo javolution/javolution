@@ -76,8 +76,13 @@ public interface MapService<K, V>  {
     //       
 
     /** 
-     * Returns the comparator to be used for key comparisons / hash-code calculations.
+     * Returns the comparator to be used for key comparisons / hash code calculations.
      */
-    ComparatorService<K> keyComparator();
+    ComparatorService<? super K> getKeyComparator();
 
+    /** 
+     * Sets the comparator to be used for key comparisons / hash code calculations.
+     */
+    void setKeyComparator(ComparatorService<? super K> cmp);
+ 
 }
