@@ -364,6 +364,7 @@ javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svne
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/Operators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
