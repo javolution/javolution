@@ -10,23 +10,17 @@ package javolution.internal.osgi;
 
 import javolution.context.ConcurrentContext;
 import javolution.context.HeapContext;
+import javolution.context.ImmortalContext;
 import javolution.context.LocalContext;
 import javolution.context.LogContext;
 import javolution.context.SecurityContext;
 import javolution.context.StackContext;
-import javolution.internal.context.ConcurrentContextImpl;
 import javolution.internal.context.ContextTracker;
-import javolution.internal.context.HeapContextImpl;
-import javolution.internal.context.LocalContextImpl;
-import javolution.internal.context.LogContextImpl;
-import javolution.internal.context.SecurityContextImpl;
-import javolution.internal.context.StackContextImpl;
-import javolution.internal.text.TextContextImpl;
-import javolution.internal.xml.XMLContextImpl;
 import javolution.osgi.ConfigurableService;
 import javolution.text.TextContext;
 import javolution.util.Initializer;
 import javolution.xml.XMLContext;
+
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -42,22 +36,24 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class JavolutionActivator implements BundleActivator {
 
-    public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER = new ContextTracker<ConcurrentContext>(
-            ConcurrentContext.class, ConcurrentContextImpl.class);
-    public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER = new ContextTracker<HeapContext>(
-            HeapContext.class, HeapContextImpl.class);
-    public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER = new ContextTracker<LocalContext>(
-            LocalContext.class, LocalContextImpl.class);
-    public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER = new ContextTracker<LogContext>(
-            LogContext.class, LogContextImpl.class);
-    public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER = new ContextTracker<SecurityContext>(
-            SecurityContext.class, SecurityContextImpl.class);
-    public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER = new ContextTracker<StackContext>(
-            StackContext.class, StackContextImpl.class);
-    public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER = new ContextTracker<TextContext>(
-            TextContext.class, TextContextImpl.class);
-    public final static ContextTracker<XMLContext> XML_CONTEXT_TRACKER = new ContextTracker<XMLContext>(
-            XMLContext.class, XMLContextImpl.class);
+    public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER 
+        = new ContextTracker<ConcurrentContext>(ConcurrentContext.class);
+    public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER 
+       = new ContextTracker<HeapContext>(HeapContext.class);
+    public final static ContextTracker<ImmortalContext> IMMORTAL_CONTEXT_TRACKER 
+    = new ContextTracker<ImmortalContext>(ImmortalContext.class);
+    public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER 
+       = new ContextTracker<LocalContext>(LocalContext.class);
+    public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER 
+        = new ContextTracker<LogContext>(LogContext.class);
+    public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER 
+        = new ContextTracker<SecurityContext>(SecurityContext.class);
+    public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER 
+        = new ContextTracker<StackContext>(StackContext.class);
+    public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER
+       = new ContextTracker<TextContext>(TextContext.class);
+    public final static ContextTracker<XMLContext> XML_CONTEXT_TRACKER
+       = new ContextTracker<XMLContext>(XMLContext.class);
 
     private ServiceTracker<LogService, LogService> logServiceTracker;
     private static JavolutionActivator INSTANCE;
@@ -78,6 +74,7 @@ public class JavolutionActivator implements BundleActivator {
 
         CONCURRENT_CONTEXT_TRACKER.activate(bc);
         HEAP_CONTEXT_TRACKER.activate(bc);
+        IMMORTAL_CONTEXT_TRACKER.activate(bc);
         LOCAL_CONTEXT_TRACKER.activate(bc);
         LOG_CONTEXT_TRACKER.activate(bc);
         SECURITY_CONTEXT_TRACKER.activate(bc);
@@ -94,6 +91,7 @@ public class JavolutionActivator implements BundleActivator {
     public void stop(BundleContext bc) throws Exception {
         CONCURRENT_CONTEXT_TRACKER.deactivate(bc);
         HEAP_CONTEXT_TRACKER.deactivate(bc);
+        IMMORTAL_CONTEXT_TRACKER.deactivate(bc);
         LOCAL_CONTEXT_TRACKER.deactivate(bc);
         LOG_CONTEXT_TRACKER.deactivate(bc);
         SECURITY_CONTEXT_TRACKER.deactivate(bc);

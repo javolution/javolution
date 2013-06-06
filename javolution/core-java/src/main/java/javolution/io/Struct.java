@@ -17,7 +17,6 @@ import java.nio.ByteOrder;
 import javolution.context.LocalParameter;
 import javolution.lang.MathLib;
 import javolution.text.TextBuilder;
-import javolution.text.TypeFormat;
 
 /**
  * <p> Equivalent to a  <code>C/C++ struct</code>; this class confers
@@ -153,11 +152,8 @@ public class Struct {
      * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter<Integer>(4) {
-        public void configure(CharSequence configuration) {
-            setDefaultValue(TypeFormat.parseInt(configuration));
-        }
-    };
+    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter<Integer>(4);
+    
     /**
      * Holds the outer struct if any.
      */

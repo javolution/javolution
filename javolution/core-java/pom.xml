@@ -94,6 +94,7 @@
                 <configuration>
                    <sourcepath>${project.build.directory}/colorized</sourcepath>
                    <excludePackageNames>*.internal</excludePackageNames>
+                   <docfilessubdirs>true</docfilessubdirs>
                 </configuration>
                 <executions>
                     <execution>

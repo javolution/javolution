@@ -28,9 +28,9 @@ public final class IdentityComparatorImpl<E> implements ComparatorService<E>, Se
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public int compare(Object o1, Object o2) {
-        return ((Comparable<Object>) o1).compareTo(o2);
+        if (o1 == o2) return 0; // Only case of equality.
+        return hashCodeOf(o1) - hashCodeOf(o2);
     }   
 
     private static final long serialVersionUID = -8716468453685126721L;

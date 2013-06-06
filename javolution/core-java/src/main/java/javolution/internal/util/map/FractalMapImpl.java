@@ -13,6 +13,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import javolution.util.service.ComparatorService;
+
 /**
  * A simple implementation of a map
  */
@@ -28,6 +30,10 @@ public final class FractalMapImpl<K, V> extends AbstractMapImpl<K, V> {
 
     @SuppressWarnings("unchecked")
     private EntryImpl<K, V>[] entries = (EntryImpl<K, V>[]) new EntryImpl[INITIAL_BLOCK_CAPACITY];
+    
+    public FractalMapImpl(ComparatorService<? super K> keyComparator) {
+        // TODO
+    }    
     
     @SuppressWarnings("unchecked")
     @Override

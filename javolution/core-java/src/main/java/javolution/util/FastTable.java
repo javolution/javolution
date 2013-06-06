@@ -9,12 +9,14 @@
 package javolution.util;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
+import javolution.annotation.RealTime;
 import javolution.internal.util.table.FractalTableImpl;
 import javolution.internal.util.table.NoDuplicateTableImpl;
 import javolution.internal.util.table.ReversedTableImpl;
@@ -27,64 +29,56 @@ import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
 
 /**
- * <p> A random access collection of ordered/unordered elements with fast
- * insertion/deletion and smooth (time bounded) capacity increase/decrease.
- * The default implementation (fractal based) ensures that basic operations 
- * <b>worst</b> execution time is in <i><b>O(log(size))</b></i> even 
- * for arbitrary insertions or deletions. The capacity of a fast table 
- * is automatically adjusted to best fit its size (e.g. when a table is cleared
- * its memory footprint is minimal).</p>
- * <img src="doc-files/list-add.png"/>
+ * <p> A high-performance table (fractal-based) with {@link RealTime real-time} 
+ *     behavior (insertion/deletion in <i><b>O(Log(size))</b></i>; smooth capacity 
+ *     increase/decrease and minimal memory footprint.</p>
+ * <p> The fractal-based implementation ensures that basic operations 
+ *     <b>worst</b> execution time is always in <i><b>O(log(size))</b></i> even 
+ *     for arbitrary insertions or deletions. The capacity of a fast table 
+ *     is automatically adjusted to best fit its size (e.g. when a table is cleared
+ *     its memory footprint is minimal).</p>
+ *     <img src="doc-files/list-add.png"/>
  *
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
- * {@link java.util.LinkedList LinkedList}, {@link java.util.ArrayDeque ArrayDeque}
- * and even {@link java.util.TreeSet TreeSet} in terms of adaptability, space or performance.
- * Null elements are supported and fast tables can be concurrently accessed using
- * their {@link #shared() shared} views. On top of all the views inherited from FastCollection 
- * (such as {@link #unmodifiable unmodifiable}, {@link #shared}, {@link FastCollection#filtered filtered},
- * {@link FastCollection#mapped mapped} or {@link FastCollection#noDuplicate differeninoDuplicate}), fast tables
- * support the following specific views:
- * <ol>
- *    <li>{@link #subList} - View on a portion of the table.</li>
- *    <li>{@link #sorted} - View keeping its elements sorted (sorted tables have faster 
- *        {@link #indexOf indexOf}, {@link #contains contains} and {@link #remove(java.lang.Object) remove} methods).
- *    .</li>
- *    <li>{@link #reverse} - View for which elements are in the reverse order.</li>
- * </ol>
- * Here are few examples of chaining using table views:
+ *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
+ *      in terms of adaptability, space or performance.
+ *     Null elements are supported and fast tables can be concurrently iterated over using
+ *     their {@link #shared() shared} views. Fast table inherits from all the fast collection
+ *     views and also support the {@link #subList subList} view on a portion of the table.</li>
  * [code]
- * FastTable<Session> sessions = new FastTable<Session>().shared(); // Table which can be concurrently accessed/modified.
- * FastTable<Item> items = new FastTable<Item>().sorted().noDuplicate(); // Equivalent to FastSortedSet except it is a list!
- * FastTable<CharSequence> names = new FastTable<CharSequence>.setComparator(FastComparator.LEXICAL); // Use lexical comparator for object equality/comparison.
- * ...
- * names.reverse().sort(); // Sorts the names in reverse alphabetical order.
- * names.shared().subList(0, mames.size() / 2); // Provides a view over the first half of a shared table.
- * names.shared().subList(mames.size() / 2, names.size()); // Provides a view over the second half of a shared table.
- * names.subList(start, end).shared(); // Provides a concurrently modifiable view over a part of a table (which is different from the above).
- * [/code]</p>
+ * FastTable<String> names = ...;
+ * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names ignoring case.
+ * names.subList(0, names.size() / 2).clear(); // Removes the first half of the table.
+ * names.filter(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
+ * [/code]
+ * </p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations are faster
- * when performed using closures (and the notation is shorter with Java 8).
- * This is also the preferred mean of iterating over {@link FastTable#shared shared}
- * tables since <code>ConcurrentModificationException</code> cannot occur ! 
+ *     when performed using closures (and the notation is shorter with Java 8).
+ *     This is also the preferred mean of iterating over {@link FastTable#shared shared}
+ *     tables since <code>ConcurrentModificationException</code> cannot occur ! 
  * [code]
- * FastTable<Person> persons = new FastTable<Person>().shared();
+ * FastTable<Person> persons = new FastTable<Person>().shared(); // Thread-safe table.
  * ...
- * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
- *     return persons.filtered(new Predicate<Person>() { 
+ * Person findWithName(final String name) { 
+ *     return persons.filter(new Predicate<Person>() { 
  *         public boolean test(Person person) {
  *             return (person.getName().equals(name));
  *         }
- *     }).peek();
+ *     }).reduce(Operators.ANY);
  * }
  * [/code]
  * The code above can be simplified using Java 8.
  * [code]
- * Person findWithName(final String name) { // Thread-safe even if persons concurrently modified.
- *     return persons.filtered(person -> person.getName().equals(name)).peek();
+ * Person findWithName(String name) {
+ *     return persons.filter(person -> person.getName().equals(name)).reduce(Operators.ANY);
  * }
  * [/code]
  * </p>
+ *  <p> The iteration order over a basic table is the {@link #add insertion} order; 
+ *      specialization may have a different order, for example the {@link FastSortedTable} has 
+ *      an iteration order based on element order (and faster {@link #contains},
+ *      {@link #remove} methods).</p> 
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -92,24 +86,22 @@ import javolution.util.service.TableService;
 public class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
 
-    /**
-     * Holds the actual table service implementation.
-     */
-    private final TableService<E> service;
-
-    /**
+      /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
      */
     public FastTable() {
-        service = new FractalTableImpl<E>();
+        super(new FractalTableImpl<E>());
     }
 
     /**
-     * Creates a table backed up by the specified implementation.
+     * Creates a table having the specified initial elements.
      */
-    protected FastTable(TableService<E> service) {
-        this.service = service;
+    public FastTable(E... elements) {
+        this();     
+        for (E e : elements) {
+            add(e);
+        }
     }
 
     /***************************************************************************
@@ -126,39 +118,9 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return new FastTable<E>(new SharedTableImpl<E>(service));
     }
 
-    /**
-     * Sorts this table and returns a view that keeps the table sorted. 
-     * Having a sorted table improved significantly the
-     * performance of the methods {@link #indexOf(java.lang.Object) indexOf},
-     * {@link #contains contains} and {@link #remove(java.lang.Object) remove}.
-     *
-     * @throws UnsupportedOperationException if this table is not empty.
-     */
-    public FastTable<E> sort() {
-        service.sort();
-        return new FastTable<E>(new SortedTableImpl<E>(service));
-    }
-
-    /**
-     * Returns a view for which the elements are in reverse order.
-     * Iterating on this view (iterator or closure) will start from the
-     * last element and finish by the first.</p>
-     */
-    public FastTable<E> reverse() {
-        return new FastTable<E>(new ReversedTableImpl<E>(service));
-    }
-
-    /**
-     * <p> Returns a view that keeps this table (initially empty) without 
-     *     duplicate; elements are not added if already present.</p>
-     * 
-     * @throws UnsupportedOperationException if this table is not empty.
-     */
-    public FastTable<E> noDuplicate() {
-        if (!isEmpty())
-            throw new UnsupportedOperationException(
-                    "No duplicate view requires the tables to be initially empty");
-        return new FastTable<E>(new NoDuplicateTableImpl<E>(service));
+    @Override
+    public FastTable<E> usingComparator(Comparator<? super E> comparator) {
+        return null;
     }
 
     @Override
@@ -349,7 +311,10 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
 
     /**
-     * Sorts this table in place (quick sort). 
+     * Sorts this table in place (quick sort). Sorts uses the table 
+     * comparator.
+     * 
+     * @see #usingComparator(java.util.Comparator)
      */
     public void sort() {
         service.sort();
@@ -367,10 +332,21 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     public void removeRange(int fromIndex, int toIndex) {
         subList(fromIndex, toIndex).clear();
     }
+  
+    /***************************************************************************
+     * For sub-classes.
+     */
 
+    /**
+     * Creates a fast table backed up by the specified implementation.
+     */
+    protected FastTable(TableService<E> service) {
+        super(service);
+    }
+    
     @Override
     protected TableService<E> getService() {
-        return service;
+        return (TableService<E>) super.getService();
     }
     
     private static final long serialVersionUID = 9153496416654421848L;

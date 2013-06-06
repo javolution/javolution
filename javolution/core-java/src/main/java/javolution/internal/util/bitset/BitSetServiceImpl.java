@@ -9,9 +9,15 @@
 package javolution.internal.util.bitset;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
 import javolution.lang.MathLib;
+import javolution.util.Comparators;
+import javolution.util.Index;
+import javolution.util.function.Predicate;
 import javolution.util.service.BitSetService;
+import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 
 /**
  * A table of indices implemented using packed bits (long[]).
@@ -126,11 +132,6 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     //
     // Clear/Set/Flip Operations
     //
-
-    @Override
-    public void clear() {
-        bits = new long[0];
-    }
 
     @Override
     public void clear(int bitIndex) {
@@ -293,7 +294,72 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     public long[] toLongArray() {
         return bits.clone();
     }
+
+    //
+    // SetService methods.
+    // 
+
+    @Override
+    public void clear() {
+        bits = new long[0];
+    }
     
+    @Override
+    public int size() {
+        return cardinality();
+    }
+
+    @Override
+    public boolean add(Index index) {
+        return !getAndSet(index.intValue(), true);
+    }
+
+    @Override
+    public boolean contains(Index index) {
+        return get(index.intValue());        
+    }
+    
+    @Override
+    public boolean remove(Index index) {
+        return getAndSet(index.intValue(), false);
+    }
+
+    @Override
+    public boolean doWhile(Predicate<? super Index> predicate) {
+        for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
+            if (!predicate.test(Index.valueOf(i)))
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super Index> predicate) {
+        boolean modified = false;
+        for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
+            if (predicate.test(Index.valueOf(i))) {
+                clear(i);
+                modified = true;
+            }
+        }
+        return modified;
+    }
+    
+    @Override
+    public Iterator<Index> iterator() {
+        return new BitSetIteratorImpl(this, 0);
+    }
+
+    @Override
+    public ComparatorService<? super Index> comparator() {
+        return Comparators.IDENTITY;
+    }
+    
+    @Override
+    public CollectionService<Index>[] trySplit(int n) {
+        return null; // No split.
+    }
+
     /**
      * Sets the new length of the table (all new bits are <code>false</code>).
      *
@@ -308,4 +374,5 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     }
 
     private static final long serialVersionUID = 3261649277588514214L;
+
 }

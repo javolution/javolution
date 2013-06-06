@@ -14,41 +14,48 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import javolution.annotation.RealTime;
+import javolution.annotation.RealTime.Limit;
 import javolution.internal.util.map.FractalMapImpl;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
 
 /**
- * <p> A customizable map with real-time behavior; smooth capacity increase and 
- *     <i>thread-safe</i> behavior without external synchronization when
- *     {@link #shared shared}. The map capacity of the default implementation 
- *     is automatically adjusted to best fit its size (e.g. when the map is 
- *     cleared its memory footprint is minimal).</p>
- *     <img src="doc-files/map-put.png"/>
- * 
- * <p> The iteration order for the default implementation is non-deterministic, 
- *     for a predictable insertion order, the  {@link #ordered ordered}
- *     view can be used (equivalent to {@link LinkedHashMap}).</p> 
+ * <p> A high-performance map with {@link RealTime real-time} behavior; 
+ *     smooth capacity increase/decrease and minimal memory footprint. 
+ *     Fast maps support multiple views which can be chained.
+ * <ul>
+ *    <li>{@link #unmodifiable} - View which does not allow for modification.</li>
+ *    <li>{@link #shared} - View allowing for concurrent read/write.</li>
+ *    <li>{@link #parallel} - View allowing concurrent iterations (closure-based) over the map's entries, keys or values.</li>
+ *    <li>{@link #entrySet} - Set view over the map keys.</li>
+ *    <li>{@link #keySet} - Set view over the map keys.</li>
+ *    <li>{@link #values} - Collection view over the map keys.</li>
+ * </ul>      
+ * <p> The iteration order over the fast map keys, values or entries is deterministic 
+ *     (unlike {@link java.util.HashMap}). It is either the insertion order (default) 
+ *     or the key order for {@link FastSortedMap} subclasses.</p> 
  *     
- * <p> Fast maps may use custom {@link #setKeyComparator key comparator}, 
- *     <code>null</code> keys are also supported.
+ * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps. 
  *     [code]
- *     FastMap<Foo, Bar> identityMap = new FastMap<Foo, Bar>().setKeyComparator(FastComparator.IDENTITY);
- *     [/code]
- *     Fast maps can advantageously replace any of the standard 
- *     <code>java.util</code> maps. For example:
- *     [code]
- *     Map<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // ConcurrentHashMap
- *     Map<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>().ordered(); // LinkedHashMap
- *     Map<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().ordered().shared(); // Does not exist in java.util !
- *     Map<Foo, Bar> unmodifiableMap = new FastMap<Foo, Bar>().unmodifiable(); // Unmodifiable view.
- *     ...
- *     [/code]</p>
+ *     FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
+ *     FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
+ *     FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
+ *     FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
+ *     FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
+ *     FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
+ *     FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Comparators.IDENTITY);
+ *     FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Comparators.LEXICAL);  // Allows for value retrieval using any CharSequence key.
+ *     FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.STRING);  // Use high-performance <code>String</code> comparator
+ *     ...                                                                                    // (constant-time hashCode calculations).
+ *     [/code]</p>     
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0.0, December 12, 2012
  */
+@RealTime
 public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
 
     /**
@@ -57,28 +64,40 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
     private final MapService<K, V> impl;
 
     /**
-     * Creates an empty map whose capacity increments or decrements smoothly
-     * without large resize/rehash operations.
+     * Creates an empty hash map.
      */
     public FastMap() {
-        impl = new FractalMapImpl<K, V>();
+        this(Comparators.STANDARD);
     }
-
+    
     /**
-     * Creates a map backed up by the specified implementation.
+     * Creates an empty hash map using the specified comparator for key 
+     * equality only (for sorting the {@link FastSortedMap} subclass should 
+     * be used instead).
      */
-    protected FastMap(MapService<K, V> service) {
-        this.impl = service;
+    public FastMap(ComparatorService<? super K> keyEquality) {
+        impl = new FractalMapImpl<K, V>(keyEquality);
+    }
+        
+    /**
+     * Returns the comparator used by this map for key equality
+     * or comparison (if the map is sorted).
+     * 
+     * @see #FastMap(ComparatorService)
+     * @see FastSortedMap
+     */
+    public ComparatorService<? super K> comparator() {
+        return impl.getKeyComparator();
     }
 
     /***************************************************************************
-     * Map views.
+     * Views.
      */
 
     /**
      * Returns an unmodifiable view of this map.
-     * Attempts to modify the map returned or the map elements (keys, values, 
-     * entries) will result in an {@link UnsupportedOperationException} being thrown. 
+     * Attempts to modify the map returned or the map elements (keys, values or 
+     * entries) results in an {@link UnsupportedOperationException} being thrown. 
      */
     public FastMap<K, V> unmodifiable() {
         return null; // TODO
@@ -87,38 +106,53 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
     /**
      * Returns a shared view over this map.
      * Multiple threads may concurrently modify this map or the map elements
-     * (key, values, entries).
+     * (key, values or entries). The implementation guarantees that concurrent
+     * accesses can always be performed without blocking.
      */
     public FastMap<K, V> shared() {
         return null; // TODO
     }
 
     /**
-     * Returns an ordered view of this map (insertion-order).
-     * Closures (and iterations) over the map elements (key, values,
-     * entries) have a predictable iteration order which is the order 
-     * in which the entries are put.
+     * Returns a parallel view over this map.
+     * Closure-based iterations over the maps keys, values or entries can be 
+     * performed concurrently.
      */
-    public FastMap<K, V> ordered() {
+    public FastMap<K, V> parallel() {
         return null; // TODO
     }
 
     /**
-     * Sets the key comparator to be used by this map.
-     * If the map is not empty, this operation may result in the rehashing 
-     * of all the map's entries.
+     * Returns a set view of the keys contained in this map.
+     * The set is backed by the map, so changes to the map are
+     * reflected in the set, and vice-versa.
      */
-    public FastMap<K, V> setKeyComparator(Comparators<? super K> cmp) {
+    public FastSet<K> keySet() {
         return null; // TODO
     }
 
     /**
-     * Sets the value comparator to be used by this map.
+     * Returns a collection view of the values contained in this map.
+     * The collection is backed by the map, so changes to the map are
+     * reflected in the collection, and vice-versa. 
      */
-    public FastMap<K, V> setValueComparator(Comparators<? super V> cmp) {
+    public FastCollection<V> values() {
         return null; // TODO
     }
-    
+
+    /**
+     * Returns a {@link FastCollection} view of the mappings contained in 
+     * this map. The set is backed by the map, so changes to the map are
+     * reflected in the set, and vice-versa. 
+     */
+    public FastSet<Entry<K, V>> entrySet() {
+        return null;  // TODO
+    }
+
+    /***************************************************************************
+     * Map interface.
+     */
+
     /**
      * Returns the number of key-value mappings in this map.
      * 
@@ -158,6 +192,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      *         specified value.
      */
     @SuppressWarnings("unchecked")
+    @RealTime(Limit.LINEAR)
     public boolean containsValue(Object value) {
         return impl.values().contains((V) value);
     }
@@ -243,33 +278,6 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
         impl.clear();
     }
 
-    /**
-     * Returns a {@link FastCollection} view of the keys contained in this map.
-     * The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa.
-     */
-    public KeySet<K> keySet() {
-        return new KeySet<K>(impl.keySet());
-    }
-
-    /**
-     * Returns a {@link FastCollection} view of the values contained in this map.
-     * The collection is backed by the map, so changes to the map are
-     * reflected in the collection, and vice-versa. 
-     */
-    public Values<V> values() {
-        return new Values<V>(impl.values());
-    }
-
-    /**
-     * Returns a {@link FastCollection} view of the mappings contained in 
-     * this map. The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa. 
-     */
-    public EntrySet<K, V> entrySet() {
-        return new EntrySet<K, V>(impl.entrySet());
-    }
-
     /***************************************************************************
      * ConcurrentMap Interface.
      */
@@ -295,64 +303,21 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
         return impl.replace(key, value);
     }
     
-    /**
-     * A fast collection view over the map keys.
+    /***************************************************************************
+     * For sub-classes.
      */
-    public static final class KeySet<K> extends FastCollection<K> implements
-            Set<K> {
 
-        private final CollectionService<K> impl;
-
-        private KeySet(CollectionService<K> service) {
-            this.impl = service;
-        }
-
-        @Override
-        protected CollectionService<K> getService() {
-            return impl;
-        }
-
-        private static final long serialVersionUID = 5965229814125983593L;
+    /**
+     * Creates a map backed up by the specified implementation.
+     */
+    protected FastMap(MapService<K, V> implementation) {
+        this.impl = implementation;
     }
 
     /**
-     * A fast collection view over the map entries.
+     * Returns this map service implementation.
      */
-    public static final class EntrySet<K, V> extends
-            FastCollection<Entry<K, V>> implements Set<Entry<K, V>> {
-
-        private final CollectionService<Entry<K, V>> impl;
-
-        private EntrySet(CollectionService<Entry<K, V>> service) {
-            this.impl = service;
-        }
-
-        @Override
-        protected CollectionService<Entry<K, V>> getService() {
-            return impl;
-        }
-
-        private static final long serialVersionUID = -3956521670593088014L;
-    }
-
-    /**
-     * A fast collection view over the map values.
-     */
-    public static final class Values<V> extends FastCollection<V> {
-
-        private final CollectionService<V> impl;
-
-        private Values(CollectionService<V> service) {
-            this.impl = service;
-        }
-
-        @Override
-        protected CollectionService<V> getService() {
-            return impl;
-        }
-
-        private static final long serialVersionUID = -424158623485419456L;
-    }
-
-  
+    protected MapService<K, V> getService() {
+        return impl;
+    }    
 }

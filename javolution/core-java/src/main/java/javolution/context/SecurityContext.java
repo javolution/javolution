@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRACKER;
+import javolution.internal.context.SecurityContextImpl;
 import javolution.lang.Configurable;
 import javolution.lang.Permission;
 
@@ -125,7 +126,8 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     protected static SecurityContext current() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null) return ctx;
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
+    private static final SecurityContextImpl DEFAULT = new SecurityContextImpl();
 }

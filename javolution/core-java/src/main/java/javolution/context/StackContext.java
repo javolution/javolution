@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
+import javolution.internal.context.StackContextImpl;
 import javolution.lang.Configurable;
 import javolution.lang.Copyable;
 import javolution.util.function.Function;
@@ -74,7 +75,7 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
         StackContext ctx = AbstractContext.current(StackContext.class);
         if (ctx != null) return ctx.inner().enterScope();
         return STACK_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.get()).inner().enterScope();
+                WAIT_FOR_SERVICE.get(), DEFAULT).inner().enterScope();
     }
     
     /**
@@ -108,4 +109,5 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      */
     protected abstract <P,R extends Copyable<R>> R executeInContext(Function<P,R> function, P parameter);
 
+    private static final StackContextImpl DEFAULT = new StackContextImpl();
 }

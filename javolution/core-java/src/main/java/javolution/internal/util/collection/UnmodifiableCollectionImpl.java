@@ -18,37 +18,17 @@ import javolution.util.service.ComparatorService;
 /**
  * An unmodifiable view over a collection.
  */
-public final class UnmodifiableCollectionImpl<E> implements
+public class UnmodifiableCollectionImpl<E> implements
         CollectionService<E>, Serializable {
 
-    private final CollectionService<E> that;
+    protected final CollectionService<E> that;
 
     public UnmodifiableCollectionImpl(CollectionService<E> that) {
         this.that = that;
     }
 
     @Override
-    public int size() {
-        return that.size();
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
     public boolean add(E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return that.contains(element);
-    }
-
-    @Override
-    public boolean remove(E element) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -58,7 +38,7 @@ public final class UnmodifiableCollectionImpl<E> implements
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
+    public boolean removeIf(Predicate<? super E> predicate) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -86,13 +66,8 @@ public final class UnmodifiableCollectionImpl<E> implements
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
-    }
-    
-    @Override
-    public void setComparator(ComparatorService<? super E> cmp) {
-        throw new UnsupportedOperationException("Unmodifiable");
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
     
     @SuppressWarnings("unchecked")

@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER;
+import javolution.internal.context.LocalContextImpl;
 import javolution.lang.Configurable;
 
 /**
@@ -83,7 +84,8 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
     protected static LocalContext current() {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
         if (ctx != null) return ctx;
-        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
+    private static final LocalContextImpl DEFAULT = new LocalContextImpl();
 }

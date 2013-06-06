@@ -18,50 +18,23 @@ import javolution.util.service.ComparatorService;
 /**
  * A filtered view over a collection.
  */
-public final class FilteredCollectionImpl<E> implements
+public class FilteredCollectionImpl<E> implements
         CollectionService<E>, Serializable {
 
-    private final CollectionService<E> that;
+    protected final CollectionService<E> that;
     
-    private final Predicate<? super E> predicate;
+    protected final Predicate<? super E> filter;
 
     public FilteredCollectionImpl(CollectionService<E> that, 
-            Predicate<? super E> predicate) {
+            Predicate<? super E> filter) {
         this.that = that;
-        this.predicate = predicate;
+        this.filter = filter;
     }
 
-    @Override
-    public int size() {
-        final int[] count = new int[1];
-        that.doWhile(new Predicate<E>() {
-
-            @Override
-            public Boolean apply(E param) {
-                if (predicate.apply(param)) count[0]++;
-                return true;
-            }});
-        return count[0];
-    }
-
-    @Override
-    public void clear() {
-        that.removeAll(predicate);
-    }
-    
+  
     @Override
     public boolean add(E element) {
-        return predicate.apply(element) && that.add(element); 
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return predicate.apply(element) && that.contains(element);
-    }
-
-    @Override
-    public boolean remove(E element) {
-        return predicate.apply(element) && that.remove(element);
+        return filter.test(element) && that.add(element); 
     }
 
     @Override
@@ -69,21 +42,21 @@ public final class FilteredCollectionImpl<E> implements
         return that.doWhile(new Predicate<E>() {
 
             @Override
-            public Boolean apply(E param) {
-                if (predicate.apply(param)) {
-                    return p.apply(param);
+            public boolean test(E param) {
+                if (filter.test(param)) {
+                    return p.test(param);
                 }
                 return true;
             }});
     }
 
     @Override
-    public boolean removeAll(final Predicate<? super E> p) {
-        return that.removeAll(new Predicate<E>() {
+    public boolean removeIf(final Predicate<? super E> p) {
+        return that.removeIf(new Predicate<E>() {
 
             @Override
-            public Boolean apply(E param) {
-                return predicate.apply(param) && p.apply(param);
+            public boolean test(E param) {
+                return filter.test(param) && p.test(param);
             }});
     }
 
@@ -100,7 +73,7 @@ public final class FilteredCollectionImpl<E> implements
                 while (true) {
                     if (!thatIterator.hasNext()) return false;
                     next = thatIterator.next();
-                    if (predicate.apply(next)) {
+                    if (filter.test(next)) {
                         peekNext = true;
                         return true;
                     }
@@ -114,8 +87,8 @@ public final class FilteredCollectionImpl<E> implements
                     return next;
                 }
                 while (true) {
-                    E e = thatIterator.next();
-                    if (predicate.apply(e)) return e;
+                    next = thatIterator.next();
+                    if (filter.test(next)) return next;
                 }
             }
 
@@ -128,13 +101,8 @@ public final class FilteredCollectionImpl<E> implements
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
-    }
-    
-    @Override
-    public void setComparator(ComparatorService<? super E> cmp) {
-        that.setComparator(cmp);
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
     
     @SuppressWarnings("unchecked")
@@ -144,7 +112,7 @@ public final class FilteredCollectionImpl<E> implements
         if (tmp == null) return null;
         FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length]; 
        for (int i=0; i < tmp.length; i++) {
-            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], predicate); 
+            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter); 
        }
         return filtereds;
     }

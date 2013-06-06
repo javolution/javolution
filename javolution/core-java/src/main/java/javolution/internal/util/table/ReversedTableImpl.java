@@ -80,7 +80,7 @@ public final class ReversedTableImpl<E> extends AbstractTableImpl<E> {
     }
     
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
+    public boolean removeIf(Predicate<? super E> predicate) {
         return removeAllDefault(predicate);
     }
 
@@ -144,8 +144,8 @@ public final class ReversedTableImpl<E> extends AbstractTableImpl<E> {
     // 
     
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
     
     @Override

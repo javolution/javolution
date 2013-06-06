@@ -44,7 +44,7 @@ public interface MapService<K, V>  {
     
     /** Same as {@link java.util.Map#entrySet()} except it does support the
      * <code>add</code> and <code>addAll</code> operations. */
-    CollectionService<Entry<K,V>> entrySet();
+    SetService<Entry<K,V>> entrySet();
 
     /** Same as {@link java.util.Map#values()} */
     CollectionService<V> values();
@@ -52,7 +52,7 @@ public interface MapService<K, V>  {
     /** Same as {@link java.util.Map#keySet()} except it does support the
      * <code>add</code> and <code>addAll</code> operations (the corresponding 
      * entry in the map has a <code>null</code> value). */
-    CollectionService<K> keySet();
+    SetService<K> keySet();
 
     //
     // ConcurrentMap Interface
@@ -79,10 +79,5 @@ public interface MapService<K, V>  {
      * Returns the comparator to be used for key comparisons / hash code calculations.
      */
     ComparatorService<? super K> getKeyComparator();
-
-    /** 
-     * Sets the comparator to be used for key comparisons / hash code calculations.
-     */
-    void setKeyComparator(ComparatorService<? super K> cmp);
  
 }

@@ -19,24 +19,23 @@ public final class LexicalComparatorImpl implements ComparatorService<CharSequen
 
     @Override
     public int hashCodeOf(CharSequence csq) {
-        if (csq == null)
-            return 0;
-        final int length = csq.length();
-        if (length == 0)
-            return 0;
-        return csq.charAt(0) + csq.charAt(length - 1) * 31
-                + csq.charAt(length >> 1) * 1009 + csq.charAt(length >> 2)
-                * 27583 + csq.charAt(length - 1 - (length >> 2)) * 73408859;
+        if (csq == null) return -1;
+        int n = csq.length();
+        if (n == 0) return 0;
+        // Hash based on 5 characters only.
+        return csq.charAt(0) + csq.charAt(n - 1) * 31
+                + csq.charAt(n >> 1) * 1009 + csq.charAt(n >> 2) * 27583 
+                + csq.charAt(n - 1 - (n >> 2)) * 73408859;
     }
-
+    
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
         if ((csq1 == null) || (csq2 == null))
             return csq1 == csq2;
-        final int length = csq1.length();
-        if (csq2.length() != length)
+        final int n = csq1.length();
+        if (csq2.length() != n)
             return false;
-        for (int i = 0; i < length;) {
+        for (int i = 0; i < n;) {
             if (csq1.charAt(i) != csq2.charAt(i++))
                 return false;
         }

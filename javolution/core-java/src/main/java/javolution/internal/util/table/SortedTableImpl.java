@@ -38,7 +38,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public int indexOf(E element) {
-        ComparatorService<? super E> cmp = getComparator();
+        ComparatorService<? super E> cmp = comparator();
         int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) return i;
         return -1;
@@ -46,7 +46,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public int lastIndexOf(E element) {
-        ComparatorService<? super E> cmp = getComparator();
+        ComparatorService<? super E> cmp = comparator();
         int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) {
             while ((++i < size()) && cmp.areEqual(element, get(i))) {
@@ -105,8 +105,8 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     // 
 
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
     
     @Override
@@ -146,8 +146,8 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
-        return that.removeAll(predicate);
+    public boolean removeIf(Predicate<? super E> predicate) {
+        return that.removeIf(predicate);
     }
 
     @Override
@@ -196,7 +196,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     public static <E> int indexIfSortedOf(E element, TableService<E> table, int start, int length) {
         if (length == 0) return start;
         int half = length >> 1;
-       ComparatorService<? super E> comparator = table.getComparator();
+       ComparatorService<? super E> comparator = table.comparator();
         return (comparator.compare(element, table.get(start + half)) <= 0)
                 ? indexIfSortedOf(element, table, start, half)
                 : indexIfSortedOf(element, table, start + half + 1, length - half - 1);

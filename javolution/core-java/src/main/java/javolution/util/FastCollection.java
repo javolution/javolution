@@ -12,19 +12,26 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import javolution.annotation.Format;
+import javolution.annotation.RealTime;
+import javolution.annotation.RealTime.Limit;
 import javolution.annotation.StackSafe;
+import javolution.annotation.ThreadSafe;
+import javolution.internal.util.collection.CustomComparatorCollectionImpl;
+import javolution.internal.util.collection.DistinctCollectionImpl;
 import javolution.internal.util.collection.FilteredCollectionImpl;
 import javolution.internal.util.collection.MappedCollectionImpl;
+import javolution.internal.util.collection.ParallelCollectionImpl;
+import javolution.internal.util.collection.ReversedCollectionImpl;
 import javolution.internal.util.collection.SharedCollectionImpl;
+import javolution.internal.util.collection.SortedCollectionImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
+import javolution.internal.util.comparator.WrapperComparatorImpl;
 import javolution.lang.Copyable;
-import javolution.lang.Immutable;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
@@ -32,28 +39,33 @@ import javolution.util.function.Consumer;
 import javolution.util.function.Function;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
+import javolution.util.service.ComparatorService;
 import javolution.util.service.OperatorService;
 
 /**
- * <p> A closure-ready collection supporting multiple views which can be 
- *     chained. The following predefined views are defined.
- * <ol>
+ * <p> A high-performance collection with {@link RealTime real-time} behavior; 
+ *     smooth capacity increase/decrease and minimal memory footprint. 
+ *     Fast collections support multiple views which can be chained.
+ * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow for modification.</li>
  *    <li>{@link #shared} - View allowing for concurrent read/write.</li>
- *    <li>{@link #filter} - View exposing only the elements matching a specified predicate.</li>
- *    <li>{@link #map} - View exposing elements through a specified mapping function.</li>
- *    <li>{@link #sort} - View exposing elements in a {@link #getComparator sorted} order.</li>
- *    <li>{@link #reverse} - View exposing elements in a reverse order.</li>
- *    <li>{@link #parallel} - View for which closure operations are performed concurrently.</li>
- * </ol>
+ *    <li>{@link #filter} - View exposing only the elements matching a specified filter.</li>
+ *    <li>{@link #map} - View exposing elements through the specified mapping function.</li>
+ *    <li>{@link #sorted} - View exposing elements according to their sorting order.</li>
+ *    <li>{@link #reverse} - View exposing elements in reverse order.</li>
+ *    <li>{@link #distinct} - View exposing each element only once.</li>
+ *    <li>{@link #usingComparator} - View using a custom comparator for element equality/comparison.</li>
+ *    <li>{@link #parallel} - A {@link #shared() shared} view for which closure iterations can
+ *                             be performed concurrently.</li>
+ * </ul>
  *    Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
- *    Java 8 streams</a> except that actions on a view may impact the collection source.
+ *    Java 8 streams</a> except that views are themselves fast collections and can be used to update
+ *    the original collections.
  *    [code]
- *    FastCollection<String> names = new FastTable<String>().setComparator(Comparators.LEXICAL);
- *    ...
- *    System.out.println(names.sort()); // Prints the names in lexical order (no impact on the collection itself).
- *    names.subList(0, n).clear(); // Removes the n first names from names (see java.util.List).
- *    names.filter(isLong).clear(); // Removes all the long names from names.
+ *    FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
+ *    names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
+ *    names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
+ *    names.filter(isLong).clear(); // Removes all the persons with long names.
  *    names.parallel().filter(isLong).clear(); // Same as above but performed concurrently.
  *    ...
  *    Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
@@ -66,7 +78,7 @@ import javolution.util.service.OperatorService;
  *    [code]
  *    String anyLongName = names.filter(isLong).reduce(Operators.ANY); // Returns any long name.
  *    int nbrChars = names.map(toLength).reduce(Operators.SUM); // Returns the total number of characters (sequentially).
- *    int maxLength = names.parallel().map(toLength).reduce(Operators.MAX); // Finds the maximum length name in parallel.
+ *    int maxLength = names.parallel().map(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
  *    ...
  *    Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
  *         public Integer apply(CharSequence csq) {
@@ -74,21 +86,38 @@ import javolution.util.service.OperatorService;
  *         }
  *    });
  *    [/code]
+ *    Views may override the element comparator used by methods 
+ *    such as {@link #contains contains}, {@link #remove remove} or by views 
+ *    such as {@link #sorted sorted}, {@link #distinct distinct}.
+ *    [code]
+ *    // Case insensitive search for "Luc Surieux".
+ *    boolean found = names.usingComparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("Luc Surieux"); 
+ *    [/code]
+ *    </p>
  *           
- * <p> Collection can be iterated over using closures, this is also the safest way if
- *     the collection is {@link #shared() shared} or {@link #parallel() parallel} 
- *     (no concurrent modification exception possible). 
+ * <p> Fast collections can be iterated over using closures, this is also the
+ *     preferred way to iterate over {@link #shared() shared} collections (no concurrent modification exception possible).
+ *     If a collection (or a map) is shared, any chained view is also thread-safe.
+ *     Analogously, if a collection is {@link #parallel parallel}, any closure-based iteration over 
+ *     a chained view is performed concurrently. 
  *     [code]
- *     // Print names
- *     names.forEach(new Consumer<String>() {
- *         public void accept(String csq) {
- *              System.out.println(csq);
+ *     FastMap<String, Runnable> tasks = new FastMap<String, Runnable>().shared();
+ *     ...
+ *     boolean completed = tasks.values().doWhile(new Predicate<Runnable>() { // Thread-Safe (even if tasks concurrently modified).
+ *         public boolean test(Runnable task) {
+ *              try {
+ *                  task.run();
+ *                  return true; // Continue.
+ *              } (Throwable error) {
+ *                  return false; // Stop iterating.      
+ *              }
  *         }
  *     });
  *     [/code]
- *     The code above is greatly simplified with Java 8 (lambda expression support).
+ *     With Java 8, closures are greatly simplified using lambda expressions.
+ *     For example, the following prints all names in alphabetical order. 
  *     [code]
- *     names.forEach(csq -> System.out.println(csq)); // Print names.
+ *     names.sorted().forEach(str -> System.out.println(str)); 
  *     [/code]
  *     </p>
  * 
@@ -97,103 +126,169 @@ import javolution.util.service.OperatorService;
  */
 @StackSafe
 @Format(text = FastCollection.PlainText.class)
-public abstract class FastCollection<E> implements Collection<E>,
+@RealTime
+public class FastCollection<E> implements Collection<E>,
         Copyable<FastCollection<E>>, Serializable {
 
     /**
-     * Default constructor.
+     * Holds the actual collection implementation.
      */
-    protected FastCollection() {}
+    private final CollectionService<E> impl;
 
     /**
-     * Returns the service implementation of this collection.
+     * Creates a collection backed up by the specified service implementation.
      */
-    protected abstract CollectionService<E> getService();
+    protected FastCollection(CollectionService<E> service) {
+        this.impl = service;
+    }
+
+    /**
+     * Returns this collection service implementation.
+     */
+    protected CollectionService<E> getService() {
+        return impl;
+    }
 
     /***************************************************************************
      * Collection views.
      */
 
     /**
-     * Returns an unmodifiable/{@link Immutable} view of this collection. 
+     * Returns an unmodifiable view of this collection. 
      * Attempts to modify the returned collection result in an 
      * {@link UnsupportedOperationException} being thrown.
      */
     public FastCollection<E> unmodifiable() {
-        return new GenericCollection<E>(new UnmodifiableCollectionImpl<E>(
-                getService()));
+        return new FastCollection<E>(new UnmodifiableCollectionImpl<E>(impl));          
     }
-
+   
     /**
-     * Returns a concurrent read-write view of this collection.
-     * Thread safety is guaranteed only if all the concurrent threads 
-     * reading/writing this collection are using the same shared view directly.
-     * Iterators on {@link #shared} collections are deprecated as the may 
-     * raise {@link ConcurrentModificationException}.
+     * Returns a thread safe read-write view of this collection.
+     * Any view derived from a shared view is itself thread-safe.
+     * The semantic of a shared view allows for concurrent read / iterations 
+     * without blocking. The preferred way to iterate through a shared 
+     * collection is using closure (e.g. {@link #doWhile doWhile}, 
+     * {@link #removeIf removeIf}, {@link #forEach forEach}) as no concurrent 
+     * modification can possibly occur while iterating.
      */
     public FastCollection<E> shared() {
-        return new GenericCollection<E>(new SharedCollectionImpl<E>(
-                getService()));
+        return new FastCollection<E>(new SharedCollectionImpl<E>(impl));
     }
-
+    
+    /** 
+     * Returns a view over this collection overriding this collection 
+     * comparator. Any modification of the returned view is reflected 
+     * in this collection and vice-versa. The returned view uses the specified 
+     * comparator for methods such as {@link #contains contains}, 
+     * {@link #remove remove} as well as for views such as 
+     * {@link #sorted sorted}, {@link #distinct distinct}.
+     */
+    @SuppressWarnings("unchecked")
+    public FastCollection<E> usingComparator(Comparator<? super E> cmp) {
+        ComparatorService<E> comparator = (cmp instanceof ComparatorService) ?
+                (ComparatorService<E>)cmp :  new WrapperComparatorImpl<E>(cmp);
+        return new FastCollection<E>(new CustomComparatorCollectionImpl<E>(impl, comparator));
+    }
+    
     /** 
      * Returns a view exposing only the elements matching the specified 
-     * predicate. Any modification in the returned view is reflected in this
-     * collection and vice-versa. Adding/removing an element to the filtered 
+     * filter. Any modification of the returned view is reflected in this
+     * collection and vice-versa. Adding/removing elements to a filtered 
      * view for which the predicate is not verified has no effect 
      * (add/remove returns <code>false</code>).
      */
-    public FastCollection<E> filter(Predicate<? super E> predicate) {
-        return new GenericCollection<E>(new FilteredCollectionImpl<E>(
-                getService(), predicate));
-    }
-
+    public FastCollection<E> filter(Predicate<? super E> filter) {
+        return new FastCollection<E>(new FilteredCollectionImpl<E>(impl, filter));
+    }  
+    
     /** 
      * Returns a view exposing elements through the specified mapping function.
      * Any modification in the returned view is reflected in this
      * collection and vice-versa. The mapped view does not support adding 
      * new elements (although removing elements is authorized).
-     * Mapped views may use a custom comparators (with no impact on the 
-     * collection mapped).
      */
     public <R> FastCollection<R> map(Function<? super E, ? extends R> function) {
-        return new GenericCollection<R>(new MappedCollectionImpl<E, R>(
-                getService(), function));
+        return new FastCollection<R>(new MappedCollectionImpl<E, R>(impl, function));     
     }
 
+    /** 
+     * Returns a view exposing elements ordered according to this collection 
+     * {@link #comparator() comparator}. Adding/removing elements
+     * to a sorted view is authorized and will impact the view being sorted.
+     */
+    public FastCollection<E> sorted() {
+        return new FastCollection<E>(new SortedCollectionImpl<E>(impl));
+    }
+
+    /** 
+     * Returns a view exposing elements in reverse iterative order.
+     * Adding/removing elements to a reversed view is authorized and 
+     * will directly impact the original collection.
+     */
+    public FastCollection<E> reverse() {
+        return new FastCollection<E>(new ReversedCollectionImpl<E>(impl));
+    }
+
+    /** 
+     * Returns a view exposing only distinct elements (it does not iterate twice 
+     * over the {@link #comparator() same} elements). Any modification of the 
+     * returned view is reflected in this collection and vice-versa. 
+     * Adding/removing elements to the returned view is authorized and 
+     * directly impacts this collection. Adding elements already in the 
+     * collection has no effect (if this collection is initially empty, using
+     * the distinct view prevents element duplication).   
+     */
+    public FastCollection<E> distinct() {
+        return new FastCollection<E>(new DistinctCollectionImpl<E>(impl));
+    }
+ 
+    /** 
+     * Returns a parallel view of this collection. Using this view, closures
+     * operations are performed concurrently. The number of concurrent sub-collections
+     * is typically equals to the local {@link 
+     * javolution.context.ConcurrentContext#CONCURRENCY concurrency}.
+     */
+    public FastCollection<E> parallel() {
+        return new FastCollection<E>(new ParallelCollectionImpl<E>(impl));
+    }
+        
     /***************************************************************************
      * Closure operations.
      */
 
     /** 
-     * Iterates this collection elements sequentially (even for 
-     * {@link #parallel} collection) until the specified predicate 
-     * returns <code>false</code>.
+     * Iterates this collection elements. For {@link #parallel parallel} 
+     * collections iterations may be performed concurrently on sub-collections.
+     * Iterations will stop (including parallel ones) if the specified predicate
+     * evaluation returns {@code false} at least once.
      * 
-     * @param predicate the predicate being evaluated.
-     * @return <code>true</code> if all the predicate evaluation have returned
-     *         <code>true</code>; otherwise returns <code>false</code>  
+     * @param doContinue a predicate returning {@code false} to stop iterating.
+     * @return {@code true} if iterations have been performed without any stopping;
+     *         {@code false} if at least one predicate evaluation returned {@code false}  
      */
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return getService().doWhile(predicate);
+    @RealTime(Limit.LINEAR)
+    public boolean doWhile(Predicate<? super E> doContinue) {
+        return impl.doWhile(doContinue);
     }
 
     /** 
      * Removes from this collection all the elements matching the specified 
-     * predicate.
+     * predicate  
      * 
-     * @param predicate the predicate being evaluated.
-     * @return <code>true</code> if this collection changed as a result of 
-     *         the call; <code>false</code> otherwise.
+     * @param filter a predicate returning {@code true} for elements to be removed.
+     * @return {@code true} if the collection has changed due to this call;
+     *         {@code false} otherwise.
      */
-    public boolean removeAll(Predicate<? super E> predicate) {
-        return getService().removeAll(predicate);
+    @RealTime(Limit.LINEAR)
+    public boolean removeIf(Predicate<? super E> filter) {
+        return impl.removeIf(filter);
     }
 
     /** 
      * Iterates all the elements of this collection and apply the specified 
-     * operation (convenience method).
+     * consumer operation (convenience method).
      */
+    @RealTime(Limit.LINEAR)
     public void forEach(final Consumer<? super E> consumer) {
         doWhile(new Predicate<E>() {
 
@@ -208,15 +303,20 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     /** 
      * Performs a reduction of the elements of this collection using the 
-     * specified operator. This may not involve iterating over all the 
-     * collection elements (see {@link Comparators}).
+     * specified operator (convenience method). This may not involve iterating 
+     * over all the collection elements, for example the comparators:
+     * {@link Comparators#ANY ANY}, {@link Comparators#AND AND}, 
+     * {@link Comparators#OR OR} may stop iterating early. 
+     * Reductions are performed concurrently if the collection is 
+     * {@link #parallel() parallel}. 
      *    
-     * @param operator the operator to be used to perform the reduction.
-     * @return <code>reducer.apply(this.getService())</code>
+     * @param operator the {@link ThreadSafe thread-safe} operator.
+     * @return {@code operator.apply(this.getService())}
      */
     @SuppressWarnings("unchecked")
+    @RealTime(Limit.LINEAR)
     public E reduce(OperatorService<? super E> operator) {
-        return ((OperatorService<E>)operator).apply(this.getService());
+        return ((OperatorService<E>)operator).apply(impl);
     }
 
     /***************************************************************************
@@ -224,92 +324,145 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
 
     /**
-     * Returns the number of element in this collection. 
-     */
-    public int size() {
-        return getService().size();
-    }
-
-    /**
      * Adds the specified element; although the implementation may append the 
-     * element to the end of the collection it is not forced to do so 
+     * element to the end of this collection it is not forced to do so 
      * (e.g. if the collection is ordered).
      * 
      * @param element the element to be added to this collection.
-     * @return <code>true</code> (as per the general contract of the
-     *         <code>Collection.add</code> method).
+     * @return {@code true} if the collection is modified as a result of 
+     *         this call; {@code false} otherwise.
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
     public boolean add(E element) {
-        return getService().add(element);
-    }
-
-    /**
-     * Removes the first occurrence in this collection of the specified element.
-     *
-     * @param element the element to be removed from this collection.
-     * @return <code>true</code> if this collection contained the specified
-     *         element; <code>false</code> otherwise.
-     * @throws UnsupportedOperationException if the collection is not modifiable.
-     */
-    @SuppressWarnings("unchecked")
-    public boolean remove(Object element) {
-        return getService().remove((E) element);
-    }
-
-    /**
-     * Removes all of the elements from this collection (optional operation).
-     *
-     * @throws UnsupportedOperationException if not supported.
-     */
-    public void clear() {
-        getService().clear();
+        return impl.add(element);
     }
 
     /**
      * Indicates if this collection is empty.
-     *
-     * @return <code>true</code> if this collection contains no element;
-     *         <code>false</code> otherwise.
+     * 
+     * @return {@code size() == 0}
      */
+    @RealTime(Limit.LINEAR)
     public boolean isEmpty() {
         return size() == 0;
     }
+ 
+    /**
+     * Returns the number of elements in this collection. The default 
+     * implementation counts the number of element (in parallel 
+     * if the collection is {@link #parallel parallel}).
+     * 
+     * @return {@code this.map(TO_ONE).reduce(Operators.SUM)}
+     */
+    @RealTime(Limit.LINEAR)
+    public int size() {
+        return this.map(TO_ONE).reduce(Operators.SUM);
+    }
+    
+    private static final Function<Object, Integer> TO_ONE 
+        = new Function<Object, Integer>() {
+            Integer ONE = 1;
+            @Override
+            public Integer apply(Object param) {
+                return ONE;
+            }
+      
+    };
 
     /**
-     * Indicates if this collection contains the specified element.
+     * Removes all of the elements from this collection.
+     * The default implementation removes all the elements iteratively 
+     * (in parallel if the collection is {@link #parallel parallel}).
      *
-     * @param element the element whose presence in this collection 
-     *        is to be tested.
-     * @return <code>true</code> if this collection contains the specified
-     *         element;<code>false</code> otherwise.
+     * @throws UnsupportedOperationException if the collection is not modifiable.
      */
-    @SuppressWarnings("unchecked")
-    public boolean contains(Object element) {
-        return getService().contains((E) element);
+    @RealTime(Limit.LINEAR)
+    public void clear() {
+        removeIf(new Predicate<E>() {
+            @Override
+            public boolean test(E param) {
+                return true;
+            }
+        });
     }
     
     /**
-     * Returns the first element of this collection or 
-     * <code>null</code> if this collection is empty (convenience method).
+     * Indicates if this collection contains the specified element. 
+     * The default implementation iterates over all the elements (in parallel 
+     * if the collection is {@link #parallel parallel}) in order to find an element
+     * {@link #comparator() equals} to the one specified.
+     *
+     * @param element the element whose presence in this collection 
+     *        is to be tested.
+     * @return {@code true} if this collection contains the specified
+     *         element;{@code false} otherwise.
      */
     @SuppressWarnings("unchecked")
-    public E peek() {
-        final E[] first = (E[]) new Object[1];
-        this.doWhile(new Predicate<E>() {
+    @RealTime(Limit.LINEAR)
+    public boolean contains(final Object element) {
+        final ComparatorService<? super E> cmp = this.comparator();
+        final boolean[] found = new boolean[1];
+        doWhile(new Predicate<E>() {
 
             @Override
             public boolean test(E param) {
-                first[0] = param;
-                return false;
+                if (cmp.areEqual((E)element, param)) {
+                    found[0] = true;
+                    return false;
+                }
+                return true;
             }
             
         });
-        return first[0];
+        return found[0];
+    }
+    
+
+    /**
+     * Removes a single instance {@link #comparator() equals} to the specified
+     * element from this collection, if it is present. Even if the removal 
+     * is performed concurrently ({@link #parallel parallel} collections), 
+     * only one instance is removed. 
+     *
+     * @param element the element to be removed from this collection.
+     * @return  {@code true}  if this collection contained the specified
+     *         element;  {@code false} otherwise.
+     * @throws UnsupportedOperationException if the collection is not modifiable.
+     */
+    @SuppressWarnings("unchecked")
+    @RealTime(Limit.LINEAR)
+    public boolean remove(final Object element) {
+        final ComparatorService<? super E> cmp = this.comparator();
+        final boolean[] found = new boolean[1];
+        removeIf(new Predicate<E>() {
+            @Override
+            public boolean test(E param) {
+                if (found[0]) return false; // Shortcut.
+                if (cmp.areEqual((E)element, param)) {
+                    synchronized (this) {
+                        if (found[0]) return false; // One instance already removed.
+                        found[0] = true;
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+        return found[0];
+    }
+
+    /** 
+     * Returns an iterator over this collection. For {@link #shared shared} 
+     * collections, closure (e.g. {@link #doWhile}) should be used instead of
+     * iterators (or Java 1.5 simplified loop) whenever possible.
+     */
+    public Iterator<E> iterator() {
+        return impl.iterator();
     }
 
     @Override
     @SuppressWarnings("unchecked")
+    @RealTime(Limit.LINEAR)
     public boolean addAll(final Collection<? extends E> that) {
         if (that instanceof FastCollection)
             return addAllFast((FastCollection<E>) that);
@@ -338,6 +491,7 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     @Override
     @SuppressWarnings("unchecked")
+    @RealTime(Limit.N_SQUARE)
     public boolean containsAll(final Collection<?> that) {
         if (that instanceof FastCollection)
             return containsAllFast((FastCollection<E>) that);
@@ -360,8 +514,9 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     @Override
+    @RealTime(Limit.N_SQUARE)
     public boolean removeAll(final Collection<?> that) {
-        return removeAll(new Predicate<E>() {
+        return removeIf(new Predicate<E>() {
             public boolean test(E param) {
                 return that.contains(param);
             }
@@ -369,8 +524,9 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     @Override
+    @RealTime(Limit.N_SQUARE)
     public boolean retainAll(final Collection<?> that) {
-        return removeAll(new Predicate<E>() {
+        return removeIf(new Predicate<E>() {
             public boolean test(E param) {
                 return !that.contains(param);
             }
@@ -378,12 +534,14 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     @Override
+    @RealTime(Limit.LINEAR)
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
     @Override
     @SuppressWarnings("unchecked")
+    @RealTime(Limit.LINEAR)
     public <T> T[] toArray(final T[] array) { // Support concurrent modifications if Shared.
         final T[][] result = (T[][]) new Object[1][];
         final int[] size = new int[1];
@@ -426,6 +584,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     @SuppressWarnings("unchecked")
     @Override
+    @RealTime(Limit.LINEAR)
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -475,6 +634,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * hashcode is returned.
      */
     @Override
+    @RealTime(Limit.LINEAR)
     public int hashCode() {
         final int[] hash = new int[1];
         if (this instanceof Set) {
@@ -500,50 +660,20 @@ public abstract class FastCollection<E> implements Collection<E>,
         }
     }
 
-    /** 
-     * Returns an iterator over this collection. For shared collection 
-     * closure (e.g. {@link #doWhile}) should be used instead o
-     * iterators (or Java 1.5 simplified loop)
-     */
-    public Iterator<E> iterator() {
-        return getService().iterator();
-    }
-
     /***************************************************************************
      * Misc.
      */
 
     /**
-     * <p> Set the comparator to be used by this collection for element equality
-     *     or sorting (if the collection is ordered).</p> 
-     * <p> For collections having custom comparators, it is possible that 
-     *     elements considered distinct using the default equality 
-     *     comparator, would appear to be equals as far as this collection is 
-     *     concerned. For example, a {@link Comparators#LEXICAL lexical 
-     *     comparator} considers that two {@link CharSequence} are equals if they
-     *     hold the same characters regardless of the {@link CharSequence} 
-     *     implementation. On the other hand, for the 
-     *     {@link Comparators#IDENTITY identity} comparator, two elements 
-     *     might be considered distinct even if the default object equality 
-     *     considers them equals.</p>  
-     *
-     * @param cmp the comparator to be used.
-     * @return <code>this</code>
+     * Returns the comparator used by this collection for element equality
+     * or comparison (if the collection is sorted).
      */
-    public FastCollection<E> setComparator(Comparator<? super E> cmp) {
-        getService().setComparator(cmp);
-        return this;
-    }
-
-    /**
-     * <p> Returns the comparator to be used by this collection for element equality
-     *     or sorting (if the collection is ordered).</p> 
-     */
-    public Comparator<? super E> getComparator() {
-        return getService().getComparator();
+    public ComparatorService<? super E> comparator() {
+        return impl.comparator();
     }
 
     @Override
+    @RealTime(Limit.LINEAR)
     public FastCollection<E> copy() {
         final FastTable<E> table = new FastTable<E>();
         this.doWhile(new Predicate<E>() {
@@ -551,13 +681,14 @@ public abstract class FastCollection<E> implements Collection<E>,
             public boolean test(E param) {
                 table.add((param instanceof Copyable) ? ((Copyable<E>) param)
                         .copy() : param);
-                return false;
+                return true;
             }
         });
         return table;
     }
 
     @Override
+    @RealTime(Limit.LINEAR)
     public String toString() {
         return TextContext.getFormat(FastCollection.class).format(this);
     }
@@ -605,22 +736,6 @@ public abstract class FastCollection<E> implements Collection<E>,
             return dest.append(']');
         }
     }
- 
-    /** Generic fast collection implementation.     */
-    private static class GenericCollection<E> extends FastCollection<E> {
-        private CollectionService<E> impl;
 
-        private GenericCollection(CollectionService<E> impl) {
-            this.impl = impl;
-        }
-
-        @Override
-        protected CollectionService<E> getService() {
-            return impl;
-        }
-
-        private static final long serialVersionUID = -6839414236289938521L;
-    }
-
-    private static final long serialVersionUID = 586810942305431721L;
-}
+    private static final long serialVersionUID = 5965713679404252279L;
+ }

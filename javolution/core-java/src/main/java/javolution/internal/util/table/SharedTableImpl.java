@@ -213,10 +213,10 @@ public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
+    public boolean removeIf(Predicate<? super E> predicate) {
         write.lock();
         try {
-            return that.removeAll(predicate);
+            return that.removeIf(predicate);
         } finally {
             write.unlock();
         }
@@ -322,10 +322,10 @@ public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
+    public ComparatorService<? super E> comparator() {
         read.lock();
         try {
-            return that.getComparator();
+            return that.comparator();
         } finally {
             read.unlock();
         } 

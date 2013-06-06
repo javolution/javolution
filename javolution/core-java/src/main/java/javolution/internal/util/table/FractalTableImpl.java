@@ -106,7 +106,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
+    public ComparatorService<? super E> comparator() {
         return comparator;
     }
 
@@ -490,7 +490,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
+    public boolean removeIf(Predicate<? super E> predicate) {
         return removeAllDefault(predicate);
     }
 

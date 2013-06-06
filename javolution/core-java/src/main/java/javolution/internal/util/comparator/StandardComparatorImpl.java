@@ -30,7 +30,10 @@ public final class StandardComparatorImpl<E> implements ComparatorService<E>, Se
     @SuppressWarnings("unchecked")
     @Override
     public int compare(E o1, E o2) {
-        return ((Comparable<E>) o1).compareTo(o2);
+        if (o1 instanceof Comparable) 
+            return ((Comparable<E>) o1).compareTo(o2);
+        if (o1.equals(o2)) return 0;
+        return (hashCodeOf(o1) > hashCodeOf(o2)) ? 1 :  -1;
     }
 
     private static final long serialVersionUID = -615690677813206151L;

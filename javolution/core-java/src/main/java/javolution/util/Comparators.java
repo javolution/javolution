@@ -1,17 +1,17 @@
 package javolution.util;
 
-import java.io.Serializable;
-
 import javolution.annotation.StackSafe;
 import javolution.annotation.ThreadSafe;
-import javolution.internal.util.comparator.StandardComparatorImpl;
 import javolution.internal.util.comparator.IdentityComparatorImpl;
+import javolution.internal.util.comparator.LexicalCaseInsensitiveComparatorImpl;
 import javolution.internal.util.comparator.LexicalComparatorImpl;
+import javolution.internal.util.comparator.StandardComparatorImpl;
 import javolution.internal.util.comparator.StringComparatorImpl;
 import javolution.util.service.ComparatorService;
 
 /**
- * <p> Common comparators instances.</p>
+ * <p> A collection of {@link StackSafe stack-safe} and 
+ *     {@link ThreadSafe thread-safe} (stateless) comparators.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -29,29 +29,36 @@ public class Comparators  {
     /**
      * Holds an identity comparator for any object.
      */
-    public static final Comparators<Object> IDENTITY 
+    public static final ComparatorService<Object> IDENTITY 
         = new IdentityComparatorImpl<Object>();
 
     /**
      * Holds a lexicographic comparator for any {@link CharSequence}.
-     * Hashcodes are calculated by taking a sample of few characters instead of 
+     * Hash codes are calculated by taking a sample of few characters instead of 
      * the whole character sequence.
      */
-    public static final Comparators<CharSequence> LEXICAL 
+    public static final ComparatorService<CharSequence> LEXICAL 
         = new LexicalComparatorImpl();
     
     /**
-     * Holds an optimized comparator for <code>java.lang.String</code>
-     * instances.
+     * Holds a case insensitive lexicographic comparator for any {@link CharSequence}.
+     * Hash codes are calculated by taking a sample of few characters instead of 
+     * the whole character sequence.
      */
-    public static final Comparators<String> STRING 
+    public static final ComparatorService<CharSequence> LEXICAL_CASE_INSENSITIVE 
+        = new LexicalCaseInsensitiveComparatorImpl();
+    
+    /**
+     * Holds an optimized comparator for <code>java.lang.String</code>
+     * instances taking a sample of few characters instead of 
+     * the whole character sequence to calculate the hash code.
+     */
+    public static final ComparatorService<String> STRING 
         = new StringComparatorImpl();
         
     /**
-     * Default constructor.
+     * Utility class (private constructor).
      */
-    protected Comparators() {
+    private Comparators() {
     }
-
-    private static final long serialVersionUID = -7225629198872713338L;
 }

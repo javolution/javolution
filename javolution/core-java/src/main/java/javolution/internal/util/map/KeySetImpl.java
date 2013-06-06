@@ -63,7 +63,7 @@ public final class KeySetImpl<K, V> implements
     }
 
     @Override
-    public boolean removeAll(Predicate<K> predicate) {
+    public boolean removeIf(Predicate<K> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
             if (predicate.apply(i.next().getKey())) {

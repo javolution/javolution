@@ -24,15 +24,8 @@ public final class ContextTracker<C extends AbstractContext<C>> {
 
     final Class<C> type;
 
-    final Class<? extends C> defaultImplClass;
-
-    C defaultImpl;
-
-    // This constructor does not cause the initialization/creation of the 
-    // default implementation (avoid class initialization circularities.
-    public ContextTracker(Class<C> type, Class<? extends C> defaultImplClass) {
+    public ContextTracker(Class<C> type) {
         this.type = type;
-        this.defaultImplClass = defaultImplClass;
     }
 
     public synchronized void activate(BundleContext bc) {
@@ -46,7 +39,12 @@ public final class ContextTracker<C extends AbstractContext<C>> {
         tracker = null;
     }
 
-    public synchronized C getService(boolean waitForService) {
+    /**
+     * Returns published context service or <code>null</code> if none. 
+     * @param waitForService indicates if this method blocks until a service
+     *        is available.
+     */
+    public synchronized C getService(boolean waitForService, C defaultImpl) {
         try {
             if (waitForService && (tracker == null)) {
                 while (tracker == null) {
@@ -61,15 +59,6 @@ public final class ContextTracker<C extends AbstractContext<C>> {
         } catch (InterruptedException ex) {
             // Stop waiting. 
         }
-        // No OSGi service.
-        if (defaultImpl != null) return defaultImpl;
-        try {         
-            defaultImpl = defaultImplClass.newInstance();
-            return defaultImpl;
-        } catch (InstantiationException ex) {
-            throw new RuntimeException(ex);
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException(ex);
-        }
+        return defaultImpl; 
     }
 }

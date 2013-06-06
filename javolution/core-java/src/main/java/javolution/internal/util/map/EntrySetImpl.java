@@ -63,7 +63,7 @@ public final class EntrySetImpl<K, V> implements
     }
 
     @Override
-    public boolean removeAll(Predicate<Map.Entry<K, V>> predicate) {
+    public boolean removeIf(Predicate<Map.Entry<K, V>> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
             if (predicate.apply(i.next())) {

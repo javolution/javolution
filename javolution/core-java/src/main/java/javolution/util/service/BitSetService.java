@@ -10,6 +10,7 @@ package javolution.util.service;
 
 import javolution.util.FastBitSet;
 import javolution.util.FastTable;
+import javolution.util.Index;
 
 /**
  * The set of related functionalities which can be used/reused to 
@@ -19,7 +20,7 @@ import javolution.util.FastTable;
  * @version 6.0.0, December 12, 2012
  * @see FastTable
  */
-public interface BitSetService {
+public interface BitSetService extends SetService<Index> {
      
     //
     // Read Accessors.
@@ -54,9 +55,6 @@ public interface BitSetService {
     // Clear/Set/Flip Operations
     //
 
-    /** See {@link FastBitSet#clear() } */
-    void clear();
-    
     /** See {@link FastBitSet#clear(int) } */
     void clear(int bitIndex);
 

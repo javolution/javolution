@@ -16,17 +16,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Annotation indicating (when applied to a class) that all its methods 
- *     are stack-safe and can be used while executing
+ * <p> Annotation indicating when applied to a class that all its methods 
+ *     and fields are safe to be used while executing
  *     in a {@link javolution.context.StackContext StackContext}.</p>
  *     
  * <p> Classes with no static fields or with static fields unmodifiable are 
- *     usually {@link StackSafe} (since static class initialization is 
- *     performed in immortal memory). Lazy initialization should be 
- *     avoided or forced to be executed in a {@link HeapContext}.</p>
+ *     usually {@link StackSafe} (when running on a real-time VM static fields
+ *     are being allocated in immortal memory). Lazy initialization of static
+ *     fields should be avoided or forced to be executed on the 
+ *     {@link javolution.context.HeapContext heap} or in
+ *     {@link javolution.context.ImmortalContext immortal} memory.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
+ * @see javolution.context.StackContext
  */
 @Documented
 @Inherited

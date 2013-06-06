@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TRACKER;
+import javolution.internal.context.ConcurrentContextImpl;
 import javolution.lang.Configurable;
 
 /**
@@ -278,7 +279,8 @@ public abstract class ConcurrentContext extends
                 .current(ConcurrentContext.class);
         if (ctx != null)
             return ctx;
-        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
+    private static final ConcurrentContextImpl DEFAULT = new ConcurrentContextImpl();
 }

@@ -10,8 +10,7 @@ package javolution.util.service;
 
 
 /**
- * The set of related functionalities which can be used/reused to 
- * implement tables collections.
+ * The set of related functionalities used to implement tables collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012

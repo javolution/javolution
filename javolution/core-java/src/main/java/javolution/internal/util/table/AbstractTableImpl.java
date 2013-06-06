@@ -87,7 +87,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
 
     final boolean doWhileDefault(Predicate<? super E> predicate) {
         for (int i = 0, size = size(); i < size;) {
-            if (!predicate.apply(get(i++)))
+            if (!predicate.test(get(i++)))
                 return false;
         }
         return true;
@@ -96,7 +96,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     final boolean removeAllDefault(Predicate<? super E> predicate) {
         boolean modified = false;
         for (int i = size(); i > 0;) {
-            if (predicate.apply(get(--i))) {
+            if (predicate.test(get(--i))) {
                 remove(i);
                 modified = true;
             }
@@ -117,7 +117,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     }
 
      final int indexOfDefault(E element) {
-        ComparatorService<? super E> cmp = getComparator();
+        ComparatorService<? super E> cmp = comparator();
         for (int i = 0, size = size(); i < size; i++) {
             if (cmp.areEqual(element, get(i)))
                 return i;
@@ -126,7 +126,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     }
 
      final int lastIndexOfDefault(E element) {
-        ComparatorService<? super E> cmp = getComparator();
+        ComparatorService<? super E> cmp = comparator();
         for (int i = size(); i > 0;) {
             if (cmp.areEqual(element, get(--i)))
                 return i;
@@ -137,7 +137,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     final void sortDefault() {
         int size = size();
         if (size > 1) {
-            quicksort(0, size - 1, getComparator());
+            quicksort(0, size - 1, comparator());
         }
     }
 

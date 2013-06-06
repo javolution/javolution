@@ -80,7 +80,7 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
+    public boolean removeIf(Predicate<? super E> predicate) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -142,8 +142,8 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
 
     @Override

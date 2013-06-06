@@ -129,8 +129,8 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E>  {
     }
 
     @Override
-    public boolean removeAll(Predicate<? super E> predicate) {
-        return that.removeAll(predicate);
+    public boolean removeIf(Predicate<? super E> predicate) {
+        return that.removeIf(predicate);
     }
 
     @Override
@@ -174,8 +174,8 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E>  {
     }
 
     @Override
-    public ComparatorService<? super E> getComparator() {
-        return that.getComparator();
+    public ComparatorService<? super E> comparator() {
+        return that.comparator();
     }
     
     @Override

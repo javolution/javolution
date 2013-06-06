@@ -8,8 +8,6 @@
  */
 package javolution.util.service;
 
-import javolution.annotation.StackSafe;
-import javolution.annotation.ThreadSafe;
 import javolution.util.function.Function;
 
 /**
@@ -18,9 +16,8 @@ import javolution.util.function.Function;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
+ * @see javolution.util.Operators
  */
-@StackSafe
-@ThreadSafe
 public interface OperatorService<T> extends Function<CollectionService<T>, T> {
 
    

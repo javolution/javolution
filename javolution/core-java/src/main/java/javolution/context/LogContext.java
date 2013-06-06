@@ -9,6 +9,7 @@
 package javolution.context;
 
 import static javolution.internal.osgi.JavolutionActivator.LOG_CONTEXT_TRACKER;
+import javolution.internal.context.LogContextImpl;
 import javolution.lang.Configurable;
 
 /**
@@ -152,7 +153,8 @@ public abstract class LogContext extends AbstractContext<LogContext> {
         LogContext ctx = AbstractContext.current(LogContext.class);
         if (ctx != null)
             return ctx;
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
+    private static final LogContextImpl DEFAULT = new LogContextImpl();
 }

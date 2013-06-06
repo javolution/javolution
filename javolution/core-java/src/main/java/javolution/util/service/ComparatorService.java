@@ -10,28 +10,20 @@ package javolution.util.service;
 
 import java.util.Comparator;
 
-import javolution.annotation.ThreadSafe;
-import javolution.annotation.StackSafe;
-import javolution.util.Comparators;
-import javolution.util.FastCollection;
-import javolution.util.FastMap;
-
 /**
  * <p> A comparator to be used for equality as well as for ordering.
- *     Instances of this class provide a hashcode function 
+ *     Implementing class should provide a hashcode function 
  *     consistent with equal (if two objects {@link #areEqual
  *     are equal}, they have the same {@link #hashCodeOf hashcode}),
- *     equality with <code>null</code> values is supported.</p>
+ *     equality with <code>null</code> values should be supported.</p>
  *     
- * <p> Comparators can be employed with {@link FastMap} (e.g. 
- *     {@link Comparators#IDENTITY} for identity maps) or with 
- *     {@link FastCollection} classes.</p>
+ * <p> Custom comparators can be employed with maps (e.g.  
+ *     identity comparator for identity maps) or with collections.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
+ * @see javolution.util.Comparators
  */
-@ThreadSafe
-@StackSafe
 public interface ComparatorService<T> extends Comparator<T> {
 
     /**
@@ -47,6 +39,8 @@ public interface ComparatorService<T> extends Comparator<T> {
 
     /**
      * Indicates if the specified objects can be considered equal.
+     * This methods is equivalent to {@code (compare(o1, o2) == 0)} but 
+     * usually faster.
      * 
      * @param o1 the first object (or <code>null</code>).
      * @param o2 the second object (or <code>null</code>).

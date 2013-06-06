@@ -8,9 +8,10 @@
  */
 package javolution.text;
 
+import static javolution.internal.osgi.JavolutionActivator.TEXT_CONTEXT_TRACKER;
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
-import static javolution.internal.osgi.JavolutionActivator.TEXT_CONTEXT_TRACKER;
+import javolution.internal.text.TextContextImpl;
 import javolution.lang.Configurable;
 
 /**
@@ -83,7 +84,8 @@ public abstract class TextContext extends FormatContext<TextContext> {
     protected static TextContext current() {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null) return ctx;
-        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
+    private static final TextContextImpl DEFAULT = new TextContextImpl();
 }

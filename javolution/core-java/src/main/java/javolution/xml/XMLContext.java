@@ -8,12 +8,12 @@
  */
 package javolution.xml;
 
+import static javolution.internal.osgi.JavolutionActivator.XML_CONTEXT_TRACKER;
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
-import static javolution.internal.osgi.JavolutionActivator.XML_CONTEXT_TRACKER;
+import javolution.internal.xml.XMLContextImpl;
 import javolution.lang.Configurable;
 import javolution.text.TextFormat;
-import javolution.text.TypeFormat;
 
 /**
  * <p> A context for xml serialization/deserialization. 
@@ -78,6 +78,8 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
     protected static XMLContext current() {
         XMLContext ctx = AbstractContext.current(XMLContext.class);
         if (ctx != null) return ctx;
-        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get());
+        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
+    
+    private static final XMLContextImpl DEFAULT = new XMLContextImpl();    
 }

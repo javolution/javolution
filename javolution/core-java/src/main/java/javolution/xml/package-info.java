@@ -3,6 +3,10 @@
    into <code>XML</code>; and the complementary reconstruction of the
    object graph from <code>XML</code>. 
 </p>
+<p><i> This page has been translated into 
+<a href="http://www.webhostinghub.com/support/es/misc/paquete-javolutionxml">Spanish</a>
+language by Maria Ramos  from <a href="http://www.webhostinghub.com/support/edu">
+Webhostinghub.com/support/edu</a>.</i></p>
 
 <h2><a name="OVERVIEW">XML marshalling/unmarshalling facility:</a></h2>
 

@@ -20,29 +20,17 @@ import javolution.util.service.ComparatorService;
 /**
  * A mapped view over a collection.
  */
-public final class MappedCollectionImpl<E,R> implements
+public class MappedCollectionImpl<E,R> implements
         CollectionService<R>, Serializable {
 
-    private final CollectionService<E> that;
+    protected final CollectionService<E> that;
     
-    private final  Function<? super E, ? extends R> function;
-    
-    private ComparatorService<? super R> comparator = Comparators.STANDARD;
-
+    protected final  Function<? super E, ? extends R> function;
+ 
     public MappedCollectionImpl(CollectionService<E> that, 
             Function<? super E, ? extends R> function) {
         this.that = that;
         this.function = function;
-    }
-
-    @Override
-    public int size() {
-        return that.size();
-    }
-
-    @Override
-    public void clear() {
-        that.clear();
     }
     
     @Override
@@ -51,53 +39,24 @@ public final class MappedCollectionImpl<E,R> implements
     }
 
     @Override
-    public boolean contains(final R element) {
-        return !that.doWhile(new Predicate<E>() {
-
-            @Override
-            public Boolean apply(E param) {
-                R r = function.apply(param);
-                if (comparator.areEqual(element, r)) return false;
-                return true;
-            }});
-    
-    }
-
-    @Override
-    public boolean remove(final R element) {
-        final boolean[] modified = new boolean[1];
-        return !that.doWhile(new Predicate<E>() {
-
-            @Override
-            public Boolean apply(E param) {
-                R r = function.apply(param);
-                if (comparator.areEqual(element, r)) {
-                    modified[0] = that.remove(param);
-                    return false;
-                }
-                return true;
-            }}) && modified[0];
-    }
-
-    @Override
     public boolean doWhile(final Predicate<? super R> predicate) {
         return that.doWhile(new Predicate<E>() {
 
             @Override
-            public Boolean apply(E param) {
+            public boolean test(E param) {
                 R r = function.apply(param);
-                return predicate.apply(r);
+                return predicate.test(r);
                 }});
     }
 
     @Override
-    public boolean removeAll(final Predicate<? super R> predicate) {
-        return that.removeAll(new Predicate<E>() {
+    public boolean removeIf(final Predicate<? super R> predicate) {
+        return that.removeIf(new Predicate<E>() {
 
             @Override
-            public Boolean apply(E param) {
+            public boolean test(E param) {
                 R r = function.apply(param);
-                return predicate.apply(r);
+                return predicate.test(r);
             }});
     }
 
@@ -125,15 +84,10 @@ public final class MappedCollectionImpl<E,R> implements
     }
 
     @Override
-    public ComparatorService<? super R> getComparator() {
-        return comparator;
+    public ComparatorService<? super R> comparator() {
+        return Comparators.STANDARD;
     }
-    
-    @Override
-    public void setComparator(ComparatorService<? super R> cmp) {
-        this.comparator = cmp;
-    }
-    
+     
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<R>[] trySplit(int n) {
@@ -146,5 +100,5 @@ public final class MappedCollectionImpl<E,R> implements
         return mappeds;
     }
   
-    private static final long serialVersionUID = -7828030658889842514L;
+    private static final long serialVersionUID = 5283622142410922044L;
 }

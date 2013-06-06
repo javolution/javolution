@@ -8,20 +8,15 @@
  */
 package javolution.util;
 
-import java.util.Iterator;
-import java.util.Set;
-
-import javolution.internal.util.bitset.BitSetIteratorImpl;
+import javolution.annotation.RealTime;
 import javolution.internal.util.bitset.BitSetServiceImpl;
 import javolution.internal.util.bitset.SharedBitSet;
 import javolution.internal.util.bitset.UnmodifiableBitSet;
-import javolution.util.function.Predicate;
 import javolution.util.service.BitSetService;
-import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 
 /**
- * <p> A table of bits equivalent to a packed set of non-negative numbers.</p>
+ * <p> A high-performance bit set with {@link RealTime real-time} behavior; 
+ *     smooth capacity increase/decrease and minimal memory footprint.</p>
  * 
  * <p> This class is integrated with the collection framework as 
  *     a set of {@link Index indices} and obeys the collection semantic
@@ -31,14 +26,14 @@ import javolution.util.service.ComparatorService;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastBitSet extends FastCollection<Index> implements Set<Index> {
+public class FastBitSet extends FastSet<Index> {
 
     /**
-     * The actual implementation.
+     * Holds the bit set implementation.
      */
     private final BitSetService impl;
-
-    /**
+    
+     /**
      * Creates an empty bit set whose capacity increments/decrements smoothly
      * without large resize operations to best fit the set current size.
      */
@@ -56,13 +51,6 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
      */
     public FastBitSet(int bitSize) {
         impl = new BitSetServiceImpl(bitSize);
-    }
-
-    /**
-     * Creates a bit set using the specified implementation.
-     */
-    protected FastBitSet(BitSetService impl) {
-        this.impl = impl;
     }
 
     /**
@@ -321,72 +309,20 @@ public class FastBitSet extends FastCollection<Index> implements Set<Index> {
         return this.get(0, length());
     }
 
+    /***************************************************************************
+     * For sub-classes.
+     */
+
+    /**
+     * Creates a bit set based on the specified implementation.
+     */
+    protected FastBitSet(BitSetService impl) {
+        this.impl = impl;
+    }
+
     @Override
-    protected CollectionService<Index> getService() {
-        return new CollectionService<Index>() {
-
-            @Override
-            public void clear() {
-                impl.clear();                
-            }
-            
-            @Override
-            public int size() {
-                return cardinality();
-            }
-
-            @Override
-            public boolean add(Index index) {
-                return !impl.getAndSet(index.intValue(), true);
-            }
-
-            @Override
-            public boolean contains(Index index) {
-                return impl.get(index.intValue());        
-            }
-            
-            @Override
-            public boolean remove(Index index) {
-                return impl.getAndSet(index.intValue(), false);
-            }
-   
-            @Override
-            public boolean doWhile(Predicate<? super Index> predicate) {
-                for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-                    if (!predicate.apply(Index.valueOf(i)))
-                        return false;
-                }
-                return true;
-            }
-
-            @Override
-            public boolean removeAll(Predicate<? super Index> predicate) {
-                boolean modified = false;
-                for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i)) {
-                    if (predicate.apply(Index.valueOf(i))) {
-                        impl.clear(i);
-                        modified = true;
-                    }
-                }
-                return modified;
-            }
-            
-            @Override
-            public Iterator<Index> iterator() {
-                return new BitSetIteratorImpl(impl, 0);
-            }
-
-            @Override
-            public ComparatorService<? super Index> getComparator() {
-                return Comparators.IDENTITY;
-            }
-
-            @Override
-            public void setComparator(ComparatorService<? super Index> cmp) {
-                throw new UnsupportedOperationException();                
-            }
-
-        };
+    protected BitSetService getService() {
+        return impl;
     }
 
     private static final long serialVersionUID = 2947704388849012297L;

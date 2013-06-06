@@ -71,7 +71,7 @@ public final class ValuesImpl<K, V> implements
     }
 
     @Override
-    public boolean removeAll(Predicate<V> predicate) {
+    public boolean removeIf(Predicate<V> predicate) {
         boolean hasChanged = false;
         for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
             if (predicate.apply(i.next().getValue())) {

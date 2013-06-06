@@ -13,13 +13,19 @@ import java.io.Serializable;
 import javolution.util.service.ComparatorService;
 
 /**
- * The string comparator implementation.
+ * The string comparator high-performance implementation.
  */
 public final class StringComparatorImpl implements ComparatorService<String>, Serializable {
 
     @Override
     public int hashCodeOf(String str) {
-        return (str != null) ? str.hashCode() : 0;
+        if (str == null) return -1;
+        int n = str.length();
+        if (n == 0) return 0;
+        // Hash based on 5 characters only.
+        return str.charAt(0) + str.charAt(n - 1) * 31
+                + str.charAt(n >> 1) * 1009 + str.charAt(n >> 2) * 27583 
+                + str.charAt(n - 1 - (n >> 2)) * 73408859;
     }
 
     @Override

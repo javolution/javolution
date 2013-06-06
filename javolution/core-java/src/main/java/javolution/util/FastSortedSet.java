@@ -11,43 +11,45 @@ package javolution.util;
 import java.util.Comparator;
 import java.util.SortedSet;
 
+import javolution.annotation.RealTime;
 import javolution.internal.util.table.FractalTableImpl;
 import javolution.internal.util.table.NoDuplicateTableImpl;
 import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SortedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
+import javolution.util.service.ComparatorService;
+import javolution.util.service.SetService;
 import javolution.util.service.TableService;
 
 /**
- * <p> A set backed up by an sorted table and benefiting from the 
- *     same characteristics (memory footprint adjusted to current size,
- *     smooth capacity increase, etc).</p>
+ * <p> A high-performance sorted set with {@link RealTime real-time} behavior; 
+ *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastSortedSet<E> extends FastCollection<E> implements SortedSet<E> {
+public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
 
     /**
-     * Holds the backing table.
-     */
-    private final TableService<E> table;
-
-    /**
-     * Creates an empty set whose capacity increment or decrement smoothly
-     * without large resize/rehash operations.
+     * Creates an empty set ordered on elements natural order.
      */
     public FastSortedSet() {
-        table = new NoDuplicateTableImpl<E>(new SortedTableImpl<E>(new FractalTableImpl<E>()));
+        super(...);
     }
 
     /**
-     * Creates a sorted set backed up by the specified table implementation.
+    * Creates an empty set ordered using the specified element comparator.
+    */
+   public FastSortedSet(ComparatorService<? super E> comparator) {
+       super(...);
+   }
+    /**
+     * Creates a set backed up by the specified implementation.
      */
-    protected FastSortedSet(TableService<E> table) {
-        this.table = table;
-    } 
+    protected FastSet(SetService<E> implementation) {
+        super(implementation);        
+    }
     
     @Override
     public FastSortedSet<E> unmodifiable() {
