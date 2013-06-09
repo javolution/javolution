@@ -27,7 +27,7 @@ public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements SetServ
     public int size() {
         read.lock();
         try {
-            return ((SetService<E>) that).size();
+            return ((SetService<E>) target).size();
         } finally {
             read.unlock();
         }
@@ -37,7 +37,7 @@ public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements SetServ
     public void clear() {
         write.lock();
         try {
-            ((SetService<E>) that).clear();
+            ((SetService<E>) target).clear();
         } finally {
             write.unlock();
         }
@@ -47,7 +47,7 @@ public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements SetServ
     public boolean contains(E e) {
         read.lock();
         try {
-            return ((SetService<E>) that).contains(e);
+            return ((SetService<E>) target).contains(e);
         } finally {
             read.unlock();
         }   
@@ -57,7 +57,7 @@ public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements SetServ
     public boolean remove(E e) {
         write.lock();
         try {
-            return ((SetService<E>) that).remove(e);
+            return ((SetService<E>) target).remove(e);
         } finally {
             write.unlock();
         }

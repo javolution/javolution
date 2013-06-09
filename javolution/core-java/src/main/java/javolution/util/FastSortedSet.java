@@ -62,7 +62,7 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     }
         
     @Override
-    protected TableService<E> getService() {
+    public TableService<E> service() {
         return table;
     }
 

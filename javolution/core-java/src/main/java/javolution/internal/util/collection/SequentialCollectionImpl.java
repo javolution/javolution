@@ -10,22 +10,21 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
-import javolution.context.ConcurrentContext;
 import javolution.util.FastCollection;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
 import javolution.util.service.ConsumerService;
 
 /**
- * A parallel view over a collection.
+ * A sequential view over a collection.
  */
-public final class ParallelCollectionImpl<E> extends FastCollection<E>
+public final class SequentialCollectionImpl<E> extends FastCollection<E>
         implements CollectionService<E> {
 
-    private static final long serialVersionUID = -3997574892344595177L;
+    private static final long serialVersionUID = 7400438782996852037L;
     private final CollectionService<E> target;
 
-    public ParallelCollectionImpl(CollectionService<E> target) {
+    public SequentialCollectionImpl(CollectionService<E> target) {
         this.target = target;
     }
 
@@ -36,30 +35,10 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
 
     @Override
     public void forEach(final ConsumerService<? super E> consumer) {
-        if (consumer instanceof ConsumerService.Sequential) { 
-            target.forEach(consumer); // Sequential.
-            return;
-        }
-        CollectionService<E>[] split = target
-                .trySplit(ConcurrentContext.CONCURRENCY.get());
-        if (split == null) {
+        if (consumer instanceof ConsumerService.Sequential) {
             target.forEach(consumer);
-            return;
-        }
-        // Parallelization.
-        ConcurrentContext ctx = ConcurrentContext.enter();
-        try {
-            for (int i = 0; i < split.length; i++) {
-                final CollectionService<E> subcollection = split[i];
-                ctx.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        subcollection.forEach(consumer);
-                    }
-                });
-            }
-        } finally {
-            ctx.exit();
+        } else {
+            target.forEach(new SequentialConsumerWrapper<E>(consumer));
         }
     }
 
@@ -79,7 +58,23 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public ParallelCollectionImpl<E> service() {
+    public SequentialCollectionImpl<E> service() {
         return this;
     }
+    
+    /**
+    * A sequential consumer wrapper.
+    */
+   private static class SequentialConsumerWrapper<E> implements ConsumerService.Sequential<E> {
+       private final ConsumerService<? super E> consumer;
+
+       public SequentialConsumerWrapper(ConsumerService<? super E> consumer) {
+           this.consumer = consumer;
+       }
+
+       @Override
+       public void accept(E e, ConsumerService.Controller controller) {
+           consumer.accept(e, controller);
+       }
+   }    
 }

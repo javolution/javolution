@@ -8,71 +8,76 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.FastCollection;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
+import javolution.util.service.ConsumerService;
 
 /**
  * A filtered view over a collection.
  */
-public class FilteredCollectionImpl<E> implements
-        CollectionService<E>, Serializable {
+public final class FilteredCollectionImpl<E> extends FastCollection<E>
+        implements CollectionService<E> {
 
-    protected final CollectionService<E> that;
-    
-    protected final Predicate<? super E> filter;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -5475396934090095686L;
+    private final CollectionService<E> target;
+    private final Predicate<? super E> filter;
 
-    public FilteredCollectionImpl(CollectionService<E> that, 
+    public FilteredCollectionImpl(CollectionService<E> target,
             Predicate<? super E> filter) {
-        this.that = that;
+        this.target = target;
         this.filter = filter;
     }
 
-  
     @Override
     public boolean add(E element) {
-        return filter.test(element) && that.add(element); 
+        return filter.test(element) && target.add(element);
     }
 
     @Override
-    public boolean doWhile(final Predicate<? super E> p) {
-        return that.doWhile(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                if (filter.test(param)) {
-                    return p.test(param);
+    public void forEach(final ConsumerService<? super E> consumer) {
+        if (consumer instanceof ConsumerService.Sequential) {
+            target.forEach(new ConsumerService.Sequential<E>() {
+                @Override
+                public void accept(E e, Controller controller) {
+                    if (filter.test(e)) {
+                        consumer.accept(e, controller);
+                    }
                 }
-                return true;
-            }});
-    }
-
-    @Override
-    public boolean removeIf(final Predicate<? super E> p) {
-        return that.removeIf(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                return filter.test(param) && p.test(param);
-            }});
+            });
+        } else {
+            target.forEach(new ConsumerService<E>() {
+                @Override
+                public void accept(E e, Controller controller) {
+                    if (filter.test(e)) {
+                        consumer.accept(e, controller);
+                    }
+                }
+            });
+        }
     }
 
     @Override
     public Iterator<E> iterator() {
-        final Iterator<E> thatIterator = that.iterator();
+        final Iterator<E> targetIterator = target.iterator();
         return new Iterator<E>() {
             E next = null; // Next element for which the predicate is verified. 
             boolean peekNext; // If the next element has been read in advance.
 
             @Override
             public boolean hasNext() {
-                if (peekNext) return true;
+                if (peekNext)
+                    return true;
                 while (true) {
-                    if (!thatIterator.hasNext()) return false;
-                    next = thatIterator.next();
+                    if (!targetIterator.hasNext())
+                        return false;
+                    next = targetIterator.next();
                     if (filter.test(next)) {
                         peekNext = true;
                         return true;
@@ -81,20 +86,21 @@ public class FilteredCollectionImpl<E> implements
             }
 
             @Override
-            public E next() {                
+            public E next() {
                 if (peekNext) { // Usually true (hasNext has been called before). 
                     peekNext = false;
                     return next;
                 }
                 while (true) {
-                    next = thatIterator.next();
-                    if (filter.test(next)) return next;
+                    next = targetIterator.next();
+                    if (filter.test(next))
+                        return next;
                 }
             }
 
             @Override
             public void remove() {
-                thatIterator.remove();
+                targetIterator.remove();
             }
 
         };
@@ -102,21 +108,25 @@ public class FilteredCollectionImpl<E> implements
 
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
-        if (tmp == null) return null;
-        FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length]; 
-       for (int i=0; i < tmp.length; i++) {
-            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter); 
-       }
+        CollectionService<E>[] tmp = target.trySplit(n);
+        if (tmp == null)
+            return null;
+        FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter);
+        }
         return filtereds;
     }
-    
-    private static final long serialVersionUID = -8038802508310724258L;
-   
+
+    @Override
+    public FilteredCollectionImpl<E> service() {
+        return this;
+    }
+
 }

@@ -8,9 +8,9 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
@@ -19,18 +19,19 @@ import javolution.util.service.ComparatorService;
 /**
  * A sorted view over a collection.
  */
-public class SortedCollectionImpl<E> implements
-        CollectionService<E>, Serializable {
+public final class SortedCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
 
-    protected final CollectionService<E> that;
+    private static final long serialVersionUID = 2125302736706554633L;
+    private final CollectionService<E> target;
 
     public SortedCollectionImpl(CollectionService<E> that) {
-        this.that = that;
+        this.target = that;
     }
 
     @Override
     public boolean add(E element) {
-        return that.add(element);
+        return target.add(element);
     }
 
     @Override
@@ -40,7 +41,7 @@ public class SortedCollectionImpl<E> implements
     
     @Override
     public boolean removeIf(Predicate<? super E> predicate) {
-        return that.removeIf(predicate);
+        return target.removeIf(predicate);
     }
 
     @Override
@@ -50,13 +51,13 @@ public class SortedCollectionImpl<E> implements
 
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
+        CollectionService<E>[] tmp = target.trySplit(n);
         if (tmp == null) return null;
         SortedCollectionImpl<E>[] sorteds = new SortedCollectionImpl[tmp.length]; 
         for (int i=0; i < tmp.length; i++) {
@@ -66,8 +67,8 @@ public class SortedCollectionImpl<E> implements
     }
     
     private FastTable<E> getSortedTable() {
-        final FastTable<E> sorted = new FastTable<E>().usingComparator(that.comparator());
-        that.doWhile(new Predicate<E>() {
+        final FastTable<E> sorted = new FastTable<E>().usingComparator(target.comparator());
+        target.doWhile(new Predicate<E>() {
 
             @Override
             public boolean test(E e) {
@@ -78,5 +79,8 @@ public class SortedCollectionImpl<E> implements
         return sorted;
    }
 
-    private static final long serialVersionUID = -2266144061499828155L;
+    @Override
+    public SortedCollectionImpl<E> service() {
+        return this;
+    }
 }

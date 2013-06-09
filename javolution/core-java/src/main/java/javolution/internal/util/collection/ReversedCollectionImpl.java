@@ -8,74 +8,67 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
-import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
+import javolution.util.service.ConsumerService;
+import javolution.util.service.TableService;
 
 /**
- * A reversed view over a collection.
+ * A reversed view over a collection (unmodifiable).
  */
-public class ReversedCollectionImpl<E> implements
-        CollectionService<E>, Serializable {
+public final class ReversedCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
 
-    protected final CollectionService<E> that;
+    private static final long serialVersionUID = -8075747377480487300L;
+    private final CollectionService<E> target;
 
-    public ReversedCollectionImpl(CollectionService<E> that) {
-        this.that = that;
+    public ReversedCollectionImpl(CollectionService<E> target) {
+        this.target = target;
     }
 
     @Override
     public boolean add(E element) {
-        return that.add(element);
+        return target.add(element);
     }
 
     @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return getReversedTable().doWhile(predicate);
+    public void forEach(final ConsumerService<? super E> consumer) {
+        reversed().forEach(consumer);
     }
     
     @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        return that.removeIf(predicate);
-    }
-
-    @Override
     public Iterator<E> iterator() {
-        return getReversedTable().unmodifiable().iterator();
+        return reversed().iterator();
     }
     
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
-        if (tmp == null) return null;
-        ReversedCollectionImpl<E>[] sorteds = new ReversedCollectionImpl[tmp.length]; 
-       for (int i=0; i < tmp.length; i++) {
-           sorteds[i] = new ReversedCollectionImpl<E>(tmp[i]); 
-       }
-        return sorteds;
+        return reversed().service().trySplit(n);
     }
     
-    private FastTable<E> getReversedTable() {
+    private FastTable<E> reversed() {
         final FastTable<E> reversed = new FastTable<E>();
-        that.doWhile(new Predicate<E>() {
+        target.forEach(new ConsumerService.Sequential<E>() {
 
             @Override
-            public boolean test(E e) {
+            public void accept(E e, Controller controller) {
                 reversed.addFirst(e);
-                return true;
             }});
-        return reversed;
-   }
+        return reversed.unmodifiable();
+    }
 
-    private static final long serialVersionUID = 4309258622150539799L;
+    @Override
+    public ReversedCollectionImpl<E> service() {
+        return this;
+    }
 }

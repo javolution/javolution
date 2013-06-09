@@ -10,8 +10,7 @@ package javolution.util.service;
 
 import java.util.Iterator;
 
-import javolution.util.function.Predicate;
-
+import javolution.util.function.Consumer;
 
 /**
  * The fundamental set of related functionalities required to implement 
@@ -21,11 +20,15 @@ import javolution.util.function.Predicate;
  * @version 6.0.0, December 12, 2012
  */
 public interface CollectionService<E> {
+    
+    /** 
+     * Executes the specified atomic action on this collection.
+     * 
+     * @param action the action to be executed atomically on this collection.
+     * @param update indicates if the specified action may modify the collection.
+     */
+    void atomic(Runnable action, boolean update);
 
-    //
-    // Basic collection methods.
-    // 
- 
     /** 
      * Adds the specified element to this collection.
      * 
@@ -35,36 +38,12 @@ public interface CollectionService<E> {
     boolean add(E element);
 
     /** 
-     * Returns an iterator over the collection elements.
-     */
-    Iterator<E> iterator();
-    
-    //
-    // Closure-based iterations.
-    // 
-   
-    /** 
-     * Iterates over this collection elements until the specified predicate 
-     * returns <code>false</code>. 
+     * Iterates over this collection elements either sequentially or 
+     * in parallel. 
      * 
-     * @param pursue a predicate returning {@code false} to stop iterating.
-     * @param predicate the predicate being evaluated.
-     * @return {@code false} if any predicate evaluation returned {@code false}.
+     * @param consumer the consumer of the collection elements.
      */
-    boolean doWhile(Predicate<? super E> pursue);
-
-    /** 
-     * Removes from this collection all the elements matching the specified 
-     * predicate.
-     * 
-     * @param filter a predicate returning {@code true} for elements to be removed.
-     * @return {@code true} if any elements were removed
-     */
-    boolean removeIf(Predicate<? super E> filter);
-    
-    //
-    // Misc.
-    //       
+    void forEach(ConsumerService<? super E> consumer);
 
     /** 
      * Splits this collection in <code>n</code> sub-collections.
@@ -80,4 +59,9 @@ public interface CollectionService<E> {
      */
     ComparatorService<? super E> comparator();
  
+    /** 
+     * Returns an iterator over the collection elements.
+     */
+    Iterator<E> iterator();
+    
  }

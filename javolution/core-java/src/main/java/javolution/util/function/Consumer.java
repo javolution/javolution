@@ -23,6 +23,6 @@ public interface Consumer<P> {
     /**
      * Accepts an input value.
      */
-    void accept(P param);
+    void accept(P p);
 
 }

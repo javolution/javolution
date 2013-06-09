@@ -25,7 +25,7 @@ public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E> implem
 
     @Override
     public int size() {
-        return ((SetService<E>)that).size();
+        return ((SetService<E>)target).size();
     }
 
     @Override
@@ -35,7 +35,7 @@ public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E> implem
 
     @Override
     public boolean contains(E e) {
-        return ((SetService<E>)that).contains(e);
+        return ((SetService<E>)target).contains(e);
     }
 
     @Override

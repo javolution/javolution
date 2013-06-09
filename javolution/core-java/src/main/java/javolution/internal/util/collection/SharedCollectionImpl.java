@@ -8,11 +8,11 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javolution.util.FastCollection;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
@@ -20,23 +20,23 @@ import javolution.util.service.ComparatorService;
 /**
  * A shared view over a collection allowing concurrent access and sequential updates.
  */
-public class SharedCollectionImpl<E> implements CollectionService<E>,
-        Serializable {
+public final class SharedCollectionImpl<E> extends FastCollection<E> implements CollectionService<E> {
 
-    protected final CollectionService<E> that;
-    protected final Lock read;
-    protected final Lock write;
+    private static final long serialVersionUID = 1496271733380089832L;
+    private final CollectionService<E> target;
+    private final Lock read;
+    private final Lock write;
 
-    public SharedCollectionImpl(CollectionService<E> that) {
-        this.that = that;
+    public SharedCollectionImpl(CollectionService<E> target) {
+        this.target = target;
         ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
         this.read = readWriteLock.readLock();
         this.write = readWriteLock.writeLock();
     }
 
-    private SharedCollectionImpl(CollectionService<E> that, Lock read,
+    private SharedCollectionImpl(CollectionService<E> target, Lock read,
             Lock write) {
-        this.that = that;
+        this.target = target;
         this.read = read;
         this.write = write;
     }
@@ -45,7 +45,7 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
     public boolean add(E element) {
         write.lock();
         try {
-            return that.add(element);
+            return target.add(element);
         } finally {
             write.unlock();
         }
@@ -55,7 +55,7 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
     public boolean doWhile(Predicate<? super E> predicate) {
         read.lock();
         try {
-            return that.doWhile(predicate);
+            return target.doWhile(predicate);
         } finally {
             read.unlock();
         }
@@ -65,7 +65,7 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
     public boolean removeIf(Predicate<? super E> predicate) {
         write.lock();
         try {
-            return that.removeIf(predicate);
+            return target.removeIf(predicate);
         } finally {
             write.unlock();
         }
@@ -74,14 +74,14 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
     @Override
     @Deprecated
     public Iterator<E> iterator() {
-        final Iterator<E> thatIterator = that.iterator();
+        final Iterator<E> targetIterator = target.iterator();
         return new Iterator<E>() {
 
             @Override
             public boolean hasNext() {
                 read.lock();
                 try {
-                    return thatIterator.hasNext();
+                    return targetIterator.hasNext();
                 } finally {
                     read.unlock();
                 }
@@ -91,7 +91,7 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
             public E next() {
                 read.lock();
                 try {
-                    return thatIterator.next();
+                    return targetIterator.next();
                 } finally {
                     read.unlock();
                 }
@@ -101,7 +101,7 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
             public void remove() {
                 write.lock();
                 try {
-                    thatIterator.remove();
+                    targetIterator.remove();
                 } finally {
                     write.unlock();
                 }
@@ -112,13 +112,13 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
 
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
+        CollectionService<E>[] tmp = target.trySplit(n);
         if (tmp == null)
             return null;
         SharedCollectionImpl<E>[] shareds = new SharedCollectionImpl[tmp.length];
@@ -128,5 +128,8 @@ public class SharedCollectionImpl<E> implements CollectionService<E>,
         return shareds;
     }
 
-    private static final long serialVersionUID = 6737935331276281598L;
+    @Override
+    public SharedCollectionImpl<E> service() {
+        return this;
+    }
 }

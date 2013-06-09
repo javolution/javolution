@@ -8,75 +8,77 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.FastCollection;
 import javolution.util.FastSet;
-import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
+import javolution.util.service.ConsumerService;
+import javolution.util.service.SetService;
 
 /**
  * A view which does not iterate twice over the same elements and which 
  * maintains element unicity.
  */
-public class DistinctCollectionImpl<E> implements CollectionService<E>,
-        Serializable {
+public final class DistinctCollectionImpl<E> extends FastCollection<E>
+        implements CollectionService<E> {
 
-    protected final CollectionService<E> that;
+    private static final long serialVersionUID = 5695227218089832829L;
+    private final CollectionService<E> target;
 
-    public DistinctCollectionImpl(CollectionService<E> that) {
-        this.that = that;
+    public DistinctCollectionImpl(CollectionService<E> target) {
+        this.target = target;
     }
 
     @Override
     public boolean add(E element) {
-        return contains(element) ? false : that.add(element);
-    }
-
-    private boolean contains(final E element) {
-        final ComparatorService<? super E> cmp = that.comparator();
-        return !that.doWhile(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                return !cmp.areEqual(element, param);
-            }
-        });
+        return checkContains(element) ? false : target.add(element);
     }
 
     @Override
-    public boolean doWhile(final Predicate<? super E> predicate) {
-        final FastSet<E> iterated = new FastSet<E>(that.comparator());
-        return that.doWhile(new Predicate<E>() {
+    public void forEach(final ConsumerService<? super E> consumer) {
+        if (consumer instanceof ConsumerService.Sequential) {
+            target.forEach(new ConsumerService.Sequential<E>() {
+                FastSet<E> iterated = new FastSet<E>(target.comparator());
 
-            @Override
-            public boolean test(E param) {
-                if (iterated.contains(param)) return true; // Ignores.
-                iterated.add(param);
-                return predicate.test(param);
-            }});
-    }
+                @Override
+                public void accept(E e, Controller controller) {
+                    if (!iterated.add(e))
+                        return; // Already iterated over.
+                    consumer.accept(e, controller);
+                }
+            });
+        } else { // Potentially concurrent (use shared collection).
+            target.forEach(new ConsumerService<E>() {
+                FastSet<E> iterated = new FastSet<E>(target.comparator()).shared();
 
-    @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        return that.removeIf(predicate);
+                @Override
+                public void accept(E e, Controller controller) {
+                    if (!iterated.add(e))
+                        return; // Already iterated over.
+                    consumer.accept(e, controller);
+                }
+            });
+        }
     }
 
     @Override
     public Iterator<E> iterator() {
-        final Iterator<E> thatIterator = that.iterator();
-        final FastSet<E> iterated = new FastSet<E>(that.comparator());
+        final Iterator<E> targetIterator = target.iterator();
+        final FastSet<E> iterated = new FastSet<E>(target.comparator());
         return new Iterator<E>() {
             E next = null; // Next element not already iterated over. 
             boolean peekNext; // If the next element has been read in advance.
 
             @Override
             public boolean hasNext() {
-                if (peekNext) return true;
+                if (peekNext)
+                    return true;
                 while (true) {
-                    if (!thatIterator.hasNext()) return false;
-                    next = thatIterator.next();
+                    if (!targetIterator.hasNext())
+                        return false;
+                    next = targetIterator.next();
                     if (!iterated.contains(next)) {
                         iterated.add(next);
                         peekNext = true;
@@ -86,13 +88,13 @@ public class DistinctCollectionImpl<E> implements CollectionService<E>,
             }
 
             @Override
-            public E next() {                
+            public E next() {
                 if (peekNext) { // Usually true (hasNext has been called before). 
                     peekNext = false;
                     return next;
                 }
                 while (true) {
-                    next = thatIterator.next();
+                    next = targetIterator.next();
                     if (!iterated.contains(next)) {
                         iterated.add(next);
                         return next;
@@ -102,29 +104,43 @@ public class DistinctCollectionImpl<E> implements CollectionService<E>,
 
             @Override
             public void remove() {
-                thatIterator.remove();
+                targetIterator.remove();
             }
 
         };
-    }  
+    }
 
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
-        if (tmp == null)
-            return null;
-        DistinctCollectionImpl<E>[] sorteds = new DistinctCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            sorteds[i] = new DistinctCollectionImpl<E>(tmp[i]);
-        }
-        return sorteds;
+        return target.trySplit(n);
     }
 
-    private static final long serialVersionUID = 3758464317713857912L; 
+    public DistinctCollectionImpl<E> service() {
+        return this;
+    }
+
+    // Check if this collection contains the specified element.
+    private boolean checkContains(final E element) {
+        if (target instanceof SetService)
+            return ((SetService<E>) target).contains(element);
+        final boolean[] found = new boolean[1];
+        target.forEach(new ConsumerService<E>() {
+            ComparatorService<? super E> cmp = target.comparator();
+
+            @Override
+            public void accept(E e, Controller controller) {
+                if (cmp.areEqual((E) element, e)) {
+                    found[0] = true;
+                    controller.terminate();
+                }
+            }
+        });
+        return found[0];
+    }
+
 }

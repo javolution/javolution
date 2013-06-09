@@ -41,7 +41,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * specified comparator for key equality.
     */
    public FastSet(ComparatorService<? super E> comparator) {
-       super(new FastMap<E, Void>(comparator).keySet().getService());
+       super(new FastMap<E, Void>(comparator).keySet().service());
    }   
    
    /**
@@ -54,8 +54,8 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     /**
      * Returns the service implementation of this set.
      */
-    protected SetService<E> getService() {
-        return (SetService<E>) super.getService();
+    public SetService<E> service() {
+        return (SetService<E>) super.service();
     }
 
     /**
@@ -63,7 +63,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      */
     @RealTime(Limit.CONSTANT)
     public int size() {
-       return getService().size(); 
+       return service().size(); 
     }
 
     /**
@@ -71,7 +71,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      */
     @RealTime(Limit.CONSTANT)
     public void clear() {
-        getService().clear();
+        service().clear();
     }
     
     /**
@@ -80,7 +80,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     @SuppressWarnings("unchecked")
     @RealTime(Limit.CONSTANT)
     public boolean contains(Object obj) {
-        return getService().contains((E)obj);
+        return service().contains((E)obj);
     }
 
     /**
@@ -91,7 +91,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     @SuppressWarnings("unchecked")
     @RealTime(Limit.CONSTANT)
     public boolean remove(Object obj) {
-        return getService().remove((E) obj);
+        return service().remove((E) obj);
     }
 
     //
@@ -100,17 +100,17 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
   
     @Override
     public FastSet<E> unmodifiable() {
-        return new FastSet<E>(new UnmodifiableSetImpl<E>(getService()));
+        return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
     }
 
     @Override
     public FastSet<E> shared() {
-        return new FastSet<E>(new SharedSetImpl<E>(getService()));
+        return new FastSet<E>(new SharedSetImpl<E>(service()));
     }
 
     @Override
     public FastSet<E> filter(final Predicate<? super E> filter) {
-        return new FastSet<E>(new FilteredSetImpl<E>(getService(), filter));
+        return new FastSet<E>(new FilteredSetImpl<E>(service(), filter));
     }
     
     @Override

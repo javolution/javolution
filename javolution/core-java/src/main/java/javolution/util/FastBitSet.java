@@ -321,7 +321,7 @@ public class FastBitSet extends FastSet<Index> {
     }
 
     @Override
-    protected BitSetService getService() {
+    public BitSetService service() {
         return impl;
     }
 

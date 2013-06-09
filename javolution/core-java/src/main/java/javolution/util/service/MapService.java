@@ -20,64 +20,65 @@ import java.util.Map.Entry;
  */
 public interface MapService<K, V>  {
 
-    //
-    // Map interface.
-    // 
-    
-    /** See {@link java.util.Map#clear} */
-    void clear();
-
-    /** See {@link java.util.Map#containsKey} */
-    boolean containsKey(K key);
-    
-    /** See {@link java.util.Map#get} */
-    V get(K key);
-
-    /** See {@link java.util.Map#put} */
-    V put(K key, V value);
-    
-    /** See {@link java.util.Map#remove} */
-    V remove(K key);
-
-    /** See {@link java.util.Map#size} */
-    int size();
-    
-    /** Same as {@link java.util.Map#entrySet()} except it does support the
-     * <code>add</code> and <code>addAll</code> operations. */
-    SetService<Entry<K,V>> entrySet();
-
-    /** Same as {@link java.util.Map#values()} */
-    CollectionService<V> values();
-
-    /** Same as {@link java.util.Map#keySet()} except it does support the
-     * <code>add</code> and <code>addAll</code> operations (the corresponding 
-     * entry in the map has a <code>null</code> value). */
-    SetService<K> keySet();
-
-    //
-    // ConcurrentMap Interface
-    //
-    
-    /** See {@link java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)} */
-    V putIfAbsent(K key, V value);
-    
-    /** See {@link java.util.concurrent.ConcurrentMap#remove(Object, Object)} */
-    boolean remove(K key, V value);
-    
-    /** See {@link java.util.concurrent.ConcurrentMap#replace(Object, Object)} */
-    V replace(K key, V value);
-    
-    /** See {@link java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)} */
-    boolean replace(K key, V oldValue, V newValue);
-
-    
-    //
-    // Misc.
-    //       
+    /** 
+     * Executes the specified atomic action on this map.
+     * 
+     * @param action the action to be executed atomically on this map.
+     * @param update indicates if the specified action may modify the map.
+     */
+    void atomic(Runnable action, boolean update);
 
     /** 
-     * Returns the comparator to be used for key comparisons / hash code calculations.
+     * Returns the set view of this map entries.
+     * Unlike {@link java.util.Map#entrySet()} the view supports adding new 
+     * entries to the map.
      */
-    ComparatorService<? super K> getKeyComparator();
- 
+    SetService<Entry<K,V>> entrySet();
+
+     /** 
+      * Indicates if the map contains the specified key.
+      */
+    boolean containsKey(K key);
+    
+    /** 
+     * Returns the value associated to the specified key.
+     */
+    V get(K key);
+
+    /** 
+     * Associates the specified value to the specified key; returns 
+     * the previously associated value if any.
+     */
+    V put(K key, V value);
+    
+    /**
+     * Removes the specified key and returns the previously associated value
+     * if any. 
+     */
+    V remove(K key);
+
+    /** 
+     *  Associates the specified key with the specified value unless 
+     *  it is already associated.
+     */
+    V putIfAbsent(K key, V value);
+    
+    /** 
+     * Removes the entry for a key only if currently mapped to the 
+     * specified value.
+     */
+    boolean remove(K key, V value);
+    
+    /** 
+     * Replaces the entry for a key only if currently mapped to the
+     * specified value.
+     */
+    V replace(K key, V value);
+    
+    /** 
+     * Replaces the entry for a key only if currently mapped to the
+     * specified value.
+     */
+    boolean replace(K key, V oldValue, V newValue);
+    
 }

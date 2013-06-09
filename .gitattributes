@@ -295,12 +295,13 @@ javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetIterato
 javolution/core-java/src/main/java/javolution/internal/util/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/SharedBitSet.java -text
 javolution/core-java/src/main/java/javolution/internal/util/bitset/UnmodifiableBitSet.java -text
-javolution/core-java/src/main/java/javolution/internal/util/collection/CustomComparatorCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/collection/ComparatorCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/DistinctCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/ParallelCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/ReversedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/collection/SequentialCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
@@ -391,10 +392,13 @@ javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/ComparatorService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/ConsumerService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/MapService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/OperatorService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/SetService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SortedMapService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/SortedSetService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SortedTableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/TableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain

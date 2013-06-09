@@ -8,9 +8,9 @@
  */
 package javolution.internal.util.collection;
 
-import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.FastCollection;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 import javolution.util.service.ComparatorService;
@@ -18,13 +18,14 @@ import javolution.util.service.ComparatorService;
 /**
  * An unmodifiable view over a collection.
  */
-public class UnmodifiableCollectionImpl<E> implements
-        CollectionService<E>, Serializable {
+public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
 
-    protected final CollectionService<E> that;
+    private static final long serialVersionUID = -5922312619483198062L;
+    private final CollectionService<E> target;
 
-    public UnmodifiableCollectionImpl(CollectionService<E> that) {
-        this.that = that;
+    public UnmodifiableCollectionImpl(CollectionService<E> target) {
+        this.target = target;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class UnmodifiableCollectionImpl<E> implements
 
     @Override
     public boolean doWhile(Predicate<? super E> predicate) {
-        return that.doWhile(predicate);
+        return target.doWhile(predicate);
     }
 
     @Override
@@ -44,17 +45,17 @@ public class UnmodifiableCollectionImpl<E> implements
 
     @Override
     public Iterator<E> iterator() {
-        final Iterator<E> thatIterator = that.iterator();
+        final Iterator<E> targetIterator = target.iterator();
         return new Iterator<E>() {
 
             @Override
             public boolean hasNext() {
-                return thatIterator.hasNext();
+                return targetIterator.hasNext();
             }
 
             @Override
             public E next() {
-                return thatIterator.next();
+                return targetIterator.next();
             }
 
             @Override
@@ -67,13 +68,13 @@ public class UnmodifiableCollectionImpl<E> implements
 
     @Override
     public ComparatorService<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
+        CollectionService<E>[] tmp = target.trySplit(n);
         if (tmp == null) return null;
         UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length]; 
        for (int i=0; i < tmp.length; i++) {
@@ -81,6 +82,9 @@ public class UnmodifiableCollectionImpl<E> implements
        }
         return unmodifiables;
     }
-    
-    private static final long serialVersionUID = 278852354797494219L;
+
+    @Override
+    public UnmodifiableCollectionImpl<E> service() {
+        return this;
+    }
 }

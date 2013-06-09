@@ -50,10 +50,10 @@ public class FastSortedTable<E> extends FastTable<E>  {
    }
    
     /**
-     * Creates a sorted table backed up by the specified implementation.
+     * Creates a sorted table backed up by the specified service implementation.
      */
-    protected FastSortedTable(TableService<E> implementation) {
-        super(implementation);        
+    public FastSortedTable(TableService<E> service) {
+        super(service);        
     }
  
 }

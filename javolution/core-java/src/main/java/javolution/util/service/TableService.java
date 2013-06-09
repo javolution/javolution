@@ -17,32 +17,28 @@ package javolution.util.service;
  */
 public interface TableService<E> extends CollectionService<E> {
 
-    //
-    // List interface.
-    //
+    /**
+     * Returns the number of elements in this table.
+     */
+    int size();
+
+    /**
+     * Removes all of the elements from this table.
+     */
+    void clear();
     
     /** See {@link java.util.List#add(int, Object)} */
     void add(int index, E element);
 
     /** See {@link java.util.List#get(int)} */
     E get(int index);
-
+update doc
     /** See {@link java.util.List#set(int, Object)} */
     E set(int index, E element);
-
-    /** See {@link java.util.List#indexOf(Object)} */
-    int indexOf(E element);
-
-    /** See {@link java.util.List#lastIndexOf(Object)} */
-    int lastIndexOf(E element);
 
     /** See {@link java.util.List#remove(int)} */
     E remove(int index);
 
-    //
-    // Deque interface.
-    //
-    
     /** See {@link java.util.Deque#getFirst() } */
     E getFirst();
 
@@ -60,32 +56,5 @@ public interface TableService<E> extends CollectionService<E> {
 
     /** See {@link java.util.Deque#removeLast() } */
     E removeLast();
-
-    /** See {@link java.util.Deque#pollFirst() } */
-    E pollFirst();
-
-    /** See {@link java.util.Deque#pollLast() } */
-    E pollLast();
-
-    /** See {@link java.util.Deque#peekFirst() } */
-    E peekFirst();
-
-    /** See {@link java.util.Deque#peekLast() } */
-    E peekLast();
     
-    //
-    // Misc.
-    //       
-  
-    /**
-     * Returns multiple views (split) over this table. 
-     */
-    @Override
-    TableService<E>[] trySplit(int n);
-    
-    /**
-     * Sorts this table in place. 
-     */
-    void sort();
-                   
 }

@@ -49,12 +49,12 @@ public class FilteredSetImpl<E> extends FilteredCollectionImpl<E> implements Set
 
     @Override
     public boolean contains(E e) {
-        return filter.test(e) && ((SetService<E>)that).contains(e);
+        return filter.test(e) && ((SetService<E>)target).contains(e);
     }
 
     @Override
     public boolean remove(E e) {
-        return filter.test(e) && ((SetService<E>)that).remove(e);
+        return filter.test(e) && ((SetService<E>)target).remove(e);
     }
 
     private static final long serialVersionUID = -218446112843771282L;

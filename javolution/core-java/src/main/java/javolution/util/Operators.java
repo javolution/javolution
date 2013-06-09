@@ -19,7 +19,7 @@ import javolution.util.service.OperatorService;
 
 /**
  * <p> A collection of {@link StackSafe stack-safe} and 
- *     {@link ThreadSafe thread-safe} operators (stateless instances).</p>
+ *     {@link ThreadSafe thread-safe} collection operators.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012

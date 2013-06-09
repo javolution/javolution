@@ -28,10 +28,6 @@ public class QuickSort<E> {
         this.comparator = comparator;
     }
 
-    POUR SYNCRO METHOD 
-        protected boolean lockRead(boolean)
-        protected boolean lockWrite(boolean)
-    
     public void sort() {
        sort(0, table.size()); 
     }

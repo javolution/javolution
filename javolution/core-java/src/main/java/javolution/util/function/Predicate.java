@@ -11,10 +11,10 @@ package javolution.util.function;
 /**
  * <p> A function which states or affirms the attribute or quality of something.</p>
  * 
-  * <p> Note: In future version this interface may derive from 
+ * <p> Note: In future version this interface may derive from 
  *           {@code Function<P, Boolean>}.</p>
  *           
-* @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
+ * @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
  * Wikipedia: Predicate<a>    
  *                  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>

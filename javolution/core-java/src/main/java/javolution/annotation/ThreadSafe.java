@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Annotation indicating that a class (and any of its instances) can be used 
+ * <p> Annotation indicating that a class, a method or a field can be used 
  *     by multiple threads concurrently.</p>
  * 
  * <p> Classes with no internal fields or immutable are typically thread-safe
@@ -29,8 +29,8 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Inherited
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface ThreadSafe {
 
     /**

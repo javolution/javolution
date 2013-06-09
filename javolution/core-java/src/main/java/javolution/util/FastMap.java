@@ -8,6 +8,7 @@
  */
 package javolution.util;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,16 +28,15 @@ import javolution.util.service.MapService;
  *     smooth capacity increase/decrease and minimal memory footprint. 
  *     Fast maps support multiple views which can be chained.
  * <ul>
- *    <li>{@link #unmodifiable} - View which does not allow for modification.</li>
- *    <li>{@link #shared} - View allowing for concurrent read/write.</li>
- *    <li>{@link #parallel} - View allowing concurrent iterations (closure-based) over the map's entries, keys or values.</li>
- *    <li>{@link #entrySet} - Set view over the map keys.</li>
- *    <li>{@link #keySet} - Set view over the map keys.</li>
- *    <li>{@link #values} - Collection view over the map keys.</li>
+ *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
+ *    <li>{@link #shared} - View allowing concurrent modifications.</li>
+ *    <li>{@link #entrySet} - {@link FastSet} view over the map entries.</li>
+ *    <li>{@link #keySet} - {@link FastSet} view over the map keys.</li>
+ *    <li>{@link #values} - {@link FastCollection} view over the map values.</li>
  * </ul>      
  * <p> The iteration order over the fast map keys, values or entries is deterministic 
  *     (unlike {@link java.util.HashMap}). It is either the insertion order (default) 
- *     or the key order for {@link FastSortedMap} subclasses.</p> 
+ *     or the key order for the {@link FastSortedMap} subclass.</p> 
  *     
  * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps. 
  *     [code]
@@ -80,15 +80,18 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
     }
         
     /**
-     * Returns the comparator used by this map for key equality
-     * or comparison (if the map is sorted).
-     * 
-     * @see #FastMap(ComparatorService)
-     * @see FastSortedMap
+     * Creates a map backed up by the specified service implementation.
      */
-    public ComparatorService<? super K> comparator() {
-        return impl.getKeyComparator();
+    public FastMap(MapService<K, V> implementation) {
+        this.impl = implementation;
     }
+
+    /**
+     * Returns this map service implementation.
+     */
+    public MapService<K, V> service() {
+        return impl;
+    }    
 
     /***************************************************************************
      * Views.
@@ -114,15 +117,6 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
     }
 
     /**
-     * Returns a parallel view over this map.
-     * Closure-based iterations over the maps keys, values or entries can be 
-     * performed concurrently.
-     */
-    public FastMap<K, V> parallel() {
-        return null; // TODO
-    }
-
-    /**
      * Returns a set view of the keys contained in this map.
      * The set is backed by the map, so changes to the map are
      * reflected in the set, and vice-versa.
@@ -141,12 +135,12 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
     }
 
     /**
-     * Returns a {@link FastCollection} view of the mappings contained in 
+     * Returns a set view of the mappings contained in 
      * this map. The set is backed by the map, so changes to the map are
      * reflected in the set, and vice-versa. 
      */
     public FastSet<Entry<K, V>> entrySet() {
-        return null;  // TODO
+        return new FastSet<Entry<K, V>>(impl.entrySet());
     }
 
     /***************************************************************************
@@ -159,7 +153,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * @return this map's size.
      */
     public int size() {
-        return impl.size();
+        return impl.entrySet().size();
     }
 
     /**
@@ -168,7 +162,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * @return <code>true</code> if this map contains no key-value mappings;
      *         <code>false</code> otherwise.
      */
-    public boolean isEmpty() {
+    public final boolean isEmpty() {
         return size() == 0;
     }
 
@@ -180,7 +174,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      *         specified key; <code>false</code> otherwise.
      */
     @SuppressWarnings("unchecked")
-    public boolean containsKey(Object key) {
+    public final boolean containsKey(Object key) {
         return impl.containsKey((K) key);
     }
 
@@ -191,10 +185,9 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * @return <code>true</code> if this map maps one or more keys to the
      *         specified value.
      */
-    @SuppressWarnings("unchecked")
     @RealTime(Limit.LINEAR)
     public boolean containsValue(Object value) {
-        return impl.values().contains((V) value);
+        return values().contains(value);
     }
 
     /**
@@ -205,7 +198,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      *         <code>null</code> if there is no mapping for the key.
      */
     @SuppressWarnings("unchecked")
-    public V get(Object key) {
+    public final V get(Object key) {
         return impl.get((K) key);
     }
 
@@ -221,7 +214,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      *         <code>null</code> return can also indicate that the map
      *         previously associated <code>null</code> with the specified key.
      */
-    public V put(K key, V value) {
+    public final V put(K key, V value) {
         return impl.put(key, value);
     }
 
@@ -237,23 +230,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      */
     @SuppressWarnings("unchecked")
     public void putAll(Map<? extends K, ? extends V> map) {
-        Set<?> entries = map.entrySet();
-        if (entries instanceof FastCollection) {
-            FastCollection<Map.Entry<K, V>> fc = (FastCollection<Map.Entry<K, V>>) entries;
-            fc.doWhile(new Predicate<Map.Entry<K, V>>() {
-
-                public Boolean apply(Entry<K, V> entry) {
-                    put(entry.getKey(), entry.getValue());
-                    return true;
-                }
-
-            });
-        } else {
-            for (Iterator<?> i = map.entrySet().iterator(); i.hasNext();) {
-                Map.Entry<K, V> entry = (Map.Entry<K, V>) i.next();
-                put(entry.getKey(), entry.getValue());
-            }
-        }
+        entrySet().addAll((Collection<? extends Entry<K, V>>) map.entrySet()); 
     }
 
     /**
@@ -266,7 +243,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      *         previously associated <code>null</code> with the specified key.
      */
     @SuppressWarnings("unchecked")
-    public V remove(Object key) {
+    public final V remove(Object key) {
         return impl.remove((K) key);
     }
 
@@ -275,7 +252,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * is then reduced to its minimum (reduces memory footprint).
      */
     public void clear() {
-        impl.clear();
+        entrySet().clear();
     }
 
     /***************************************************************************
@@ -303,21 +280,4 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
         return impl.replace(key, value);
     }
     
-    /***************************************************************************
-     * For sub-classes.
-     */
-
-    /**
-     * Creates a map backed up by the specified implementation.
-     */
-    protected FastMap(MapService<K, V> implementation) {
-        this.impl = implementation;
-    }
-
-    /**
-     * Returns this map service implementation.
-     */
-    protected MapService<K, V> getService() {
-        return impl;
-    }    
 }
