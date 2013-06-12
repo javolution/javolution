@@ -48,8 +48,8 @@ import javolution.util.service.MapService;
  *     FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
  *     FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Comparators.IDENTITY);
  *     FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Comparators.LEXICAL);  // Allows for value retrieval using any CharSequence key.
- *     FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.STRING);  // Use high-performance <code>String</code> comparator
- *     ...                                                                                    // (constant-time hashCode calculations).
+ *     FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.LEXICAL_FAST);  // Use constant-time hashcode calculation.
+ *     ...                                                                                   
  *     [/code]</p>     
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>

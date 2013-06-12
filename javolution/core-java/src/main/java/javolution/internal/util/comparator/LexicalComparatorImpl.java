@@ -10,34 +10,33 @@ package javolution.internal.util.comparator;
 
 import java.io.Serializable;
 
+import javolution.lang.MathLib;
 import javolution.util.service.ComparatorService;
 
 /**
  * The lexical comparator implementation.
  */
-public final class LexicalComparatorImpl implements ComparatorService<CharSequence>, Serializable {
+public class LexicalComparatorImpl implements ComparatorService<CharSequence>, Serializable {
 
     @Override
     public int hashCodeOf(CharSequence csq) {
         if (csq == null) return -1;
-        int n = csq.length();
-        if (n == 0) return 0;
-        // Hash based on 5 characters only.
-        return csq.charAt(0) + csq.charAt(n - 1) * 31
-                + csq.charAt(n >> 1) * 1009 + csq.charAt(n >> 2) * 27583 
-                + csq.charAt(n - 1 - (n >> 2)) * 73408859;
+        if (csq instanceof String) return ((String)csq).hashCode(); // String hashcode is cached. 
+        int h = 0;
+        for (int i = 0, n = csq.length(); i < n;) {
+            h = 31 * h + csq.charAt(i++);
+        }
+        return h;
     }
     
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
-        if ((csq1 == null) || (csq2 == null))
-            return csq1 == csq2;
-        final int n = csq1.length();
-        if (csq2.length() != n)
-            return false;
+        if (csq1 == csq2) return true;
+        if ((csq1 == null) || (csq2 == null)) return false;
+        int n = csq1.length();
+        if (csq2.length() != n) return false;
         for (int i = 0; i < n;) {
-            if (csq1.charAt(i) != csq2.charAt(i++))
-                return false;
+            if (csq1.charAt(i) != csq2.charAt(i++)) return false;
         }
         return true;
     }
@@ -45,7 +44,7 @@ public final class LexicalComparatorImpl implements ComparatorService<CharSequen
     @Override
     public int compare(CharSequence left, CharSequence right) {
         int i = 0;
-        int n = Math.min(left.length(), right.length());
+        int n = MathLib.min(left.length(), right.length());
         while (n-- != 0) {
             char c1 = left.charAt(i);
             char c2 = right.charAt(i++);

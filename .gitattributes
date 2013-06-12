@@ -305,11 +305,12 @@ javolution/core-java/src/main/java/javolution/internal/util/collection/Sequentia
 javolution/core-java/src/main/java/javolution/internal/util/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/comparator/ArrayComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalCaseInsensitiveComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/internal/util/comparator/LexicalFastComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/StandardComparatorImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/internal/util/comparator/StringComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/comparator/WrapperComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/AbstractMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/internal/util/map/CustomKeyComparatorMapImpl.java -text svneol=unset#text/plain

@@ -51,37 +51,52 @@ import javolution.util.service.OperatorService;
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
- *    <li>{@link #filter} - View exposing the elements matching the specified filter.</li>
- *    <li>{@link #map} - View exposing elements through the specified mapping function.</li>
+ *    <li>{@link #filtered} - View exposing the elements matching the specified filter.</li>
+ *    <li>{@link #mapped} - View exposing elements through the specified mapping function.</li>
  *    <li>{@link #sorted} - View exposing elements according to the collection sorting order.</li>
- *    <li>{@link #reverse} - View exposing elements in reverse iterative order.</li>
+ *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
  *    <li>{@link #parallel} - View allowing parallel processing (closure-based).</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  * </ul>
  *    Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
- *    Java 8 streams</a> except that views are themselves collections and actions on a view 
- *    can impact the original collection.
+ *    Java 8 streams</a> except that views are themselves collections (virtual collections)
+ *    and actions on a view can impact the original collection. Views are nothing "new" since they already existed
+ *    in the original java.util collection classes (e.g. List.subList(...), Map.keySet(), Map.values(), ...).
+ *    Javolution extends to this concept and allows views to be chained which addresses 
+ *    the concern of class proliferation (see
+ *    <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
+ *    State of the Lambda: Libraries Edition</a>). 
  *    [code]
  *    FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
  *    boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
  *    names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
  *    names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
- *    names.filter(isLong).clear(); // Removes all the persons with long names.
- *    names.parallel().filter(isLong).clear(); // Same as above but performed concurrently.
+ *    names.filtered(isLong).clear(); // Removes all the persons with long names.
+ *    names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
  *    ...
  *    Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
  *         public boolean test(CharSequence csq) {
  *             return csq.length() > 16; 
  *         }
  *    });
+ *    
+ *    // JDK Class.getEnclosingMethod after simplification (to be compared with actual implementation).
+ *    Method matching = FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ *       .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
+ *       .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
+ *       .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
+ *       .reduce(Operators.ANY);
+ *    if (matching == null) throw new InternalError("Enclosing method not found");
+ *    return matching;
  *    [/code]
- *    Views can of course be used to perform "stream" oriented filter-map-reduce operations.
+ *    Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
+ *    Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.
  *    [code]
- *    String anyLongName = names.filter(isLong).reduce(Operators.ANY); // Returns any long name.
- *    int nbrChars = names.map(toLength).reduce(Operators.SUM); // Returns the total number of characters.
- *    int maxLength = names.parallel().map(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
+ *    String anyLongName = names.filtered(isLong).reduce(Operators.ANY); // Returns any long name.
+ *    int nbrChars = names.mapped(toLength).reduce(Operators.SUM); // Returns the total number of characters.
+ *    int maxLength = names.parallel().mapped(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
  *    ...
  *    Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
  *         public Integer apply(CharSequence csq) {
@@ -109,7 +124,7 @@ import javolution.util.service.OperatorService;
  *     With Java 8, closures are greatly simplified using lambda expressions.
  *     [code]
  *     tasks.values().parallel().forEach(task -> task.run()); // Same as above.
- *     names.sorted().reverse().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
+ *     names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
  *     [/code]
  *     </p>
  * 
@@ -183,7 +198,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * Returns a view exposing only the elements matching the specified 
      * filter.
      */
-    public FastCollection<E> filter(Predicate<? super E> filter) {
+    public FastCollection<E> filtered(Predicate<? super E> filter) {
         return new FilteredCollectionImpl<E>(service(), filter);
     }
 
@@ -191,7 +206,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * Returns a view exposing elements through the specified mapping function.
      * The view does not allows new elements to be added.
      */
-    public <R> FastCollection<R> map(Function<? super E, ? extends R> function) {
+    public <R> FastCollection<R> mapped(Function<? super E, ? extends R> function) {
         return new MappedCollectionImpl<E, R>(service(), function);
     }
 
@@ -208,7 +223,7 @@ public abstract class FastCollection<E> implements Collection<E>,
     /** 
      * Returns a view exposing elements in reverse iterative order.
      */
-    public FastCollection<E> reverse() {
+    public FastCollection<E> reversed() {
         return new ReversedCollectionImpl<E>(service());
     }
 
@@ -357,7 +372,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     @RealTime(Limit.LINEAR)
     public int size() {
-        return this.map(TO_ONE).reduce(Operators.SUM);
+        return this.mapped(TO_ONE).reduce(Operators.SUM);
     }
 
     private static final Function<Object, Integer> TO_ONE = new Function<Object, Integer>() {
@@ -634,7 +649,7 @@ public abstract class FastCollection<E> implements Collection<E>,
                     return (param == null) ? 0 : param.hashCode();
                 }
             };
-            return map(toHash).reduce(Operators.SUM); // Can be performed in parallel.            
+            return mapped(toHash).reduce(Operators.SUM); // Can be performed in parallel.            
         } else if (this instanceof List) {
             final int[] hash = new int[1];
             sequential().forEach(new ConsumerService<E>() {

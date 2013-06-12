@@ -17,26 +17,26 @@ import javolution.util.service.ComparatorService;
  */
 public final class LexicalCaseInsensitiveComparatorImpl implements ComparatorService<CharSequence>, Serializable {
 
+    private static final long serialVersionUID = 7232021322902740242L;
+
     @Override
     public int hashCodeOf(CharSequence csq) {
         if (csq == null) return -1;
-        int n = csq.length();
-        if (n == 0) return 0;
-        return up(csq.charAt(0)) + up(csq.charAt(n - 1)) * 31
-                + up(csq.charAt(n >> 1)) * 1009 + up(csq.charAt(n >> 2))
-                * 27583 + up(csq.charAt(n - 1 - (n >> 2))) * 73408859;
+        int h = 0;
+        for (int i = 0, n = csq.length(); i < n;) {
+            h = 31 * h + up(csq.charAt(i++));
+        }
+        return h;
     }
     
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
-        if ((csq1 == null) || (csq2 == null))
-            return csq1 == csq2;
+        if (csq1 == csq2) return true;
+        if ((csq1 == null) || (csq2 == null)) return false;
         int n = csq1.length();
-        if (csq2.length() != n)
-            return false;
+        if (csq2.length() != n) return false;
         for (int i = 0; i < n;) {
-            if (up(csq1.charAt(i)) != up(csq2.charAt(i++)))
-                return false;
+            if (up(csq1.charAt(i)) != up(csq2.charAt(i++))) return false;
         }
         return true;
     }
@@ -58,6 +58,4 @@ public final class LexicalCaseInsensitiveComparatorImpl implements ComparatorSer
     private static char up(char c) {
         return Character.toUpperCase(c);
     }
-    
-    private static final long serialVersionUID = 7232021322902740242L;  
-}
+ }

@@ -12,17 +12,26 @@ import java.util.Comparator;
 
 /**
  * <p> A comparator to be used for equality as well as for ordering.
- *     Implementing class should provide a hashcode function 
- *     consistent with equal (if two objects {@link #areEqual
- *     are equal}, they have the same {@link #hashCodeOf hashcode}),
- *     equality with <code>null</code> values should be supported.</p>
+ *     Implementing class should ensures that:
+ *     <ul>
+ *        <li> The {@link #compare compare} function is consistent with 
+ *             {@link #areEqual equals}. If two objects {@link #compare compare}
+ *             to {@code 0} then they are {@link #areEqual equals} and the 
+ *             the reciprocal is true. This ensures that sorted collections/maps
+ *             do not break the general contract of their parent class  
+ *             (equal-based).</li>
+ *        <li> The hashcode function is consistent with equals: If two objects 
+ *             {@link #areEqual equals}, they have the same 
+ *             {@link #hashCodeOf hashcode} (the reciprocal is not true).</li>
+ *        <li> All functions support <code>null</code> values.</li>
+ *     </ul>
+ * </p>
  *     
- * <p> Custom comparators can be employed with maps (e.g.  
- *     identity comparator for identity maps) or with collections.</p>
+ * <p> Predefined comparators can be found in the 
+ *    {@link javolution.util.Comparators Comparators} class.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @see javolution.util.Comparators
  */
 public interface ComparatorService<T> extends Comparator<T> {
 
@@ -51,13 +60,13 @@ public interface ComparatorService<T> extends Comparator<T> {
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
-     * zero, or a positive integer as the first argument is less than, equal to,
-     * or greater than the second.
+     * zero, or a positive integer as the first argument is less than, possibly 
+     * equal to, or greater than the second.
      * 
      * @param o1 the first object.
      * @param o2 the second object.
      * @return a negative integer, zero, or a positive integer as the first
-     *         argument is less than, equal to, or greater than the second.
+     *         argument is less than, possibly equal to, or greater than the second.
      */
     int compare(T o1, T o2);
     

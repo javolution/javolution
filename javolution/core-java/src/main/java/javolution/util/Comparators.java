@@ -1,12 +1,15 @@
 package javolution.util;
 
+import javolution.annotation.RealTime;
 import javolution.annotation.StackSafe;
 import javolution.annotation.ThreadSafe;
+import javolution.annotation.RealTime.Limit;
+import javolution.internal.util.comparator.ArrayComparatorImpl;
 import javolution.internal.util.comparator.IdentityComparatorImpl;
 import javolution.internal.util.comparator.LexicalCaseInsensitiveComparatorImpl;
 import javolution.internal.util.comparator.LexicalComparatorImpl;
+import javolution.internal.util.comparator.LexicalFastComparatorImpl;
 import javolution.internal.util.comparator.StandardComparatorImpl;
-import javolution.internal.util.comparator.StringComparatorImpl;
 import javolution.util.service.ComparatorService;
 
 /**
@@ -21,40 +24,52 @@ import javolution.util.service.ComparatorService;
 public class Comparators  {
 
     /**
-     * The standard object comparator.
+     * A standard object comparator (based on the object hashCode and equals 
+     * methods).  Comparisons either use the object natural order or an 
+     * empirical method (if the object does not implement {@link Comparable}).
      */
+    @RealTime(Limit.UNKNOWN)
     public static final ComparatorService<Object> STANDARD 
         = new StandardComparatorImpl<Object>();
 
     /**
-     * Holds an identity comparator for any object.
+     * A standard comparator for which instances are only equals to themselves.
      */
+    @RealTime(Limit.CONSTANT)
     public static final ComparatorService<Object> IDENTITY 
         = new IdentityComparatorImpl<Object>();
 
     /**
-     * Holds a lexicographic comparator for any {@link CharSequence}.
-     * Hash codes are calculated by taking a sample of few characters instead of 
-     * the whole character sequence.
+     * A standard content array comparator. If the content of an array is also 
+     * an array (multi-dimensional arrays), that same comparator is used 
+     * for equality and comparison (recursive).
      */
+    @RealTime(Limit.LINEAR)
+    public static final ComparatorService<Object> ARRAY 
+        = new ArrayComparatorImpl();
+
+    /**
+     * A lexicographic comparator for any {@link CharSequence}.
+     */
+    @RealTime(Limit.LINEAR)
     public static final ComparatorService<CharSequence> LEXICAL 
         = new LexicalComparatorImpl();
     
     /**
-     * Holds a case insensitive lexicographic comparator for any {@link CharSequence}.
-     * Hash codes are calculated by taking a sample of few characters instead of 
-     * the whole character sequence.
+     * A case insensitive lexicographic comparator for any {@link CharSequence}.
      */
+    @RealTime(Limit.LINEAR)
     public static final ComparatorService<CharSequence> LEXICAL_CASE_INSENSITIVE 
         = new LexicalCaseInsensitiveComparatorImpl();
     
     /**
-     * Holds an optimized comparator for <code>java.lang.String</code>
-     * instances taking a sample of few characters instead of 
-     * the whole character sequence to calculate the hash code.
+     * An optimized lexical comparator for any {@link CharSequence} taking 
+     * a sample of few characters instead of the whole character sequence to 
+     * calculate the hash code (still equality comparison checks all characters).
      */
-    public static final ComparatorService<String> STRING 
-        = new StringComparatorImpl();
+    @RealTime(Limit.LINEAR)
+    public static final ComparatorService<CharSequence> LEXICAL_FAST 
+        = new LexicalFastComparatorImpl();
         
     /**
      * Utility class (private constructor).

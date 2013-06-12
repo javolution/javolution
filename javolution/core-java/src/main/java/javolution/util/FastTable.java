@@ -18,6 +18,7 @@ import java.util.RandomAccess;
 import javolution.annotation.RealTime;
 import javolution.internal.util.table.FractalTableImpl;
 import javolution.internal.util.table.QuickSort;
+import javolution.internal.util.table.ReversedTableImpl;
 import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
@@ -41,13 +42,13 @@ import javolution.util.service.TableService;
  *     in terms of adaptability, space or performance.
  *     Null elements are supported and fast tables can be concurrently iterated over using
  *     their {@link #shared() shared} views. Fast table inherits from all the fast collection
- *     views, atomic updates and support the new {@link #subList subList} view over
- *     a portion of the table.</li>
+ *     views and also support the new {@link #subList subList} view over a portion of the table.</li>
  * [code]
  * FastTable<String> names = ...;
- * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names ignoring case.
+ * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Actually sorts the names (different from sorted() which is a sorted view).
  * names.subList(0, names.size() / 2).clear(); // Removes the first half of the table.
- * names.filter(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
+ * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
+ * names.reversed().addLast("Paul Auchon"); // Actually adds first to names.
  * [/code]
  * </p>
  *
@@ -59,7 +60,7 @@ import javolution.util.service.TableService;
  * FastTable<Person> persons = new FastTable<Person>().shared(); // Thread-safe table.
  * ...
  * Person findWithName(final String name) { 
- *     return persons.filter(new Predicate<Person>() { 
+ *     return persons.filtered(new Predicate<Person>() { 
  *         public boolean test(Person person) {
  *             return (person.getName().equals(name));
  *         }
@@ -69,7 +70,7 @@ import javolution.util.service.TableService;
  * The code above can be simplified using Java 8.
  * [code]
  * Person findWithName(String name) {
- *     return persons.filter(person -> person.getName().equals(name)).reduce(Operators.ANY);
+ *     return persons.filtered(person -> person.getName().equals(name)).reduce(Operators.ANY);
  * }
  * [/code]
  * </p>
@@ -85,6 +86,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
 
     private static final long serialVersionUID = 8176661943244396559L;
+ 
     /**
      * Actual service implementation.
      */
@@ -134,6 +136,10 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return new FastTable<E>(new SharedTableImpl<E>(impl));
     }
 
+    @Override
+    public FastTable<E> reversed() {
+        return new FastTable<E>(new ReversedTableImpl<E>(impl));
+    }
 
     @Override
     public FastTable<E> subList(int fromIndex, int toIndex) {
@@ -143,6 +149,24 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
                 new SubTableImpl<E>(impl, fromIndex, toIndex));
     }
 
+
+    /***************************************************************************
+     * Collection operations.
+     */
+    
+    // Methods calling directly the service implementation are marked final
+    // (overriding should be done through service specialization).
+    
+    @Override
+    public final int size() {
+        return impl.size();
+    }
+    
+    @Override
+    public final void clear() {
+        impl.clear();
+    }
+ 
     /***************************************************************************
      * List operations.
      */
@@ -176,7 +200,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     @Override
     public int indexOf(final Object element) {
         final int[] index = new int[] { -1 };
-        atomicRead(new Runnable() {
+        atomicRead(new Runnable() { // Prevents concurrent writes when table shared.
             ComparatorService<? super E> cmp = impl.comparator();
             @Override
             public void run() {
@@ -191,20 +215,13 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return index[0];
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public int lastIndexOf(final Object element) {
-        final int[] index = new int[] { -1 };
-        atomicRead(new Runnable() {
-            ComparatorService<? super E> cmp = impl.comparator();
+        final int[] index = new int[1];
+        atomicRead(new Runnable() { // Prevents concurrent writes when table shared.
             @Override
             public void run() {
-                for (int i= size() - 1; i >= 0; i--) {
-                    if (cmp.areEqual((E) element, impl.get(i))) {
-                        index[0] = i;
-                        break;
-                    }
-                }
+                index[0] = size() - 1 - reversed().indexOf(element); 
             }
         });
         return index[0];
@@ -229,7 +246,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /***************************************************************************
-     * Deque operations.
+     * Deque operations (atomic when the table is shared).
      */
 
     @Override
@@ -262,56 +279,24 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return impl.removeLast();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public E pollFirst() {
-        final E[] result = (E[])new Object[1];
-        atomicWrite(new Runnable() {
-            @Override
-            public void run() {
-                result[0] = (size() == 0) ? null : removeFirst();
-            }
-        });
-        return result[0];
+    public final E pollFirst() {
+        return impl.pollFirst();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public E pollLast() {
-        final E[] result = (E[])new Object[1];
-        atomicWrite(new Runnable() {
-            @Override
-            public void run() {
-                result[0] = (size() == 0) ? null : removeLast();
-            }
-        });
-        return result[0];
+    public final E pollLast() {
+        return impl.pollLast();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public E peekFirst() {
-        final E[] result = (E[])new Object[1];
-        atomicRead(new Runnable() {
-            @Override
-            public void run() {
-                result[0] = (size() == 0) ? null : getFirst();
-            }
-        });
-        return result[0];
+    public final E peekFirst() {
+        return impl.peekFirst();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public E peekLast() {
-        final E[] result = (E[])new Object[1];
-        atomicRead(new Runnable() {
-            @Override
-            public void run() {
-                result[0] = (size() == 0) ? null : getLast();
-            }
-        });
-        return result[0];
+    public final E peekLast() {
+        return impl.peekLast();
     }
     
     @Override
@@ -332,19 +317,8 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Override
-    public boolean removeLastOccurrence(final Object obj) {
-        final boolean[] found = new boolean[1];
-        atomicWrite(new Runnable() {
-            @Override
-            public void run() {
-                int i = lastIndexOf(obj);
-                if (i >= 0) {
-                    found[0] = true;
-                    remove(i);
-                }
-            }
-        });
-        return found[0];
+    public boolean removeLastOccurrence(Object obj) {
+        return reversed().removeFirstOccurrence(obj);
     }
 
     @Override
@@ -384,7 +358,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
 
     @Override
     public Iterator<E> descendingIterator() {
-        return reverse().iterator();
+        return reversed().iterator();
     }
 
     /***************************************************************************
@@ -399,8 +373,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
             @Override
             public void run() {
                 QuickSort<E> qs = new QuickSort<E>(impl, impl.comparator());
-                qs.sort();
-              
+                qs.sort();              
             }
         });
     }

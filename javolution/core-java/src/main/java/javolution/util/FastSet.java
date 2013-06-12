@@ -109,7 +109,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     }
 
     @Override
-    public FastSet<E> filter(final Predicate<? super E> filter) {
+    public FastSet<E> filtered(final Predicate<? super E> filter) {
         return new FastSet<E>(new FilteredSetImpl<E>(service(), filter));
     }
     

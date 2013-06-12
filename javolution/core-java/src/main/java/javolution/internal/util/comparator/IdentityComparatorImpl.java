@@ -8,30 +8,22 @@
  */
 package javolution.internal.util.comparator;
 
-import java.io.Serializable;
-
-import javolution.util.service.ComparatorService;
 
 /**
- * The lexical comparator implementation.
+ * The identity comparator implementation.
  */
-public final class IdentityComparatorImpl<E> implements ComparatorService<E>, Serializable {
+public class IdentityComparatorImpl<E> extends StandardComparatorImpl<E> {
+
+    private static final long serialVersionUID = -5186106439905062276L;
 
     @Override
-    public int hashCodeOf(Object obj) {
+    public int hashCodeOf(E obj) {
         return System.identityHashCode(obj);
     }
 
     @Override
-    public boolean areEqual(Object o1, Object o2) {
+    public boolean areEqual(E o1, E o2) {
         return o1 == o2;
     }
 
-    @Override
-    public int compare(Object o1, Object o2) {
-        if (o1 == o2) return 0; // Only case of equality.
-        return hashCodeOf(o1) - hashCodeOf(o2);
-    }   
-
-    private static final long serialVersionUID = -8716468453685126721L;
 }

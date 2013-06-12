@@ -27,34 +27,83 @@ public interface TableService<E> extends CollectionService<E> {
      */
     void clear();
     
-    /** See {@link java.util.List#add(int, Object)} */
+    /** 
+     * Inserts the specified element at the specified position in this list
+     * Shifts the element currently at that position to the right.
+     */
     void add(int index, E element);
 
-    /** See {@link java.util.List#get(int)} */
+    /** 
+     * Returns the element at the specified position.
+     */
     E get(int index);
-update doc
-    /** See {@link java.util.List#set(int, Object)} */
+
+    /** 
+     * Replaces the element at the specified position and returns the
+     * previous element.
+     */
     E set(int index, E element);
 
-    /** See {@link java.util.List#remove(int)} */
+    /** 
+     * Removes the element as the specified position.
+     */
     E remove(int index);
 
-    /** See {@link java.util.Deque#getFirst() } */
+    /**
+     * Dequeue methods.
+     */
+    
+    /** 
+     * Returns the first element. 
+     */
     E getFirst();
 
-    /** See {@link java.util.Deque#getLast() } */
+    /**
+     *  Returns the last element.
+     */
     E getLast();
 
-    /** See {@link java.util.Deque#addFirst(java.lang.Object) } */
+    /** 
+     * Inserts the specified element at the front of this table.
+     */
     void addFirst(E element);
 
-    /** See {@link java.util.Deque#getLast() } */
+    /** 
+     * Inserts the specified element at the end of this table.
+     */
     void addLast(E element);
 
-    /** See {@link java.util.Deque#removeFirst() } */
+    /** 
+     *  Retrieves and removes the first element of this table.
+     */
     E removeFirst();
-
-    /** See {@link java.util.Deque#removeLast() } */
+    
+    /** 
+     *  Retrieves and removes the last element of this table.
+     */
     E removeLast();
     
+    /**
+     * Retrieves, but does not remove, the first element of this table,
+     * or returns {@link null} if this table is empty (atomic operation).
+     */
+    E peekFirst();
+
+    /**
+     * Retrieves, but does not remove, the last element of this table,
+     * or returns {@link null} if this table is empty (atomic operation).
+     */
+    E peekLast();
+
+    /**
+     * Retrieves and removes the first element of this table,
+     * or returns {@link null} if this table is empty (atomic operation).
+     */
+    E pollFirst();
+
+    /**
+     * Retrieves and removes the last element of this table,
+     * or returns {@link null} if this table is empty (atomic operation).
+     */
+    E pollLast();    
 }

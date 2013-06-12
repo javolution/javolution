@@ -18,9 +18,10 @@ package javolution.util.service;
 public interface SortedTableService<E> extends TableService<E> {
     
     /** 
-     * Returns the index of the first occurrence of the specified element
-     * in this list, or -1 if this list does not contain the element.
+     * Returns the insertion index of the specified element in this table.
+     * It is the smallest index of the element if the element was to be
+     * added to this sorted table (in the range {@code [0 .. size()]}).
      */
-    int indexOf(E element);
+    int insertionIndexOf(E element);
 
 }
