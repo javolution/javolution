@@ -18,7 +18,7 @@ import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SortedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
-import javolution.util.service.ComparatorService;
+import javolution.util.function.ComparatorService;
 import javolution.util.service.SetService;
 import javolution.util.service.TableService;
 

@@ -10,12 +10,12 @@ package javolution.internal.util.comparator;
 
 import java.io.Serializable;
 
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
 
 /**
  * The case insensitive lexical comparator implementation.
  */
-public final class LexicalCaseInsensitiveComparatorImpl implements ComparatorService<CharSequence>, Serializable {
+public final class LexicalCaseInsensitiveComparatorImpl implements FullComparator<CharSequence>, Serializable {
 
     private static final long serialVersionUID = 7232021322902740242L;
 

@@ -8,24 +8,18 @@
  */
 package javolution.util.function;
 
+import javolution.util.service.CollectionService;
 
 /**
- * <p> A special type of function which does not return anything.</p>
+ * <p> An operator upon multiple elements of a collection yielding a result 
+ *     of that collection type.</p>
  * 
- * <p> Note: In future version this interface may derive from 
- *           {@code Function<P, Void>}.</p>
- *           
- * @param <T> The type of input parameter to accept.
- *           
+ * @param <E> The type of elements in the collection operated upon.
+ * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
- * @see     CollectionConsumer
+ * @see     Operators
  */
-public interface Consumer<T> {
-
-    /**
-     * Accepts an input value.
-     */
-    void accept(T param);
-
+public interface CollectionOperator<E> extends Function<CollectionService<E>, E> {
+   
 }

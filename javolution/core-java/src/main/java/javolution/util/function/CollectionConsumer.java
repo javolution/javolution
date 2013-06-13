@@ -6,27 +6,23 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util.service;
+package javolution.util.function;
+
 
 /**
  * <p> A consumer of the elements of a collection during closure-based 
- *     iterations.</p>
+ *     iterations. Most collection consumers can be executed in parallel; 
+ *     if not the {@link Sequential} interface should be implemented.</p>
  *     
- * <p><i> Note: Future versions of this functional interface will have 
- *     a default {@code isParallel} method (once Java 8 is mainstream).</i></p>  
- *          
+ * <p> Note: Future versions of this class may derive from {@link Consumer}.</p>    
+ *     
+ * @param <E> The type of elements in the collection consumed.
+ * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
- * @param <E> The type of the collection element consumed.
- * @see CollectionService#forEach(ConsumerService)
+ * @see javolution.util.FastCollection#forEach(CollectionConsumer)
  */
-public interface ConsumerService<E> {
-
-    /**
-     * Identifies consumers which cannot be executed in parallel 
-     * (order dependent for example).
-     */
-    public interface Sequential<E> extends ConsumerService<E> {}
+public interface CollectionConsumer<E> {
 
     /**
      * The closure-based iteration controller.
@@ -47,10 +43,9 @@ public interface ConsumerService<E> {
     /**
      * Accepts the specified collection element.
      * 
-     * @param e the collection element being iterated over.
+     * @param element the collection element being iterated over.
      * @param controller the iteration controller. 
      */
-    void accept(E e, Controller controller);
-
+    void accept(E element, Controller controller);
 
 }

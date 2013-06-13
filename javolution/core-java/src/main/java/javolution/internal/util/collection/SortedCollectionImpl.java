@@ -12,9 +12,9 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
+import javolution.util.function.FullComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 
 /**
  * A sorted view over a collection.
@@ -33,24 +33,24 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
     public boolean add(E element) {
         return target.add(element);
     }
-
-    @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return getSortedTable().doWhile(predicate);
-    }
     
     @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        return target.removeIf(predicate);
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
     }
 
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+   
     @Override
     public Iterator<E> iterator() {
         return getSortedTable().unmodifiable().iterator();
      }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
     

@@ -11,10 +11,10 @@ package javolution.internal.util.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 
 /**
  * A filtered view over a collection.
@@ -22,9 +22,6 @@ import javolution.util.service.ConsumerService;
 public final class FilteredCollectionImpl<E> extends FastCollection<E>
         implements CollectionService<E> {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = -5475396934090095686L;
     private final CollectionService<E> target;
     private final Predicate<? super E> filter;
@@ -41,9 +38,19 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void forEach(final ConsumerService<? super E> consumer) {
-        if (consumer instanceof ConsumerService.Sequential) {
-            target.forEach(new ConsumerService.Sequential<E>() {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(final CollectionConsumer<? super E> consumer) {
+        if (consumer instanceof CollectionConsumer.Sequential) {
+            target.forEach(new CollectionConsumer.Sequential<E>() {
                 @Override
                 public void accept(E e, Controller controller) {
                     if (filter.test(e)) {
@@ -52,7 +59,7 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E>
                 }
             });
         } else {
-            target.forEach(new ConsumerService<E>() {
+            target.forEach(new CollectionConsumer<E>() {
                 @Override
                 public void accept(E e, Controller controller) {
                     if (filter.test(e)) {
@@ -107,7 +114,7 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
 

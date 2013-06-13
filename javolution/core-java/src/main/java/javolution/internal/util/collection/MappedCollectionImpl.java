@@ -10,12 +10,12 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
-import javolution.util.Comparators;
 import javolution.util.FastCollection;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Function;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 
 /**
  * A mapped view over a collection.
@@ -40,16 +40,26 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
-    public void forEach(final ConsumerService<? super R> consumer) {
-        if (consumer instanceof ConsumerService.Sequential) {
-            target.forEach(new ConsumerService.Sequential<E>() {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(final CollectionConsumer<? super R> consumer) {
+        if (consumer instanceof CollectionConsumer.Sequential) {
+            target.forEach(new CollectionConsumer.Sequential<E>() {
                 @Override
                 public void accept(E e, Controller controller) {
                     consumer.accept(function.apply(e), controller);
                 }
             });
         } else {
-            target.forEach(new ConsumerService<E>() {
+            target.forEach(new CollectionConsumer<E>() {
                 @Override
                 public void accept(E e, Controller controller) {
                     consumer.accept(function.apply(e), controller);
@@ -82,7 +92,7 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
-    public ComparatorService<? super R> comparator() {
+    public FullComparator<? super R> comparator() {
         return Comparators.STANDARD;
     }
 

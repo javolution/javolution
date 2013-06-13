@@ -8,7 +8,7 @@
  */
 package javolution.text;
 
-import javolution.util.Comparators;
+import javolution.util.function.Comparators;
 
 /**
  * <p> A {@link CharSequence} backed up by a <code>char</code> array. 

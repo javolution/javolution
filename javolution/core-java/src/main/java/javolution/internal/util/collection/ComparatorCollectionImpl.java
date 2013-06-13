@@ -10,23 +10,20 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
-import javolution.util.FastCollection;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 
 /**
  * A view using a custom comparator for element equality or comparison.
  */
-public final class ComparatorCollectionImpl<E> extends FastCollection<E> implements
-        CollectionService<E> {
+public class ComparatorCollectionImpl<E> implements CollectionService<E> {
     
-    private static final long serialVersionUID = -8346102607362932618L;
     private final CollectionService<E> target;
-    private final ComparatorService<? super E> comparator;
+    private final FullComparator<? super E> comparator;
 
     public ComparatorCollectionImpl(CollectionService<E> target,
-            ComparatorService<? super E> comparator) {
+            FullComparator<? super E> comparator) {
         this.target = target;
         this.comparator = comparator;
     }
@@ -37,7 +34,17 @@ public final class ComparatorCollectionImpl<E> extends FastCollection<E> impleme
     }
 
     @Override
-    public void forEach(ConsumerService<? super E> consumer) {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(CollectionConsumer<? super E> consumer) {
         target.forEach(consumer);
     }
 
@@ -60,12 +67,8 @@ public final class ComparatorCollectionImpl<E> extends FastCollection<E> impleme
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return comparator;
     }
 
-    @Override
-    public ComparatorCollectionImpl<E> service() {
-        return this;
-    }
 }

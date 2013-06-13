@@ -12,9 +12,9 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 import javolution.util.service.TableService;
 
 /**
@@ -36,7 +36,17 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> implement
     }
 
     @Override
-    public void forEach(final ConsumerService<? super E> consumer) {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(final CollectionConsumer<? super E> consumer) {
         reversed().forEach(consumer);
     }
     
@@ -46,7 +56,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> implement
     }
     
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
     
@@ -58,7 +68,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> implement
     
     private FastTable<E> reversed() {
         final FastTable<E> reversed = new FastTable<E>();
-        target.forEach(new ConsumerService.Sequential<E>() {
+        target.forEach(new CollectionConsumer.Sequential<E>() {
 
             @Override
             public void accept(E e, Controller controller) {

@@ -18,9 +18,10 @@ import java.util.concurrent.ConcurrentMap;
 import javolution.annotation.RealTime;
 import javolution.annotation.RealTime.Limit;
 import javolution.internal.util.map.FractalMapImpl;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
 
 /**
@@ -75,7 +76,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * equality only (for sorting the {@link FastSortedMap} subclass should 
      * be used instead).
      */
-    public FastMap(ComparatorService<? super K> keyEquality) {
+    public FastMap(FullComparator<? super K> keyEquality) {
         impl = new FractalMapImpl<K, V>(keyEquality);
     }
         

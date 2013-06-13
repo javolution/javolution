@@ -382,18 +382,22 @@ javolution/core-java/src/main/java/javolution/util/FastSortedTable.java -text sv
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Initializer.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/Operators.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/CollectionConsumer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/CollectionOperator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Comparators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/FullComparator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Operators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Sequential.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/ComparatorService.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/service/ConsumerService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/MapService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/OperatorService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/SetService.java -text svneol=unset#text/plain

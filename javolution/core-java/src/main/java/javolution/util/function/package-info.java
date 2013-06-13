@@ -1,28 +1,25 @@
 /**
 <p> Provides basic function types for lambda expressions and method references.</p>
-    All functions are hierarchically organized (e.g. {@link Predicate} and 
-    {@link Supplier} are derived from {@link Function}). Functions may take an
-    arbitrary number of arguments using the {@link MultiVariable} class or no
-    argument at all using the standard {@link Void} class.  
+    Usually functions do not have a state and can be called concurrently, 
+    if not this should be indicated by implementing the interface {@link Sequential}.
+    Functions may take an arbitrary number of arguments through the use of {@link MultiVariable multi-variables}
+    or no argument at all using the standard {@link Void} class.  
     [code]
     // Function adding n integers to a list and returning void.
-    Function<MultiVariable<Integer, List<Integer>>, Void> fill = new Function<MultiVariable<Integer, List<Integer>>, Void>() {
-        public Void evaluate(MultiVariable<Integer, List<Integer>> param) {
-            List<Integer> list = param.getRight();
-            for (int i = 0; i < param.getLeft(); i++) {
+    Function<MultiVariable<Integer, List<Integer>>, Void> fill = new Function<>() {
+        public Void apply(MultiVariable<Integer, List<Integer>> params) {
+            List<Integer> list = params.getRight();
+            for (int i = 0; i < params.getLeft(); i++) {
                 list.add(i);
            }
            return null;
         }
     };
-    ...
     FastTable<Integer> list = new FastTable<Integer>();
-    fill.evaluate(new MultiVariable(100, list));
-    ...
+    fill.evaluate(new MultiVariable(100, list)); // Populates with numbers [0 .. 100[
     [/code] 
-    In future version, the classes defined in this package may derive
-    from <code>java.util.function</code> classes without breaking backward 
-    compatibility of course (using JDK 8 interface default method implementations). 
+    In future versions, classes in in this package may derive
+    from classes in <code>java.util.function</code> classes. 
  */
 package javolution.util.function;
 

@@ -14,8 +14,8 @@ import java.lang.CharSequence;
 import javolution.lang.Immutable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.util.Comparators;
 import javolution.util.FastMap;
+import javolution.util.function.Comparators;
 
 /**
  * <p> This class represents unique identifiers for XML elements (tags) or 

@@ -36,13 +36,16 @@ import javolution.lang.Copyable;
 import javolution.text.Cursor;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.CollectionOperator;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Consumer;
 import javolution.util.function.Function;
+import javolution.util.function.Operators;
 import javolution.util.function.Predicate;
+import javolution.util.function.Sequential;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
-import javolution.util.service.OperatorService;
 
 /**
  * <p> A high-performance collection with {@link RealTime real-time} behavior; 
@@ -51,21 +54,21 @@ import javolution.util.service.OperatorService;
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
+ *    <li>{@link #parallel} - A {@link #shared shared} view allowing parallel processing (closure-based).</li>
+ *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  *    <li>{@link #filtered} - View exposing the elements matching the specified filter.</li>
  *    <li>{@link #mapped} - View exposing elements through the specified mapping function.</li>
  *    <li>{@link #sorted} - View exposing elements according to the collection sorting order.</li>
  *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
- *    <li>{@link #parallel} - View allowing parallel processing (closure-based).</li>
- *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  * </ul>
  *    Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
  *    Java 8 streams</a> except that views are themselves collections (virtual collections)
- *    and actions on a view can impact the original collection. Views are nothing "new" since they already existed
- *    in the original java.util collection classes (e.g. List.subList(...), Map.keySet(), Map.values(), ...).
- *    Javolution extends to this concept and allows views to be chained which addresses 
- *    the concern of class proliferation (see
+ *    and actions on a view can impact the original collection. Collection views are nothing "new" 
+ *    since they already existed in the original java.util collection classes (e.g. List.subList(...),
+ *    Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
+ *    which addresses the concern of class proliferation (see
  *    <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
  *    State of the Lambda: Libraries Edition</a>). 
  *    [code]
@@ -81,16 +84,8 @@ import javolution.util.service.OperatorService;
  *             return csq.length() > 16; 
  *         }
  *    });
- *    
- *    // JDK Class.getEnclosingMethod after simplification (to be compared with actual implementation).
- *    Method matching = FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
- *       .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
- *       .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
- *       .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
- *       .reduce(Operators.ANY);
- *    if (matching == null) throw new InternalError("Enclosing method not found");
- *    return matching;
  *    [/code]
+ *    
  *    Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
  *    Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.
  *    [code]
@@ -103,14 +98,22 @@ import javolution.util.service.OperatorService;
  *             return csq.length(); 
  *         }
  *    });
+ *    
+ *    // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
+ *    Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ *       .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
+ *       .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
+ *       .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
+ *       .reduce(Operators.ANY);
+ *    if (matching == null) throw new InternalError("Enclosing method not found");
+ *    return matching;
  *    [/code]
  *    </p>
  *           
  * <p> Fast collections can be iterated over using closures, this is also the preferred way 
- *     to iterate over {@link #shared() shared} collections (iterations may also 
- *     be performed within  an {@link #atomic atomic} block).
- *     If a collection (or a map) is shared, any derived view is also thread-safe.
- *     Analogously, if a collection is {@link #parallel parallel}, all closure-based iterations 
+ *     to iterate over {@link #shared() shared} collections (no concurrent update possible).
+ *     If a collection (or a map) is shared, derived views are also thread-safe.
+ *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
  *     on derived views can be performed concurrently. 
  *     [code]
  *     FastMap<String, Runnable> tasks = ...
@@ -165,7 +168,13 @@ public abstract class FastCollection<E> implements Collection<E>,
     /**
      * Returns a thread-safe view over this collection allowing 
      * concurrent read without blocking and concurrent write possibly 
-     * blocking.
+     * blocking. All updates performed by the specified action on this 
+     * collection are atomic as far as this collection's readers are concerned.
+     * To perform complex actions on a shared collection in an atomic manner, 
+     * the {@link #atomic atomic} method should be used (on the shared view
+     * or on any view derived from the shared view).
+     * 
+     *  @see #atomic(Runnable)
      */
     public FastCollection<E> shared() {
         return new SharedCollectionImpl<E>(service());
@@ -180,7 +189,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * @see #sorted() 
      * @see #distinct() 
      */
-    public FastCollection<E> comparator(ComparatorService<? super E> cmp) {
+    public FastCollection<E> comparator(FullComparator<? super E> cmp) {
         return new ComparatorCollectionImpl<E>(service(), cmp);
     }
 
@@ -188,7 +197,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * Returns a view over this collection using the specified functional 
      * comparator for element equality or sorting.
      * 
-     * @see #comparator(javolution.util.service.ComparatorService) 
+     * @see #comparator(javolution.util.function.FullComparator) 
      */
     public FastCollection<E> comparator(Comparator<? super E> cmp) {
         return comparator(new WrapperComparatorImpl<E>(cmp));
@@ -206,7 +215,8 @@ public abstract class FastCollection<E> implements Collection<E>,
      * Returns a view exposing elements through the specified mapping function.
      * The view does not allows new elements to be added.
      */
-    public <R> FastCollection<R> mapped(Function<? super E, ? extends R> function) {
+    public <R> FastCollection<R> mapped(
+            Function<? super E, ? extends R> function) {
         return new MappedCollectionImpl<E, R>(service(), function);
     }
 
@@ -238,10 +248,16 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /** 
-     * Returns a parallel view of this collection. Using this view, 
-     * closure-based iteration can be performed concurrently. 
+     * Returns a parallel/{@link #shared() shared} view of this collection. 
+     * Using this view, closure-based iteration can be performed concurrently. 
      * The default implementation is based upon 
      * {@link javolution.context.ConcurrentContext ConcurrentContext}.
+     * 
+     * <p> Note: Some view may prevent parallel processing over their 
+     *           collection target. It is therefore preferable for 
+     *           parallel views to be the last view before processing. 
+     *           For example {@code collection.unmodifiable().parallel()}
+     *           is preferred to {@code collection.parallel().unmodifiable()}.</p>
      */
     public FastCollection<E> parallel() {
         return new ParallelCollectionImpl<E>(service());
@@ -262,41 +278,45 @@ public abstract class FastCollection<E> implements Collection<E>,
     /** 
      * Iterates over this collection elements applying the specified consumer 
      * service. For {@link #parallel parallel} collections, iterations can be
-     * performed concurrently. Iterations may not fully complete if the 
-     * consumer has {@link ConsumerService.Controller#terminate terminated}.
-     * Also, the consumer service may {@link ConsumerService.Controller#remove
+     * performed concurrently if the specified consumer is not 
+     * {@link Sequential Sequential}. Iterations may not fully complete if the 
+     * consumer has {@link CollectionConsumer.Controller#terminate terminated}.
+     * Also, the consumer service may {@link CollectionConsumer.Controller#remove
      * remove} the elements iterated over.
      * 
      * @param consumer the service applied to this collection elements.
      */
     @RealTime(Limit.LINEAR)
-    public void forEach(ConsumerService<? super E> consumer) {
+    public void forEach(CollectionConsumer<? super E> consumer) {
         service().forEach(consumer);
     }
 
     /** 
      * Iterates over all this collection elements applying the specified 
-     * functional consumer. For {@link #parallel parallel} collections, 
-     * iterations can be performed concurrently.
+     * functional consumer. Iterations are performed concurrently if the 
+     * collection is {@link #parallel() parallel} and the specified consumer 
+     * is not {@link Sequential Sequential}.
      * 
      * @param consumer the functional consumer applied to the collection elements.
      */
     @RealTime(Limit.LINEAR)
     public void forEach(final Consumer<? super E> consumer) {
-        service().forEach(new ConsumerService<E>() {
+        (consumer instanceof Sequential ? sequential().service() : service())
+                .forEach(new CollectionConsumer<E>() {
 
-            @Override
-            public void accept(E e, Controller controller) {
-                consumer.accept(e);
-            }
+                    @Override
+                    public void accept(E e, Controller controller) {
+                        consumer.accept(e); // Controller is ignored.
+                    }
 
-        });
+                });
     }
 
     /**
      * Removes from this collection all the elements matching the specified
      * functional predicate. Removal are performed concurrently if the 
-     * collection is {@link #parallel() parallel}.
+     * collection is {@link #parallel() parallel} and the specified filter 
+     * is not {@link Sequential Sequential}.
      * 
      * @param filter a predicate returning {@code true} for elements to be removed.
      * @return {@code true} if at least one element has been removed;
@@ -305,17 +325,18 @@ public abstract class FastCollection<E> implements Collection<E>,
     @RealTime(Limit.LINEAR)
     public boolean removeIf(final Predicate<? super E> filter) {
         final boolean[] anyRemoved = new boolean[1];
-        service().forEach(new ConsumerService<E>() {
+        (filter instanceof Sequential ? sequential() : this)
+                .forEach(new CollectionConsumer<E>() {
 
-            @Override
-            public void accept(E e, Controller controller) {
-                if (filter.test(e)) {
-                    controller.remove();
-                    anyRemoved[0] = true;
-                }
-            }
+                    @Override
+                    public void accept(E e, Controller controller) {
+                        if (filter.test(e)) {
+                            controller.remove();
+                            anyRemoved[0] = true;
+                        }
+                    }
 
-        });
+                });
         return anyRemoved[0];
     }
 
@@ -335,8 +356,8 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     @SuppressWarnings("unchecked")
     @RealTime(Limit.LINEAR)
-    public E reduce(OperatorService<? super E> operator) {
-        return ((OperatorService<E>) operator).apply(service());
+    public E reduce(CollectionOperator<? super E> operator) {
+        return ((CollectionOperator<E>) operator).apply(service());
     }
 
     /***************************************************************************
@@ -356,7 +377,7 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /**
-     * Indicates if this collection is empty.
+     * Indicates if this collection is empty (convenience method).
      * 
      * @return {@code size() == 0}
      */
@@ -366,7 +387,7 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /**
-     * Returns the number of elements in this collection.
+     * Returns the number of elements in this collection (convenience method).
      * 
      * @return {@code this.map(TO_ONE).reduce(Operators.SUM)}
      */
@@ -386,7 +407,7 @@ public abstract class FastCollection<E> implements Collection<E>,
     };
 
     /**
-     * Removes all of the elements from this collection.
+     * Removes all of the elements from this collection (convenience method).
      *
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
@@ -414,8 +435,8 @@ public abstract class FastCollection<E> implements Collection<E>,
     @RealTime(Limit.LINEAR)
     public boolean contains(final Object element) {
         final boolean[] found = new boolean[1];
-        service().forEach(new ConsumerService<E>() {
-            ComparatorService<? super E> cmp = service().comparator();
+        service().forEach(new CollectionConsumer<E>() {
+            final FullComparator<? super E> cmp = service().comparator();
 
             @Override
             public void accept(E e, Controller controller) {
@@ -436,20 +457,20 @@ public abstract class FastCollection<E> implements Collection<E>,
      *
      * @param element the element to be removed from this collection.
      * @return {@code true} if this collection contained the specified
-     *         element;  {@code false} otherwise.
+     *         element; {@code false} otherwise.
      * @throws UnsupportedOperationException if the collection is not modifiable.
      */
     @SuppressWarnings("unchecked")
     @RealTime(Limit.LINEAR)
     public boolean remove(final Object element) {
         final boolean[] found = new boolean[1];
-        service().forEach(new ConsumerService<E>() {
-            ComparatorService<? super E> cmp = service().comparator();
+        service().forEach(new CollectionConsumer<E>() {
+            final FullComparator<? super E> cmp = service().comparator();
 
             @Override
             public void accept(E param, Controller controller) {
                 if (cmp.areEqual((E) element, param)) {
-                    synchronized (this) {
+                    synchronized (this) { // Ensures removal unicity.
                         if (!found[0]) {
                             controller.remove();
                         }
@@ -462,7 +483,8 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /** 
-     * Returns an iterator over this collection. For {@link #shared shared} 
+     * Returns an iterator over this collection. For 
+     * {@link #shared shared} / {@link #parallel parallel}
      * collections, closures should be used instead of iterators.
      */
     public Iterator<E> iterator() {
@@ -486,7 +508,8 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     private boolean addAll(FastCollection<E> that) {
         final boolean[] modified = new boolean[1];
-        that.sequential().forEach(new ConsumerService<E>() {
+        // Adds sequentially to keep the original order.
+        that.sequential().forEach(new CollectionConsumer<E>() {
             @Override
             public void accept(E e, Controller controller) {
                 if (add(e)) {
@@ -512,7 +535,7 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     private boolean containsAll(FastCollection<E> that) {
         final boolean[] missing = new boolean[1];
-        that.service().forEach(new ConsumerService<E>() {
+        that.service().forEach(new CollectionConsumer<E>() {
 
             @Override
             public void accept(E e, Controller controller) {
@@ -559,7 +582,8 @@ public abstract class FastCollection<E> implements Collection<E>,
         final T[] result = (size <= array.length) ? array
                 : (T[]) java.lang.reflect.Array.newInstance(array.getClass()
                         .getComponentType(), size);
-        sequential().forEach(new ConsumerService<E>() {
+        // Keep the collection order by using the sequential view.
+        sequential().forEach(new CollectionConsumer<E>() {
             int i;
 
             @Override
@@ -573,6 +597,23 @@ public abstract class FastCollection<E> implements Collection<E>,
             result[size] = null; // As per Collection contract.
         }
         return result;
+    }
+
+    /***************************************************************************
+     * Misc.
+     */
+
+    /** 
+     * Executes the specified action on this collection in an atomic manner. As 
+     * far as readers of this collection are concerned, either they see the full
+     * result of the action executed or nothing.
+     * If this collection is not {@link #shared shared} or {@link #parallel 
+     * parallel} the specified action is executed directly.
+     * 
+     * @param action the action to be executed in an atomic manner.
+     */
+    public void atomic(Runnable action) {
+        service().atomic(action);
     }
 
     /**
@@ -601,23 +642,12 @@ public abstract class FastCollection<E> implements Collection<E>,
             if (!(obj instanceof Set))
                 return false;
             Set<E> that = (Set<E>) obj;
-            if (this.size() != that.size())
-                return false;
-            return that.containsAll(this);
+            return (this.size() == that.size()) && containsAll(that);
         } else if (this instanceof List) {
-            List<E> thisList = (List<E>) this;
             if (!(obj instanceof List))
                 return false;
             List<E> that = (List<E>) obj;
-            int size = this.size();
-            if (that.size() != size)
-                return false;
-            for (int i = 0; i < size; i++) {
-                if (!Comparators.STANDARD
-                        .areEqual(thisList.get(i), that.get(i)))
-                    return false;
-            }
-            return true;
+            return Comparators.ARRAY.areEqual(this.toArray(), that.toArray());
         } else {
             return false;
         }
@@ -652,7 +682,7 @@ public abstract class FastCollection<E> implements Collection<E>,
             return mapped(toHash).reduce(Operators.SUM); // Can be performed in parallel.            
         } else if (this instanceof List) {
             final int[] hash = new int[1];
-            sequential().forEach(new ConsumerService<E>() {
+            sequential().forEach(new CollectionConsumer<E>() {
 
                 @Override
                 public void accept(E e, Controller controller) {
@@ -665,51 +695,40 @@ public abstract class FastCollection<E> implements Collection<E>,
         }
     }
 
-    /***************************************************************************
-     * Misc.
+    /**
+     * Returns a copy of this collection holding a copies of its elements.
+     * For lists and sets the copy is {@link #equals} to the original 
+     * (the copy of a list is a list and the copy of a set is a set).
+     * The iterative order is kept by this operation.
      */
-
-    /** 
-     * Executes the specified atomic read action on this collection.
-     * No concurrent update can take place while executing an atomic read 
-     * action. If this collection is not {@link #shared() shared}, the action 
-     * is called directly.
-     * 
-     * @param action the read action to be executed atomically on this collection.
-     * @throws UnsupportedOperationException if an attempt to modify the collection 
-     *         is detected.
-     */
-    public void atomicRead(Runnable action) {
-        service().atomic(action, false);
-    }
-
-    /** 
-     * Executes the specified atomic write action on this collection.
-     * As far as concurrent threads are concerned, the result of an atomic 
-     * write action either happens completely, or it doesn't happen at all.
-     * If this collection is not {@link #shared() shared}, the action 
-     * is called directly.
-     * 
-     * @param action the action to be executed atomically on this collection.
-     * @param update indicates if the specified action may modify the collection.
-     */
-    public void atomicWrite(Runnable action) {
-        service().atomic(action, true);
-    }
-
     @Override
     @RealTime(Limit.LINEAR)
     public FastCollection<E> copy() {
-        final FastTable<E> table = new FastTable<E>();
-        forEach(new ConsumerService<E>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public void accept(E e, Controller controller) {
-                table.add((e instanceof Copyable) ? ((Copyable<E>) e).copy()
-                        : e);
-            }
-        });
-        return table;
+        if (this instanceof Set) {
+            final FastSet<E> set = new FastSet<E>(service().comparator());
+            sequential().forEach(new CollectionConsumer<E>() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void accept(E e, Controller controller) {
+                    E copy = (e instanceof Copyable) ? ((Copyable<E>) e).copy()
+                            : e;
+                    set.add(copy);
+                }
+            });
+            return set;
+        } else { // Returns a list.
+            final FastTable<E> list = new FastTable<E>();
+            sequential().forEach(new CollectionConsumer<E>() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void accept(E e, Controller controller) {
+                    E copy = (e instanceof Copyable) ? ((Copyable<E>) e).copy()
+                            : e;
+                    list.add(copy);
+                }
+            });
+            return list;
+        }
     }
 
     @Override
@@ -734,7 +753,7 @@ public abstract class FastCollection<E> implements Collection<E>,
         public Appendable format(FastCollection<Object> that,
                 final Appendable dest) throws IOException {
             dest.append('[');
-            that.sequential().forEach(new ConsumerService<Object>() {
+            that.sequential().forEach(new CollectionConsumer<Object>() {
                 boolean isFirst = true;
 
                 @Override

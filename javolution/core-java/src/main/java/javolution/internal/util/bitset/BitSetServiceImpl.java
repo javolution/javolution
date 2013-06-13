@@ -12,12 +12,12 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 import javolution.lang.MathLib;
-import javolution.util.Comparators;
 import javolution.util.Index;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.BitSetService;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 
 /**
  * A table of indices implemented using packed bits (long[]).
@@ -351,7 +351,7 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     }
 
     @Override
-    public ComparatorService<? super Index> comparator() {
+    public FullComparator<? super Index> comparator() {
         return Comparators.IDENTITY;
     }
     

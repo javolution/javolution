@@ -10,12 +10,12 @@ package javolution.internal.util.comparator;
 
 import java.io.Serializable;
 
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
 
 /**
  * The standard comparator implementation.
  */
-public class StandardComparatorImpl<E> implements ComparatorService<E>, Serializable {
+public class StandardComparatorImpl<E> implements FullComparator<E>, Serializable {
 
     private static final long serialVersionUID = -615690677813206151L;
 

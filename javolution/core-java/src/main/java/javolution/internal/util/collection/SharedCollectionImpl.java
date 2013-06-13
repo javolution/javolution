@@ -13,9 +13,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javolution.util.FastCollection;
+import javolution.util.function.FullComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 
 /**
  * A shared view over a collection allowing concurrent access and sequential updates.
@@ -51,6 +51,26 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements 
         }
     }
 
+    @Override
+    public void atomicRead(Runnable action) {
+        read.lock();
+        try {
+            target.atomicRead(action);
+        } finally {
+            read.unlock();
+        }
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        write.lock();
+        try {
+            target.atomicWrite(action);
+        } finally {
+            write.unlock();
+        }
+    }
+    
     @Override
     public boolean doWhile(Predicate<? super E> predicate) {
         read.lock();
@@ -111,7 +131,7 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements 
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
 

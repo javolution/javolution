@@ -12,9 +12,9 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 import javolution.internal.util.collection.FilteredCollectionImpl;
+import javolution.util.function.FullComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.SetService;
 import javolution.util.service.TableService;
 
@@ -60,7 +60,7 @@ public class SortedTableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -95,7 +95,7 @@ public class SortedTableSetImpl<E> implements SetService<E>, Serializable {
     public static <E> int indexIfSortedOf(E element, TableService<E> table, int start, int length) {
         if (length == 0) return start;
         int half = length >> 1;
-       ComparatorService<? super E> comparator = table.comparator();
+       FullComparator<? super E> comparator = table.comparator();
         return (comparator.compare(element, table.get(start + half)) <= 0)
                 ? indexIfSortedOf(element, table, start, half)
                 : indexIfSortedOf(element, table, start + half + 1, length - half - 1);

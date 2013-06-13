@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 
-import javolution.util.Comparators;
+import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 

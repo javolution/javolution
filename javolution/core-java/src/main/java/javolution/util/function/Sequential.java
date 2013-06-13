@@ -8,24 +8,14 @@
  */
 package javolution.util.function;
 
-
 /**
- * <p> A special type of function which does not return anything.</p>
+ * <p> Identifies any function which cannot be called concurrently.
+ *     Most functions do not have a state and therefore are not 
+ *     sequential.</p>
  * 
- * <p> Note: In future version this interface may derive from 
- *           {@code Function<P, Void>}.</p>
- *           
- * @param <T> The type of input parameter to accept.
- *           
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
- * @see     CollectionConsumer
  */
-public interface Consumer<T> {
-
-    /**
-     * Accepts an input value.
-     */
-    void accept(T param);
-
+public interface Sequential {
+   
 }

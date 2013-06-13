@@ -12,19 +12,21 @@ package javolution.util.function;
  * <p> A function that perform some operation and returns the result of 
  *     that operation.</p>
  * 
- * @see <a href="http://en.wikipedia.org/wiki/Function_(computer_science)">Wikipedia: Function<a>    
- *                  
+ * @param <T> the type of the input parameter of the apply operation.
+ * @param <R> the type of the result of the apply operation.
+ *                   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
+ * @see <a href="http://en.wikipedia.org/wiki/Function_(computer_science)">Wikipedia: Function<a>    
  */
-public interface Function<P, R> {
+public interface Function<T, R> {
 
     /**
-     * Returns the result of applying the function to the specified parameter. 
+     * Returns the result of applying this function to the specified parameter. 
      * 
-     * @param param the parameter object on which the evaluation is performed. 
-     * @return the result of the evaluation.
+     * @param param the parameter object on which the function is performed. 
+     * @return the result of the function.
      */
-    R apply(P param);
+    R apply(T param);
 
 }

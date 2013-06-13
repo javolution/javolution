@@ -13,9 +13,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javolution.util.Comparators;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.MapService;
 
 /**
@@ -113,7 +113,7 @@ public abstract class AbstractMapImpl<K, V> implements MapService<K, V>, Seriali
     }
     
     @Override
-    public ComparatorService<K> keyComparator() {
+    public FullComparator<K> keyComparator() {
         return Comparators.standard();
     }
  

@@ -10,8 +10,8 @@ package javolution.internal.util.table;
 
 import java.util.Iterator;
 
+import javolution.util.function.FullComparator;
 import javolution.util.function.Predicate;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
@@ -38,7 +38,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public int indexOf(E element) {
-        ComparatorService<? super E> cmp = comparator();
+        FullComparator<? super E> cmp = comparator();
         int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) return i;
         return -1;
@@ -46,7 +46,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
 
     @Override
     public int lastIndexOf(E element) {
-        ComparatorService<? super E> cmp = comparator();
+        FullComparator<? super E> cmp = comparator();
         int i = SortedTableImpl.indexIfSortedOf(element, this, 0, size());
         if ((i < size()) && cmp.areEqual(element, get(i))) {
             while ((++i < size()) && cmp.areEqual(element, get(i))) {
@@ -105,12 +105,12 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     // 
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return that.comparator();
     }
     
     @Override
-    public void setComparator(ComparatorService<? super E> cmp) {
+    public void setComparator(FullComparator<? super E> cmp) {
         that.setComparator(cmp);
     }   
  
@@ -196,7 +196,7 @@ public final class SortedTableImpl<E> extends AbstractTableImpl<E> {
     public static <E> int indexIfSortedOf(E element, TableService<E> table, int start, int length) {
         if (length == 0) return start;
         int half = length >> 1;
-       ComparatorService<? super E> comparator = table.comparator();
+       FullComparator<? super E> comparator = table.comparator();
         return (comparator.compare(element, table.get(start + half)) <= 0)
                 ? indexIfSortedOf(element, table, start, half)
                 : indexIfSortedOf(element, table, start + half + 1, length - half - 1);

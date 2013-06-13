@@ -10,10 +10,10 @@ package javolution.xml;
 
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.util.Comparators;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
 import javolution.util.Index;
+import javolution.util.function.Comparators;
 import javolution.xml.stream.XMLStreamException;
 
 

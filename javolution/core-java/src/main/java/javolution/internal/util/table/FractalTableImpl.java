@@ -10,9 +10,9 @@ package javolution.internal.util.table;
 
 import java.util.Iterator;
 
-import javolution.util.Comparators;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.TableService;
 
 /**
@@ -39,7 +39,7 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     private int capacity; // Actual memory allocated is usually far less than
     // capacity since inner fractal tables can be null.
 
-    private ComparatorService<? super E> comparator = Comparators.STANDARD;
+    private FullComparator<? super E> comparator = Comparators.STANDARD;
 
     public FractalTableImpl() {}
 
@@ -106,12 +106,12 @@ public final class FractalTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return comparator;
     }
 
     @Override
-    public void setComparator(ComparatorService<? super E> cmp) {
+    public void setComparator(FullComparator<? super E> cmp) {
         comparator = cmp;
     }
 

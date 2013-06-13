@@ -11,12 +11,12 @@ package javolution.internal.util.comparator;
 import java.io.Serializable;
 
 import javolution.lang.MathLib;
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
 
 /**
  * The lexical comparator implementation.
  */
-public class LexicalComparatorImpl implements ComparatorService<CharSequence>, Serializable {
+public class LexicalComparatorImpl implements FullComparator<CharSequence>, Serializable {
 
     @Override
     public int hashCodeOf(CharSequence csq) {

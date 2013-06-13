@@ -13,8 +13,8 @@ import javolution.annotation.StackSafe;
 import javolution.context.HeapContext;
 import javolution.lang.MathLib;
 import javolution.lang.ValueType;
-import javolution.util.Comparators;
 import javolution.util.FastMap;
+import javolution.util.function.Comparators;
 import javolution.xml.XMLSerializable;
 
 /**

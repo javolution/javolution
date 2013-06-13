@@ -13,7 +13,8 @@ import java.util.SortedMap;
 import java.util.Map.Entry;
 
 import javolution.annotation.RealTime;
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.service.MapService;
 
 /**
@@ -21,7 +22,7 @@ import javolution.util.service.MapService;
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * <p> This map provides a total ordering based on the keys natural order or 
- *     using custom {@link #FastSortedMap(ComparatorService) comparators}.</p>
+ *     using custom {@link #FastSortedMap(FullComparator) comparators}.</p>
  *        
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
@@ -38,7 +39,7 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     /**
       * Creates an empty map ordered using the specified key comparator.
     */
-   public FastSortedMap(ComparatorService<? super K> keyComparator) {
+   public FastSortedMap(FullComparator<? super K> keyComparator) {
        super(keyComparator); // TODO
    }
      

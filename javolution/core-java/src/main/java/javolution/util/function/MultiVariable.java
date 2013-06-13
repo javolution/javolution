@@ -12,12 +12,14 @@ package javolution.util.function;
  * <p> An object holding multiple variables; typically used to create 
  *     {@link Function multi-parameters functions}.</p>
  * 
- * <p> Multi-variables may be composed to represent an unbounded number of 
- *     variables. For example.
+ * <p> Multi-variables may represent an unbounded number of variables.
  *     [code]
  *     MultiVariable<Double, MultiVariable<Integer, Boolean>> tertiaryVariable
  *         = new MultiVariable(2.3, new MultiVariable(57, true));
  *     [/code].</p>
+ * 
+ * @param <L> the type of the variable on the left.
+ * @param <R> the type of the variable on the right.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012

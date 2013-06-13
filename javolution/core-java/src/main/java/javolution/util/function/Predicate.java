@@ -13,6 +13,8 @@ package javolution.util.function;
  * 
  * <p> Note: In future version this interface may derive from 
  *           {@code Function<P, Boolean>}.</p>
+
+ * @param <T> The type of input object to test.
  *           
  * @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
  * Wikipedia: Predicate<a>    
@@ -20,11 +22,11 @@ package javolution.util.function;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Predicate<P>  {
+public interface Predicate<T>  {
      
     /**
-     * Test the specified parameter.
+     * Tests the specified value.
      */
-    boolean test(P param);
+    boolean test(T param);
   
 }

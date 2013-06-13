@@ -10,7 +10,8 @@ package javolution.util.service;
 
 import java.util.Iterator;
 
-import javolution.util.function.Consumer;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 
 /**
  * The fundamental set of related functionalities required to implement 
@@ -22,14 +23,6 @@ import javolution.util.function.Consumer;
 public interface CollectionService<E> {
     
     /** 
-     * Executes the specified atomic action on this collection.
-     * 
-     * @param action the action to be executed atomically on this collection.
-     * @param update indicates if the specified action may modify the collection.
-     */
-    void atomic(Runnable action, boolean update);
-
-    /** 
      * Adds the specified element to this collection.
      * 
      * @return <code>true</code> if an element was added as a result of 
@@ -38,13 +31,31 @@ public interface CollectionService<E> {
     boolean add(E element);
 
     /** 
-     * Iterates over this collection elements either sequentially or 
-     * in parallel. 
+     * Traverses the elements of this collection.
      * 
-     * @param consumer the consumer of the collection elements.
+     * @param consumer the consumer called upopn the element of this collection.
      */
-    void forEach(ConsumerService<? super E> consumer);
+    void forEach(CollectionConsumer<? super E> consumer);
 
+    /** 
+     * Returns an iterator over this collection elements.
+     */
+    Iterator<E> iterator();
+
+    /** 
+     * Executes the specified action on this collection in an atomic manner as 
+     * far as readers of this collection's are concerned (either readers 
+     * see the full result of this action on this collection or nothing).
+     *  
+     * @param action the action to be executed atomically.
+     */
+    void atomic(Runnable action);
+
+    /** 
+     * Returns the full comparator used for element equality or order.
+     */
+    FullComparator<? super E> comparator();
+ 
     /** 
      * Splits this collection in <code>n</code> sub-collections.
      * 
@@ -53,15 +64,5 @@ public interface CollectionService<E> {
      *         cannot be split. 
      */
     CollectionService<E>[] trySplit(int n);
-
-    /** 
-     * Returns the comparator used for element equality or comparisons.
-     */
-    ComparatorService<? super E> comparator();
- 
-    /** 
-     * Returns an iterator over the collection elements.
-     */
-    Iterator<E> iterator();
     
  }

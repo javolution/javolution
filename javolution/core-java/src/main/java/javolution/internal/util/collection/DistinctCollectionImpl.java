@@ -12,9 +12,9 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastSet;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 import javolution.util.service.SetService;
 
 /**
@@ -37,9 +37,19 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void forEach(final ConsumerService<? super E> consumer) {
-        if (consumer instanceof ConsumerService.Sequential) {
-            target.forEach(new ConsumerService.Sequential<E>() {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(final CollectionConsumer<? super E> consumer) {
+        if (consumer instanceof CollectionConsumer.Sequential) {
+            target.forEach(new CollectionConsumer.Sequential<E>() {
                 FastSet<E> iterated = new FastSet<E>(target.comparator());
 
                 @Override
@@ -50,7 +60,7 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
                 }
             });
         } else { // Potentially concurrent (use shared collection).
-            target.forEach(new ConsumerService<E>() {
+            target.forEach(new CollectionConsumer<E>() {
                 FastSet<E> iterated = new FastSet<E>(target.comparator()).shared();
 
                 @Override
@@ -111,7 +121,7 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
 
@@ -120,17 +130,13 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
         return target.trySplit(n);
     }
 
-    public DistinctCollectionImpl<E> service() {
-        return this;
-    }
-
     // Check if this collection contains the specified element.
     private boolean checkContains(final E element) {
         if (target instanceof SetService)
             return ((SetService<E>) target).contains(element);
         final boolean[] found = new boolean[1];
-        target.forEach(new ConsumerService<E>() {
-            ComparatorService<? super E> cmp = target.comparator();
+        target.forEach(new CollectionConsumer<E>() {
+            FullComparator<? super E> cmp = target.comparator();
 
             @Override
             public void accept(E e, Controller controller) {
@@ -143,4 +149,8 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
         return found[0];
     }
 
+    @Override
+    public DistinctCollectionImpl<E> service() {
+        return this;
+    }
 }

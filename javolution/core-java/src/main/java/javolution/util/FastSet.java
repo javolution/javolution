@@ -15,8 +15,9 @@ import javolution.annotation.RealTime.Limit;
 import javolution.internal.util.set.FilteredSetImpl;
 import javolution.internal.util.set.SharedSetImpl;
 import javolution.internal.util.set.UnmodifiableSetImpl;
+import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
-import javolution.util.service.ComparatorService;
 import javolution.util.service.SetService;
 
 /**
@@ -40,7 +41,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * Creates an empty set backed up by a {@link FastMap} and using the 
      * specified comparator for key equality.
     */
-   public FastSet(ComparatorService<? super E> comparator) {
+   public FastSet(FullComparator<? super E> comparator) {
        super(new FastMap<E, Void>(comparator).keySet().service());
    }   
    

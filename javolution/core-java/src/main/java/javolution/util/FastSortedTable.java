@@ -9,7 +9,7 @@
 package javolution.util;
 
 import javolution.annotation.RealTime;
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
 import javolution.util.service.SortedTableService;
 
 /**
@@ -37,7 +37,7 @@ public class FastSortedTable<E> extends FastTable<E>  {
     /**
      * Creates an empty table maintained sorted using the specified element comparator.
      */
-   public FastSortedTable(ComparatorService<? super E> comparator) {
+   public FastSortedTable(FullComparator<? super E> comparator) {
        super((SortedTableService<E>)null); // TBD
    }
 

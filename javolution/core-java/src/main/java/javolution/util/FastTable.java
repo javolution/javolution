@@ -23,7 +23,7 @@ import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
-import javolution.util.service.ComparatorService;
+import javolution.util.function.FullComparator;
 import javolution.util.service.TableService;
 
 /**
@@ -201,7 +201,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     public int indexOf(final Object element) {
         final int[] index = new int[] { -1 };
         atomicRead(new Runnable() { // Prevents concurrent writes when table shared.
-            ComparatorService<? super E> cmp = impl.comparator();
+            FullComparator<? super E> cmp = impl.comparator();
             @Override
             public void run() {
                 for (int i=0, n = size(); i < n; i++) {

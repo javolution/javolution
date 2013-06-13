@@ -11,9 +11,9 @@ package javolution.internal.util.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
+import javolution.util.function.CollectionConsumer;
+import javolution.util.function.FullComparator;
 import javolution.util.service.CollectionService;
-import javolution.util.service.ComparatorService;
-import javolution.util.service.ConsumerService;
 
 /**
  * A sequential view over a collection.
@@ -34,8 +34,18 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void forEach(final ConsumerService<? super E> consumer) {
-        if (consumer instanceof ConsumerService.Sequential) {
+    public void atomicRead(Runnable action) {
+        target.atomicRead(action);
+    }
+
+    @Override
+    public void atomicWrite(Runnable action) {
+        target.atomicWrite(action);        
+    }
+    
+    @Override
+    public void forEach(final CollectionConsumer<? super E> consumer) {
+        if (consumer instanceof CollectionConsumer.Sequential) {
             target.forEach(consumer);
         } else {
             target.forEach(new SequentialConsumerWrapper<E>(consumer));
@@ -53,7 +63,7 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public ComparatorService<? super E> comparator() {
+    public FullComparator<? super E> comparator() {
         return target.comparator();
     }
 
@@ -65,15 +75,15 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
     /**
     * A sequential consumer wrapper.
     */
-   private static class SequentialConsumerWrapper<E> implements ConsumerService.Sequential<E> {
-       private final ConsumerService<? super E> consumer;
+   private static class SequentialConsumerWrapper<E> implements CollectionConsumer.Sequential<E> {
+       private final CollectionConsumer<? super E> consumer;
 
-       public SequentialConsumerWrapper(ConsumerService<? super E> consumer) {
+       public SequentialConsumerWrapper(CollectionConsumer<? super E> consumer) {
            this.consumer = consumer;
        }
 
        @Override
-       public void accept(E e, ConsumerService.Controller controller) {
+       public void accept(E e, CollectionConsumer.Controller controller) {
            consumer.accept(e, controller);
        }
    }    
