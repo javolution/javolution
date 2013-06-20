@@ -8,15 +8,16 @@
  */
 package javolution.util;
 
+import static javolution.annotation.RealTime.Limit.CONSTANT;
+
 import java.util.Set;
 
 import javolution.annotation.RealTime;
-import javolution.annotation.RealTime.Limit;
 import javolution.internal.util.set.FilteredSetImpl;
 import javolution.internal.util.set.SharedSetImpl;
 import javolution.internal.util.set.UnmodifiableSetImpl;
-import javolution.util.function.FullComparator;
 import javolution.util.function.Comparators;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.SetService;
 
@@ -24,11 +25,23 @@ import javolution.util.service.SetService;
  * <p> A high-performance set with {@link RealTime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
+ * <p> The iteration order over the set elements is deterministic 
+ *     (unlike {@link java.util.HashSet}).It is either the insertion order (default) 
+ *     or the key order for the {@link FastSortedSet} subclass.
+ *     This class permits {@code null} elements.</p>
+ *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
 public class FastSet<E> extends FastCollection<E> implements Set<E> {
   
+    private static final long serialVersionUID = 0x600L; // Version.
+
+    /**
+     * Holds the actual service implementation.
+     */
+    private final SetService<E> service;
+
     /**
      * Creates an empty set backed up by a {@link FastMap} and having  
      * the same real-time characteristics.
@@ -41,64 +54,21 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * Creates an empty set backed up by a {@link FastMap} and using the 
      * specified comparator for key equality.
     */
-   public FastSet(FullComparator<? super E> comparator) {
-       super(new FastMap<E, Void>(comparator).keySet().service());
+   public FastSet(EqualityComparator<? super E> comparator) {
+       service = null; // TODO
    }   
    
    /**
-     * Creates a set backed up by the specified implementation.
+     * Creates a fast set backed up by the specified service implementation.
      */
-    protected FastSet(SetService<E> implementation) {
-        super(implementation);        
-    }
-    
-    /**
-     * Returns the service implementation of this set.
-     */
-    public SetService<E> service() {
-        return (SetService<E>) super.service();
+    protected FastSet(SetService<E> service) {
+        this.service = service;        
     }
 
-    /**
-     * Returns the number of elements in this set.
+    /***************************************************************************
+     * Views.
      */
-    @RealTime(Limit.CONSTANT)
-    public int size() {
-       return service().size(); 
-    }
 
-    /**
-     * Removes all of the elements from this set.
-     */
-    @RealTime(Limit.CONSTANT)
-    public void clear() {
-        service().clear();
-    }
-    
-    /**
-     * Indicates if this set contains the specified element.
-     */
-    @SuppressWarnings("unchecked")
-    @RealTime(Limit.CONSTANT)
-    public boolean contains(Object obj) {
-        return service().contains((E)obj);
-    }
-
-    /**
-     * Removes the specified element from this set. More formally,
-     * removes an element {@code elem} such that
-     * {@code getComparator().areEquals(elem, obj))}.
-     */  
-    @SuppressWarnings("unchecked")
-    @RealTime(Limit.CONSTANT)
-    public boolean remove(Object obj) {
-        return service().remove((E) obj);
-    }
-
-    //
-    // Overrides views returning a set.
-    // 
-  
     @Override
     public FastSet<E> unmodifiable() {
         return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
@@ -119,5 +89,42 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
         return this; // Elements already distinct.
     }
 
-    private static final long serialVersionUID = 6416925552876467301L;
+    /***************************************************************************
+     * Set operations optimizations.
+     */
+    
+    @Override
+    @RealTime(limit = CONSTANT)
+    public int size() {
+       return service.size(); 
+    }
+
+    @Override
+    @RealTime(limit = CONSTANT)
+    public void clear() {
+        service.clear();
+    }
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    @RealTime(limit = CONSTANT)
+    public boolean contains(Object obj) {
+        return service.contains((E)obj);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @RealTime(limit = CONSTANT)
+    public boolean remove(Object obj) {
+        return service.remove((E) obj);
+    }
+  
+    /***************************************************************************
+     * Misc.
+     */
+    
+    @Override
+    protected SetService<E> service() {
+        return service;
+    }
 }

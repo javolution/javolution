@@ -8,6 +8,7 @@
  */
 package javolution.util;
 
+import static javolution.annotation.RealTime.Limit.LINEAR;
 import javolution.annotation.RealTime;
 import javolution.internal.util.bitset.BitSetServiceImpl;
 import javolution.internal.util.bitset.SharedBitSet;
@@ -28,17 +29,19 @@ import javolution.util.service.BitSetService;
  */
 public class FastBitSet extends FastSet<Index> {
 
-    /**
+    private static final long serialVersionUID = 0x600L; // Version.
+  
+     /**
      * Holds the bit set implementation.
      */
-    private final BitSetService impl;
+    private final BitSetService service;
     
      /**
      * Creates an empty bit set whose capacity increments/decrements smoothly
      * without large resize operations to best fit the set current size.
      */
     public FastBitSet() {
-        impl = new BitSetServiceImpl(0);
+        service = new BitSetServiceImpl(0);
     }
 
     /**
@@ -50,9 +53,34 @@ public class FastBitSet extends FastSet<Index> {
      * @param bitSize the initial capacity in bits.
      */
     public FastBitSet(int bitSize) {
-        impl = new BitSetServiceImpl(bitSize);
+        service = new BitSetServiceImpl(bitSize);
     }
 
+    /**
+     * Creates a fast bit set based on the specified implementation.
+     */
+    protected FastBitSet(BitSetService impl) {
+        this.service = impl;
+    }
+
+    /***************************************************************************
+     * Views.
+     */
+   
+    @Override
+    public FastBitSet unmodifiable() {
+        return new FastBitSet(new UnmodifiableBitSet(service));
+    }
+
+    @Override
+    public FastBitSet shared() {
+        return new FastBitSet(new SharedBitSet(service));
+    }
+    
+    /***************************************************************************
+     * Bit set operations.
+     */
+  
     /**
      * Performs the logical AND operation on this bit set and the
      * given bit set. This means it builds the intersection
@@ -60,8 +88,9 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
+    @RealTime(limit = LINEAR)
     public void and(FastBitSet that) {
-        impl.and(that.impl);
+        service.and(that.service);
     }
 
     /**
@@ -72,8 +101,9 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set
      */
+    @RealTime(limit = LINEAR)
     public void andNot(FastBitSet that) {
-        impl.andNot(that.impl);
+        service.andNot(that.service);
     }
 
     /**
@@ -83,7 +113,7 @@ public class FastBitSet extends FastSet<Index> {
      * @return the number of bits being set.
      */
     public int cardinality() {
-        return impl.cardinality();
+        return service.cardinality();
     }
 
     /**
@@ -91,7 +121,7 @@ public class FastBitSet extends FastSet<Index> {
      */
     @Override
     public void clear() {
-        impl.clear();
+        service.clear();
     }
 
     /**
@@ -102,7 +132,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code index < 0}
      */
     public void clear(int bitIndex) {
-        impl.clear(bitIndex);
+        service.clear(bitIndex);
     }
 
     /**
@@ -114,8 +144,9 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
+    @RealTime(limit = LINEAR)
     public void clear(int fromIndex, int toIndex) {     
-        impl.clear(fromIndex, toIndex);
+        service.clear(fromIndex, toIndex);
     }
 
     /**
@@ -125,7 +156,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void flip(int bitIndex) {
-        impl.flip(bitIndex);
+        service.flip(bitIndex);
     }
 
     /**
@@ -136,8 +167,9 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
+    @RealTime(limit = LINEAR)
     public void flip(int fromIndex, int toIndex) {
-        impl.flip(fromIndex, toIndex);
+        service.flip(fromIndex, toIndex);
     }
 
     /**
@@ -149,7 +181,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public boolean get(int bitIndex) {
-        return impl.get(bitIndex);
+        return service.get(bitIndex);
     }
 
     /**
@@ -161,8 +193,9 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
+    @RealTime(limit = LINEAR)
     public FastBitSet get(int fromIndex, int toIndex) {     
-        return new FastBitSet(impl.get(fromIndex, toIndex));
+        return new FastBitSet(service.get(fromIndex, toIndex));
     }
 
     /**
@@ -172,8 +205,9 @@ public class FastBitSet extends FastSet<Index> {
      * @param that the bit set to check for intersection
      * @return {@code true} if the sets intersect; {@code false} otherwise.
      */
+    @RealTime(limit = LINEAR)
     public boolean intersects(FastBitSet that) {
-        return impl.intersects(that.impl);
+        return service.intersects(that.service);
     }
 
     /**
@@ -186,7 +220,7 @@ public class FastBitSet extends FastSet<Index> {
      * @return the index of the highest set bit plus one.
      */
     public int length() {
-        return impl.length();
+        return service.length();
     }
 
     /**
@@ -198,7 +232,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code fromIndex < 0} 
      */
     public int nextClearBit(int fromIndex) {
-        return impl.nextClearBit(fromIndex);
+        return service.nextClearBit(fromIndex);
     }
 
     /**
@@ -214,7 +248,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code fromIndex < 0} 
      */
     public int nextSetBit(int fromIndex) {
-        return impl.nextSetBit(fromIndex);
+        return service.nextSetBit(fromIndex);
     }
 
     /**
@@ -224,8 +258,9 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
+    @RealTime(limit = LINEAR)
     public void or(FastBitSet that) {
-        impl.or(that.impl);
+        service.or(that.service);
     }
 
     /**
@@ -236,7 +271,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void set(int bitIndex) {
-        impl.set(bitIndex);
+        service.set(bitIndex);
     }
 
     /**
@@ -247,7 +282,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
     public void set(int bitIndex, boolean value) {
-        impl.set(bitIndex, value);
+        service.set(bitIndex, value);
     }
 
     /**
@@ -259,10 +294,11 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
+    @RealTime(limit = LINEAR)
     public void set(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex < fromIndex))
             throw new IndexOutOfBoundsException();
-        impl.set(fromIndex, toIndex);
+        service.set(fromIndex, toIndex);
     }
 
     /**
@@ -274,8 +310,9 @@ public class FastBitSet extends FastSet<Index> {
      * @param value the value to set it to.
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
+    @RealTime(limit = LINEAR)
     public void set(int fromIndex, int toIndex, boolean value) {
-        impl.set(fromIndex, toIndex, value);
+        service.set(fromIndex, toIndex, value);
     }
 
     /**
@@ -286,44 +323,24 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
+    @RealTime(limit = LINEAR)
     public void xor(FastBitSet that) {
-        impl.xor(that.impl);
-    }
-
-    //
-    // FastCollection methods override.
-    //
-    
-    @Override
-    public FastBitSet unmodifiable() {
-        return new FastBitSet(new UnmodifiableBitSet(impl));
-    }
-
-    @Override
-    public FastBitSet shared() {
-        return new FastBitSet(new SharedBitSet(impl));
-    }
-
-    @Override
-    public FastBitSet copy() {
-        return this.get(0, length());
+        service.xor(that.service);
     }
 
     /***************************************************************************
-     * For sub-classes.
+     * Misc.
      */
-
-    /**
-     * Creates a bit set based on the specified implementation.
-     */
-    protected FastBitSet(BitSetService impl) {
-        this.impl = impl;
+   
+    @Override
+    @RealTime(limit = LINEAR)
+   public FastBitSet copy() {
+        return this.get(0, length());
     }
 
     @Override
-    public BitSetService service() {
-        return impl;
+    protected BitSetService service() {
+        return service;
     }
 
-    private static final long serialVersionUID = 2947704388849012297L;
 }

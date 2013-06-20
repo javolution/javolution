@@ -18,7 +18,7 @@ import java.io.IOException;
  * <p> Instances of this class are typically retrieved from the 
  *     current {@link TextContext} (OSGi service or not).
  *     [code]
- *     @Format(text=Complex.PlainText.class) 
+ *     @TextFormat(Complex.Cartesian.class) 
  *     public class Complex extends Number {
  *         public static Complex valueOf(CharSequence csq) {
  *             return TextContext.getFormat(Complex.class).parse(csq);
@@ -26,9 +26,9 @@ import java.io.IOException;
  *         public String toString() {
  *             return TextContext.getFormat(Complex.class).format(this);
  *         }
- *         public static class PlainText extends TextFormat<Complex> { ... }
+ *         public static class Cartesian extends javolution.text.TextFormat<Complex> { ... }
  *     }[/code]
- *     Text formats can be locally overriden.
+ *     Text formats can be locally overridden.
  *     [code]
  *     TextContext ctx = TextContext.enter();
  *     try {

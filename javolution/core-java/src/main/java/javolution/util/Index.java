@@ -12,8 +12,8 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.List;
 
-import javolution.annotation.Format;
-import javolution.annotation.StackSafe;
+import javolution.annotation.DefaultTextFormat;
+import javolution.annotation.RealTime;
 import javolution.context.HeapContext;
 import javolution.context.StackContext;
 import javolution.lang.Configurable;
@@ -38,15 +38,17 @@ import javolution.text.TypeFormat;
  *     instances), but should not be used for large integer values as that  
  *     would increase the permanent memory footprint significantly.</p> 
  * 
- * <p> This class is {@link StackSafe} new unique indices are always allocated
- *     on the heap even when executing in a {@link StackContext}.</p>
+ * <p> This class is {@link RealTime#stackSafe stack-safe} new unique indices 
+ *     are always allocated on the heap even when executing in a {@link StackContext}.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
-@Format(text = Index.PlainText.class)
-@StackSafe(initialization = false)
+@RealTime
+@DefaultTextFormat(Index.PlainText.class)
 public final class Index extends Number implements Comparable<Index>, ValueType<Index> {
+
+    private static final long serialVersionUID = 0x600L; // Version.
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -56,30 +58,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     /**
      * Holds indices (to maintains unicity).
      */
-    private static Index[] INSTANCES = new Index[256];
-
-    static { 
-        INSTANCES[0] = ZERO;
-        for (int i = 1; i < INSTANCES.length; i++) {
-            INSTANCES[i] = new Index(i);
-        }
-    }
-
-    /**
-     * Holds the number of indices preallocated (default <code>256</code>).
-     */
-    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(INSTANCES.length) {
-
-        @Override
-        public void configure(CharSequence configuration) {
-            int n = TypeFormat.parseInt(configuration);
-            if (n <= 0)
-                throw new IllegalArgumentException("Preallocated max cannot be zero or negative");
-            this.setDefaultValue(n);
-            Index.allocateOnHeap(n);
-        }
-
-    };
+    private static final FastTable<Index> INSTANCES = new FastTable<Index>(ZERO);
 
     /**
      * Holds the index value.
@@ -105,8 +84,24 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
      * @throws IndexOutOfBoundsException if <code>value &lt; 0</code>
      */
     public static Index valueOf(int value) { // Short to be inlined.
-        if (value >= INSTANCES.length) Index.allocateOnHeap(2 * value);
-        return INSTANCES[value];
+        return (value < INSTANCES.size()) ?  INSTANCES.get(value) : newIndex(value);
+    }
+
+    private static Index newIndex(final int value) {
+        HeapContext.execute(new Runnable() {
+
+            public void run() {
+                Index[] tmp = new Index[n];
+                System.arraycopy(INSTANCES, 0, tmp, 0, INSTANCES.length);
+                for (int i = INSTANCES.length; i < n; i++) {
+                    tmp[i] = new Index(i);
+                }
+                INSTANCES = tmp;
+
+            }
+
+        });
+        
     }
 
     /**
@@ -310,6 +305,4 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
 
         });
     }
-
-    private static final long serialVersionUID = -3074527329717548267L;
 }

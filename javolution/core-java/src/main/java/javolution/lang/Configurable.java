@@ -8,7 +8,7 @@
  */
 package javolution.lang;
 
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 import javolution.context.SecurityContext;
 
 /**
@@ -41,7 +41,7 @@ import javolution.context.SecurityContext;
  * @version 6.0, December 12, 2012
  * @see     javolution.osgi.ConfigurableService
  */
-@StackSafe
+@RealTime
 public class Configurable<T> {
 
     /**

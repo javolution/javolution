@@ -8,20 +8,18 @@
  */
 package javolution.util;
 
+import static javolution.annotation.RealTime.Limit.*;
+
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import javolution.annotation.Parallelizable;
 import javolution.annotation.RealTime;
-import javolution.annotation.RealTime.Limit;
 import javolution.internal.util.map.FractalMapImpl;
-import javolution.util.function.FullComparator;
 import javolution.util.function.Comparators;
-import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
+import javolution.util.function.EqualityComparator;
 import javolution.util.service.MapService;
 
 /**
@@ -37,7 +35,8 @@ import javolution.util.service.MapService;
  * </ul>      
  * <p> The iteration order over the fast map keys, values or entries is deterministic 
  *     (unlike {@link java.util.HashMap}). It is either the insertion order (default) 
- *     or the key order for the {@link FastSortedMap} subclass.</p> 
+ *     or the key order for the {@link FastSortedMap} subclass. 
+ *     This class permits {@code null} keys.</p> 
  *     
  * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps. 
  *     [code]
@@ -57,12 +56,15 @@ import javolution.util.service.MapService;
  * @version 6.0.0, December 12, 2012
  */
 @RealTime
-public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
+@Parallelizable(mutexFree = false, comment = "When using shared views.")
+public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializable {
 
+    private static final long serialVersionUID = 0x600L; // Version.
+    
     /**
-     * Holds the actual map implementation.
+     * Holds the actual map service implementation.
      */
-    private final MapService<K, V> impl;
+    private final MapService<K, V> service;
 
     /**
      * Creates an empty hash map.
@@ -76,23 +78,16 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * equality only (for sorting the {@link FastSortedMap} subclass should 
      * be used instead).
      */
-    public FastMap(FullComparator<? super K> keyEquality) {
-        impl = new FractalMapImpl<K, V>(keyEquality);
+    public FastMap(EqualityComparator<? super K> keyEquality) {
+        service = new FractalMapImpl<K, V>(keyEquality);
     }
         
     /**
      * Creates a map backed up by the specified service implementation.
      */
-    public FastMap(MapService<K, V> implementation) {
-        this.impl = implementation;
+    protected FastMap(MapService<K, V> service) {
+        this.service = service;
     }
-
-    /**
-     * Returns this map service implementation.
-     */
-    public MapService<K, V> service() {
-        return impl;
-    }    
 
     /***************************************************************************
      * Views.
@@ -141,117 +136,60 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
      * reflected in the set, and vice-versa. 
      */
     public FastSet<Entry<K, V>> entrySet() {
-        return new FastSet<Entry<K, V>>(impl.entrySet());
+        return new FastSet<Entry<K, V>>(service.entrySet());
     }
 
     /***************************************************************************
      * Map interface.
      */
 
-    /**
-     * Returns the number of key-value mappings in this map.
-     * 
-     * @return this map's size.
-     */
+    @Override
     public int size() {
-        return impl.entrySet().size();
+        return service.entrySet().size();
     }
 
-    /**
-     * Indicates if this map contains no key-value mappings.
-     * 
-     * @return <code>true</code> if this map contains no key-value mappings;
-     *         <code>false</code> otherwise.
-     */
-    public final boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
         return size() == 0;
     }
 
-    /**
-     * Indicates if this map contains a mapping for the specified key.
-     * 
-     * @param key the key whose presence in this map is to be tested.
-     * @return <code>true</code> if this map contains a mapping for the
-     *         specified key; <code>false</code> otherwise.
-     */
+    @Override
     @SuppressWarnings("unchecked")
-    public final boolean containsKey(Object key) {
-        return impl.containsKey((K) key);
+    public boolean containsKey(Object key) {
+        return service.containsKey((K) key);
     }
 
-    /**
-     * Indicates if this map associates one or more keys to the specified value.
-     * 
-     * @param value the value whose presence in this map is to be tested.
-     * @return <code>true</code> if this map maps one or more keys to the
-     *         specified value.
-     */
-    @RealTime(Limit.LINEAR)
+    @Override
+    @RealTime(limit = LINEAR)
     public boolean containsValue(Object value) {
         return values().contains(value);
     }
 
-    /**
-     * Returns the value to which this map associates the specified key.
-     * 
-     * @param key the key whose associated value is to be returned.
-     * @return the value to which this map maps the specified key, or
-     *         <code>null</code> if there is no mapping for the key.
-     */
+    @Override
     @SuppressWarnings("unchecked")
-    public final V get(Object key) {
-        return impl.get((K) key);
+    public V get(Object key) {
+        return service.get((K) key);
     }
 
-    /**
-     * Associates the specified value with the specified key in this map.
-     * If this map previously contained a mapping for this key, the old value
-     * is replaced.
-     * 
-     * @param key the key with which the specified value is to be associated.
-     * @param value the value to be associated with the specified key.
-     * @return the previous value associated with specified key, or
-     *         <code>null</code> if there was no mapping for key. A
-     *         <code>null</code> return can also indicate that the map
-     *         previously associated <code>null</code> with the specified key.
-     */
-    public final V put(K key, V value) {
-        return impl.put(key, value);
+    @Override
+    public V put(K key, V value) {
+        return service.put(key, value);
     }
 
-    /**
-     * Copies all of the mappings from the specified map to this map.
-     * If the entry set of the specified map is an instance of 
-     * {@link FastCollection}, closure-based iterations are performed 
-     * (safe even when the specified map is shared and concurrently 
-     * modified).
-     * 
-     * @param map the mappings to be stored in this map.
-     * @throws NullPointerException the specified map is <code>null</code>.
-     */
+    @Override
     @SuppressWarnings("unchecked")
+    @RealTime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
         entrySet().addAll((Collection<? extends Entry<K, V>>) map.entrySet()); 
     }
 
-    /**
-     * Removes the entry for the specified key if present.
-     * 
-     * @param key the key whose mapping is to be removed from the map.
-     * @return previous value associated with specified key, or
-     *         <code>null</code> if there was no mapping for key. A
-     *         <code>null</code> return can also indicate that the map
-     *         previously associated <code>null</code> with the specified key.
-     */
+    @Override
     @SuppressWarnings("unchecked")
-    public final V remove(Object key) {
-        return impl.remove((K) key);
+    public V remove(Object key) {
+        return service.remove((K) key);
     }
 
-    /**
-     * Removes all of the mappings from this map; the capacity of the map
-     * is then reduced to its minimum (reduces memory footprint).
-     */
+    @Override
     public void clear() {
         entrySet().clear();
     }
@@ -262,23 +200,34 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V> {
 
     @Override
     public V putIfAbsent(K key, V value) {
-        return impl.putIfAbsent(key, value);
+        return service.putIfAbsent(key, value);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object key, Object value) {
-        return impl.remove((K) key, (V)value);
+        return service.remove((K) key, (V)value);
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        return impl.replace(key, oldValue, newValue);
+        return service.replace(key, oldValue, newValue);
     }
 
     @Override
     public V replace(K key, V value) {
-        return impl.replace(key, value);
+        return service.replace(key, value);
     }
+
+    /***************************************************************************
+     * Misc.
+     */
+    
+    /**
+     * Returns this map service implementation.
+     */
+    protected MapService<K, V> service() {
+        return service;
+    }    
     
 }

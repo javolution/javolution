@@ -9,7 +9,7 @@
 package javolution.text;
 
 import java.io.PrintStream;
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 import javolution.context.HeapContext;
 import javolution.lang.MathLib;
 import javolution.lang.ValueType;
@@ -60,7 +60,7 @@ import javolution.xml.XMLSerializable;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@StackSafe
+@RealTime
 public final class Text implements CharSequence, Comparable<CharSequence>, XMLSerializable,
         ValueType<Text> {
 

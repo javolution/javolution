@@ -1,5 +1,5 @@
 /**
-<p> High-performance collection classes based on OSGi principles (pluggable 
+<p> High-performance collection classes based on the OSGi principles (pluggable 
     and run-time adaptable implementations for optimum performance).</p>
     <img src="doc-files/architecture.png" /> 
 <p> Whereas Java current evolution leads to more and more classes being parts of 

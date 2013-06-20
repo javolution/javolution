@@ -9,7 +9,7 @@
 package javolution.text;
 
 import java.io.IOException;
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 import javolution.lang.MathLib;
 
 /**
@@ -39,7 +39,7 @@ import javolution.lang.MathLib;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, February 15, 2009
  */
-@StackSafe
+@RealTime
 public final class TypeFormat {
 
     /**

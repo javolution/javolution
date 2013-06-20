@@ -8,7 +8,7 @@
  */
 package javolution.lang;
 
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 
 /**
  * A permission associated to a specific class/action/instance. 
@@ -26,7 +26,7 @@ import javolution.annotation.StackSafe;
  * @version 6.0, December 12, 2012
  * @see SecurityContext
  */
-@StackSafe
+@RealTime
 public class Permission<T> {
 
     /**

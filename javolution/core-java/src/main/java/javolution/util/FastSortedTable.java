@@ -8,13 +8,17 @@
  */
 package javolution.util;
 
+import static javolution.annotation.RealTime.Limit.LOG_N;
 import javolution.annotation.RealTime;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Comparators;
+import javolution.util.function.EqualityComparator;
 import javolution.util.service.SortedTableService;
 
 /**
  * <p> A high-performance sorted table with {@link RealTime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.</p>
+ *     smooth capacity increase/decrease and minimal memory footprint.
+ *     Fast sorted table have significantly faster {@link #contains}, 
+ *     {@link #indexOf} and {@link #remove} methods).</p>
  *     
  * <p>This class is comparable to {@link FastSortedSet} in performance, 
  *    but it allows for duplicate and implements the {@link java.util.List}
@@ -25,41 +29,83 @@ import javolution.util.service.SortedTableService;
  */
 public class FastSortedTable<E> extends FastTable<E>  {
 
-    private static final long serialVersionUID = 4650179945867476490L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     /**
-      * Creates an empty table maintained sorted using its elements natural order.     
+      * Creates an empty table sorted using its elements natural order.     
      */
     public FastSortedTable() {
-        super((SortedTableService<E>)null); // TBD
+        this(Comparators.STANDARD);
     }
 
     /**
-     * Creates an empty table maintained sorted using the specified element comparator.
+     * Creates an empty table sorted using the specified element comparator.
      */
-   public FastSortedTable(FullComparator<? super E> comparator) {
-       super((SortedTableService<E>)null); // TBD
+   public FastSortedTable(EqualityComparator<? super E> comparator) {
+       super((SortedTableService<E>)null); // TODO 
    }
-
+   
    /**
     * Creates a sorted table backed up by the specified service implementation.
     */
-   public FastSortedTable(SortedTableService<E> service) {
+   protected FastSortedTable(SortedTableService<E> service) {
        super(service);
    }
-   
+      
+   /***************************************************************************
+    * Views.
+    */    
+
    @Override
-   public SortedTableService<E> service() {
+   public FastSortedTable<E> unmodifiable() {
+       return null; // TODO
+   }
+
+   @Override
+   public FastSortedTable<E> shared() {
+       return null; // TODO
+   }   
+      
+   /***************************************************************************
+    * Sorted table operations optimizations.
+    */
+
+   @SuppressWarnings("unchecked")
+   @RealTime(limit = LOG_N)
+   public boolean contains(Object obj) {
+       return service().indexOf((E)obj) >= 0;
+   }
+
+   @SuppressWarnings("unchecked")
+   @RealTime(limit = LOG_N)
+   public boolean remove(Object obj) {
+       return service().remove((E) obj);
+   }
+   
+   @SuppressWarnings("unchecked")
+   @Override
+   @RealTime(limit = LOG_N)
+   public int indexOf(final Object obj) {
+       return service().indexOf((E) obj);
+   }
+    
+   /***************************************************************************
+    * Misc.
+    */    
+      
+   /** 
+    * Returns the would index of the specified element if it were
+    * to be added to this sorted table.
+    */    
+   @RealTime(limit = LOG_N)
+   public int slotOf(E element) {
+       return service().slotOf(element);
+   }
+   
+ 
+   @Override
+   protected SortedTableService<E> service() {
        return (SortedTableService<E>) super.service();
    }
- 
-   /** 
-    * Returns the insertion index of the specified element in this table.
-    * It is the smallest index of the element if the element was to be
-    * added to this sorted table (in the range {@code [0 .. size()]}).
-    */
-   public final int insertionIndexOf(E element) {
-       return service().insertionIndexOf(element);
-   }
-   
+    
 }

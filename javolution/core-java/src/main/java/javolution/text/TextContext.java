@@ -17,7 +17,7 @@ import javolution.lang.Configurable;
 /**
  * <p> A context for plain text parsing/formatting. The default plain text 
  *     format for any class is given by the 
- *     {@link javolution.annotation.Format Format} inheritable annotation.</p>
+ *     {@link javolution.annotation.DefaultTextFormat Format} inheritable annotation.</p>
  * 
  * <p> A default plain text format exists for the following predefined types:
  *     <code><ul>

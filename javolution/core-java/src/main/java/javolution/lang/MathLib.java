@@ -8,17 +8,17 @@
  */
 package javolution.lang;
 
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 
 /**
- * <p> An utility class providing a {@link StackSafe} implementation of 
+ * <p> An utility class providing a {@link RealTime} implementation of 
  *     the math library.</p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
  * @see javolution.context.StackContext
  */
-@StackSafe
+@RealTime
 public final class MathLib {
 
     /**
