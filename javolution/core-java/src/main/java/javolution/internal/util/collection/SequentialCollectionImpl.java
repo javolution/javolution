@@ -11,8 +11,9 @@ package javolution.internal.util.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
@@ -21,7 +22,7 @@ import javolution.util.service.CollectionService;
 public final class SequentialCollectionImpl<E> extends FastCollection<E>
         implements CollectionService<E> {
 
-    private static final long serialVersionUID = 7400438782996852037L;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
 
     public SequentialCollectionImpl(CollectionService<E> target) {
@@ -34,27 +35,35 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
 
     @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);        
-    }
-    
-    @Override
-    public void forEach(final CollectionConsumer<? super E> consumer) {
-        if (consumer instanceof CollectionConsumer.Sequential) {
-            target.forEach(consumer);
-        } else {
-            target.forEach(new SequentialConsumerWrapper<E>(consumer));
-        }
+    public EqualityComparator<? super E> comparator() {
+        return target.comparator();
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        return target.trySplit(n);
+    public void forEach(final Consumer<? super E> consumer,
+            final IterationController controller) {
+        target.forEach(consumer, new IterationController() {
+
+            @Override
+            public boolean doReversed() {
+                return controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return true;
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }
+        });
     }
 
     @Override
@@ -63,28 +72,35 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
-        return target.comparator();
+    public boolean removeIf(Predicate<? super E> filter,
+            final IterationController controller) {
+        return target.removeIf(filter, new IterationController() {
+
+            @Override
+            public boolean doReversed() {
+                return controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return true;
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }
+        });
     }
 
     @Override
-    public SequentialCollectionImpl<E> service() {
+    protected SequentialCollectionImpl<E> service() {
         return this;
     }
-    
-    /**
-    * A sequential consumer wrapper.
-    */
-   private static class SequentialConsumerWrapper<E> implements CollectionConsumer.Sequential<E> {
-       private final CollectionConsumer<? super E> consumer;
 
-       public SequentialConsumerWrapper(CollectionConsumer<? super E> consumer) {
-           this.consumer = consumer;
-       }
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        return target.trySplit(n); // Forwards (view affects iteration controller only).
+    }
 
-       @Override
-       public void accept(E e, CollectionConsumer.Controller controller) {
-           consumer.accept(e, controller);
-       }
-   }    
 }

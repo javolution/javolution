@@ -1,4 +1,4 @@
 /**
-<p> Annotations for formatting (text/xml) and stack allocation safety.</p>
+<p> Javolution specific annotations.</p>
  */
 package javolution.annotation;

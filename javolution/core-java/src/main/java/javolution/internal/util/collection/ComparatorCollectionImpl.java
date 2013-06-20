@@ -10,20 +10,23 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.FastCollection;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
  * A view using a custom comparator for element equality or comparison.
  */
-public class ComparatorCollectionImpl<E> implements CollectionService<E> {
+public class ComparatorCollectionImpl<E>  extends FastCollection<E> implements CollectionService<E> {
     
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final EqualityComparator<? super E> comparator;
     private final CollectionService<E> target;
-    private final FullComparator<? super E> comparator;
 
     public ComparatorCollectionImpl(CollectionService<E> target,
-            FullComparator<? super E> comparator) {
+            EqualityComparator<? super E> comparator) {
         this.target = target;
         this.comparator = comparator;
     }
@@ -34,41 +37,44 @@ public class ComparatorCollectionImpl<E> implements CollectionService<E> {
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
-    }
-
-    @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);        
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
     
     @Override
-    public void forEach(CollectionConsumer<? super E> consumer) {
-        target.forEach(consumer);
+    public EqualityComparator<? super E> comparator() {
+        return comparator;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        if (tmp == null)
-            return null;
-        CollectionService<E>[] result = new CollectionService[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            result[i] = new ComparatorCollectionImpl<E>(tmp[i], comparator);
-        }
-        return result;
+    public void forEach(Consumer<? super E> consumer, IterationController controller) {
+        target.forEach(consumer, controller);
     }
-
+    
     @Override
     public Iterator<E> iterator() {
         return target.iterator();
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
-        return comparator;
+    public boolean removeIf(Predicate<? super E> filter, IterationController controller) {
+        return target.removeIf(filter, controller);
+    }
+
+    @Override
+    protected CollectionService<E> service() {
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public ComparatorCollectionImpl<E>[] trySplit(int n) {
+        CollectionService<E>[] tmp = target.trySplit(n);
+        ComparatorCollectionImpl<E>[] result = new ComparatorCollectionImpl[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            result[i] = new ComparatorCollectionImpl<E>(tmp[i], comparator);
+        }
+        return result;
     }
 
 }

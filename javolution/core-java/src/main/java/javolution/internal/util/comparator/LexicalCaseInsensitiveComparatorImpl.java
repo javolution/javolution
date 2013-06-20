@@ -10,39 +10,53 @@ package javolution.internal.util.comparator;
 
 import java.io.Serializable;
 
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 
 /**
  * The case insensitive lexical comparator implementation.
  */
-public final class LexicalCaseInsensitiveComparatorImpl implements FullComparator<CharSequence>, Serializable {
-
-    private static final long serialVersionUID = 7232021322902740242L;
+public class LexicalCaseInsensitiveComparatorImpl implements
+        EqualityComparator<CharSequence>, Serializable {
+    
+    private static final long serialVersionUID = -1046672327934410697L;
 
     @Override
     public int hashCodeOf(CharSequence csq) {
-        if (csq == null) return -1;
+        if (csq == null)
+            return 0;
         int h = 0;
         for (int i = 0, n = csq.length(); i < n;) {
             h = 31 * h + up(csq.charAt(i++));
         }
         return h;
     }
-    
+
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
-        if (csq1 == csq2) return true;
-        if ((csq1 == null) || (csq2 == null)) return false;
+        if (csq1 == csq2)
+            return true;
+        if ((csq1 == null) || (csq2 == null))
+            return false;
+        if ((csq1 instanceof String) && (csq2 instanceof String)) // Optimization.
+            return ((String)csq1).equalsIgnoreCase((String)csq2); 
         int n = csq1.length();
-        if (csq2.length() != n) return false;
+        if (csq2.length() != n)
+            return false;
         for (int i = 0; i < n;) {
-            if (up(csq1.charAt(i)) != up(csq2.charAt(i++))) return false;
+            if (up(csq1.charAt(i)) != up(csq2.charAt(i++)))
+                return false;
         }
         return true;
     }
 
     @Override
     public int compare(CharSequence left, CharSequence right) {
+        if (left == null)
+            return -1;
+        if (right == null)
+            return 1;
+        if ((left instanceof String) && (right instanceof String)) // Optimization.
+            return ((String) left).compareToIgnoreCase((String) right);
         int i = 0;
         int n = Math.min(left.length(), right.length());
         while (n-- != 0) {
@@ -58,4 +72,4 @@ public final class LexicalCaseInsensitiveComparatorImpl implements FullComparato
     private static char up(char c) {
         return Character.toUpperCase(c);
     }
- }
+}

@@ -13,9 +13,9 @@ import java.util.Arrays;
 /**
  * The array comparator implementation.
  */
-public final class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
+public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
 
-    private static final long serialVersionUID = 8517252031324662945L;
+    private static final long serialVersionUID = 4134048629840904441L;
 
     @Override
     public int hashCodeOf(Object array) {
@@ -39,7 +39,7 @@ public final class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
             return Arrays.hashCode((boolean[]) array);
         if (array != null)
             return array.hashCode();     
-        return -1;        
+        return 0;        
     }
     
     @Override

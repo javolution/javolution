@@ -10,16 +10,19 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
-import javolution.util.function.CollectionConsumer.Controller;
+import javolution.util.FastCollection;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
  * An unmodifiable view over a collection.
  */
-public class UnmodifiableCollectionImpl<E> implements CollectionService<E> {
+public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
 
+    private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
 
     public UnmodifiableCollectionImpl(CollectionService<E> target) {
@@ -28,56 +31,23 @@ public class UnmodifiableCollectionImpl<E> implements CollectionService<E> {
 
     @Override
     public boolean add(E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        throw new UnsupportedOperationException("Unmodifiable Collection");
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
 
     @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);
-    }
-
-    @Override
-    public FullComparator<? super E> comparator() {
+    public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
 
     @Override
-    public void forEach(final CollectionConsumer<? super E> consumer) {
-        target.forEach(new NoRemoveConsumer<E>(consumer));
-    }
-
-    // This is a sequential consumer, hence collection.unmodifiable().parallel() 
-    // should be preferred to collection.parallel().unmodifiable()
-    private static class NoRemoveConsumer<E> implements CollectionConsumer.Sequential<E>,
-            Controller {
-        private final CollectionConsumer<? super E> actualConsumer;
-        private Controller actualController; // State ok, sequential consumer.
-
-        public NoRemoveConsumer(CollectionConsumer<? super E> consumer) {
-            actualConsumer = consumer;
-        }
-
-        @Override
-        public void accept(E e, Controller controller) {
-            actualController = controller;
-            actualConsumer.accept(e, this);
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Unmodifiable");
-        }
-
-        @Override
-        public void terminate() {
-            actualController.terminate();
-        };
-
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        target.forEach(consumer, controller);
     }
 
     @Override
@@ -97,18 +67,28 @@ public class UnmodifiableCollectionImpl<E> implements CollectionService<E> {
 
             @Override
             public void remove() {
-                throw new UnsupportedOperationException("Unmodifiable");
+                throw new UnsupportedOperationException(
+                        "Unmodifiable Collection");
             }
 
         };
     }
 
+    @Override
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
+        throw new UnsupportedOperationException("Unmodifiable Collection");
+    }
+
+    @Override
+    protected CollectionService<E> service() {
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E>[] trySplit(int n) {
+    public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
         CollectionService<E>[] tmp = target.trySplit(n);
-        if (tmp == null)
-            return null;
         UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
             unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]);

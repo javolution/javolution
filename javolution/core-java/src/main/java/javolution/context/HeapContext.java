@@ -17,12 +17,8 @@ import javolution.util.function.Supplier;
 /**
  * <p> An {@link AllocatorContext} always allocating from the heap (default).</p>
  * 
- * <p> This context is typically used when updating the static fields of 
- *     {@link javolution.annotation.StackSafe} classes.</p>
- *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
- * @see javolution.annotation.StackSafe
  */
 public abstract class HeapContext extends AllocatorContext<HeapContext> {
 

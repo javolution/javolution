@@ -16,9 +16,9 @@ import javolution.context.LogContext;
 import javolution.context.SecurityContext;
 import javolution.context.StackContext;
 import javolution.internal.context.ContextTracker;
+import javolution.lang.Initializer;
 import javolution.osgi.ConfigurableService;
 import javolution.text.TextContext;
-import javolution.util.Initializer;
 import javolution.xml.XMLContext;
 
 import org.osgi.framework.BundleActivator;

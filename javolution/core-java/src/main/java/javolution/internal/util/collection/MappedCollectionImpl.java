@@ -11,10 +11,11 @@ package javolution.internal.util.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Comparators;
 import javolution.util.function.Function;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
@@ -23,9 +24,9 @@ import javolution.util.service.CollectionService;
 public final class MappedCollectionImpl<E, R> extends FastCollection<R>
         implements CollectionService<R> {
 
-    private static final long serialVersionUID = -2593582146510853694L;
-    private final CollectionService<E> target;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final Function<? super E, ? extends R> function;
+    private final CollectionService<E> target;
 
     public MappedCollectionImpl(CollectionService<E> target,
             Function<? super E, ? extends R> function) {
@@ -40,32 +41,26 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
 
     @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);        
+    public EqualityComparator<? super R> comparator() {
+        return Comparators.STANDARD;
     }
-    
+
     @Override
-    public void forEach(final CollectionConsumer<? super R> consumer) {
-        if (consumer instanceof CollectionConsumer.Sequential) {
-            target.forEach(new CollectionConsumer.Sequential<E>() {
-                @Override
-                public void accept(E e, Controller controller) {
-                    consumer.accept(function.apply(e), controller);
-                }
-            });
-        } else {
-            target.forEach(new CollectionConsumer<E>() {
-                @Override
-                public void accept(E e, Controller controller) {
-                    consumer.accept(function.apply(e), controller);
-                }
-            });
-        }
+    public void forEach(final Consumer<? super R> consumer,
+            IterationController controller) {
+
+        target.forEach(new Consumer<E>() {
+            @Override
+            public void accept(E e) {
+                consumer.accept(function.apply(e));
+            }
+        }, controller);
+
     }
 
     @Override
@@ -92,25 +87,32 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
-    public FullComparator<? super R> comparator() {
-        return Comparators.STANDARD;
+    public boolean removeIf(final Predicate<? super R> filter,
+            IterationController controller) {
+
+        return target.removeIf(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+
+                return filter.test(function.apply(param));
+            }
+        }, controller);
+    }
+
+    @Override
+    protected MappedCollectionImpl<E, R> service() {
+        return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<R>[] trySplit(int n) {
+    public MappedCollectionImpl<E, R>[] trySplit(int n) {
         CollectionService<E>[] tmp = target.trySplit(n);
-        if (tmp == null)
-            return null;
         MappedCollectionImpl<E, R>[] mappeds = new MappedCollectionImpl[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
             mappeds[i] = new MappedCollectionImpl<E, R>(tmp[i], function);
         }
         return mappeds;
-    }
-
-    @Override
-    public MappedCollectionImpl<E, R> service() {
-        return this;
     }
 }

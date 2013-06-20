@@ -11,38 +11,61 @@ package javolution.internal.util.comparator;
 import java.io.Serializable;
 
 import javolution.lang.MathLib;
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 
 /**
- * The lexical comparator implementation.
+ * The lexical comparator implementation (optimized for String).
  */
-public class LexicalComparatorImpl implements FullComparator<CharSequence>, Serializable {
+public class LexicalComparatorImpl implements EqualityComparator<CharSequence>,
+        Serializable {
+
+    private static final long serialVersionUID = 7904852144917623728L;
 
     @Override
     public int hashCodeOf(CharSequence csq) {
-        if (csq == null) return -1;
-        if (csq instanceof String) return ((String)csq).hashCode(); // String hashcode is cached. 
+        if (csq == null)
+            return 0;
+        if (csq instanceof String) // Optimization.
+            return csq.hashCode();
         int h = 0;
         for (int i = 0, n = csq.length(); i < n;) {
             h = 31 * h + csq.charAt(i++);
         }
         return h;
     }
-    
+
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
-        if (csq1 == csq2) return true;
-        if ((csq1 == null) || (csq2 == null)) return false;
+        if (csq1 == csq2)
+            return true;
+        if ((csq1 == null) || (csq2 == null))
+            return false;
+        if (csq1 instanceof String) { // Optimization.
+            if (csq2 instanceof String)
+                return csq1.equals(csq2);
+            return ((String) csq1).contentEquals(csq2);
+        } else if (csq2 instanceof String) { return ((String) csq2)
+                .contentEquals(csq1); }
+
+        // None of the CharSequence is a String. 
         int n = csq1.length();
-        if (csq2.length() != n) return false;
+        if (csq2.length() != n)
+            return false;
         for (int i = 0; i < n;) {
-            if (csq1.charAt(i) != csq2.charAt(i++)) return false;
+            if (csq1.charAt(i) != csq2.charAt(i++))
+                return false;
         }
         return true;
     }
 
     @Override
     public int compare(CharSequence left, CharSequence right) {
+        if (left == null)
+            return -1;
+        if (right == null)
+            return 1;
+        if ((left instanceof String) && (right instanceof String)) // Optimization.
+            return ((String) left).compareTo((String) right);
         int i = 0;
         int n = MathLib.min(left.length(), right.length());
         while (n-- != 0) {
@@ -53,6 +76,4 @@ public class LexicalComparatorImpl implements FullComparator<CharSequence>, Seri
         }
         return left.length() - right.length();
     }
-
-    private static final long serialVersionUID = 1217966333277654645L;
 }

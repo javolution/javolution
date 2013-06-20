@@ -20,7 +20,6 @@ import javolution.util.function.Supplier;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
- * @see javolution.annotation.StackSafe
  */
 public abstract class ImmortalContext extends AllocatorContext<ImmortalContext> {
 

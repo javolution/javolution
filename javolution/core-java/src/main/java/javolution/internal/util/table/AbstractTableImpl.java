@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.lang.MathLib;
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
 
@@ -117,7 +117,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     }
 
      final int indexOfDefault(E element) {
-        FullComparator<? super E> cmp = comparator();
+        EqualityComparator<? super E> cmp = comparator();
         for (int i = 0, size = size(); i < size; i++) {
             if (cmp.areEqual(element, get(i)))
                 return i;
@@ -126,7 +126,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
     }
 
      final int lastIndexOfDefault(E element) {
-        FullComparator<? super E> cmp = comparator();
+        EqualityComparator<? super E> cmp = comparator();
         for (int i = size(); i > 0;) {
             if (cmp.areEqual(element, get(--i)))
                 return i;
@@ -174,7 +174,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
 
     // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
     //
-    private void quicksort(int first, int last, FullComparator<? super E> cmp) {
+    private void quicksort(int first, int last, EqualityComparator<? super E> cmp) {
         if (first < last) {
             int pivIndex = partition(first, last, cmp);
             quicksort(first, (pivIndex - 1), cmp);
@@ -182,7 +182,7 @@ public abstract class AbstractTableImpl<E> implements TableService<E>, Serializa
         }
     }
 
-    private int partition(int f, int l, FullComparator<? super E> cmp) {
+    private int partition(int f, int l, EqualityComparator<? super E> cmp) {
         int up, down;
         E piv = get(f);
         up = f;

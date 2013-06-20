@@ -12,18 +12,19 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.TableService;
 
 /**
- * A reversed view over a collection (unmodifiable).
+ * A reversed view over a collection (limitation: iterator does not allow for 
+ *  modification).
  */
-public final class ReversedCollectionImpl<E> extends FastCollection<E> implements
-        CollectionService<E> {
+public final class ReversedCollectionImpl<E> extends FastCollection<E>
+        implements CollectionService<E> {
 
-    private static final long serialVersionUID = -8075747377480487300L;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
 
     public ReversedCollectionImpl(CollectionService<E> target) {
@@ -36,49 +37,79 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> implement
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
 
     @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);        
-    }
-    
-    @Override
-    public void forEach(final CollectionConsumer<? super E> consumer) {
-        reversed().forEach(consumer);
-    }
-    
-    @Override
-    public Iterator<E> iterator() {
-        return reversed().iterator();
-    }
-    
-    @Override
-    public FullComparator<? super E> comparator() {
+    public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
-    
-    @SuppressWarnings("unchecked")
+
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        return reversed().service().trySplit(n);
-    }
-    
-    private FastTable<E> reversed() {
-        final FastTable<E> reversed = new FastTable<E>();
-        target.forEach(new CollectionConsumer.Sequential<E>() {
+    public void forEach(final Consumer<? super E> consumer,
+            final IterationController controller) {
+        target.forEach(consumer, new IterationController() {
 
             @Override
-            public void accept(E e, Controller controller) {
-                reversed.addFirst(e);
-            }});
-        return reversed.unmodifiable();
+            public boolean doReversed() {
+                return !controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return controller.doSequential();
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }
+        });
     }
 
     @Override
-    public ReversedCollectionImpl<E> service() {
+    public Iterator<E> iterator() {
+        final FastTable<E> reversed = new FastTable<E>();
+        target.forEach(new Consumer<E>() {
+
+            @Override
+            public void accept(E e) {
+                reversed.addFirst(e);
+            }
+        }, IterationController.SEQUENTIAL);
+        return reversed.unmodifiable().iterator();
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> filter,
+            final IterationController controller) {
+        return target.removeIf(filter, new IterationController() {
+
+            @Override
+            public boolean doReversed() {
+                return !controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return controller.doSequential();
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }
+        });
+    }
+
+    @Override
+    protected ReversedCollectionImpl<E> service() {
         return this;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        return target.trySplit(n); // Forwards (view affects iteration controller only).
     }
 }

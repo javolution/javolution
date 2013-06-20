@@ -13,7 +13,7 @@ import java.util.Iterator;
 
 import javolution.lang.MathLib;
 import javolution.util.Index;
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Comparators;
 import javolution.util.function.Predicate;
 import javolution.util.service.BitSetService;
@@ -351,7 +351,7 @@ public class BitSetServiceImpl implements BitSetService, Serializable  {
     }
 
     @Override
-    public FullComparator<? super Index> comparator() {
+    public EqualityComparator<? super Index> comparator() {
         return Comparators.IDENTITY;
     }
     

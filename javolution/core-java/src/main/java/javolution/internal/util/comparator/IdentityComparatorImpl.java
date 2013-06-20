@@ -8,13 +8,17 @@
  */
 package javolution.internal.util.comparator;
 
+import java.io.Serializable;
+
+import javolution.util.function.EqualityComparator;
+
 
 /**
  * The identity comparator implementation.
  */
-public class IdentityComparatorImpl<E> extends StandardComparatorImpl<E> {
+public class IdentityComparatorImpl<E> implements EqualityComparator<E>, Serializable {
 
-    private static final long serialVersionUID = -5186106439905062276L;
+    private static final long serialVersionUID = 6576306094743751922L;
 
     @Override
     public int hashCodeOf(E obj) {
@@ -22,8 +26,19 @@ public class IdentityComparatorImpl<E> extends StandardComparatorImpl<E> {
     }
 
     @Override
-    public boolean areEqual(E o1, E o2) {
-        return o1 == o2;
+    public boolean areEqual(E e1, E e2) {
+        return e1 == e2;
     }
-
+    
+    @Override
+    public int compare(E left, E right) {
+        if (left == right) return 0;
+        if (left == null)
+            return -1;
+        if (right == null)
+            return 1;
+        
+        // Empirical comparison.
+        return (hashCodeOf(left) < hashCodeOf(right)) ? -1 : 1;
+    }
 }

@@ -15,29 +15,27 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javolution.xml.XMLFormat;
+
 /**
- * <p> Annotation indicating that a class, a method or a field can be used 
- *     by multiple threads concurrently.</p>
- * 
- * <p> Classes with no internal fields or immutable are typically thread-safe
- *     without locking. For others, if there is a possibility of thread blocking 
- *     due to internal locks, the {@link #useLock() useLock} attribute 
- *     should be set to <code>true</code>.</p> 
+ * <p> Indicates the default xml format of a class (for xml serialization/deserialization). 
+ *     The default format is used by the {@link javolution.xml.XMLObjectReader}
+ *     and  {@link javolution.xml.XMLObjectWriter} classes. It can be locally overridden 
+ *     in the scope of a {@link javolution.xml.XMLContext XMLContext}.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
 @Documented
 @Inherited
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ThreadSafe {
-
+public @interface DefaultXMLFormat {
+    
     /**
-     * Indicates if there is a possibility that calling a method of the 
-     * annotated class results in thread blocking due to internal locks 
-     * (default <code>false</code>)
+     * Returns the default xml format of the annotated class.
      */
-    boolean useLock() default false;    
-
+    @SuppressWarnings("rawtypes")
+    Class<? extends XMLFormat> value();    
+       
 }

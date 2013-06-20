@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Map.Entry;
 
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
@@ -93,7 +93,7 @@ public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>, Serial
     }
 
     @Override
-    public FullComparator<K> keyComparator() {
+    public EqualityComparator<K> keyComparator() {
         return that.keyComparator();
     }
     

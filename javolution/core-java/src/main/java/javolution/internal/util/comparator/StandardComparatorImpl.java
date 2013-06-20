@@ -10,12 +10,13 @@ package javolution.internal.util.comparator;
 
 import java.io.Serializable;
 
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 
 /**
  * The standard comparator implementation.
  */
-public class StandardComparatorImpl<E> implements FullComparator<E>, Serializable {
+public class StandardComparatorImpl<E> implements EqualityComparator<E>,
+        Serializable {
 
     private static final long serialVersionUID = -615690677813206151L;
 
@@ -31,11 +32,18 @@ public class StandardComparatorImpl<E> implements FullComparator<E>, Serializabl
 
     @SuppressWarnings("unchecked")
     @Override
-    public int compare(E o1, E o2) {
-        // Comparator should always be consistent with equals.
-        if (areEqual(o1, o2)) return 0;
-        if (o1 instanceof Comparable) 
-            return ((Comparable<E>) o1).compareTo(o2) < 0 ? -1 : 1;
-        return (hashCodeOf(o1) < hashCodeOf(o2)) ? -1 :  1;
+    public int compare(E left, E right) {
+        if (left == right) return 0;
+        if (left == null)
+            return -1;
+        if (right == null)
+            return 1;
+        if (left instanceof Comparable) 
+            return ((Comparable<E>)left).compareTo(right);
+        
+        // Empirical method (consistent with equals).
+        if (left.equals(right)) return 0;
+        return left.hashCode() < right.hashCode() ? -1 : 1;
     }
+
 }

@@ -12,8 +12,9 @@ import java.util.Iterator;
 
 import javolution.context.ConcurrentContext;
 import javolution.util.FastCollection;
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
@@ -22,11 +23,11 @@ import javolution.util.service.CollectionService;
 public final class ParallelCollectionImpl<E> extends FastCollection<E>
         implements CollectionService<E> {
 
-    private static final long serialVersionUID = -3997574892344595177L;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
 
     public ParallelCollectionImpl(CollectionService<E> target) {
-        this.target = target;
+        this.target = new SharedCollectionImpl<E>(target); // Ensures the target collection is shared.
     }
 
     @Override
@@ -35,27 +36,30 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        target.atomicRead(action);
+    public void atomic(Runnable action) {
+        target.atomic(action);
     }
 
     @Override
-    public void atomicWrite(Runnable action) {
-        target.atomicWrite(action);        
+    public EqualityComparator<? super E> comparator() {
+        return target.comparator();
     }
-    
+
     @Override
-    public void forEach(final CollectionConsumer<? super E> consumer) {
-        if (consumer instanceof CollectionConsumer.Sequential) { 
-            target.forEach(consumer); // Sequential.
+    public void forEach(final Consumer<? super E> consumer,
+            final IterationController controller) {
+        if (controller.doSequential()) {
+            target.forEach(consumer, controller); // Sequential.
             return;
         }
         CollectionService<E>[] split = target
                 .trySplit(ConcurrentContext.CONCURRENCY.get());
-        if (split == null) {
-            target.forEach(consumer);
+        if (split.length == 0)
             return;
+        if (split.length == 1) {
+            split[0].forEach(consumer, controller);
         }
+
         // Parallelization.
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
@@ -64,7 +68,7 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
                 ctx.execute(new Runnable() {
                     @Override
                     public void run() {
-                        subcollection.forEach(consumer);
+                        subcollection.forEach(consumer, controller);
                     }
                 });
             }
@@ -74,22 +78,49 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        return target.trySplit(n);
-    }
-
-    @Override
     public Iterator<E> iterator() {
         return target.iterator();
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
-        return target.comparator();
+    public boolean removeIf(final Predicate<? super E> filter,
+            final IterationController controller) {
+        if (controller.doSequential())
+            return target.removeIf(filter, controller); // Sequential.
+        CollectionService<E>[] split = target
+                .trySplit(ConcurrentContext.CONCURRENCY.get());      
+        if (split.length == 1)
+            return split[0].removeIf(filter, controller);
+
+        // Parallelization.
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        final boolean[] atLeastOneRemoved = new boolean[1];
+        try {
+            for (int i = 0; i < split.length; i++) {
+                final CollectionService<E> subcollection = split[i];
+                ctx.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (subcollection.removeIf(filter, controller)) {
+                            atLeastOneRemoved[0] = true;
+                        }
+                    }
+                });
+            }
+        } finally {
+            ctx.exit();
+        }
+        return atLeastOneRemoved[0];
     }
 
     @Override
-    public ParallelCollectionImpl<E> service() {
+    protected ParallelCollectionImpl<E> service() {
         return this;
     }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        return target.trySplit(n); // Forwards (view affects iteration controller only).
+    }
+
 }

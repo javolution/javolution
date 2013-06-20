@@ -46,8 +46,8 @@ import javolution.util.function.Function;
  *         }
  *     }[/code]</p>
  * 
- * <p> Classes/methods identified as {@link javolution.annotation.StackSafe 
- *     StackSafe} can safely be used in a stack context.</p>
+ * <p> Classes/methods identified as {@link javolution.annotation.RealTime#stackSafe() 
+ *     stack-safe} can safely be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012

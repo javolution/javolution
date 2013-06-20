@@ -12,7 +12,7 @@ package javolution.context;
  * <p> The parent class for all serializer/deserializer contexts.
  *     The context format type (plain text, XML, JSON, ...) is specified by sub-classes.
  *     The default format for any given class is retrieved from the  
- *     annotation {@link javolution.annotation.Format Format} (inheritable).
+ *     annotation {@link javolution.annotation.DefaultTextFormat Format} (inheritable).
  *     [code]
  *     @Format(text=Complex.TextFormat.class, xml=Complex.XMLFormat.class)
  *     public Complex {

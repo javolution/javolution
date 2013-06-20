@@ -13,18 +13,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javolution.util.FastCollection;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
  * A shared view over a collection allowing concurrent access and sequential updates.
  */
-public final class SharedCollectionImpl<E> extends FastCollection<E> implements CollectionService<E> {
+public final class SharedCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
 
-    private static final long serialVersionUID = 1496271733380089832L;
-    private final CollectionService<E> target;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final Lock read;
+    private final CollectionService<E> target;
     private final Lock write;
 
     public SharedCollectionImpl(CollectionService<E> target) {
@@ -52,42 +54,28 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements 
     }
 
     @Override
-    public void atomicRead(Runnable action) {
-        read.lock();
-        try {
-            target.atomicRead(action);
-        } finally {
-            read.unlock();
-        }
-    }
-
-    @Override
-    public void atomicWrite(Runnable action) {
+    public void atomic(Runnable action) {
         write.lock();
         try {
-            target.atomicWrite(action);
+            target.atomic(action);
         } finally {
             write.unlock();
         }
     }
-    
+
     @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        read.lock();
-        try {
-            return target.doWhile(predicate);
-        } finally {
-            read.unlock();
-        }
+    public EqualityComparator<? super E> comparator() {
+        return target.comparator();
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        write.lock();
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        read.lock();
         try {
-            return target.removeIf(predicate);
+            target.forEach(consumer, controller);
         } finally {
-            write.unlock();
+            read.unlock();
         }
     }
 
@@ -131,25 +119,29 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements 
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
-        return target.comparator();
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
+        write.lock();
+        try {
+            return target.removeIf(filter, controller);
+        } finally {
+            write.unlock();
+        }
+    }
+
+    @Override
+    protected SharedCollectionImpl<E> service() {
+        return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E>[] trySplit(int n) {
+    public SharedCollectionImpl<E>[] trySplit(int n) {
         CollectionService<E>[] tmp = target.trySplit(n);
-        if (tmp == null)
-            return null;
         SharedCollectionImpl<E>[] shareds = new SharedCollectionImpl[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
             shareds[i] = new SharedCollectionImpl<E>(tmp[i], read, write);
         }
         return shareds;
-    }
-
-    @Override
-    public SharedCollectionImpl<E> service() {
-        return this;
     }
 }

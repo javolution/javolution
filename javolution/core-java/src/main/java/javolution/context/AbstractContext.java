@@ -8,7 +8,7 @@
  */
 package javolution.context;
 
-import javolution.annotation.StackSafe;
+import javolution.annotation.RealTime;
 import javolution.lang.Permission;
 
 /**
@@ -59,7 +59,7 @@ import javolution.lang.Permission;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-@StackSafe
+@RealTime
 public abstract class AbstractContext<C extends AbstractContext<C>> {
 
     /**

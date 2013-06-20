@@ -10,7 +10,7 @@ package javolution.internal.util.table;
 
 import java.util.Iterator;
 
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
 
@@ -174,12 +174,12 @@ public final class NoDuplicateTableImpl<E> extends AbstractTableImpl<E>  {
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
+    public EqualityComparator<? super E> comparator() {
         return that.comparator();
     }
     
     @Override
-    public void setComparator(FullComparator<? super E> cmp) {
+    public void setComparator(EqualityComparator<? super E> cmp) {
         that.setComparator(cmp);
     }
 

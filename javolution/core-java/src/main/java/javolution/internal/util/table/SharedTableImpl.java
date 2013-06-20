@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javolution.util.function.FullComparator;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
 
@@ -322,7 +322,7 @@ public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
     }
 
     @Override
-    public FullComparator<? super E> comparator() {
+    public EqualityComparator<? super E> comparator() {
         read.lock();
         try {
             return that.comparator();
@@ -332,7 +332,7 @@ public final class SharedTableImpl<E> extends AbstractTableImpl<E> {
     }
     
     @Override
-    public void setComparator(FullComparator<? super E> cmp) {
+    public void setComparator(EqualityComparator<? super E> cmp) {
         write.lock();
         try {
             that.setComparator(cmp);
