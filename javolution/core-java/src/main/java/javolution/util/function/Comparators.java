@@ -1,9 +1,7 @@
 package javolution.util.function;
 
 import javolution.annotation.RealTime;
-import javolution.annotation.StackSafe;
-import javolution.annotation.ThreadSafe;
-import javolution.annotation.RealTime.Limit;
+import javolution.annotation.Parallelizable;
 import javolution.internal.util.comparator.ArrayComparatorImpl;
 import javolution.internal.util.comparator.IdentityComparatorImpl;
 import javolution.internal.util.comparator.LexicalCaseInsensitiveComparatorImpl;
@@ -11,54 +9,60 @@ import javolution.internal.util.comparator.LexicalComparatorImpl;
 import javolution.internal.util.comparator.LexicalFastComparatorImpl;
 import javolution.internal.util.comparator.StandardComparatorImpl;
 
+import static javolution.annotation.RealTime.Limit.*;
+
 /**
- * <p> A collection of {@link StackSafe stack-safe} and 
- *     {@link ThreadSafe thread-safe} (stateless) comparators.</p>
+ * <p> A set of useful {@link EqualityComparator comparators} 
+ *     for equality and ordering.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@StackSafe
-@ThreadSafe
+@Parallelizable
+@RealTime(limit = UNKNOWN)
 public class Comparators  {
 
     /**
      * A standard object comparator (based on the object hashCode and equals 
-     * methods).  Comparisons either use the object natural order or an 
-     * empirical method (if the object does not implement {@link Comparable}).
+     * methods).  Comparisons either use the object natural order (which 
+     * should be consistent with equals) or an empirical method 
+     * (if the object does not implement {@link Comparable}).
+     * 
      */
-    @RealTime(Limit.UNKNOWN)
-    public static final FullComparator<Object> STANDARD 
+    public static final EqualityComparator<Object> STANDARD 
         = new StandardComparatorImpl<Object>();
 
     /**
-     * A standard comparator for which instances are only equals to themselves.
+     * A comparator for which instances are only equals to themselves.
+     * For comparisons an empirical method consistent with equals ({@code == })
+     * is used.
      */
-    @RealTime(Limit.CONSTANT)
-    public static final FullComparator<Object> IDENTITY 
+    @RealTime(limit = CONSTANT)
+    public static final EqualityComparator<Object> IDENTITY 
         = new IdentityComparatorImpl<Object>();
 
     /**
-     * A standard content array comparator. If the content of an array is also 
+     * A content array comparator. If the content of an array is also 
      * an array (multi-dimensional arrays), that same comparator is used 
-     * for equality and comparison (recursive).
+     * for equality and comparison (recursive). The {@link #STANDARD standard}
+     * comparator is used for non-array elements. 
      */
-    @RealTime(Limit.LINEAR)
-    public static final FullComparator<Object> ARRAY 
+    @RealTime(limit = LINEAR)
+    public static final EqualityComparator<Object> ARRAY 
         = new ArrayComparatorImpl();
 
     /**
      * A lexicographic comparator for any {@link CharSequence}.
      */
-    @RealTime(Limit.LINEAR)
-    public static final FullComparator<CharSequence> LEXICAL 
+    @RealTime(limit = LINEAR)
+    public static final EqualityComparator<CharSequence> LEXICAL 
         = new LexicalComparatorImpl();
     
     /**
      * A case insensitive lexicographic comparator for any {@link CharSequence}.
      */
-    @RealTime(Limit.LINEAR)
-    public static final FullComparator<CharSequence> LEXICAL_CASE_INSENSITIVE 
+    @RealTime(limit = LINEAR)
+    public static final EqualityComparator<CharSequence> LEXICAL_CASE_INSENSITIVE 
         = new LexicalCaseInsensitiveComparatorImpl();
     
     /**
@@ -66,8 +70,8 @@ public class Comparators  {
      * a sample of few characters instead of the whole character sequence to 
      * calculate the hash code (still equality comparison checks all characters).
      */
-    @RealTime(Limit.LINEAR)
-    public static final FullComparator<CharSequence> LEXICAL_FAST 
+    @RealTime(limit = LINEAR)
+    public static final EqualityComparator<CharSequence> LEXICAL_FAST 
         = new LexicalFastComparatorImpl();
         
     /**
