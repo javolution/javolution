@@ -10,8 +10,9 @@ package javolution.util.service;
 
 import java.util.Iterator;
 
-import javolution.util.function.CollectionConsumer;
-import javolution.util.function.FullComparator;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
 
 /**
  * The fundamental set of related functionalities required to implement 
@@ -21,7 +22,7 @@ import javolution.util.function.FullComparator;
  * @version 6.0.0, December 12, 2012
  */
 public interface CollectionService<E> {
-    
+
     /** 
      * Adds the specified element to this collection.
      * 
@@ -33,9 +34,22 @@ public interface CollectionService<E> {
     /** 
      * Traverses the elements of this collection.
      * 
-     * @param consumer the consumer called upopn the element of this collection.
+     * @param consumer the consumer called upon the elements of this collection.
+     * @param controller the iteration controller.
      */
-    void forEach(CollectionConsumer<? super E> consumer);
+    void forEach(Consumer<? super E> consumer, IterationController controller);
+
+    /**
+     * Removes from this collection the elements matching the specified
+     * predicate.
+     * 
+     * @param filter a predicate returning {@code true} for elements to be removed.
+     * @param controller the iteration controller.
+     * @return {@code true} if at least one element has been removed;
+     *         {@code false} otherwise.
+     */
+    boolean removeIf(final Predicate<? super E> filter,
+            IterationController controller);
 
     /** 
      * Returns an iterator over this collection elements.
@@ -54,15 +68,88 @@ public interface CollectionService<E> {
     /** 
      * Returns the full comparator used for element equality or order.
      */
-    FullComparator<? super E> comparator();
- 
+    EqualityComparator<? super E> comparator();
+
     /** 
-     * Splits this collection in <code>n</code> sub-collections.
+     * Try to splits this collection in {@code n} sub-collections;
+     * if not possible may return an array of length less than 
+     * {@code n} (for example of length one if no split). 
      * 
      * @param n the number of sub-collection to return.
-     * @return the sub-collection or <code>null</code> if the collection 
-     *         cannot be split. 
+     * @return the sub-collections elements.
+     * @throws IllegalArgumentException if {@code n <= 0}
      */
     CollectionService<E>[] trySplit(int n);
-    
- }
+
+    /**
+     * The controller used during closure-based iterations.
+     * 
+     * @see CollectionService#forEach
+     * @see CollectionService#removeIf
+     */
+    public interface IterationController {
+        /** 
+         * A standard {@link CollectionService.IterationController 
+         * iteration controller} allowing parallel traversal over all the 
+         * collection elements in the normal iterative order.
+         */
+        public static final IterationController STANDARD = new IterationController() {
+
+            @Override
+            public boolean doSequential() {
+                return false;
+            }
+
+            @Override
+            public boolean doReversed() {
+                return false;
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return false;
+            }
+        };
+        
+        /** 
+         * A sequential {@link CollectionService.IterationController 
+         * iteration controller} over all the collection elements in the normal 
+         * iterative order.
+         */
+        public static final IterationController SEQUENTIAL = new IterationController() {
+
+            @Override
+            public boolean doSequential() {
+                return true;
+            }
+
+            @Override
+            public boolean doReversed() {
+                return false;
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return false;
+            }
+        };
+
+        /** 
+         * Indicates if the iterations should be performed sequentially.
+         */
+        boolean doSequential();
+
+        /** 
+         * Indicates if the iterations should be performed in reversed order.
+         */
+        boolean doReversed();
+
+        /** 
+         * Indicates if the iterations should be terminated; this method is 
+         * always called after the {@link Consumer#accept(Object) consumer 
+         * accept} method.
+         */
+        boolean isTerminated();
+
+    }
+}

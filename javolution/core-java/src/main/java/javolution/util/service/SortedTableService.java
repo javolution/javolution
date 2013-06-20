@@ -16,12 +16,21 @@ package javolution.util.service;
  * @version 6.0.0, December 12, 2012
  */
 public interface SortedTableService<E> extends TableService<E> {
-    
+       
     /** 
-     * Returns the insertion index of the specified element in this table.
-     * It is the smallest index of the element if the element was to be
-     * added to this sorted table (in the range {@code [0 .. size()]}).
-     */
-    int insertionIndexOf(E element);
+     * Returns the index of the specified element or -1 if not present.
+     */    
+    int indexOf(E element);
+     
+    /** 
+     * Removes the specified element if present.
+     */    
+    boolean remove(E element);
+     
+    /** 
+     * Returns what would be the index of the specified element if it were
+     * to be added.
+     */    
+    int slotOf(E element);
 
 }

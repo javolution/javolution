@@ -18,7 +18,7 @@ import javolution.text.TextFormat;
 /**
  * <p> A context for xml serialization/deserialization. 
  *     The default xml format for any class is given by the 
- *     {@link javolution.annotation.Format Format} inheritable annotation.</p>
+ *     {@link javolution.annotation.DefaultTextFormat Format} inheritable annotation.</p>
  * 
  * <p> A default xml format exists for the following predefined types:
  *     <code><ul>
