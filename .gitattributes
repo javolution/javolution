@@ -387,7 +387,6 @@ javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svne
 javolution/core-java/src/main/java/javolution/util/FastSortedTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/function/CollectionConsumer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/CollectionOperator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Comparators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
@@ -396,7 +395,6 @@ javolution/core-java/src/main/java/javolution/util/function/Function.java -text 
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Operators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/function/Sequential.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text

@@ -8,22 +8,26 @@
  */
 package javolution.util.function;
 
+import static javolution.annotation.RealTime.Limit.LINEAR;
+
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javolution.annotation.StackSafe;
-import javolution.annotation.ThreadSafe;
+import javolution.annotation.Parallelizable;
+import javolution.annotation.RealTime;
+import javolution.util.FastCollection;
 import javolution.util.service.CollectionService;
+import javolution.util.service.IterationController;
 
 /**
- * <p> A collection of {@link StackSafe stack-safe} and 
- *     {@link ThreadSafe thread-safe} collection operators.</p>
+ * <p> A set of useful {@link CollectionOperator operators} over collections.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
+ * @see     FastCollection#reduce(CollectionOperator)
  */
-@StackSafe
-@ThreadSafe
+@Parallelizable
+@RealTime(limit = LINEAR)
 public class Operators {
 
     /**
@@ -34,79 +38,120 @@ public class Operators {
 
         @Override
         public Object apply(CollectionService<Object> objects) {
-            final Object[] found = new Object[1];
-            objects.forEach(new CollectionConsumer<Object>() {
-
-                @Override
-                public void accept(Object element, Controller controller) {
-                    if (element == null)
-                        return;
-                    found[0] = element;
-                    controller.terminate();
-                }
-            });
-            return found[0];
+            AnyConsumer<Object> anyConsumer = new AnyConsumer<Object>();
+            objects.forEach(anyConsumer, anyConsumer);
+            return anyConsumer.found;
         }
 
     };
+
+    private static class AnyConsumer<E> implements Consumer<E>,
+            IterationController {
+        private volatile E found;
+
+        @Override
+        public void accept(E param) {
+            if (param != null) {
+                found = param;
+            }
+
+        }
+
+        @Override
+        public boolean doSequential() {
+            return false;
+        }
+
+        @Override
+        public boolean doReversed() {
+            return false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return found != null;
+        }
+    }
 
     /**
      * Returns the greatest element of a collection according to the collection
      * comparator (returns {@code null} if the collection is empty).
      */
+    @Parallelizable(mutexFree = false)
     public static final CollectionOperator<Object> MAX = new CollectionOperator<Object>() {
 
         @Override
         public Object apply(final CollectionService<Object> objects) {
-            final Object[] max = new Object[1];
-            objects.forEach(new CollectionConsumer<Object>() {
-                final Comparator<? super Object> cmp = objects.comparator();
-                
-                @Override
-                public void accept(Object element, Controller controller) {
-                    Object currentMax = max[0];
-                    if ((currentMax == null) || cmp.compare(element, currentMax) > 0) {
-                        synchronized (this) {  // Exclusive lock.
-                            if ((currentMax == max[0]) || (cmp.compare(element, max[0]) > 0)) {
-                                max[0] = element;
-                            }
-                        }
-                    }
-                }
-            });         
-            return max[0];
+            MaxConsumer<Object> maxConsumer = new MaxConsumer<Object>(
+                    objects.comparator());
+            objects.forEach(maxConsumer, null);
+            return maxConsumer.max;
         }
 
     };
+
+    private static class MaxConsumer<E> implements Consumer<E> {
+        private final Comparator<? super E> comparator;
+        private E max;
+
+        public MaxConsumer(Comparator<? super E> comparator) {
+            this.comparator = comparator;
+        }
+
+        @Override
+        public void accept(E param) {
+            E currentMax = max;
+            if ((currentMax == null)
+                    || comparator.compare(param, currentMax) > 0) {
+                synchronized (this) { // Exclusive lock.
+                    if ((currentMax == max)
+                            || (comparator.compare(param, max) > 0)) {
+                        max = param;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Returns the smallest element of a collection according to the collection
      * comparator (returns {@code null} if the collection is empty).
      */
+    @Parallelizable(mutexFree = false)
     public static final CollectionOperator<Object> MIN = new CollectionOperator<Object>() {
-        
+
         @Override
         public Object apply(final CollectionService<Object> objects) {
-            final Object[] min = new Object[1];
-            objects.forEach(new CollectionConsumer<Object>() {
-                final Comparator<? super Object> cmp = objects.comparator();
-                
-                @Override
-                public void accept(Object element, Controller controller) {
-                    Object currentMin = min[0];
-                    if ((currentMin == null) || cmp.compare(element, currentMin) < 0) {
-                        synchronized (this) { // Exclusive lock.
-                            if ((currentMin == min[0]) || (cmp.compare(element, min[0]) < 0)) {
-                                min[0] = element;
-                            }
-                        }
-                    }
-                }
-            });         
-            return min[0];
+            MinConsumer<Object> minConsumer = new MinConsumer<Object>(
+                    objects.comparator());
+            objects.forEach(minConsumer, null);
+            return minConsumer.min;
         }
 
     };
+
+    private static class MinConsumer<E> implements Consumer<E> {
+        private final Comparator<? super E> comparator;
+        private E min;
+
+        public MinConsumer(Comparator<? super E> comparator) {
+            this.comparator = comparator;
+        }
+
+        @Override
+        public void accept(E param) {
+            E currentMin = min;
+            if ((currentMin == null)
+                    || comparator.compare(param, currentMin) < 0) {
+                synchronized (this) { // Exclusive lock.
+                    if ((currentMin == min)
+                            || (comparator.compare(param, min) < 0)) {
+                        min = param;
+                    }
+                }
+            }
+        }
+    }
 
     /**
     * Conditional 'and' operator (returns {@code true} if the collection is 
@@ -114,22 +159,41 @@ public class Operators {
     * is found.
     */
     public static final CollectionOperator<Boolean> AND = new CollectionOperator<Boolean>() {
-               
+
         @Override
         public Boolean apply(final CollectionService<Boolean> booleans) {
-            final boolean[] result = new boolean[] { true };
-            booleans.forEach(new CollectionConsumer<Boolean>() {
-                  
-                @Override
-                public void accept(Boolean element, Controller controller) {
-                    if (element.booleanValue()) return;
-                    result[0] = false;
-                    controller.terminate();
-                }
-            });         
-            return result[0];
+            AndConsumer andConsumer = new AndConsumer();
+            booleans.forEach(andConsumer, andConsumer);
+            return andConsumer.result;
         }
     };
+
+    private static class AndConsumer implements Consumer<Boolean>,
+            IterationController {
+        private volatile boolean result = true;
+
+        @Override
+        public void accept(Boolean param) {
+            if (!param) {
+                result = false;
+            }
+        }
+
+        @Override
+        public boolean doSequential() {
+            return false;
+        }
+
+        @Override
+        public boolean doReversed() {
+            return false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return !result;
+        }
+    }
 
     /**
     * Conditional 'or' operator (returns {@code false} if the collection is 
@@ -137,42 +201,61 @@ public class Operators {
     * is found.
      */
     public static final CollectionOperator<Boolean> OR = new CollectionOperator<Boolean>() {
-        
+
         @Override
         public Boolean apply(final CollectionService<Boolean> booleans) {
-            final boolean[] result = new boolean[] { false };
-            booleans.forEach(new CollectionConsumer<Boolean>() {
-                  
-                @Override
-                public void accept(Boolean element, Controller controller) {
-                    if (!element.booleanValue()) return;
-                    result[0] = true;
-                    controller.terminate();
-                }
-            });         
-            return result[0];
+            OrConsumer orConsumer = new OrConsumer();
+            booleans.forEach(orConsumer, orConsumer);
+            return orConsumer.result;
         }
     };
+
+    private static class OrConsumer implements Consumer<Boolean>,
+            IterationController {
+        private volatile boolean result = false;
+
+        @Override
+        public void accept(Boolean param) {
+            if (param) {
+                result = true;
+            }
+        }
+
+        @Override
+        public boolean doSequential() {
+            return false;
+        }
+
+        @Override
+        public boolean doReversed() {
+            return false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return result;
+        }
+    }
 
     /**
      * Returns the sum of the specified integers value (returns {@code 0} 
      * if the collection is empty).
      */
     public static final CollectionOperator<Integer> SUM = new CollectionOperator<Integer>() {
-     
+
         @Override
         public Integer apply(final CollectionService<Integer> integers) {
             final AtomicInteger sum = new AtomicInteger(0);
-            integers.forEach(new CollectionConsumer<Integer>() {
-                  
+            integers.forEach(new Consumer<Integer>() {
+
                 @Override
-                public void accept(Integer element, Controller controller) {
+                public void accept(Integer element) {
                     sum.getAndAdd(element.intValue());
                 }
-            });         
+            }, null);
             return sum.get();
         }
-        
+
     };
 
 }
