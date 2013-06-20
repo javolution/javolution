@@ -390,6 +390,7 @@ javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset
 javolution/core-java/src/main/java/javolution/util/function/CollectionOperator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Comparators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/EqualityComparator.java -text
 javolution/core-java/src/main/java/javolution/util/function/FullComparator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
