@@ -8,21 +8,23 @@
  */
 package javolution.internal.util.table;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
  * A view over a portion of a table. 
  */
-public final class SubTableImpl<E> extends AbstractTableImpl<E> {
+public final class SubTableImpl<E> implements TableService<E>, Serializable {
 
-    private final TableService<E> that;
-
+    private static final long serialVersionUID = 0x600L; // Version.
     private int fromIndex;
-
+    private final TableService<E> that;
     private int toIndex;
 
     public SubTableImpl(TableService<E> that, int fromIndex, int toIndex) {
@@ -31,165 +33,141 @@ public final class SubTableImpl<E> extends AbstractTableImpl<E> {
         this.toIndex = toIndex;
     }
 
-    // 
-    // Impacted methods.
-    //
-    
     @Override
-    public int size() {
-        return toIndex - fromIndex;
-    }
-
-    @Override
-    public E get(int index) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        return that.get(index + fromIndex);
-    }
-
-    @Override
-    public E set(int index, E element) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        return that.set(index + fromIndex, element);
+    public boolean add(E element) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public void add(int index, E element) {
-        if ((index < 0) && (index > size())) indexError(index);
-        that.add(index + fromIndex, element);
-    }
+        // TODO Auto-generated method stub
 
-    @Override
-    public E remove(int index) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        toIndex--;
-        return that.remove(index + fromIndex);
-    }
-      
-    @Override
-    public boolean add(E element) {
-        return addDefault(element);
-    }
-
-    @Override
-    public boolean contains(E element) {
-        return containsDefault(element);
-    }
-
-    @Override
-    public boolean remove(E element) {
-        return removeDefault(element);
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return indexOfDefault(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return lastIndexOfDefault(element);
-    }
-
-    @Override
-    public void sort() {
-        sortDefault();
-    }
-   
-    @Override
-    public void clear() {
-        removeAllDefault(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                return true;
-            }
-            
-        });
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return iteratorDefault();
-    }
-
-    @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return doWhileDefault(predicate);
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        return removeAllDefault(predicate);
-    }
-
-    @Override
-    public E getFirst() {
-        return getFirstDefault();
-    }
-
-    @Override
-    public E getLast() {
-        return getLastDefault();
     }
 
     @Override
     public void addFirst(E element) {
-        addFirstDefault(element);
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public void addLast(E element) {
-        addLastDefault(element);
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public E removeFirst() {
-        return removeFirstDefault();
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public E removeLast() {
-        return removeLastDefault();
+    public void clear() {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public E pollFirst() {
-        return pollFirstDefault();
+    public EqualityComparator<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
-    public E pollLast() {
-        return pollLastDefault();
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {}
+
+    @Override
+    public E get(int index) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E getFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E getLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public E peekFirst() {
-        return peekFirstDefault();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public E peekLast() {
-        return peekLastDefault();
-    }
-  
-    @Override
-    public TableService<E>[] trySplit(int n) {
-        return trySplitDefault(n);
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    //
-    // If no impact, forwards to inner table.
-    // 
+    @Override
+    public E pollFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
     @Override
-    public EqualityComparator<? super E> comparator() {
-        return that.comparator();
+    public E pollLast() {
+        // TODO Auto-generated method stub
+        return null;
     }
-    
+
     @Override
-    public void setComparator(EqualityComparator<? super E> cmp) {
-        that.setComparator(cmp);
-    }  
- 
-    private static final long serialVersionUID = 475452359149518413L;
+    public E remove(int index) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E removeFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public E removeLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E set(int index, E element) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int size() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

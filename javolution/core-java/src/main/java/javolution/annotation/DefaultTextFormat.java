@@ -53,11 +53,11 @@ import javolution.text.TextFormat;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DefaultTextFormat {
-    
+
     /**
      * Returns the default text format of the annotated class.
      */
     @SuppressWarnings("rawtypes")
-    Class<? extends TextFormat> value();    
-    
+    Class<? extends TextFormat> value();
+
 }

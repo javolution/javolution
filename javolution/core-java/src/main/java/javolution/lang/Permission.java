@@ -96,36 +96,50 @@ public class Permission<T> {
      *         <code>false</code> otherwise.
      */
     public boolean implies(Permission<?> that) {
-        if (category == null) return true;
-        if (!category.isAssignableFrom(that.category)) return false;
-        if (action == null) return true;
-        if (!action.equals(that.action)) return false;
-        if (instance == null) return true;
-        if (!instance.equals(that.instance)) return false;
+        if (category == null)
+            return true;
+        if (!category.isAssignableFrom(that.category))
+            return false;
+        if (action == null)
+            return true;
+        if (!action.equals(that.action))
+            return false;
+        if (instance == null)
+            return true;
+        if (!instance.equals(that.instance))
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        if (category == null) return "All permissions";
+        if (category == null)
+            return "All permissions";
         if (action == null)
             return "Permission for any action on " + category.getName();
         if (instance == null)
             return "Permission for " + action + " on " + category.getName();
-        return "Permission for " + action + " on instance " + instance + " of " + category.getName();
+        return "Permission for " + action + " on instance " + instance + " of "
+                + category.getName();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof Permission)) return false;
+        if (obj == this)
+            return true;
+        if (!(obj instanceof Permission))
+            return false;
         Permission<?> that = (Permission<?>) obj;
-        if ((category == null) && (that.category != null)) return false;
+        if ((category == null) && (that.category != null))
+            return false;
         if ((category != null) && (!category.equals(that.category)))
             return false;
-        if ((action == null) && (that.action != null)) return false;
-        if ((action != null) && (!action.equals(that.action))) return false;
-        if ((instance == null) && (that.instance != null)) return false;
+        if ((action == null) && (that.action != null))
+            return false;
+        if ((action != null) && (!action.equals(that.action)))
+            return false;
+        if ((instance == null) && (that.instance != null))
+            return false;
         if ((instance != null) && (!instance.equals(that.instance)))
             return false;
         return false;

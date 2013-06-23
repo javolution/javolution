@@ -8,170 +8,165 @@
  */
 package javolution.internal.util.table;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
  * A reverse view over a table.
  */
-public final class ReversedTableImpl<E> extends AbstractTableImpl<E> {
+public final class ReversedTableImpl<E> implements TableService<E>,
+        Serializable {
 
-    private final TableService<E> that;
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final TableService<E> target;
 
     public ReversedTableImpl(TableService<E> that) {
-        this.that = that;
-    }
-    
-    // 
-    // Impacted methods.
-    //
-    
-    @Override
-    public E get(int index) {
-        return that.get(size() - 1 - index);
+        this.target = that;
     }
 
     @Override
-    public E set(int index, E element) {
-        return that.set(size() - 1 - index, element);
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public void add(int index, E element) {
-        that.add(size() - 1 - index, element);
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public E remove(int index) {
-        return that.remove(size() - 1 - index);
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return size() - 1 - that.lastIndexOf(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return  size() - 1 - that.indexOf(element);
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return iteratorDefault();
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean add(E element) {
-        return addDefault(element);
+        // TODO Auto-generated method stub
+        return false;
     }
 
-    @Override
-    public void sort() {
-        sortDefault();
-    }
-
-    @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return doWhileDefault(predicate);
-    }
-    
-    @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
-        return removeAllDefault(predicate);
-    }
-
-    @Override
-    public E getFirst() {
-        return getFirstDefault();
-    }
-
-    @Override
-    public E getLast() {
-        return getLastDefault();
-    }
-
-    @Override
-    public void addFirst(E element) {
-        addFirstDefault(element);
-    }
-
-    @Override
-    public void addLast(E element) {
-        addLastDefault(element);
-    }
-
-    @Override
-    public E removeFirst() {
-        return removeFirstDefault();
-    }
-
-    @Override
-    public E removeLast() {
-        return removeLastDefault();
-    }
-
-    @Override
-    public E pollFirst() {
-        return pollFirstDefault();
-    }
-
-    @Override
-    public E pollLast() {
-        return pollLastDefault();
-    }
-
-    @Override
-    public E peekFirst() {
-        return peekFirstDefault();
-    }
-
-    @Override
-    public E peekLast() {
-        return peekLastDefault();
-    }    
-
-    @Override
-    public TableService<E>[] trySplit(int n) {
-        return trySplitDefault(n);
-    }
-    
-    //
-    // If no impact, forwards to inner table.
-    // 
-    
     @Override
     public EqualityComparator<? super E> comparator() {
-        return that.comparator();
+        // TODO Auto-generated method stub
+        return null;
     }
-    
+
     @Override
-    public void setComparator(EqualityComparator<? super E> cmp) {
-        that.setComparator(cmp);
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
     }
-    
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     @Override
     public int size() {
-        return that.size();
+        // TODO Auto-generated method stub
+        return 0;
     }
 
     @Override
     public void clear() {
-        that.clear();
-    }
-    
-    @Override
-    public boolean contains(E element) {
-        return that.contains(element);
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public boolean remove(E element) {
-        return that.remove(element);
+    public void add(int index, E element) {
+        // TODO Auto-generated method stub
+
     }
 
-    private static final long serialVersionUID = -3742752971523397049L;
+    @Override
+    public E get(int index) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E set(int index, E element) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E remove(int index) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E getFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E getLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void addFirst(E element) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void addLast(E element) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public E removeFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E removeLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E peekFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E peekLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E pollFirst() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public E pollLast() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

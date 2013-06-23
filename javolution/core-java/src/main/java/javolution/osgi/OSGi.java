@@ -34,8 +34,7 @@ public abstract class OSGi {
     /**
      * Default constructor.
      */
-    protected OSGi() {
-    }
+    protected OSGi() {}
 
     /**
      * Returns a new OSGi instance.

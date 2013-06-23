@@ -17,7 +17,7 @@ import org.osgi.framework.ServiceReference;
 /**
  * Filter implementation (value type).
  */
-class FilterImpl implements Filter{
+class FilterImpl implements Filter {
 
     ////////////////////////////////////////////////////////////////////////////
     // Converted from FilterImpl.hpp (C++)
@@ -26,13 +26,13 @@ class FilterImpl implements Filter{
     String filterString;
     String className;
 
-
     public FilterImpl(String filterString) {
         this.filterString = filterString;
 
         // Assumes: "(<Constants.OBJECTCLASS>=<className>)"
         int classNameStartIndex = Constants.OBJECTCLASS.length() + 2;
-        this.className = filterString.substring(classNameStartIndex, filterString.length()-1);
+        this.className = filterString.substring(classNameStartIndex,
+                filterString.length() - 1);
     }
 
     @Override
@@ -50,12 +50,12 @@ class FilterImpl implements Filter{
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
-    public boolean match(Dictionary<String, ? > dctnr) {
+    public boolean match(Dictionary<String, ?> dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public boolean matchCase(Dictionary<String, ? > dctnr) {
+    public boolean matchCase(Dictionary<String, ?> dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

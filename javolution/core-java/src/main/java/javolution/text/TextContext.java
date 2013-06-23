@@ -15,11 +15,12 @@ import javolution.internal.text.TextContextImpl;
 import javolution.lang.Configurable;
 
 /**
- * <p> A context for plain text parsing/formatting. The default plain text 
+ * <p> A context for plain text parsing/formatting. The default text 
  *     format for any class is given by the 
- *     {@link javolution.annotation.DefaultTextFormat Format} inheritable annotation.</p>
+ *     {@link javolution.annotation.DefaultTextFormat DefaultTextFormat} 
+ *     inheritable annotation.</p>
  * 
- * <p> A default plain text format exists for the following predefined types:
+ * <p> A default format exists for the following predefined types:
  *     <code><ul>
  *       <li>java.lang.String</li>
  *       <li>java.lang.Boolean</li>
@@ -42,14 +43,13 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE 
-       = new Configurable<Boolean>(false);
-    
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
+
     /**
      * Default constructor.
      */
-    protected TextContext() {
-    }
+    protected TextContext() {}
 
     /**
      * Enters a new text context instance.
@@ -71,19 +71,22 @@ public abstract class TextContext extends FormatContext<TextContext> {
     /**
      * Sets the plain text format for the specified type (and its sub-types).
      */
-    public abstract <T> void setFormat(Class<? extends T> type, TextFormat<T> format);
+    public abstract <T> void setFormat(Class<? extends T> type,
+            TextFormat<T> format);
 
     /**
      * Returns the plain text format for the specified type.
      */
-    protected abstract <T> TextFormat<T> getFormatInContext(Class<? extends T> type);
+    protected abstract <T> TextFormat<T> getFormatInContext(
+            Class<? extends T> type);
 
     /**
      * Returns the current text context.
      */
     protected static TextContext current() {
         TextContext ctx = AbstractContext.current(TextContext.class);
-        if (ctx != null) return ctx;
+        if (ctx != null)
+            return ctx;
         return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 

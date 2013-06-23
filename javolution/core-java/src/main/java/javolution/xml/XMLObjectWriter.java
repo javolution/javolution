@@ -8,7 +8,6 @@
  */
 package javolution.xml;
 
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -42,8 +41,7 @@ public class XMLObjectWriter {
     /**
      * Hold the xml element used when formatting.
      */
-    private final XMLFormat.OutputElement _xml
-        = new XMLFormat.OutputElement();
+    private final XMLFormat.OutputElement _xml = new XMLFormat.OutputElement();
 
     /**
      * Holds writer if any.
@@ -58,8 +56,7 @@ public class XMLObjectWriter {
     /**
      * Default constructor.
      */
-    public XMLObjectWriter() {
-    }
+    public XMLObjectWriter() {}
 
     /**
      * Returns a XML object writer (potentially recycled) having the specified
@@ -67,7 +64,8 @@ public class XMLObjectWriter {
      * 
      * @param out the output stream.
      */
-    public static XMLObjectWriter newInstance(OutputStream out) throws XMLStreamException {
+    public static XMLObjectWriter newInstance(OutputStream out)
+            throws XMLStreamException {
         XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out);
         return writer;
@@ -80,7 +78,8 @@ public class XMLObjectWriter {
      * @param out the output stream.
      * @param encoding the output stream encoding.
      */
-    public static XMLObjectWriter newInstance(OutputStream out, String encoding) throws XMLStreamException {
+    public static XMLObjectWriter newInstance(OutputStream out, String encoding)
+            throws XMLStreamException {
         XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out, encoding);
         return writer;
@@ -92,7 +91,8 @@ public class XMLObjectWriter {
      * 
      * @param out the writer output.
      */
-    public static XMLObjectWriter newInstance(Writer out) throws XMLStreamException {
+    public static XMLObjectWriter newInstance(Writer out)
+            throws XMLStreamException {
         XMLObjectWriter writer = new XMLObjectWriter();
         writer.setOutput(out);
         return writer;
@@ -118,7 +118,8 @@ public class XMLObjectWriter {
      * @return <code>this</code>
      * @see    XMLStreamWriterImpl#setOutput(OutputStream)
      */
-    public XMLObjectWriter setOutput(OutputStream out) throws XMLStreamException {
+    public XMLObjectWriter setOutput(OutputStream out)
+            throws XMLStreamException {
         if ((_outputStream != null) || (_writer != null))
             throw new IllegalStateException("Writer not closed or reset");
         _xml._writer.setOutput(out);
@@ -126,7 +127,7 @@ public class XMLObjectWriter {
         _xml._writer.writeStartDocument();
         return this;
     }
-    
+
     /**
      * Sets the output stream and encoding for this XML object writer.
      * 
@@ -135,7 +136,8 @@ public class XMLObjectWriter {
      * @return <code>this</code>
      * @see    XMLStreamWriterImpl#setOutput(OutputStream, String)
      */
-    public XMLObjectWriter setOutput(OutputStream out, String encoding) throws XMLStreamException {
+    public XMLObjectWriter setOutput(OutputStream out, String encoding)
+            throws XMLStreamException {
         if ((_outputStream != null) || (_writer != null))
             throw new IllegalStateException("Writer not closed or reset");
         _xml._writer.setOutput(out, encoding);
@@ -143,7 +145,7 @@ public class XMLObjectWriter {
         _xml._writer.writeStartDocument();
         return this;
     }
-    
+
     /**
      * Sets the output writer for this XML object writer.
      * 
@@ -159,7 +161,7 @@ public class XMLObjectWriter {
         _xml._writer.writeStartDocument();
         return this;
     }
-    
+
     /**
      * Sets the XML binding to use with this object writer.
      * 
@@ -190,7 +192,8 @@ public class XMLObjectWriter {
      * @param referenceResolver the XML reference resolver.
      * @return <code>this</code>
      */
-    public XMLObjectWriter setReferenceResolver(XMLReferenceResolver referenceResolver) {
+    public XMLObjectWriter setReferenceResolver(
+            XMLReferenceResolver referenceResolver) {
         _xml.setReferenceResolver(referenceResolver);
         return this;
     }
@@ -245,7 +248,7 @@ public class XMLObjectWriter {
      * @param cls the non-abstract class identifying the XML format to use.
      * @see   XMLFormat.OutputElement#add(Object, String, Class)
      */
-    public  <T>  void write( T  obj, String name, Class <T>  cls)
+    public <T> void write(T obj, String name, Class<T> cls)
             throws XMLStreamException {
         _xml.add(obj, name, cls);
     }
@@ -260,11 +263,11 @@ public class XMLObjectWriter {
      * @param cls the class identifying the XML format to use.
      * @see   XMLFormat.OutputElement#add(Object, String, String, Class)
      */
-    public  <T>  void write( T  obj, String localName, String uri, Class <T>  cls)
+    public <T> void write(T obj, String localName, String uri, Class<T> cls)
             throws XMLStreamException {
         _xml.add(obj, localName, uri, cls);
     }
-    
+
     /**
      * Flushes the output stream of this writer (automatically done 
      * when {@link #close() closing}).
@@ -272,7 +275,7 @@ public class XMLObjectWriter {
     public void flush() throws XMLStreamException {
         _xml._writer.flush();
     }
-    
+
     /**
      * Ends document writting, closes this writer and its underlying 
      * output then {@link #reset reset} this Writer for potential reuse.
@@ -290,7 +293,7 @@ public class XMLObjectWriter {
                 _writer.close();
                 reset();
             }
-            
+
         } catch (IOException e) {
             throw new XMLStreamException(e);
         }

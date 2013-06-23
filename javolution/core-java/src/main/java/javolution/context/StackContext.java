@@ -53,7 +53,7 @@ import javolution.util.function.Function;
  * @version 6.0 December 12, 2012
  */
 public abstract class StackContext extends AllocatorContext<StackContext> {
-  
+
     /**
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
@@ -64,8 +64,7 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
     /**
      * Default constructor.
      */
-    protected StackContext() {
-    }
+    protected StackContext() {}
 
     /**
      * Enters a stack context instance (private since instances are not 
@@ -73,11 +72,13 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      */
     private static StackContext enter() {
         StackContext ctx = AbstractContext.current(StackContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return STACK_CONTEXT_TRACKER.getService(
-                WAIT_FOR_SERVICE.get(), DEFAULT).inner().enterScope();
+        if (ctx != null)
+            return ctx.inner().enterScope();
+        return STACK_CONTEXT_TRACKER
+                .getService(WAIT_FOR_SERVICE.get(), DEFAULT).inner()
+                .enterScope();
     }
-    
+
     /**
      * Executes the specified logic allocating objects on the stack.
      */
@@ -89,25 +90,27 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
             ctx.exit();
         }
     }
-        
+
     /**
      * Executes the specified function allocating objects on the stack; the 
      * function result is copied to calling context.
      */
-    public static <P,R extends Copyable<R>> R execute(Function<P,R> function, P parameter) {
+    public static <P, R extends Copyable<R>> R execute(Function<P, R> function,
+            P parameter) {
         StackContext ctx = StackContext.enter();
         try {
             return ctx.executeInContext(function, parameter);
         } finally {
             ctx.exit();
         }
-    }        
+    }
 
     /**
      * Evaluates the specified function while allocating on the stack; the 
      * function result is copied to the outer context.
      */
-    protected abstract <P,R extends Copyable<R>> R executeInContext(Function<P,R> function, P parameter);
+    protected abstract <P, R extends Copyable<R>> R executeInContext(
+            Function<P, R> function, P parameter);
 
     private static final StackContextImpl DEFAULT = new StackContextImpl();
 }

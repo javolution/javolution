@@ -34,35 +34,37 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
     public boolean add(E element) {
         throw new UnsupportedOperationException("Sorted views are unmodifiable");
     }
-    
+
     @Override
     public void atomic(Runnable action) {
         target.atomic(action);
     }
-   
+
     @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
 
     @Override
-    public void forEach(Consumer<? super E> consumer, IterationController controller) {
-        FastTable<E> sorted = new FastTable<E>(target.comparator());        
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        FastTable<E> sorted = new FastTable<E>(target.comparator());
         sorted.addAll(this);
         sorted.sort(); // Quick-sort.
         FastCollection.serviceOf(sorted).forEach(consumer, controller);
     }
-    
+
     @Override
     public Iterator<E> iterator() {
-        FastTable<E> sorted = new FastTable<E>(target.comparator());        
+        FastTable<E> sorted = new FastTable<E>(target.comparator());
         sorted.addAll(this);
         sorted.sort(); // Quick-sort.
         return sorted.unmodifiable().iterator();
-     }
-    
+    }
+
     @Override
-    public boolean removeIf(Predicate<? super E> filter, IterationController controller) {
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
         throw new UnsupportedOperationException("Sorted views are unmodifiable");
     }
 

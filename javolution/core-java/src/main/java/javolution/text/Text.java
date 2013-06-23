@@ -9,8 +9,9 @@
 package javolution.text;
 
 import java.io.PrintStream;
+
 import javolution.annotation.RealTime;
-import javolution.context.HeapContext;
+import javolution.context.ImmortalContext;
 import javolution.lang.MathLib;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
@@ -43,8 +44,8 @@ import javolution.xml.XMLSerializable;
  * <p> {@link Text} literals should be explicitly {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
  *     interning is not implicit. For example:[code]
- *         final static Text TRUE = Text.intern("true");
- *         final static Text FALSE = Text.intern("false");
+ *         final static Text TRUE = new Text("true").intern();
+ *         final static Text FALSE = new Text("true").intern("false");
  *     [/code]</p>
  *     
  * <p><i> Implementation Note: To avoid expensive copy operations , 
@@ -58,11 +59,13 @@ import javolution.xml.XMLSerializable;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton
- * @version 5.3, January 10, 2007
+ * @version 6.0.0, December 12, 2012
  */
 @RealTime
-public final class Text implements CharSequence, Comparable<CharSequence>, XMLSerializable,
-        ValueType<Text> {
+public final class Text implements CharSequence, Comparable<CharSequence>,
+        XMLSerializable, ValueType<Text> {
+
+    private static final long serialVersionUID = 0x600L; // Version.
 
     /**
      * Holds the default size for primitive blocks of characters.
@@ -75,23 +78,15 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
     private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
 
     /**
-     * Holds the primitive text factory.
+     * Holds the texts interned in immortal memory.
      */
-    /**
-     * Holds the texts interned in ImmortalMemory
-     */
-    private static final FastMap INTERN_INSTANCES = new FastMap() {
-
-        public Comparators valueComparator() {
-            return Comparators.LEXICAL;
-        }
-
-    };
+    private static final FastMap<Text, Text> INTERN = new FastMap<Text, Text>()
+            .shared();
 
     /**
      * Holds an empty character sequence.
      */
-    public static final Text EMPTY = Text.intern("");
+    public static final Text EMPTY = new Text("").intern();
 
     /**
      * Holds the raw data (primitive) or <code>null</code> (composite).
@@ -177,8 +172,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
             return text;
         } else { // Splits on a block boundary.
             int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
-            return newComposite(Text.valueOf(str, start, start + half), Text
-                    .valueOf(str, start + half, end));
+            return newComposite(Text.valueOf(str, start, start + half),
+                    Text.valueOf(str, start + half, end));
         }
     }
 
@@ -213,8 +208,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
             return text;
         } else { // Splits on a block boundary.
             int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
-            return Text.newComposite(Text.valueOf(chars, offset, half), Text
-                    .valueOf(chars, offset + half, length - half));
+            return Text.newComposite(Text.valueOf(chars, offset, half),
+                    Text.valueOf(chars, offset + half, length - half));
         }
     }
 
@@ -251,9 +246,9 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
         return b ? TRUE : FALSE;
     }
 
-    private static final Text TRUE = Text.intern("true");
+    private static final Text TRUE = new Text("true").intern();
 
-    private static final Text FALSE = Text.intern("false");
+    private static final Text FALSE = new Text("false").intern();
 
     /**
      * Returns the text instance corresponding to the specified character. 
@@ -401,7 +396,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
             Text merge = _tail.append(str);
             return merge != null ? Text.newComposite(_head, merge) : null;
         } else { // Primitive.
-            if (_count + length > BLOCK_SIZE) return null; // Cannot merge.
+            if (_count + length > BLOCK_SIZE)
+                return null; // Cannot merge.
             Text text = Text.newPrimitive(_count + length);
             System.arraycopy(_data, 0, text._data, 0, _count);
             str.getChars(0, length, text._data, _count);
@@ -527,12 +523,13 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
      * @param replacement the replacement sequence.
      * @return the resulting text.
      */
-    public Text replace(java.lang.CharSequence target, java.lang.CharSequence replacement) {
+    public Text replace(java.lang.CharSequence target,
+            java.lang.CharSequence replacement) {
         int i = indexOf(target);
         return (i < 0) ? this : // No target sequence found.
                 subtext(0, i).concat(Text.valueOf(replacement)).concat(
-                subtext(i + target.length()).replace(target,
-                replacement));
+                        subtext(i + target.length()).replace(target,
+                                replacement));
     }
 
     /**
@@ -547,7 +544,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
         int i = indexOfAny(charSet);
         return (i < 0) ? this : // No character to replace.
                 subtext(0, i).concat(Text.valueOf(replacement)).concat(
-                subtext(i + 1).replace(charSet, replacement));
+                        subtext(i + 1).replace(charSet, replacement));
     }
 
     /**
@@ -592,14 +589,12 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
         final int csqLength = csq.length();
         final int min = Math.max(0, fromIndex);
         final int max = _count - csqLength;
-        if (csqLength == 0) {
-            return (min > max) ? -1 : min;
-        }
+        if (csqLength == 0) { return (min > max) ? -1 : min; }
 
         // Searches for csq.
         final char c = csq.charAt(0);
         for (int i = indexOf(c, min); (i >= 0) && (i <= max); i = indexOf(c,
-                        ++i)) {
+                ++i)) {
             boolean match = true;
             for (int j = 1; j < csqLength; j++) {
                 if (this.charAt(i + j) != csq.charAt(j)) {
@@ -607,9 +602,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
                     break;
                 }
             }
-            if (match) {
-                return i;
-            }
+            if (match) { return i; }
         }
         return -1;
     }
@@ -642,9 +635,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
         final int csqLength = csq.length();
         final int min = 0;
         final int max = Math.min(fromIndex, _count - csqLength);
-        if (csqLength == 0) {
-            return (min > max) ? -1 : max;
-        }
+        if (csqLength == 0) { return (min > max) ? -1 : max; }
 
         // Searches for csq.
         final char c = csq.charAt(0);
@@ -656,9 +647,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
                     break;
                 }
             }
-            if (match) {
-                return i;
-            }
+            if (match) { return i; }
         }
         return -1;
 
@@ -700,9 +689,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
         final int prefixLength = prefix.length();
         if ((index >= 0) && (index <= (this.length() - prefixLength))) {
             for (int i = 0, j = index; i < prefixLength;) {
-                if (prefix.charAt(i++) != this.charAt(j++)) {
-                    return false;
-                }
+                if (prefix.charAt(i++) != this.charAt(j++)) { return false; }
             }
             return true;
         } else {
@@ -731,41 +718,26 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
     }
 
     /**
-     * Returns a text equals to the specified character sequence from a pool of
-     * unique text instances in <code>ImmortalMemory</code>.  
+     * Returns a text equals to this one from a pool of
+     * unique text instances in {@link javolution.context.ImmortalContext
+     * immortal memory}.  
      * 
-     * @return an unique text instance allocated in <code>ImmortalMemory</code>.
+     * @return an unique text instance allocated in permanent memory.
      */
-    public static Text intern(final java.lang.CharSequence csq) {
-        Text text = (Text) INTERN_INSTANCES.get(csq); // Thread-Safe - No entry removed.
-        return (text != null) ? text : Text.internImpl(csq.toString());
-    }
+    public Text intern() {
+        final Text[] interned = new Text[1];
+        INTERN.atomic(new Runnable() {
 
-    /**
-     * Returns a text equals to the specified string from a pool of
-     * unique text instances on the heap.  
-     * 
-     * @return an unique text instance allocated in <code>ImmortalMemory</code>.
-     */
-    public static Text intern(final String str) {
-        Text text = (Text) INTERN_INSTANCES.get(str); // Thread-Safe - No entry removed.
-        return (text != null) ? text : Text.internImpl(str);
-    }
-
-    private static synchronized Text internImpl(final String str) {
-        if (!INTERN_INSTANCES.containsKey(str)) { // Synchronized check.
-            HeapContext.execute(new Runnable() {
-
-                public void run() {
-                    Text txt = new Text(str);
-                    INTERN_INSTANCES.put(txt, txt);
+            @Override
+            public void run() {
+                interned[0] = INTERN.get(Text.this);
+                if (interned[0] == null) {
+                    interned[0] = ImmortalContext.copy(Text.this);
+                    INTERN.put(interned[0], interned[0]);
                 }
-
-            });
-            Text txt = new Text(str);
-            INTERN_INSTANCES.put(txt, txt);
-        }
-        return (Text) INTERN_INSTANCES.get(str);
+            }
+        });
+        return interned[0];
     }
 
     /**
@@ -805,7 +777,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
                 u2 = Character.toUpperCase(u2);
                 if ((u1 != u2)
                         && (Character.toLowerCase(u1) != Character
-                        .toLowerCase(u2)))
+                                .toLowerCase(u2)))
                     return false;
 
             }
@@ -891,7 +863,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
             out.print(", MAX DEPTH: " + getDepth());
             out.print(", NBR OF BRANCHES: " + getNbrOfBranches());
             out.print(", NBR OF LEAVES: " + leaves);
-            out.print(", AVG LEAVE LENGTH: " + (length + (leaves >> 1)) / leaves);
+            out.print(", AVG LEAVE LENGTH: " + (length + (leaves >> 1))
+                    / leaves);
             out.println();
         }
     }
@@ -903,13 +876,13 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
     }
 
     private int getNbrOfBranches() {
-        return (_data == null)
-                ? _head.getNbrOfBranches() + _tail.getNbrOfBranches() + 1 : 0;
+        return (_data == null) ? _head.getNbrOfBranches()
+                + _tail.getNbrOfBranches() + 1 : 0;
     }
 
     private int getNbrOfLeaves() {
-        return (_data == null)
-                ? _head.getNbrOfLeaves() + _tail.getNbrOfLeaves() : 1;
+        return (_data == null) ? _head.getNbrOfLeaves()
+                + _tail.getNbrOfLeaves() : 1;
     }
 
     /**
@@ -1144,8 +1117,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>, XMLSe
             return text;
         } else {
             final int middle = (length >> 1);
-            return Text.newComposite(Text.valueOf(c, middle), Text.valueOf(c,
-                    length - middle));
+            return Text.newComposite(Text.valueOf(c, middle),
+                    Text.valueOf(c, length - middle));
         }
     }
 

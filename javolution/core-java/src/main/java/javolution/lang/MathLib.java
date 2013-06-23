@@ -24,8 +24,7 @@ public final class MathLib {
     /**
      * Default constructor.
      */
-    private MathLib() {
-    }
+    private MathLib() {}
 
     /**
      * Returns the number of bits in the minimal two's-complement representation
@@ -44,23 +43,22 @@ public final class MathLib {
         return (i < 1 << 16) ? (i < 1 << 8) ? BIT_LENGTH[i]
                 : BIT_LENGTH[i >>> 8] + 8
                 : (i < 1 << 24) ? BIT_LENGTH[i >>> 16] + 16
-                : BIT_LENGTH[i >>> 24] + 24;
+                        : BIT_LENGTH[i >>> 24] + 24;
     }
 
-    private static final byte[] BIT_LENGTH = {0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4,
-        4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8
-    };
+    private static final byte[] BIT_LENGTH = { 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4,
+            4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6,
+            6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+            6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8 };
 
     /**
      * Returns the number of bits in the minimal two's-complement representation
@@ -79,14 +77,14 @@ public final class MathLib {
             return (i < 1 << 16) ? (i < 1 << 8) ? BIT_LENGTH[i] + 32
                     : BIT_LENGTH[i >>> 8] + 40
                     : (i < 1 << 24) ? BIT_LENGTH[i >>> 16] + 48
-                    : BIT_LENGTH[i >>> 24] + 56;
+                            : BIT_LENGTH[i >>> 24] + 56;
         if (i < 0)
             return bitLength(-++l);
         i = (int) l;
         return (i < 0) ? 32 : (i < 1 << 16) ? (i < 1 << 8) ? BIT_LENGTH[i]
                 : BIT_LENGTH[i >>> 8] + 8
                 : (i < 1 << 24) ? BIT_LENGTH[i >>> 16] + 16
-                : BIT_LENGTH[i >>> 24] + 24;
+                        : BIT_LENGTH[i >>> 24] + 24;
     }
 
     /**
@@ -100,7 +98,8 @@ public final class MathLib {
      */
     public static int bitCount(long longValue) {
         longValue = longValue - ((longValue >>> 1) & 0x5555555555555555L);
-        longValue = (longValue & 0x3333333333333333L) + ((longValue >>> 2) & 0x3333333333333333L);
+        longValue = (longValue & 0x3333333333333333L)
+                + ((longValue >>> 2) & 0x3333333333333333L);
         longValue = (longValue + (longValue >>> 4)) & 0x0f0f0f0f0f0f0f0fL;
         longValue = longValue + (longValue >>> 8);
         longValue = longValue + (longValue >>> 16);
@@ -203,7 +202,7 @@ public final class MathLib {
             return (i >= 100000) ? (i >= 10000000) ? (i >= 1000000000) ? 10
                     : (i >= 100000000) ? 9 : 8 : (i >= 1000000) ? 7 : 6
                     : (i >= 100) ? (i >= 10000) ? 5 : (i >= 1000) ? 4 : 3
-                    : (i >= 10) ? 2 : 1;
+                            : (i >= 10) ? 2 : 1;
         if (i == Integer.MIN_VALUE)
             return 10; // "2147483648".length()
         return digitLength(-i); // No overflow possible.
@@ -219,15 +218,14 @@ public final class MathLib {
      */
     public static int digitLength(long l) {
         if (l >= 0)
-            return (l <= Integer.MAX_VALUE)
-                    ? digitLength((int) l)
+            return (l <= Integer.MAX_VALUE) ? digitLength((int) l)
                     : // At least 10 digits or more.
                     (l >= 100000000000000L) ? (l >= 10000000000000000L) ? (l >= 1000000000000000000L) ? 19
-                    : (l >= 100000000000000000L) ? 18 : 17
-                    : (l >= 1000000000000000L) ? 16 : 15
-                    : (l >= 100000000000L) ? (l >= 10000000000000L) ? 14
-                    : (l >= 1000000000000L) ? 13 : 12
-                    : (l >= 10000000000L) ? 11 : 10;
+                            : (l >= 100000000000000000L) ? 18 : 17
+                            : (l >= 1000000000000000L) ? 16 : 15
+                            : (l >= 100000000000L) ? (l >= 10000000000000L) ? 14
+                                    : (l >= 1000000000000L) ? 13 : 12
+                                    : (l >= 10000000000L) ? 11 : 10;
         if (l == Long.MIN_VALUE)
             return 19; // "9223372036854775808".length()
         return digitLength(-l);
@@ -267,6 +265,7 @@ public final class MathLib {
         bits |= exp << 52;
         return Double.longBitsToDouble(bits);
     }
+
     /**/
 
     /**
@@ -288,8 +287,8 @@ public final class MathLib {
             if (n > 308)
                 return Double.POSITIVE_INFINITY;
             // Works with 4 x 32 bits registers (x3:x2:x1:x0)
-            long x0 = 0;  // 32 bits.
-            long x1 = 0;  // 32 bits.
+            long x0 = 0; // 32 bits.
+            long x1 = 0; // 32 bits.
             long x2 = m & MASK_32; // 32 bits.
             long x3 = m >>> 32; // 32 bits.
             int pow2 = 0;
@@ -388,9 +387,9 @@ public final class MathLib {
 
     private static final long MASK_32 = 0xFFFFFFFFL;
 
-    private static final int[] POW5_INT = {1, 5, 25, 125, 625, 3125, 15625,
-        78125, 390625, 1953125, 9765625, 48828125, 244140625, 1220703125
-    };
+    private static final int[] POW5_INT = { 1, 5, 25, 125, 625, 3125, 15625,
+            78125, 390625, 1953125, 9765625, 48828125, 244140625, 1220703125 };
+
     /**/
 
     /**
@@ -421,11 +420,12 @@ public final class MathLib {
         if (shift <= -64)
             return 0L;
         if (shift >= 11)
-            throw new ArithmeticException(
-                    "Cannot convert to long (overflow)");
-        m = (shift >= 0) ? m << shift : (m >> -shift) + ((m >> -(shift + 1)) & 1); // Rounding.
+            throw new ArithmeticException("Cannot convert to long (overflow)");
+        m = (shift >= 0) ? m << shift : (m >> -shift)
+                + ((m >> -(shift + 1)) & 1); // Rounding.
         return isNegative ? -m : m;
     }
+
     /**/
 
     /**
@@ -454,8 +454,8 @@ public final class MathLib {
         // Retrieves 63 bits m with n == 0.
         if (n >= 0) {
             // Works with 4 x 32 bits registers (x3:x2:x1:x0)
-            long x0 = 0;  // 32 bits.
-            long x1 = 0;  // 32 bits.
+            long x0 = 0; // 32 bits.
+            long x1 = 0; // 32 bits.
             long x2 = m & MASK_32; // 32 bits.
             long x3 = m >>> 32; // 32 bits.
             while (n != 0) {
@@ -550,6 +550,7 @@ public final class MathLib {
         m = (m >> -pow2) + ((m >> -(pow2 + 1)) & 1); // Rounding.
         return isNegative ? -m : m;
     }
+
     /**/
 
     /**
@@ -569,9 +570,10 @@ public final class MathLib {
         if (exp == 0x7FF)
             throw new ArithmeticException("Infinity or NaN");
         if (exp == 0)
-            return floorLog2(d * 18014398509481984L) - 54;  // 2^54 Exact.       
+            return floorLog2(d * 18014398509481984L) - 54; // 2^54 Exact.       
         return exp - 1023;
     }
+
     /**/
 
     /**
@@ -660,6 +662,7 @@ public final class MathLib {
     public static double toRadians(double degrees) {
         return degrees * (PI / 180.0);
     }
+
     /**/
 
     /**
@@ -671,6 +674,7 @@ public final class MathLib {
     public static double toDegrees(double radians) {
         return radians * (180.0 / PI);
     }
+
     /**/
 
     /**
@@ -682,6 +686,7 @@ public final class MathLib {
     public static double sqrt(double x) {
         return Math.sqrt(x); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -698,6 +703,7 @@ public final class MathLib {
         else
             return NaN;
     }
+
     /**/
 
     /**
@@ -711,6 +717,7 @@ public final class MathLib {
     public static double ceil(double x) {
         return Math.ceil(x); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -724,6 +731,7 @@ public final class MathLib {
     public static double floor(double x) {
         return Math.floor(x); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -735,6 +743,7 @@ public final class MathLib {
     public static double sin(double radians) {
         return Math.sin(radians); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -746,6 +755,7 @@ public final class MathLib {
     public static double cos(double radians) {
         return Math.cos(radians); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -757,6 +767,7 @@ public final class MathLib {
     public static double tan(double radians) {
         return Math.tan(radians); // CLDC 1.1
     }
+
     /**/
 
     /**
@@ -775,6 +786,7 @@ public final class MathLib {
             return HALF_PI;
         return MathLib.atan(x / MathLib.sqrt(1.0 - x * x));
     }
+
     /**/
 
     /**
@@ -787,6 +799,7 @@ public final class MathLib {
     public static double acos(double x) {
         return HALF_PI - MathLib.asin(x);
     }
+
     /**/
 
     /**
@@ -801,6 +814,7 @@ public final class MathLib {
     public static double atan(double x) {
         return MathLib._atan(x);
     }
+
     /**/
 
     /**
@@ -827,6 +841,7 @@ public final class MathLib {
         else
             return 0.0;
     }
+
     /**/
 
     /**
@@ -838,6 +853,7 @@ public final class MathLib {
     public static double sinh(double x) {
         return (MathLib.exp(x) - MathLib.exp(-x)) * 0.5;
     }
+
     /**/
 
     /**
@@ -849,6 +865,7 @@ public final class MathLib {
     public static double cosh(double x) {
         return (MathLib.exp(x) + MathLib.exp(-x)) * 0.5;
     }
+
     /**/
 
     /**
@@ -860,6 +877,7 @@ public final class MathLib {
     public static double tanh(double x) {
         return (MathLib.exp(2 * x) - 1) / (MathLib.exp(2 * x) + 1);
     }
+
     /**/
 
     /**
@@ -873,6 +891,7 @@ public final class MathLib {
     public static double exp(double x) {
         return MathLib._ieee754_exp(x);
     }
+
     /**/
 
     /**
@@ -885,6 +904,7 @@ public final class MathLib {
     public static double log(double x) {
         return MathLib._ieee754_log(x);
     }
+
     /**/
 
     /**
@@ -923,6 +943,7 @@ public final class MathLib {
     public static int round(float f) {
         return (int) floor(f + 0.5f);
     }
+
     /**/
 
     /**
@@ -975,6 +996,7 @@ public final class MathLib {
     public static double abs(double d) {
         return (d < 0) ? -d : d;
     }
+
     /**/
 
     /**
@@ -1020,6 +1042,7 @@ public final class MathLib {
     public static double max(double x, double y) {
         return (x >= y) ? x : y;
     }
+
     /**/
 
     /**
@@ -1054,6 +1077,7 @@ public final class MathLib {
     public static float min(float x, float y) {
         return (x < y) ? x : y;
     }
+
     /**/
 
     /**
@@ -1100,32 +1124,29 @@ public final class MathLib {
      * compiler will convert from decimal to binary accurately enough 
      * to produce the hexadecimal values shown.
      */
-    static final double atanhi[] = {
-        4.63647609000806093515e-01, // atan(0.5)hi 0x3FDDAC67, 0x0561BB4F
-        7.85398163397448278999e-01, // atan(1.0)hi 0x3FE921FB, 0x54442D18 
-        9.82793723247329054082e-01, // atan(1.5)hi 0x3FEF730B, 0xD281F69B 
-        1.57079632679489655800e+00, // atan(inf)hi 0x3FF921FB, 0x54442D18 
+    static final double atanhi[] = { 4.63647609000806093515e-01, // atan(0.5)hi 0x3FDDAC67, 0x0561BB4F
+            7.85398163397448278999e-01, // atan(1.0)hi 0x3FE921FB, 0x54442D18 
+            9.82793723247329054082e-01, // atan(1.5)hi 0x3FEF730B, 0xD281F69B 
+            1.57079632679489655800e+00, // atan(inf)hi 0x3FF921FB, 0x54442D18 
     };
 
-    static final double atanlo[] = {
-        2.26987774529616870924e-17, // atan(0.5)lo 0x3C7A2B7F, 0x222F65E2
-        3.06161699786838301793e-17, // atan(1.0)lo 0x3C81A626, 0x33145C07
-        1.39033110312309984516e-17, // atan(1.5)lo 0x3C700788, 0x7AF0CBBD
-        6.12323399573676603587e-17, // atan(inf)lo 0x3C91A626, 0x33145C07 
+    static final double atanlo[] = { 2.26987774529616870924e-17, // atan(0.5)lo 0x3C7A2B7F, 0x222F65E2
+            3.06161699786838301793e-17, // atan(1.0)lo 0x3C81A626, 0x33145C07
+            1.39033110312309984516e-17, // atan(1.5)lo 0x3C700788, 0x7AF0CBBD
+            6.12323399573676603587e-17, // atan(inf)lo 0x3C91A626, 0x33145C07 
     };
 
-    static final double aT[] = {
-        3.33333333333329318027e-01, // 0x3FD55555, 0x5555550D
-        -1.99999999998764832476e-01, // 0xBFC99999, 0x9998EBC4 
-        1.42857142725034663711e-01, // 0x3FC24924, 0x920083FF 
-        -1.11111104054623557880e-01, // 0xBFBC71C6, 0xFE231671 
-        9.09088713343650656196e-02, // 0x3FB745CD, 0xC54C206E 
-        -7.69187620504482999495e-02, // 0xBFB3B0F2, 0xAF749A6D 
-        6.66107313738753120669e-02, // 0x3FB10D66, 0xA0D03D51 
-        -5.83357013379057348645e-02, // 0xBFADDE2D, 0x52DEFD9A 
-        4.97687799461593236017e-02, // 0x3FA97B4B, 0x24760DEB 
-        -3.65315727442169155270e-02, // 0xBFA2B444, 0x2C6A6C2F 
-        1.62858201153657823623e-02, // 0x3F90AD3A, 0xE322DA11 
+    static final double aT[] = { 3.33333333333329318027e-01, // 0x3FD55555, 0x5555550D
+            -1.99999999998764832476e-01, // 0xBFC99999, 0x9998EBC4 
+            1.42857142725034663711e-01, // 0x3FC24924, 0x920083FF 
+            -1.11111104054623557880e-01, // 0xBFBC71C6, 0xFE231671 
+            9.09088713343650656196e-02, // 0x3FB745CD, 0xC54C206E 
+            -7.69187620504482999495e-02, // 0xBFB3B0F2, 0xAF749A6D 
+            6.66107313738753120669e-02, // 0x3FB10D66, 0xA0D03D51 
+            -5.83357013379057348645e-02, // 0xBFADDE2D, 0x52DEFD9A 
+            4.97687799461593236017e-02, // 0x3FA97B4B, 0x24760DEB 
+            -3.65315727442169155270e-02, // 0xBFA2B444, 0x2C6A6C2F 
+            1.62858201153657823623e-02, // 0x3F90AD3A, 0xE322DA11 
     };
 
     static final double one = 1.0, huge = 1.0e300;
@@ -1139,16 +1160,15 @@ public final class MathLib {
 
         hx = __HIx;
         ix = hx & 0x7fffffff;
-        if (ix >= 0x44100000) {	// if |x| >= 2^66 
-            if (ix > 0x7ff00000
-                    || (ix == 0x7ff00000 && (__LOx != 0)))
-                return x + x;		// NaN
+        if (ix >= 0x44100000) { // if |x| >= 2^66 
+            if (ix > 0x7ff00000 || (ix == 0x7ff00000 && (__LOx != 0)))
+                return x + x; // NaN
             if (hx > 0)
                 return atanhi[3] + atanlo[3];
             else
                 return -atanhi[3] - atanlo[3];
         }
-        if (ix < 0x3fdc0000) {	// |x| < 0.4375
+        if (ix < 0x3fdc0000) { // |x| < 0.4375
             if (ix < 0x3e200000) // |x| < 2^-29
                 if (huge + x > one)
                     return x;
@@ -1156,17 +1176,17 @@ public final class MathLib {
         } else {
             x = MathLib.abs(x);
             if (ix < 0x3ff30000) // |x| < 1.1875
-                if (ix < 0x3fe60000) {	// 7/16 <=|x|<11/16
+                if (ix < 0x3fe60000) { // 7/16 <=|x|<11/16
                     id = 0;
                     x = (2.0 * x - one) / (2.0 + x);
-                } else {			// 11/16<=|x|< 19/16
+                } else { // 11/16<=|x|< 19/16
                     id = 1;
                     x = (x - one) / (x + one);
                 }
-            else if (ix < 0x40038000) {	// |x| < 2.4375
+            else if (ix < 0x40038000) { // |x| < 2.4375
                 id = 2;
                 x = (x - 1.5) / (one + 1.5 * x);
-            } else {			// 2.4375 <= |x| < 2^66
+            } else { // 2.4375 <= |x| < 2^66
                 id = 3;
                 x = -1.0 / x;
             }
@@ -1175,7 +1195,11 @@ public final class MathLib {
         z = x * x;
         w = z * z;
         // break sum from i=0 to 10 aT[i]z**(i+1) into odd and even poly
-        s1 = z * (aT[0] + w * (aT[2] + w * (aT[4] + w * (aT[6] + w * (aT[8] + w * aT[10])))));
+        s1 = z
+                * (aT[0] + w
+                        * (aT[2] + w
+                                * (aT[4] + w
+                                        * (aT[6] + w * (aT[8] + w * aT[10])))));
         s2 = w * (aT[1] + w * (aT[3] + w * (aT[5] + w * (aT[7] + w * aT[9]))));
         if (id < 0)
             return x - x * (s1 + s2);
@@ -1184,6 +1208,7 @@ public final class MathLib {
             return (hx < 0) ? -z : z;
         }
     }
+
     /**/
     ////////////////////////////////////////////////////////////////////////////
     /* @(#)e_log.c 1.3 95/01/18 */
@@ -1257,7 +1282,7 @@ public final class MathLib {
             Lg4 = 2.222219843214978396e-01, // 3FCC71C5 1D8E78AF
             Lg5 = 1.818357216161805012e-01, // 3FC74664 96CB03DE
             Lg6 = 1.531383769920937332e-01, // 3FC39A09 D078C69F
-            Lg7 = 1.479819860511658591e-01;  // 3FC2F112 DF3E5244
+            Lg7 = 1.479819860511658591e-01; // 3FC2F112 DF3E5244
 
     static final double zero = 0.0;
 
@@ -1271,11 +1296,11 @@ public final class MathLib {
         lx = (int) xBits;
 
         k = 0;
-        if (hx < 0x00100000) {			// x < 2**-1022 
+        if (hx < 0x00100000) { // x < 2**-1022 
             if (((hx & 0x7fffffff) | lx) == 0)
-                return -two54 / zero;		// log(+-0)=-inf
+                return -two54 / zero; // log(+-0)=-inf
             if (hx < 0)
-                return (x - x) / zero;	// log(-#) = NaN
+                return (x - x) / zero; // log(-#) = NaN
             k -= 54;
             x *= two54; // subnormal number, scale up x
             xBits = Double.doubleToLongBits(x);
@@ -1287,12 +1312,12 @@ public final class MathLib {
         hx &= 0x000fffff;
         i = (hx + 0x95f64) & 0x100000;
         xBits = Double.doubleToLongBits(x);
-        int HIx = hx | (i ^ 0x3ff00000);	// normalize x or x/2
+        int HIx = hx | (i ^ 0x3ff00000); // normalize x or x/2
         xBits = ((HIx & 0xFFFFFFFFL) << 32) | (xBits & 0xFFFFFFFFL);
         x = Double.longBitsToDouble(xBits);
         k += (i >> 20);
         f = x - 1.0;
-        if ((0x000fffff & (2 + hx)) < 3) {	// |f| < 2**-20
+        if ((0x000fffff & (2 + hx)) < 3) { // |f| < 2**-20
             if (f == zero)
                 if (k == 0)
                     return zero;
@@ -1323,12 +1348,14 @@ public final class MathLib {
             if (k == 0)
                 return f - (hfsq - s * (hfsq + R));
             else
-                return dk * ln2_hi - ((hfsq - (s * (hfsq + R) + dk * ln2_lo)) - f);
+                return dk * ln2_hi
+                        - ((hfsq - (s * (hfsq + R) + dk * ln2_lo)) - f);
         } else if (k == 0)
             return f - s * (f - R);
         else
             return dk * ln2_hi - ((s * (f - R) - dk * ln2_lo) - f);
     }
+
     /**/
     ////////////////////////////////////////////////////////////////////////////
     /* @(#)e_exp.c 1.6 04/04/22 */
@@ -1404,14 +1431,14 @@ public final class MathLib {
      * compiler will convert from decimal to binary accurately enough
      * to produce the hexadecimal values shown.
      */
-    static final double halF[] = {0.5, -0.5,},
+    static final double halF[] = { 0.5, -0.5, },
             twom1000 = 9.33263618503218878990e-302, // 2**-1000=0x01700000,0
             o_threshold = 7.09782712893383973096e+02, // 0x40862E42, 0xFEFA39EF
             u_threshold = -7.45133219101941108420e+02, // 0xc0874910, 0xD52D3051
-            ln2HI[] = {6.93147180369123816490e-01, // 0x3fe62e42, 0xfee00000
-        -6.93147180369123816490e-01,},// 0xbfe62e42, 0xfee00000
-            ln2LO[] = {1.90821492927058770002e-10, // 0x3dea39ef, 0x35793c76
-        -1.90821492927058770002e-10,},// 0xbdea39ef, 0x35793c76
+            ln2HI[] = { 6.93147180369123816490e-01, // 0x3fe62e42, 0xfee00000
+                    -6.93147180369123816490e-01, },// 0xbfe62e42, 0xfee00000
+            ln2LO[] = { 1.90821492927058770002e-10, // 0x3dea39ef, 0x35793c76
+                    -1.90821492927058770002e-10, },// 0xbdea39ef, 0x35793c76
             invln2 = 1.44269504088896338700e+00, // 0x3ff71547, 0x652b82fe
             P1 = 1.66666666666666019037e-01, // 0x3FC55555, 0x5555553E
             P2 = -2.77777777770155933842e-03, // 0xBF66C16C, 0x16BEBD93
@@ -1428,12 +1455,12 @@ public final class MathLib {
         int __HIx = (int) (xBits >> 32);
         int __LOx = (int) xBits;
 
-        hx = __HIx;	// high word of x
-        xsb = (hx >> 31) & 1;		// sign bit of x
-        hx &= 0x7fffffff;		// high word of |x|
+        hx = __HIx; // high word of x
+        xsb = (hx >> 31) & 1; // sign bit of x
+        hx &= 0x7fffffff; // high word of |x|
 
         // filter out non-finite argument
-        if (hx >= 0x40862E42) {			// if |x|>=709.78...
+        if (hx >= 0x40862E42) { // if |x|>=709.78...
             if (hx >= 0x7ff00000)
                 if (((hx & 0xfffff) | __LOx) != 0)
                     return x + x; // NaN
@@ -1446,19 +1473,19 @@ public final class MathLib {
         }
 
         // argument reduction
-        if (hx > 0x3fd62e42) {		// if  |x| > 0.5 ln2 
-            if (hx < 0x3FF0A2B2) {	// and |x| < 1.5 ln2
+        if (hx > 0x3fd62e42) { // if  |x| > 0.5 ln2 
+            if (hx < 0x3FF0A2B2) { // and |x| < 1.5 ln2
                 hi = x - ln2HI[xsb];
                 lo = ln2LO[xsb];
                 k = 1 - xsb - xsb;
             } else {
                 k = (int) (invln2 * x + halF[xsb]);
                 t = k;
-                hi = x - t * ln2HI[0];	// t*ln2HI is exact here
+                hi = x - t * ln2HI[0]; // t*ln2HI is exact here
                 lo = t * ln2LO[0];
             }
             x = hi - lo;
-        } else if (hx < 0x3e300000) {	// when |x|<2**-28
+        } else if (hx < 0x3e300000) { // when |x|<2**-28
             if (huge + x > one)
                 return one + x;// trigger inexact
         } else
@@ -1474,7 +1501,7 @@ public final class MathLib {
         long yBits = Double.doubleToLongBits(y);
         int __HIy = (int) (yBits >> 32);
         if (k >= -1021) {
-            __HIy += (k << 20);	// add k to y's exponent
+            __HIy += (k << 20); // add k to y's exponent
             yBits = ((__HIy & 0xFFFFFFFFL) << 32) | (yBits & 0xFFFFFFFFL);
             y = Double.longBitsToDouble(yBits);
             return y;

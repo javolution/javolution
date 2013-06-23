@@ -32,11 +32,11 @@ import org.osgi.framework.Version;
 /**
  * Holds minimalist bundle implementation.
  */
-public class BundleImpl implements Bundle{
+public class BundleImpl implements Bundle {
 
-   /////////////////////////////////////////////////////////////////////////////
-   // Converted from BundleImpl.hpp (C++)
-   //
+    /////////////////////////////////////////////////////////////////////////////
+    // Converted from BundleImpl.hpp (C++)
+    //
 
     OSGiImpl osgi;
     String symbolicName;
@@ -50,7 +50,8 @@ public class BundleImpl implements Bundle{
     /**
      * Creates a new BundleImpl instance.
      */
-    public BundleImpl(OSGiImpl osgi, String symbolicName, BundleActivator activator) {
+    public BundleImpl(OSGiImpl osgi, String symbolicName,
+            BundleActivator activator) {
         this.osgi = osgi;
         this.symbolicName = symbolicName;
         this.activator = activator;
@@ -77,7 +78,8 @@ public class BundleImpl implements Bundle{
     @Override
     public void start() throws BundleException {
         if (state != Bundle.RESOLVED)
-            throw new RuntimeException("Bundle " + symbolicName + " not in a resolved state");
+            throw new RuntimeException("Bundle " + symbolicName
+                    + " not in a resolved state");
         state = Bundle.STARTING;
         try {
             activator.start(context);
@@ -98,7 +100,8 @@ public class BundleImpl implements Bundle{
             unregisterListeners();
             state = Bundle.RESOLVED;
             context = null;
-            throw new BundleException("Cannot start bundle " + symbolicName, error);
+            throw new BundleException("Cannot start bundle " + symbolicName,
+                    error);
         }
     }
 
@@ -130,7 +133,9 @@ public class BundleImpl implements Bundle{
         unregisterServices();
         unregisterListeners();
         state = Bundle.RESOLVED;
-        if (error != null) throw new BundleException("Cannot stop bundle" + symbolicName, error); // Rethrow after cleanup (no finally block in C++)
+        if (error != null)
+            throw new BundleException("Cannot stop bundle" + symbolicName,
+                    error); // Rethrow after cleanup (no finally block in C++)
     }
 
     @Override
@@ -148,7 +153,8 @@ public class BundleImpl implements Bundle{
         for (int i = 0; i < serviceReferences.size(); i++) {
             ServiceReferenceImpl<?> serviceReference = serviceReferences.get(i);
             // Fire event to listeners from all bundles.
-            ServiceEvent serviceEvent = new ServiceEvent(ServiceEvent.UNREGISTERING, serviceReference);
+            ServiceEvent serviceEvent = new ServiceEvent(
+                    ServiceEvent.UNREGISTERING, serviceReference);
             osgi.fireServiceEvent(serviceEvent);
             serviceReference.bundle = null; // No more active.
         }
@@ -162,10 +168,9 @@ public class BundleImpl implements Bundle{
         serviceListenerFilters.clear();
     }
 
-
     // End conversion.
     ///////////////////////////////////////////////////////////////////////////
-  
+
     @Override
     public void update() throws BundleException {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -212,7 +217,7 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public Dictionary<String,String> getHeaders(String string) {
+    public Dictionary<String, String> getHeaders(String string) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -242,7 +247,8 @@ public class BundleImpl implements Bundle{
     }
 
     @Override
-    public Enumeration<URL> findEntries(String string, String string1, boolean bln) {
+    public Enumeration<URL> findEntries(String string, String string1,
+            boolean bln) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -254,7 +260,8 @@ public class BundleImpl implements Bundle{
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public Map<X509Certificate, List<X509Certificate>> getSignerCertificates(int i) {
+    public Map<X509Certificate, List<X509Certificate>> getSignerCertificates(
+            int i) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

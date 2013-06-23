@@ -40,18 +40,17 @@ import javolution.lang.Permission;
  */
 public abstract class SecurityContext extends AbstractContext<SecurityContext> {
 
-     /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
-     */
+    /**
+    * Indicates whether or not static methods will block for an OSGi published
+    * implementation this class (default configuration <code>false</code>).
+    */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
             false);
 
     /**
      * Default constructor.
      */
-    protected SecurityContext() {
-    }
+    protected SecurityContext() {}
 
     /**
      * Enters a new security context instance.
@@ -125,8 +124,10 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      */
     protected static SecurityContext current() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
-        if (ctx != null) return ctx;
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        if (ctx != null)
+            return ctx;
+        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(),
+                DEFAULT);
     }
 
     private static final SecurityContextImpl DEFAULT = new SecurityContextImpl();

@@ -29,15 +29,15 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Inherited
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.FIELD, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Parallelizable {
-    
+
     /**
      * Indicates if this element can safely be used concurrently 
      * (default {@code true}).
      */
-    boolean value() default true; 
+    boolean value() default true;
 
     /**
      * Indicates if this element does not use any form of 
@@ -49,10 +49,10 @@ public @interface Parallelizable {
      * when using {@link RealTime real-time} elements which are not mutex-free.
      */
     boolean mutexFree() default true;
-  
+
     /**
      * Provides additional information (default {@code ""}).
      */
     String comment() default "";
- 
+
 }

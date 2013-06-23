@@ -12,11 +12,11 @@ import java.io.Serializable;
 
 import javolution.util.function.EqualityComparator;
 
-
 /**
  * The identity comparator implementation.
  */
-public class IdentityComparatorImpl<E> implements EqualityComparator<E>, Serializable {
+public class IdentityComparatorImpl<E> implements EqualityComparator<E>,
+        Serializable {
 
     private static final long serialVersionUID = 6576306094743751922L;
 
@@ -29,15 +29,16 @@ public class IdentityComparatorImpl<E> implements EqualityComparator<E>, Seriali
     public boolean areEqual(E e1, E e2) {
         return e1 == e2;
     }
-    
+
     @Override
     public int compare(E left, E right) {
-        if (left == right) return 0;
+        if (left == right)
+            return 0;
         if (left == null)
             return -1;
         if (right == null)
             return 1;
-        
+
         // Empirical comparison.
         return (hashCodeOf(left) < hashCodeOf(right)) ? -1 : 1;
     }

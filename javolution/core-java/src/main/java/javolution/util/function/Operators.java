@@ -17,7 +17,7 @@ import javolution.annotation.Parallelizable;
 import javolution.annotation.RealTime;
 import javolution.util.FastCollection;
 import javolution.util.service.CollectionService;
-import javolution.util.service.IterationController;
+import javolution.util.service.CollectionService.IterationController;
 
 /**
  * <p> A set of useful {@link CollectionOperator operators} over collections.</p>

@@ -44,12 +44,11 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      */
     public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
             false);
-    
+
     /**
      * Default constructor.
      */
-    protected LocalContext() {
-    }
+    protected LocalContext() {}
 
     /**
      * Enters a new local context instance.
@@ -83,8 +82,10 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      */
     protected static LocalContext current() {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx != null) return ctx;
-        return LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        if (ctx != null)
+            return ctx;
+        return LOCAL_CONTEXT_TRACKER
+                .getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
 
     private static final LocalContextImpl DEFAULT = new LocalContextImpl();

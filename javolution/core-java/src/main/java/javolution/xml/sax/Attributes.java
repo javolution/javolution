@@ -7,6 +7,7 @@
  * freely granted, provided that this notice is preserved.
  */
 package javolution.xml.sax;
+
 import java.lang.CharSequence;
 
 import javolution.text.CharArray;
@@ -52,7 +53,6 @@ public interface Attributes {
      * @see    #getLength
      */
     CharArray getLocalName(int index);
-
 
     /**
      * Looks up an attribute's XML 1.0 qualified name by index.

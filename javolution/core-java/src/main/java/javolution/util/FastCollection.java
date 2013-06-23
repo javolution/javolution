@@ -138,7 +138,8 @@ import javolution.util.service.CollectionService.IterationController;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@RealTime // Inheritable.
+@RealTime
+// Inheritable.
 @Parallelizable(mutexFree = false, comment = "Mutexes used by shared/parallel views.")
 @DefaultTextFormat(FastCollection.StandardText.class)
 public abstract class FastCollection<E> implements Collection<E>,
@@ -347,9 +348,9 @@ public abstract class FastCollection<E> implements Collection<E>,
         return this.mapped(TO_ONE).reduce(Operators.SUM);
     }
 
-   private static final Integer ONE = new Integer(1);
-   private static final Function<Object, Integer> TO_ONE = new Function<Object, Integer>() {
- 
+    private static final Integer ONE = new Integer(1);
+    private static final Function<Object, Integer> TO_ONE = new Function<Object, Integer>() {
+
         @Override
         public Integer apply(Object param) {
             return ONE;

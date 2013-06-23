@@ -26,19 +26,20 @@ public abstract class ImmortalContext extends AllocatorContext<ImmortalContext> 
     /**
      * Default constructor.
      */
-    protected ImmortalContext() {
-    }
-    
-   /**
-     * Enters a heap context instance (private since heap context
-     * is not configurable).
-     */
+    protected ImmortalContext() {}
+
+    /**
+      * Enters a heap context instance (private since heap context
+      * is not configurable).
+      */
     private static ImmortalContext enter() {
         ImmortalContext ctx = AbstractContext.current(ImmortalContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return IMMORTAL_CONTEXT_TRACKER.getService(false, DEFAULT).inner().enterScope();
+        if (ctx != null)
+            return ctx.inner().enterScope();
+        return IMMORTAL_CONTEXT_TRACKER.getService(false, DEFAULT).inner()
+                .enterScope();
     }
-    
+
     /**
      * Executes the specified logic allocating objects on the heap.
      */
@@ -76,6 +77,6 @@ public abstract class ImmortalContext extends AllocatorContext<ImmortalContext> 
             ctx.exit();
         }
     }
-    
+
     private static final ImmortalContextImpl DEFAULT = new ImmortalContextImpl();
 }

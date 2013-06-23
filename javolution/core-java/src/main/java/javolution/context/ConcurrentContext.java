@@ -279,7 +279,8 @@ public abstract class ConcurrentContext extends
                 .current(ConcurrentContext.class);
         if (ctx != null)
             return ctx;
-        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(),
+                DEFAULT);
     }
 
     private static final ConcurrentContextImpl DEFAULT = new ConcurrentContextImpl();

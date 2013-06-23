@@ -20,7 +20,7 @@ import static javolution.annotation.RealTime.Limit.*;
  */
 @Parallelizable
 @RealTime(limit = UNKNOWN)
-public class Comparators  {
+public class Comparators {
 
     /**
      * A standard object comparator (based on the object hashCode and equals 
@@ -29,8 +29,7 @@ public class Comparators  {
      * (if the object does not implement {@link Comparable}).
      * 
      */
-    public static final EqualityComparator<Object> STANDARD 
-        = new StandardComparatorImpl<Object>();
+    public static final EqualityComparator<Object> STANDARD = new StandardComparatorImpl<Object>();
 
     /**
      * A comparator for which instances are only equals to themselves.
@@ -38,8 +37,7 @@ public class Comparators  {
      * is used.
      */
     @RealTime(limit = CONSTANT)
-    public static final EqualityComparator<Object> IDENTITY 
-        = new IdentityComparatorImpl<Object>();
+    public static final EqualityComparator<Object> IDENTITY = new IdentityComparatorImpl<Object>();
 
     /**
      * A content array comparator. If the content of an array is also 
@@ -48,35 +46,30 @@ public class Comparators  {
      * comparator is used for non-array elements. 
      */
     @RealTime(limit = LINEAR)
-    public static final EqualityComparator<Object> ARRAY 
-        = new ArrayComparatorImpl();
+    public static final EqualityComparator<Object> ARRAY = new ArrayComparatorImpl();
 
     /**
      * A lexicographic comparator for any {@link CharSequence}.
      */
     @RealTime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL 
-        = new LexicalComparatorImpl();
-    
+    public static final EqualityComparator<CharSequence> LEXICAL = new LexicalComparatorImpl();
+
     /**
      * A case insensitive lexicographic comparator for any {@link CharSequence}.
      */
     @RealTime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL_CASE_INSENSITIVE 
-        = new LexicalCaseInsensitiveComparatorImpl();
-    
+    public static final EqualityComparator<CharSequence> LEXICAL_CASE_INSENSITIVE = new LexicalCaseInsensitiveComparatorImpl();
+
     /**
      * An optimized lexical comparator for any {@link CharSequence} taking 
      * a sample of few characters instead of the whole character sequence to 
      * calculate the hash code (still equality comparison checks all characters).
      */
     @RealTime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL_FAST 
-        = new LexicalFastComparatorImpl();
-        
+    public static final EqualityComparator<CharSequence> LEXICAL_FAST = new LexicalFastComparatorImpl();
+
     /**
      * Utility class (private constructor).
      */
-    private Comparators() {
-    }
+    private Comparators() {}
 }

@@ -38,8 +38,7 @@ public abstract class Union extends Struct {
     /**
      * Default constructor.
      */
-    public Union() {
-    }
+    public Union() {}
 
     /**
      * Returns <code>true</code>.

@@ -56,6 +56,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
     public CharArray() {
         _array = NO_CHAR;
     }
+
     private static final char[] NO_CHAR = new char[0];
 
     /**
@@ -140,9 +141,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
                         break;
                     }
                 }
-                if (match) {
-                    return i - _offset;
-                }
+                if (match) { return i - _offset; }
             }
         }
         return -1;

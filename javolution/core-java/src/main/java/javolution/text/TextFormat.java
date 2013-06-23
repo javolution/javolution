@@ -46,7 +46,7 @@ import java.io.IOException;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0, December 12, 2012
  */
-public abstract class TextFormat<T>  {
+public abstract class TextFormat<T> {
 
     /**
      * Reads a portion of the specified <code>CharSequence</code> from the
@@ -70,8 +70,9 @@ public abstract class TextFormat<T>  {
      * @param dest the appendable destination.
      * @return the specified <code>Appendable</code>.
      */
-    public abstract Appendable format(T  obj, Appendable dest) throws IOException;
-     
+    public abstract Appendable format(T obj, Appendable dest)
+            throws IOException;
+
     /**
      * Convenience method to parse the whole character sequence; if there are 
      * unread extraneous characters after parsing then an exception is raised.
@@ -85,22 +86,23 @@ public abstract class TextFormat<T>  {
     public T parse(CharSequence csq) throws IllegalArgumentException {
         Cursor cursor = new Cursor();
         T obj = parse(csq, cursor);
-        if (!cursor.atEnd(csq)) throw new IllegalArgumentException(
-                "Extraneous character(s) \"" + cursor.tail(csq) + "\"");
+        if (!cursor.atEnd(csq))
+            throw new IllegalArgumentException("Extraneous character(s) \""
+                    + cursor.tail(csq) + "\"");
         return obj;
     }
-    
-     /**
-     * Convenience method to format the specified object to a {@link TextBuilder};
-     * unlike the abstract format method, this method does not throw {@link IOException}.
-     * 
-     * @param obj the object to format.
-     * @param dest the appendable destination.
-     * @return the specified <code>TextBuilder</code>.
-     */
-    public TextBuilder format(T  obj, TextBuilder dest) {
+
+    /**
+    * Convenience method to format the specified object to a {@link TextBuilder};
+    * unlike the abstract format method, this method does not throw {@link IOException}.
+    * 
+    * @param obj the object to format.
+    * @param dest the appendable destination.
+    * @return the specified <code>TextBuilder</code>.
+    */
+    public TextBuilder format(T obj, TextBuilder dest) {
         try {
-            this.format(obj, (Appendable)dest);
+            this.format(obj, (Appendable) dest);
             return dest;
         } catch (IOException e) {
             throw new Error(e); // Cannot happens.
@@ -113,9 +115,9 @@ public abstract class TextFormat<T>  {
      * @param obj the object to format.
      * @return the formatting result as a string.
      */
-    public String format(T obj)  {
-         return this.format(obj, new TextBuilder()).toString();
-        
+    public String format(T obj) {
+        return this.format(obj, new TextBuilder()).toString();
+
     }
-       
+
 }

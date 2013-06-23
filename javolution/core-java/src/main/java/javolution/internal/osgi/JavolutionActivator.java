@@ -36,24 +36,24 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class JavolutionActivator implements BundleActivator {
 
-    public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER 
-        = new ContextTracker<ConcurrentContext>(ConcurrentContext.class);
-    public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER 
-       = new ContextTracker<HeapContext>(HeapContext.class);
-    public final static ContextTracker<ImmortalContext> IMMORTAL_CONTEXT_TRACKER 
-    = new ContextTracker<ImmortalContext>(ImmortalContext.class);
-    public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER 
-       = new ContextTracker<LocalContext>(LocalContext.class);
-    public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER 
-        = new ContextTracker<LogContext>(LogContext.class);
-    public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER 
-        = new ContextTracker<SecurityContext>(SecurityContext.class);
-    public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER 
-        = new ContextTracker<StackContext>(StackContext.class);
-    public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER
-       = new ContextTracker<TextContext>(TextContext.class);
-    public final static ContextTracker<XMLContext> XML_CONTEXT_TRACKER
-       = new ContextTracker<XMLContext>(XMLContext.class);
+    public final static ContextTracker<ConcurrentContext> CONCURRENT_CONTEXT_TRACKER = new ContextTracker<ConcurrentContext>(
+            ConcurrentContext.class);
+    public final static ContextTracker<HeapContext> HEAP_CONTEXT_TRACKER = new ContextTracker<HeapContext>(
+            HeapContext.class);
+    public final static ContextTracker<ImmortalContext> IMMORTAL_CONTEXT_TRACKER = new ContextTracker<ImmortalContext>(
+            ImmortalContext.class);
+    public final static ContextTracker<LocalContext> LOCAL_CONTEXT_TRACKER = new ContextTracker<LocalContext>(
+            LocalContext.class);
+    public final static ContextTracker<LogContext> LOG_CONTEXT_TRACKER = new ContextTracker<LogContext>(
+            LogContext.class);
+    public final static ContextTracker<SecurityContext> SECURITY_CONTEXT_TRACKER = new ContextTracker<SecurityContext>(
+            SecurityContext.class);
+    public final static ContextTracker<StackContext> STACK_CONTEXT_TRACKER = new ContextTracker<StackContext>(
+            StackContext.class);
+    public final static ContextTracker<TextContext> TEXT_CONTEXT_TRACKER = new ContextTracker<TextContext>(
+            TextContext.class);
+    public final static ContextTracker<XMLContext> XML_CONTEXT_TRACKER = new ContextTracker<XMLContext>(
+            XMLContext.class);
 
     private ServiceTracker<LogService, LogService> logServiceTracker;
     private static JavolutionActivator INSTANCE;
@@ -122,8 +122,10 @@ public class JavolutionActivator implements BundleActivator {
         Initializer initializer = new Initializer(
                 JavolutionActivator.class.getClassLoader());
         // Loads classes not yet referenced (directly or indirectly).
-        initializer.loadClass("javolution.internal.xml.stream.XMLInputFactoryImpl");
-        initializer.loadClass("javolution.internal.xml.stream.XMLOutputFactoryImpl");
+        initializer
+                .loadClass("javolution.internal.xml.stream.XMLInputFactoryImpl");
+        initializer
+                .loadClass("javolution.internal.xml.stream.XMLOutputFactoryImpl");
         initializer.initializeLoadedClasses(); // Recursive loading/initialization.
         return initializer.isInitializationSuccessful();
     }

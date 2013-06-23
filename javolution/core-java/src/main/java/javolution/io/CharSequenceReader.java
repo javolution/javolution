@@ -22,7 +22,7 @@ import javolution.text.TextBuilder;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.8, May 8, 2004
  */
-public final class CharSequenceReader extends Reader  {
+public final class CharSequenceReader extends Reader {
 
     /**
      * Holds the character sequence input.
@@ -40,8 +40,7 @@ public final class CharSequenceReader extends Reader  {
      * 
      * @see #setInput
      */
-    public CharSequenceReader() {
-    }
+    public CharSequenceReader() {}
 
     /**
      * Sets the character sequence to use for reading.
@@ -125,9 +124,7 @@ public final class CharSequenceReader extends Reader  {
             tb.getChars(_index, _index + count, cbuf, off);
         } else if (csq instanceof CharArray) {
             CharArray ca = (CharArray) csq;
-            System
-                    .arraycopy(ca.array(), _index + ca.offset(), cbuf, off,
-                            count);
+            System.arraycopy(ca.array(), _index + ca.offset(), cbuf, off, count);
         } else { // Generic CharSequence.
             for (int i = off, n = off + count, j = _index; i < n;) {
                 cbuf[i++] = _input.charAt(j++);

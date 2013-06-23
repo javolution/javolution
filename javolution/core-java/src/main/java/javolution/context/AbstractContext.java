@@ -76,15 +76,14 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
     /**
      * Default constructor. 
      */
-    protected AbstractContext() {
-    }
+    protected AbstractContext() {}
 
     /**
      * Returns the last context entered or <code>null</code> if no context have
      * been entered.
      */
     protected static AbstractContext<?> current() {
-	return AbstractContext.CURRENT.get();
+        return AbstractContext.CURRENT.get();
     }
 
     /**
@@ -92,14 +91,14 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      */
     @SuppressWarnings("unchecked")
     protected static <T extends AbstractContext<T>> T current(Class<T> type) {
-	AbstractContext<?> ctx = AbstractContext.CURRENT.get();
-	while (true) {
-	    if (ctx == null)
-		return null;
-	    if (type.isInstance(ctx))
-		return (T) ctx;
-	    ctx = ctx.outer;
-	}
+        AbstractContext<?> ctx = AbstractContext.CURRENT.get();
+        while (true) {
+            if (ctx == null)
+                return null;
+            if (type.isInstance(ctx))
+                return (T) ctx;
+            ctx = ctx.outer;
+        }
     }
 
     /**
@@ -116,14 +115,16 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      *         if <code>SecurityPermission(impl, "enter")</code> is not granted. 
      */
     public static <T extends AbstractContext<T>> T enter(Class<T> impl) {
-	SecurityContext.check(new Permission<T>(impl, "enter"));
-	try {
-	    return impl.newInstance().enterScope();
-	} catch (InstantiationException e) {
-	    throw new IllegalArgumentException("Invalid context implementation " + impl, e);
-	} catch (IllegalAccessException e) {
-	    throw new IllegalArgumentException("Invalid context implementation " + impl, e);
-	}
+        SecurityContext.check(new Permission<T>(impl, "enter"));
+        try {
+            return impl.newInstance().enterScope();
+        } catch (InstantiationException e) {
+            throw new IllegalArgumentException(
+                    "Invalid context implementation " + impl, e);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(
+                    "Invalid context implementation " + impl, e);
+        }
     }
 
     /**
@@ -134,10 +135,11 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      *         context.
      */
     public void exit() {
-	if (this != AbstractContext.CURRENT.get())
-	    throw new IllegalStateException("This context is not the current context");
-	AbstractContext.CURRENT.set(outer);
-	outer = null;
+        if (this != AbstractContext.CURRENT.get())
+            throw new IllegalStateException(
+                    "This context is not the current context");
+        AbstractContext.CURRENT.set(outer);
+        outer = null;
     }
 
     /**
@@ -146,9 +148,9 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      */
     @SuppressWarnings("unchecked")
     protected C enterScope() {
-	outer = AbstractContext.CURRENT.get();
-	AbstractContext.CURRENT.set(this);
-	return (C) this;
+        outer = AbstractContext.CURRENT.get();
+        AbstractContext.CURRENT.set(this);
+        return (C) this;
     }
 
     /**
@@ -156,7 +158,7 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      * context has no outer context (top context).
      */
     protected AbstractContext<?> getOuter() {
-	return outer;
+        return outer;
     }
 
     /**
@@ -165,7 +167,5 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      * from its parent. 
      */
     protected abstract C inner();
-    
-    
 
 }

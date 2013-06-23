@@ -72,7 +72,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     public static final Configurable<Level> LEVEL = new Configurable<Level>(
             Level.DEBUG);
-    
+
     /**
      * Default constructor.
      */

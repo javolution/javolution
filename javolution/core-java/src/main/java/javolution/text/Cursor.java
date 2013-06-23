@@ -41,18 +41,17 @@ package javolution.text;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, November 19, 2009
  */
-public class Cursor  {
+public class Cursor {
 
     /**
      * Holds the index.
      */
-   private int index;
-   
+    private int index;
+
     /**
      * Default constructor.
      */
-    public Cursor() {
-    }
+    public Cursor() {}
 
     /**
      * Returns this cursor index.
@@ -104,7 +103,8 @@ public class Cursor  {
      * @return <code>csq.charAt(this.getIndex()) == c</code>
      */
     public final boolean at(CharSet charSet, CharSequence csq) {
-        return index < csq.length() ? charSet.contains(csq.charAt(index)) : false;
+        return index < csq.length() ? charSet.contains(csq.charAt(index))
+                : false;
     }
 
     /**
@@ -162,8 +162,7 @@ public class Cursor  {
     public final boolean skipAny(char c, CharSequence csq) {
         int i = index;
         int n = csq.length();
-        for (; (i < n) && (csq.charAt(i) == c); i++) {
-        }
+        for (; (i < n) && (csq.charAt(i) == c); i++) {}
         if (i == index)
             return false; // Cursor did not moved.
         index = i;
@@ -189,8 +188,7 @@ public class Cursor  {
     public final boolean skipAny(CharSet charSet, CharSequence csq) {
         int i = index;
         int n = csq.length();
-        for (; (i < n) && charSet.contains(csq.charAt(i)); i++) {
-        }
+        for (; (i < n) && charSet.contains(csq.charAt(i)); i++) {}
         if (i == index)
             return false; // Cursor did not moved.
         index = i;

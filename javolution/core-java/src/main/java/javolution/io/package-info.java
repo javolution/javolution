@@ -4,3 +4,4 @@
     for direct interoperability with C/C++.</p>
  */
 package javolution.io;
+

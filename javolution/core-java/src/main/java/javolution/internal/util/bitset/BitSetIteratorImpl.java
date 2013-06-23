@@ -43,7 +43,8 @@ public final class BitSetIteratorImpl implements Iterator<Index> {
     }
 
     public void remove() {
-        if (currentIndex < 0) throw new IllegalStateException();
+        if (currentIndex < 0)
+            throw new IllegalStateException();
         that.clear(currentIndex);
         currentIndex = -1;
     }

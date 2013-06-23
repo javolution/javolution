@@ -18,7 +18,8 @@ import javolution.util.service.CollectionService.IterationController;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public final class SearchConsumerImpl<E> implements Consumer<E>, IterationController {
+public final class SearchConsumerImpl<E> implements Consumer<E>,
+        IterationController {
 
     private final E element;
     private final EqualityComparator<? super E> equality;
@@ -27,12 +28,12 @@ public final class SearchConsumerImpl<E> implements Consumer<E>, IterationContro
     public SearchConsumerImpl(E element, EqualityComparator<? super E> equality) {
         this.element = element;
         this.equality = equality;
-    }       
+    }
 
     public boolean isFound() {
         return found;
     }
-    
+
     @Override
     public boolean doSequential() {
         return false;
@@ -53,5 +54,5 @@ public final class SearchConsumerImpl<E> implements Consumer<E>, IterationContro
         if (equality.areEqual(element, param)) {
             found = true;
         }
-    }    
+    }
 }

@@ -122,8 +122,7 @@ public class XMLBinding implements XMLSerializable {
     /**
      * Default constructor.
      */
-    public XMLBinding() {
-    }
+    public XMLBinding() {}
 
     /**
      * Sets the qualified alias for the specified class.
@@ -177,8 +176,9 @@ public class XMLBinding implements XMLSerializable {
      * @param forClass the class for which the XML format is returned.
      * @return the XML format for the specified class (never <code>null</code>).
      */
-    protected  XMLFormat<?> getFormat(Class<?> forClass) throws XMLStreamException  {
-         return XMLContext.getFormat(forClass);
+    protected XMLFormat<?> getFormat(Class<?> forClass)
+            throws XMLStreamException {
+        return XMLContext.getFormat(forClass);
     }
 
     /**
@@ -208,14 +208,15 @@ public class XMLBinding implements XMLSerializable {
                 if (_classAttribute == null)
                     throw new XMLStreamException(
                             "Binding has no class attribute defined, cannot retrieve class");
-                classQName = QName.valueOf(reader.getAttributeValue(_classAttribute
-                        .getNamespaceURI(), _classAttribute.getLocalName()));
+                classQName = QName.valueOf(reader.getAttributeValue(
+                        _classAttribute.getNamespaceURI(),
+                        _classAttribute.getLocalName()));
                 if (classQName == null)
                     throw new XMLStreamException(
                             "Cannot retrieve class (class attribute not found)");
             } else {
-                classQName = QName.valueOf(reader.getNamespaceURI(), reader
-                        .getLocalName());
+                classQName = QName.valueOf(reader.getNamespaceURI(),
+                        reader.getLocalName());
             }
 
             // Searches aliases with namespace URI.
@@ -231,8 +232,10 @@ public class XMLBinding implements XMLSerializable {
             // Finally convert the qualified name to a class (ignoring namespace URI).
             cls = Class.forName(classQName.getLocalName().toString());
             if (cls == null)
-                throw new XMLStreamException("Class " + classQName.getLocalName() + 
-                        " not found (see javolution.lang.Reflection to support additional class loader)");
+                throw new XMLStreamException(
+                        "Class "
+                                + classQName.getLocalName()
+                                + " not found (see javolution.lang.Reflection to support additional class loader)");
             _aliasToClass.put(classQName, cls);
             return cls;
         } catch (ClassNotFoundException ex) {
@@ -273,11 +276,12 @@ public class XMLBinding implements XMLSerializable {
             }
         } else {
             if (qName != null) {
-            	if(qName.getNamespaceURI() == null) {
-            		writer.writeStartElement(qName.getLocalName());
-            	} else {
-            		writer.writeStartElement(qName.getNamespaceURI(), qName.getLocalName());
-            	}
+                if (qName.getNamespaceURI() == null) {
+                    writer.writeStartElement(qName.getLocalName());
+                } else {
+                    writer.writeStartElement(qName.getNamespaceURI(),
+                            qName.getLocalName());
+                }
             } else {
                 writer.writeStartElement(name);
             }

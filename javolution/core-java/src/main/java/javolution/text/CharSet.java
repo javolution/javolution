@@ -90,7 +90,7 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      * @param chars the characters contained by this character set.
      * @return the corresponding character set.
      */
-    public static CharSet valueOf(char...chars) {
+    public static CharSet valueOf(char... chars) {
         int maxChar = 0;
         for (int i = chars.length; --i >= 0;) {
             if (chars[i] > maxChar) {
@@ -161,8 +161,9 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int indexIn(CharSequence csq, int fromIndex) {
-        for (int i=fromIndex, n=csq.length(); i < n; i++) {
-            if (contains(csq.charAt(i))) return i;
+        for (int i = fromIndex, n = csq.length(); i < n; i++) {
+            if (contains(csq.charAt(i)))
+                return i;
         }
         return -1;
     }
@@ -187,8 +188,9 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int indexIn(char[] chars, int fromIndex) {
-        for (int i=fromIndex, n=chars.length; i < n; i++) {
-            if (contains(chars[i])) return i;
+        for (int i = fromIndex, n = chars.length; i < n; i++) {
+            if (contains(chars[i]))
+                return i;
         }
         return -1;
     }
@@ -203,7 +205,7 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int lastIndexIn(CharSequence csq) {
-        return lastIndexIn(csq, csq.length()-1);
+        return lastIndexIn(csq, csq.length() - 1);
     }
 
     /**
@@ -216,8 +218,9 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int lastIndexIn(CharSequence csq, int fromIndex) {
-        for (int i=fromIndex; i >= 0; --i) {
-            if (contains(csq.charAt(i))) return i;
+        for (int i = fromIndex; i >= 0; --i) {
+            if (contains(csq.charAt(i)))
+                return i;
         }
         return -1;
     }
@@ -230,7 +233,7 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int lastIndexIn(char[] chars) {
-        return lastIndexIn(chars, chars.length-1);
+        return lastIndexIn(chars, chars.length - 1);
     }
 
     /**
@@ -243,8 +246,9 @@ public final class CharSet implements Immutable, Copyable<CharSet> {
      *         <code>-1</code> if none found.
      */
     public int lastIndexIn(char[] chars, int fromIndex) {
-        for (int i=fromIndex; i >= 0; i--) {
-            if (contains(chars[i])) return i;
+        for (int i = fromIndex; i >= 0; i--) {
+            if (contains(chars[i]))
+                return i;
         }
         return -1;
     }

@@ -27,7 +27,7 @@ import javolution.util.service.SortedTableService;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastSortedTable<E> extends FastTable<E>  {
+public class FastSortedTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -41,71 +41,70 @@ public class FastSortedTable<E> extends FastTable<E>  {
     /**
      * Creates an empty table sorted using the specified element comparator.
      */
-   public FastSortedTable(EqualityComparator<? super E> comparator) {
-       super((SortedTableService<E>)null); // TODO 
-   }
-   
-   /**
-    * Creates a sorted table backed up by the specified service implementation.
-    */
-   protected FastSortedTable(SortedTableService<E> service) {
-       super(service);
-   }
-      
-   /***************************************************************************
-    * Views.
-    */    
+    public FastSortedTable(EqualityComparator<? super E> comparator) {
+        super((SortedTableService<E>) null); // TODO 
+    }
 
-   @Override
-   public FastSortedTable<E> unmodifiable() {
-       return null; // TODO
-   }
+    /**
+     * Creates a sorted table backed up by the specified service implementation.
+     */
+    protected FastSortedTable(SortedTableService<E> service) {
+        super(service);
+    }
 
-   @Override
-   public FastSortedTable<E> shared() {
-       return null; // TODO
-   }   
-      
-   /***************************************************************************
-    * Sorted table operations optimizations.
-    */
+    /***************************************************************************
+     * Views.
+     */
 
-   @SuppressWarnings("unchecked")
-   @RealTime(limit = LOG_N)
-   public boolean contains(Object obj) {
-       return service().indexOf((E)obj) >= 0;
-   }
+    @Override
+    public FastSortedTable<E> unmodifiable() {
+        return null; // TODO
+    }
 
-   @SuppressWarnings("unchecked")
-   @RealTime(limit = LOG_N)
-   public boolean remove(Object obj) {
-       return service().remove((E) obj);
-   }
-   
-   @SuppressWarnings("unchecked")
-   @Override
-   @RealTime(limit = LOG_N)
-   public int indexOf(final Object obj) {
-       return service().indexOf((E) obj);
-   }
-    
-   /***************************************************************************
-    * Misc.
-    */    
-      
-   /** 
-    * Returns the would index of the specified element if it were
-    * to be added to this sorted table.
-    */    
-   @RealTime(limit = LOG_N)
-   public int slotOf(E element) {
-       return service().slotOf(element);
-   }
-   
- 
-   @Override
-   protected SortedTableService<E> service() {
-       return (SortedTableService<E>) super.service();
-   }
-    
+    @Override
+    public FastSortedTable<E> shared() {
+        return null; // TODO
+    }
+
+    /***************************************************************************
+     * Sorted table operations optimizations.
+     */
+
+    @SuppressWarnings("unchecked")
+    @RealTime(limit = LOG_N)
+    public boolean contains(Object obj) {
+        return service().indexOf((E) obj) >= 0;
+    }
+
+    @SuppressWarnings("unchecked")
+    @RealTime(limit = LOG_N)
+    public boolean remove(Object obj) {
+        return service().remove((E) obj);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    @RealTime(limit = LOG_N)
+    public int indexOf(final Object obj) {
+        return service().indexOf((E) obj);
+    }
+
+    /***************************************************************************
+     * Misc.
+     */
+
+    /** 
+     * Returns the would index of the specified element if it were
+     * to be added to this sorted table.
+     */
+    @RealTime(limit = LOG_N)
+    public int slotOf(E element) {
+        return service().slotOf(element);
+    }
+
+    @Override
+    protected SortedTableService<E> service() {
+        return (SortedTableService<E>) super.service();
+    }
+
 }

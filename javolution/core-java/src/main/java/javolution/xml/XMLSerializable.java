@@ -42,6 +42,6 @@ import java.io.Serializable;
  */
 public interface XMLSerializable extends Serializable {
 
-  // No method. Tagging interface.
-    
+    // No method. Tagging interface.
+
 }

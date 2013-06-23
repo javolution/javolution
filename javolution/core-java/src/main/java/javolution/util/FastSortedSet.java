@@ -38,21 +38,21 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     /**
     * Creates an empty sorted set ordered using the specified comparator.
     */
-   public FastSortedSet(EqualityComparator<? super E> comparator) {
-       // TODO
-   }
-   
+    public FastSortedSet(EqualityComparator<? super E> comparator) {
+        // TODO
+    }
+
     /**
      * Creates a sorted set backed up by the specified service implementation.
      */
     protected FastSortedSet(SortedSetService<E> service) {
-        super(service);        
+        super(service);
     }
-    
+
     /***************************************************************************
      * Views.
-     */    
- 
+     */
+
     @Override
     public FastSortedSet<E> unmodifiable() {
         return null; // TODO
@@ -62,11 +62,11 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     public FastSortedSet<E> shared() {
         return null; // TODO
     }
-        
+
     /***************************************************************************
      * FastSet operations with different time limit behavior.
      */
-    
+
     @Override
     @RealTime(limit = LOG_N)
     public boolean add(E e) {
@@ -84,13 +84,13 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     public boolean remove(Object obj) {
         return super.remove(obj);
     }
-    
+
     /***************************************************************************
      * SortedSet operations.
-     */    
- 
-     @Override
-     @RealTime(limit = LOG_N)
+     */
+
+    @Override
+    @RealTime(limit = LOG_N)
     public SortedSet<E> subSet(E fromElement, E toElement) {
         // TODO Auto-generated method stub
         return null;
@@ -120,15 +120,15 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     public E last() {
         // TODO Auto-generated method stub
         return null;
-    }    
-    
+    }
+
     /***************************************************************************
      * Misc.
-     */    
+     */
 
     @Override
     protected SortedSetService<E> service() {
         return (SortedSetService<E>) super.service();
     }
-    
+
 }

@@ -343,3 +343,4 @@ InputElement.get(name, uri, class):
 </pre></p>
  */
 package javolution.xml;
+

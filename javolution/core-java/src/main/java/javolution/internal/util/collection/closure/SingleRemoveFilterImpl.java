@@ -30,11 +30,11 @@ public final class SingleRemoveFilterImpl<E> implements Predicate<E>,
         this.element = element;
         this.equality = equality;
     }
-    
+
     public boolean isFound() {
         return found;
     }
-    
+
     @Override
     public boolean doSequential() {
         return false;

@@ -21,9 +21,10 @@ import javolution.util.function.Function;
 public final class StackContextImpl extends StackContext {
 
     // TODO: Use RTSJ Scoped Memory.
-    
+
     @Override
-    protected <P, R extends Copyable<R>> R executeInContext(Function<P, R> function, P parameter) {
+    protected <P, R extends Copyable<R>> R executeInContext(
+            Function<P, R> function, P parameter) {
         return function.apply(parameter);
     }
 
@@ -36,6 +37,5 @@ public final class StackContextImpl extends StackContext {
     protected StackContext inner() {
         return this;
     }
-
 
 }

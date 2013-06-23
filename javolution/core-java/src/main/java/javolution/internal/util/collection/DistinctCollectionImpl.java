@@ -94,6 +94,6 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
         for (int i = 0; i < tmp.length; i++) {
             result[i] = new DistinctCollectionImpl<E>(tmp[i]);
         }
-        return result;       
+        return result;
     }
 }

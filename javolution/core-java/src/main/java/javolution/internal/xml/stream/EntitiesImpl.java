@@ -22,7 +22,7 @@ import javolution.xml.stream.XMLStreamException;
  * @version 4.0, June 16, 2006
  */
 @SuppressWarnings("rawtypes")
-public final class EntitiesImpl  {
+public final class EntitiesImpl {
 
     /**
      * Holds maximum length.
@@ -32,13 +32,12 @@ public final class EntitiesImpl  {
     /**
      * Holds the user defined entities mapping.
      */
-    private Map<?,?> _entitiesMapping;
+    private Map<?, ?> _entitiesMapping;
 
     /**
      * Default constructor.
      */
-    EntitiesImpl() {
-    }
+    EntitiesImpl() {}
 
     /**
      * Returns the length of the largest entity.
@@ -113,8 +112,8 @@ public final class EntitiesImpl  {
 
         // Searches user defined entities.
         _tmp.setArray(buffer, start + 1, length - 2);
-        CharSequence replacementText = (_entitiesMapping != null) ?
-                (CharSequence) _entitiesMapping.get(_tmp) : null;
+        CharSequence replacementText = (_entitiesMapping != null) ? (CharSequence) _entitiesMapping
+                .get(_tmp) : null;
         if (replacementText == null)
             throw new XMLStreamException("Entity " + _tmp + " not recognized");
         int replacementTextLength = replacementText.length();
@@ -137,14 +136,14 @@ public final class EntitiesImpl  {
         // Sets the maximum length for replacement text.
         Collection values = entityToReplacementText.values();
         if (values instanceof FastCollection) { // Avoids allocating iterators.
-             FastCollection<CharSequence> fc = (FastCollection<CharSequence>) values;
-             for (CharSequence value : fc) {
-                 if (_maxLength < value.length()) {
-                     _maxLength = value.length();
-                 }
-             }
+            FastCollection<CharSequence> fc = (FastCollection<CharSequence>) values;
+            for (CharSequence value : fc) {
+                if (_maxLength < value.length()) {
+                    _maxLength = value.length();
+                }
+            }
         } else {
-            for (Iterator i=values.iterator(); i.hasNext();) {
+            for (Iterator i = values.iterator(); i.hasNext();) {
                 CharSequence value = (CharSequence) i.next();
                 if (_maxLength < value.length()) {
                     _maxLength = value.length();
@@ -163,7 +162,7 @@ public final class EntitiesImpl  {
     public Map getEntitiesMapping() {
         return _entitiesMapping;
     }
-    
+
     // Implements Reusable.
     public void reset() {
         _maxLength = 1;

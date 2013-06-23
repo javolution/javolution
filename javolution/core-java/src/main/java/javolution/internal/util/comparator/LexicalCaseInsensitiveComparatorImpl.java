@@ -17,7 +17,7 @@ import javolution.util.function.EqualityComparator;
  */
 public class LexicalCaseInsensitiveComparatorImpl implements
         EqualityComparator<CharSequence>, Serializable {
-    
+
     private static final long serialVersionUID = -1046672327934410697L;
 
     @Override
@@ -38,7 +38,7 @@ public class LexicalCaseInsensitiveComparatorImpl implements
         if ((csq1 == null) || (csq2 == null))
             return false;
         if ((csq1 instanceof String) && (csq2 instanceof String)) // Optimization.
-            return ((String)csq1).equalsIgnoreCase((String)csq2); 
+            return ((String) csq1).equalsIgnoreCase((String) csq2);
         int n = csq1.length();
         if (csq2.length() != n)
             return false;

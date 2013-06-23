@@ -11,60 +11,57 @@ package javolution.internal.util.map;
 import java.io.Serializable;
 import java.util.Map.Entry;
 
-import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.util.FastMap;
 import javolution.util.function.EqualityComparator;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 import javolution.util.service.SetService;
 
 /**
- *  * An unmodifiable view over a map.
+ * The default {@link javolution.util.FastMap FastMap} implementation 
+ * based on {@link FractalMapImpl fractal maps}. 
+ * This implementation ensures that no more than 3/4 of the map capacity is
+ * ever wasted.
  */
-public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
-        Serializable {
+public final class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final MapService<K, V> target;
+    private FractalMapImpl fractal = new FractalMapImpl();
+    private final EqualityComparator<? super K> keyComparator;
 
-    public UnmodifiableMapImpl(MapService<K, V> target) {
-        this.target = target;
+    public FastMapImpl(EqualityComparator<? super K> keyComparator) {
+        this.keyComparator = keyComparator;
     }
 
     @Override
     public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
+        action.run();
     }
 
     @Override
     public boolean containsKey(K key) {
-        // TODO Auto-generated method stub
-        return false;
+        return fractal.containsKey(key, keyComparator.hashCodeOf(key));
     }
 
     @Override
     public SetService<Entry<K, V>> entrySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new EntrySetImpl<K, V>(this);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public V get(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        return (V) fractal.get(key, keyComparator.hashCodeOf(key));
     }
 
     @Override
     public SetService<K> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new KeySetImpl<K, V>(this);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public V put(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        return (V) fractal.put(key, value, keyComparator.hashCodeOf(key));
     }
 
     @Override
@@ -99,7 +96,7 @@ public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
 
     @Override
     public CollectionService<V> values() {
-        // TODO Auto-generated method stub
-        return null;
+        return new ValuesImpl<K, V>(this);
     }
+
 }

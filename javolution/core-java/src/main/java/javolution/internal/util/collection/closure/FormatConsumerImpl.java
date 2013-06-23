@@ -21,7 +21,8 @@ import javolution.util.service.CollectionService.IterationController;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public final class FormatConsumerImpl implements Consumer<Object>, IterationController {
+public final class FormatConsumerImpl implements Consumer<Object>,
+        IterationController {
 
     private final Appendable appendable;
     private volatile IOException ioException;
@@ -31,12 +32,12 @@ public final class FormatConsumerImpl implements Consumer<Object>, IterationCont
 
     public FormatConsumerImpl(Appendable appendable) {
         this.appendable = appendable;
-    }       
+    }
 
     public IOException ioException() {
         return ioException;
     }
-    
+
     @Override
     public boolean doSequential() {
         return true; // Iteration order is important.

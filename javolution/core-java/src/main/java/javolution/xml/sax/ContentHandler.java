@@ -8,7 +8,6 @@
  */
 package javolution.xml.sax;
 
-
 import javolution.text.CharArray;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -56,7 +55,7 @@ public interface ContentHandler {
      * @throws org.xml.sax.SAXException any SAX exception.
      */
     void startPrefixMapping(CharArray prefix, CharArray uri)
-        throws SAXException;
+            throws SAXException;
 
     /**
      * Ends the scope of a prefix-URI mapping.
@@ -80,8 +79,8 @@ public interface ContentHandler {
      *         attributes, it shall be an empty {@link Attributes} object.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void startElement(CharArray uri, CharArray localName,
-                      CharArray qName, Attributes atts) throws SAXException;
+    void startElement(CharArray uri, CharArray localName, CharArray qName,
+            Attributes atts) throws SAXException;
 
     /**
      * Receives notification of the end of an element.
@@ -95,8 +94,8 @@ public interface ContentHandler {
      *         character sequence if qualified names are not available.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    void endElement (CharArray uri, CharArray localName,
-        CharArray qName) throws SAXException;
+    void endElement(CharArray uri, CharArray localName, CharArray qName)
+            throws SAXException;
 
     /**
      * Receives notification of character data.
@@ -117,7 +116,7 @@ public interface ContentHandler {
      * @throws org.xml.sax.SAXException any SAX exception.
      */
     void ignorableWhitespace(char ch[], int start, int length)
-        throws SAXException;
+            throws SAXException;
 
     /**
      * Receives notification of a processing instruction.
@@ -129,7 +128,7 @@ public interface ContentHandler {
      * @throws org.xml.sax.SAXException any SAX exception.
      */
     void processingInstruction(CharArray target, CharArray data)
-        throws SAXException;
+            throws SAXException;
 
     /**
      * Receives notification of a skipped entity.

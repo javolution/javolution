@@ -5,3 +5,4 @@
     <code>String</code> allocations while parsing).</p>
  */
 package javolution.xml.sax;
+

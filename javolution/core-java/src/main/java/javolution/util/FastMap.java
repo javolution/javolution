@@ -17,9 +17,12 @@ import java.util.concurrent.ConcurrentMap;
 
 import javolution.annotation.Parallelizable;
 import javolution.annotation.RealTime;
-import javolution.internal.util.map.FractalMapImpl;
+import javolution.internal.util.map.FastMapImpl;
+import javolution.internal.util.map.SharedMapImpl;
+import javolution.internal.util.map.UnmodifiableMapImpl;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
+import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
 /**
@@ -57,10 +60,11 @@ import javolution.util.service.MapService;
  */
 @RealTime
 @Parallelizable(mutexFree = false, comment = "When using shared views.")
-public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializable {
+public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
+        Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    
+
     /**
      * Holds the actual map service implementation.
      */
@@ -72,16 +76,16 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
     public FastMap() {
         this(Comparators.STANDARD);
     }
-    
+
     /**
      * Creates an empty hash map using the specified comparator for key 
      * equality only (for sorting the {@link FastSortedMap} subclass should 
      * be used instead).
      */
     public FastMap(EqualityComparator<? super K> keyEquality) {
-        service = new FractalMapImpl<K, V>(keyEquality);
+        service = new FastMapImpl<K, V>(keyEquality);
     }
-        
+
     /**
      * Creates a map backed up by the specified service implementation.
      */
@@ -99,7 +103,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * entries) results in an {@link UnsupportedOperationException} being thrown. 
      */
     public FastMap<K, V> unmodifiable() {
-        return null; // TODO
+        return new FastMap<K, V>(new UnmodifiableMapImpl<K, V>(service));
     }
 
     /**
@@ -109,7 +113,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * accesses can always be performed without blocking.
      */
     public FastMap<K, V> shared() {
-        return null; // TODO
+        return new FastMap<K, V>(new SharedMapImpl<K, V>(service));
     }
 
     /**
@@ -118,7 +122,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * reflected in the set, and vice-versa.
      */
     public FastSet<K> keySet() {
-        return null; // TODO
+        return new FastSet<K>(service.keySet());
     }
 
     /**
@@ -127,7 +131,15 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * reflected in the collection, and vice-versa. 
      */
     public FastCollection<V> values() {
-        return null; // TODO
+        return new FastCollection<V>() {
+            private static final long serialVersionUID = 0x600L; // Version.
+            CollectionService<V> serviceValues = service.values();
+
+            @Override
+            protected CollectionService<V> service() {
+                return serviceValues;
+            }
+        };
     }
 
     /**
@@ -180,7 +192,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
     @SuppressWarnings("unchecked")
     @RealTime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
-        entrySet().addAll((Collection<? extends Entry<K, V>>) map.entrySet()); 
+        entrySet().addAll((Collection<? extends Entry<K, V>>) map.entrySet());
     }
 
     @Override
@@ -206,7 +218,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object key, Object value) {
-        return service.remove((K) key, (V)value);
+        return service.remove((K) key, (V) value);
     }
 
     @Override
@@ -222,12 +234,27 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
     /***************************************************************************
      * Misc.
      */
-    
-    /**
-     * Returns this map service implementation.
+
+    /** 
+     * Executes the specified action on this map in an atomic manner. As 
+     * far as reader of this map  are concerned, either they see the full
+     * result of the action or nothing. This method is relevant only for
+     * {@link #shared shared} or {@link #parallel parallel} maps.
+     * The framework ensures that only one atomic action can be performed at 
+     * any given time and no concurrent closure-based iteration is possible 
+     * during that time.
+     * 
+     * @param action the action to be executed in an atomic manner.
      */
+    public void atomic(Runnable action) {
+        service().atomic(action);
+    }
+
+    /**
+      * Returns this map service implementation.
+      */
     protected MapService<K, V> service() {
         return service;
-    }    
-    
+    }
+
 }

@@ -36,14 +36,13 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
      * Indicates whether or not static methods will block for an OSGi published
      * implementation this class (default configuration <code>false</code>).
      */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE 
-    = new Configurable<Boolean>(false);
-    
+    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
+            false);
+
     /**
      * Default constructor.
      */
-    protected XMLContext() {
-    }
+    protected XMLContext() {}
 
     /**
      * Enters a new xml context instance.
@@ -65,21 +64,24 @@ public abstract class XMLContext extends FormatContext<XMLContext> {
     /**
      * Sets the xml format for the specified type (and its sub-types).
      */
-    public abstract <T> void setFormat(Class<? extends T> type, XMLFormat<T> format);
+    public abstract <T> void setFormat(Class<? extends T> type,
+            XMLFormat<T> format);
 
     /**
      * Returns the xml format for the specified type.
      */
-    protected abstract <T> XMLFormat<T> getFormatInContext(Class<? extends T> type);
+    protected abstract <T> XMLFormat<T> getFormatInContext(
+            Class<? extends T> type);
 
     /**
      * Returns the current xml context.
      */
     protected static XMLContext current() {
         XMLContext ctx = AbstractContext.current(XMLContext.class);
-        if (ctx != null) return ctx;
+        if (ctx != null)
+            return ctx;
         return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
     }
-    
-    private static final XMLContextImpl DEFAULT = new XMLContextImpl();    
+
+    private static final XMLContextImpl DEFAULT = new XMLContextImpl();
 }

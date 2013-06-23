@@ -8,8 +8,12 @@
  */
 package javolution.internal.util.table;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
+import javolution.internal.util.collection.UnmodifiableCollectionImpl;
+import javolution.internal.util.collection.UnmodifiableIteratorImpl;
+import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.TableService;
@@ -17,35 +21,23 @@ import javolution.util.service.TableService;
 /**
  * An unmodifiable view over a table.
  */
-public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
+public final class UnmodifiableTableImpl<E> implements TableService<E>,
+        Serializable {
 
-    private final TableService<E> that;
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final TableService<E> target;
 
-    public UnmodifiableTableImpl(TableService<E> that) {
-        this.that = that;
+    public UnmodifiableTableImpl(TableService<E> target) {
+        this.target = target;
     }
+
     @Override
-    public E set(int index, E element) {
+    public boolean add(E element) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public void add(int index, E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public E remove(int index) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public boolean add(E element) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -60,13 +52,54 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
     }
 
     @Override
-    public E removeFirst() {
+    public void atomic(Runnable action) {
+        target.atomic(action);
+    }
+
+    @Override
+    public void clear() {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public E removeLast() {
-        throw new UnsupportedOperationException("Unmodifiable");
+    public EqualityComparator<? super E> comparator() {
+        return target.comparator();
+    }
+
+    @Override
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        target.forEach(consumer, controller);
+    }
+
+    @Override
+    public E get(int index) {
+        return target.get(index);
+    }
+
+    @Override
+    public E getFirst() {
+        return target.getFirst();
+    }
+
+    @Override
+    public E getLast() {
+        return target.getLast();
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return new UnmodifiableIteratorImpl<E>(target.iterator());
+    }
+
+    @Override
+    public E peekFirst() {
+        return target.peekFirst();
+    }
+
+    @Override
+    public E peekLast() {
+        return target.peekLast();
     }
 
     @Override
@@ -80,111 +113,38 @@ public final class UnmodifiableTableImpl<E> extends AbstractTableImpl<E>{
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> predicate) {
+    public E remove(int index) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public boolean remove(E element) {
+    public E removeFirst() {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public void sort() {
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public Iterator<E> iterator() {
-        final Iterator<E> thatIterator = that.iterator();
-        return new Iterator<E>() {
-
-            @Override
-            public boolean hasNext() {
-                return thatIterator.hasNext();
-            }
-
-            @Override
-            public E next() {
-                return thatIterator.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Unmodifiable");
-            }
-
-        };
-    }
-
-    @Override
-    public void setComparator(EqualityComparator<? super E> cmp) {
+    public E removeLast() {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public TableService<E>[] trySplit(int n) {
-        return trySplitDefault(n);
+    public E set(int index, E element) {
+        throw new UnsupportedOperationException("Unmodifiable");
     }
-    
-    //
-    // If no impact, forwards to inner table.
-    // 
-  
+
     @Override
     public int size() {
-        return that.size();
+        return target.size();
     }
 
     @Override
-    public E get(int index) {
-        return that.get(index);
+    public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
+        return UnmodifiableCollectionImpl.splitOf(this, n);
     }
-
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return that.comparator();
-    }
-
-    @Override
-    public int indexOf(E element) {
-        return that.indexOf(element);
-    }
-
-    @Override
-    public int lastIndexOf(E element) {
-        return that.lastIndexOf(element);
-    }
-    
-    @Override
-    public E getFirst() {
-        return that.getFirst();
-    }
-
-    @Override
-    public E getLast() {
-        return that.getLast();
-    }
-
-    @Override
-    public E peekFirst() {
-        return that.peekFirst();
-    }
-
-    @Override
-    public E peekLast() {
-        return that.peekLast();
-    }
-
-    @Override
-    public boolean doWhile(Predicate<? super E> predicate) {
-        return that.doWhile(predicate);
-    }
-    
-    @Override
-    public boolean contains(E element) {
-        return that.contains(element);
-    }
-
-    private static final long serialVersionUID = -800081761156821069L;
 }

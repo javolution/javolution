@@ -323,12 +323,12 @@ public final class UTF8StreamWriter extends Writer {
         _index = 0;
     }
 
-     public void reset() {
+    public void reset() {
         _highSurrogate = 0;
         _index = 0;
         _outputStream = null;
     }
-    
+
     /**
      * @deprecated Replaced by {@link #setOutput(OutputStream)}
      */

@@ -53,8 +53,8 @@ public class Configurable<T> {
      * instance. Also, the general permission to reconfigure a configurable 
      * may be revoked but granted only for a specific instance.
      */
-    public static Permission<Configurable<?>> RECONFIGURE_PERMISSION 
-       = new Permission<Configurable<?>>(Configurable.class, "reconfigure");
+    public static Permission<Configurable<?>> RECONFIGURE_PERMISSION = new Permission<Configurable<?>>(
+            Configurable.class, "reconfigure");
 
     /**
      * Holds the reconfigure permission.

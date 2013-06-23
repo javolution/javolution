@@ -9,59 +9,94 @@
 package javolution.internal.util.set;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
 import javolution.internal.util.collection.SharedCollectionImpl;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
  * A shared view over a set allowing concurrent access and sequential updates.
  */
-public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements SetService<E>,
-        Serializable {
+public class SharedSetImpl<E> implements SetService<E>, Serializable {
 
-    public SharedSetImpl(SetService<E> that) {
-        super(that);
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final SetService<E> target;
+
+    public SharedSetImpl(SetService<E> target) {
+        this.target = target;
     }
-    
+
+    @Override
+    public boolean add(E element) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public EqualityComparator<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void forEach(
+            Consumer<? super E> consumer,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean removeIf(
+            Predicate<? super E> filter,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     @Override
     public int size() {
-        read.lock();
-        try {
-            return ((SetService<E>) target).size();
-        } finally {
-            read.unlock();
-        }
+        // TODO Auto-generated method stub
+        return 0;
     }
 
     @Override
     public void clear() {
-        write.lock();
-        try {
-            ((SetService<E>) target).clear();
-        } finally {
-            write.unlock();
-        }
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public boolean contains(E e) {
-        read.lock();
-        try {
-            return ((SetService<E>) target).contains(e);
-        } finally {
-            read.unlock();
-        }   
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean remove(E e) {
-        write.lock();
-        try {
-            return ((SetService<E>) target).remove(e);
-        } finally {
-            write.unlock();
-        }
+        // TODO Auto-generated method stub
+        return false;
     }
-    
-    private static final long serialVersionUID = 8668632118009609808L;
 }

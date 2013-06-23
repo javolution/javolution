@@ -25,7 +25,7 @@ import javolution.util.FastMap;
  */
 public final class TextContextImpl extends TextContext {
 
-    private final FastMap<Class<?>, DefaultTextFormat<?>> formats = new FastMap<Class<?>, DefaultTextFormat<?>>();
+    private final FastMap<Class<?>, TextFormat<?>> formats = new FastMap<Class<?>, TextFormat<?>>();
 
     @Override
     protected TextContext inner() {
@@ -36,16 +36,15 @@ public final class TextContextImpl extends TextContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> DefaultTextFormat<T> getFormatInContext(Class<? extends T> type) {
-        DefaultTextFormat<T> tf = (DefaultTextFormat<T>) formats.get(type);
+    protected <T> TextFormat<T> getFormatInContext(Class<? extends T> type) {
+        TextFormat<T> tf = (TextFormat<T>) formats.get(type);
         if (tf != null)
             return tf;
         DefaultTextFormat format = type.getAnnotation(DefaultTextFormat.class);
-        if ((format != null)
-                && (format.text() != DefaultTextFormat.UnsupportedTextFormat.class)) {
-            Class<? extends DefaultTextFormat<?>> formatClass = format.text();
+        if (format != null) {
+            Class<?> formatClass = format.value();
             try {
-                tf = (DefaultTextFormat<T>) formatClass.newInstance();
+                tf = (TextFormat<T>) formatClass.newInstance();
                 synchronized (formats) { // Required since possible concurrent use 
                     // (getFormatInContext is not a configuration method).
                     formats.put(type, tf);
@@ -56,22 +55,22 @@ public final class TextContextImpl extends TextContext {
             }
         }
         // Check predefined formats.
-        return (DefaultTextFormat<T>) PREDEFINED.get(type);
+        return (TextFormat<T>) PREDEFINED.get(type);
 
     }
 
     @Override
-    public <T> void setFormat(Class<? extends T> type, DefaultTextFormat<T> format) {
+    public <T> void setFormat(Class<? extends T> type, TextFormat<T> format) {
         formats.put(type, format);
     }
 
     ////////////////////////
     // PREDEFINED FORMATS //
     ////////////////////////
-    private static final FastMap<Class<?>, DefaultTextFormat<?>> PREDEFINED = new FastMap<Class<?>, DefaultTextFormat<?>>();
+    private static final FastMap<Class<?>, TextFormat<?>> PREDEFINED = new FastMap<Class<?>, TextFormat<?>>();
 
     static {
-        PREDEFINED.put(Boolean.class, new DefaultTextFormat<Boolean>() {
+        PREDEFINED.put(Boolean.class, new TextFormat<Boolean>() {
 
             public Appendable format(Boolean obj, Appendable dest)
                     throws IOException {
@@ -84,7 +83,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Character.class, new DefaultTextFormat<Character>() {
+        PREDEFINED.put(Character.class, new TextFormat<Character>() {
 
             public Appendable format(Character obj, Appendable dest)
                     throws IOException {
@@ -97,7 +96,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Byte.class, new DefaultTextFormat<Byte>() {
+        PREDEFINED.put(Byte.class, new TextFormat<Byte>() {
 
             public Appendable format(Byte obj, Appendable dest)
                     throws IOException {
@@ -110,7 +109,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Short.class, new DefaultTextFormat<Short>() {
+        PREDEFINED.put(Short.class, new TextFormat<Short>() {
 
             public Appendable format(Short obj, Appendable dest)
                     throws IOException {
@@ -123,7 +122,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Integer.class, new DefaultTextFormat<Integer>() {
+        PREDEFINED.put(Integer.class, new TextFormat<Integer>() {
 
             public Appendable format(Integer obj, Appendable dest)
                     throws IOException {
@@ -136,7 +135,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Long.class, new DefaultTextFormat<Long>() {
+        PREDEFINED.put(Long.class, new TextFormat<Long>() {
 
             public Appendable format(Long obj, Appendable dest)
                     throws IOException {
@@ -149,7 +148,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Float.class, new DefaultTextFormat<Float>() {
+        PREDEFINED.put(Float.class, new TextFormat<Float>() {
 
             public Appendable format(Float obj, Appendable dest)
                     throws IOException {
@@ -162,7 +161,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Double.class, new DefaultTextFormat<Double>() {
+        PREDEFINED.put(Double.class, new TextFormat<Double>() {
 
             public Appendable format(Double obj, Appendable dest)
                     throws IOException {
@@ -175,7 +174,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(String.class, new DefaultTextFormat<String>() {
+        PREDEFINED.put(String.class, new TextFormat<String>() {
 
             public Appendable format(String obj, Appendable dest)
                     throws IOException {
@@ -191,7 +190,7 @@ public final class TextContextImpl extends TextContext {
 
         });
 
-        PREDEFINED.put(Class.class, new DefaultTextFormat<Class<?>>() {
+        PREDEFINED.put(Class.class, new TextFormat<Class<?>>() {
 
             public Appendable format(Class<?> obj, Appendable dest)
                     throws IOException {

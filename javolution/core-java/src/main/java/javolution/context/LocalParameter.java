@@ -27,9 +27,8 @@ public class LocalParameter<T> {
      * Holds the general permission to override local parameters (action <code>
      * "override"</code>).
      */
-    public static final Permission<LocalParameter<?>> OVERRIDE_PERMISSION 
-        = new Permission<LocalParameter<?>>(
-              LocalParameter.class, "override");
+    public static final Permission<LocalParameter<?>> OVERRIDE_PERMISSION = new Permission<LocalParameter<?>>(
+            LocalParameter.class, "override");
 
     /**
      * Holds the default value.
@@ -66,7 +65,8 @@ public class LocalParameter<T> {
      */
     public T get() {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        return (ctx != null) ? ctx.getLocalValueInContext(this) : getDefault().get();
+        return (ctx != null) ? ctx.getLocalValueInContext(this) : getDefault()
+                .get();
     }
 
     /**

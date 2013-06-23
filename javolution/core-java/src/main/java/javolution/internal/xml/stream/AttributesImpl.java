@@ -96,12 +96,13 @@ public final class AttributesImpl implements Attributes {
 
     // Implements Attributes.
     public int getIndex(CharSequence uri, CharSequence localName) {
-        if (uri == null) 
+        if (uri == null)
             throw new IllegalArgumentException(
                     "null namespace URI is not allowed");
         for (int i = 0; i < _length; i++) {
             if (_localNames[i].equals(localName)) {
-                CharArray ns = _namespaces.getNamespaceURINullAllowed(_prefixes[i]);
+                CharArray ns = _namespaces
+                        .getNamespaceURINullAllowed(_prefixes[i]);
                 if ((ns != null) && ns.equals(uri))
                     return i;
             }
@@ -178,8 +179,8 @@ public final class AttributesImpl implements Attributes {
         final Text equ = Text.valueOf('=');
         final Text sep = Text.valueOf(", ");
         for (int i = 0; i < _length;) {
-            text = text.concat(Text.valueOf(_qNames[i]).concat(equ).concat(
-                    Text.valueOf(_values[i])));
+            text = text.concat(Text.valueOf(_qNames[i]).concat(equ)
+                    .concat(Text.valueOf(_values[i])));
             if (++i != _length) {
                 text = text.concat(sep);
             }

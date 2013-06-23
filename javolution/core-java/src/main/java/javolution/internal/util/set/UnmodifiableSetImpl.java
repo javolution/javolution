@@ -9,39 +9,95 @@
 package javolution.internal.util.set;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
+import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
  * An unmodifiable view over a set.
  */
-public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E> implements SetService<E>,
-        Serializable {
+public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
 
-    public UnmodifiableSetImpl(SetService<E> that) {
-        super(that);
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final SetService<E> target;
+
+    public UnmodifiableSetImpl(SetService<E> target) {
+        this.target = target;
     }
 
     @Override
-    public int size() {
-        return ((SetService<E>)target).size();
+    public boolean add(E element) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public EqualityComparator<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void forEach(
+            Consumer<? super E> consumer,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean removeIf(
+            Predicate<? super E> filter,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public void clear() {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public boolean contains(E e) {
-        return ((SetService<E>)target).contains(e);
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean remove(E e) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+        return false;
     }
-     
-    private static final long serialVersionUID = 5049669192830982105L;
+
+    @Override
+    public int size() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }

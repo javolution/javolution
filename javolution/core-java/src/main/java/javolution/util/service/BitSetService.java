@@ -21,7 +21,7 @@ import javolution.util.Index;
  * @see FastTable
  */
 public interface BitSetService extends SetService<Index> {
-     
+
     //
     // Read Accessors.
     //
@@ -47,9 +47,15 @@ public interface BitSetService extends SetService<Index> {
 
     /** See {@link FastBitSet#nextClearBit(int) } */
     int nextClearBit(int fromIndex);
-    
+
     /** See {@link FastBitSet#nextSetBit(int) } */
     int nextSetBit(int fromIndex);
+
+    /** See {@link FastBitSet#previousClearBit(int) } */
+    int previousClearBit(int fromIndex);
+
+    /** See {@link FastBitSet#previousSetBit(int) } */
+    int previousSetBit(int fromIndex);
 
     //
     // Clear/Set/Flip Operations
@@ -60,11 +66,11 @@ public interface BitSetService extends SetService<Index> {
 
     /** See {@link FastBitSet#clear(int, int) } */
     void clear(int fromIndex, int toIndex);
-    
+
     /** Clear or sets the specified bit, returns <code>true</code> 
      * if previously set; <code>false</code> otherwise. */
     boolean getAndSet(int bitIndex, boolean value);
-    
+
     /** See {@link FastBitSet#set(int) } */
     void set(int bitIndex);
 
@@ -73,7 +79,7 @@ public interface BitSetService extends SetService<Index> {
 
     /** See {@link FastBitSet#set(int, int) } */
     void set(int fromIndex, int toIndex);
-    
+
     /** See {@link FastBitSet#set(int, int, boolean) } */
     void set(int fromIndex, int toIndex, boolean value);
 
@@ -82,7 +88,7 @@ public interface BitSetService extends SetService<Index> {
 
     /** See {@link FastBitSet#flip(int, int) } */
     void flip(int fromIndex, int toIndex);
-    
+
     //
     // Operators Operations
     //
@@ -98,13 +104,13 @@ public interface BitSetService extends SetService<Index> {
 
     /** See {@link FastBitSet#xor(FastBitSet) } */
     void xor(BitSetService that);
-    
-     //
-     // Misc.
-     //
-    
+
+    //
+    // Misc.
+    //
+
     /** Returns the <code>long[]</code> representation of this bitset 
      * (new array) */
     long[] toLongArray();
-                  
+
 }

@@ -27,7 +27,6 @@ import javolution.util.service.TableService;
 public final class FastTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-
     private final EqualityComparator<? super E> comparator;
     private FractalTableImpl fractal; // Null if empty (capacity 0)
     private int size;
@@ -40,8 +39,8 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
 
     @Override
     public boolean add(E element) {
-         addLast(element);
-         return true;
+        addLast(element);
+        return true;
     }
 
     @Override
@@ -96,17 +95,20 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @SuppressWarnings("unchecked")
-      @Override
-    public void forEach(Consumer<? super E> consumer, IterationController controller) {
-         if (!controller.doReversed()) {
-            for (int i=0; i < size; i++) {
-                consumer.accept((E)fractal.get(i));
-                if (controller.isTerminated()) break;
+    @Override
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
+        if (!controller.doReversed()) {
+            for (int i = 0; i < size; i++) {
+                consumer.accept((E) fractal.get(i));
+                if (controller.isTerminated())
+                    break;
             }
         } else { // Reversed.
-            for (int i=size; --i >= 0;) {
-                consumer.accept((E)fractal.get(i));
-                if (controller.isTerminated()) break;
+            for (int i = size; --i >= 0;) {
+                consumer.accept((E) fractal.get(i));
+                if (controller.isTerminated())
+                    break;
             }
         }
     }
@@ -156,7 +158,7 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public E pollLast() {
         return (size == 0) ? null : removeLast();
-        
+
     }
 
     @SuppressWarnings("unchecked")
@@ -194,25 +196,28 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean removeIf(Predicate<? super E> filter, IterationController controller) {
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
         boolean removed = false;
         if (!controller.doReversed()) {
-            for (int i=0; i < size; i++) {
-                if (filter.test((E)fractal.get(i))) {
+            for (int i = 0; i < size; i++) {
+                if (filter.test((E) fractal.get(i))) {
                     remove(i--);
                     removed = true;
-                } 
-                if (controller.isTerminated()) break;
+                }
+                if (controller.isTerminated())
+                    break;
             }
         } else { // Reversed.
-            for (int i=size; --i >= 0;) {
-                if (filter.test((E)fractal.get(i))) {
+            for (int i = size; --i >= 0;) {
+                if (filter.test((E) fractal.get(i))) {
                     remove(i);
                     removed = true;
-                }   
-                if (controller.isTerminated()) break;
+                }
+                if (controller.isTerminated())
+                    break;
             }
-        } 
+        }
         return removed;
     }
 
@@ -242,26 +247,29 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     @SuppressWarnings("unchecked")
     @Override
     public TableService<E>[] trySplit(int n) {
-        if (n <= 0) throw new IllegalArgumentException("Invalid argument n: " + n);  
+        if (n <= 0)
+            throw new IllegalArgumentException("Invalid argument n: " + n);
         int length = MathLib.min(n, size);
-        if (length < 2)  return new FastTableImpl[]{ this }; // No split.
+        if (length < 2)
+            return new FastTableImpl[] { this }; // No split.
         TableService<E>[] subTables = new TableService[length];
         int div = size / length;
         int start = 0;
-        for (int i=0; i < length - 1; i++) {
+        for (int i = 0; i < length - 1; i++) {
             subTables[i] = new SubTableImpl<E>(this, start, start + div);
             start += div;
         }
-        subTables[length-1] = new SubTableImpl<E>(this, start, size - start);
+        subTables[length - 1] = new SubTableImpl<E>(this, start, size - start);
         return subTables;
     }
 
     /***************************************************************************
      * Private utility methods.    
      */
-    
+
     private void checkDownsize() {
-        if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN) && (size <= (capacity >> 2)))
+        if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN)
+                && (size <= (capacity >> 2)))
             downsize();
     }
 

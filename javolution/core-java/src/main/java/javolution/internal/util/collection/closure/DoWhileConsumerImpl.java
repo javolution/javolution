@@ -18,15 +18,16 @@ import javolution.util.service.CollectionService.IterationController;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public final class DoWhileConsumerImpl<E> implements Consumer<E>, IterationController {
+public final class DoWhileConsumerImpl<E> implements Consumer<E>,
+        IterationController {
 
-    private final Predicate<? super E> doContinue;    
+    private final Predicate<? super E> doContinue;
     private volatile boolean terminate;
-    
+
     public DoWhileConsumerImpl(Predicate<? super E> doContinue) {
         this.doContinue = doContinue;
     }
-    
+
     @Override
     public boolean doSequential() {
         return false;
@@ -46,6 +47,6 @@ public final class DoWhileConsumerImpl<E> implements Consumer<E>, IterationContr
     public void accept(E param) {
         if (!doContinue.test(param)) {
             terminate = true;
-        }        
+        }
     }
 }

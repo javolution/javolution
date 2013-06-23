@@ -30,7 +30,7 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
      * @param  e the warning information encapsulated in a SAX parse exception.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    public void warning (SAXParseException e) throws SAXException {}
+    public void warning(SAXParseException e) throws SAXException {}
 
     /**
      * Receives notification of recoverable parser error. The default behaviour
@@ -39,7 +39,7 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
      * @param  e the error information encapsulated in a SAX parse exception.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    public void error (SAXParseException e) throws SAXException {}
+    public void error(SAXParseException e) throws SAXException {}
 
     /**
      * Reports a fatal XML parsing error. The default behaviour is to throw
@@ -48,8 +48,8 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
      * @param  e the error information encapsulated in a SAX parse exception.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    public void fatalError (SAXParseException e) throws SAXException {
-	throw e;
+    public void fatalError(SAXParseException e) throws SAXException {
+        throw e;
     }
 
     // Implements ContentHandler
@@ -63,30 +63,30 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
 
     // Implements ContentHandler
     public void startPrefixMapping(CharArray prefix, CharArray uri)
-        throws SAXException {}
+            throws SAXException {}
 
     // Implements ContentHandler
     public void endPrefixMapping(CharArray prefix) throws SAXException {}
 
     // Implements ContentHandler
     public void startElement(CharArray namespaceURI, CharArray localName,
-        CharArray qName, Attributes atts) throws SAXException {}
+            CharArray qName, Attributes atts) throws SAXException {}
 
     // Implements ContentHandler
     public void endElement(CharArray namespaceURI, CharArray localName,
-        CharArray qName) throws SAXException {}
+            CharArray qName) throws SAXException {}
 
     // Implements ContentHandler
     public void characters(char ch[], int start, int length)
-        throws SAXException {}
+            throws SAXException {}
 
     // Implements ContentHandler
     public void ignorableWhitespace(char ch[], int start, int length)
-        throws SAXException {}
+            throws SAXException {}
 
     // Implements ContentHandler
     public void processingInstruction(CharArray target, CharArray data)
-        throws SAXException {}
+            throws SAXException {}
 
     // Implements ContentHandler
     public void skippedEntity(CharArray name) throws SAXException {}
@@ -108,10 +108,9 @@ public class DefaultHandler implements ContentHandler, ErrorHandler {
      *         attributes, it shall be an empty {@link Attributes} object.
      * @throws org.xml.sax.SAXException any SAX exception.
      */
-    protected final void startElement(
-        CharArray uri, CharArray localName,
-        CharArray qName, org.xml.sax.Attributes atts) throws SAXException {
-            throw new UnsupportedOperationException();
+    protected final void startElement(CharArray uri, CharArray localName,
+            CharArray qName, org.xml.sax.Attributes atts) throws SAXException {
+        throw new UnsupportedOperationException();
     }
 
 }

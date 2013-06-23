@@ -13,94 +13,97 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.util.function.EqualityComparator;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
+import javolution.util.service.SetService;
 
 /**
  *  * A shared view over a map.
  */
-public final class SharedMapImpl<K, V> implements MapService<K, V>, Serializable {
+public final class SharedMapImpl<K, V> implements MapService<K, V>,
+        Serializable {
 
-    private final MapService<K, V> that;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final Lock read;
+    private final MapService<K, V> target;
     private final Lock write;
 
-    public SharedMapImpl(MapService<K,V> that, ReentrantReadWriteLock readWriteLock) {
-        this.that = that;
-        this.read  = readWriteLock.readLock();
-        this.write = readWriteLock.writeLock();        
+    public SharedMapImpl(MapService<K, V> target) {
+        this.target = target;
+        ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+        this.read = readWriteLock.readLock();
+        this.write = readWriteLock.writeLock();
     }
 
     @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Unmodifiable");
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public boolean containsKey(K key) {
-        return that.containsKey(key);
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public SetService<Entry<K, V>> entrySet() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public V get(K key) {
-        return that.get(key);
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SetService<K> keySet() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public V put(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public V remove(K key) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public int size() {
-        return that.size();
-    }
-
-    @Override
-    public CollectionService<Entry<K, V>> entrySet() {
-        return new UnmodifiableCollectionImpl<Entry<K, V>>(that.entrySet());
-    }
-
-    @Override
-    public CollectionService<V> values() {
-        return new UnmodifiableCollectionImpl<V>(that.values());
-    }
-
-    @Override
-    public CollectionService<K> keySet() {
-        return new UnmodifiableCollectionImpl<K>(that.keySet());
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public V putIfAbsent(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public V remove(K key) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public boolean remove(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public V replace(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public EqualityComparator<K> keyComparator() {
-        return that.keyComparator();
+    public CollectionService<V> values() {
+        // TODO Auto-generated method stub
+        return null;
     }
-    
 }

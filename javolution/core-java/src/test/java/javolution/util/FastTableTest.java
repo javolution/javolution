@@ -33,7 +33,7 @@ public class FastTableTest {
     private Perfometer perfometer = new Perfometer();
 
     private Random random = new Random();
-    
+
     /** Function creating a fast table. */
     Function<Void, List<Index>> newFastTable = new Function<Void, List<Index>>() {
         public List<Index> apply(Void param) {
@@ -62,7 +62,8 @@ public class FastTableTest {
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
                 Index obj = Index.valueOf(i);
-                if (perfometer.doPerform()) list.add(obj);
+                if (perfometer.doPerform())
+                    list.add(obj);
             }
             return list;
         }
@@ -76,7 +77,8 @@ public class FastTableTest {
             for (int i = 0; i < n; i++) {
                 Index obj = Index.valueOf(i);
                 int j = random.nextInt(list.size() + 1);
-                if (perfometer.doPerform()) list.add(j, obj);
+                if (perfometer.doPerform())
+                    list.add(j, obj);
             }
             return list;
         }
@@ -89,7 +91,8 @@ public class FastTableTest {
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
                 int j = random.nextInt(list.size());
-                if (perfometer.doPerform()) list.remove(j);
+                if (perfometer.doPerform())
+                    list.remove(j);
             }
             return list;
         }
@@ -102,7 +105,8 @@ public class FastTableTest {
             List<Index> list = param.getRight();
             for (int i = 0; i < n; i++) {
                 Index obj = Index.valueOf(i);
-                if (perfometer.doPerform()) list.add(0, obj);
+                if (perfometer.doPerform())
+                    list.add(0, obj);
             }
             return list;
         }
@@ -112,8 +116,8 @@ public class FastTableTest {
         long ns = perfometer.measure(newFastTable);
         long alns = perfometer.measure(newArrayList);
         long llns = perfometer.measure(newLinkedList);
-        LogContext.info("Creation (empty): ", ns, " ns (",
-                alns, " ns for ArrayList, ", llns, " ns for LinkedList)");
+        LogContext.info("Creation (empty): ", ns, " ns (", alns,
+                " ns for ArrayList, ", llns, " ns for LinkedList)");
     }
 
     public void ttestAddToList() {
@@ -122,7 +126,8 @@ public class FastTableTest {
             long alns = perfometer.measure(addToList, i, newArrayList);
             long llns = perfometer.measure(addToList, i, newLinkedList);
             LogContext.info("Add ", i, " elements: ", nano(ns), " (",
-                    nano(alns), " for ArrayList, ", nano(llns), " for LinkedList)");
+                    nano(alns), " for ArrayList, ", nano(llns),
+                    " for LinkedList)");
         }
     }
 
@@ -130,19 +135,25 @@ public class FastTableTest {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(insertToList, i, newFastTable);
             long alns = perfometer.measure(insertToList, i, newArrayList);
-            long llns = (i < 1024 * 64) ? perfometer.measure(insertToList, i, newLinkedList) : -1;
-            LogContext.info("Insert (at random position) ", i, " elements: ", nano(ns), " (",
-                    nano(alns), " for ArrayList, ", nano(llns), " for LinkedList)");
+            long llns = (i < 1024 * 64) ? perfometer.measure(insertToList, i,
+                    newLinkedList) : -1;
+            LogContext.info("Insert (at random position) ", i, " elements: ",
+                    nano(ns), " (", nano(alns), " for ArrayList, ", nano(llns),
+                    " for LinkedList)");
         }
     }
 
     public void ttestRemoveFromList() {
         for (int i = 16; i <= 1024 * 256; i *= 4) {
-            long ns = perfometer.measure(removeFromList, i, addToList, i, newFastTable);
-            long alns = perfometer.measure(removeFromList, i, addToList, i, newArrayList);
-            long llns = (i < 1024 * 64) ? perfometer.measure(removeFromList, i, addToList, i, newLinkedList) : -1;
-            LogContext.info("Remove (at random position) ", i, " elements: ", nano(ns), " (",
-                    nano(alns), " for ArrayList, ", nano(llns), " for LinkedList)");
+            long ns = perfometer.measure(removeFromList, i, addToList, i,
+                    newFastTable);
+            long alns = perfometer.measure(removeFromList, i, addToList, i,
+                    newArrayList);
+            long llns = (i < 1024 * 64) ? perfometer.measure(removeFromList, i,
+                    addToList, i, newLinkedList) : -1;
+            LogContext.info("Remove (at random position) ", i, " elements: ",
+                    nano(ns), " (", nano(alns), " for ArrayList, ", nano(llns),
+                    " for LinkedList)");
         }
     }
 
@@ -152,47 +163,52 @@ public class FastTableTest {
             long alns = perfometer.measure(addFirstToList, i, newArrayList);
             long llns = perfometer.measure(addFirstToList, i, newLinkedList);
             LogContext.info("Add first  ", i, " elements: ", nano(ns), " (",
-                    nano(alns), " for ArrayList, ", nano(llns), " for LinkedList)");
+                    nano(alns), " for ArrayList, ", nano(llns),
+                    " for LinkedList)");
         }
     }
 
-    public void testListOperations() {
+    public void ttestListOperations() {
         List<Integer> ft = new FastTable<Integer>();
         List<Integer> al = new ArrayList<Integer>();
-        for (long start = System.nanoTime(), time = start;
-                time < start + 2 * ONE_SECOND_IN_NS; time = System.nanoTime()) {
+        for (long start = System.nanoTime(), time = start; time < start + 2
+                * ONE_SECOND_IN_NS; time = System.nanoTime()) {
             long seed = random.nextLong();
             Throwable found = anyListOperation(seed, ft);
             Throwable expected = anyListOperation(seed, al);
             assertEquals(found, expected);
-            assert al.equals(ft) && ft.equals(al) :
-                    found.getMessage() + "\nFound:    " + ft + "\nExpected: " + al;
+            assert al.equals(ft) && ft.equals(al) : found.getMessage()
+                    + "\nFound:    " + ft + "\nExpected: " + al;
         }
         LogContext.info("FastTable - List Operations Validated!");
     }
 
-    public void testDequeuOperations() {
+    public void ttestDequeuOperations() {
         Deque<Integer> ft = new FastTable<Integer>();
         Deque<Integer> ad = new ArrayDeque<Integer>();
-        for (long start = System.nanoTime(), time = start;
-                time < start + 2 * ONE_SECOND_IN_NS; time = System.nanoTime()) {
+        for (long start = System.nanoTime(), time = start; time < start + 2
+                * ONE_SECOND_IN_NS; time = System.nanoTime()) {
             long seed = random.nextLong();
             Throwable found = anyDequeOperation(seed, ft);
             Throwable expected = anyDequeOperation(seed, ad);
             assertEquals(found, expected);
-            assert FastTableTest.areEquals(ad, ft) :
-                    found.getMessage() + "\nFound:    " + ft + "\nExpected: " + ad;
+            assert FastTableTest.areEquals(ad, ft) : found.getMessage()
+                    + "\nFound:    " + ft + "\nExpected: " + ad;
         }
         LogContext.info("FastTable - Deque Operations Validated!");
     }
+
     private static boolean areEquals(Deque<?> left, Deque<?> right) {
-        if (left.size() != right.size()) return false;
-        for (Iterator<?> il = left.iterator(), ir = right.iterator(); il.hasNext();) {
-            if (!il.next().equals(ir.next())) return false;
+        if (left.size() != right.size())
+            return false;
+        for (Iterator<?> il = left.iterator(), ir = right.iterator(); il
+                .hasNext();) {
+            if (!il.next().equals(ir.next()))
+                return false;
         }
-        return true;            
+        return true;
     }
-    
+
     private Throwable anyListOperation(long seed, List<Integer> list) {
         random.setSeed(seed);
         int operation = random.nextInt(20);
@@ -216,7 +232,7 @@ public class FastTableTest {
                     list.add(random.nextInt());
                     break;
                 }
-                case 4: { 
+                case 4: {
                     test = "Test contains(Object)";
                     int r = random.nextInt();
                     int i = random.nextInt(list.size() + 1);
@@ -224,7 +240,7 @@ public class FastTableTest {
                     list.add(list.contains(r) ? 1 : 0);
                     break;
                 }
-                case 5: { 
+                case 5: {
                     test = "Test indexOf/lastIndexOf";
                     int r = random.nextInt();
                     list.add(random.nextInt(list.size() + 1), r);
@@ -240,7 +256,8 @@ public class FastTableTest {
                     int s = list.size();
                     int i = random.nextInt(s);
                     int j = random.nextInt(s);
-                    if (i > j) break; // ArrayList throw IllegalArgumentException instead of
+                    if (i > j)
+                        break; // ArrayList throw IllegalArgumentException instead of
                     // IndexOutOfBoundsException (which is incorrect as per List.subList contract).
                     list.addAll(list.subList(i, j));
                     break;
@@ -250,8 +267,10 @@ public class FastTableTest {
                     int s = list.size();
                     int i = random.nextInt(s);
                     int j = random.nextInt(s);
-                    if (i > j) break; 
-                    test = "Test subList.clear" + " " + i + " " + j + " size " + list.size();
+                    if (i > j)
+                        break;
+                    test = "Test subList.clear" + " " + i + " " + j + " size "
+                            + list.size();
                     list.subList(i, j).clear();
                     break;
                 }
@@ -260,7 +279,8 @@ public class FastTableTest {
                     int s = list.size();
                     int i = random.nextInt(s);
                     int j = random.nextInt(s);
-                    if (i > j) break;
+                    if (i > j)
+                        break;
                     boolean containsAll = list.containsAll(list.subList(i, j));
                     list.add(containsAll ? 1 : 0);
                     break;
@@ -268,16 +288,21 @@ public class FastTableTest {
                 case 9: {
                     test = "Test iterator";
                     int j = 0;
-                    for (ListIterator<Integer> i = list.listIterator(); i.hasNext(); i.next()) {
-                        if (random.nextInt(list.size()) == 0) j = i.next();
-                        if (random.nextInt(list.size()) == 0) j = i.previous();
-                        if (random.nextInt(list.size()) == 0) i.remove();
+                    for (ListIterator<Integer> i = list.listIterator(); i
+                            .hasNext(); i.next()) {
+                        if (random.nextInt(list.size()) == 0)
+                            j = i.next();
+                        if (random.nextInt(list.size()) == 0)
+                            j = i.previous();
+                        if (random.nextInt(list.size()) == 0)
+                            i.remove();
                     }
                     list.add(j);
                     break;
-                }                    
+                }
                 default:
-                    if (list.size() > 100000) list.clear();
+                    if (list.size() > 100000)
+                        list.clear();
                     list.add(random.nextInt());
             }
         } catch (Throwable error) {
@@ -325,20 +350,23 @@ public class FastTableTest {
                     deque.addFirst(deque.pop());
                     deque.push(random.nextInt());
                     deque.addLast(deque.pollFirst());
-                    deque.addFirst(deque.pollLast());                    
+                    deque.addFirst(deque.pollLast());
                     break;
                 }
                 case 7: {
                     test = "Test descendingIterator";
                     int obj = random.nextInt();
-                    for (Iterator<Integer> i = deque.descendingIterator(); i.hasNext(); i.next()) {
-                        if (random.nextInt(deque.size()) == 0) obj = i.next();
+                    for (Iterator<Integer> i = deque.descendingIterator(); i
+                            .hasNext(); i.next()) {
+                        if (random.nextInt(deque.size()) == 0)
+                            obj = i.next();
                     }
                     deque.add(obj);
                     break;
                 }
-                default: 
-                    if (deque.size() > 100000) deque.clear();
+                default:
+                    if (deque.size() > 100000)
+                        deque.clear();
                     deque.add(random.nextInt());
             }
         } catch (Throwable error) {
@@ -349,20 +377,25 @@ public class FastTableTest {
 
     /* Utilities */
     private static String nano(long ns) {
-        if (ns < 0) return "N/A";
+        if (ns < 0)
+            return "N/A";
         return commaSeparated(String.valueOf(ns)) + " ns";
     }
 
     private static String commaSeparated(String str) {
         int length = str.length();
-        if (length <= 3) return str;
-        return commaSeparated(str.substring(0, length - 3)) + ',' + str.substring(length - 3);
+        if (length <= 3)
+            return str;
+        return commaSeparated(str.substring(0, length - 3)) + ','
+                + str.substring(length - 3);
     }
 
     private static void assertEquals(Throwable found, Throwable expected) {
-        if (found.getClass().equals(expected.getClass())) return;
+        if (found.getClass().equals(expected.getClass()))
+            return;
         found.printStackTrace(System.err);
         expected.printStackTrace(System.err);
-        assert false : "Exception mismatch found: " + found + ", expected: " + expected;
+        assert false : "Exception mismatch found: " + found + ", expected: "
+                + expected;
     }
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThread
 
-   private AtomicBoolean isFree = new AtomicBoolean();
+    private AtomicBoolean isFree = new AtomicBoolean();
 
     private int priority;
 
@@ -41,7 +41,8 @@ public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThre
      * <code>false</code> if this thread is busy.
      */
     public boolean execute(Runnable logic, ConcurrentContextImpl inContext) {
-        if (!isFree.compareAndSet(true, false)) return false;
+        if (!isFree.compareAndSet(true, false))
+            return false;
         synchronized (this) {
             this.priority = Thread.currentThread().getPriority();
             this.inContext = inContext;

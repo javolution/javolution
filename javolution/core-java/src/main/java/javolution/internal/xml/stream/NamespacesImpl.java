@@ -94,10 +94,11 @@ public final class NamespacesImpl implements NamespaceContext {
 
     // Implements NamespaceContext
     public CharArray getNamespaceURI(CharSequence prefix) {
-        if (prefix == null) 
+        if (prefix == null)
             throw new IllegalArgumentException("null prefix not allowed");
         return getNamespaceURINullAllowed(prefix);
     }
+
     CharArray getNamespaceURINullAllowed(CharSequence prefix) {
         if ((prefix == null) || (prefix.length() == 0))
             return _defaultNamespace;
@@ -111,7 +112,7 @@ public final class NamespacesImpl implements NamespaceContext {
 
     // Implements NamespaceContext
     public CharArray getPrefix(CharSequence uri) {
-        if (uri == null) 
+        if (uri == null)
             throw new IllegalArgumentException("null namespace URI not allowed");
         return _defaultNamespace.equals(uri) ? _defaultNsPrefix : getPrefix(
                 uri, _namespacesCount[_nesting]);
@@ -168,12 +169,12 @@ public final class NamespacesImpl implements NamespaceContext {
         final int index = _namespacesCount[_nesting];
         _prefixesWritten[index] = isWritten;
         final int prefixLength = prefix.length();
-        CharArray prefixTmp = _prefixesTmp[index]; 
-        if ((prefixTmp == null)
-                || (prefixTmp.array().length < prefixLength)) {
+        CharArray prefixTmp = _prefixesTmp[index];
+        if ((prefixTmp == null) || (prefixTmp.array().length < prefixLength)) {
             HeapContext.execute(new Runnable() {
                 public void run() {
-                    _prefixesTmp[index] = new CharArray().setArray(new char[prefixLength + 32], 0, 0);
+                    _prefixesTmp[index] = new CharArray().setArray(
+                            new char[prefixLength + 32], 0, 0);
                 }
             });
             prefixTmp = _prefixesTmp[index];
@@ -184,12 +185,12 @@ public final class NamespacesImpl implements NamespaceContext {
         prefixTmp.setArray(prefixTmp.array(), 0, prefixLength);
 
         final int uriLength = uri.length();
-        CharArray namespaceTmp = _namespacesTmp[index]; 
-        if ((namespaceTmp == null)
-                || (namespaceTmp.array().length < uriLength)) {
+        CharArray namespaceTmp = _namespacesTmp[index];
+        if ((namespaceTmp == null) || (namespaceTmp.array().length < uriLength)) {
             HeapContext.execute(new Runnable() {
                 public void run() {
-                    _namespacesTmp[index] = new CharArray().setArray(new char[uriLength + 32], 0, 0);
+                    _namespacesTmp[index] = new CharArray().setArray(
+                            new char[uriLength + 32], 0, 0);
                 }
             });
             namespaceTmp = _namespacesTmp[index];
@@ -198,7 +199,7 @@ public final class NamespacesImpl implements NamespaceContext {
             namespaceTmp.array()[i] = uri.charAt(i);
         }
         namespaceTmp.setArray(namespaceTmp.array(), 0, uriLength);
-        
+
         // Sets the prefix using CharArray instances.
         setPrefix(prefixTmp, namespaceTmp);
     }
@@ -288,6 +289,5 @@ public final class NamespacesImpl implements NamespaceContext {
             }
         });
     }
-
 
 }

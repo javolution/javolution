@@ -31,11 +31,11 @@ import javolution.xml.XMLFormat;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DefaultXMLFormat {
-    
+
     /**
      * Returns the default xml format of the annotated class.
      */
     @SuppressWarnings("rawtypes")
-    Class<? extends XMLFormat> value();    
-       
+    Class<? extends XMLFormat> value();
+
 }

@@ -13,3 +13,4 @@
     <a href="http://en.wikipedia.org/wiki/StAX">Wikipedia: StAX</a></p>
  */
 package javolution.xml.stream;
+

@@ -20,6 +20,7 @@ import javolution.util.service.CollectionService;
  * @version 6.0, December 12, 2012
  * @see     Operators
  */
-public interface CollectionOperator<E> extends Function<CollectionService<E>, E> {
-   
+public interface CollectionOperator<E> extends
+        Function<CollectionService<E>, E> {
+
 }

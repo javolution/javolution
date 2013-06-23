@@ -16,7 +16,6 @@ import javolution.util.Index;
 import javolution.util.function.Comparators;
 import javolution.xml.stream.XMLStreamException;
 
-
 /**
  * <p> This class represents a resolver for XML cross references during 
  *     the marshalling/unmarshalling process.</p>
@@ -28,14 +27,14 @@ import javolution.xml.stream.XMLStreamException;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public class XMLReferenceResolver  {
+public class XMLReferenceResolver {
 
     /**
      * Holds object to identifier (FastTable.Index) mapping.
      */
-    private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>()
-            .usingKeyComparator(Comparators.IDENTITY);
- 
+    private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>(
+            Comparators.IDENTITY);
+
     /**
      * Holds the objects (index to object mapping).
      */
@@ -69,8 +68,7 @@ public class XMLReferenceResolver  {
     /**
      * Default constructor.
      */
-    public XMLReferenceResolver() {
-    }
+    public XMLReferenceResolver() {}
 
     /**
      * Sets the name of the identifier attribute (by default<code>"id"</code>).
@@ -137,21 +135,17 @@ public class XMLReferenceResolver  {
             _objectToId.put(obj, id);
             _tmp.clear().append(id.intValue());
             if (_idURI == null) {
-                xml.getStreamWriter().writeAttribute(_idName,
-                        _tmp);
+                xml.getStreamWriter().writeAttribute(_idName, _tmp);
             } else {
-                xml.getStreamWriter().writeAttribute(_idURI,
-                        _idName, _tmp);
+                xml.getStreamWriter().writeAttribute(_idURI, _idName, _tmp);
             }
             return false;
         }
         _tmp.clear().append(id.intValue());
         if (_refURI == null) {
-            xml._writer
-                    .writeAttribute(_refName, _tmp);
+            xml._writer.writeAttribute(_refName, _tmp);
         } else {
-            xml._writer.writeAttribute(_refURI,
-                    _refName, _tmp);
+            xml._writer.writeAttribute(_refURI, _refName, _tmp);
         }
         return true;
     }
@@ -169,8 +163,7 @@ public class XMLReferenceResolver  {
      */
     public Object readReference(XMLFormat.InputElement xml)
             throws XMLStreamException {
-        CharArray value = xml._reader.getAttributeValue(
-                _refURI, _refName);
+        CharArray value = xml._reader.getAttributeValue(_refURI, _refName);
         if (value == null)
             return null;
         int ref = value.toInt();
@@ -190,8 +183,7 @@ public class XMLReferenceResolver  {
      */
     public void createReference(Object obj, XMLFormat.InputElement xml)
             throws XMLStreamException {
-        CharArray value = xml._reader.getAttributeValue(
-                _idURI, _idName);
+        CharArray value = xml._reader.getAttributeValue(_idURI, _idName);
         if (value == null)
             return;
         int i = value.toInt();
@@ -210,6 +202,5 @@ public class XMLReferenceResolver  {
         _objectToId.clear();
         _counter = 0;
     }
-
 
 }

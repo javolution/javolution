@@ -17,15 +17,15 @@ import org.osgi.framework.ServiceRegistration;
  *  Holds minimalist service registration implementation.
  */
 public class ServiceRegistrationImpl<S> implements ServiceRegistration<S> {
-    
-   /////////////////////////////////////////////////////////////////////////////
-   // Converted from ServiceRegistrationImpl.hpp (C++)
-   //
 
-   ServiceReferenceImpl<S> serviceReference;
+    /////////////////////////////////////////////////////////////////////////////
+    // Converted from ServiceRegistrationImpl.hpp (C++)
+    //
+
+    ServiceReferenceImpl<S> serviceReference;
 
     public ServiceRegistrationImpl(ServiceReferenceImpl<S> serviceReference) {
-       this.serviceReference = serviceReference;
+        this.serviceReference = serviceReference;
     }
 
     @Override
@@ -36,9 +36,12 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S> {
     @Override
     public void unregister() {
         // Fire event to listeners from all bundles.
-        ServiceEvent serviceEvent = new ServiceEvent(ServiceEvent.UNREGISTERING, serviceReference);
-        ((BundleImpl)serviceReference.bundle).osgi.fireServiceEvent(serviceEvent);
-    	((BundleImpl)serviceReference.bundle).serviceReferences.remove(serviceReference);
+        ServiceEvent serviceEvent = new ServiceEvent(
+                ServiceEvent.UNREGISTERING, serviceReference);
+        ((BundleImpl) serviceReference.bundle).osgi
+                .fireServiceEvent(serviceEvent);
+        ((BundleImpl) serviceReference.bundle).serviceReferences
+                .remove(serviceReference);
         serviceReference.bundle = null; // No more active.
     }
 
@@ -46,7 +49,7 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S> {
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void setProperties(Dictionary<String, ? > dctnr) {
+    public void setProperties(Dictionary<String, ?> dctnr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

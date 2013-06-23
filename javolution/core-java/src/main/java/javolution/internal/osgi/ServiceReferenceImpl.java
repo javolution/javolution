@@ -16,16 +16,16 @@ import org.osgi.framework.ServiceReference;
  */
 public class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
-   /////////////////////////////////////////////////////////////////////////////
-   // Converted from ServiceReferenceImpl.hpp (C++)
-   //
-   Bundle bundle;
+    /////////////////////////////////////////////////////////////////////////////
+    // Converted from ServiceReferenceImpl.hpp (C++)
+    //
+    Bundle bundle;
 
-   String serviceName;
+    String serviceName;
 
-   S service;
+    S service;
 
-   public ServiceReferenceImpl(Bundle bundle, String serviceName, S service) {
+    public ServiceReferenceImpl(Bundle bundle, String serviceName, S service) {
         this.bundle = bundle;
         this.serviceName = serviceName;
         this.service = service;
@@ -38,12 +38,8 @@ public class ServiceReferenceImpl<S> implements ServiceReference<S> {
 
     @Override
     public String toString() {
-        return new StringBuilder()
-                .append("Service ")
-                .append(serviceName)
-                .append(" from ")
-                .append(bundle)
-                .toString();
+        return new StringBuilder().append("Service ").append(serviceName)
+                .append(" from ").append(bundle).toString();
     }
 
     // End conversion.

@@ -49,7 +49,7 @@ public interface EqualityComparator<T> extends Comparator<T> {
      * @param  object the object to return the hashcode for.
      * @return the hashcode for the specified object.
      */
-     int hashCodeOf(T object);
+    int hashCodeOf(T object);
 
     /**
      * Indicates if the specified objects can be considered equal.
@@ -61,7 +61,7 @@ public interface EqualityComparator<T> extends Comparator<T> {
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-     boolean areEqual(T left, T right);
+    boolean areEqual(T left, T right);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
@@ -75,5 +75,5 @@ public interface EqualityComparator<T> extends Comparator<T> {
      *         argument is less than, possibly equal to, or greater than the second.
      */
     int compare(T left, T right);
-    
+
 }

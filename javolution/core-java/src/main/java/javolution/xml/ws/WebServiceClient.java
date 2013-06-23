@@ -67,8 +67,7 @@ public abstract class WebServiceClient {
     /**
      * Default constructor (address not set).
      */
-    public WebServiceClient() {
-    }
+    public WebServiceClient() {}
 
     /**
      * Sets the address of this web service.
@@ -106,11 +105,11 @@ public abstract class WebServiceClient {
             // Sends the request.
             if (_url == null)
                 throw new IOException("URL not set");
-            /**/    
-            java.net.HttpURLConnection http = (java.net.HttpURLConnection) 
-               ((java.net.URL)_url).openConnection();
-            http.setRequestProperty("Content-Length", String.valueOf(_buffer
-                    .length()));
+            /**/
+            java.net.HttpURLConnection http = (java.net.HttpURLConnection) ((java.net.URL) _url)
+                    .openConnection();
+            http.setRequestProperty("Content-Length",
+                    String.valueOf(_buffer.length()));
             http.setRequestProperty("Content-Type", "text/xml; charset=utf-8");
             // httpConn.setRequestProperty("SOAPAction", "");
             http.setRequestMethod("POST");
@@ -122,7 +121,7 @@ public abstract class WebServiceClient {
             _utf8Writer.close();
 
             // Reads the response.
-            /**/    
+            /**/
             _reader.setInput(http.getInputStream());
             /**/
             final XMLStreamReader xmlIn = _reader.getStreamReader();
@@ -146,13 +145,15 @@ public abstract class WebServiceClient {
             _reader.reset();
         }
     }
+
     private final TextBuilder _buffer = new TextBuilder();
     private final AppendableWriter _out = new AppendableWriter();
     private final XMLObjectWriter _writer = new XMLObjectWriter();
     private final UTF8StreamWriter _utf8Writer = new UTF8StreamWriter();
-    private  final XMLObjectReader _reader = new XMLObjectReader();
+    private final XMLObjectReader _reader = new XMLObjectReader();
+
     /**/
-    
+
     /**
      * Writes the web service request (SOAP body).
      * 
@@ -171,52 +172,52 @@ public abstract class WebServiceClient {
         final XMLStreamReader xml = in.getStreamReader();
         while (xml.hasNext()) {
             switch (xml.next()) {
-            case XMLStreamReader.START_DOCUMENT:
-                System.out.println("Start Document");
-                break;
-            case XMLStreamReader.END_DOCUMENT:
-                System.out.println("End Document.");
-                break;
-            case XMLStreamReader.START_ELEMENT:
-                System.out.println("Start Element: " + xml.getLocalName() + "("
-                        + xml.getNamespaceURI() + ")");
-                for (int i = 0, n = xml.getAttributeCount(); i < n; i++) {
-                    System.out.println("   Attribute: "
-                            + xml.getAttributeLocalName(i) + "("
-                            + xml.getAttributeNamespace(i) + "), Value: "
-                            + xml.getAttributeValue(i));
-                }
-                break;
-            case XMLStreamReader.END_ELEMENT:
-                if (xml.getLocalName().equals("Body")
-                        && xml.getNamespaceURI().equals(ENVELOPE_URI))
-                    return; // End body.
-                System.out.println("End Element: " + xml.getLocalName() + "("
-                        + xml.getNamespaceURI() + ")");
-                break;
-            case XMLStreamReader.CHARACTERS:
-                System.out.println("Characters: " + xml.getText());
-                break;
-            case XMLStreamReader.CDATA:
-                System.out.println("CDATA: " + xml.getText());
-                break;
-            case XMLStreamReader.COMMENT:
-                System.out.println("Comment: " + xml.getText());
-                break;
-            case XMLStreamReader.SPACE:
-                System.out.println("Space");
-                break;
-            default:
-                System.out.println(xml);
+                case XMLStreamReader.START_DOCUMENT:
+                    System.out.println("Start Document");
+                    break;
+                case XMLStreamReader.END_DOCUMENT:
+                    System.out.println("End Document.");
+                    break;
+                case XMLStreamReader.START_ELEMENT:
+                    System.out.println("Start Element: " + xml.getLocalName()
+                            + "(" + xml.getNamespaceURI() + ")");
+                    for (int i = 0, n = xml.getAttributeCount(); i < n; i++) {
+                        System.out.println("   Attribute: "
+                                + xml.getAttributeLocalName(i) + "("
+                                + xml.getAttributeNamespace(i) + "), Value: "
+                                + xml.getAttributeValue(i));
+                    }
+                    break;
+                case XMLStreamReader.END_ELEMENT:
+                    if (xml.getLocalName().equals("Body")
+                            && xml.getNamespaceURI().equals(ENVELOPE_URI))
+                        return; // End body.
+                    System.out.println("End Element: " + xml.getLocalName()
+                            + "(" + xml.getNamespaceURI() + ")");
+                    break;
+                case XMLStreamReader.CHARACTERS:
+                    System.out.println("Characters: " + xml.getText());
+                    break;
+                case XMLStreamReader.CDATA:
+                    System.out.println("CDATA: " + xml.getText());
+                    break;
+                case XMLStreamReader.COMMENT:
+                    System.out.println("Comment: " + xml.getText());
+                    break;
+                case XMLStreamReader.SPACE:
+                    System.out.println("Space");
+                    break;
+                default:
+                    System.out.println(xml);
             }
         }
 
-    }  
-    
+    }
+
     // For J2ME compatiblity.
     private static final CharSequence csq(Object string) {
-        return (string instanceof CharSequence) ? (CharSequence) string:
-            Text.valueOf(string);
-        
+        return (string instanceof CharSequence) ? (CharSequence) string : Text
+                .valueOf(string);
+
     }
 }

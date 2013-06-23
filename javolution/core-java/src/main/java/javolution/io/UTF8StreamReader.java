@@ -8,7 +8,6 @@
  */
 package javolution.io;
 
-
 import java.io.CharConversionException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +41,7 @@ import java.io.Reader;
  * @version 2.0, December 9, 2004
  * @see     UTF8StreamWriter
  */
-public final class UTF8StreamReader extends Reader  {
+public final class UTF8StreamReader extends Reader {
 
     /**
      * Holds the current input stream or <code>null</code> if closed.
@@ -300,7 +299,7 @@ public final class UTF8StreamReader extends Reader  {
         }
     }
 
-     public void reset() {
+    public void reset() {
         _code = 0;
         _end = 0;
         _inputStream = null;

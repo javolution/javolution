@@ -73,8 +73,10 @@ public class ConfigurableService implements ManagedService {
      * @throws ConfigurationException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void updated(Dictionary<String, ?> configuration) throws ConfigurationException {
-        if (configuration == null) return; // No configuration data.      
+    public void updated(Dictionary<String, ?> configuration)
+            throws ConfigurationException {
+        if (configuration == null)
+            return; // No configuration data.      
         Enumeration<String> e = configuration.keys();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
@@ -82,11 +84,13 @@ public class ConfigurableService implements ManagedService {
             Configurable cfg = ConfigurableService.configurableFor(name);
             if (cfg != null) {
                 try {
-                    TextFormat format = TextContext.getFormat(cfg.get().getClass());
+                    TextFormat format = TextContext.getFormat(cfg.get()
+                            .getClass());
                     Object newValue = format.parse(textValue);
                     cfg.reconfigure(newValue);
                 } catch (IllegalArgumentException error) {
-                    throw new ConfigurationException(name, "Cannot be configured", error);
+                    throw new ConfigurationException(name,
+                            "Cannot be configured", error);
                 }
             }
         }
@@ -103,7 +107,8 @@ public class ConfigurableService implements ManagedService {
     public static Configurable<?> configurableFor(String name) {
         try {
             int sep = name.lastIndexOf('#');
-            if (sep < 0) return null; // Not a configurable.
+            if (sep < 0)
+                return null; // Not a configurable.
             String className = name.substring(0, sep);
             String fieldName = name.substring(sep + 1);
             Class<?> cls = Class.forName(className);
@@ -111,7 +116,8 @@ public class ConfigurableService implements ManagedService {
                 LogContext.warning("Class " + className + " not found");
                 return null;
             }
-            Configurable<?> cfg = (Configurable<?>) cls.getDeclaredField(fieldName).get(null);
+            Configurable<?> cfg = (Configurable<?>) cls.getDeclaredField(
+                    fieldName).get(null);
             if (cfg == null) {
                 LogContext.warning("Configurable " + name + " not found");
             }

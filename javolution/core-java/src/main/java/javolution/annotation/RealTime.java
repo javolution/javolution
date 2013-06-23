@@ -40,22 +40,23 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Inherited
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Target({ ElementType.TYPE, ElementType.FIELD, ElementType.METHOD,
+        ElementType.CONSTRUCTOR })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RealTime {
- 
+
     /**
      * Indicates if this element has a bounded worst-case execution time
      * (default {@code true}).
      */
     boolean value() default true;
- 
+
     /**
      * Returns the limit behavior for the worst-case execution time
      * (default {@link Limit#CONSTANT}).
      */
     Limit limit() default Limit.CONSTANT;
-  
+
     /**
      * Indicates if this element is safe to be used if object allocation
      * is performed on the {@link javolution.context.StackContext stack}.
@@ -72,12 +73,12 @@ public @interface RealTime {
      * Provides additional information (default {@code ""}).
      */
     String comment() default "";
- 
+
     /**
      * Identifies the limit behavior for the worst case execution time.
      */
     public enum Limit {
-        
+
         /**
          * The worst case execution time is constant.
          */

@@ -8,7 +8,6 @@
  */
 package javolution.util.service;
 
-
 /**
  * The set of related functionalities used to implement tables collections.
  * 
@@ -17,51 +16,11 @@ package javolution.util.service;
  */
 public interface TableService<E> extends CollectionService<E> {
 
-    /**
-     * Returns the number of elements in this table.
-     */
-    int size();
-
-    /**
-     * Removes all of the elements from this table.
-     */
-    void clear();
-    
     /** 
      * Inserts the specified element at the specified position in this list
      * Shifts the element currently at that position to the right.
      */
     void add(int index, E element);
-
-    /** 
-     * Returns the element at the specified position.
-     */
-    E get(int index);
-
-    /** 
-     * Replaces the element at the specified position and returns the
-     * previous element.
-     */
-    E set(int index, E element);
-
-    /** 
-     * Removes the element as the specified position.
-     */
-    E remove(int index);
-
-    /**
-     * Dequeue methods.
-     */
-    
-    /** 
-     * Returns the first element. 
-     */
-    E getFirst();
-
-    /**
-     *  Returns the last element.
-     */
-    E getLast();
 
     /** 
      * Inserts the specified element at the front of this table.
@@ -73,16 +32,30 @@ public interface TableService<E> extends CollectionService<E> {
      */
     void addLast(E element);
 
-    /** 
-     *  Retrieves and removes the first element of this table.
+    /**
+     * Removes all of the elements from this table.
      */
-    E removeFirst();
-    
+    void clear();
+
     /** 
-     *  Retrieves and removes the last element of this table.
+     * Returns the element at the specified position.
      */
-    E removeLast();
-    
+    E get(int index);
+
+    /** 
+     * Returns the first element. 
+     */
+    E getFirst();
+
+    /**
+     * Dequeue methods.
+     */
+
+    /**
+     *  Returns the last element.
+     */
+    E getLast();
+
     /**
      * Retrieves, but does not remove, the first element of this table,
      * or returns {@link null} if this table is empty (atomic operation).
@@ -105,5 +78,31 @@ public interface TableService<E> extends CollectionService<E> {
      * Retrieves and removes the last element of this table,
      * or returns {@link null} if this table is empty (atomic operation).
      */
-    E pollLast();    
+    E pollLast();
+
+    /** 
+     * Removes the element as the specified position.
+     */
+    E remove(int index);
+
+    /** 
+     *  Retrieves and removes the first element of this table.
+     */
+    E removeFirst();
+
+    /** 
+     *  Retrieves and removes the last element of this table.
+     */
+    E removeLast();
+
+    /** 
+     * Replaces the element at the specified position and returns the
+     * previous element.
+     */
+    E set(int index, E element);
+
+    /**
+     * Returns the number of elements in this table.
+     */
+    int size();
 }

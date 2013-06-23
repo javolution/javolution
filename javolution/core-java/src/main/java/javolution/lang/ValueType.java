@@ -39,5 +39,4 @@ package javolution.lang;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface ValueType<T> extends Immutable, Copyable<T> {
-}
+public interface ValueType<T> extends Immutable, Copyable<T> {}

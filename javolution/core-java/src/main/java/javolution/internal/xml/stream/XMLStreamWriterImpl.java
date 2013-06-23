@@ -21,8 +21,6 @@ import javolution.xml.stream.XMLOutputFactory;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamWriter;
 
-
-
 /**
  * <p> This class represents an implementation of {@link XMLStreamWriter}.</p>
  *     
@@ -119,7 +117,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
      * Indicates if the current object written is an attribute value.
      */
     private boolean _isAttributeValue;
-    
+
     ////////////////////////
     // Temporary Settings //
     ////////////////////////
@@ -386,7 +384,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
             flush();
         }
         reset(); // Explicit reset.
-     }
+    }
 
     // Implements XMLStreamWriter interface.
     public void flush() throws XMLStreamException {
@@ -754,8 +752,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
                 && ((prefix == null) || prefixForURI.equals(prefix)))
             return prefixForURI; // No repair needed.
         if ((prefix == null) || (prefix.length() == 0)) { // Creates new prefix.
-            prefix = _autoPrefix.clear().append(_repairingPrefix).append(
-                    _autoNSCount++);
+            prefix = _autoPrefix.clear().append(_repairingPrefix)
+                    .append(_autoNSCount++);
         }
         _namespaces.setPrefix(prefix, namespaceURI, true); // Map to namespace URI.
         return prefix;
@@ -797,8 +795,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
         write(csq, 0, csq.length(), false);
     }
 
-    private final void writeEscape(CharSequence csq)
-            throws XMLStreamException {
+    private final void writeEscape(CharSequence csq) throws XMLStreamException {
         write(csq, 0, csq.length(), true);
     }
 
@@ -808,8 +805,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
             if (csq instanceof String) {
                 ((String) csq).getChars(start, start + length, _buffer, _index);
             } else if (csq instanceof javolution.text.Text) {
-                ((javolution.text.Text) csq).getChars(start, start
-                        + length, _buffer, _index);
+                ((javolution.text.Text) csq).getChars(start, start + length,
+                        _buffer, _index);
             } else if (csq instanceof javolution.text.TextBuilder) {
                 ((javolution.text.TextBuilder) csq).getChars(start, start
                         + length, _buffer, _index);
@@ -855,8 +852,8 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
     }
 
     // The buffer must have been flushed prior to calling this method.
-    private final void writeDirectEscapedCharacters(char[] chars, int start, int end)
-            throws XMLStreamException {
+    private final void writeDirectEscapedCharacters(char[] chars, int start,
+            int end) throws XMLStreamException {
         try {
             int blockStart = start;
             for (int i = start; i < end;) {
@@ -868,46 +865,46 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
                 if (blockLength > 0) {
                     _writer.write(_buffer, blockStart, blockLength);
                 }
-                blockStart = i;                
+                blockStart = i;
                 switch (c) {
-                case '<':
-                    _writer.write("&lt;");
-                    break;
-                case '>':
-                    _writer.write("&gt;");
-                    break;
-                case '\'': 
-                   _writer.write("&apos;");
-                   break;
-                case '"':
-                    _writer.write("&quot;");
-                    break;
-                case '&':
-                    _writer.write("&amp;");
-                    break;
-                default:
-                    _writer.write("&#");
-                    _writer.write((char) ('0' + c / 10));
-                    _writer.write((char) ('0' + c % 10));
-                    _writer.write(';');
+                    case '<':
+                        _writer.write("&lt;");
+                        break;
+                    case '>':
+                        _writer.write("&gt;");
+                        break;
+                    case '\'':
+                        _writer.write("&apos;");
+                        break;
+                    case '"':
+                        _writer.write("&quot;");
+                        break;
+                    case '&':
+                        _writer.write("&amp;");
+                        break;
+                    default:
+                        _writer.write("&#");
+                        _writer.write((char) ('0' + c / 10));
+                        _writer.write((char) ('0' + c % 10));
+                        _writer.write(';');
                 }
             }
             // Flush the current block.
             int blockLength = end - blockStart;
             if (blockLength > 0) {
                 _writer.write(_buffer, blockStart, blockLength);
-            }                                   
+            }
         } catch (IOException e) {
             throw new XMLStreamException(e);
         }
     }
 
     private boolean isEscaped(char c) {
-        return ((c < ' ') && _isAttributeValue) ||
-            (c == '"' && _isAttributeValue) ||
-            (c == '<') || (c == '>') || (c == '&');
+        return ((c < ' ') && _isAttributeValue)
+                || (c == '"' && _isAttributeValue) || (c == '<') || (c == '>')
+                || (c == '&');
     }
-    
+
     private final void write(char c) throws XMLStreamException {
         if (_index == BUFFER_LENGTH) {
             flushBuffer();

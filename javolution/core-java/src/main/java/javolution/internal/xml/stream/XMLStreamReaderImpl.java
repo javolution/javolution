@@ -74,11 +74,11 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     /**
      * Holds the textual representation for events.
      */
-    static final String[] NAMES_OF_EVENTS = new String[]{"UNDEFINED",
-        "START_ELEMENT", "END_ELEMENT", "PROCESSING_INSTRUCTIONS",
-        "CHARACTERS", "COMMENT", "SPACE", "START_DOCUMENT", "END_DOCUMENT",
-        "ENTITY_REFERENCE", "ATTRIBUTE", "DTD", "CDATA", "NAMESPACE",
-        "NOTATION_DECLARATION", "ENTITY_DECLARATION"};
+    static final String[] NAMES_OF_EVENTS = new String[] { "UNDEFINED",
+            "START_ELEMENT", "END_ELEMENT", "PROCESSING_INSTRUCTIONS",
+            "CHARACTERS", "COMMENT", "SPACE", "START_DOCUMENT", "END_DOCUMENT",
+            "ENTITY_REFERENCE", "ATTRIBUTE", "DTD", "CDATA", "NAMESPACE",
+            "NOTATION_DECLARATION", "ENTITY_DECLARATION" };
 
     /**
      * Holds the reader buffer capacity.
@@ -224,8 +224,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     /** 
      * Default constructor.
      */
-    public XMLStreamReaderImpl() {
-    }
+    public XMLStreamReaderImpl() {}
 
     /**
      * Sets the input stream source for this XML stream reader 
@@ -383,7 +382,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
      * @param entities the entities to replacement texts mapping 
      *        (both must be <code>CharSequence</code> instances).
      */
-    public void setEntities(Map<?,?> entities) {
+    public void setEntities(Map<?, ?> entities) {
         _entities.setEntitiesMapping(entities);
     }
 
@@ -437,9 +436,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                             int length = _index - _start - 1;
                             if (length > 0) {
                                 if (_charactersPending) {
-                                    _text.setArray(_data, _text.offset(), _text
-                                            .length()
-                                            + length); // Coalescing.
+                                    _text.setArray(_data, _text.offset(),
+                                            _text.length() + length); // Coalescing.
                                 } else {
                                     _text = newSeq(_start, length);
                                     _charactersPending = true;
@@ -471,9 +469,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                             int length = _index - _start;
                             if (length > 0) { // Not empty.
                                 if (_charactersPending) {
-                                    _text.setArray(_data, _text.offset(), _text
-                                            .length()
-                                            + length); // Coalescing.
+                                    _text.setArray(_data, _text.offset(),
+                                            _text.length() + length); // Coalescing.
                                 } else {
                                     _text = newSeq(_start, length);
                                     _charactersPending = true;
@@ -538,7 +535,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                                 return _eventType = CHARACTERS;
                             }
                         }
-                    } else if ((_index - _start == 4) && (_data[_start + 1] == '!')
+                    } else if ((_index - _start == 4)
+                            && (_data[_start + 1] == '!')
                             && (_data[_start + 2] == '-')
                             && (_data[_start + 3] == '-')) {
                         _start = _index = _index - 4; // Removes <!--
@@ -548,7 +546,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                             return _eventType = CHARACTERS;
                         }
 
-                    } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
+                    } else if ((_index - _start == 9)
+                            && (_data[_start + 1] == '!')
                             && (_data[_start + 2] == '[')
                             && (_data[_start + 3] == 'C')
                             && (_data[_start + 4] == 'D')
@@ -559,7 +558,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                         _start = _index = _index - 9; // Do not keep <![CDATA[
                         _state = STATE_CDATA;
 
-                    } else if ((_index - _start == 9) && (_data[_start + 1] == '!')
+                    } else if ((_index - _start == 9)
+                            && (_data[_start + 1] == '!')
                             && (_data[_start + 2] == 'D')
                             && (_data[_start + 3] == 'O')
                             && (_data[_start + 4] == 'C')
@@ -682,9 +682,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                     if (c == '=') {
                         --_index;
                         _state = STATE_OPEN_TAGxEQUAL_READ;
-                    } else if (c > ' ') {
-                        throw new XMLStreamException("'=' expected", _location);
-                    }
+                    } else if (c > ' ') { throw new XMLStreamException(
+                            "'=' expected", _location); }
                     break;
 
                 case STATE_OPEN_TAGxEQUAL_READ:
@@ -694,9 +693,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                     } else if (c == '\"') {
                         _start = --_index;
                         _state = STATE_OPEN_TAGxREAD_ATTR_VALUE_DOUBLE_QUOTE;
-                    } else if (c > ' ') {
-                        throw new XMLStreamException("Quotes expected", _location);
-                    }
+                    } else if (c > ' ') { throw new XMLStreamException(
+                            "Quotes expected", _location); }
                     break;
 
                 case STATE_OPEN_TAGxREAD_ATTR_VALUE_SIMPLE_QUOTE:
@@ -750,7 +748,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                         throw new XMLStreamException("'>' expected", _location);
                     }
 
-                // CLOSE_TAG:
+                    // CLOSE_TAG:
                 case STATE_CLOSE_TAGxREAD_ELEM_NAME:
                     while (true) { // Element name can be read all at once.
 
@@ -782,9 +780,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                         _state = STATE_CHARACTERS;
                         processEndTag();
                         return _eventType = END_ELEMENT;
-                    } else if (c > ' ') {
-                        throw new XMLStreamException("'>' expected", _location);
-                    }
+                    } else if (c > ' ') { throw new XMLStreamException(
+                            "'>' expected", _location); }
                     break;
 
                 default:
@@ -909,10 +906,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
         if (c == 0xA) {
             _location._line++;
             _location._column = -_readIndex; // column = 0
-        } else if (c == 0x0) {
-            throw new XMLStreamException("Illegal XML character U+0000",
-                    _location);
-        }
+        } else if (c == 0x0) { throw new XMLStreamException(
+                "Illegal XML character U+0000", _location); }
         return c;
     }
 
@@ -1078,7 +1073,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                 char[] tmp = new char[_data.length * 2];
                 javolution.context.LogContext.info(new CharArray(
                         "XMLStreamReaderImpl: Data buffer increased to "
-                        + tmp.length));
+                                + tmp.length));
                 System.arraycopy(_data, 0, tmp, 0, _data.length);
                 _data = tmp;
             }
@@ -1094,7 +1089,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
                 CharArray[] tmp = new CharArray[_elemStack.length * 2];
                 javolution.context.LogContext.info(new CharArray(
                         "XMLStreamReaderImpl: CharArray stack increased to "
-                        + tmp.length));
+                                + tmp.length));
                 System.arraycopy(_elemStack, 0, tmp, 0, _elemStack.length);
                 _elemStack = tmp;
             }
@@ -1166,11 +1161,9 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     // Implements XMLStreamReader Interface.
     public CharArray getElementText() throws XMLStreamException {
         // Derived from interface specification code.
-        if (getEventType() != XMLStreamConstants.START_ELEMENT) {
-            throw new XMLStreamException(
-                    "Parser must be on START_ELEMENT to read next text",
-                    getLocation());
-        }
+        if (getEventType() != XMLStreamConstants.START_ELEMENT) { throw new XMLStreamException(
+                "Parser must be on START_ELEMENT to read next text",
+                getLocation()); }
         CharArray text = null;
         int eventType = next();
         while (eventType != XMLStreamConstants.END_ELEMENT) {
@@ -1284,8 +1277,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
             throw illegalState("Not a start or end element");
         if (_prefixSep < 0)
             return _qName;
-        CharArray localName = newSeq(_prefixSep + 1, _qName.offset()
-                + _qName.length() - _prefixSep - 1);
+        CharArray localName = newSeq(_prefixSep + 1,
+                _qName.offset() + _qName.length() - _prefixSep - 1);
         return localName;
     }
 
@@ -1351,7 +1344,8 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     public CharArray getPITarget() {
         if (_eventType != XMLStreamConstants.PROCESSING_INSTRUCTION)
             throw illegalState("Not a processing instruction");
-        CharArray piTarget = newSeq(_text.offset(), _text.indexOf(' ') + _text.offset());
+        CharArray piTarget = newSeq(_text.offset(),
+                _text.indexOf(' ') + _text.offset());
         return piTarget;
     }
 

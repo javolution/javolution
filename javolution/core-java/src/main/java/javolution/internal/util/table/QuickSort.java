@@ -19,19 +19,19 @@ import javolution.util.service.TableService;
  * @version 6.0.0, December 12, 2012
  */
 public class QuickSort<E> {
-      
+
     private TableService<E> table;
     private Comparator<? super E> comparator;
-   
+
     public QuickSort(TableService<E> table, Comparator<? super E> comparator) {
         this.table = table;
         this.comparator = comparator;
     }
 
     public void sort() {
-       sort(0, table.size()); 
+        sort(0, table.size());
     }
-    
+
     // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
     //
     private void sort(int first, int last) {

@@ -28,7 +28,8 @@ import javolution.util.service.SortedMapService;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
+public class FastSortedMap<K, V> extends FastMap<K, V> implements
+        SortedMap<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -38,31 +39,31 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     public FastSortedMap() {
         this(Comparators.STANDARD);
     }
-  
+
     /**
       * Creates an empty sorted map ordered using the specified comparator 
       * for key equality and ordering.
     */
-   public FastSortedMap(EqualityComparator<? super K> keyComparator) {
-       super(keyComparator); // TODO
-   }
-     
-   /**
-    * Creates a sorted map backed up by the specified service implementation.
-    */
-   protected FastSortedMap(SortedMapService<K, V> service) {
-       super(service);
-   }
-   
-   /***************************************************************************
-    * Views.
-    */
+    public FastSortedMap(EqualityComparator<? super K> keyComparator) {
+        super(keyComparator); // TODO
+    }
 
-   @Override
-   public FastSortedSet<Entry<K, V>> entrySet() {
-       return null;
-   }
-   
+    /**
+     * Creates a sorted map backed up by the specified service implementation.
+     */
+    protected FastSortedMap(SortedMapService<K, V> service) {
+        super(service);
+    }
+
+    /***************************************************************************
+     * Views.
+     */
+
+    @Override
+    public FastSortedSet<Entry<K, V>> entrySet() {
+        return null;
+    }
+
     @Override
     @RealTime(limit = LOG_N)
     public FastSortedMap<K, V> subMap(K fromKey, K toKey) {
@@ -111,7 +112,7 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     public V remove(Object key) {
         return super.remove(key);
     }
-    
+
     @Override
     @RealTime(limit = LOG_N)
     public V putIfAbsent(K key, V value) {
@@ -134,8 +135,8 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     @RealTime(limit = LOG_N)
     public V replace(K key, V value) {
         return super.replace(key, value);
-    }   
-    
+    }
+
     /***************************************************************************
      * SortedMap operations.
      */
@@ -155,8 +156,8 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     @Override
     public Comparator<? super K> comparator() {
         return keySet().comparator();
-    }   
-   
+    }
+
     /***************************************************************************
      * Misc.
      */
@@ -164,5 +165,5 @@ public class FastSortedMap<K,V> extends FastMap<K,V> implements SortedMap<K,V> {
     @Override
     protected SortedMapService<K, V> service() {
         return (SortedMapService<K, V>) super.service();
-    } 
+    }
 }

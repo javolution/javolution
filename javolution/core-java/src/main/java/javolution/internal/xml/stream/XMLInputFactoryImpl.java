@@ -19,24 +19,27 @@ import javolution.xml.stream.XMLStreamReader;
  * This class represents the default factory implementation.
  */
 public final class XMLInputFactoryImpl extends XMLInputFactory {
-    Map<?,?> _entities = null;
+    Map<?, ?> _entities = null;
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(Reader reader) throws XMLStreamException {
+    public XMLStreamReader createXMLStreamReader(Reader reader)
+            throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(reader);
         return xmlReader;
     }
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(InputStream stream) throws XMLStreamException {
+    public XMLStreamReader createXMLStreamReader(InputStream stream)
+            throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(stream);
         return xmlReader;
     }
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(InputStream stream, String encoding) throws XMLStreamException {
+    public XMLStreamReader createXMLStreamReader(InputStream stream,
+            String encoding) throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(stream, encoding);
         return xmlReader;
@@ -44,13 +47,15 @@ public final class XMLInputFactoryImpl extends XMLInputFactory {
 
     // Implements XMLInputFactory abstract method.
     @SuppressWarnings("unchecked")
-    public void setProperty(String name, Object value) throws IllegalArgumentException {
+    public void setProperty(String name, Object value)
+            throws IllegalArgumentException {
         if (name.equals(IS_COALESCING)) {
             // Do nothing, always coalescing.
         } else if (name.equals(ENTITIES)) {
-            _entities = (Map<Object,Object>) value;
+            _entities = (Map<Object, Object>) value;
         } else {
-            throw new IllegalArgumentException("Property: " + name + " not supported");
+            throw new IllegalArgumentException("Property: " + name
+                    + " not supported");
         }
     }
 
@@ -61,7 +66,8 @@ public final class XMLInputFactoryImpl extends XMLInputFactory {
         } else if (name.equals(ENTITIES)) {
             return _entities;
         } else {
-            throw new IllegalArgumentException("Property: " + name + " not supported");
+            throw new IllegalArgumentException("Property: " + name
+                    + " not supported");
         }
     }
 
@@ -77,5 +83,5 @@ public final class XMLInputFactoryImpl extends XMLInputFactory {
         }
         return xmlReader;
     }
-    
+
 }

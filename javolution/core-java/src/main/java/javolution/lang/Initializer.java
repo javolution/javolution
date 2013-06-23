@@ -53,18 +53,17 @@ public class Initializer {
 
     /** The class loader for this initializer */
     private final ClassLoader classLoader;
-    
+
     /** Indicates if the initialization has been performed successfully. */
     private boolean isInitializationSuccessful = false;
-    
+
     /** 
      * Creates an initializer for the specified class loader.
      */
     public Initializer(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
-    
-    
+
     /**
      * Returns the classes loaded by the class loader of this initializer or 
      * <code>null</code> if not supported by the platform.
@@ -76,9 +75,11 @@ public class Initializer {
             cls = cls.getSuperclass();
         }
         try {
-            java.lang.reflect.Field fldClasses = cls.getDeclaredField("classes");
+            java.lang.reflect.Field fldClasses = cls
+                    .getDeclaredField("classes");
             fldClasses.setAccessible(true);
-            Vector<Class<?>> list = (Vector<Class<?>>) fldClasses.get(classLoader);
+            Vector<Class<?>> list = (Vector<Class<?>>) fldClasses
+                    .get(classLoader);
             Class<?>[] classes = new Class<?>[list.size()];
             for (int i = 0; i < classes.length; i++) {
                 classes[i] = list.get(i);
@@ -111,10 +112,12 @@ public class Initializer {
         while (true) {
             Class<?>[] classes = loadedClasses();
             if (classes == null) {
-                LogContext.warning("Automatic class initialization not supported.");
+                LogContext
+                        .warning("Automatic class initialization not supported.");
                 return;
             }
-            if (nbrClassesInitialized >= classes.length) break; // Done.
+            if (nbrClassesInitialized >= classes.length)
+                break; // Done.
             for (int i = nbrClassesInitialized; i < classes.length; i++) {
                 Class<?> cls = classes[i];
                 try {
@@ -125,7 +128,8 @@ public class Initializer {
             }
             nbrClassesInitialized = classes.length;
         }
-        LogContext.info("Initialization of ", nbrClassesInitialized, " classes loaded by ", classLoader);
+        LogContext.info("Initialization of ", nbrClassesInitialized,
+                " classes loaded by ", classLoader);
     }
 
     /**

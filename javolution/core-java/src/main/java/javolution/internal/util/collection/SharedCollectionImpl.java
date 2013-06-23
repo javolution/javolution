@@ -29,6 +29,27 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
     private final CollectionService<E> target;
     private final Lock write;
 
+    /**
+     * Splits the specified collection into sub-collections all of them 
+     * sharing the same read/write locks.
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> SharedCollectionImpl<E>[] splitOf(
+            CollectionService<E> that, int n, Lock read, Lock write) {
+        CollectionService<E>[] tmp;
+        read.lock();
+        try {
+            tmp = that.trySplit(n);
+        } finally {
+            read.unlock();
+        }
+        SharedCollectionImpl<E>[] shareds = new SharedCollectionImpl[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            shareds[i] = new SharedCollectionImpl<E>(tmp[i], read, write);
+        }
+        return shareds;
+    }
+
     public SharedCollectionImpl(CollectionService<E> target) {
         this.target = target;
         ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -82,40 +103,7 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
     @Override
     @Deprecated
     public Iterator<E> iterator() {
-        final Iterator<E> targetIterator = target.iterator();
-        return new Iterator<E>() {
-
-            @Override
-            public boolean hasNext() {
-                read.lock();
-                try {
-                    return targetIterator.hasNext();
-                } finally {
-                    read.unlock();
-                }
-            }
-
-            @Override
-            public E next() {
-                read.lock();
-                try {
-                    return targetIterator.next();
-                } finally {
-                    read.unlock();
-                }
-            }
-
-            @Override
-            public void remove() {
-                write.lock();
-                try {
-                    targetIterator.remove();
-                } finally {
-                    write.unlock();
-                }
-            }
-
-        };
+        return new SharedIteratorImpl<E>(target.iterator(), read, write);
     }
 
     @Override
@@ -134,14 +122,8 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public SharedCollectionImpl<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        SharedCollectionImpl<E>[] shareds = new SharedCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            shareds[i] = new SharedCollectionImpl<E>(tmp[i], read, write);
-        }
-        return shareds;
+        return SharedCollectionImpl.splitOf(target, n, read, write);
     }
 }

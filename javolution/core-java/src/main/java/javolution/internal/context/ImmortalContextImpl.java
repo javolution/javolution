@@ -19,7 +19,7 @@ import javolution.context.ImmortalContext;
 public final class ImmortalContextImpl extends ImmortalContext {
 
     // TODO: Use RTSJ Immortal Memory Memory.
-    
+
     @Override
     protected void executeInContext(Runnable logic) {
         logic.run();

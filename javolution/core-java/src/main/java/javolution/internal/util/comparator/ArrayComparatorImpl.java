@@ -38,16 +38,18 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
         if (array instanceof boolean[])
             return Arrays.hashCode((boolean[]) array);
         if (array != null)
-            return array.hashCode();     
-        return 0;        
+            return array.hashCode();
+        return 0;
     }
-    
+
     @Override
     public boolean areEqual(Object array1, Object array2) {
-        if (array1 == array2) return true;
-        if ((array1 == null) || (array2 == null)) return false;
+        if (array1 == array2)
+            return true;
+        if ((array1 == null) || (array2 == null))
+            return false;
         if (array1 instanceof Object[] && array2 instanceof Object[])
-            return Arrays.deepEquals ((Object[]) array1, (Object[]) array2);
+            return Arrays.deepEquals((Object[]) array1, (Object[]) array2);
         if (array1 instanceof byte[] && array2 instanceof byte[])
             return Arrays.equals((byte[]) array1, (byte[]) array2);
         if (array1 instanceof short[] && array2 instanceof short[])
@@ -67,4 +69,4 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
         return array1.equals(array2);
     }
 
-} 
+}

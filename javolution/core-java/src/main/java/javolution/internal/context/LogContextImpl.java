@@ -25,7 +25,7 @@ import org.osgi.service.log.LogService;
  */
 public final class LogContextImpl extends LogContext {
 
-    private final FastMap<Object,Object> properties = new FastMap<Object, Object>();
+    private final FastMap<Object, Object> properties = new FastMap<Object, Object>();
 
     private Level level; // Null to use configurable LEVEL.
 
@@ -50,7 +50,8 @@ public final class LogContextImpl extends LogContext {
     @Override
     protected void log(Level level, Object... objs) {
         Level thisLevel = (this.level != null) ? this.level : LEVEL.get();
-        if (level.compareTo(thisLevel) < 0) return;
+        if (level.compareTo(thisLevel) < 0)
+            return;
         final TextBuilder msg = new TextBuilder();
         properties.entrySet().doWhile(new Predicate<Entry<Object, Object>>() {
 
@@ -74,7 +75,8 @@ public final class LogContextImpl extends LogContext {
         LogService logService = JavolutionActivator.getLogService();
         if (logService != null) { // OSGi LogService.
             if (error != null) {
-                logService.log(TO_OSGI_LEVEL[level.ordinal()], msg.toString(), error);
+                logService.log(TO_OSGI_LEVEL[level.ordinal()], msg.toString(),
+                        error);
             } else {
                 logService.log(TO_OSGI_LEVEL[level.ordinal()], msg.toString());
             }
@@ -84,7 +86,7 @@ public final class LogContextImpl extends LogContext {
                 System.out.print(' ');
                 System.out.print(msg);
                 if (error != null) {
-                   error.printStackTrace(System.out); 
+                    error.printStackTrace(System.out);
                 } else {
                     System.out.println();
                 }
@@ -92,7 +94,7 @@ public final class LogContextImpl extends LogContext {
         }
     }
 
-    private static final int[] TO_OSGI_LEVEL = {LogService.LOG_DEBUG, LogService.LOG_INFO,
-        LogService.LOG_WARNING, LogService.LOG_ERROR};
+    private static final int[] TO_OSGI_LEVEL = { LogService.LOG_DEBUG,
+            LogService.LOG_INFO, LogService.LOG_WARNING, LogService.LOG_ERROR };
 
 }

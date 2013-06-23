@@ -51,5 +51,5 @@ public interface NamespaceContext {
      *         <code>null</code>
      */
     Iterator<CharArray> getPrefixes(CharSequence namespaceURI);
-    
+
 }

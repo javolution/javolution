@@ -94,12 +94,12 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
 
     private static final long serialVersionUID = 0x600L; // Version.
- 
+
     /**
      * Holds the actual service implementation.
      */
     private final TableService<E> service;
-    
+
     /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
@@ -112,15 +112,15 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      * Creates an empty table using the specified comparator for element 
      * equality.
     */
-   public FastTable(EqualityComparator<? super E> comparator) {
-       service = new FastTableImpl<E>(comparator);
-   }   
-   
+    public FastTable(EqualityComparator<? super E> comparator) {
+        service = new FastTableImpl<E>(comparator);
+    }
+
     /**
      * Creates a table having the specified initial elements.
      */
     public FastTable(E... elements) {
-        this();     
+        this();
         for (E e : elements) {
             add(e);
         }
@@ -132,10 +132,10 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     protected FastTable(TableService<E> service) {
         this.service = service;
     }
-    
-     /***************************************************************************
-     * Views.
-     */
+
+    /***************************************************************************
+    * Views.
+    */
 
     @Override
     public FastTable<E> unmodifiable() {
@@ -160,23 +160,22 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
                 new SubTableImpl<E>(service, fromIndex, toIndex));
     }
 
-
     /***************************************************************************
      * Collection operations.
      */
-       
+
     @Override
     @RealTime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
-    
+
     @Override
     @RealTime(limit = CONSTANT)
     public void clear() {
         service.clear();
     }
- 
+
     /***************************************************************************
      * List operations.
      */
@@ -214,15 +213,16 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     public int indexOf(final Object element) {
         final EqualityComparator<? super E> cmp = comparator();
         final int[] count = new int[] { -1 };
-        boolean found = sequential().doWhile(new Predicate<E>() {
+        boolean notFound = sequential().doWhile(new Predicate<E>() {
 
             @Override
             @SuppressWarnings("unchecked")
             public boolean test(E param) {
                 count[0]++;
-                return !cmp.areEqual((E)element, param);                
-            }});
-        return found ? count[0] : -1;
+                return !cmp.areEqual((E) element, param);
+            }
+        });
+        return notFound ? -1 : count[0];
     }
 
     @Override
@@ -230,16 +230,18 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     public int lastIndexOf(final Object element) {
         final EqualityComparator<? super E> cmp = comparator();
         final int[] count = new int[] { -1 };
-        boolean found = reversed().sequential().doWhile(new Predicate<E>() {
+        boolean notFound = reversed().sequential().doWhile(new Predicate<E>() {
 
             @Override
             @SuppressWarnings("unchecked")
             public boolean test(E param) {
-                if (count[0] < 0) count[0] = size();
+                if (count[0] < 0)
+                    count[0] = size();
                 count[0]--;
-                return !cmp.areEqual((E)element, param);                
-            }});
-        return found ? count[0] : -1;
+                return !cmp.areEqual((E) element, param);
+            }
+        });
+        return notFound ? -1 : count[0];
     }
 
     @Override
@@ -313,7 +315,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     public E peekLast() {
         return service.peekLast();
     }
-    
+
     @Override
     public boolean offerFirst(E e) {
         addFirst(e);
@@ -388,8 +390,9 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         atomic(new Runnable() {
             @Override
             public void run() {
-                QuickSort<E> qs = new QuickSort<E>(service, service.comparator());
-                qs.sort();              
+                QuickSort<E> qs = new QuickSort<E>(service,
+                        service.comparator());
+                qs.sort();
             }
         });
     }

@@ -32,19 +32,20 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
     /**
      * Default constructor.
      */
-    protected HeapContext() {
-    }
-    
-   /**
-     * Enters a heap context instance (private since heap context
-     * is not configurable).
-     */
+    protected HeapContext() {}
+
+    /**
+      * Enters a heap context instance (private since heap context
+      * is not configurable).
+      */
     private static HeapContext enter() {
         HeapContext ctx = AbstractContext.current(HeapContext.class);
-        if (ctx != null) return ctx.inner().enterScope();
-        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT).inner().enterScope();
+        if (ctx != null)
+            return ctx.inner().enterScope();
+        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT)
+                .inner().enterScope();
     }
-    
+
     /**
      * Executes the specified logic allocating objects on the heap.
      */

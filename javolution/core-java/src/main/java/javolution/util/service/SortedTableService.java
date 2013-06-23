@@ -8,7 +8,6 @@
  */
 package javolution.util.service;
 
-
 /**
  * The set of related functionalities used to implement sorted tables collections.
  * 
@@ -16,21 +15,21 @@ package javolution.util.service;
  * @version 6.0.0, December 12, 2012
  */
 public interface SortedTableService<E> extends TableService<E> {
-       
+
     /** 
      * Returns the index of the specified element or -1 if not present.
-     */    
+     */
     int indexOf(E element);
-     
+
     /** 
      * Removes the specified element if present.
-     */    
+     */
     boolean remove(E element);
-     
+
     /** 
      * Returns what would be the index of the specified element if it were
      * to be added.
-     */    
+     */
     int slotOf(E element);
 
 }

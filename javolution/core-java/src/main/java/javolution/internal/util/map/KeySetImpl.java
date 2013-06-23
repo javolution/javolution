@@ -10,91 +10,93 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.Map;
 
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
+import javolution.util.service.SetService;
 
 /**
  * The keys view over a map.
  */
-public final class KeySetImpl<K, V> implements
-        CollectionService<K>, Serializable {
+public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
 
-    private final AbstractMapImpl<K, V> map;
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final FastMapImpl<K, V> map;
 
-    public KeySetImpl(AbstractMapImpl<K, V> map) {
+    public KeySetImpl(FastMapImpl<K, V> map) {
         this.map = map;
     }
 
     @Override
-    public int size() {
-        return map.size();
+    public boolean add(K element) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public void clear() {
-        map.clear();
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public boolean add(K key) {
-        throw new UnsupportedOperationException();
+    public EqualityComparator<? super K> comparator() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
-    public boolean contains(K key) {
-        return map.containsKey(key);
+    public boolean contains(K e) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public boolean remove(K key) {
-        if (!map.containsKey(key)) return false;
-        map.remove(key);
-        return true;
-    }
+    public void forEach(
+            Consumer<? super K> consumer,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
 
-    @Override
-    public void doWhile(Predicate<K> predicate) {
-        for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (!predicate.apply(i.next().getKey()))
-                return;
-        }
-    }
-
-    @Override
-    public boolean removeIf(Predicate<K> predicate) {
-        boolean hasChanged = false;
-        for (Iterator<Map.Entry<K, V>> i = map.entriesIterator(); i.hasNext();) {
-            if (predicate.apply(i.next().getKey())) {
-                i.remove();
-                hasChanged = true;
-            }
-        }
-        return hasChanged;
     }
 
     @Override
     public Iterator<K> iterator() {
-        return new Iterator<K>() {
-            final Iterator<Map.Entry<K, V>> entriesIterator = map.entriesIterator();
-            @Override
-            public boolean hasNext() {
-                return entriesIterator.hasNext();
-            }
-
-            @Override
-            public K next() {
-                return entriesIterator.next().getKey();
-            }
-
-            @Override
-            public void remove() {
-                entriesIterator.remove();                
-            }
-            
-        };
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    private static final long serialVersionUID = -2146924466361188899L;
+    @Override
+    public boolean remove(K e) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean removeIf(
+            Predicate<? super K> filter,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int size() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public CollectionService<K>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

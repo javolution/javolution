@@ -19,8 +19,9 @@ import javolution.util.service.CollectionService;
 /**
  * A view using a custom comparator for element equality or comparison.
  */
-public class ComparatorCollectionImpl<E>  extends FastCollection<E> implements CollectionService<E> {
-    
+public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
+        CollectionService<E> {
+
     private static final long serialVersionUID = 0x600L; // Version.
     private final EqualityComparator<? super E> comparator;
     private final CollectionService<E> target;
@@ -40,24 +41,26 @@ public class ComparatorCollectionImpl<E>  extends FastCollection<E> implements C
     public void atomic(Runnable action) {
         target.atomic(action);
     }
-    
+
     @Override
     public EqualityComparator<? super E> comparator() {
         return comparator;
     }
 
     @Override
-    public void forEach(Consumer<? super E> consumer, IterationController controller) {
+    public void forEach(Consumer<? super E> consumer,
+            IterationController controller) {
         target.forEach(consumer, controller);
     }
-    
+
     @Override
     public Iterator<E> iterator() {
         return target.iterator();
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> filter, IterationController controller) {
+    public boolean removeIf(Predicate<? super E> filter,
+            IterationController controller) {
         return target.removeIf(filter, controller);
     }
 

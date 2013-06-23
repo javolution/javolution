@@ -33,16 +33,18 @@ public class StandardComparatorImpl<E> implements EqualityComparator<E>,
     @SuppressWarnings("unchecked")
     @Override
     public int compare(E left, E right) {
-        if (left == right) return 0;
+        if (left == right)
+            return 0;
         if (left == null)
             return -1;
         if (right == null)
             return 1;
-        if (left instanceof Comparable) 
-            return ((Comparable<E>)left).compareTo(right);
-        
+        if (left instanceof Comparable)
+            return ((Comparable<E>) left).compareTo(right);
+
         // Empirical method (consistent with equals).
-        if (left.equals(right)) return 0;
+        if (left.equals(right))
+            return 0;
         return left.hashCode() < right.hashCode() ? -1 : 1;
     }
 

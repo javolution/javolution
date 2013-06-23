@@ -10,12 +10,9 @@ package javolution.util;
 
 import java.io.IOException;
 import java.io.ObjectStreamException;
-import java.util.List;
 
 import javolution.annotation.DefaultTextFormat;
 import javolution.annotation.RealTime;
-import javolution.context.HeapContext;
-import javolution.context.StackContext;
 import javolution.lang.Configurable;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
@@ -24,31 +21,36 @@ import javolution.text.TextFormat;
 import javolution.text.TypeFormat;
 
 /**
- * <p> A <b>unique</b> non-negative number which can be used for ordering.
- *    For example:[code]
+ * <p> A non-negative number representing a position in an arrangement.
+ *     For example:[code]
  *         class SparseVector<F> {
- *             FastMap<Index, F> elements = new FastMap();
+ *             FastMap<Index, F> elements = new FastMap<Index, F>();
  *             ...
  *         }[/code]</p>
- *          
- * <p> Unicity is guaranteed and direct equality (<code>==</code>) can be used 
- *     in place of object equality.</p>
- * 
- * <p> Indices have no adverse effect on the garbage collector (persistent 
- *     instances), but should not be used for large integer values as that  
- *     would increase the permanent memory footprint significantly.</p> 
- * 
- * <p> This class is {@link RealTime#stackSafe stack-safe} new unique indices 
- *     are always allocated on the heap even when executing in a {@link StackContext}.</p>
+
+ * <p> Index performance is on-par with the primitive {@code int} type
+ *     for small values and similar to {@link Integer} instances for large
+ *     values. Small indexes have no adverse effect on the garbage collector
+ *     (permanent memory) and have fast {@link #equals(Object) equals}  
+ *     method due to their unicity.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
 @RealTime
-@DefaultTextFormat(Index.PlainText.class)
-public final class Index extends Number implements Comparable<Index>, ValueType<Index> {
+@DefaultTextFormat(Index.Decimal.class)
+public final class Index extends Number implements Comparable<Index>,
+        ValueType<Index> {
 
     private static final long serialVersionUID = 0x600L; // Version.
+
+    /**
+     * Holds the number of preallocated instances (default {@code 1024}).
+     * Preallocate instances are allocated in permanent memory (e.g. 
+     * immortal memory) and are unique (fast equals method).
+     */
+    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(
+            1024);
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -56,9 +58,15 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     public static final Index ZERO = new Index(0);
 
     /**
-     * Holds indices (to maintains unicity).
+     * Holds the preallocated instances.
      */
-    private static final FastTable<Index> INSTANCES = new FastTable<Index>(ZERO);
+    private static final Index[] INSTANCES = new Index[PREALLOCATED.get()];
+    static {
+        INSTANCES[0] = ZERO;
+        for (int i = 1; i < INSTANCES.length; i++) {
+            INSTANCES[i] = new Index(i);
+        }
+    }
 
     /**
      * Holds the index value.
@@ -67,71 +75,22 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
 
     /**
      * Creates an index having the specified value.
-     * 
-     * @param value the index value.
      */
     private Index(int value) {
         this.value = value;
     }
 
     /**
-     * Returns the unique index for the specified <code>int</code> non-negative
-     * value (creating it as well as the indices toward {@link #ZERO zero} 
-     *  if they do not exist). 
+     * Returns the index for the specified {@code int} non-negative
+     * value (returns a preallocated instance if the specified value is 
+     * small).
      * 
      * @param value the index value.
-     * @return the corresponding unique index.
+     * @return the corresponding index.
      * @throws IndexOutOfBoundsException if <code>value &lt; 0</code>
      */
-    public static Index valueOf(int value) { // Short to be inlined.
-        return (value < INSTANCES.size()) ?  INSTANCES.get(value) : newIndex(value);
-    }
-
-    private static Index newIndex(final int value) {
-        HeapContext.execute(new Runnable() {
-
-            public void run() {
-                Index[] tmp = new Index[n];
-                System.arraycopy(INSTANCES, 0, tmp, 0, INSTANCES.length);
-                for (int i = INSTANCES.length; i < n; i++) {
-                    tmp[i] = new Index(i);
-                }
-                INSTANCES = tmp;
-
-            }
-
-        });
-        
-    }
-
-    /**
-     * Returns all the indices greater or equal to <code>start</code>
-     * but less than <code>end</code>.
-     *
-     * @param start the start index.
-     * @param end the end index.
-     * @return <code>[start .. end[</code>
-     */
-    public static List<Index> rangeOf(int start, int end) {
-        FastTable<Index> list = new FastTable<Index>();
-        for (int i = start; i < end; i++) {
-            list.add(Index.valueOf(i));
-        }
-        return list;
-    }
-
-    /**
-     * Returns the list of all the indices specified.
-     *
-     * @param indices the indices values.
-     * @return <code>{indices[0], indices[1], ...}</code>
-     */
-    public static List<Index> valuesOf(int... indices) {
-        FastTable<Index> list = new FastTable<Index>();
-        for (int i : indices) {
-            list.add(Index.valueOf(i));
-        }
-        return list;
+    public static Index valueOf(int value) {
+        return (value < INSTANCES.length) ? INSTANCES[value] : new Index(value);
     }
 
     /**
@@ -147,7 +106,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
      * @throws IndexOutOfBoundsException if (this == Index.ZERO)
      */
     public Index previous() {
-        return INSTANCES[value - 1];
+        return Index.valueOf(value - 1);
     }
 
     /**
@@ -178,7 +137,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     }
 
     /**
-     * Returns the index value as <code>int</code>.
+     * Returns the index value as <code>double</code>.
      * 
      * @return the index value.
      */
@@ -196,7 +155,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
      *          is less than, equal to, or greater than the specified index.
      */
     public int compareTo(Index that) {
-        return this.value - ((Index) that).value;
+        return this.value - that.value;
     }
 
     /**
@@ -215,16 +174,16 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     /**
      * Indicates if this index is zero.
      * 
-     * @return <code>this == ZERO</code> 
+     * @return {@code this == ZERO} 
      */
     public boolean isZero() {
         return this == ZERO;
     }
 
     /**
-     * Returns the <code>String</code> representation of this index.
+     * Returns the {@link String} representation of this index.
      * 
-     * @return <code>TextContext.getFormat(Index.class).format(this)</code>
+     * @return {@code TextContext.getFormat(Index.class).format(this)}
      */
     @Override
     public String toString() {
@@ -232,40 +191,34 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     }
 
     /**
-     * Indicates if this index is equals to the one specified (unicity 
-     * ensures that this method is equivalent to <code>==</code>).
-     * 
-     * @return <code>this == obj</code>
+     * Indicates if this index is equals to the one specified (for small 
+     * indices this method is equivalent to <code>==</code>).
      */
     @Override
-    public final boolean equals(Object obj) {
-        return this == obj;
+    public boolean equals(Object obj) {
+        return (this.value < INSTANCES.length) ? (this == obj)
+                : ((obj instanceof Index) ? (((Index) obj).value == value)
+                        : false);
     }
 
     /**
      * Returns the hash code for this index.
-     *
-     * @return the index value.
      */
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return value;
     }
 
     /**
-     * Returns <code>this</code> in order to maintain unicity.
-     * Index instances are always heap allocated.
-     * 
-     * @return <code>this</code>
+     * Returns a copy of this index or <code>this</code> if the indexes 
+     * is small (in permanent memory) in order to maintain unicity.
      */
     public Index copy() {
-        return this;
+        return value < INSTANCES.length ? this : new Index(value);
     }
 
     /**
      * Ensures index unicity during deserialization.
-     * 
-     * @return the unique instance for this deserialized index.
      */
     protected final Object readResolve() throws ObjectStreamException {
         return Index.valueOf(value);
@@ -274,10 +227,11 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
     /**
      * Holds the default text format for indices (decimal value representation).
      */
-    public static class PlainText extends TextFormat<Index> {
+    public static class Decimal extends TextFormat<Index> {
 
         @Override
-        public Index parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
+        public Index parse(CharSequence csq, Cursor cursor)
+                throws IllegalArgumentException {
             return Index.valueOf(TypeFormat.parseInt(csq, cursor));
         }
 
@@ -286,23 +240,5 @@ public final class Index extends Number implements Comparable<Index>, ValueType<
             return TypeFormat.format(obj.intValue(), dest);
         }
 
-    }
-
-    // Allocates on the heap at least min indices.
-    private static synchronized void allocateOnHeap(final int n) {
-        if (n <= INSTANCES.length) return; // Already done.
-        HeapContext.execute(new Runnable() {
-
-            public void run() {
-                Index[] tmp = new Index[n];
-                System.arraycopy(INSTANCES, 0, tmp, 0, INSTANCES.length);
-                for (int i = INSTANCES.length; i < n; i++) {
-                    tmp[i] = new Index(i);
-                }
-                INSTANCES = tmp;
-
-            }
-
-        });
     }
 }

@@ -64,3 +64,4 @@ Text barFileName = directoryName.plus("bar.java");[/code]
 </ol>
  */
 package javolution.text;
+

@@ -12,7 +12,6 @@ import javolution.internal.xml.stream.XMLOutputFactoryImpl;
 import java.io.OutputStream;
 import java.io.Writer;
 
-
 /**
  * <p> The class represents the factory for getting {@link XMLStreamWriter}
  *     intances.</p>
@@ -67,10 +66,10 @@ public abstract class XMLOutputFactory {
      */
     public static final String INDENTATION = "javolution.xml.stream.indentation";
 
-     /**
-     * Property used to specify the new line characters
-     * (type: <code>String</code>, default: <code>"\n"</code>).
-     */
+    /**
+    * Property used to specify the new line characters
+    * (type: <code>String</code>, default: <code>"\n"</code>).
+    */
     public static final String LINE_SEPARATOR = "javolution.xml.stream.lineSeparator";
 
     /**
@@ -94,9 +93,7 @@ public abstract class XMLOutputFactory {
     /**
      * Default constructor.
      */
-    protected XMLOutputFactory() {
-    }
-
+    protected XMLOutputFactory() {}
 
     /**
      * Returns a new instance of the output factory

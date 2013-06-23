@@ -12,40 +12,37 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * The parent class for all table implementations.
+ * The map entry implementation.
  */
+public final class EntryImpl implements Map.Entry<Object, Object>, Serializable {
 
-public final class EntryImpl<K, V> implements Map.Entry<K, V>, Serializable {
-
-    final K key;
-
-    V value;
-
+    private static final long serialVersionUID = 0x600L; // Version.
     int hash;
+    Object key;
+    EntryImpl next;
+    EntryImpl previous;
+    Object value;
 
-    EntryImpl(K key, V value, int hash) {
+    EntryImpl(Object key, Object value, int hash) {
         this.key = key;
         this.value = value;
         this.hash = hash;
     }
 
     @Override
-    public K getKey() {
+    public Object getKey() {
         return key;
     }
 
     @Override
-    public V getValue() {
+    public Object getValue() {
         return value;
     }
 
     @Override
-    public V setValue(V value) {
-        V previous = this.value;
+    public Object setValue(Object value) {
+        Object oldValue = this.value;
         this.value = value;
-        return previous;
+        return oldValue;
     }
-
-    private static final long serialVersionUID = -840205841264586393L;
-
 }

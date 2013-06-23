@@ -20,9 +20,9 @@ import javolution.util.FastMap;
  */
 public final class LocalContextImpl extends LocalContext {
 
-    private FastMap<LocalParameter<?>, Object> localSettings; 
+    private FastMap<LocalParameter<?>, Object> localSettings;
     private LocalContextImpl outer;
-    
+
     @Override
     protected LocalContext inner() {
         LocalContextImpl ctx = new LocalContextImpl();
@@ -41,9 +41,10 @@ public final class LocalContextImpl extends LocalContext {
     @SuppressWarnings("unchecked")
     @Override
     protected <T> T getLocalValueInContext(LocalParameter<T> param) {
-        if ((localSettings != null) && localSettings.containsKey(param)) 
-            return (T) localSettings.get(param); 
-        if (outer != null) return outer.getLocalValueInContext(param);
+        if ((localSettings != null) && localSettings.containsKey(param))
+            return (T) localSettings.get(param);
+        if (outer != null)
+            return outer.getLocalValueInContext(param);
         return param.getDefault().get();
     }
 

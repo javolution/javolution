@@ -8,7 +8,6 @@
  */
 package javolution.io;
 
-
 import java.io.CharConversionException;
 import java.io.IOException;
 import java.io.Writer;
@@ -45,8 +44,7 @@ public final class UTF8ByteBufferWriter extends Writer {
     /**
      * Default constructor.
      */
-    public UTF8ByteBufferWriter() {
-    }
+    public UTF8ByteBufferWriter() {}
 
     /**
      * Sets the byte buffer to use for writing until this writer is closed.
@@ -196,9 +194,7 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void flush() throws IOException {
-        if (_byteBuffer == null) {
-            throw new IOException("Writer closed");
-        }
+        if (_byteBuffer == null) { throw new IOException("Writer closed"); }
     }
 
     /**

@@ -8,9 +8,7 @@
  */
 package javolution.util;
 
-import javolution.context.LocalContext;
 import javolution.context.LocalParameter;
-import javolution.text.TypeFormat;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 
@@ -25,12 +23,7 @@ public class Perfometer {
      * Hold the measure time duration in nanosecond.
      */
     public static final LocalParameter<Long> MEASURE_DURATION_NS = new LocalParameter<Long>(
-            1000 * 1000 * 1000L) {
-        @Override
-        public void configure(CharSequence configuration) {
-            this.setDefaultValue(TypeFormat.parseLong(configuration));
-        }
-    };
+            1000 * 1000 * 1000L);
 
     /**
      * Indicates if the operation to be measured is actually performed.
@@ -47,7 +40,7 @@ public class Perfometer {
      * time minus the first one. Parameters of a functor can be functors themselves 
      * in which case they are evaluated recursively before each measure.
      */
-    public long measure(Function<?,?> functor, Object... params) {
+    public long measure(Function<?, ?> functor, Object... params) {
         measure(true, functor, params); // Class initialization.
         System.gc();
         long nopExecutionTime = measure(false, functor, params);
@@ -57,7 +50,8 @@ public class Perfometer {
     }
 
     @SuppressWarnings("unchecked")
-    private long measure(boolean doPerform, Function<?,?> functor, Object... params) {
+    private long measure(boolean doPerform, Function<?, ?> functor,
+            Object... params) {
         long startTime = System.nanoTime();
         int count = 0;
         long executionTime;
@@ -67,14 +61,14 @@ public class Perfometer {
             try {
                 this.doPerform = doPerform;
                 cumulatedTime -= System.nanoTime();
-                ((Function<Object,?>)functor).apply(param);
+                ((Function<Object, ?>) functor).apply(param);
             } finally {
                 cumulatedTime += System.nanoTime();
                 this.doPerform = true;
             }
             count++;
             executionTime = System.nanoTime() - startTime;
-            if (executionTime > LocalContext.getLocalValue(MEASURE_DURATION_NS))
+            if (executionTime > MEASURE_DURATION_NS.get())
                 break;
         }
         return cumulatedTime / count;
@@ -87,9 +81,9 @@ public class Perfometer {
         Object param = params[i];
         Object next = evaluateParams(++i, params);
         if (param instanceof Function) {
-            return ((Function<Object,Object>) param).apply(next);
+            return ((Function<Object, Object>) param).apply(next);
         } else if (next != null) {
-            return new MultiVariable<Object,Object>(param, next);
+            return new MultiVariable<Object, Object>(param, next);
         } else {
             return param;
         }

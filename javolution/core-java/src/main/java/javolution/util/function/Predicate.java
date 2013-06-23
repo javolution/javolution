@@ -22,11 +22,11 @@ package javolution.util.function;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface Predicate<T>  {
-     
+public interface Predicate<T> {
+
     /**
      * Tests the specified value.
      */
     boolean test(T param);
-  
+
 }

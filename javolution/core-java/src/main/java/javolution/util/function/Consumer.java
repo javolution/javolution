@@ -8,7 +8,6 @@
  */
 package javolution.util.function;
 
-
 /**
  * <p> A special type of function which does not return anything.</p>
  * 

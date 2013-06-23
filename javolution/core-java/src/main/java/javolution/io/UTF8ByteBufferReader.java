@@ -36,7 +36,7 @@ import java.nio.ByteBuffer;
  * @version 2.0, December 9, 2004
  * @see     UTF8ByteBufferWriter
  */
-public final class UTF8ByteBufferReader extends Reader  {
+public final class UTF8ByteBufferReader extends Reader {
 
     /**
      * Holds the byte buffer source.
@@ -46,8 +46,7 @@ public final class UTF8ByteBufferReader extends Reader  {
     /**
      * Default constructor.
      */
-    public UTF8ByteBufferReader() {
-    }
+    public UTF8ByteBufferReader() {}
 
     /**
      * Sets the <code>ByteBuffer</code> to use for reading available bytes

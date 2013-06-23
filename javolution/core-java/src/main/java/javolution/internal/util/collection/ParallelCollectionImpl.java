@@ -88,7 +88,7 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
         if (controller.doSequential())
             return target.removeIf(filter, controller); // Sequential.
         CollectionService<E>[] split = target
-                .trySplit(ConcurrentContext.CONCURRENCY.get());      
+                .trySplit(ConcurrentContext.CONCURRENCY.get());
         if (split.length == 1)
             return split[0].removeIf(filter, controller);
 

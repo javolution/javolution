@@ -26,5 +26,5 @@ public interface Supplier<T> {
      * Returns an object.
      */
     T get();
-    
+
 }

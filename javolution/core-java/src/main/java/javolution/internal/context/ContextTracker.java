@@ -52,13 +52,15 @@ public final class ContextTracker<C extends AbstractContext<C>> {
                 }
             }
             if (tracker != null) { // Activated.
-                if (waitForService) return tracker.waitForService(0);
+                if (waitForService)
+                    return tracker.waitForService(0);
                 C ctx = tracker.getService();
-                if (ctx != null) return ctx;
+                if (ctx != null)
+                    return ctx;
             }
         } catch (InterruptedException ex) {
             // Stop waiting. 
         }
-        return defaultImpl; 
+        return defaultImpl;
     }
 }

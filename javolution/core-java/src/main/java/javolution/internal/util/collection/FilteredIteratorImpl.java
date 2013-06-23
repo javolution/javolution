@@ -16,7 +16,7 @@ import javolution.util.function.Predicate;
  * An iterator for filtered collections.
  */
 public class FilteredIteratorImpl<E> implements Iterator<E> {
-    
+
     private final Iterator<E> target;
     private final Predicate<? super E> filter;
     private E next = null; // The next element for which the predicate is verified. 
@@ -26,7 +26,7 @@ public class FilteredIteratorImpl<E> implements Iterator<E> {
         this.target = target;
         this.filter = filter;
     }
-  
+
     @Override
     public boolean hasNext() {
         if (peekNext)

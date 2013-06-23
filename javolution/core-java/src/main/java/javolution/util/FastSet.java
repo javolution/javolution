@@ -34,7 +34,7 @@ import javolution.util.service.SetService;
  * @version 6.0.0, December 12, 2012
  */
 public class FastSet<E> extends FastCollection<E> implements Set<E> {
-  
+
     private static final long serialVersionUID = 0x600L; // Version.
 
     /**
@@ -49,20 +49,20 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     public FastSet() {
         this(Comparators.STANDARD);
     }
-    
+
     /**
      * Creates an empty set backed up by a {@link FastMap} and using the 
      * specified comparator for key equality.
     */
-   public FastSet(EqualityComparator<? super E> comparator) {
-       service = null; // TODO
-   }   
-   
-   /**
-     * Creates a fast set backed up by the specified service implementation.
-     */
+    public FastSet(EqualityComparator<? super E> comparator) {
+        service = null; // TODO
+    }
+
+    /**
+      * Creates a fast set backed up by the specified service implementation.
+      */
     protected FastSet(SetService<E> service) {
-        this.service = service;        
+        this.service = service;
     }
 
     /***************************************************************************
@@ -83,7 +83,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     public FastSet<E> filtered(final Predicate<? super E> filter) {
         return new FastSet<E>(new FilteredSetImpl<E>(service(), filter));
     }
-    
+
     @Override
     public FastSet<E> distinct() {
         return this; // Elements already distinct.
@@ -92,11 +92,11 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     /***************************************************************************
      * Set operations optimizations.
      */
-    
+
     @Override
     @RealTime(limit = CONSTANT)
     public int size() {
-       return service.size(); 
+        return service.size();
     }
 
     @Override
@@ -104,12 +104,12 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     public void clear() {
         service.clear();
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     @RealTime(limit = CONSTANT)
     public boolean contains(Object obj) {
-        return service.contains((E)obj);
+        return service.contains((E) obj);
     }
 
     @Override
@@ -118,11 +118,11 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     public boolean remove(Object obj) {
         return service.remove((E) obj);
     }
-  
+
     /***************************************************************************
      * Misc.
      */
-    
+
     @Override
     protected SetService<E> service() {
         return service;

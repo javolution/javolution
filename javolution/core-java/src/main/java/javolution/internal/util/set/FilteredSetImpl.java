@@ -9,53 +9,95 @@
 package javolution.internal.util.set;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
-import javolution.internal.util.collection.FilteredCollectionImpl;
+import javolution.util.function.Consumer;
+import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
  * A filtered view over a set.
  */
-public class FilteredSetImpl<E> extends FilteredCollectionImpl<E> implements SetService<E>,
-        Serializable {
+public class FilteredSetImpl<E> implements SetService<E>, Serializable {
 
-    public FilteredSetImpl(SetService<E> that, Predicate<? super E> filter) {
-        super(that, filter);
+    private static final long serialVersionUID = 0x600L; // Version.
+    private final SetService<E> target;
+    private final Predicate<? super E> filter;
+
+    public FilteredSetImpl(SetService<E> target, Predicate<? super E> filter) {
+        this.target = target;
+        this.filter = filter;
+    }
+
+    @Override
+    public boolean add(E element) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void atomic(Runnable action) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public EqualityComparator<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void forEach(
+            Consumer<? super E> consumer,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean removeIf(
+            Predicate<? super E> filter,
+            javolution.util.service.CollectionService.IterationController controller) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public int size() {
-        final int count[] = new int[1];
-        doWhile(new Predicate<E>() {
-            @Override
-            public boolean test(E param) {
-                if (filter.test(param)) count[0]++;
-                return true;
-            }
-        });
-        return count[0];
+        // TODO Auto-generated method stub
+        return 0;
     }
-    
+
     @Override
     public void clear() {
-        removeIf(new Predicate<E>() {
-            @Override
-            public boolean test(E param) {
-                return filter.test(param);
-            }
-        });
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public boolean contains(E e) {
-        return filter.test(e) && ((SetService<E>)target).contains(e);
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean remove(E e) {
-        return filter.test(e) && ((SetService<E>)target).remove(e);
+        // TODO Auto-generated method stub
+        return false;
     }
-
-    private static final long serialVersionUID = -218446112843771282L;
 }

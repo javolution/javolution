@@ -23,13 +23,13 @@ import javolution.util.function.Supplier;
  * @link HeapContext
  * @link StackContext
  */
-public abstract class AllocatorContext<C extends AllocatorContext<C>> extends AbstractContext<C> {
+public abstract class AllocatorContext<C extends AllocatorContext<C>> extends
+        AbstractContext<C> {
 
     /**
      * Default constructor.
      */
-    protected AllocatorContext() {
-    }
+    protected AllocatorContext() {}
 
     /**
      * Returns the current allocator context or <code>null</code> if none
@@ -37,7 +37,7 @@ public abstract class AllocatorContext<C extends AllocatorContext<C>> extends Ab
      */
     @SuppressWarnings("unchecked")
     public static AllocatorContext<?> current() {
-	return AbstractContext.current(AllocatorContext.class);
+        return AbstractContext.current(AllocatorContext.class);
     }
 
     /**
@@ -51,9 +51,9 @@ public abstract class AllocatorContext<C extends AllocatorContext<C>> extends Ab
      * (convenience method).
      */
     protected <T> T allocateInContext(Supplier<T> factory) {
-	Allocator<T> allocator = new Allocator<T>(factory);
-	executeInContext(allocator);
-	return allocator.instance;
+        Allocator<T> allocator = new Allocator<T>(factory);
+        executeInContext(allocator);
+        return allocator.instance;
     }
 
     /**
@@ -61,42 +61,42 @@ public abstract class AllocatorContext<C extends AllocatorContext<C>> extends Ab
      * context (convenience method).
      */
     protected <T> T copyInContext(Copyable<T> obj) {
-	Copier<T> copier = new Copier<T>(obj);
-	executeInContext(copier);
-	return copier.objCopy;
+        Copier<T> copier = new Copier<T>(obj);
+        executeInContext(copier);
+        return copier.objCopy;
     }
 
     // Runnable to allocate a new instance on the heap.
     private static class Allocator<T> implements Runnable {
 
-	private final Supplier<T> factory;
+        private final Supplier<T> factory;
 
-	T instance;
+        T instance;
 
-	public Allocator(Supplier<T> factory) {
-	    this.factory = factory;
-	}
+        public Allocator(Supplier<T> factory) {
+            this.factory = factory;
+        }
 
-	public void run() {
-	    instance = factory.get();
-	}
+        public void run() {
+            instance = factory.get();
+        }
 
     }
 
     // Runnable to allocate a new instance on the heap.
     private static class Copier<T> implements Runnable {
 
-	private final Copyable<T> obj;
+        private final Copyable<T> obj;
 
-	T objCopy;
+        T objCopy;
 
-	public Copier(Copyable<T> obj) {
-	    this.obj = obj;
-	}
+        public Copier(Copyable<T> obj) {
+            this.obj = obj;
+        }
 
-	public void run() {
-	    objCopy = obj.copy();
-	}
+        public void run() {
+            objCopy = obj.copy();
+        }
 
     }
 

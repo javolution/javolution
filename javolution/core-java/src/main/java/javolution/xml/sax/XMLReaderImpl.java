@@ -8,7 +8,6 @@
  */
 package javolution.xml.sax;
 
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,14 +92,14 @@ public class XMLReaderImpl implements XMLReader {
             _xmlReader.setInput(in);
             parseAll();
         } catch (XMLStreamException e) {
-            if (e.getNestedException() instanceof IOException) 
-                throw (IOException)e.getNestedException();
+            if (e.getNestedException() instanceof IOException)
+                throw (IOException) e.getNestedException();
             throw new SAXException(e.getMessage());
         } finally {
             _xmlReader.reset();
         }
     }
-    
+
     /**
      * Parses an XML document from the specified input stream and encoding.
      *
@@ -112,19 +111,20 @@ public class XMLReaderImpl implements XMLReader {
      *         possibly from a byte stream or character stream
      *         supplied by the application.
      */
-    public void parse(InputStream in, String encoding) throws IOException, SAXException {
+    public void parse(InputStream in, String encoding) throws IOException,
+            SAXException {
         try {
             _xmlReader.setInput(in, encoding);
             parseAll();
         } catch (XMLStreamException e) {
-            if (e.getNestedException() instanceof IOException) 
-                throw (IOException)e.getNestedException();
+            if (e.getNestedException() instanceof IOException)
+                throw (IOException) e.getNestedException();
             throw new SAXException(e.getMessage());
         } finally {
             _xmlReader.reset();
         }
     }
-    
+
     /**
      * Parses an XML document using the specified reader.
      *
@@ -142,8 +142,8 @@ public class XMLReaderImpl implements XMLReader {
             _xmlReader.setInput(reader);
             parseAll();
         } catch (XMLStreamException e) {
-            if (e.getNestedException() instanceof IOException) 
-                throw (IOException)e.getNestedException();
+            if (e.getNestedException() instanceof IOException)
+                throw (IOException) e.getNestedException();
             throw new SAXException(e.getMessage());
         } finally {
             _xmlReader.reset();
@@ -227,8 +227,7 @@ public class XMLReaderImpl implements XMLReader {
     public void setFeature(String name, boolean value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
         if (name.equals("http://xml.org/sax/features/namespaces")
-                || name
-                        .equals("http://xml.org/sax/features/namespace-prefixes")) {
+                || name.equals("http://xml.org/sax/features/namespace-prefixes")) {
             return; // Ignores, these features are always set.
         } else {
             throw new SAXNotRecognizedException("Feature " + name
@@ -293,72 +292,72 @@ public class XMLReaderImpl implements XMLReader {
         while (doContinue) {
             CharArray uri, localName, qName, prefix, text;
             switch (_xmlReader.next()) {
-            case XMLStreamConstants.START_ELEMENT:
+                case XMLStreamConstants.START_ELEMENT:
 
-                // Start prefix mapping.
-                for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
-                    prefix = _xmlReader.getNamespacePrefix(i);
-                    prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
-                    uri = _xmlReader.getNamespaceURI(i);
-                    _contentHandler.startPrefixMapping(prefix, uri);
-                }
+                    // Start prefix mapping.
+                    for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
+                        prefix = _xmlReader.getNamespacePrefix(i);
+                        prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
+                        uri = _xmlReader.getNamespaceURI(i);
+                        _contentHandler.startPrefixMapping(prefix, uri);
+                    }
 
-                // Start element.
-                uri = _xmlReader.getNamespaceURI();
-                uri = (uri == null) ? NO_CHAR : uri;
-                localName = _xmlReader.getLocalName();
-                qName = _xmlReader.getQName();
-                _contentHandler.startElement(uri, localName, qName, _xmlReader
-                        .getAttributes());
-                break;
+                    // Start element.
+                    uri = _xmlReader.getNamespaceURI();
+                    uri = (uri == null) ? NO_CHAR : uri;
+                    localName = _xmlReader.getLocalName();
+                    qName = _xmlReader.getQName();
+                    _contentHandler.startElement(uri, localName, qName,
+                            _xmlReader.getAttributes());
+                    break;
 
-            case XMLStreamConstants.END_ELEMENT:
+                case XMLStreamConstants.END_ELEMENT:
 
-                // End element.
-                uri = _xmlReader.getNamespaceURI();
-                uri = (uri == null) ? NO_CHAR : uri;
-                localName = _xmlReader.getLocalName();
-                qName = _xmlReader.getQName();
-                _contentHandler.endElement(uri, localName, qName);
+                    // End element.
+                    uri = _xmlReader.getNamespaceURI();
+                    uri = (uri == null) ? NO_CHAR : uri;
+                    localName = _xmlReader.getLocalName();
+                    qName = _xmlReader.getQName();
+                    _contentHandler.endElement(uri, localName, qName);
 
-                // End prefix mapping.
-                for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
-                    prefix = _xmlReader.getNamespacePrefix(i);
-                    prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
-                    _contentHandler.endPrefixMapping(prefix);
-                }
-                break;
+                    // End prefix mapping.
+                    for (int i = 0, count = _xmlReader.getNamespaceCount(); i < count; i++) {
+                        prefix = _xmlReader.getNamespacePrefix(i);
+                        prefix = (prefix == null) ? NO_CHAR : prefix; // Default namespace is "" 
+                        _contentHandler.endPrefixMapping(prefix);
+                    }
+                    break;
 
-            case XMLStreamConstants.CDATA:
-            case XMLStreamConstants.CHARACTERS:
-                text = _xmlReader.getText();
-                _contentHandler.characters(text.array(), text.offset(), text
-                        .length());
-                break;
+                case XMLStreamConstants.CDATA:
+                case XMLStreamConstants.CHARACTERS:
+                    text = _xmlReader.getText();
+                    _contentHandler.characters(text.array(), text.offset(),
+                            text.length());
+                    break;
 
-            case XMLStreamConstants.SPACE:
-                text = _xmlReader.getText();
-                _contentHandler.ignorableWhitespace(text.array(),
-                        text.offset(), text.length());
-                break;
+                case XMLStreamConstants.SPACE:
+                    text = _xmlReader.getText();
+                    _contentHandler.ignorableWhitespace(text.array(),
+                            text.offset(), text.length());
+                    break;
 
-            case XMLStreamConstants.PROCESSING_INSTRUCTION:
-                _contentHandler.processingInstruction(
-                        _xmlReader.getPITarget(), _xmlReader.getPIData());
-                break;
+                case XMLStreamConstants.PROCESSING_INSTRUCTION:
+                    _contentHandler.processingInstruction(
+                            _xmlReader.getPITarget(), _xmlReader.getPIData());
+                    break;
 
-            case XMLStreamConstants.COMMENT:
-                // Ignores.
-                break;
+                case XMLStreamConstants.COMMENT:
+                    // Ignores.
+                    break;
 
-            case XMLStreamConstants.END_DOCUMENT:
-                doContinue = false;
-                _xmlReader.close();
-                break;
+                case XMLStreamConstants.END_DOCUMENT:
+                    doContinue = false;
+                    _xmlReader.close();
+                    break;
 
             }
         }
     }
-    
+
     private static final CharArray NO_CHAR = new CharArray("");
 }

@@ -17,7 +17,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 
-
 /**
  * SAX2-like interface for reading an XML document using callbacks.
  *

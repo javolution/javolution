@@ -12,7 +12,6 @@ import javolution.internal.xml.stream.XMLInputFactoryImpl;
 import java.io.InputStream;
 import java.io.Reader;
 
-
 /**
  * <p> The class represents the factory for getting {@link XMLStreamReader}
  *     intances.
@@ -45,7 +44,6 @@ import java.io.Reader;
  */
 public abstract class XMLInputFactory {
 
-
     /**
      * The property that requires the parser to coalesce adjacent character data
      * sections (type: <code>Boolean</code>, default: <code>FALSE</code>)
@@ -70,8 +68,7 @@ public abstract class XMLInputFactory {
     /**
      * Default constructor.
      */
-    protected XMLInputFactory() {
-    }
+    protected XMLInputFactory() {}
 
     /**
      * Returns a new instance of the input factory

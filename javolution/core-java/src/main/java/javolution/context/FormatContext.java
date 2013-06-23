@@ -25,12 +25,12 @@ package javolution.context;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class FormatContext<C extends FormatContext<C>> extends AbstractContext<C> {
+public abstract class FormatContext<C extends FormatContext<C>> extends
+        AbstractContext<C> {
 
     /**
      * Default constructor.
      */
-    protected FormatContext() {
-    }
+    protected FormatContext() {}
 
 }

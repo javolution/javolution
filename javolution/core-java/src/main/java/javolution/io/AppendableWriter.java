@@ -8,7 +8,6 @@
  */
 package javolution.io;
 
-
 import java.io.IOException;
 import java.io.Writer;
 import javolution.text.Text;
@@ -20,7 +19,7 @@ import javolution.text.Text;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.8, May 8, 2006
  */
-public final class AppendableWriter extends Writer  {
+public final class AppendableWriter extends Writer {
 
     /**
      * Holds the current appendable output or <code>null</code> if closed.
@@ -33,8 +32,7 @@ public final class AppendableWriter extends Writer  {
      * 
      * @see #setOutput(Appendable)
      */
-    public AppendableWriter() {
-    }
+    public AppendableWriter() {}
 
     /**
      * Sets the appendable output being written to.

@@ -54,14 +54,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     /**
      * Holds the full name (String) to QName mapping.
      */
-    private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME 
-         = new FastMap<CharSequence, QName>() {
-
-        public Comparators<CharSequence> keyComparator() {
-            return Comparators.LEXICAL;
-        }
-
-    };
+    private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME = new FastMap<CharSequence, QName>(
+            Comparators.LEXICAL);
 
     /**
      * Creates a qualified name having the specified local name and namespace 
@@ -72,7 +66,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      * @param toString the string representation.
      */
     private QName(String namespaceURI, String localName, String toString) {
-        _namespaceURI = (namespaceURI == null) ? null : new CharArray(namespaceURI);
+        _namespaceURI = (namespaceURI == null) ? null : new CharArray(
+                namespaceURI);
         _localName = new CharArray(localName);
         _toString = toString;
     }
@@ -86,7 +81,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      */
     public static QName valueOf(CharSequence name) {
         QName qName = (QName) FULL_NAME_TO_QNAME.get(name);
-        return (qName != null) ? qName : QName.createNoNamespace(name.toString());
+        return (qName != null) ? qName : QName.createNoNamespace(name
+                .toString());
     }
 
     private static QName createNoNamespace(String name) {
@@ -123,7 +119,8 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      * @param localName the local name.
      * @see #toString()
      */
-    public static QName valueOf(CharSequence namespaceURI, CharSequence localName) {
+    public static QName valueOf(CharSequence namespaceURI,
+            CharSequence localName) {
         if (namespaceURI == null)
             return QName.valueOf(localName);
         TextBuilder tmp = new TextBuilder();
@@ -227,5 +224,5 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     }
 
     private static final long serialVersionUID = -6126031630693748647L;
-  
+
 }

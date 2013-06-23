@@ -11,7 +11,8 @@ package javolution.internal.xml;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import javolution.annotation.DefaultTextFormat;
+
+import javolution.annotation.DefaultXMLFormat;
 import javolution.util.FastMap;
 import javolution.xml.XMLContext;
 import javolution.xml.XMLFormat;
@@ -41,9 +42,9 @@ public final class XMLContextImpl extends XMLContext {
         XMLFormat xml = formats.get(type);
         if (xml != null)
             return xml;
-        DefaultTextFormat format = type.getAnnotation(DefaultTextFormat.class);
-        if ((format != null) && (format.xml() != XMLFormat.Default.class)) {
-            Class<? extends XMLFormat> formatClass = format.xml();
+        DefaultXMLFormat format = type.getAnnotation(DefaultXMLFormat.class);
+        if (format != null) {
+            Class<? extends XMLFormat> formatClass = format.value();
             try {
                 xml = formatClass.newInstance();
                 synchronized (formats) { // Required since possible concurrent use 

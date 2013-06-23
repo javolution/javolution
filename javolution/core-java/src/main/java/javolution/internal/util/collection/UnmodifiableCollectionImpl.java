@@ -25,6 +25,20 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
     private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
 
+    /**
+     * Splits the specified collection into unmodifiable sub-collections.
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> UnmodifiableCollectionImpl<E>[] splitOf(
+            CollectionService<E> that, int n) {
+        CollectionService<E>[] tmp = that.trySplit(n);
+        UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]);
+        }
+        return unmodifiables;
+    }
+
     public UnmodifiableCollectionImpl(CollectionService<E> target) {
         this.target = target;
     }
@@ -52,26 +66,7 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
 
     @Override
     public Iterator<E> iterator() {
-        final Iterator<E> targetIterator = target.iterator();
-        return new Iterator<E>() {
-
-            @Override
-            public boolean hasNext() {
-                return targetIterator.hasNext();
-            }
-
-            @Override
-            public E next() {
-                return targetIterator.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException(
-                        "Unmodifiable Collection");
-            }
-
-        };
+        return new UnmodifiableIteratorImpl<E>(target.iterator());
     }
 
     @Override
@@ -85,15 +80,9 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]);
-        }
-        return unmodifiables;
+        return UnmodifiableCollectionImpl.splitOf(this, n);
     }
 
 }

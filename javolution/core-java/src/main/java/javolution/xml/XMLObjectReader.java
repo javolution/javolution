@@ -8,7 +8,6 @@
  */
 package javolution.xml;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -36,7 +35,7 @@ import javolution.internal.xml.stream.XMLStreamReaderImpl;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public class XMLObjectReader  {
+public class XMLObjectReader {
 
     /**
      * Hold the xml element used when parsing.
@@ -59,7 +58,8 @@ public class XMLObjectReader  {
      * 
      * @param in the input stream.
      */
-    public static XMLObjectReader newInstance(InputStream in) throws XMLStreamException {
+    public static XMLObjectReader newInstance(InputStream in)
+            throws XMLStreamException {
         XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in);
         return reader;
@@ -72,7 +72,8 @@ public class XMLObjectReader  {
      * @param in the input stream.
      * @param encoding the input stream encoding
      */
-    public static XMLObjectReader newInstance(InputStream in, String encoding) throws XMLStreamException {
+    public static XMLObjectReader newInstance(InputStream in, String encoding)
+            throws XMLStreamException {
         XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in, encoding);
         return reader;
@@ -84,7 +85,8 @@ public class XMLObjectReader  {
      * 
      * @param in the reader source.
      */
-    public static XMLObjectReader newInstance(Reader in) throws XMLStreamException {
+    public static XMLObjectReader newInstance(Reader in)
+            throws XMLStreamException {
         XMLObjectReader reader = new XMLObjectReader();
         reader.setInput(in);
         return reader;
@@ -93,8 +95,7 @@ public class XMLObjectReader  {
     /**
      * Default constructor.
      */
-    public XMLObjectReader() {
-    }
+    public XMLObjectReader() {}
 
     /**
      * Returns the stream reader being used by this reader (it can be 
@@ -199,8 +200,8 @@ public class XMLObjectReader  {
      * @see    XMLFormat.InputElement#getNext()
      */
     @SuppressWarnings("unchecked")
-    public  <T>  T  read() throws XMLStreamException {
-        return ( T )_xml.getNext();
+    public <T> T read() throws XMLStreamException {
+        return (T) _xml.getNext();
     }
 
     /**
@@ -213,8 +214,8 @@ public class XMLObjectReader  {
      * @see    XMLFormat.InputElement#get(String)
      */
     @SuppressWarnings("unchecked")
-    public  <T>  T  read(String name) throws XMLStreamException {
-        return ( T ) _xml.get(name);
+    public <T> T read(String name) throws XMLStreamException {
+        return (T) _xml.get(name);
     }
 
     /**
@@ -228,9 +229,8 @@ public class XMLObjectReader  {
      * @see    XMLFormat.InputElement#get(String, String)
      */
     @SuppressWarnings("unchecked")
-    public  <T>  T  read(String localName, String uri)
-            throws XMLStreamException {
-        return ( T ) _xml.get(localName, uri);
+    public <T> T read(String localName, String uri) throws XMLStreamException {
+        return (T) _xml.get(localName, uri);
     }
 
     /**
@@ -242,8 +242,7 @@ public class XMLObjectReader  {
      * @param cls the non-abstract class identifying the object to return.
      * @return <code>read(name, null, cls)</code>
      */
-    public <T>  T read(String name, Class <T> cls)
-            throws XMLStreamException {
+    public <T> T read(String name, Class<T> cls) throws XMLStreamException {
         return _xml.get(name, cls);
     }
 
@@ -257,8 +256,8 @@ public class XMLObjectReader  {
      * @param cls the non-abstract class identifying the object to return.
      * @return the next content object or <code>null</code> if no match.
      */
-    public <T>  T read(String localName, String uri,
-            Class <T> cls) throws XMLStreamException {
+    public <T> T read(String localName, String uri, Class<T> cls)
+            throws XMLStreamException {
         return _xml.get(localName, uri, cls);
     }
 
