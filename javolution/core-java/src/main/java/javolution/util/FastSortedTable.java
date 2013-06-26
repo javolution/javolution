@@ -8,8 +8,8 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.LOG_N;
-import javolution.annotation.RealTime;
+import static javolution.lang.RealTime.Limit.LOG_N;
+import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.service.SortedTableService;

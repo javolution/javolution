@@ -8,7 +8,6 @@
  */
 package javolution.lang;
 
-import javolution.annotation.RealTime;
 
 /**
  * A permission associated to a specific class/action/instance. 

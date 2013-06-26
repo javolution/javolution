@@ -23,22 +23,12 @@ import javolution.util.function.Supplier;
  * @link HeapContext
  * @link StackContext
  */
-public abstract class AllocatorContext<C extends AllocatorContext<C>> extends
-        AbstractContext<C> {
+public abstract class AllocatorContext extends AbstractContext {
 
     /**
      * Default constructor.
      */
     protected AllocatorContext() {}
-
-    /**
-     * Returns the current allocator context or <code>null</code> if none
-     * (default heap allocation).
-     */
-    @SuppressWarnings("unchecked")
-    public static AllocatorContext<?> current() {
-        return AbstractContext.current(AllocatorContext.class);
-    }
 
     /**
      * Executes the specified logic allocating memory using this 

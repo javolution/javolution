@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.annotation;
+package javolution.lang;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -18,14 +18,35 @@ import java.lang.annotation.Target;
 /**
  * <p> Indicates that a class, a method or a field can be used by multiple 
  *     threads concurrently and whether or not it is 
- *     {@link RealTime#mutexFree() free of mutex}.</p>
+ *     {@link Parallelizable#mutexFree() mutex-free} (not blocking).</p>
  * 
+ * [code]
+ * public class Operators {
+ *    @Parallelizable
+ *    public static final CollectionOperator<Object> ANY = new CollectionOperator<Object>() { ... }
+ *    
+ *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final CollectionOperator<Object> MAX = new CollectionOperator<Object>() { ... }
+ *    
+ *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final CollectionOperator<Object> MIN = new CollectionOperator<Object>() { ... }
+ *    
+ *    @Parallelizable
+ *    public static final CollectionOperator<Boolean> AND = new CollectionOperator<Boolean>() { ... }
+ *    
+ *    @Parallelizable
+ *    public static final CollectionOperator<Boolean> OR = new CollectionOperator<Boolean>() { ... }
+ *    
+ *    @Parallelizable(comment="Internal use of AtomicInteger")
+ *    public static final CollectionOperator<Integer> SUM = new CollectionOperator<Integer>() { ... }
+ * }[/code]
+ *  
  * <p> Classes with no internal fields or {@link javolution.lang.Immutable 
- *     immutable} are parallelizable without using 
- *     <a href="http://en.wikipedia.org/wiki/Mutual_exclusion>mutexes</a>.</p>
+ *     Immutable} are usually parallelizable and mutex-free.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
+ * @see <a href="http://en.wikipedia.org/wiki/Mutual_exclusion">Wikipedia: Mutual Exclusion</a>
  */
 @Documented
 @Inherited
@@ -40,8 +61,7 @@ public @interface Parallelizable {
     boolean value() default true;
 
     /**
-     * Indicates if this element does not use any form of 
-     * <a href="http://en.wikipedia.org/wiki/Mutual_exclusion>mutex</a> to 
+     * Indicates if this element does not use any form of mutex to 
      * access shared resources (default {@code true}). To avoid 
      * <a href="http://en.wikipedia.org/wiki/Priority_inversion">
      * priority inversion</a> and possibly unbounded response times,

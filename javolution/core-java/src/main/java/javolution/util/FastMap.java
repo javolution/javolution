@@ -8,18 +8,19 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.*;
+import static javolution.lang.RealTime.Limit.*;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import javolution.annotation.Parallelizable;
-import javolution.annotation.RealTime;
 import javolution.internal.util.map.FastMapImpl;
 import javolution.internal.util.map.SharedMapImpl;
 import javolution.internal.util.map.UnmodifiableMapImpl;
+import javolution.lang.Parallelizable;
+import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.service.CollectionService;
@@ -192,7 +193,8 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     @SuppressWarnings("unchecked")
     @RealTime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
-        entrySet().addAll((Collection<? extends Entry<K, V>>) map.entrySet());
+        Set<?> entries = map.entrySet();
+        entrySet().addAll((Collection<? extends java.util.Map.Entry<K, V>>) entries);
     }
 
     @Override

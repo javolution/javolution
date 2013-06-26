@@ -10,9 +10,9 @@ package javolution.text;
 
 import java.io.PrintStream;
 
-import javolution.annotation.RealTime;
 import javolution.context.ImmortalContext;
 import javolution.lang.MathLib;
+import javolution.lang.RealTime;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
 import javolution.util.function.Comparators;

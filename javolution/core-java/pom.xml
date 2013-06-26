@@ -93,6 +93,7 @@
                 <version>2.9</version>
                 <configuration>
                    <sourcepath>${project.build.directory}/colorized</sourcepath>
+                   <outputDirectory>${project.build.directory}/docs/api</outputDirectory>
                    <excludePackageNames>*.internal</excludePackageNames>
                    <docfilessubdirs>true</docfilessubdirs>
                 </configuration>

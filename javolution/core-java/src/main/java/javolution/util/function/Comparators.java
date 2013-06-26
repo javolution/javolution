@@ -1,15 +1,15 @@
 package javolution.util.function;
 
-import javolution.annotation.RealTime;
-import javolution.annotation.Parallelizable;
 import javolution.internal.util.comparator.ArrayComparatorImpl;
 import javolution.internal.util.comparator.IdentityComparatorImpl;
 import javolution.internal.util.comparator.LexicalCaseInsensitiveComparatorImpl;
 import javolution.internal.util.comparator.LexicalComparatorImpl;
 import javolution.internal.util.comparator.LexicalFastComparatorImpl;
 import javolution.internal.util.comparator.StandardComparatorImpl;
+import javolution.lang.Parallelizable;
+import javolution.lang.RealTime;
 
-import static javolution.annotation.RealTime.Limit.*;
+import static javolution.lang.RealTime.Limit.*;
 
 /**
  * <p> A set of useful {@link EqualityComparator comparators} 
@@ -18,8 +18,6 @@ import static javolution.annotation.RealTime.Limit.*;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
-@Parallelizable
-@RealTime(limit = UNKNOWN)
 public class Comparators {
 
     /**
@@ -29,6 +27,8 @@ public class Comparators {
      * (if the object does not implement {@link Comparable}).
      * 
      */
+    @Parallelizable
+    @RealTime(limit = UNKNOWN)
     public static final EqualityComparator<Object> STANDARD = new StandardComparatorImpl<Object>();
 
     /**
@@ -36,6 +36,7 @@ public class Comparators {
      * For comparisons an empirical method consistent with equals ({@code == })
      * is used.
      */
+    @Parallelizable
     @RealTime(limit = CONSTANT)
     public static final EqualityComparator<Object> IDENTITY = new IdentityComparatorImpl<Object>();
 
@@ -45,18 +46,21 @@ public class Comparators {
      * for equality and comparison (recursive). The {@link #STANDARD standard}
      * comparator is used for non-array elements. 
      */
+    @Parallelizable
     @RealTime(limit = LINEAR)
     public static final EqualityComparator<Object> ARRAY = new ArrayComparatorImpl();
 
     /**
      * A lexicographic comparator for any {@link CharSequence}.
      */
+    @Parallelizable
     @RealTime(limit = LINEAR)
     public static final EqualityComparator<CharSequence> LEXICAL = new LexicalComparatorImpl();
 
     /**
      * A case insensitive lexicographic comparator for any {@link CharSequence}.
      */
+    @Parallelizable
     @RealTime(limit = LINEAR)
     public static final EqualityComparator<CharSequence> LEXICAL_CASE_INSENSITIVE = new LexicalCaseInsensitiveComparatorImpl();
 
@@ -65,6 +69,7 @@ public class Comparators {
      * a sample of few characters instead of the whole character sequence to 
      * calculate the hash code (still equality comparison checks all characters).
      */
+    @Parallelizable
     @RealTime(limit = LINEAR)
     public static final EqualityComparator<CharSequence> LEXICAL_FAST = new LexicalFastComparatorImpl();
 

@@ -8,8 +8,8 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.LINEAR;
-import static javolution.annotation.RealTime.Limit.N_SQUARE;
+import static javolution.lang.RealTime.Limit.LINEAR;
+import static javolution.lang.RealTime.Limit.N_SQUARE;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -19,9 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javolution.annotation.DefaultTextFormat;
-import javolution.annotation.Parallelizable;
-import javolution.annotation.RealTime;
 import javolution.internal.util.collection.ComparatorCollectionImpl;
 import javolution.internal.util.collection.DistinctCollectionImpl;
 import javolution.internal.util.collection.FilteredCollectionImpl;
@@ -38,7 +35,10 @@ import javolution.internal.util.collection.closure.SearchConsumerImpl;
 import javolution.internal.util.collection.closure.SingleRemoveFilterImpl;
 import javolution.internal.util.comparator.WrapperComparatorImpl;
 import javolution.lang.Copyable;
+import javolution.lang.Parallelizable;
+import javolution.lang.RealTime;
 import javolution.text.Cursor;
+import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.function.CollectionOperator;
@@ -66,60 +66,60 @@ import javolution.util.service.CollectionService.IterationController;
  *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
- * </ul>
- *    Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
- *    Java 8 streams</a> except that views are themselves collections (virtual collections)
- *    and actions on a view can impact the original collection. Collection views are nothing "new" 
- *    since they already existed in the original java.util collection classes (e.g. List.subList(...),
- *    Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
- *    which addresses the concern of class proliferation (see
- *    <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
- *    State of the Lambda: Libraries Edition</a>). 
- *    [code]
- *    FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
- *    boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
- *    names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
- *    names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
- *    names.filtered(isLong).clear(); // Removes all the persons with long names.
- *    names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
- *    ...
- *    Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
+ * </ul></p>
+ * 
+ * <p> Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
+ *     Java 8 streams</a> except that views are themselves collections (virtual collections)
+ *     and actions on a view can impact the original collection. Collection views are nothing "new" 
+ *     since they already existed in the original java.util collection classes (e.g. List.subList(...),
+ *     Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
+ *     which addresses the concern of class proliferation (see
+ *     <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
+ *     State of the Lambda: Libraries Edition</a>).</p> 
+ * <p> [code]
+ *     FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
+ *     boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
+ *     names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
+ *     names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
+ *     names.filtered(isLong).clear(); // Removes all the persons with long names.
+ *     names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
+ *     ...
+ *     Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
  *         public boolean test(CharSequence csq) {
  *             return csq.length() > 16; 
  *         }
- *    });
- *    [/code]
+ *     });
+ *     [/code]</p>
  *    
- *    Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
- *    Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.
- *    [code]
- *    String anyLongName = names.filtered(isLong).reduce(Operators.ANY); // Returns any long name.
- *    int nbrChars = names.mapped(toLength).reduce(Operators.SUM); // Returns the total number of characters.
- *    int maxLength = names.parallel().mapped(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
- *    ...
- *    Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
+ * <p> Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
+ *     Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.</p>
+ * <p> [code]
+ *     String anyLongName = names.filtered(isLong).reduce(Operators.ANY); // Returns any long name.
+ *     int nbrChars = names.mapped(toLength).reduce(Operators.SUM); // Returns the total number of characters.
+ *     int maxLength = names.parallel().mapped(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
+ *     ...
+ *     Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
  *         public Integer apply(CharSequence csq) {
  *             return csq.length(); 
  *         }
- *    });
+ *     });
  *    
- *    // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
- *    Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
- *       .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
- *       .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
- *       .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
- *       .reduce(Operators.ANY);
- *    if (matching == null) throw new InternalError("Enclosing method not found");
- *    return matching;
- *    [/code]
- *    </p>
+ *     // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
+ *     Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ *        .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
+ *        .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
+ *        .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
+ *        .reduce(Operators.ANY);
+ *     if (matching == null) throw new InternalError("Enclosing method not found");
+ *     return matching;
+ *     [/code]</p>
  *           
  * <p> Fast collections can be iterated over using closures, this is also the preferred way 
  *     to iterate over {@link #shared() shared} collections (no concurrent update possible).
  *     If a collection (or a map) is shared, derived views are also thread-safe.
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
- *     on derived views can be performed concurrently. 
- *     [code]
+ *     on derived views can be performed concurrently.</p> 
+ * <p> [code]
  *     FastMap<String, Runnable> tasks = ...
  *     ...
  *     tasks.values().parallel().forEach(new Consumer<Runnable>() { // Executes task concurrently. 
@@ -127,13 +127,12 @@ import javolution.util.service.CollectionService.IterationController;
  *              task.run();
  *         }
  *     });
- *     [/code]
- *     With Java 8, closures are greatly simplified using lambda expressions.
+ *     [/code]</p>
+ * <p> With Java 8, closures are greatly simplified using lambda expressions.
  *     [code]
  *     tasks.values().parallel().forEach(task -> task.run()); // Same as above.
  *     names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
- *     [/code]
- *     </p>
+ *     [/code]</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012

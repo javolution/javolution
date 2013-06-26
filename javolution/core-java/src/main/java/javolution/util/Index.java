@@ -11,11 +11,11 @@ package javolution.util;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 
-import javolution.annotation.DefaultTextFormat;
-import javolution.annotation.RealTime;
 import javolution.lang.Configurable;
+import javolution.lang.RealTime;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
+import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.text.TypeFormat;

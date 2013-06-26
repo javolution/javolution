@@ -83,11 +83,6 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
         throw new RuntimeException(error);
     }
 
-    @Override
-    public void setCurrent() {
-        super.setCurrent();
-    }
-
     // Informs this context of the completion of a task (with possible error).
     public synchronized void completed(Throwable error) {
         if (error != null) {

@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.annotation;
+package javolution.lang;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -24,11 +24,26 @@ import java.lang.annotation.Target;
  *     Real-time elements should support {@link javolution.context.StackContext 
  *     stack allocations} unless indicated {@link #stackSafe otherwise}.</p>
  *     
+ * [code]
+ * public class Comparators {
+ *     @RealTime(limit = UNKNOWN)
+ *     public static final EqualityComparator<Object> STANDARD = new StandardComparatorImpl<Object>();
+ *     
+ *     @RealTime(limit = CONSTANT)
+ *     public static final EqualityComparator<Object> IDENTITY = new IdentityComparatorImpl<Object>();
+ *     
+ *     @RealTime(limit = LINEAR)
+ *     public static final EqualityComparator<Object> ARRAY = new ArrayComparatorImpl();
+ *     
+ *     @RealTime(limit = LINEAR)
+ *     public static final EqualityComparator<CharSequence> LEXICAL = new LexicalComparatorImpl();
+ * }[/code]      
+ *     
  * <p> Analysis tools / compilers may produce warnings if program elements 
  *     use or override elements with incompatible real-time characteristics.</p>
  *     
  * <p> Note: For multi-cores systems, if a real-time element is {@link Parellizable}
- *     but not {@link Parellizable#mutexFree() mutex-free}, its response 
+ *     but not {@link Parellizable#mutexFree() mutex-free}, response 
  *     time even for high priority threads may be unbounded due to 
  *     <a href="http://en.wikipedia.org/wiki/Priority_inversion">priority 
  *     inversion</a>. This is no longer the case when running on real-time 

@@ -8,7 +8,6 @@
  */
 package javolution.lang;
 
-import javolution.annotation.RealTime;
 import javolution.context.SecurityContext;
 
 /**

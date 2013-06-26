@@ -18,7 +18,7 @@ import org.osgi.util.tracker.ServiceTracker;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public final class ContextTracker<C extends AbstractContext<C>> {
+public final class ContextTracker<C extends AbstractContext> {
 
     ServiceTracker<C, C> tracker;
 

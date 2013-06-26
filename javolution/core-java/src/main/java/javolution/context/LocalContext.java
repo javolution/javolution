@@ -13,8 +13,8 @@ import javolution.internal.context.LocalContextImpl;
 import javolution.lang.Configurable;
 
 /**
- * <p> A context holding local parameters values.
- *     [code]
+ * <p> A context holding local parameters values.</p>
+ * <p> [code]
  *     public class ModuloInteger {
  *         public static final LocalParameter<LargeInteger> MODULO 
  *             = new LocalParameter<LargeInteger>(ONE.minus());
@@ -28,7 +28,7 @@ import javolution.lang.Configurable;
  *     } finally {
  *         ctx.exit(); // Reverts changes. 
  *     }
- *     }[/code]</p>   
+ *     }[/code]</p>
  *     
  * <p> As for any context, local context settings are inherited during 
  *     {@link ConcurrentContext} executions.</p> 
@@ -36,7 +36,7 @@ import javolution.lang.Configurable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class LocalContext extends AbstractContext<LocalContext> {
+public abstract class LocalContext extends AbstractContext {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -56,7 +56,11 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      * @return the new local context implementation entered.
      */
     public static LocalContext enter() {
-        return LocalContext.current().inner().enterScope();
+        LocalContext ctx = AbstractContext.current(LocalContext.class);
+        if (ctx == null) {
+            ctx = LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        }
+        return (LocalContext) ctx.enterInner();
     }
 
     /**
@@ -77,16 +81,6 @@ public abstract class LocalContext extends AbstractContext<LocalContext> {
      */
     protected abstract <T> T getLocalValueInContext(LocalParameter<T> param);
 
-    /**
-     * Returns the current local context.
-     */
-    protected static LocalContext current() {
-        LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx != null)
-            return ctx;
-        return LOCAL_CONTEXT_TRACKER
-                .getService(WAIT_FOR_SERVICE.get(), DEFAULT);
-    }
-
+    
     private static final LocalContextImpl DEFAULT = new LocalContextImpl();
 }

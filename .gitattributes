@@ -257,11 +257,6 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.cpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.hpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.hpp -text
 javolution/core-java/pom.xml -text
-javolution/core-java/src/main/java/javolution/annotation/DefaultTextFormat.java -text
-javolution/core-java/src/main/java/javolution/annotation/DefaultXMLFormat.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/annotation/Parallelizable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/annotation/RealTime.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/annotation/package-info.java -text
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/AllocatorContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
@@ -360,7 +355,9 @@ javolution/core-java/src/main/java/javolution/lang/Copyable.java -text svneol=un
 javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Permission.java -text
+javolution/core-java/src/main/java/javolution/lang/RealTime.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain
@@ -369,6 +366,7 @@ javolution/core-java/src/main/java/javolution/osgi/package-info.java -text
 javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/Cursor.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/DefaultTextFormat.java -text
 javolution/core-java/src/main/java/javolution/text/Text.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/TextBuilder.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/TextContext.java -text svneol=unset#text/plain
@@ -404,6 +402,7 @@ javolution/core-java/src/main/java/javolution/util/service/SortedSetService.java
 javolution/core-java/src/main/java/javolution/util/service/SortedTableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/TableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/DefaultXMLFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLContext.java -text svneol=unset#text/plain

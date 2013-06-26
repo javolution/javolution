@@ -20,7 +20,7 @@ import javolution.util.function.Supplier;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class HeapContext extends AllocatorContext<HeapContext> {
+public abstract class HeapContext extends AllocatorContext {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -40,10 +40,10 @@ public abstract class HeapContext extends AllocatorContext<HeapContext> {
       */
     private static HeapContext enter() {
         HeapContext ctx = AbstractContext.current(HeapContext.class);
-        if (ctx != null)
-            return ctx.inner().enterScope();
-        return HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT)
-                .inner().enterScope();
+        if (ctx == null) { // Root.
+            ctx = HEAP_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        }
+        return (HeapContext) ctx.enterInner();
     }
 
     /**

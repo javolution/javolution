@@ -21,7 +21,7 @@ import javolution.util.function.Supplier;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class ImmortalContext extends AllocatorContext<ImmortalContext> {
+public abstract class ImmortalContext extends AllocatorContext {
 
     /**
      * Default constructor.
@@ -34,10 +34,10 @@ public abstract class ImmortalContext extends AllocatorContext<ImmortalContext> 
       */
     private static ImmortalContext enter() {
         ImmortalContext ctx = AbstractContext.current(ImmortalContext.class);
-        if (ctx != null)
-            return ctx.inner().enterScope();
-        return IMMORTAL_CONTEXT_TRACKER.getService(false, DEFAULT).inner()
-                .enterScope();
+        if (ctx == null) {
+            ctx = IMMORTAL_CONTEXT_TRACKER.getService(false, DEFAULT);
+        }
+        return (ImmortalContext) ctx.enterInner();
     }
 
     /**

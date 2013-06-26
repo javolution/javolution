@@ -8,11 +8,11 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.CONSTANT;
-import static javolution.annotation.RealTime.Limit.LINEAR;
-import static javolution.annotation.RealTime.Limit.LOG_N;
-import static javolution.annotation.RealTime.Limit.N_LOG_N;
-import static javolution.annotation.RealTime.Limit.N_SQUARE;
+import static javolution.lang.RealTime.Limit.CONSTANT;
+import static javolution.lang.RealTime.Limit.LINEAR;
+import static javolution.lang.RealTime.Limit.LOG_N;
+import static javolution.lang.RealTime.Limit.N_LOG_N;
+import static javolution.lang.RealTime.Limit.N_SQUARE;
 
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import javolution.annotation.RealTime;
 import javolution.internal.util.table.FastTableImpl;
 import javolution.internal.util.table.QuickSort;
 import javolution.internal.util.table.ReversedTableImpl;
@@ -30,6 +29,7 @@ import javolution.internal.util.table.SharedTableImpl;
 import javolution.internal.util.table.SubTableImpl;
 import javolution.internal.util.table.TableIteratorImpl;
 import javolution.internal.util.table.UnmodifiableTableImpl;
+import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;

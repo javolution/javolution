@@ -8,14 +8,14 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.CONSTANT;
+import static javolution.lang.RealTime.Limit.CONSTANT;
 
 import java.util.Set;
 
-import javolution.annotation.RealTime;
 import javolution.internal.util.set.FilteredSetImpl;
 import javolution.internal.util.set.SharedSetImpl;
 import javolution.internal.util.set.UnmodifiableSetImpl;
+import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;

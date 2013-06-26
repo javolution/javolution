@@ -8,12 +8,12 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.LOG_N;
+import static javolution.lang.RealTime.Limit.LOG_N;
 
 import java.util.Comparator;
 import java.util.SortedMap;
 
-import javolution.annotation.RealTime;
+import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.service.SortedMapService;

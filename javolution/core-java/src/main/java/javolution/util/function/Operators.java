@@ -8,13 +8,13 @@
  */
 package javolution.util.function;
 
-import static javolution.annotation.RealTime.Limit.LINEAR;
+import static javolution.lang.RealTime.Limit.LINEAR;
 
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javolution.annotation.Parallelizable;
-import javolution.annotation.RealTime;
+import javolution.lang.Parallelizable;
+import javolution.lang.RealTime;
 import javolution.util.FastCollection;
 import javolution.util.service.CollectionService;
 import javolution.util.service.CollectionService.IterationController;
@@ -26,14 +26,14 @@ import javolution.util.service.CollectionService.IterationController;
  * @version 6.0, December 12, 2012
  * @see     FastCollection#reduce(CollectionOperator)
  */
-@Parallelizable
-@RealTime(limit = LINEAR)
 public class Operators {
 
     /**
      * Returns any non-null element. This operator stops iterating as soon as
      * a non-null element is found.
      */
+    @Parallelizable
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Object> ANY = new CollectionOperator<Object>() {
 
         @Override
@@ -77,7 +77,8 @@ public class Operators {
      * Returns the greatest element of a collection according to the collection
      * comparator (returns {@code null} if the collection is empty).
      */
-    @Parallelizable(mutexFree = false)
+    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Object> MAX = new CollectionOperator<Object>() {
 
         @Override
@@ -117,7 +118,8 @@ public class Operators {
      * Returns the smallest element of a collection according to the collection
      * comparator (returns {@code null} if the collection is empty).
      */
-    @Parallelizable(mutexFree = false)
+    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Object> MIN = new CollectionOperator<Object>() {
 
         @Override
@@ -158,6 +160,8 @@ public class Operators {
     * empty). This operator stops iterating as soon as a {@code false} value
     * is found.
     */
+    @Parallelizable
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Boolean> AND = new CollectionOperator<Boolean>() {
 
         @Override
@@ -200,6 +204,8 @@ public class Operators {
     * empty). This operator stops iterating as soon as a {@code true} value
     * is found.
      */
+    @Parallelizable
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Boolean> OR = new CollectionOperator<Boolean>() {
 
         @Override
@@ -241,6 +247,8 @@ public class Operators {
      * Returns the sum of the specified integers value (returns {@code 0} 
      * if the collection is empty).
      */
+    @Parallelizable(comment="Internal use of AtomicInteger")
+    @RealTime(limit = LINEAR)
     public static final CollectionOperator<Integer> SUM = new CollectionOperator<Integer>() {
 
         @Override

@@ -8,30 +8,30 @@
  */
 package javolution.context;
 
-import javolution.annotation.RealTime;
+import javolution.lang.Parallelizable;
 import javolution.lang.Permission;
+import javolution.lang.RealTime;
 
 /**
  * <p> The parent class for all contexts. 
  *     Contexts allow for cross cutting concerns (performance, logging, 
  *     security, ...) to be addressed at run-time without polluting the
  *     application code (<a href="http://en.wikipedia.org/wiki/Separation_of_concerns">
- *     Separation of Concerns</a>). A context implementation/behavior is provided
- *     at high-level (e.g. OSGi service) and impacts code execution
+ *     Separation of Concerns</a>). The context implementation/behavior is typically 
+ *     provided at high-level (OSGi service implementation) and impacts code execution
  *     everywhere. With contexts, you <i>Think Locally, Act Globally!</i></p>
  *     
- * <p> Context configuration is performed by a <code>try, finally</code> block 
- *     statement and impacts only the thread within the scope.
+ * <p> Context configuration is performed sequentially in a {@code try, finally}
+ *     block statement and is visible only to the current thread and 
+ *     potentially to the concurrent threads of an inner {@link ConcurrentContext} scope.</p> 
  *     [code]
- *     MyContext ctx = MyContext.enter(); // Enters a context scope. 
+ *     AnyContext ctx = AnyContext.enter(); // Enters a context scope. 
  *     try {                             
  *         ctx.configure(...); // Local configuration (optional).
  *         ... // Thread executes using the configured context.
  *     } finally {
  *         ctx.exit();
- *     }
- *     [/code]
- *     </p>
+ *     }[/code]
  * 
  * <p> When running OSGi, the context implementation is retrieved from published
  *     services (if any). To avoid
@@ -42,47 +42,63 @@ import javolution.lang.Permission;
  *     causes the security checks to block until a {@link SecurityContext}
  *     implementation is published.</p>
  * 
- * <p> Applications may use custom (static) context implementations.
+ * <p> Instead of using dynamic OSGi context implementations, applications may 
+ *     also use custom (static) implementations.</p>
  *     [code]
  *     MyContext ctx = AbstractContext.enter(MyContextImpl.class); // Enters custom instance.
  *     try { 
  *         ... // Execution in the scope of MyContextImpl
  *     } finally {
  *         ctx.exit();
- *     }
- *     [/code]</p>
+ *     }[/code]
  * 
- * <p> Contexts do not pause thread-safety issues. They can be inherited 
- *     by multiple threads but only the entering thread will be able to configure 
- *     them.</p>
+ * <p> Contexts do not pause thread-safety issues (they are {@link Parallelizable 
+ *     parallelizable}). They can be inherited by multiple threads but only 
+ *     one thread (the entering thread) configure them.</p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
 @RealTime
-public abstract class AbstractContext<C extends AbstractContext<C>> {
+@Parallelizable(comment="Sequential configuration, parallel use")
+public abstract class AbstractContext {
 
     /**
-     * Holds the last context entered (thread-local). This instance is always
-     * allocated on the heap (since allocator contexts are sub-classes).
+     * Holds the root context (common instance for all threads).
      */
-    static final ThreadLocal<AbstractContext<?>> CURRENT = new ThreadLocal<AbstractContext<?>>();
+    private static final AbstractContext ROOT = new AbstractContext() {
+
+        @Override
+        protected AbstractContext inner() {
+            return this; // Inner of root is itself.
+        }};
+
+    /**
+     * Holds the last context entered (thread-local).
+     */
+    private static final ThreadLocal<AbstractContext> CURRENT 
+        = new ThreadLocal<AbstractContext>() {
+        @Override
+        protected AbstractContext initialValue() {
+            return ROOT;
+        }  
+    };
 
     /**
      * Holds the outer context or <code>null</code> if none (root or not attached).
      */
-    private AbstractContext<?> outer;
+    private AbstractContext outer;
 
     /**
      * Default constructor. 
      */
     protected AbstractContext() {}
-
+ 
     /**
-     * Returns the last context entered or <code>null</code> if no context have
-     * been entered.
+     * Returns the current context for the current thread or <code>null</code>
+     * if this thread has no context (default).
      */
-    protected static AbstractContext<?> current() {
+    public static AbstractContext current() {
         return AbstractContext.CURRENT.get();
     }
 
@@ -90,8 +106,8 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      * Returns the current context of specified type or <code>null</code> if none. 
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends AbstractContext<T>> T current(Class<T> type) {
-        AbstractContext<?> ctx = AbstractContext.CURRENT.get();
+    protected static <T extends AbstractContext> T current(Class<T> type) {
+        AbstractContext ctx = AbstractContext.CURRENT.get();
         while (true) {
             if (ctx == null)
                 return null;
@@ -102,29 +118,71 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
     }
 
     /**
-     * Enters the scope of the specified context implementation
-     * (the instance is created using the implementation default constructor).
-     * This method raises a {@link SecurityException} if the 
-     * permission to enter the specified class (or a parent class) is not
-     * granted. 
-     * 
-     * @param impl the context implementation class.
+     * <p> Enters the scope of a custom context. This method raises a 
+     *    {@link SecurityException} if the permission to enter contexts of 
+     *     the specified class is not granted. For example, the following
+     *     disallow entering any custom context.</p>
+     *[code]
+     * SecurityContext ctx = SecurityContext.enter(); 
+     * try {
+     *     ctx.revoke(new Permission(AbstractContext.class, "enter"));
+     *     ... // Cannot enter any custom context.
+     * } finally {
+     *     ctx.exit(); // Back to previous security settings. 
+     * }[/code]     
+     *  
+     * @param  custom the custom context to enter.
      * @throws IllegalArgumentException if the specified class default constructor
      *         cannot be instantiated.
-     * @throws SecurityException 
-     *         if <code>SecurityPermission(impl, "enter")</code> is not granted. 
+     * @throws SecurityException if {@code Permission(custom, "enter")} is not granted. 
+     * @see    Permission
      */
-    public static <T extends AbstractContext<T>> T enter(Class<T> impl) {
-        SecurityContext.check(new Permission<T>(impl, "enter"));
+    @SuppressWarnings("unchecked")
+    public static <T extends AbstractContext> T enter(Class<T> custom) {
+        SecurityContext.check(new Permission<T>(custom, "enter"));
         try {
-            return impl.newInstance().enterScope();
+            return (T) custom.newInstance().enterInner();
         } catch (InstantiationException e) {
             throw new IllegalArgumentException(
-                    "Invalid context implementation " + impl, e);
+                    "Cannot instantiate instance of " + custom, e);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(
-                    "Invalid context implementation " + impl, e);
+                    "Cannot access " + custom, e);
         }
+    }
+
+    /**
+     * Inherits the specified context which becomes the context of the current
+     * thread. This method is particularly useful when creating new threads to 
+     * make them inherits from the context stack of the spawning thread.</p>
+     * [code]
+     * //Spawns a new thread inheriting the current context stack.
+     * MyThread myThread = new MyThread();
+     * myThread.inherited = AbstractContext.current(); 
+     * myThread.start(); 
+     * ...
+     * class MyThread extends Thread {
+     *     AbstractContext<?> inherited;
+     *     public void run() {
+     *         AbstractContext.inherit(inherited); // Sets context stack. 
+     *         ...
+     *     }
+     * }[/code]
+     */
+     public static void inherit(AbstractContext ctx) {
+         CURRENT.set(ctx);
+     }
+
+    /**
+     * Enters the scope of an inner context which becomes the current context; 
+     * the previous current context becomes the outer of this context. 
+     * @see #inner
+     */
+    protected AbstractContext enterInner() {
+        AbstractContext inner = inner();
+        inner.outer = AbstractContext.CURRENT.get();
+        AbstractContext.CURRENT.set(inner);
+        return this;
     }
 
     /**
@@ -143,21 +201,10 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
     }
 
     /**
-     * Enters the scope of this context which becomes the current context; 
-     * the previous current context becomes the outer of this context. 
-     */
-    @SuppressWarnings("unchecked")
-    protected C enterScope() {
-        outer = AbstractContext.CURRENT.get();
-        AbstractContext.CURRENT.set(this);
-        return (C) this;
-    }
-
-    /**
      * Returns the outer context of this context or <code>null</code> if this 
      * context has no outer context (top context).
      */
-    protected AbstractContext<?> getOuter() {
+    protected AbstractContext getOuter() {
         return outer;
     }
 
@@ -166,6 +213,6 @@ public abstract class AbstractContext<C extends AbstractContext<C>> {
      * of this context. The new instance can be configured independently 
      * from its parent. 
      */
-    protected abstract C inner();
+    protected abstract AbstractContext inner();
 
 }

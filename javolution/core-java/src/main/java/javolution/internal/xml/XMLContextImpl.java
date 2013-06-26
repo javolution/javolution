@@ -12,8 +12,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import javolution.annotation.DefaultXMLFormat;
 import javolution.util.FastMap;
+import javolution.xml.DefaultXMLFormat;
 import javolution.xml.XMLContext;
 import javolution.xml.XMLFormat;
 import javolution.xml.stream.XMLStreamException;

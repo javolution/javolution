@@ -21,24 +21,24 @@ import javolution.lang.Permission;
  *     (especially knowing that the default implementation grants all permissions).
  *     When granting/revoking permission the order is very important. 
  *     For example, the following code revokes all configurable permissions 
- *     except for concurrency settings.
- *     [code]
- *     SecurityContext ctx = SecurityContext.enter(); 
- *     try {
- *         ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
- *         ctx.grant(ConcurrentContext.CONCURRENCY.getOverridePermission(), adminCertificate);
- *         ...
- *         ConcurrentContext.CONCURRENCY.configure("0"); // Ok (disables concurrency).
- *         ...
- *     } finally {
- *         ctx.exit(); // Back to previous security settings. 
- *     }
- *     [/code]</p>
+ *     except for concurrency settings.</p>
+ * [code]
+ * SecurityContext ctx = SecurityContext.enter(); 
+ * try {
+ *     ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
+ *     ctx.grant(ConcurrentContext.CONCURRENCY.getOverridePermission(), adminCertificate);
+ *     ...
+ *     ConcurrentContext.CONCURRENCY.configure("0"); // Ok (specific permission).
+ *     ...
+ *  } finally {
+ *     ctx.exit(); // Back to previous security settings. 
+ *  }
+ *  [/code]
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class SecurityContext extends AbstractContext<SecurityContext> {
+public abstract class SecurityContext extends AbstractContext {
 
     /**
     * Indicates whether or not static methods will block for an OSGi published
@@ -58,7 +58,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @return the new security context implementation entered. 
      */
     public static SecurityContext enter() {
-        return SecurityContext.current().inner().enterScope();
+        return (SecurityContext) SecurityContext.currentSecurityContext().enterInner();
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
      * @throws SecurityException if the specified permission is not granted.
      */
     public static void check(Permission<?> permission) {
-        if (!SecurityContext.current().isGranted(permission))
+        if (!SecurityContext.currentSecurityContext().isGranted(permission))
             throw new SecurityException(permission + " is not granted.");
     }
 
@@ -122,7 +122,7 @@ public abstract class SecurityContext extends AbstractContext<SecurityContext> {
     /**
      * Returns the current security context. 
      */
-    protected static SecurityContext current() {
+    private static SecurityContext currentSecurityContext() {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null)
             return ctx;

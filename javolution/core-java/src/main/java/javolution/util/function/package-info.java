@@ -1,7 +1,7 @@
 /**
 <p> Provides basic function types for lambda expressions and method references.</p>
     Usually functions do not have a state and can be called concurrently, 
-    this should be indicated using the annotation {@link javolution.annotation.Parallelizable Parallelizable}.</p>
+    this should be indicated using the annotation {@link javolution.lang.Parallelizable Parallelizable}.</p>
     
 <p> Functions may take an arbitrary number of arguments through the use of {@link MultiVariable multi-variables}
     or no argument at all using the standard {@link Void} class.  

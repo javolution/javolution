@@ -8,7 +8,6 @@
  */
 package javolution.lang;
 
-import javolution.annotation.RealTime;
 
 /**
  * <p> An utility class providing a {@link RealTime} implementation of 

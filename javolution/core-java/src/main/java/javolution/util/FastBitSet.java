@@ -8,11 +8,11 @@
  */
 package javolution.util;
 
-import static javolution.annotation.RealTime.Limit.LINEAR;
-import javolution.annotation.RealTime;
+import static javolution.lang.RealTime.Limit.LINEAR;
 import javolution.internal.util.bitset.BitSetServiceImpl;
 import javolution.internal.util.bitset.SharedBitSetImpl;
 import javolution.internal.util.bitset.UnmodifiableBitSetImpl;
+import javolution.lang.RealTime;
 import javolution.util.service.BitSetService;
 
 /**

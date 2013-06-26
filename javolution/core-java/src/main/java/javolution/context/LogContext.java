@@ -23,7 +23,7 @@ import javolution.lang.Configurable;
  *             ctx.attach("User ID", userId); // Attaches the specified properties.
  *             ... 
  *             LogContext.info("Overdraft of ", amount); 
- *                 // Message logged (default impl.): "[User ID: <userId>] Overdraft of <amount>"
+ *                 // Default message logged is "[User ID: <userId>] Overdraft of <amount>"
  *             ...
  *         } finally {
  *             ctx.exit(); // Reverts to previous header.
@@ -46,7 +46,9 @@ import javolution.lang.Configurable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public abstract class LogContext extends AbstractContext<LogContext> {
+public abstract class LogContext extends AbstractContext {
+
+    private static final LogContextImpl DEFAULT = new LogContextImpl();
 
     /**
      * Defines the logging levels.
@@ -84,7 +86,13 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @return the new log context implementation entered.
      */
     public static LogContext enter() {
-        return LogContext.current().inner().enterScope();
+        return (LogContext) currentLogContext().enterInner();
+    }
+    
+    private static LogContext currentLogContext() {
+        LogContext ctx = AbstractContext.current(LogContext.class);
+        if (ctx != null) return ctx;
+        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);        
     }
 
     /**
@@ -93,7 +101,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void debug(Object... objs) {
-        LogContext.current().log(Level.DEBUG, objs);
+        currentLogContext().log(Level.DEBUG, objs);
     }
 
     /**
@@ -102,7 +110,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void info(Object... objs) {
-        LogContext.current().log(Level.INFO, objs);
+        currentLogContext().log(Level.INFO, objs);
     }
 
     /**
@@ -111,7 +119,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void warning(Object... objs) {
-        LogContext.current().log(Level.WARNING, objs);
+        currentLogContext().log(Level.WARNING, objs);
     }
 
     /**
@@ -121,7 +129,7 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      * @param objs the objects whose textual representation is the message logged.
      */
     public static void error(Object... objs) {
-        LogContext.current().log(Level.ERROR, objs);
+        currentLogContext().log(Level.ERROR, objs);
     }
 
     /**
@@ -146,15 +154,4 @@ public abstract class LogContext extends AbstractContext<LogContext> {
      */
     protected abstract void log(Level level, Object... objs);
 
-    /**
-     * Returns the current log context.
-     */
-    protected static LogContext current() {
-        LogContext ctx = AbstractContext.current(LogContext.class);
-        if (ctx != null)
-            return ctx;
-        return LOG_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
-    }
-
-    private static final LogContextImpl DEFAULT = new LogContextImpl();
 }

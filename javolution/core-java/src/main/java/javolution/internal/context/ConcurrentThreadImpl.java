@@ -10,6 +10,8 @@ package javolution.internal.context;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javolution.context.AbstractContext;
+
 /**
  * A worker thread executing in a concurrent context.
  * 
@@ -60,7 +62,7 @@ public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThre
                     this.wait();
                 }
                 this.setPriority(priority);
-                inContext.setCurrent();
+                AbstractContext.inherit(inContext);
                 logic.run();
                 inContext.completed(null);
             } catch (Throwable error) {
@@ -68,6 +70,7 @@ public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThre
             }
             logic = null;
             inContext = null;
+            AbstractContext.inherit(null);
             isFree.set(true);
         }
     }

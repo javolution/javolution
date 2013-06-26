@@ -9,29 +9,29 @@
 package javolution.text;
 
 import java.io.IOException;
-import javolution.annotation.RealTime;
 import javolution.lang.MathLib;
+import javolution.lang.RealTime;
 
 /**
  * <p> Utility class to parse {@link CharSequence} into primitive types and 
  *     to format primitive types into any {@link Appendable}.</p>
  *
  * <p> Methods from this class <b>do not create temporary objects</b> and
- *     are typically faster than standard library methods (see 
- *     <a href="http://javolution.org/doc/benchmark.html">benchmark</a>).</p>
+ *     are typically faster than standard library methods.</p>
  *     
  * <p> The number of digits when formatting floating point numbers can be 
  *     specified. The default setting for <code>double</code> is 17 digits 
  *     or even 16 digits when the conversion is lossless back and forth
- *     (mimic the standard library formatting). For example:[code]
- *         TypeFormat.format(0.2, a) = "0.2" // 17 or 16 digits (as long as lossless conversion), remove trailing zeros.
- *         TypeFormat.format(0.2, 17, false, false, a) = "0.20000000000000001" // Closest 17 digits number.
- *         TypeFormat.format(0.2, 19, false, false, a) = "0.2000000000000000111" // Closest 19 digits.
- *         TypeFormat.format(0.2, 4, false, false, a) = "0.2" // Fixed-point notation, remove trailing zeros.
- *         TypeFormat.format(0.2, 4, false, true, a) = "0.2000" // Fixed-point notation, fixed number of digits.
- *         TypeFormat.format(0.2, 4, true, false, a) = "2.0E-1" // Scientific notation, remove trailing zeros.  
- *         TypeFormat.format(0.2, 4, true, true, a) = "2.000E-1" // Scientific notation, fixed number of digits.
- *         [/code]</p>        
+ *     (mimic the standard library formatting).</p>
+ * <p>[code]
+ * TypeFormat.format(0.2, a) = "0.2" // 17 or 16 digits (as long as lossless conversion), remove trailing zeros.
+ * TypeFormat.format(0.2, 17, false, false, a) = "0.20000000000000001" // Closest 17 digits number.
+ * TypeFormat.format(0.2, 19, false, false, a) = "0.2000000000000000111" // Closest 19 digits.
+ * TypeFormat.format(0.2, 4, false, false, a) = "0.2" // Fixed-point notation, remove trailing zeros.
+ * TypeFormat.format(0.2, 4, false, true, a) = "0.2000" // Fixed-point notation, fixed number of digits.
+ * TypeFormat.format(0.2, 4, true, false, a) = "2.0E-1" // Scientific notation, remove trailing zeros.  
+ * TypeFormat.format(0.2, 4, true, true, a) = "2.000E-1" // Scientific notation, fixed number of digits.
+ * [/code]</p>        
  *
  * <p> For non-primitive objects, formatting is typically performed using 
  *     specialized {@link TextFormat} instances.</p>

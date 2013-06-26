@@ -46,13 +46,13 @@ import javolution.util.function.Function;
  *         }
  *     }[/code]</p>
  * 
- * <p> Classes/methods identified as {@link javolution.annotation.RealTime#stackSafe() 
+ * <p> Classes/methods identified as {@link javolution.lang.RealTime#stackSafe() 
  *     stack-safe} can safely be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class StackContext extends AllocatorContext<StackContext> {
+public abstract class StackContext extends AllocatorContext {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -72,11 +72,11 @@ public abstract class StackContext extends AllocatorContext<StackContext> {
      */
     private static StackContext enter() {
         StackContext ctx = AbstractContext.current(StackContext.class);
-        if (ctx != null)
-            return ctx.inner().enterScope();
-        return STACK_CONTEXT_TRACKER
-                .getService(WAIT_FOR_SERVICE.get(), DEFAULT).inner()
-                .enterScope();
+        if (ctx == null) {
+            ctx = STACK_CONTEXT_TRACKER
+                    .getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        }
+        return (StackContext) ctx.enterInner();
     }
 
     /**

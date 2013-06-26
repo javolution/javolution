@@ -9,9 +9,9 @@
 package javolution.internal.text;
 
 import java.io.IOException;
-import javolution.annotation.DefaultTextFormat;
 import javolution.text.CharSet;
 import javolution.text.Cursor;
+import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.text.TypeFormat;

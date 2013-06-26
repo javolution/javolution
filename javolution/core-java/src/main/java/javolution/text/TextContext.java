@@ -17,7 +17,7 @@ import javolution.lang.Configurable;
 /**
  * <p> A context for plain text parsing/formatting. The default text 
  *     format for any class is given by the 
- *     {@link javolution.annotation.DefaultTextFormat DefaultTextFormat} 
+ *     {@link javolution.text.DefaultTextFormat DefaultTextFormat} 
  *     inheritable annotation.</p>
  * 
  * <p> A default format exists for the following predefined types:
@@ -37,7 +37,7 @@ import javolution.lang.Configurable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class TextContext extends FormatContext<TextContext> {
+public abstract class TextContext extends FormatContext {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -57,7 +57,7 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * @return the new text context implementation entered.
      */
     public static TextContext enter() {
-        return TextContext.current().inner().enterScope();
+        return (TextContext) TextContext.currentTextContext().enterInner();
     }
 
     /**
@@ -65,7 +65,7 @@ public abstract class TextContext extends FormatContext<TextContext> {
      * if none defined.
      */
     public static <T> TextFormat<T> getFormat(Class<? extends T> type) {
-        return TextContext.current().getFormatInContext(type);
+        return TextContext.currentTextContext().getFormatInContext(type);
     }
 
     /**
@@ -83,7 +83,7 @@ public abstract class TextContext extends FormatContext<TextContext> {
     /**
      * Returns the current text context.
      */
-    protected static TextContext current() {
+    protected static TextContext currentTextContext() {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null)
             return ctx;

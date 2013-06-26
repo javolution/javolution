@@ -8,9 +8,9 @@
  */
 package javolution.context;
 
-import javolution.annotation.RealTime;
 import javolution.lang.Configurable;
 import javolution.lang.Permission;
+import javolution.lang.RealTime;
 
 /**
  * <p> A local parameter with {@link Configurable configurable} default value. 

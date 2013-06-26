@@ -142,9 +142,8 @@ import javolution.lang.Configurable;
  *    [code]
  *    LocalContext ctx = LocalContext.enter(); 
  *    try { 
- *        // Performs analysis sequentially.
- *        ctx.setLocalValue(ConcurrentContext.CONCURRENCY, 0);
- *        runAnalysis();  
+ *        ctx.override(ConcurrentContext.CONCURRENCY, 0); // No impact on others threads.
+ *        runAnalysis();  // Performs analysis sequentially.
  *    } finally {
  *        ctx.exit(); // Back to previous concurrency settings.  
  *    }[/code]</p>
@@ -152,8 +151,7 @@ import javolution.lang.Configurable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-public abstract class ConcurrentContext extends
-        AbstractContext<ConcurrentContext> {
+public abstract class ConcurrentContext extends AbstractContext {
 
     /**
      * Indicates whether or not static methods will block for an OSGi published
@@ -183,7 +181,11 @@ public abstract class ConcurrentContext extends
      * @return the new concurrent context implementation entered.
      */
     public static ConcurrentContext enter() {
-        return ConcurrentContext.current().inner().enterScope();
+        ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
+        if (ctx == null) {
+            ctx = CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        }
+        return (ConcurrentContext) ctx.enterInner();
     }
 
     /**
@@ -239,48 +241,6 @@ public abstract class ConcurrentContext extends
     @Override
     public void exit() { // Redefine here for documentation purpose.
         super.exit();
-    }
-
-    /**
-     * Sets this concurrent context as the current context for the 
-     * current thread. This method is particularly useful when users
-     * want to create their own threads and make them inherits the 
-     * current context stack. That inherited context stack remains 
-     * invariant for the child thread even when the parent thread exits
-     * contexts scopes or enter new ones.
-     * [code]
-     * ConcurrentContext ctx = ConcurrentContext.enter();
-     * try {
-     *     MyThread myThread = new MyThread();
-     *     myThread.parentContext = ctx;
-     *     myThread.start(); // Autonomous thread inheriting an invariant view of the context stack.
-     * } finally {
-     *    ctx.exit(); 
-     * }
-     * ...
-     * class MyThread extends Thread {
-     *     ConcurrentContext parentContext;
-     *     public void run() {
-     *         parentContext.setCurrent(); 
-     *         ...
-     *     }
-     * } 
-     * [/code]</p>
-     */
-    public void setCurrent() {
-        CURRENT.set(this);
-    }
-
-    /**
-     * Returns the current concurrent context.
-     */
-    protected static ConcurrentContext current() {
-        ConcurrentContext ctx = AbstractContext
-                .current(ConcurrentContext.class);
-        if (ctx != null)
-            return ctx;
-        return CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(),
-                DEFAULT);
     }
 
     private static final ConcurrentContextImpl DEFAULT = new ConcurrentContextImpl();
