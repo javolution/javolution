@@ -103,7 +103,7 @@
                 <runtime.dependency.type>dll</runtime.dependency.type>
                 <runtime.dependency.classifier>win32</runtime.dependency.classifier>
           
-                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/en-us/products/2010-editions/express -->                
+                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/eng/products/visual-studio-2010-express  -->                
                 <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName>                 
                 <native.compilerProvider>msvc</native.compilerProvider>
                 <native.compilerExecutable></native.compilerExecutable>
