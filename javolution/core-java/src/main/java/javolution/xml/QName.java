@@ -34,7 +34,7 @@ import javolution.util.function.Comparators;
  * @version 5.3, January 14, 2007
  * @see <a href="http://en.wikipedia.org/wiki/Qname">Wikipedia: QName</a> 
  */
-public final class QName implements XMLSerializable, Immutable, CharSequence {
+public final class QName implements XMLSerializable, Immutable<QName>, CharSequence {
 
     /**
      * Holds the local name.
@@ -224,5 +224,10 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
     }
 
     private static final long serialVersionUID = -6126031630693748647L;
+
+    @Override
+    public QName value() {
+        return this;
+    }
 
 }

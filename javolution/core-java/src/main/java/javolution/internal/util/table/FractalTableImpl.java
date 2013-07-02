@@ -18,10 +18,11 @@ import java.io.Serializable;
   */
 final class FractalTableImpl implements Serializable {
 
-    private static final long serialVersionUID = 0x600L; // Version.
     static final int SHIFT = 10;
     static final int BASE_CAPACITY_MIN = 16;
     static final int BASE_CAPACITY_MAX = 1 << SHIFT;
+    private static final long serialVersionUID = 0x600L; // Version.
+    private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
 
     /** Offset value, it is the index of the first element (modulo data.length). */
     int offset;
@@ -216,8 +217,6 @@ final class FractalTableImpl implements Serializable {
         }
         return result;
     }
-
-    private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
 
     private FractalTableImpl F(int i) {
         FractalTableImpl table = (FractalTableImpl) data[i];

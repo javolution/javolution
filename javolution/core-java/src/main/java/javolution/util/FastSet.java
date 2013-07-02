@@ -124,6 +124,11 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      */
 
     @Override
+    public FastSet<E> addAll(E... elements) {
+        return (FastSet<E>) super.addAll(elements);
+    }
+
+    @Override
     protected SetService<E> service() {
         return service;
     }

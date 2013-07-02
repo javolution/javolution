@@ -117,16 +117,6 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
-     * Creates a table having the specified initial elements.
-     */
-    public FastTable(E... elements) {
-        this();
-        for (E e : elements) {
-            add(e);
-        }
-    }
-
-    /**
      * Creates a fast table backed up by the specified service implementation.
      */
     protected FastTable(TableService<E> service) {
@@ -395,6 +385,11 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
                 qs.sort();
             }
         });
+    }
+
+    @Override
+    public FastTable<E> addAll(E... elements) {
+        return (FastTable<E>) super.addAll(elements);
     }
 
     @Override

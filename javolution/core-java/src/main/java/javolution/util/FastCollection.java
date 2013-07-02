@@ -35,6 +35,7 @@ import javolution.internal.util.collection.closure.SearchConsumerImpl;
 import javolution.internal.util.collection.closure.SingleRemoveFilterImpl;
 import javolution.internal.util.comparator.WrapperComparatorImpl;
 import javolution.lang.Copyable;
+import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.RealTime;
 import javolution.text.Cursor;
@@ -66,7 +67,16 @@ import javolution.util.service.CollectionService.IterationController;
  *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
- * </ul></p>
+ * </ul>
+ * Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
+ * reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
+ * guarantees that the collection source cannot be modified even by himself 
+ * (the value of the immutable reference is an {@link #unmodifiable unmodifiable} collection).</p>
+ * <p>[code]
+ * Immutable<List<String>> winners 
+ *     = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil").toImmutable();
+ *     // Immutability is guaranteed, no reference left on the collection source.
+ * [/code]</p>
  * 
  * <p> Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
  *     Java 8 streams</a> except that views are themselves collections (virtual collections)
@@ -76,64 +86,64 @@ import javolution.util.service.CollectionService.IterationController;
  *     which addresses the concern of class proliferation (see
  *     <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
  *     State of the Lambda: Libraries Edition</a>).</p> 
- * <p> [code]
- *     FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
- *     boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
- *     names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
- *     names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
- *     names.filtered(isLong).clear(); // Removes all the persons with long names.
- *     names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
- *     ...
- *     Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
- *         public boolean test(CharSequence csq) {
- *             return csq.length() > 16; 
- *         }
- *     });
- *     [/code]</p>
+ * <p>[code]
+ * FastTable<String> names = new FastTable<String>().addAll("Oscar Thon", "Eva Poret", "Paul Auchon");
+ * boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
+ * names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
+ * names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
+ * names.filtered(isLong).clear(); // Removes all the persons with long names.
+ * names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
+ * ...
+ * Predicate<CharSequence> isLong = new Predicate<CharSequence>() { 
+ *     public boolean test(CharSequence csq) {
+ *         return csq.length() > 16; 
+ *     }
+ * });
+ * [/code]</p>
  *    
  * <p> Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
  *     Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.</p>
- * <p> [code]
- *     String anyLongName = names.filtered(isLong).reduce(Operators.ANY); // Returns any long name.
- *     int nbrChars = names.mapped(toLength).reduce(Operators.SUM); // Returns the total number of characters.
- *     int maxLength = names.parallel().mapped(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
- *     ...
- *     Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
- *         public Integer apply(CharSequence csq) {
- *             return csq.length(); 
- *         }
- *     });
+ * <p>[code]
+ * String anyLongName = names.filtered(isLong).reduce(Operators.ANY); // Returns any long name.
+ * int nbrChars = names.mapped(toLength).reduce(Operators.SUM); // Returns the total number of characters.
+ * int maxLength = names.parallel().mapped(toLength).reduce(Operators.MAX); // Finds the longest name in parallel.
+ * ...
+ * Function<CharSequence, Integer> toLength = new Function<CharSequence, Integer>() {
+ *    public Integer apply(CharSequence csq) {
+ *        return csq.length(); 
+ *    }
+ * });
  *    
- *     // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
- *     Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
- *        .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
- *        .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
- *        .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
- *        .reduce(Operators.ANY);
- *     if (matching == null) throw new InternalError("Enclosing method not found");
- *     return matching;
- *     [/code]</p>
+ * // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
+ * Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ *     .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
+ *     .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
+ *     .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))
+ *     .reduce(Operators.ANY);
+ * if (matching == null) throw new InternalError("Enclosing method not found");
+ * return matching;
+ * [/code]</p>
  *           
  * <p> Fast collections can be iterated over using closures, this is also the preferred way 
  *     to iterate over {@link #shared() shared} collections (no concurrent update possible).
  *     If a collection (or a map) is shared, derived views are also thread-safe.
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
  *     on derived views can be performed concurrently.</p> 
- * <p> [code]
- *     FastMap<String, Runnable> tasks = ...
- *     ...
- *     tasks.values().parallel().forEach(new Consumer<Runnable>() { // Executes task concurrently. 
- *         public void accept(Runnable task) {
- *              task.run();
- *         }
- *     });
- *     [/code]</p>
- * <p> With Java 8, closures are greatly simplified using lambda expressions.
- *     [code]
- *     tasks.values().parallel().forEach(task -> task.run()); // Same as above.
- *     names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
- *     [/code]</p>
- * 
+ * <p>[code]
+ * FastMap<String, Runnable> tasks = ...
+ * ...
+ * tasks.values().parallel().forEach(new Consumer<Runnable>() { // Executes task concurrently. 
+ *     public void accept(Runnable task) {
+ *         task.run();
+ *     }
+ * });
+ * [/code]</p>
+ * <p> With Java 8, closures are greatly simplified using lambda expressions.</p>
+ * <p>[code]
+ * tasks.values().parallel().forEach(task -> task.run()); // Same as above.
+ * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
+ * [/code]</p>
+ *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0.0, December 12, 2012
  */
@@ -418,7 +428,7 @@ public abstract class FastCollection<E> implements Collection<E>,
         });
         return modified[0];
     }
-
+    
     @Override
     @RealTime(limit = N_SQUARE)
     public boolean containsAll(Collection<?> that) {
@@ -495,6 +505,19 @@ public abstract class FastCollection<E> implements Collection<E>,
      * Misc.
      */
 
+    /**
+     * Adds the specified elements to this collection. 
+     * 
+     * @param elements the elements to be added.
+     * @return {@code this}
+     */
+    public FastCollection<E> addAll(E... elements) {
+        for (E e : elements) {
+            add(e);
+        }
+        return this;
+    }
+    
     /** 
      * Returns the comparator uses by this collection for equality and/or 
      * ordering if this collection is ordered.
@@ -516,6 +539,23 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     public void atomic(Runnable action) {
         service().atomic(action);
+    }
+
+    /** 
+     * Returns an immutable reference over this collection. The method should 
+     * only be called if this collection cannot be modified after the call (for 
+     * example if there is no reference to this collection after the call).
+     */
+    public <T extends Collection<E>> Immutable<T> toImmutable() {
+        return new Immutable<T>() {
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public T value() {
+                return (T) unmodifiable();
+            }
+            
+        };
     }
 
     /**

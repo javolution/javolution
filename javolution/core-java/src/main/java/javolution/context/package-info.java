@@ -1,7 +1,6 @@
 /**
 <p> Provides execution {@link javolution.context.AbstractContext contexts} to facilitate 
-    separation of concerns and achieve higher level of performance and 
-    code predictability.</p>
+    separation of concerns and achieve higher level of performance and flexibility.</p>
 
 <h2><a name="OVERVIEW">Separation of Concerns</a></h2>
 
@@ -72,28 +71,32 @@ void myMethod() {
     <a name="FAQ-1"></a>
     <li><b>In my application I create new threads on-the-fly and I would like them to inherit 
            the current context environment. How can I do that?</b>
-    <p> Context are automatically inherited when performing concurrent executions using 
+    <p> Context is automatically inherited when performing concurrent executions using 
         {@link javolution.context.ConcurrentContext ConcurrentContext}. If you create
-        new threads yourself you can easily setup their context stack as shown below.</p>
+        new threads yourself you can easily setup their context as shown below.</p>
 [code]
-//Spawns a new thread inheriting from the current context stack.
+//Spawns a new thread inheriting the context of the current thread.
 MyThread myThread = new MyThread();
 myThread.inherited = AbstractContext.current(); 
 myThread.start(); 
  ...
 class MyThread extends Thread {
-    AbstractContext<?> inherited;
+    AbstractContext inherited;
     public void run() {
-        AbstractContext.inherit(inherited); // Sets context stack. 
+        AbstractContext.inherit(inherited); // Sets current context. 
         ...
     }
 }[/code]
+<p></p>
     </li>
+    
     <a name="FAQ-2"></a>
     <li><b>Is it possible to configure the context of all running threads (global configuration) ?</b>
     <p> Yes by publishing an OSGi implementation of the customized context
         (published context services are the default contexts of all running threads).
-        Otherwise, you can only configure a context that you have entered (for obvious safety reasons).</li> 
+        Otherwise, you can only configure a context that you have entered (for obvious safety reasons).</p>
+<p></p>
+    </li> 
     <a name="FAQ-3"></a>
     <li><b>I am writing an application using third party libraries. 
           I cannot avoid GC unless I get the source and patch it to Javolution.
@@ -104,6 +107,7 @@ class MyThread extends Thread {
     real-time collections implementation (fractal-based). That being said, if your are running 
     on a RTSJ VM, entering a {@link javolution.context.StackContext StackContext} will force 
     new objects allocations to be performed on ScopedMemory with no adverse effect on GC.</p>
+<p></p>
     </li> 
     
  </ol>

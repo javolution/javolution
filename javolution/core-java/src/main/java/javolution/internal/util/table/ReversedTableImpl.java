@@ -31,142 +31,150 @@ public final class ReversedTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
     public boolean add(E element) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public int size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public void clear() {
-        // TODO Auto-generated method stub
-
+        return target.add(element);
     }
 
     @Override
     public void add(int index, E element) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public E get(int index) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public E set(int index, E element) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public E remove(int index) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public E getFirst() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public E getLast() {
-        // TODO Auto-generated method stub
-        return null;
+        target.add(size() - index - 1, element);
     }
 
     @Override
     public void addFirst(E element) {
-        // TODO Auto-generated method stub
-
-    }
+        add(0, element);    }
 
     @Override
     public void addLast(E element) {
-        // TODO Auto-generated method stub
+        add(size(), element);
+    }
+
+    @Override
+    public void atomic(Runnable action) {
+        target.atomic(action);
 
     }
 
     @Override
-    public E removeFirst() {
-        // TODO Auto-generated method stub
-        return null;
+    public void clear() {
+        target.clear();
     }
 
     @Override
-    public E removeLast() {
-        // TODO Auto-generated method stub
-        return null;
+    public EqualityComparator<? super E> comparator() {
+        return target.comparator();
+    }
+
+    @Override
+    public void forEach(Consumer<? super E> consumer,
+            final IterationController controller) {
+        target.forEach(consumer, new IterationController() {
+
+            @Override
+            public boolean doReversed() {
+                return !controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return controller.doSequential();
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }});
+        
+    }
+
+    @Override
+    public E get(int index) {
+        return target.get(size() - index - 1);
+    }
+
+    @Override
+    public E getFirst() {
+        return get(0);
+    }
+
+    @Override
+    public E getLast() {
+        return get(size() - 1);
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return new TableIteratorImpl<E>(this, 0);
     }
 
     @Override
     public E peekFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : getFirst();
     }
 
     @Override
     public E peekLast() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : getLast();
     }
 
     @Override
     public E pollFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : removeFirst();
     }
 
     @Override
     public E pollLast() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : removeLast();
+    }
+
+    @Override
+    public E remove(int index) {
+        return target.remove(size() - index - 1) ;
+    }
+
+    @Override
+    public E removeFirst() {
+        return remove(0);
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> filter,
+            final IterationController controller) {
+        return target.removeIf(filter, new IterationController() {
+
+            @Override
+            public boolean doReversed() {
+                return !controller.doReversed();
+            }
+
+            @Override
+            public boolean doSequential() {
+                return controller.doSequential();
+            }
+
+            @Override
+            public boolean isTerminated() {
+                return controller.isTerminated();
+            }});
+    }
+
+    @Override
+    public E removeLast() {
+        return remove(size() - 1);
+    }
+
+    @Override
+    public E set(int index, E element) {
+        return target.set(size() - index - 1, element);
+    }
+
+    @Override
+    public int size() {
+        return target.size();
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        return target.trySplit(n); // Forwards (view affects iteration controller only).
     }
 }

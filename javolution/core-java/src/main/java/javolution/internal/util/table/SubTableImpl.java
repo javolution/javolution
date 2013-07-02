@@ -10,6 +10,7 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -35,139 +36,177 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
 
     @Override
     public boolean add(E element) {
-        // TODO Auto-generated method stub
-        return false;
+        add(size(), element);
+        return true;
     }
 
     @Override
     public void add(int index, E element) {
-        // TODO Auto-generated method stub
-
+        if ((index < 0) && (index > size())) indexError(index);
+        that.add(index + fromIndex, element);
     }
 
     @Override
     public void addFirst(E element) {
-        // TODO Auto-generated method stub
-
+        add(0, element);
     }
 
     @Override
     public void addLast(E element) {
-        // TODO Auto-generated method stub
-
+        add(size(), element);
     }
 
     @Override
     public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
+        that.atomic(action);
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        for (int i=size(); --i >= 0;) {
+            remove(i);
+        }
     }
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return that.comparator();
     }
 
     @Override
     public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {}
+            IterationController controller) {
+        int size = size();
+        if (!controller.doReversed()) {
+            for (int i = 0; i < size; i++) {
+                consumer.accept(get(i));
+                if (controller.isTerminated())
+                    break;
+            }
+        } else { // Reversed.
+            for (int i = size; --i >= 0;) {
+                consumer.accept(get(i));
+                if (controller.isTerminated())
+                    break;
+            }
+        }
+    }
 
     @Override
     public E get(int index) {
-        // TODO Auto-generated method stub
-        return null;
+        if ((index < 0) && (index >= size())) indexError(index);
+        return that.get(index + fromIndex);
     }
 
     @Override
     public E getFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        if (size() == 0) emptyError();
+        return get(0);
     }
 
     @Override
     public E getLast() {
-        // TODO Auto-generated method stub
-        return null;
+        if (size() == 0) emptyError();
+        return get(size() - 1);
     }
 
     @Override
     public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new TableIteratorImpl<E>(this, 0);
     }
 
     @Override
     public E peekFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : getFirst();
     }
 
     @Override
     public E peekLast() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : getLast();
     }
 
     @Override
     public E pollFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : removeFirst();
     }
 
     @Override
     public E pollLast() {
-        // TODO Auto-generated method stub
-        return null;
+        return (size() == 0) ? null : removeLast();
     }
-
+    
     @Override
     public E remove(int index) {
-        // TODO Auto-generated method stub
-        return null;
+        if ((index < 0) && (index >= size())) indexError(index);
+        toIndex--;
+        return that.remove(index + fromIndex);
     }
 
     @Override
     public E removeFirst() {
-        // TODO Auto-generated method stub
-        return null;
+        if (size() == 0)
+            emptyError();
+        return remove(0);
     }
 
     @Override
     public boolean removeIf(Predicate<? super E> filter,
             IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
+        int size = size();
+        boolean removed = false;
+        if (!controller.doReversed()) {
+            for (int i = 0; i < size; i++) {
+                if (filter.test(get(i))) {
+                    remove(i--);
+                    removed = true;
+                }
+                if (controller.isTerminated())
+                    break;
+            }
+        } else { // Reversed.
+            for (int i = size; --i >= 0;) {
+                if (filter.test(get(i))) {
+                    remove(i);
+                    removed = true;
+                }
+                if (controller.isTerminated())
+                    break;
+            }
+        }
+        return removed;
     }
 
     @Override
     public E removeLast() {
-        // TODO Auto-generated method stub
-        return null;
+        if (size() == 0)
+            emptyError();
+        return remove(size() - 1);
     }
 
     @Override
     public E set(int index, E element) {
-        // TODO Auto-generated method stub
-        return null;
+        if ((index < 0) && (index >= size())) indexError(index);
+        return that.set(index + fromIndex, element);
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        return toIndex - fromIndex;
     }
 
     @Override
     public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
+        return FastTableImpl.splitOf(this, n);
+    }
+    
+    /** Throws NoSuchElementException */
+    private void emptyError() {
+        throw new NoSuchElementException("Empty Table");
     }
 
+      /** Throws IndexOutOfBoundsException */
+    private void indexError(int index) {
+        throw new IndexOutOfBoundsException("index: " + index + ", size: "
+                + size());
+    }
 }

@@ -127,6 +127,11 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
      */
 
     @Override
+    public FastSortedSet<E> addAll(E... elements) {
+        return (FastSortedSet<E>) super.addAll(elements);
+    }
+
+    @Override
     protected SortedSetService<E> service() {
         return (SortedSetService<E>) super.service();
     }

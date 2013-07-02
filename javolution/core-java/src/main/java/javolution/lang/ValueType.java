@@ -13,24 +13,24 @@ package javolution.lang;
  *     value; a JVM implementation may allocate instances of this class 
  *     on the stack and pass references by copy.</p>
  *     
- * <p> {@link ValueType} instances are {@link Copyable} to be easily 
- *     exported out of the stack when  executing in a 
- *     {@link javolution.context.StackContext StackContext}.
- *     [code]
- *     public final class Complex implements ValueType<Complex> { ... }
- *     ...
- *     public Complex sumOf(Complex[] values) {
- *         StackContext ctx = StackContext.enter(); // Starts stack allocation.
- *         try {
- *             Complex sum = Complex.ZERO;
- *             for (Complex c : values) {
- *                 sum = sum.plus(c);
- *             }
- *             return ctx.export(sum); // Exports result outside of the stack.
- *         } finally {
- *             ctx.exit(); // Resets stacks.
- *         }
- *     }[/code]</p>
+ * <p> {@link ValueType} instances are both {@link Immutable} and 
+ *     {@link Copyable} to be easily exported out of the stack when 
+ *     executing in a {@link javolution.context.StackContext StackContext}.
+ * [code]
+ * public final class Complex implements ValueType<Complex> { ... }
+ * ...
+ * public Complex sumOf(Complex[] values) {
+ *     StackContext ctx = StackContext.enter(); // Starts stack allocation.
+ *     try {
+ *          Complex sum = Complex.ZERO;
+ *          for (Complex c : values) {
+ *              sum = sum.plus(c);
+ *          }
+ *          return ctx.export(sum); // Exports result outside of the stack.
+ *     } finally {
+ *          ctx.exit(); // Resets stacks.
+ *     }
+ * }[/code]</p>
  *      
  * <p> <b>Note:</b> "Stack" allocation is not the only optimization that a VM 
  *     can do on {@link ValueType}. The VM might decide not to perform any 
@@ -39,4 +39,4 @@ package javolution.lang;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
  */
-public interface ValueType<T> extends Immutable, Copyable<T> {}
+public interface ValueType<T> extends Immutable<T>, Copyable<T> {}

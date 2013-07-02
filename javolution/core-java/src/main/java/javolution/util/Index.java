@@ -42,7 +42,23 @@ import javolution.text.TypeFormat;
 public final class Index extends Number implements Comparable<Index>,
         ValueType<Index> {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+    /**
+     * Holds the default text format for indices (decimal value representation).
+     */
+    public static class Decimal extends TextFormat<Index> {
+
+        @Override
+        public Appendable format(Index obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.intValue(), dest);
+        }
+
+        @Override
+        public Index parse(CharSequence csq, Cursor cursor)
+                throws IllegalArgumentException {
+            return Index.valueOf(TypeFormat.parseInt(csq, cursor));
+        }
+
+    }
 
     /**
      * Holds the number of preallocated instances (default {@code 1024}).
@@ -57,27 +73,13 @@ public final class Index extends Number implements Comparable<Index>,
      */
     public static final Index ZERO = new Index(0);
 
-    /**
-     * Holds the preallocated instances.
-     */
+    private static final long serialVersionUID = 0x600L; // Version.
     private static final Index[] INSTANCES = new Index[PREALLOCATED.get()];
     static {
         INSTANCES[0] = ZERO;
         for (int i = 1; i < INSTANCES.length; i++) {
             INSTANCES[i] = new Index(i);
         }
-    }
-
-    /**
-     * Holds the index value.
-     */
-    private final int value;
-
-    /**
-     * Creates an index having the specified value.
-     */
-    private Index(int value) {
-        this.value = value;
     }
 
     /**
@@ -94,55 +96,15 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
-     * Returns the index after this one.
+     * Holds the index value.
      */
-    public Index next() {
-        return Index.valueOf(value + 1);
-    }
+    private final int value;
 
     /**
-     * Returns the index before this one.
-     * 
-     * @throws IndexOutOfBoundsException if (this == Index.ZERO)
+     * Creates an index having the specified value.
      */
-    public Index previous() {
-        return Index.valueOf(value - 1);
-    }
-
-    /**
-     * Returns the index value as <code>int</code>.
-     * 
-     * @return the index value.
-     */
-    public int intValue() {
-        return value;
-    }
-
-    /**
-     * Returns the index value as <code>long</code>.
-     * 
-     * @return the index value.
-     */
-    public long longValue() {
-        return value;
-    }
-
-    /**
-     * Returns the index value as <code>float</code>.
-     * 
-     * @return the index value.
-     */
-    public float floatValue() {
-        return (float) value;
-    }
-
-    /**
-     * Returns the index value as <code>double</code>.
-     * 
-     * @return the index value.
-     */
-    public double doubleValue() {
-        return (double) value;
+    private Index(int value) {
+        this.value = value;
     }
 
     /**
@@ -172,22 +134,20 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
-     * Indicates if this index is zero.
-     * 
-     * @return {@code this == ZERO} 
+     * Returns a copy of this index or <code>this</code> if the indexes 
+     * is small (in permanent memory) in order to maintain unicity.
      */
-    public boolean isZero() {
-        return this == ZERO;
+    public Index copy() {
+        return value < INSTANCES.length ? this : new Index(value);
     }
 
     /**
-     * Returns the {@link String} representation of this index.
+     * Returns the index value as <code>double</code>.
      * 
-     * @return {@code TextContext.getFormat(Index.class).format(this)}
+     * @return the index value.
      */
-    @Override
-    public String toString() {
-        return TextContext.getFormat(Index.class).format(this);
+    public double doubleValue() {
+        return (double) value;
     }
 
     /**
@@ -202,6 +162,15 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
+     * Returns the index value as <code>float</code>.
+     * 
+     * @return the index value.
+     */
+    public float floatValue() {
+        return (float) value;
+    }
+
+    /**
      * Returns the hash code for this index.
      */
     @Override
@@ -210,11 +179,46 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
-     * Returns a copy of this index or <code>this</code> if the indexes 
-     * is small (in permanent memory) in order to maintain unicity.
+     * Returns the index value as <code>int</code>.
+     * 
+     * @return the index value.
      */
-    public Index copy() {
-        return value < INSTANCES.length ? this : new Index(value);
+    public int intValue() {
+        return value;
+    }
+
+    /**
+     * Indicates if this index is zero.
+     * 
+     * @return {@code this == ZERO} 
+     */
+    public boolean isZero() {
+        return this == ZERO;
+    }
+
+    /**
+     * Returns the index value as <code>long</code>.
+     * 
+     * @return the index value.
+     */
+    public long longValue() {
+        return value;
+    }
+
+    /**
+     * Returns the index after this one.
+     */
+    public Index next() {
+        return Index.valueOf(value + 1);
+    }
+
+    /**
+     * Returns the index before this one.
+     * 
+     * @throws IndexOutOfBoundsException if (this == Index.ZERO)
+     */
+    public Index previous() {
+        return Index.valueOf(value - 1);
     }
 
     /**
@@ -225,20 +229,17 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
-     * Holds the default text format for indices (decimal value representation).
+     * Returns the {@link String} representation of this index.
+     * 
+     * @return {@code TextContext.getFormat(Index.class).format(this)}
      */
-    public static class Decimal extends TextFormat<Index> {
+    @Override
+    public String toString() {
+        return TextContext.getFormat(Index.class).format(this);
+    }
 
-        @Override
-        public Index parse(CharSequence csq, Cursor cursor)
-                throws IllegalArgumentException {
-            return Index.valueOf(TypeFormat.parseInt(csq, cursor));
-        }
-
-        @Override
-        public Appendable format(Index obj, Appendable dest) throws IOException {
-            return TypeFormat.format(obj.intValue(), dest);
-        }
-
+    @Override
+    public Index value() {
+        return this;
     }
 }

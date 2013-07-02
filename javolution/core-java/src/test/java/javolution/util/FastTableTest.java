@@ -168,7 +168,7 @@ public class FastTableTest {
         }
     }
 
-    public void ttestListOperations() {
+    public void testListOperations() {
         List<Integer> ft = new FastTable<Integer>();
         List<Integer> al = new ArrayList<Integer>();
         for (long start = System.nanoTime(), time = start; time < start + 2
@@ -183,7 +183,7 @@ public class FastTableTest {
         LogContext.info("FastTable - List Operations Validated!");
     }
 
-    public void ttestDequeuOperations() {
+    public void testDequeuOperations() {
         Deque<Integer> ft = new FastTable<Integer>();
         Deque<Integer> ad = new ArrayDeque<Integer>();
         for (long start = System.nanoTime(), time = start; time < start + 2

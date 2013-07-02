@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import javolution.internal.util.map.FastMapImpl;
 import javolution.internal.util.map.SharedMapImpl;
 import javolution.internal.util.map.UnmodifiableMapImpl;
+import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
@@ -42,19 +43,23 @@ import javolution.util.service.MapService;
  *     or the key order for the {@link FastSortedMap} subclass. 
  *     This class permits {@code null} keys.</p> 
  *     
- * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps. 
- *     [code]
- *     FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
- *     FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
- *     FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
- *     FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
- *     FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
- *     FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
- *     FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Comparators.IDENTITY);
- *     FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Comparators.LEXICAL);  // Allows for value retrieval using any CharSequence key.
- *     FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.LEXICAL_FAST);  // Use constant-time hashcode calculation.
- *     ...                                                                                   
- *     [/code]</p>     
+ * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps.</p> 
+ * <p>[code]
+ *  FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
+ *  FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
+ *  FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
+ *  FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
+ *  FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
+ *  FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
+ *  FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Comparators.IDENTITY);
+ *  FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Comparators.LEXICAL);  // Allows for value retrieval using any CharSequence key.
+ *  FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.LEXICAL_FAST);  // Use constant-time hashcode calculation.
+ *  ...                                                                                   
+ *  [/code]</p>
+ *  
+ *  <p> As for fast collections, an {@link javolution.lang.Immutable immutable}. 
+ *      reference (or const reference) can be {@link #toImmutable() obtained} when the originator  
+ *      guarantees that the map source cannot be modified.</p>      
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0.0, December 12, 2012
@@ -252,6 +257,23 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         service().atomic(action);
     }
 
+    /** 
+     * Returns an immutable reference over this map. The method should only 
+     * be called if this map cannot be modified after the call (for 
+     * example if there is no reference to this map after the call).
+     */
+    public <T extends Map<K,V>> Immutable<T> toImmutable() {
+        return new Immutable<T>() {
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public T value() {
+                return (T) unmodifiable();
+            }
+            
+        };
+    }
+    
     /**
       * Returns this map service implementation.
       */

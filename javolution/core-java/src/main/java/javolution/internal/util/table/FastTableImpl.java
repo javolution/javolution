@@ -158,7 +158,6 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public E pollLast() {
         return (size == 0) ? null : removeLast();
-
     }
 
     @SuppressWarnings("unchecked")
@@ -244,22 +243,27 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
         return size;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public TableService<E>[] trySplit(int n) {
+        return splitOf(this, n);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <E> TableService<E>[] splitOf(TableService<E> table, int n) {
+        int size = table.size();
         if (n <= 0)
             throw new IllegalArgumentException("Invalid argument n: " + n);
         int length = MathLib.min(n, size);
         if (length < 2)
-            return new FastTableImpl[] { this }; // No split.
+            return new TableService[] { table }; // No split.
         TableService<E>[] subTables = new TableService[length];
         int div = size / length;
         int start = 0;
         for (int i = 0; i < length - 1; i++) {
-            subTables[i] = new SubTableImpl<E>(this, start, start + div);
+            subTables[i] = new SubTableImpl<E>(table, start, start + div);
             start += div;
         }
-        subTables[length - 1] = new SubTableImpl<E>(this, start, size - start);
+        subTables[length - 1] = new SubTableImpl<E>(table, start, size - start);
         return subTables;
     }
 

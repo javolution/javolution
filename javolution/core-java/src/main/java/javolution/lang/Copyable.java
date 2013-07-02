@@ -9,9 +9,10 @@
 package javolution.lang;
 
 /**
- * <p> An object for which a deep copy can be performed (recursive copy).
- *     This interface is particularly useful to copy objects 
- *     from one memory space to another (when supported by the JVM).</p>
+ * <p> An object for which a completely independent copy can be obtained.
+ *     This interface is typically used to ensure "full" immutability of local 
+ *     copies or to copy object graphs from one memory space to another 
+ *     (when supported by the JVM).</p>
  *                  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, December 12, 2012
@@ -20,12 +21,13 @@ package javolution.lang;
 public interface Copyable<T> {
 
     /**
-     * Returns a deep copy of this object. For unique objects (e.g. 
-     * static objects allocated in immortal memory) this method
-     * should return <code>this</code>.
-     * 
-     * @return an object identical to this object but allocated 
-     *         in the current memory space (e.g. scope memory for real-time VM).
+     * Returns an object identical to this but fully independent from it. 
+     * No matter what happens to this object, it will have no impact on the copy.
+     * {@link Immutable Immutable} objects allocated in 
+     * {@link javolution.context.ImmortalContext immortal memory) (e.g. static)
+     * or on the heap may return {@code this}. On the other hands, immutable 
+     * objects allocated on the {@link javolution.context.StackContext stack)
+     * should return a new instance.
      */
     T copy();
 

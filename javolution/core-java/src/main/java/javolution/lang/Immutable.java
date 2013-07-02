@@ -9,27 +9,35 @@
 package javolution.lang;
 
 /**
- * <p> An object which is not subject or susceptible of change or variation 
- *     after creation. Once a class is declared immutable, any subclass must 
+ * <p> An object whose value is not subject or susceptible of change or 
+ *     variation. Once a class is declared immutable, any subclass must 
  *     ensure immutability as well.</p>
  *     
  * <p> {@link Immutable} objects can safely be used in a multi-threaded 
  *     environment and <b>do not require defensive copying</b>.
- *     For example:[code]
- *     class Polygon implements Immutable {
- *          private List<Point2D> _vertices;
- *          public Polygon(List<Point2D> vertices) {
- *              _vertices = (vertices instanceof Immutable) ?
- *                   vertices : // Safe, the vertices cannot be modified by the client.
- *                   new FastTable<Point2D>(vertices); // Defensive copying required.
- *          }
- *     }[/code]</p>
+ * [code]
+ * class Polygon extends Shape implements Immutable<Shape> {
+ *     private List<Point2D> vertices;
+ *     public Polygon(Immutable<List<Point2D>> vertices) {
+ *         _vertices = vertices.value(); // No defensive copying required.
+ *     }
+ *     public Polygon value() { return this; }
+ * }
+ * ...
+ * // FastCollection/FastMap can be converted directly to immutable.
+ * Polygone triangle = new Polygon(new FastTable<Point2D>().addAll(p1, p2, p3).toImmutable());
+ * ...[/code]</p>
  * @see <a href="http://en.wikipedia.org/wiki/Immutable_object">
  *      Wikipedia: Immutable Object<a>    
- * 
+ * @see javolution.util.FastCollection#toImmutable
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 3.7, February 6, 2006
+ * @version 6.0.0, December 12, 2012
  */
-public interface Immutable {
-    // No method (tagging interface).
+public interface Immutable<T> {
+    
+    /**
+     * Returns the unmodifiable value.
+     */
+    T value();
+
 }

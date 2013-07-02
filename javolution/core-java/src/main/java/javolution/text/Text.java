@@ -1356,4 +1356,9 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
         return text;
     }
 
+    @Override
+    public Text value() {
+        return this;
+    }
+
 }

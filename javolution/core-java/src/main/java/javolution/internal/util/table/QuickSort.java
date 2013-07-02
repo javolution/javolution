@@ -14,9 +14,6 @@ import javolution.util.service.TableService;
 
 /**
  * A quick sort utility class.
- *       
- * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
  */
 public class QuickSort<E> {
 

@@ -156,15 +156,15 @@ public abstract class AbstractContext {
      * thread. This method is particularly useful when creating new threads to 
      * make them inherits from the context stack of the spawning thread.</p>
      * [code]
-     * //Spawns a new thread inheriting the current context stack.
+     * //Spawns a new thread inheriting the context of the current thread.
      * MyThread myThread = new MyThread();
      * myThread.inherited = AbstractContext.current(); 
      * myThread.start(); 
      * ...
      * class MyThread extends Thread {
-     *     AbstractContext<?> inherited;
+     *     AbstractContext inherited;
      *     public void run() {
-     *         AbstractContext.inherit(inherited); // Sets context stack. 
+     *         AbstractContext.inherit(inherited); // Sets current context. 
      *         ...
      *     }
      * }[/code]
