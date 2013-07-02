@@ -9,26 +9,20 @@
 
 <h2><a name="FAQ">FAQ:</a></h2>
 <ol>
-    <li><b>Why <b>J</b>avolution does not provide immutable collections similar to 
+    <li><b>Does <b>J</b>avolution provide immutable collections similar to 
      the ones provided by Scala or .NET ?</b>
-    <p> In standard collection frameworks there are some benefit in terms 
-        of algorithmic complexity for using immutable collections. For example,
-        the {@code List.Add} method in .NET has a WCET of {@code O(n)} (due to resizing) 
-        versus {@code O(Log(n))} for the {@code ImmutableList.Add} version. 
-        It is not the case with <b>J</b>avolution classes (incremental resize).<p>   
-    <p> Nonetheless, for semantic reasons it is always possible to return an {@link Immutable} reference 
-        over any {@link javolution.util.FastCollection FastCollection FastCollection}
-        using the {@link javolution.util.FastCollection#toImmutable() toImmutable()} method.
+    <p> Using <b>J</b>avolution you may return an {@link javolution.lang.Immutable Immutable} 
+        reference (const reference) over any object which cannot be modified including collections or maps.
 [code]
 public class UnitSystem {
     Set<Unit> units;
     public UnitSystem(Immutable<Set<Unit>> units) {
-       this.units = units.value(); // No need to copy (semantic contract)
+       this.units = units.value(); // Defensive copy unnecessary (immutable)
     }
 }
 ...
-FastSet<Unit> unitsMKSA = new FastSet<Unit>(M, K, S, A);
-UnitSystem MKSA = new UnitSystem(unitsMKSA.toImmutable());
+Immutable<Set<Unit>> unitsMKSA = new FastSet<Unit>().addAll(M, K, S, A).toImmutable();
+UnitSystem MKSA = new UnitSystem(unitsMKSA);
 [/code]</p>
     </li>
 </ol>    

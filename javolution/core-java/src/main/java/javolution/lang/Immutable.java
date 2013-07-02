@@ -19,7 +19,7 @@ package javolution.lang;
  * class Polygon extends Shape implements Immutable<Shape> {
  *     private List<Point2D> vertices;
  *     public Polygon(Immutable<List<Point2D>> vertices) {
- *         _vertices = vertices.value(); // No defensive copying required.
+ *         this.vertices = vertices.value(); // No defensive copying required.
  *     }
  *     public Polygon value() { return this; }
  * }
