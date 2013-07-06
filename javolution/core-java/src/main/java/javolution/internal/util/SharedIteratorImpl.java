@@ -6,10 +6,10 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.internal.util.collection;
+package javolution.internal.util;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.Lock;
+
 
 /**
  * An iterator allowing concurrent access and sequential removals.
@@ -17,42 +17,40 @@ import java.util.concurrent.locks.Lock;
 public final class SharedIteratorImpl<E> implements Iterator<E> {
 
     private final Iterator<E> target;
-    private final Lock read;
-    private final Lock write;
+    private final ReadWriteLockImpl rwLock;
 
-    public SharedIteratorImpl(Iterator<E> target, Lock read, Lock write) {
+    public SharedIteratorImpl(Iterator<E> target, ReadWriteLockImpl rwLock) {
         this.target = target;
-        this.read = read;
-        this.write = write;
+        this.rwLock = rwLock;
     }
 
     @Override
     public boolean hasNext() {
-        read.lock();
+        rwLock.readLock().lock();
         try {
             return target.hasNext();
         } finally {
-            read.unlock();
+            rwLock.readLock().unlock();
         }
     }
 
     @Override
     public E next() {
-        read.lock();
+        rwLock.readLock().lock();
         try {
             return target.next();
         } finally {
-            read.unlock();
+            rwLock.readLock().unlock();
         }
     }
 
     @Override
     public void remove() {
-        write.lock();
+        rwLock.writeLock().lock();
         try {
             target.remove();
         } finally {
-            write.unlock();
+            rwLock.writeLock().unlock();
         }
     }
 

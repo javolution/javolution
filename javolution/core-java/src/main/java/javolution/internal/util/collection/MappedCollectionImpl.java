@@ -9,6 +9,7 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
@@ -41,11 +42,6 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
-    public void atomic(Runnable action) {
-        target.atomic(action);
-    }
-
-    @Override
     public EqualityComparator<? super R> comparator() {
         return Comparators.STANDARD;
     }
@@ -64,6 +60,11 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
+    }
+
+   @Override
     public Iterator<R> iterator() {
         final Iterator<E> targetIterator = target.iterator();
         return new Iterator<R>() {

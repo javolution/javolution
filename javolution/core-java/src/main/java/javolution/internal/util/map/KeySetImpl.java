@@ -10,6 +10,7 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -33,12 +34,6 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
     public boolean add(K element) {
         // TODO Auto-generated method stub
         return false;
-    }
-
-    @Override
-    public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -95,6 +90,12 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
 
     @Override
     public CollectionService<K>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
         // TODO Auto-generated method stub
         return null;
     }

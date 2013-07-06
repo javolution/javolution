@@ -10,6 +10,7 @@ package javolution.internal.util.bitset;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.lang.MathLib;
 import javolution.util.Index;
@@ -57,12 +58,6 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
         while (--i >= 0) {
             this.bits[i] &= ~thatBits[i];
         }
-    }
-
-    @Override
-    public void atomic(Runnable action) {
-        action.run();
-
     }
 
     @Override
@@ -206,6 +201,11 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
     }
 
     @Override
+    public ReadWriteLock getLock() {
+        return null;
+    }
+
+   @Override
     public Iterator<Index> iterator() {
         return new BitSetIteratorImpl(this, 0);
     }

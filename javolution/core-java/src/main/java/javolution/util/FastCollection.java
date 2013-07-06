@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.collection.ComparatorCollectionImpl;
 import javolution.internal.util.collection.DistinctCollectionImpl;
@@ -183,7 +184,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * the {@link #atomic atomic} method should be used (on the shared view
      * or on any view derived from the shared view).
      * 
-     *  @see #atomic(Runnable)
+     *  @see #atomicWrite(Runnable)
      */
     public FastCollection<E> shared() {
         return new SharedCollectionImpl<E>(service());
@@ -527,18 +528,51 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /** 
-     * Executes the specified action on this collection in an atomic manner. As 
-     * far as readers of this collection are concerned, either they see the full
-     * result of the action or nothing. This method is relevant only for
-     * {@link #shared shared} or {@link #parallel parallel} collections.
-     * The framework ensures that only one atomic action can be performed at 
-     * any given time and no concurrent closure-based iteration is possible 
-     * during that time.
+     * Executes the specified write action on this collection in an atomic 
+     * manner. As far as readers of this collection are concerned, either they
+     * see the full result of the action or nothing. This method is relevant 
+     * only for {@link #shared shared} or {@link #parallel parallel} collections.
+     * The framework ensures that only one write action can be performed at 
+     * a time and write action have precedence over read actions.
      * 
-     * @param action the action to be executed in an atomic manner.
+     * @param write the write action to be executed in an atomic manner.
      */
-    public void atomic(Runnable action) {
-        service().atomic(action);
+    public void atomicWrite(Runnable write) {
+        ReadWriteLock rwLock = service().getLock();
+        if (rwLock != null) {
+            rwLock.writeLock().lock();
+            try {
+                write.run();
+            } finally {
+                rwLock.writeLock().unlock();
+            }
+        } else { // Not shared or parallel.
+            write.run();
+        }
+    }
+
+    /** 
+     * Executes the specified read action on this collection in an atomic 
+     * manner. Multiple read actions can be performed concurrently.
+     * This method is relevant only for {@link #shared shared} or
+     *  {@link #parallel parallel} collections.
+     * The framework ensures that no read action can be performed if a 
+     * write action is in progress or waiting.
+     * 
+     * @param read the read action to be executed in an atomic manner.
+     */
+    public void atomicRead(Runnable read) {
+        ReadWriteLock rwLock = service().getLock();
+        if (rwLock != null) {
+            rwLock.readLock().lock();
+            try {
+                read.run();
+            } finally {
+                rwLock.readLock().unlock();
+            }
+        } else { // Not shared or parallel.
+            read.run();
+        }
     }
 
     /** 

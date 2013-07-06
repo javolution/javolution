@@ -9,6 +9,7 @@
 package javolution.util.service;
 
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -103,16 +104,7 @@ public interface CollectionService<E> {
      */
     boolean add(E element);
 
-    /** 
-     * Executes the specified action on this collection in an atomic manner as 
-     * far as readers of this collection's are concerned (either readers 
-     * see the full result of this action on this collection or nothing).
-     *  
-     * @param action the action to be executed atomically.
-     */
-    void atomic(Runnable action);
-
-    /** 
+     /** 
      * Returns the full comparator used for element equality or order.
      */
     EqualityComparator<? super E> comparator();
@@ -126,6 +118,15 @@ public interface CollectionService<E> {
     void forEach(Consumer<? super E> consumer, IterationController controller);
 
     /** 
+     * Returns the read-write lock of this collection if any; otherwise
+     * returns {@code null}. The implementation must give preference to the 
+     * waiting writer threads over the readers. That means if we have two 
+     * threads waiting to acquire the lock, the one waiting for write lock 
+     * will get the lock first. 
+     */
+    ReadWriteLock getLock();
+
+   /** 
      * Returns an iterator over this collection elements.
      */
     Iterator<E> iterator();

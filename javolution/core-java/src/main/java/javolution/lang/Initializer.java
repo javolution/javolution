@@ -13,12 +13,10 @@ import java.util.Vector;
 import javolution.context.LogContext;
 
 /**
- * <p> An initializer for all classes loaded by any custom class loader.</p>
+ * <p> An initializer for all classes loaded by any specified class loader.</p>
  * 
  * <p> Initialization of loaded classes at startup (or during bundle activation)
- *     ensures that not only all the static members are allocated on the heap 
- *     (see {@link javolution.annotation.StackSafe StackSafe} annotation)
- *     but also that the run-time behavior is more time deterministic 
+ *     ensures that the run-time behavior is more time deterministic 
  *     (aka real-time).</p> 
  * 
  * <p> Class loading can be performed in a lazy manner and therefore some parts 
@@ -26,22 +24,16 @@ import javolution.context.LogContext;
  *     load time. Javolution activator loads unreferenced classes to ensure that
  *     <b>all</b> classes can be initialized during bundle activation.
  *     The following code illustrates how this can be done for any bundle.
- *     [code]
- *     public class MyActivator implements BundleActivator {
- *         public void start(BundleContext bc) throws Exception {
- *             initializeAll();
- *             ...
- *         }
- *         public static boolean initializeAll()  {
- *             Initializer initializer = new Initializer(MyActivator.class.getClassLoader());
- *             // Loads classes not yet referenced (directly or indirectly).
- *             initializer.loadClass("com.foo.internal.UnreferencedClass");
- *             ... 
- *             initializer.initializeLoadedClasses(); // Recursive loading/initialization.
- *             return initializer.isInitializationSuccessful();
- *         }
+ * [code]
+ * public class MyActivator implements BundleActivator {
+ *     public void start(BundleContext bc) throws Exception {
+ *         Initializer initializer = new Initializer(MyActivator.class.getClassLoader());
+ *         initializer.loadClass("com.foo.internal.UnreferencedClass");
+ *         ... // Load explicitly classes not yet referenced.
+ *         initializer.initializeLoadedClasses(); // Recursive loading/initialization.
+ *         ... // Continue activation
  *     }
- *     [/code]</p>
+ * }[/code]</p>
  * 
  * <p> This utility use reflection to find the classes loaded and may not be
  *     supported on all platforms.</p>

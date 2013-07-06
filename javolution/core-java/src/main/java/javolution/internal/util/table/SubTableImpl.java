@@ -11,6 +11,7 @@ package javolution.internal.util.table;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -25,11 +26,11 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private int fromIndex;
-    private final TableService<E> that;
+    private final TableService<E> target;
     private int toIndex;
 
-    public SubTableImpl(TableService<E> that, int fromIndex, int toIndex) {
-        this.that = that;
+    public SubTableImpl(TableService<E> target, int fromIndex, int toIndex) {
+        this.target = target;
         this.fromIndex = fromIndex;
         this.toIndex = toIndex;
     }
@@ -43,7 +44,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public void add(int index, E element) {
         if ((index < 0) && (index > size())) indexError(index);
-        that.add(index + fromIndex, element);
+        target.add(index + fromIndex, element);
     }
 
     @Override
@@ -57,11 +58,6 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public void atomic(Runnable action) {
-        that.atomic(action);
-    }
-
-    @Override
     public void clear() {
         for (int i=size(); --i >= 0;) {
             remove(i);
@@ -70,7 +66,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        return that.comparator();
+        return target.comparator();
     }
 
     @Override
@@ -95,7 +91,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public E get(int index) {
         if ((index < 0) && (index >= size())) indexError(index);
-        return that.get(index + fromIndex);
+        return target.get(index + fromIndex);
     }
 
     @Override
@@ -108,6 +104,11 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     public E getLast() {
         if (size() == 0) emptyError();
         return get(size() - 1);
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
     }
 
     @Override
@@ -139,7 +140,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     public E remove(int index) {
         if ((index < 0) && (index >= size())) indexError(index);
         toIndex--;
-        return that.remove(index + fromIndex);
+        return target.remove(index + fromIndex);
     }
 
     @Override
@@ -186,7 +187,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public E set(int index, E element) {
         if ((index < 0) && (index >= size())) indexError(index);
-        return that.set(index + fromIndex, element);
+        return target.set(index + fromIndex, element);
     }
 
     @Override

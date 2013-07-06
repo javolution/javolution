@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -39,12 +40,6 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
     }
 
     @Override
-    public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void clear() {
         // TODO Auto-generated method stub
 
@@ -68,6 +63,12 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
             javolution.util.service.CollectionService.IterationController controller) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

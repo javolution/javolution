@@ -9,9 +9,10 @@
 package javolution.internal.util.bitset;
 
 import java.io.Serializable;
+import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.internal.util.collection.UnmodifiableIteratorImpl;
 import javolution.util.Index;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -43,11 +44,6 @@ public class UnmodifiableBitSetImpl implements BitSetService, Serializable {
     @Override
     public void andNot(BitSetService that) {
         throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public void atomic(Runnable action) {
-        target.atomic(action);
     }
 
     @Override
@@ -114,6 +110,11 @@ public class UnmodifiableBitSetImpl implements BitSetService, Serializable {
     @Override
     public boolean intersects(BitSetService that) {
         return target.intersects(that);
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
     }
 
     @Override

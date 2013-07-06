@@ -49,24 +49,23 @@ import javolution.util.service.TableService;
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance.
- *     {@code null} elements are supported and fast tables can be concurrently iterated over using
- *     their {@link #shared() shared} views. Fast tables inherit from all the fast collection
- *     views and also support the new {@link #subList subList} view over a portion of the table.</li>
+ *     {@code null} elements are supported and fast tables can be concurrently iterated or 
+ *     modified using their {@link #shared() shared} views. {@link FastTable} inherits all the fast collection
+ *     views and support the {@link #subList subList} view over a portion of the table.</p>
  * [code]
- * FastTable<String> names = ...;
- * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Actually sorts the names (different from sorted() which is a sorted view).
- * names.subList(0, names.size() / 2).clear(); // Removes the first half of the table.
+ * FastTable<String> names = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil");
+ * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
+ * names.subList(0, names.size() / 2).clear(); // Removes the first half of the table (as per java.util.List specification).
  * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
- * names.parallel().filtered(str -> str.startsWith("A")).clear(); // Same as above but performed concurrently.
+ * names.parallel().filtered(str -> str.startsWith("A")).clear(); // Same as above but performed concurrently !
  * [/code]
- * </p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations are faster
- *     when performed using closures (and the notation is shorter with Java 8).
+ *     when performed using closures (and the notation shorter with Java 8).
  *     This is also the preferred mean of iterating over {@link FastTable#shared shared}
- *     tables since {@link ConcurrentModificationException} cannot occur. 
+ *     instances since {@link ConcurrentModificationException} cannot occur. 
  * [code]
- * FastTable<Person> persons = new FastTable<Person>().shared(); // Thread-safe table.
+ * FastTable<Person> persons = new FastTable<Person>().shared(); // Thread-safe view.
  * ...
  * Person findWithName(final String name) { 
  *     return persons.filtered(new Predicate<Person>() { 
@@ -377,7 +376,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
     @RealTime(limit = N_SQUARE)
     public void sort() {
-        atomic(new Runnable() {
+        atomicWrite(new Runnable() {
             @Override
             public void run() {
                 QuickSort<E> qs = new QuickSort<E>(service,

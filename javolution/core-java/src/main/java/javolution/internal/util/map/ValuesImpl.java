@@ -10,6 +10,7 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -36,12 +37,6 @@ public final class ValuesImpl<K, V> implements CollectionService<V>,
     }
 
     @Override
-    public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public EqualityComparator<? super V> comparator() {
         // TODO Auto-generated method stub
         return null;
@@ -53,6 +48,12 @@ public final class ValuesImpl<K, V> implements CollectionService<V>,
             javolution.util.service.CollectionService.IterationController controller) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

@@ -10,9 +10,10 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.internal.util.collection.UnmodifiableIteratorImpl;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
@@ -52,11 +53,6 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public void atomic(Runnable action) {
-        target.atomic(action);
-    }
-
-    @Override
     public void clear() {
         throw new UnsupportedOperationException("Unmodifiable");
     }
@@ -85,6 +81,11 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     @Override
     public E getLast() {
         return target.getLast();
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
     }
 
     @Override

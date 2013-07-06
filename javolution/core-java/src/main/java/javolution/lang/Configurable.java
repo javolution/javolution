@@ -20,18 +20,21 @@ import javolution.context.SecurityContext;
  *  <p> The response is obviously NO!</p>
  *
  *  <p> Let's compare the following examples:
- *      [code]
- *      class Document {
- *          private static final Font FONT
- *              = Font.decode(System.getProperty("FONT") != null ?
- *                  System.getProperty("DEFAULT_FONT") : "Arial-BOLD-18");
- *      }[/code]
+ *  [code]
+ *  class Document {
+ *      private static final Font FONT
+ *          = Font.decode(System.getProperty("FONT") != null ?
+ *              System.getProperty("FONT") : "Arial-BOLD-18");
+ *  }[/code]
+ *  
  *      With the following:
- *      [code]
- *      class Document {
- *          public static final Configurable<Font> FONT 
- *                  = new Configurable<Font>(new Font("Arial", Font.BOLD, 18));
- *      }[/code]
+ *  
+ *  [code]
+ *  class Document {
+ *      public static final Configurable<Font> FONT 
+ *          = new Configurable<Font>(new Font("Arial", Font.BOLD, 18));
+ *  }[/code]
+ *  
  *      Not only the second example is cleaner, but the actual configuration
  *      data can come from anywhere, for example during bundle activation,
  *      from the system properties, etc. Low level code does not need to know.</p>

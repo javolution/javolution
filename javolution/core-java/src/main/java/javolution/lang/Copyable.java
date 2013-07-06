@@ -22,12 +22,9 @@ public interface Copyable<T> {
 
     /**
      * Returns an object identical to this but fully independent from it. 
-     * No matter what happens to this object, it will have no impact on the copy.
-     * {@link Immutable Immutable} objects allocated in 
-     * {@link javolution.context.ImmortalContext immortal memory) (e.g. static)
-     * or on the heap may return {@code this}. On the other hands, immutable 
-     * objects allocated on the {@link javolution.context.StackContext stack)
-     * should return a new instance.
+     * No matter what happens to this object (e.g. this object is destroyed), 
+     * it will have no impact on the copy. Only objects for which the unicity 
+     * has to be maintained may return {@code this}.
      */
     T copy();
 

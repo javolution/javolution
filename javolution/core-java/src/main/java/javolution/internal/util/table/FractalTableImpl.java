@@ -19,20 +19,20 @@ import java.io.Serializable;
 final class FractalTableImpl implements Serializable {
 
     static final int SHIFT = 10;
-    static final int BASE_CAPACITY_MIN = 16;
     static final int BASE_CAPACITY_MAX = 1 << SHIFT;
-    private static final long serialVersionUID = 0x600L; // Version.
+    static final int BASE_CAPACITY_MIN = 16;
     private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
+    private static final long serialVersionUID = 0x600L; // Version.
 
     /** Offset value, it is the index of the first element (modulo data.length). */
     int offset;
 
-    /** The index shift, zero if base table. */
-    private final int shift;
-
     /** An array of data elements or fractal tables (recursion). 
      Data length varies from 2 to BASE_CAPACITY_MAX  */
     private Object[] data;
+
+    /** The index shift, zero if base table. */
+    private final int shift;
 
     public FractalTableImpl() {
         this.shift = 0;
@@ -52,41 +52,6 @@ final class FractalTableImpl implements Serializable {
 
     public int capacity() {
         return data.length << shift;
-    }
-
-    public Object get(int index) {
-        Object fractal = data[((index + offset) >> shift) & (data.length - 1)];
-        return (shift == 0) ? fractal : ((FractalTableImpl) fractal).get(index
-                + offset);
-    }
-
-    public Object set(int index, Object element) {
-        int i = ((index + offset) >> shift) & (data.length - 1);
-        if (shift != 0)
-            return F(i).set(index + offset, element);
-        Object previous = data[i];
-        data[i] = element;
-        return previous;
-    }
-
-    public FractalTableImpl upsize() {
-        offset &= (data.length << shift) - 1; // Makes it positive.
-        if (data.length >= BASE_CAPACITY_MAX) {
-            FractalTableImpl table = new FractalTableImpl(shift + SHIFT);
-            table.offset = offset;
-            this.offset = 0;
-            table.data[0] = this;
-            table.data[1] = this.extract(0, table.offset);
-            return table;
-        }
-        Object[] tmp = new Object[data.length << 1];
-        int i = (offset >> shift);
-        System.arraycopy(data, i, tmp, i, data.length - i);
-        System.arraycopy(data, 0, tmp, data.length, i);
-        if (shift > 0)
-            tmp[data.length + i] = F(i).extract(0, offset);
-        data = tmp;
-        return this;
     }
 
     public FractalTableImpl downsize(int minsize) {
@@ -122,35 +87,19 @@ final class FractalTableImpl implements Serializable {
         return this;
     }
 
-    /** Shifts the specified element ([first, first + length[ modulo capacity) 
-     one position to the right. No shift if length (modulo capacity) is zero. */
-    public void shiftRight(Object inserted, int first, int length) {
-        int mask = (data.length << shift) - 1;
-        int head = (first + offset) & mask;
-        int tail = (first + offset + length) & mask;
-        if (shift == 0) {
-            int n = tail - head;
-            if (head > tail) { // Wrapping
-                System.arraycopy(data, 0, data, 1, tail);
-                data[0] = data[mask];
-                n = mask - head;
-            }
-            System.arraycopy(data, head, data, head + 1, n);
-            data[head] = inserted;
-        } else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift local to inner table.
-            F(head >> shift).shiftRight(inserted, head, length); // (no wrapping).
-        } else {
-            int high = tail >> shift;
-            int low = (high != 0) ? high - 1 : data.length - 1;
-            F(high).shiftRight(F(low).get(-1), 0, tail);
-            while (low != (head >> shift)) {
-                high = low;
-                low = (high != 0) ? high - 1 : data.length - 1;
-                F(high).offset--; // Full shift right.
-                F(high).set(0, F(low).get(-1));
-            }
-            F(low).shiftRight(inserted, head, mask - head);
-        }
+    public Object get(int index) {
+        Object fractal = data[((index + offset) >> shift) & (data.length - 1)];
+        return (shift == 0) ? fractal : ((FractalTableImpl) fractal).get(index
+                + offset);
+    }
+
+    public Object set(int index, Object element) {
+        int i = ((index + offset) >> shift) & (data.length - 1);
+        if (shift != 0)
+            return F(i).set(index + offset, element);
+        Object previous = data[i];
+        data[i] = element;
+        return previous;
     }
 
     /** Shifts the specified elements(]last - length, last] modulo capacity) 
@@ -184,6 +133,64 @@ final class FractalTableImpl implements Serializable {
         }
     }
 
+    /** Shifts the specified element ([first, first + length[ modulo capacity) 
+     one position to the right. No shift if length (modulo capacity) is zero. */
+    public void shiftRight(Object inserted, int first, int length) {
+        int mask = (data.length << shift) - 1;
+        int head = (first + offset) & mask;
+        int tail = (first + offset + length) & mask;
+        if (shift == 0) {
+            int n = tail - head;
+            if (head > tail) { // Wrapping
+                System.arraycopy(data, 0, data, 1, tail);
+                data[0] = data[mask];
+                n = mask - head;
+            }
+            System.arraycopy(data, head, data, head + 1, n);
+            data[head] = inserted;
+        } else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift local to inner table.
+            F(head >> shift).shiftRight(inserted, head, length); // (no wrapping).
+        } else {
+            int high = tail >> shift;
+            int low = (high != 0) ? high - 1 : data.length - 1;
+            F(high).shiftRight(F(low).get(-1), 0, tail);
+            while (low != (head >> shift)) {
+                high = low;
+                low = (high != 0) ? high - 1 : data.length - 1;
+                F(high).offset--; // Full shift right.
+                F(high).set(0, F(low).get(-1));
+            }
+            F(low).shiftRight(inserted, head, mask - head);
+        }
+    }
+
+    public FractalTableImpl upsize() {
+        offset &= (data.length << shift) - 1; // Makes it positive.
+        if (data.length >= BASE_CAPACITY_MAX) {
+            FractalTableImpl table = new FractalTableImpl(shift + SHIFT);
+            table.offset = offset;
+            this.offset = 0;
+            table.data[0] = this;
+            table.data[1] = this.extract(0, table.offset);
+            return table;
+        }
+        Object[] tmp = new Object[data.length << 1];
+        int i = (offset >> shift);
+        System.arraycopy(data, i, tmp, i, data.length - i);
+        System.arraycopy(data, 0, tmp, data.length, i);
+        if (shift > 0)
+            tmp[data.length + i] = F(i).extract(0, offset);
+        data = tmp;
+        return this;
+    }
+
+    private FractalTableImpl allocate(int i) {
+        FractalTableImpl fractal = new FractalTableImpl(shift - SHIFT,
+                new Object[1 << SHIFT], 0);
+        data[i] = fractal;
+        return fractal;
+    }
+
     /** Extracts the specified elements if any.
      Nothing extracted if length (modulo capacity) is zero.*/
     private FractalTableImpl extract(int first, int length) {
@@ -209,7 +216,7 @@ final class FractalTableImpl implements Serializable {
             }
         } else { // Head and tail in the same inner table.
             if (head > tail) { // Wrapping.
-                switchData(this, result);
+                switchWith(result);
                 data[hh] = result.F(hh).extract(tail, head - tail);
             } else if (shift != 0) {
                 result.data[hh] = F(hh).extract(head, tail - head);
@@ -223,16 +230,9 @@ final class FractalTableImpl implements Serializable {
         return (table != null) ? table : allocate(i);
     }
 
-    private FractalTableImpl allocate(int i) {
-        FractalTableImpl fractal = new FractalTableImpl(shift - SHIFT,
-                new Object[1 << SHIFT], 0);
-        data[i] = fractal;
-        return fractal;
-    }
-
-    private static void switchData(FractalTableImpl left, FractalTableImpl right) {
-        Object[] tmp = left.data;
-        left.data = right.data;
-        right.data = tmp;
+    private void switchWith(FractalTableImpl that) {
+        Object[] tmp = this.data;
+        this.data = that.data;
+        that.data = tmp;
     }
 }

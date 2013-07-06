@@ -12,8 +12,7 @@ import java.io.Serializable;
 import java.util.Map.Entry;
 
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.util.FastMap;
-import javolution.util.function.EqualityComparator;
+import javolution.internal.util.set.UnmodifiableSetImpl;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 import javolution.util.service.SetService;
@@ -33,73 +32,60 @@ public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
 
     @Override
     public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
-    }
+        target.atomic(action);    }
 
     @Override
     public boolean containsKey(K key) {
-        // TODO Auto-generated method stub
-        return false;
+        return target.containsKey(key);
     }
 
     @Override
     public SetService<Entry<K, V>> entrySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new UnmodifiableSetImpl<Entry<K, V>>(target.entrySet());
     }
 
     @Override
     public V get(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        return target.get(key);
     }
 
     @Override
     public SetService<K> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new UnmodifiableSetImpl<K>(target.keySet());
     }
 
     @Override
     public V put(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public V putIfAbsent(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public V remove(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public boolean remove(K key, V value) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public V replace(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public CollectionService<V> values() {
-        // TODO Auto-generated method stub
-        return null;
+        return new UnmodifiableCollectionImpl<V>(target.values());
     }
 }

@@ -9,6 +9,7 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
@@ -38,11 +39,6 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
     }
 
     @Override
-    public void atomic(Runnable action) {
-        target.atomic(action);
-    }
-
-    @Override
     public EqualityComparator<? super E> comparator() {
         return comparator;
     }
@@ -51,6 +47,11 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
     public void forEach(Consumer<? super E> consumer,
             IterationController controller) {
         target.forEach(consumer, controller);
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
     }
 
     @Override
@@ -64,11 +65,6 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
         return target.removeIf(filter, controller);
     }
 
-    @Override
-    protected CollectionService<E> service() {
-        return this;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public ComparatorCollectionImpl<E>[] trySplit(int n) {
@@ -78,6 +74,11 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
             result[i] = new ComparatorCollectionImpl<E>(tmp[i], comparator);
         }
         return result;
+    }
+
+    @Override
+    protected CollectionService<E> service() {
+        return this;
     }
 
 }

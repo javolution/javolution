@@ -11,6 +11,7 @@ package javolution.internal.util.table;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.lang.MathLib;
 import javolution.util.function.Consumer;
@@ -27,11 +28,32 @@ import javolution.util.service.TableService;
 public final class FastTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final EqualityComparator<? super E> comparator;
-    private FractalTableImpl fractal; // Null if empty (capacity 0)
-    private int size;
+
+    @SuppressWarnings("unchecked")
+    static <E> TableService<E>[] splitOf(TableService<E> table, int n) {
+        int size = table.size();
+        if (n <= 0)
+            throw new IllegalArgumentException("Invalid argument n: " + n);
+        int length = MathLib.min(n, size);
+        if (length < 2)
+            return new TableService[] { table }; // No split.
+        TableService<E>[] subTables = new TableService[length];
+        int div = size / length;
+        int start = 0;
+        for (int i = 0; i < length - 1; i++) {
+            subTables[i] = new SubTableImpl<E>(table, start, start + div);
+            start += div;
+        }
+        subTables[length - 1] = new SubTableImpl<E>(table, start, size - start);
+        return subTables;
+    }
+    
     private int capacity; // Actual memory allocated is usually far less than
                           // capacity since inner fractal tables can be null.
+    private final EqualityComparator<? super E> comparator;
+    private FractalTableImpl fractal; // Null if empty (capacity 0)
+
+    private int size;
 
     public FastTableImpl(EqualityComparator<? super E> comparator) {
         this.comparator = comparator;
@@ -75,11 +97,6 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     public void addLast(E element) {
         checkUpsize();
         fractal.set(size++, element);
-    }
-
-    @Override
-    public void atomic(Runnable action) {
-        action.run();
     }
 
     @Override
@@ -133,6 +150,11 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
         if (size == 0)
             emptyError();
         return get(size - 1);
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return null;
     }
 
     @Override
@@ -247,29 +269,6 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     public TableService<E>[] trySplit(int n) {
         return splitOf(this, n);
     }
-
-    @SuppressWarnings("unchecked")
-    static <E> TableService<E>[] splitOf(TableService<E> table, int n) {
-        int size = table.size();
-        if (n <= 0)
-            throw new IllegalArgumentException("Invalid argument n: " + n);
-        int length = MathLib.min(n, size);
-        if (length < 2)
-            return new TableService[] { table }; // No split.
-        TableService<E>[] subTables = new TableService[length];
-        int div = size / length;
-        int start = 0;
-        for (int i = 0; i < length - 1; i++) {
-            subTables[i] = new SubTableImpl<E>(table, start, start + div);
-            start += div;
-        }
-        subTables[length - 1] = new SubTableImpl<E>(table, start, size - start);
-        return subTables;
-    }
-
-    /***************************************************************************
-     * Private utility methods.    
-     */
 
     private void checkDownsize() {
         if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN)

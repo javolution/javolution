@@ -9,7 +9,9 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.FilteredIteratorImpl;
 import javolution.util.FastCollection;
 import javolution.util.FastSet;
 import javolution.util.function.Consumer;
@@ -37,11 +39,6 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
-    public void atomic(Runnable action) {
-        target.atomic(action);
-    }
-
-    @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
@@ -60,6 +57,11 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E>
             }
         }, controller);
 
+    }
+    
+    @Override
+    public ReadWriteLock getLock() {
+        return target.getLock();
     }
 
     @Override

@@ -10,6 +10,7 @@ package javolution.internal.util.set;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
 import javolution.util.function.Consumer;
@@ -37,7 +38,7 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
-    public void atomic(Runnable action) {
+    public void clear() {
         // TODO Auto-generated method stub
 
     }
@@ -49,6 +50,12 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
+    public boolean contains(E e) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
     public void forEach(
             Consumer<? super E> consumer,
             javolution.util.service.CollectionService.IterationController controller) {
@@ -57,9 +64,21 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
+    public ReadWriteLock getLock() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public Iterator<E> iterator() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public boolean remove(E e) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
@@ -71,33 +90,15 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void clear() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public boolean contains(E e) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean remove(E e) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
     public int size() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    @Override
+    public CollectionService<E>[] trySplit(int n) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

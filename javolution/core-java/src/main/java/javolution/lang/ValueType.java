@@ -9,9 +9,8 @@
 package javolution.lang;
 
 /**
- * <p> This interface identifies objects which can be manipulated by 
- *     value; a JVM implementation may allocate instances of this class 
- *     on the stack and pass references by copy.</p>
+ * <p> An object which can be manipulated by value; a JVM implementation may 
+ *     allocate instances of this class on the stack and pass them around by copy.</p>
  *     
  * <p> {@link ValueType} instances are both {@link Immutable} and 
  *     {@link Copyable} to be easily exported out of the stack when 
