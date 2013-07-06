@@ -15,11 +15,10 @@ import java.io.Serializable;
  * It is based on a fractal structure with self-similar patterns at any scale
  * (maps holding submaps). At each depth only a part of the hashcode is used
  * starting by the last bits. 
- * entries is removed.
  */
 final class FractalMapImpl implements Serializable {
 
-    static final int SHIFT = 10;
+    static final int SHIFT = 10; // Number of hashcode bits per depth. 
     static final int EMPTINESS_LEVEL = 2; // Can be 1 (load factor 0.5), 2 (load factor 0.25) or any greater value.
     static final int INITIAL_BLOCK_CAPACITY = 2 << EMPTINESS_LEVEL;
     static final int MAX_BLOCK_CAPACITY = 1 << SHIFT;
@@ -41,16 +40,13 @@ final class FractalMapImpl implements Serializable {
         count = 0;
     }
 
-    public boolean containsKey(Object key, int hash) {
-        return entries[indexOfKey(key, hash)] != null;
+    /** Returns null if no entry with specified key */
+    public EntryImpl getEntry(Object key, int hash) {
+        return entries[indexOfKey(key, hash)];
     }
 
-    public Object get(Object key, int hash) {
-        EntryImpl entry = entries[indexOfKey(key, hash)];
-        return (entry != null) ? entry.value : null;
-    }
-
-    // Returns the index of the specified key in the map (points to a null key if key not present).
+    /** Returns the index of the specified key in the map 
+       (points to a null key if key not present). */
     private int indexOfKey(Object key, int hash) {
         int mask = entries.length - 1;
         int i = (hash >> shift) & mask;
@@ -64,24 +60,22 @@ final class FractalMapImpl implements Serializable {
         }
     }
 
-    public Object put(Object key, Object value, int hash) {
+    /** Adds the specified entry if not already present; returns the 
+     *  either the specified entry or an existing entry for the specified key. **/
+    public EntryImpl addEntry(EntryImpl newEntry, Object key, int hash) {
         int i = indexOfKey(key, hash);
         EntryImpl entry = entries[i];
-        if (entry != null) { // Entry exists.
-            Object oldValue = entry.value;
-            entry.value = value;
-
-            return oldValue;
-        }
-        entries[i] = new EntryImpl(key, value, hash);
+        if (entry != null) return entry; // Entry exists
+        entries[i] = newEntry;
         // Check if we need to resize.
         if ((++count << EMPTINESS_LEVEL) > entries.length) {
-            resize(entries.length << 1); // TODO: Use submaps if max capacity reached.
+            resize(entries.length << 1); 
         }
-        return null;
+        return null;        
     }
-
-    public Object remove(Object key, int hash) {
+    
+    /** Returns the entry removed or null if none. */
+    public EntryImpl removeEntry(Object key, int hash) {
         int i = indexOfKey(key, hash);
         EntryImpl oldEntry = entries[i];
         if (oldEntry == null)
@@ -105,11 +99,12 @@ final class FractalMapImpl implements Serializable {
                 && (entries.length > INITIAL_BLOCK_CAPACITY)) {
             resize(entries.length >> 1);
         }
-        return oldEntry.value;
+        return oldEntry;
     }
 
     // The capacity is a power of two such as: 
     //    (count * 2**EMPTINESS_LEVEL) <=  capacity < (count * 2**(EMPTINESS_LEVEL+1))
+    // TODO: Use submaps if max capacity reached.
     private void resize(int newCapacity) {
         EntryImpl[] newEntries = new EntryImpl[newCapacity];
         int newMask = newEntries.length - 1;

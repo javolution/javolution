@@ -12,10 +12,12 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.ReadWriteLockImpl;
+import javolution.internal.util.SharedIteratorImpl;
+import javolution.internal.util.collection.SharedCollectionImpl;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
@@ -24,79 +26,108 @@ import javolution.util.service.SetService;
 public class SharedSetImpl<E> implements SetService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
+    private final ReadWriteLockImpl rwLock;
     private final SetService<E> target;
 
     public SharedSetImpl(SetService<E> target) {
+        this(target,new ReadWriteLockImpl());
+    }
+
+    public SharedSetImpl(SetService<E> target, ReadWriteLockImpl rwLock) {
         this.target = target;
+        this.rwLock = rwLock;
     }
 
     @Override
     public boolean add(E element) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.writeLock().lock();
+        try {
+            return target.add(element);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        rwLock.writeLock().lock();
+        try {
+            target.clear();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return target.comparator();
     }
 
     @Override
     public boolean contains(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.readLock().lock();
+        try {
+            return target.contains(e);
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
     public void forEach(
-            Consumer<? super E> consumer,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-
+            Consumer<? super E> consumer, IterationController controller) {
+        rwLock.readLock().lock();
+        try {
+            target.forEach(consumer, controller);
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
     public ReadWriteLock getLock() {
-        // TODO Auto-generated method stub
-        return null;
+        return rwLock;
     }
 
+    @Deprecated
     @Override
     public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new SharedIteratorImpl<E>(target.iterator(), rwLock);
     }
 
     @Override
     public boolean remove(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.writeLock().lock();
+        try {
+            return target.remove(e);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean removeIf(
-            Predicate<? super E> filter,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
+            Predicate<? super E> filter, IterationController controller) {
+        rwLock.writeLock().lock();
+        try {
+            return target.removeIf(filter, controller);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        rwLock.readLock().lock();
+        try {
+            return target.size();
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
+    public SharedCollectionImpl<E>[] trySplit(int n) {
+        return SharedCollectionImpl.splitOf(target, n, rwLock);
     }
 }

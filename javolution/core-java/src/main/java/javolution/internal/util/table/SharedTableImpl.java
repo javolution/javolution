@@ -10,9 +10,7 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javolution.internal.util.ReadWriteLockImpl;
 import javolution.internal.util.SharedIteratorImpl;
@@ -31,9 +29,13 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
     private final ReadWriteLockImpl rwLock;
     private final TableService<E> target;
 
-    public SharedTableImpl(TableService<E> that) {
-        this.target = that;
-        this.rwLock = new ReadWriteLockImpl();
+    public SharedTableImpl(TableService<E> target) {
+        this(target, new ReadWriteLockImpl());
+    }
+
+    public SharedTableImpl(TableService<E> target, ReadWriteLockImpl rwLock) {
+        this.target = target;
+        this.rwLock = rwLock;
     }
 
     @Override
@@ -88,12 +90,7 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        rwLock.readLock().lock();
-        try {
-            return target.comparator();
-        } finally {
-            rwLock.readLock().unlock();
-        }
+        return target.comparator();
     }
 
     @Override

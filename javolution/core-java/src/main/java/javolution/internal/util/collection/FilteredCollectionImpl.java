@@ -28,6 +28,20 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E>
     private final Predicate<? super E> filter;
     private final CollectionService<E> target;
 
+    /**
+     * Splits the specified collection into filtered sub-collections.
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> FilteredCollectionImpl<E>[] splitOf(
+            CollectionService<E> target, int n, Predicate<? super E> filter) {
+        CollectionService<E>[] tmp = target.trySplit(n);
+        FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter);
+        }
+        return filtereds;
+    }
+
     public FilteredCollectionImpl(CollectionService<E> target,
             Predicate<? super E> filter) {
         this.target = target;
@@ -86,15 +100,8 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E>
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public FilteredCollectionImpl<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter);
-        }
-        return filtereds;
+        return splitOf(target, n, filter);
     }
-
 }

@@ -34,11 +34,11 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
      */
     @SuppressWarnings("unchecked")
     public static <E> SharedCollectionImpl<E>[] splitOf(
-            CollectionService<E> that, int n, ReadWriteLockImpl rwLock) {
+            CollectionService<E> target, int n, ReadWriteLockImpl rwLock) {
         CollectionService<E>[] tmp;
         rwLock.readLock().lock();
         try {
-            tmp = that.trySplit(n);
+            tmp = target.trySplit(n);
         } finally {
             rwLock.readLock().unlock();
         }

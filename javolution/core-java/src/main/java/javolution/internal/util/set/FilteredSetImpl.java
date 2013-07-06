@@ -10,12 +10,14 @@ package javolution.internal.util.set;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.FilteredIteratorImpl;
+import javolution.internal.util.collection.FilteredCollectionImpl;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
@@ -34,71 +36,81 @@ public class FilteredSetImpl<E> implements SetService<E>, Serializable {
 
     @Override
     public boolean add(E element) {
-        // TODO Auto-generated method stub
-        return false;
+        if (!filter.test(element)) return false;
+        return target.add(element);
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        target.removeIf(filter, IterationController.STANDARD);
     }
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return target.comparator();
     }
 
     @Override
     public boolean contains(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        if (!filter.test(e)) return false;
+        return target.contains(e);
     }
 
     @Override
     public void forEach(
-            Consumer<? super E> consumer,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
+            final Consumer<? super E> consumer, IterationController controller) {
+        target.forEach(new Consumer<E>() {
 
+            @Override
+            public void accept(E param) {
+                if (filter.test(param)) {
+                     consumer.accept(param);  
+                }
+            }}, controller);
     }
 
     @Override
     public ReadWriteLock getLock() {
-        // TODO Auto-generated method stub
-        return null;
+        return target.getLock();
     }
 
     @Override
     public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new FilteredIteratorImpl<E>(target.iterator(), filter);
     }
 
     @Override
     public boolean remove(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        if (!filter.test(e)) return false;
+        return target.remove(e);
     }
 
     @Override
     public boolean removeIf(
-            Predicate<? super E> filter,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
+            final Predicate<? super E> aFilter, IterationController controller) {
+        return target.removeIf(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+                return filter.test(param) && aFilter.test(param);
+            }}, controller);
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        final AtomicInteger count = new AtomicInteger();
+        this.forEach(new Consumer<E>() {
+
+            @Override
+            public void accept(E param) {
+                count.incrementAndGet();
+            }}, IterationController.STANDARD);
+        
+        return count.get();
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
+    public FilteredCollectionImpl<E>[] trySplit(int n) {
+        return FilteredCollectionImpl.splitOf(target, n, filter);
     }
 }

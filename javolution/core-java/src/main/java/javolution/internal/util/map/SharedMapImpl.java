@@ -10,9 +10,11 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.ReadWriteLockImpl;
+import javolution.internal.util.collection.SharedCollectionImpl;
+import javolution.internal.util.set.SharedSetImpl;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 import javolution.util.service.SetService;
@@ -24,86 +26,135 @@ public final class SharedMapImpl<K, V> implements MapService<K, V>,
         Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final Lock read;
+    private final ReadWriteLockImpl rwLock;
     private final MapService<K, V> target;
-    private final Lock write;
 
     public SharedMapImpl(MapService<K, V> target) {
+        this(target, new ReadWriteLockImpl());
+    }
+
+    public SharedMapImpl(MapService<K, V> target, ReadWriteLockImpl rwLock) {
         this.target = target;
-        ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-        this.read = readWriteLock.readLock();
-        this.write = readWriteLock.writeLock();
+        this.rwLock = rwLock;
     }
 
     @Override
-    public void atomic(Runnable action) {
-        // TODO Auto-generated method stub
-
+    public void clear() {
+        rwLock.writeLock().lock();
+        try {
+            target.clear();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean containsKey(K key) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.readLock().lock();
+        try {
+            return target.containsKey(key);
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
     public SetService<Entry<K, V>> entrySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new SharedSetImpl<Entry<K, V>>(target.entrySet(), rwLock);
     }
 
     @Override
     public V get(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        rwLock.readLock().lock();
+        try {
+            return target.get(key);
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
     public SetService<K> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return new SharedSetImpl<K>(target.keySet(), rwLock);
     }
 
     @Override
     public V put(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        rwLock.writeLock().lock();
+        try {
+            return target.put(key, value);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public V putIfAbsent(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        rwLock.writeLock().lock();
+        try {
+            return target.putIfAbsent(key, value);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public V remove(K key) {
-        // TODO Auto-generated method stub
-        return null;
+        rwLock.writeLock().lock();
+        try {
+            return target.remove(key);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean remove(K key, V value) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.writeLock().lock();
+        try {
+            return target.remove(key, value);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public V replace(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
+        rwLock.writeLock().lock();
+        try {
+            return target.replace(key, value);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        // TODO Auto-generated method stub
-        return false;
+        rwLock.writeLock().lock();
+        try {
+            return target.replace(key, oldValue, newValue);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
     public CollectionService<V> values() {
-        // TODO Auto-generated method stub
-        return null;
+        return new SharedCollectionImpl<V>(target.values(), rwLock);
+    }
+
+    @Override
+    public ReadWriteLock getLock() {
+        return rwLock;
+    }
+
+    @Override
+    public int size() {
+        rwLock.readLock().lock();
+        try {
+            return target.size();
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 }

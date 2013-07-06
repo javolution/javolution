@@ -12,11 +12,11 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
@@ -33,72 +33,57 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
 
     @Override
     public boolean add(E element) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public EqualityComparator<? super E> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return target.comparator();
     }
 
     @Override
     public boolean contains(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        return target.contains(e);
     }
 
     @Override
-    public void forEach(
-            Consumer<? super E> consumer,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-
+    public void forEach(Consumer<? super E> consumer, IterationController controller) {
+        target.forEach(consumer, controller);
     }
 
     @Override
     public ReadWriteLock getLock() {
-        // TODO Auto-generated method stub
-        return null;
+        return target.getLock();
     }
 
     @Override
     public Iterator<E> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new UnmodifiableIteratorImpl<E>(target.iterator());
     }
 
     @Override
     public boolean remove(E e) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public boolean removeIf(
-            Predicate<? super E> filter,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean removeIf(Predicate<? super E> filter, IterationController controller) {
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        return target.size();
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
+    public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
+        return UnmodifiableCollectionImpl.splitOf(this, n);
     }
 
 }

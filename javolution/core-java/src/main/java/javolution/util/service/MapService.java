@@ -9,6 +9,7 @@
 package javolution.util.service;
 
 import java.util.Map.Entry;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * The set of related map functionalities which can be used/reused to implement 
@@ -20,14 +21,10 @@ import java.util.Map.Entry;
  */
 public interface MapService<K, V> {
 
-    /** 
-     * Executes the specified action on this map in an atomic manner as 
-     * far as readers of this collection's are concerned (either readers 
-     * see the full result of this action on this collection or nothing).
-     *  
-     * @param action the action to be executed atomically.
+    /**
+     * Removes all of the entries from this map.
      */
-    void atomic(Runnable action);
+    void clear();
 
     /** 
       * Indicates if the map contains the specified key.
@@ -45,6 +42,15 @@ public interface MapService<K, V> {
      * Returns the value associated to the specified key.
      */
     V get(K key);
+
+    /** 
+     * Returns the read-write lock of this map if any; otherwise
+     * returns {@code null}. The implementation must give preference to the 
+     * waiting writer threads over the readers. That means if we have two 
+     * threads waiting to acquire the lock, the one waiting for write lock 
+     * will get the lock first. 
+     */
+    ReadWriteLock getLock();
 
     /** 
     * Returns the set view of this map keys.
@@ -88,6 +94,11 @@ public interface MapService<K, V> {
      * specified value.
      */
     boolean replace(K key, V oldValue, V newValue);
+
+    /**
+     * Returns the number of entries in this map.
+     */
+    int size();
 
     /** 
      * Returns the collection view of this map values.

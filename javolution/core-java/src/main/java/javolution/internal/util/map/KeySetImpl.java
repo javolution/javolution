@@ -10,6 +10,7 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
@@ -31,73 +32,124 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
     }
 
     @Override
-    public boolean add(K element) {
-        // TODO Auto-generated method stub
-        return false;
-    }
+    public boolean add(K key) {
+        int size = map.size();
+        map.put(key, null);
+        return (size != map.size()); 
+     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        map.clear();
     }
 
     @Override
     public EqualityComparator<? super K> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return map.keyComparator;
     }
 
     @Override
-    public boolean contains(K e) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean contains(K key) {
+        return map.containsKey(key);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void forEach(
-            Consumer<? super K> consumer,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
+            Consumer<? super K> consumer, IterationController controller) {
+        if (!controller.doReversed()) {
+            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
+                consumer.accept((K) e.key);
+                if (controller.isTerminated())
+                    break;
+            }
+        } else { // Reversed.
+            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
+                consumer.accept((K) e.key);
+                if (controller.isTerminated())
+                    break;
+            }
+        }
+     }
 
+    @Override
+    public ReadWriteLock getLock() {
+        return map.getLock();
     }
 
     @Override
     public Iterator<K> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new Iterator<K>() {
+            EntryImpl current;
+            EntryImpl next = map.firstEntry;
+
+            @Override
+            public boolean hasNext() {
+                return next != null;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public K next() {
+                current = next;
+                if (current == null) throw new NoSuchElementException();
+                next = current.next;
+                return (K) current.key;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public void remove() {
+                if (current == null)
+                    throw new IllegalStateException();
+                map.remove((K)current.key);
+                current = null;   
+            }
+        };
     }
 
     @Override
-    public boolean remove(K e) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean remove(K key) {
+        int size = map.size();
+        map.remove(key);
+        return size != map.size();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean removeIf(
-            Predicate<? super K> filter,
-            javolution.util.service.CollectionService.IterationController controller) {
-        // TODO Auto-generated method stub
-        return false;
+            Predicate<? super K> filter, IterationController controller) {
+        boolean removed = false;
+        if (!controller.doReversed()) {
+            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
+                 if (filter.test((K) e.key)) {
+                    map.remove((K) e.key);
+                    removed = true;
+                }
+                if (controller.isTerminated())
+                    break;
+            }
+        } else { // Reversed.
+            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
+                if (filter.test((K) e.key)) {
+                    map.remove((K) e.key);
+                    removed = true;
+                }
+                if (controller.isTerminated())
+                    break;
+            }
+        }
+        return removed;
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        return map.size();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public CollectionService<K>[] trySplit(int n) {
-        // TODO Auto-generated method stub
-        return null;
+        return new CollectionService[] { this }; // No splitting.
     }
-
-    @Override
-    public ReadWriteLock getLock() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

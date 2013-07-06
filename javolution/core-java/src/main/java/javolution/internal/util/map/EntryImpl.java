@@ -23,12 +23,6 @@ public final class EntryImpl implements Map.Entry<Object, Object>, Serializable 
     EntryImpl previous;
     Object value;
 
-    EntryImpl(Object key, Object value, int hash) {
-        this.key = key;
-        this.value = value;
-        this.hash = hash;
-    }
-
     @Override
     public Object getKey() {
         return key;

@@ -195,7 +195,7 @@ public class UnmodifiableBitSetImpl implements BitSetService, Serializable {
 
     @Override
     public UnmodifiableCollectionImpl<Index>[] trySplit(int n) {
-        return UnmodifiableCollectionImpl.splitOf(this, n);
+        return UnmodifiableCollectionImpl.splitOf(target, n);
     }
 
     @Override

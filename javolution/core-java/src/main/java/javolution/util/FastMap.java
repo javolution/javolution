@@ -8,13 +8,14 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.*;
+import static javolution.lang.RealTime.Limit.LINEAR;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.map.FastMapImpl;
 import javolution.internal.util.map.SharedMapImpl;
@@ -34,8 +35,10 @@ import javolution.util.service.MapService;
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
- *    <li>{@link #entrySet} - {@link FastSet} view over the map entries.</li>
- *    <li>{@link #keySet} - {@link FastSet} view over the map keys.</li>
+ *    <li>{@link #entrySet} - {@link FastSet} view over the map entries allowing 
+ *                            new entries to be added.</li>
+ *    <li>{@link #keySet} - {@link FastSet} view over the map keys allowing 
+ *                           new keys to be added ({@code null} value).</li>
  *    <li>{@link #values} - {@link FastCollection} view over the map values.</li>
  * </ul>      
  * <p> The iteration order over the fast map keys, values or entries is deterministic 
@@ -113,10 +116,12 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     }
 
     /**
-     * Returns a shared view over this map.
-     * Multiple threads may concurrently modify this map or the map elements
-     * (key, values or entries). The implementation guarantees that concurrent
-     * accesses can always be performed without blocking.
+     * Returns a thread-safe view over this map allowing 
+     * concurrent read without blocking and concurrent write possibly 
+     * blocking. All updates performed on this map are atomic as far as 
+     * this map's readers are concerned. To perform complex actions on a 
+     * shared map in an atomic manner, the {@link #atomicRead atomicRead} /
+     * {@link #atomicWrite atomicWrite} method should be used.
      */
     public FastMap<K, V> shared() {
         return new FastMap<K, V>(new SharedMapImpl<K, V>(service));
@@ -163,7 +168,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
 
     @Override
     public int size() {
-        return service.entrySet().size();
+        return service.size();
     }
 
     @Override
@@ -210,7 +215,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
 
     @Override
     public void clear() {
-        entrySet().clear();
+        service.clear();
     }
 
     /***************************************************************************
@@ -243,18 +248,51 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      */
 
     /** 
-     * Executes the specified action on this map in an atomic manner. As 
-     * far as reader of this map  are concerned, either they see the full
-     * result of the action or nothing. This method is relevant only for
-     * {@link #shared shared} or {@link #parallel parallel} maps.
-     * The framework ensures that only one atomic action can be performed at 
-     * any given time and no concurrent closure-based iteration is possible 
-     * during that time.
+     * Executes the specified read action on this map in an atomic 
+     * manner. Multiple read actions can be performed concurrently.
+     * This method is relevant only for {@link #shared shared} or
+     * {@link #parallel parallel} maps.
+     * The framework ensures that no read action can be performed if a 
+     * write action is in progress or waiting.
      * 
-     * @param action the action to be executed in an atomic manner.
+     * @param read the read action to be executed in an atomic manner.
      */
-    public void atomic(Runnable action) {
-        service().atomic(action);
+    public void atomicRead(Runnable read) {
+        ReadWriteLock rwLock = service().getLock();
+        if (rwLock != null) {
+            rwLock.readLock().lock();
+            try {
+                read.run();
+            } finally {
+                rwLock.readLock().unlock();
+            }
+        } else { // Not shared or parallel.
+            read.run();
+        }
+    }
+
+    /** 
+     * Executes the specified write action on this map in an atomic 
+     * manner. As far as readers of this map are concerned, either they
+     * see the full result of the action or nothing. This method is relevant 
+     * only for {@link #shared shared} or {@link #parallel parallel} maps.
+     * The framework ensures that only one write action can be performed at 
+     * a time and write action have precedence over read actions.
+     * 
+     * @param write the write action to be executed in an atomic manner.
+     */
+    public void atomicWrite(Runnable write) {
+        ReadWriteLock rwLock = service().getLock();
+        if (rwLock != null) {
+            rwLock.writeLock().lock();
+            try {
+                write.run();
+            } finally {
+                rwLock.writeLock().unlock();
+            }
+        } else { // Not shared or parallel.
+            write.run();
+        }
     }
 
     /** 

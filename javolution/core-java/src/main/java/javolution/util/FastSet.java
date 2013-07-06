@@ -55,7 +55,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * specified comparator for key equality.
     */
     public FastSet(EqualityComparator<? super E> comparator) {
-        service = null; // TODO
+        service = new FastMap<E, Void>().keySet().service();
     }
 
     /**

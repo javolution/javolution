@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -196,7 +195,7 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public CollectionService<E>[] trySplit(int n) {
+    public TableService<E>[] trySplit(int n) {
         return FastTableImpl.splitOf(this, n);
     }
     

@@ -60,7 +60,7 @@ import javolution.util.service.CollectionService.IterationController;
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
- *    <li>{@link #parallel} - A {@link #shared shared} view allowing parallel processing (closure-based).</li>
+ *    <li>{@link #parallel} - {@link #shared Shared} view allowing parallel processing (closure-based).</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  *    <li>{@link #filtered} - View exposing the elements matching the specified filter.</li>
  *    <li>{@link #mapped} - View exposing elements through the specified mapping function.</li>
@@ -178,16 +178,37 @@ public abstract class FastCollection<E> implements Collection<E>,
     /**
      * Returns a thread-safe view over this collection allowing 
      * concurrent read without blocking and concurrent write possibly 
-     * blocking. All updates performed by the specified action on this 
-     * collection are atomic as far as this collection's readers are concerned.
-     * To perform complex actions on a shared collection in an atomic manner, 
-     * the {@link #atomic atomic} method should be used (on the shared view
-     * or on any view derived from the shared view).
-     * 
-     *  @see #atomicWrite(Runnable)
+     * blocking. All updates performed on this collection are atomic as far as
+     *  this collection's readers are concerned. To perform complex actions on
+     * a shared collection in an atomic manner, the {@link #atomicRead 
+     * atomicRead} / {@link #atomicWrite atomicWrite} method should be used.
      */
     public FastCollection<E> shared() {
         return new SharedCollectionImpl<E>(service());
+    }
+
+    /** 
+     * Returns a parallel/{@link #shared() shared} view of this collection. 
+     * Using this view, closure-based iteration can be performed concurrently. 
+     * The default implementation is based upon 
+     * {@link javolution.context.ConcurrentContext ConcurrentContext}.
+     * 
+     * <p> Note: Some view may prevent parallel processing over their 
+     *           collection target. It is therefore preferable for 
+     *           parallel views to be the last view before processing. 
+     *           For example {@code collection.unmodifiable().parallel()}
+     *           is preferred to {@code collection.parallel().unmodifiable()}.</p>
+     */
+    public FastCollection<E> parallel() {
+        return new ParallelCollectionImpl<E>(service());
+    }
+
+    /** 
+     * Returns a sequential view of this collection. Using this view, 
+     * all closure-based iterations are performed in sequence.
+     */
+    public FastCollection<E> sequential() {
+        return new SequentialCollectionImpl<E>(service());
     }
 
     /** 
@@ -250,30 +271,6 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     public FastCollection<E> distinct() {
         return new DistinctCollectionImpl<E>(service());
-    }
-
-    /** 
-     * Returns a parallel/{@link #shared() shared} view of this collection. 
-     * Using this view, closure-based iteration can be performed concurrently. 
-     * The default implementation is based upon 
-     * {@link javolution.context.ConcurrentContext ConcurrentContext}.
-     * 
-     * <p> Note: Some view may prevent parallel processing over their 
-     *           collection target. It is therefore preferable for 
-     *           parallel views to be the last view before processing. 
-     *           For example {@code collection.unmodifiable().parallel()}
-     *           is preferred to {@code collection.parallel().unmodifiable()}.</p>
-     */
-    public FastCollection<E> parallel() {
-        return new ParallelCollectionImpl<E>(service());
-    }
-
-    /** 
-     * Returns a sequential view of this collection. Using this view, 
-     * all closure-based iterations are performed in sequence.
-     */
-    public FastCollection<E> sequential() {
-        return new SequentialCollectionImpl<E>(service());
     }
 
     /***************************************************************************
@@ -528,30 +525,6 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /** 
-     * Executes the specified write action on this collection in an atomic 
-     * manner. As far as readers of this collection are concerned, either they
-     * see the full result of the action or nothing. This method is relevant 
-     * only for {@link #shared shared} or {@link #parallel parallel} collections.
-     * The framework ensures that only one write action can be performed at 
-     * a time and write action have precedence over read actions.
-     * 
-     * @param write the write action to be executed in an atomic manner.
-     */
-    public void atomicWrite(Runnable write) {
-        ReadWriteLock rwLock = service().getLock();
-        if (rwLock != null) {
-            rwLock.writeLock().lock();
-            try {
-                write.run();
-            } finally {
-                rwLock.writeLock().unlock();
-            }
-        } else { // Not shared or parallel.
-            write.run();
-        }
-    }
-
-    /** 
      * Executes the specified read action on this collection in an atomic 
      * manner. Multiple read actions can be performed concurrently.
      * This method is relevant only for {@link #shared shared} or
@@ -572,6 +545,30 @@ public abstract class FastCollection<E> implements Collection<E>,
             }
         } else { // Not shared or parallel.
             read.run();
+        }
+    }
+
+    /** 
+     * Executes the specified write action on this collection in an atomic 
+     * manner. As far as readers of this collection are concerned, either they
+     * see the full result of the action or nothing. This method is relevant 
+     * only for {@link #shared shared} or {@link #parallel parallel} collections.
+     * The framework ensures that only one write action can be performed at 
+     * a time and write action have precedence over read actions.
+     * 
+     * @param write the write action to be executed in an atomic manner.
+     */
+    public void atomicWrite(Runnable write) {
+        ReadWriteLock rwLock = service().getLock();
+        if (rwLock != null) {
+            rwLock.writeLock().lock();
+            try {
+                write.run();
+            } finally {
+                rwLock.writeLock().unlock();
+            }
+        } else { // Not shared or parallel.
+            write.run();
         }
     }
 

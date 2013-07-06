@@ -146,6 +146,6 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
 
     @Override
     public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
-        return UnmodifiableCollectionImpl.splitOf(this, n);
+        return UnmodifiableCollectionImpl.splitOf(target, n);
     }
 }

@@ -32,8 +32,8 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
      */
     @SuppressWarnings("unchecked")
     public static <E> UnmodifiableCollectionImpl<E>[] splitOf(
-            CollectionService<E> that, int n) {
-        CollectionService<E>[] tmp = that.trySplit(n);
+            CollectionService<E> target, int n) {
+        CollectionService<E>[] tmp = target.trySplit(n);
         UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
             unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]);
@@ -84,7 +84,7 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
 
     @Override
     public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
-        return UnmodifiableCollectionImpl.splitOf(this, n);
+        return UnmodifiableCollectionImpl.splitOf(target, n);
     }
 
 }
