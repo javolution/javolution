@@ -37,21 +37,21 @@ import javolution.util.service.TableService;
 
 /**
  * <p> A high-performance table (fractal-based) with {@link RealTime real-time} 
- *     behavior (insertion/deletion in <i><b>O(Log(size))</b></i>; smooth capacity 
- *     increase/decrease and minimal memory footprint.</p>
+ *     behavior; smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
- * <p> The fractal-based implementation ensures that basic operations 
- *     <b>worst</b> execution time is always in <i><b>O(log(size))</b></i> even 
- *     for arbitrary insertions or deletions. The capacity of a fast table 
+ * <p> The fractal-based implementation ensures that add/insertion/deletion operations 
+ *     <b>worst</b> execution time is always in <i><b>O(log(size))</b></i> (for  
+ *     comparison {@code ArrayList.add} is in  <i><b>O(size)</b></i> due to resize).
+ *     The capacity of a fast table 
  *     is automatically adjusted to best fit its size (e.g. when a table is cleared
  *     its memory footprint is minimal).</p>
  *
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance.
- *     {@code null} elements are supported and fast tables can be concurrently iterated or 
- *     modified using their {@link #shared() shared} views. {@link FastTable} inherits all the fast collection
- *     views and support the {@link #subList subList} view over a portion of the table.</p>
+ *     Fast tables can be concurrently iterated / modified through their {@link #shared() shared} 
+ *     views. They inherit all the fast collection
+ *     views and support the new {@link #subList subList} view over a portion of the table.</p>
  * [code]
  * FastTable<String> names = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil");
  * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).

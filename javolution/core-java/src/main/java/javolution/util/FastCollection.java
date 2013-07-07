@@ -68,11 +68,11 @@ import javolution.util.service.CollectionService.IterationController;
  *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
- * </ul>
- * Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
- * reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
- * guarantees that the collection source cannot be modified even by himself 
- * (the value of the immutable reference is an {@link #unmodifiable unmodifiable} collection).</p>
+ * </ul></p>
+ * <p> Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
+ *     reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
+ *     guarantees that the collection source cannot be modified even by himself 
+ *     (the value of the immutable reference is an {@link #unmodifiable unmodifiable} collection).</p>
  * <p>[code]
  * Immutable<List<String>> winners 
  *     = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil").toImmutable();
@@ -116,7 +116,7 @@ import javolution.util.service.CollectionService.IterationController;
  * });
  *    
  * // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
- * Method matching = new FastTable<Method>(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ * Method matching = new FastTable<Method>().addAll(enclosingInfo.getEnclosingClass().getDeclaredMethods())
  *     .filtered(m -> Comparators.STANDARD.areEqual(m.getName(), enclosingInfo.getName())
  *     .filtered(m -> Comparators.ARRAY.areEqual(m.getParameterTypes(), parameterClasses))
  *     .filtered(m -> Comparators.STANDARD.areEqual(m.getReturnType(), returnType))

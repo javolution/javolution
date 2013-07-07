@@ -25,10 +25,11 @@ import javolution.lang.Permission;
  * [code]
  * SecurityContext ctx = SecurityContext.enter(); 
  * try {
- *     ctx.revoke(Configurable.CONFIGURE_PERMISSION, adminCertificate);
- *     ctx.grant(ConcurrentContext.CONCURRENCY.getOverridePermission(), adminCertificate);
+ *     ctx.revoke(Configurable.RECONFIGURE_PERMISSION);
+ *     ctx.grant(ConcurrentContext.CONCURRENCY.getReconfigurePermission());
  *     ...
- *     ConcurrentContext.CONCURRENCY.configure("0"); // Ok (specific permission).
+ *     // Disables concurrency (global) 
+ *     ConcurrentContext.CONCURRENCY.reconfigure(0); // Ok (permission specifically granted).
  *     ...
  *  } finally {
  *     ctx.exit(); // Back to previous security settings. 
