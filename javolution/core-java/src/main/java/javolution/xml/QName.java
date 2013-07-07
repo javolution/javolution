@@ -211,8 +211,8 @@ public final class QName implements XMLSerializable, Immutable<QName>, CharSeque
      * @return the character sequence starting at the specified
      *         <code>start</code> position and ending just before the specified
      *         <code>end</code> position.
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-     *         (start > end) || (end > this.length())</code>
+     * @throws IndexOutOfBoundsException if {@code (start < 0) || (end < 0) ||
+     *         (start > end) || (end > this.length())}
      */
     public CharSequence subSequence(int start, int end) {
         return _toString.substring(start, end);
