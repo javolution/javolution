@@ -71,7 +71,7 @@ final class FractalMapImpl implements Serializable {
         if ((++count << EMPTINESS_LEVEL) > entries.length) {
             resize(entries.length << 1); 
         }
-        return null;        
+        return newEntry;        
     }
     
     /** Returns the entry removed or null if none. */
