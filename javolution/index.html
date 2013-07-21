@@ -198,11 +198,13 @@
                                          comparable to standard structures for small sizes, but significantly 
                                          improved for larger size (e.g. <A HREF="docs/api/javolution/util/FastTable.html">FastTable</A> 
                                          random insertion/deletion in <i>O(Log(n))</i>).</LI>
+                                    <LI> Most <A HREF="docs/api/javolution/lang/Parallelizable.html">parallelizable</A> classes (including 
+                                         collections) are either mutex-free or using extremely short locking time in order not to impact 
+                                         the worst case execution time of high priority threads (works well only if the VM 
+                                         supports priority inheritance).</LI>
                                     <LI> <A HREF="docs/api/javolution/context/package-summary.html#package_description">Context</A> programming
                                         in order to achieve true separation of concerns (logging, performance, etc).</LI>
-                                    <LI> A <A HREF="docs/api/javolution/testing/package-summary.html#package_description">testing</A> framework
-                                        addressing not only unit tests but also performance and regression tests as well.</LI>
-                                    <LI> Straightforward and low-level parallel computing capabilities
+                                     <LI> Straightforward and low-level parallel computing capabilities
                                         with <A HREF="docs/api/javolution/context/ConcurrentContext.html">ConcurrentContext</A>.</LI>
                                     <LI> <A HREF="docs/api/javolution/io/Struct.html">Struct</A> and
                                         <A HREF="docs/api/javolution/io/Union.html">Union</A> base classes for
@@ -303,8 +305,7 @@
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B>'s real-time collection classes
                                         (<A HREF="docs/api/javolution/util/FastMap.html">map</A>,
-                                        <A HREF="docs/api/javolution/util/FastList.html">list</A>,
-                                        <A HREF="docs/api/javolution/util/FastTable.html">table</A> and
+                                         <A HREF="docs/api/javolution/util/FastTable.html">table</A> and
                                         <A HREF="docs/api/javolution/util/FastSet.html">set</A>)
                                         can be used in place of most standard collection classes and provide
                                         numerous additional <A HREF="docs/api/javolution/util/package-summary.html#package_description">capabilities</A>.<BR> </LI>
@@ -320,7 +321,7 @@
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body">Most <B><I>Javolution</I></B> classes are <B>stateless</B> (state passed through parameters to methods or 
                                          available through <A HREF="docs/api/javolution/context/package-summary.html#package_description">context</A> classes).
-                                        There is no static instance, orchestration classes (the high level classes holding the state) are typically created on-demand and <A HREF="docs/api/javolution/lang/Recyclable.html">recyclable</A>.
+                                        There is no static instance, orchestration classes (the high level classes holding the state) are typically created on-demand. 
                                         This design approach makes Javolution and any product based on Javolution highly parrallelizable with no need for synchronization.
                                         <BR> </LI>
                                     <LI CLASS="simplespacer_body"><B><I>Javolution</I></B> can be either a <B>Pure
@@ -338,7 +339,7 @@
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - July 7, 2013</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - July 21, 2013 (stable)</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -741,12 +742,12 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
-                                    <LI CLASS="simplespacer_body"><B>July 7, 2013: Javolution 6.0.0-SNAPSHOT</B><BR>
-                                        Prerelease (official v6.0 on July 14), includes fractal collections (e.g.FastTable),
-                                        closures support, collections extended views, immutability support, etc. 
-                                    </LI>
-                                    <LI CLASS="simplespacer_body"><B>September 16, 2012: Javolution 6.0.0-SNAPSHOT</B><BR>
-                                        This release makes it easy for Java developers to translate their Java code to C++ 
+                                    <LI CLASS="simplespacer_body"><B>July 21, 2013: Javolution 6.0.0-SNAPSHOT (stable)</B><BR>
+                                        <P>Stable release, correction of the current issues backlog almost complete.</P>
+                                        <P>Includes fractal classes, closures support, collections extended views, 
+                                        immutability support, real-time/parellelizable 
+                                        collections, etc. </P>
+                                        <P> This release makes it easy for Java developers to translate their Java code to C++ 
                                         or to write Java-Like C++ code without knowledge of the C++ intricacies. 
                                         <UL>
                                             <LI> Your Java-Like C++ code is robust, multi-platforms (Windows/Linux/Solaris) and 
@@ -816,7 +817,7 @@
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : July 7, 2013<BR>
+                                Revision      : July 21, 2013<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
