@@ -10,7 +10,6 @@ package javolution.internal.util.set;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.ReadWriteLockImpl;
 import javolution.internal.util.SharedIteratorImpl;
@@ -84,11 +83,6 @@ public class SharedSetImpl<E> implements SetService<E>, Serializable {
         }
     }
 
-    @Override
-    public ReadWriteLock getLock() {
-        return rwLock;
-    }
-
     @Deprecated
     @Override
     public Iterator<E> iterator() {
@@ -129,5 +123,23 @@ public class SharedSetImpl<E> implements SetService<E>, Serializable {
     @Override
     public SharedCollectionImpl<E>[] trySplit(int n) {
         return SharedCollectionImpl.splitOf(target, n, rwLock);
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        rwLock.writeLock().lock();
+        try {
+            target.atomic(update);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+        
+    protected SetService<E> target() {
+        return target;
+    }
+    
+    protected ReadWriteLockImpl rwLock() {
+        return rwLock;
     }
 }

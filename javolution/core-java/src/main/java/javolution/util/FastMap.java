@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.map.FastMapImpl;
 import javolution.internal.util.map.SharedMapImpl;
@@ -80,19 +79,27 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     private final MapService<K, V> service;
 
     /**
-     * Creates an empty hash map.
+     * Creates an empty fast map.
      */
     public FastMap() {
         this(Comparators.STANDARD);
     }
 
     /**
-     * Creates an empty hash map using the specified comparator for key 
-     * equality only (for sorting the {@link FastSortedMap} subclass should 
-     * be used instead).
+     * Creates an empty fast map using the specified comparator for keys 
+     * equality.
      */
     public FastMap(EqualityComparator<? super K> keyEquality) {
-        service = new FastMapImpl<K, V>(keyEquality);
+        this(keyEquality, Comparators.STANDARD);
+    }
+
+    /**
+     * Creates an empty fast map using the specified comparators for keys 
+     * equality and values equality.
+     */
+    public FastMap(EqualityComparator<? super K> keyEquality, 
+            EqualityComparator<? super V> valueEquality) {
+        service = new FastMapImpl<K, V>(keyEquality, valueEquality);
     }
 
     /**
@@ -248,65 +255,31 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      */
 
     /** 
-     * Executes the specified read action on this map in an atomic 
-     * manner. Multiple read actions can be performed concurrently.
+     * Executes the specified update in an atomic manner.
+     * Either the readers (including closure-based iterations) see the full 
+     * effect of the update or nothing.
      * This method is relevant only for {@link #shared shared} or
      * {@link #parallel parallel} maps.
-     * The framework ensures that no read action can be performed if a 
-     * write action is in progress or waiting.
-     * 
-     * @param read the read action to be executed in an atomic manner.
+     *  
+     * @param update the update action to be executed on this map.
      */
-    public void atomicRead(Runnable read) {
-        ReadWriteLock rwLock = service().getLock();
-        if (rwLock != null) {
-            rwLock.readLock().lock();
-            try {
-                read.run();
-            } finally {
-                rwLock.readLock().unlock();
-            }
-        } else { // Not shared or parallel.
-            read.run();
-        }
-    }
+    @Parallelizable(mutexFree = false, comment = "The map is locked during atomic updates")
+    public void atomic(Runnable update) {
+        service.atomic(update);
+     }
 
     /** 
-     * Executes the specified write action on this map in an atomic 
-     * manner. As far as readers of this map are concerned, either they
-     * see the full result of the action or nothing. This method is relevant 
-     * only for {@link #shared shared} or {@link #parallel parallel} maps.
-     * The framework ensures that only one write action can be performed at 
-     * a time and write action have precedence over read actions.
-     * 
-     * @param write the write action to be executed in an atomic manner.
-     */
-    public void atomicWrite(Runnable write) {
-        ReadWriteLock rwLock = service().getLock();
-        if (rwLock != null) {
-            rwLock.writeLock().lock();
-            try {
-                write.run();
-            } finally {
-                rwLock.writeLock().unlock();
-            }
-        } else { // Not shared or parallel.
-            write.run();
-        }
-    }
-
-    /** 
-     * Returns an immutable reference over this map. The method should only 
-     * be called if this map cannot be modified after the call (for 
-     * example if there is no reference to this map after the call).
+     * Returns an immutable reference over this collection. The method should 
+     * only be called if this collection cannot be modified after this call (for 
+     * example if there is no reference left to this collection).
      */
     public <T extends Map<K,V>> Immutable<T> toImmutable() {
         return new Immutable<T>() {
-
             @SuppressWarnings("unchecked")
+            final T value = (T) unmodifiable();
             @Override
             public T value() {
-                return (T) unmodifiable();
+                return value;
             }
             
         };

@@ -10,7 +10,6 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -21,7 +20,7 @@ import javolution.util.service.TableService;
 /**
  * A reverse view over a table.
  */
-public final class ReversedTableImpl<E> implements TableService<E>,
+public class ReversedTableImpl<E> implements TableService<E>,
         Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
@@ -49,6 +48,12 @@ public final class ReversedTableImpl<E> implements TableService<E>,
     public void addLast(E element) {
         add(size(), element);
     }
+    
+    @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+
     @Override
     public void clear() {
         target.clear();
@@ -94,11 +99,6 @@ public final class ReversedTableImpl<E> implements TableService<E>,
     @Override
     public E getLast() {
         return get(size() - 1);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override

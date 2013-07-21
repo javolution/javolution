@@ -21,19 +21,20 @@ import javolution.lang.Configurable;
  *     The logic is then executed by a concurrent thread or by the current 
  *     thread itself if there is no concurrent thread immediately available 
  *     (the number of concurrent threads is limited, see {@link #CONCURRENCY}).
- *     [code]
- *     ConcurrentContext ctx = ConcurrentContext.enter(); 
- *     try { 
- *         ctx.execute(new Runnable() {...}); 
- *         ctx.execute(new Runnable() {...});  
- *     } finally {
- *         ctx.exit(); // Waits for all concurrent executions to complete.
- *                     // Reexports any exception raised during concurrent executions. 
- *     }
- *    [/code] or equivalent shorter notation:
- *    [code]
- *    ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});
- *    [/code]</p>
+ * [code]
+ * ConcurrentContext ctx = ConcurrentContext.enter(); 
+ * try { 
+ *     ctx.execute(new Runnable() {...}); 
+ *     ctx.execute(new Runnable() {...});  
+ * } finally {
+ *     ctx.exit(); // Waits for all concurrent executions to complete.
+ *                 // Re-exports any exception raised during concurrent executions. 
+ * }
+ * [/code]</p>
+ * <p> or equivalent shorter notation:
+ * [code]
+ * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});
+ * [/code]</p>
  *     
  * <p> Only after all concurrent executions are completed, is the current 
  *     thread allowed to exit the scope of the concurrent context 
@@ -99,11 +100,12 @@ import javolution.lang.Configurable;
  *                }
  *            }
  *        }
- *     }[/code]
- *      Here is another example using {@link #execute(java.lang.Runnable[]) 
- *      execute(Runnable ...)} static method 
- *     (Karatsuba recursive multiplication for large integers).
- *      [code]
+ *     }[/code]</p>
+ *     
+ * <p> Here is another example using {@link #execute(java.lang.Runnable[]) 
+ *     execute(Runnable ...)} static method 
+ *    (Karatsuba recursive multiplication for large integers).
+ * [code]
  *     public LargeInteger multiply(LargeInteger that) {
  *         if (that._size <= 1) {
  *             return multiply(that.longValue()); // Direct multiplication.
@@ -134,19 +136,18 @@ import javolution.lang.Configurable;
  *         public void run() {
  *             result = left.times(right); // Recursive.
  *         }
- *     };
- *    [/code]</p>
+ *     };[/code]</p>
  *          
  * <p> Concurrency can be adjusted or disabled. The maximum concurrency 
  *     is defined by the {@link #CONCURRENCY} local parameter. 
- *    [code]
- *    LocalContext ctx = LocalContext.enter(); 
- *    try { 
- *        ctx.override(ConcurrentContext.CONCURRENCY, 0); // No impact on others threads.
- *        runAnalysis();  // Performs analysis sequentially.
- *    } finally {
- *        ctx.exit(); // Back to previous concurrency settings.  
- *    }[/code]</p>
+ * [code]
+ * LocalContext ctx = LocalContext.enter(); 
+ * try { 
+ *    ctx.override(ConcurrentContext.CONCURRENCY, 0); // No impact on others threads.
+ *    runAnalysis();  // Performs analysis sequentially.
+ * } finally {
+ *    ctx.exit(); // Back to previous concurrency settings.  
+ * }[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012

@@ -10,7 +10,6 @@ package javolution.internal.util.set;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
@@ -57,11 +56,6 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
     }
 
     @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
-    }
-
-    @Override
     public Iterator<E> iterator() {
         return new UnmodifiableIteratorImpl<E>(target.iterator());
     }
@@ -86,4 +80,13 @@ public class UnmodifiableSetImpl<E> implements SetService<E>, Serializable {
         return UnmodifiableCollectionImpl.splitOf(this, n);
     }
 
+    @Override
+    public void atomic(Runnable update) {
+        throw new UnsupportedOperationException("Unmodifiable");
+    }
+
+    protected SetService<E> target() {
+        return target;
+    }
+    
 }

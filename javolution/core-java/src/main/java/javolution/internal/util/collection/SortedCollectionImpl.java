@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
@@ -37,6 +36,11 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
     }
 
     @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+    
+    @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
@@ -48,11 +52,6 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
         sorted.addAll(this);
         sorted.sort(); // Quick-sort.
         FastCollection.serviceOf(sorted).forEach(consumer, controller);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override

@@ -64,6 +64,16 @@ public class SharedBitSetImpl implements BitSetService, Serializable {
     }
 
     @Override
+    public void atomic(Runnable update) {
+        rwLock.writeLock().lock();
+        try {
+            target.atomic(update);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    @Override
     public int cardinality() {
         rwLock.readLock().lock();
         try {
@@ -187,11 +197,6 @@ public class SharedBitSetImpl implements BitSetService, Serializable {
         } finally {
             rwLock.readLock().unlock();
         }
-    }
-
-    @Override
-    public ReadWriteLockImpl getLock() {
-        return rwLock;
     }
 
     @Override

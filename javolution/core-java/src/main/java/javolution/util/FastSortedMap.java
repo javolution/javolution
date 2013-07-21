@@ -13,6 +13,9 @@ import static javolution.lang.RealTime.Limit.LOG_N;
 import java.util.Comparator;
 import java.util.SortedMap;
 
+import javolution.internal.util.map.sorted.FastSortedMapImpl;
+import javolution.internal.util.map.sorted.SharedSortedMapImpl;
+import javolution.internal.util.map.sorted.UnmodifiableSortedMapImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
@@ -42,10 +45,19 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
 
     /**
       * Creates an empty sorted map ordered using the specified comparator 
-      * for key equality and ordering.
+      * for order.
     */
     public FastSortedMap(EqualityComparator<? super K> keyComparator) {
-        super(keyComparator); // TODO
+        this(keyComparator, Comparators.STANDARD); 
+    }
+
+    /**
+      * Creates an empty sorted map ordered using the specified key comparator 
+      * for order and value comparator for values equality.
+    */
+    public FastSortedMap(EqualityComparator<? super K> keyComparator, 
+            EqualityComparator<? super V> valueComparator) {
+        super(new FastSortedMapImpl<K,V>(keyComparator, valueComparator)); 
     }
 
     /**
@@ -60,29 +72,41 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
      */
 
     @Override
-    public FastSortedSet<Entry<K, V>> entrySet() {
-        return null;
+    public FastSortedMap<K, V> unmodifiable() {
+        return new FastSortedMap<K, V>(new UnmodifiableSortedMapImpl<K, V>(service()));
     }
 
     @Override
+    public FastSortedMap<K, V> shared() {
+        return new FastSortedMap<K, V>(new SharedSortedMapImpl<K, V>(service()));
+    }
+
+    @Override
+    public FastSortedSet<Entry<K,V>> entrySet() {
+        return new FastSortedSet<Entry<K,V>>(service().entrySet());
+    }
+    
+    @Override
+    public FastSortedSet<K> keySet() {
+        return new FastSortedSet<K>(service().keySet());
+    }
+    
+    @Override
     @RealTime(limit = LOG_N)
     public FastSortedMap<K, V> subMap(K fromKey, K toKey) {
-        // TODO Auto-generated method stub
-        return null;
+        return new FastSortedMap<K, V>(service().subMap(fromKey, toKey));
     }
 
     @Override
     @RealTime(limit = LOG_N)
     public FastSortedMap<K, V> headMap(K toKey) {
-        // TODO Auto-generated method stub
-        return null;
+        return new FastSortedMap<K, V>(service().subMap(firstKey(), toKey));
     }
 
     @Override
     @RealTime(limit = LOG_N)
     public FastSortedMap<K, V> tailMap(K fromKey) {
-        // TODO Auto-generated method stub
-        return null;
+        return new FastSortedMap<K, V>(service().subMap(fromKey, lastKey()));
     }
 
     /***************************************************************************
@@ -143,14 +167,12 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
 
     @Override
     public K firstKey() {
-        // TODO Auto-generated method stub
-        return null;
+        return service().firstKey();
     }
 
     @Override
     public K lastKey() {
-        // TODO Auto-generated method stub
-        return null;
+        return service().lastKey();
     }
 
     @Override

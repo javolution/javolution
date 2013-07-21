@@ -8,6 +8,8 @@
  */
 package javolution.util.service;
 
+import java.util.Map.Entry;
+
 /**
  * The set of related functionalities used to implement sorted map.
  * 
@@ -34,4 +36,10 @@ public interface SortedMapService<K, V> extends MapService<K, V> {
      */
     SortedMapService<K, V> subMap(K fromKey, K toKey);
 
+    @Override
+    SortedSetService<Entry<K, V>> entrySet();
+    
+    @Override
+    SortedSetService<K> keySet();
+    
 }

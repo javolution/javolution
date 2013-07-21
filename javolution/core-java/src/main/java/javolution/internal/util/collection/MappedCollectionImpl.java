@@ -9,12 +9,11 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
+import javolution.util.function.Comparators;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
-import javolution.util.function.Comparators;
 import javolution.util.function.Function;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
@@ -42,6 +41,11 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
     }
 
     @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+    
+    @Override
     public EqualityComparator<? super R> comparator() {
         return Comparators.STANDARD;
     }
@@ -57,11 +61,6 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R>
             }
         }, controller);
 
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
    @Override

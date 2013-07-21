@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
@@ -25,7 +24,7 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final EqualityComparator<? super E> comparator;
-    private final CollectionService<E> target;
+    private CollectionService<E> target;
 
     public ComparatorCollectionImpl(CollectionService<E> target,
             EqualityComparator<? super E> comparator) {
@@ -39,6 +38,11 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
     }
 
     @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+
+    @Override
     public EqualityComparator<? super E> comparator() {
         return comparator;
     }
@@ -47,11 +51,6 @@ public class ComparatorCollectionImpl<E> extends FastCollection<E> implements
     public void forEach(Consumer<? super E> consumer,
             IterationController controller) {
         target.forEach(consumer, controller);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override

@@ -10,7 +10,6 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.ReadWriteLockImpl;
 import javolution.internal.util.SharedIteratorImpl;
@@ -23,7 +22,7 @@ import javolution.util.service.TableService;
 /**
  * A shared view over a table allowing concurrent access and sequential updates.
  */
-public final class SharedTableImpl<E> implements TableService<E>, Serializable {
+public class SharedTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final ReadWriteLockImpl rwLock;
@@ -76,6 +75,16 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
         } finally {
             rwLock.writeLock().unlock();
         }
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        rwLock.writeLock().lock();
+        try {
+            target.atomic(update);
+        } finally {
+            rwLock.writeLock().unlock();
+        }   
     }
 
     @Override
@@ -132,11 +141,6 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
         } finally {
             rwLock.readLock().unlock();
         }
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return rwLock;
     }
 
     @Override
@@ -249,6 +253,14 @@ public final class SharedTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public SharedCollectionImpl<E>[] trySplit(int n) {
         return SharedCollectionImpl.splitOf(target, n, rwLock);
+    }
+    
+    protected TableService<E> target() {
+        return target;
+    }
+    
+    protected ReadWriteLockImpl rwLock() {
+        return rwLock;
     }
 
 }

@@ -10,7 +10,6 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
 import javolution.internal.util.set.UnmodifiableSetImpl;
@@ -21,14 +20,19 @@ import javolution.util.service.SetService;
 /**
  *  * An unmodifiable view over a map.
  */
-public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
+public class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
         Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final MapService<K, V> target;
+    protected final MapService<K, V> target;
 
     public UnmodifiableMapImpl(MapService<K, V> target) {
         this.target = target;
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
@@ -49,11 +53,6 @@ public final class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
     @Override
     public V get(K key) {
         return target.get(key);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override

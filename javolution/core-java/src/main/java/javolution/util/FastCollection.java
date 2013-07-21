@@ -18,7 +18,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.collection.ComparatorCollectionImpl;
 import javolution.internal.util.collection.DistinctCollectionImpl;
@@ -59,16 +58,17 @@ import javolution.util.service.CollectionService.IterationController;
  *     Fast collections support multiple views which can be chained.
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
- *    <li>{@link #shared} - View allowing concurrent modifications.</li>
+ *    <li>{@link #shared} - Thread-safe view allowing concurrent read/write operations.</li>
  *    <li>{@link #parallel} - {@link #shared Shared} view allowing parallel processing (closure-based).</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
- *    <li>{@link #filtered} - View exposing the elements matching the specified filter.</li>
- *    <li>{@link #mapped} - View exposing elements through the specified mapping function.</li>
+ *    <li>{@link #filtered filtered(filter)} - View exposing the elements matching the specified filter.</li>
+ *    <li>{@link #mapped mapped(function)} - View exposing elements through the specified mapping function.</li>
  *    <li>{@link #sorted} - View exposing elements according to the collection sorting order.</li>
  *    <li>{@link #reversed} - View exposing elements in reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
- *    <li>{@link #comparator} - View using the specified comparator for element equality/order.</li>
- * </ul></p>
+ *    <li>{@link #comparator comparator(cmp)} - View using the specified comparator for element equality/order.</li>
+ * </ul>
+ * 
  * <p> Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
  *     reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
  *     guarantees that the collection source cannot be modified even by himself 
@@ -77,6 +77,15 @@ import javolution.util.service.CollectionService.IterationController;
  * Immutable<List<String>> winners 
  *     = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil").toImmutable();
  *     // Immutability is guaranteed, no reference left on the collection source.
+ * [/code]</p>
+ * 
+ *  <p> Immutable collections may be preferred {@link #shared} views in case of infrequent updates 
+ *      since they do not introduce mutex (and locking).</p>
+ * <p>[code]
+ * static Immutable<FastSet<Unit>> basicUnits = new FastSet<Unit>().toImmutable(); // Infrequent changes.
+ * synchronized void addBasicUnits(Unit... units) {
+ *     basicUnits = basicUnits.values().copy().addAll(units).toImmutable();
+ * }
  * [/code]</p>
  * 
  * <p> Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
@@ -126,7 +135,7 @@ import javolution.util.service.CollectionService.IterationController;
  * [/code]</p>
  *           
  * <p> Fast collections can be iterated over using closures, this is also the preferred way 
- *     to iterate over {@link #shared() shared} collections (no concurrent update possible).
+ *     to iterate over {@link #shared() shared} collections (concurrent update are safe).
  *     If a collection (or a map) is shared, derived views are also thread-safe.
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
  *     on derived views can be performed concurrently.</p> 
@@ -149,8 +158,7 @@ import javolution.util.service.CollectionService.IterationController;
  * @version 6.0.0, December 12, 2012
  */
 @RealTime
-// Inheritable.
-@Parallelizable(mutexFree = false, comment = "Mutexes used by shared/parallel views.")
+@Parallelizable(mutexFree = false, comment = "Shared/Parallel views use read-write locks, CopyOnWrite views have mutex-free access.")
 @DefaultTextFormat(FastCollection.StandardText.class)
 public abstract class FastCollection<E> implements Collection<E>,
         Copyable<FastCollection<E>>, Serializable {
@@ -176,12 +184,15 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /**
-     * Returns a thread-safe view over this collection allowing 
-     * concurrent read without blocking and concurrent write possibly 
-     * blocking. All updates performed on this collection are atomic as far as
-     *  this collection's readers are concerned. To perform complex actions on
-     * a shared collection in an atomic manner, the {@link #atomicRead 
-     * atomicRead} / {@link #atomicWrite atomicWrite} method should be used.
+     * Returns a thread-safe view over this collection. The shared view 
+     * uses <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+     * readers–writer locks</a> allowing concurrent read without blocking. 
+     * Since only write operation may introduce blocking, in case of 
+     * infrequent updates it may be judicious to use {@link #toImmutable()
+     * immutable} collections rather than shared views.
+     * 
+     * @see <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+     *      Readers–writer lock</a> 
      */
     public FastCollection<E> shared() {
         return new SharedCollectionImpl<E>(service());
@@ -286,7 +297,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     @RealTime(limit = LINEAR)
     public void forEach(Consumer<? super E> consumer) {
-        service().forEach(consumer, IterationController.STANDARD);
+        service().forEach(consumer, IterationController.PARALLEL);
     }
 
     /** 
@@ -316,7 +327,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
     @RealTime(limit = LINEAR)
     public boolean removeIf(final Predicate<? super E> filter) {
-        return service().removeIf(filter, IterationController.STANDARD);
+        return service().removeIf(filter, IterationController.PARALLEL);
     }
 
     /** 
@@ -525,65 +536,31 @@ public abstract class FastCollection<E> implements Collection<E>,
     }
 
     /** 
-     * Executes the specified read action on this collection in an atomic 
-     * manner. Multiple read actions can be performed concurrently.
+     * Executes the specified update in an atomic manner.
+     * Either the readers (including closure-based iterations) see the full 
+     * effect of the update or nothing.
      * This method is relevant only for {@link #shared shared} or
-     *  {@link #parallel parallel} collections.
-     * The framework ensures that no read action can be performed if a 
-     * write action is in progress or waiting.
-     * 
-     * @param read the read action to be executed in an atomic manner.
+     * {@link #parallel parallel} collections.
+     *  
+     * @param update the update action to be executed on this collection.
      */
-    public void atomicRead(Runnable read) {
-        ReadWriteLock rwLock = service().getLock();
-        if (rwLock != null) {
-            rwLock.readLock().lock();
-            try {
-                read.run();
-            } finally {
-                rwLock.readLock().unlock();
-            }
-        } else { // Not shared or parallel.
-            read.run();
-        }
-    }
-
-    /** 
-     * Executes the specified write action on this collection in an atomic 
-     * manner. As far as readers of this collection are concerned, either they
-     * see the full result of the action or nothing. This method is relevant 
-     * only for {@link #shared shared} or {@link #parallel parallel} collections.
-     * The framework ensures that only one write action can be performed at 
-     * a time and write action have precedence over read actions.
-     * 
-     * @param write the write action to be executed in an atomic manner.
-     */
-    public void atomicWrite(Runnable write) {
-        ReadWriteLock rwLock = service().getLock();
-        if (rwLock != null) {
-            rwLock.writeLock().lock();
-            try {
-                write.run();
-            } finally {
-                rwLock.writeLock().unlock();
-            }
-        } else { // Not shared or parallel.
-            write.run();
-        }
-    }
+    @Parallelizable(mutexFree = false, comment = "The collection is locked during atomic updates")
+    public void atomic(Runnable update) {
+        service().atomic(update);
+     }
 
     /** 
      * Returns an immutable reference over this collection. The method should 
-     * only be called if this collection cannot be modified after the call (for 
-     * example if there is no reference to this collection after the call).
+     * only be called if this collection cannot be modified after this call (for 
+     * example if there is no reference left to this collection).
      */
     public <T extends Collection<E>> Immutable<T> toImmutable() {
         return new Immutable<T>() {
-
             @SuppressWarnings("unchecked")
+            final T value = (T) unmodifiable();
             @Override
             public T value() {
-                return (T) unmodifiable();
+                return value;
             }
             
         };

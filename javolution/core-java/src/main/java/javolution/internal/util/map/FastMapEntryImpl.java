@@ -14,28 +14,29 @@ import java.util.Map;
 /**
  * The map entry implementation.
  */
-public final class EntryImpl implements Map.Entry<Object, Object>, Serializable {
+final class FastMapEntryImpl<K, V> implements Map.Entry<K, V>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
+
     int hash;
-    Object key;
-    EntryImpl next;
-    EntryImpl previous;
-    Object value;
+    K key;
+    FastMapEntryImpl<K, V> next;
+    FastMapEntryImpl<K, V> previous;
+    V value;
 
     @Override
-    public Object getKey() {
+    public K getKey() {
         return key;
     }
 
     @Override
-    public Object getValue() {
+    public V getValue() {
         return value;
     }
 
     @Override
-    public Object setValue(Object value) {
-        Object oldValue = this.value;
+    public V setValue(V value) {
+        V oldValue = this.value;
         this.value = value;
         return oldValue;
     }

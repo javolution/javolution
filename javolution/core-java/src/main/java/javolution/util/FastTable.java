@@ -55,7 +55,7 @@ import javolution.util.service.TableService;
  * [code]
  * FastTable<String> names = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil");
  * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
- * names.subList(0, names.size() / 2).clear(); // Removes the first half of the table (as per java.util.List specification).
+ * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
  * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
  * names.parallel().filtered(str -> str.startsWith("A")).clear(); // Same as above but performed concurrently !
  * [/code]
@@ -141,14 +141,14 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return new FastTable<E>(new ReversedTableImpl<E>(service));
     }
 
-    @Override
-    public FastTable<E> subList(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex > size()) || (fromIndex > toIndex))
-            throw new IndexOutOfBoundsException(); // As per List.subList contract.
-        return new FastTable<E>(
-                new SubTableImpl<E>(service, fromIndex, toIndex));
+    /**
+     * Returns a view over a portion of the table (equivalent to 
+     * {@link java.util.List#subList(int, int)}).
+     */
+    public FastTable<E> subTable(int fromIndex, int toIndex) {
+        return new FastTable<E>(new SubTableImpl<E>(service, fromIndex, toIndex));
     }
-
+        
     /***************************************************************************
      * Collection operations.
      */
@@ -376,7 +376,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
     @RealTime(limit = N_SQUARE)
     public void sort() {
-        atomicWrite(new Runnable() {
+        atomic(new Runnable() {
             @Override
             public void run() {
                 QuickSort<E> qs = new QuickSort<E>(service,
@@ -391,6 +391,15 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return (FastTable<E>) super.addAll(elements);
     }
 
+    /**
+     * Replaced by {@link #subTable(int, int)
+     */
+    @Override
+    @Deprecated 
+    public FastTable<E> subList(int fromIndex, int toIndex) {
+        return subTable(fromIndex, toIndex);
+    }
+    
     @Override
     protected TableService<E> service() {
         return service;

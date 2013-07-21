@@ -10,7 +10,6 @@ package javolution.internal.util.map;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.ReadWriteLockImpl;
 import javolution.internal.util.collection.SharedCollectionImpl;
@@ -22,12 +21,11 @@ import javolution.util.service.SetService;
 /**
  *  * A shared view over a map.
  */
-public final class SharedMapImpl<K, V> implements MapService<K, V>,
-        Serializable {
+public class SharedMapImpl<K, V> implements MapService<K, V>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final ReadWriteLockImpl rwLock;
-    private final MapService<K, V> target;
+    protected final ReadWriteLockImpl rwLock;
+    protected final MapService<K, V> target;
 
     public SharedMapImpl(MapService<K, V> target) {
         this(target, new ReadWriteLockImpl());
@@ -36,6 +34,16 @@ public final class SharedMapImpl<K, V> implements MapService<K, V>,
     public SharedMapImpl(MapService<K, V> target, ReadWriteLockImpl rwLock) {
         this.target = target;
         this.rwLock = rwLock;
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        rwLock.writeLock().lock();
+        try {
+            target.atomic(update);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
@@ -139,16 +147,6 @@ public final class SharedMapImpl<K, V> implements MapService<K, V>,
     }
 
     @Override
-    public CollectionService<V> values() {
-        return new SharedCollectionImpl<V>(target.values(), rwLock);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return rwLock;
-    }
-
-    @Override
     public int size() {
         rwLock.readLock().lock();
         try {
@@ -156,5 +154,10 @@ public final class SharedMapImpl<K, V> implements MapService<K, V>,
         } finally {
             rwLock.readLock().unlock();
         }
+    }
+
+    @Override
+    public CollectionService<V> values() {
+        return new SharedCollectionImpl<V>(target.values(), rwLock);
     }
 }

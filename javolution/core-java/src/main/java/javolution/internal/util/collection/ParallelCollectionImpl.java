@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.context.ConcurrentContext;
 import javolution.util.FastCollection;
@@ -36,6 +35,11 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
         return target.add(element);
     }
 
+    @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+    
     @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
@@ -71,11 +75,6 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E>
         } finally {
             ctx.exit();
         }
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
    @Override

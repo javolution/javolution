@@ -9,7 +9,6 @@
 package javolution.util.service;
 
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * The set of related map functionalities which can be used/reused to implement 
@@ -20,6 +19,11 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @see javolution.util.FastMap#FastMap()
  */
 public interface MapService<K, V> {
+
+    /** 
+     * Executes the specified update in an atomic manner.
+     */
+    void atomic(Runnable update);
 
     /**
      * Removes all of the entries from this map.
@@ -42,16 +46,7 @@ public interface MapService<K, V> {
      * Returns the value associated to the specified key.
      */
     V get(K key);
-
-    /** 
-     * Returns the read-write lock of this map if any; otherwise
-     * returns {@code null}. The implementation must give preference to the 
-     * waiting writer threads over the readers. That means if we have two 
-     * threads waiting to acquire the lock, the one waiting for write lock 
-     * will get the lock first. 
-     */
-    ReadWriteLock getLock();
-
+   
     /** 
     * Returns the set view of this map keys.
     * Unlike {@link java.util.Map#keySet()} the view supports adding new 

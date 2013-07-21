@@ -19,15 +19,16 @@ import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
- * A shared view over a collection allowing concurrent access and sequential updates.
+ * A shared view over a collection allowing concurrent access 
+ * and sequential updates.
  */
 public final class SharedCollectionImpl<E> extends FastCollection<E> implements
         CollectionService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final ReadWriteLockImpl rwLock;
-    private CollectionService<E> target;
-    
+    private final CollectionService<E> target;
+       
     /**
      * Splits the specified collection into sub-collections all of them 
      * sharing the same read/write locks.
@@ -69,6 +70,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
     }
 
     @Override
+    public void atomic(Runnable update) {
+        rwLock.writeLock().lock();
+        try {
+            target.atomic(update);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+    
+    @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
@@ -84,11 +95,6 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
         }
     }
 
-    @Override
-    public ReadWriteLockImpl getLock() {
-        return rwLock;
-    }
-
    @Override
     @Deprecated
     public Iterator<E> iterator() {
@@ -98,6 +104,7 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> implements
     @Override
     public boolean removeIf(Predicate<? super E> filter,
             IterationController controller) {
+        // Default collection behavior does not allow for concurrent removal.
         rwLock.writeLock().lock();
         try {
             return target.removeIf(filter, controller);

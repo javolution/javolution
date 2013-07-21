@@ -27,6 +27,7 @@ import javolution.lang.MathLib;
  */
 public class TextBuilder implements Appendable, CharSequence, Serializable {
 
+    private static final long serialVersionUID = 0x600L; // Version.
     // We do a full resize (and copy) only when the capacity is less than C1.
     // For large collections, multi-dimensional arrays are employed.
     private static final int B0 = 5; // Initial capacity in bits.

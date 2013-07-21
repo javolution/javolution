@@ -16,6 +16,7 @@ import java.io.Serializable;
  * (maps holding submaps). At each depth only a part of the hashcode is used
  * starting by the last bits. 
  */
+@SuppressWarnings("rawtypes")
 final class FractalMapImpl implements Serializable {
 
     static final int SHIFT = 10; // Number of hashcode bits per depth. 
@@ -24,7 +25,7 @@ final class FractalMapImpl implements Serializable {
     static final int MAX_BLOCK_CAPACITY = 1 << SHIFT;
     private static final long serialVersionUID = 0x600L; // Version.
     private int count; // Number of entries different from null in this block.
-    private EntryImpl[] entries = new EntryImpl[INITIAL_BLOCK_CAPACITY]; // Entries value can be a sub-map.
+    private FastMapEntryImpl[] entries = new FastMapEntryImpl[INITIAL_BLOCK_CAPACITY]; // Entries value can be a sub-map.
     private final int shift; // Zero if base map.
 
     public FractalMapImpl() {
@@ -36,12 +37,12 @@ final class FractalMapImpl implements Serializable {
     }
 
     public void clear() {
-        entries = new EntryImpl[INITIAL_BLOCK_CAPACITY];
+        entries = new FastMapEntryImpl[INITIAL_BLOCK_CAPACITY];
         count = 0;
     }
 
     /** Returns null if no entry with specified key */
-    public EntryImpl getEntry(Object key, int hash) {
+    public FastMapEntryImpl getEntry(Object key, int hash) {
         return entries[indexOfKey(key, hash)];
     }
 
@@ -51,7 +52,7 @@ final class FractalMapImpl implements Serializable {
         int mask = entries.length - 1;
         int i = (hash >> shift) & mask;
         while (true) {
-            EntryImpl entry = entries[i];
+            FastMapEntryImpl entry = entries[i];
             if (entry == null)
                 return i;
             if ((entry.hash == hash) && key.equals(entry.key))
@@ -62,9 +63,9 @@ final class FractalMapImpl implements Serializable {
 
     /** Adds the specified entry if not already present; returns the 
      *  either the specified entry or an existing entry for the specified key. **/
-    public EntryImpl addEntry(EntryImpl newEntry, Object key, int hash) {
+    public FastMapEntryImpl addEntry(FastMapEntryImpl newEntry, Object key, int hash) {
         int i = indexOfKey(key, hash);
-        EntryImpl entry = entries[i];
+        FastMapEntryImpl entry = entries[i];
         if (entry != null) return entry; // Entry exists
         entries[i] = newEntry;
         // Check if we need to resize.
@@ -75,9 +76,9 @@ final class FractalMapImpl implements Serializable {
     }
     
     /** Returns the entry removed or null if none. */
-    public EntryImpl removeEntry(Object key, int hash) {
+    public FastMapEntryImpl removeEntry(Object key, int hash) {
         int i = indexOfKey(key, hash);
-        EntryImpl oldEntry = entries[i];
+        FastMapEntryImpl oldEntry = entries[i];
         if (oldEntry == null)
             return null; // Entry does not exist.
         entries[i] = null;
@@ -85,7 +86,7 @@ final class FractalMapImpl implements Serializable {
         for (;;) {
             // We use a step of 1 (improve caching through memory locality).
             i = (i + 1) & (entries.length - 1);
-            EntryImpl entry = entries[i];
+            FastMapEntryImpl entry = entries[i];
             if (entry == null)
                 break; // Done.
             int correctIndex = indexOfKey(entry.key, entry.hash);
@@ -106,10 +107,10 @@ final class FractalMapImpl implements Serializable {
     //    (count * 2**EMPTINESS_LEVEL) <=  capacity < (count * 2**(EMPTINESS_LEVEL+1))
     // TODO: Use submaps if max capacity reached.
     private void resize(int newCapacity) {
-        EntryImpl[] newEntries = new EntryImpl[newCapacity];
+        FastMapEntryImpl[] newEntries = new FastMapEntryImpl[newCapacity];
         int newMask = newEntries.length - 1;
         for (int i = 0, n = entries.length; i < n; i++) {
-            EntryImpl entry = entries[i];
+            FastMapEntryImpl entry = entries[i];
             if (entry == null)
                 continue;
             int newIndex = entry.hash & newMask;

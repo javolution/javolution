@@ -11,7 +11,6 @@ package javolution.internal.util.set;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.FilteredIteratorImpl;
 import javolution.internal.util.collection.FilteredCollectionImpl;
@@ -42,7 +41,7 @@ public class FilteredSetImpl<E> implements SetService<E>, Serializable {
 
     @Override
     public void clear() {
-        target.removeIf(filter, IterationController.STANDARD);
+        target.removeIf(filter, IterationController.PARALLEL);
     }
 
     @Override
@@ -67,11 +66,6 @@ public class FilteredSetImpl<E> implements SetService<E>, Serializable {
                      consumer.accept(param);  
                 }
             }}, controller);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override
@@ -104,7 +98,7 @@ public class FilteredSetImpl<E> implements SetService<E>, Serializable {
             @Override
             public void accept(E param) {
                 count.incrementAndGet();
-            }}, IterationController.STANDARD);
+            }}, IterationController.PARALLEL);
         
         return count.get();
     }
@@ -112,5 +106,10 @@ public class FilteredSetImpl<E> implements SetService<E>, Serializable {
     @Override
     public FilteredCollectionImpl<E>[] trySplit(int n) {
         return FilteredCollectionImpl.splitOf(target, n, filter);
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
     }
 }

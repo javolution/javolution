@@ -497,7 +497,7 @@ public final class TypeFormat {
             int digit = c - '0';
             if ((digit >= 0) && (digit < 10)) {
                 long tmp = decimal * 10 + digit;
-                if (tmp < decimal)
+                if ((decimal > LONG_MAX_DIV10) || (tmp < decimal))
                     throw new NumberFormatException(
                             "Too many digits - Overflow");
                 decimal = tmp;
@@ -526,7 +526,7 @@ public final class TypeFormat {
                 int digit = c - '0';
                 if ((digit >= 0) && (digit < 10)) {
                     int tmp = exp * 10 + digit;
-                    if (tmp < exp)
+                    if ((exp > INT_MAX_DIV10) || (tmp < exp))
                         throw new NumberFormatException("Exponent Overflow");
                     exp = tmp;
                 } else
@@ -542,7 +542,9 @@ public final class TypeFormat {
         return javolution.lang.MathLib.toDoublePow10(decimal, exp
                 - fractionLength);
     }
-
+    private static final int INT_MAX_DIV10 = Integer.MAX_VALUE / 10;
+    private static final long LONG_MAX_DIV10 = Long.MAX_VALUE / 10;
+    
     /**
      * Parses the whole specified character sequence as a <code>double</code>.
      * The format must be of the form:<code>

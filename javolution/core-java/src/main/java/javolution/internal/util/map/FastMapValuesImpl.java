@@ -11,93 +11,79 @@ package javolution.internal.util.map;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.locks.ReadWriteLock;
 
+import javolution.internal.util.collection.SplitCollectionImpl;
+import javolution.util.function.Comparators;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
-import javolution.util.service.SetService;
 
 /**
- * The keys view over a map.
+ * The values view over a map.
  */
-public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
+public class FastMapValuesImpl<K, V> implements CollectionService<V>,
+        Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final FastMapImpl<K, V> map;
 
-    public KeySetImpl(FastMapImpl<K, V> map) {
+    public FastMapValuesImpl(FastMapImpl<K, V> map) {
         this.map = map;
     }
 
     @Override
-    public boolean add(K key) {
-        int size = map.size();
-        map.put(key, null);
-        return (size != map.size()); 
-     }
-
-    @Override
-    public void clear() {
-        map.clear();
+    public boolean add(V element) {
+        throw new UnsupportedOperationException("Cannot add map value without key");
     }
 
     @Override
-    public EqualityComparator<? super K> comparator() {
-        return map.keyComparator;
+    public void atomic(Runnable update) {
+        map.atomic(update);
     }
 
     @Override
-    public boolean contains(K key) {
-        return map.containsKey(key);
+    public EqualityComparator<? super V> comparator() {
+        return Comparators.STANDARD;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void forEach(
-            Consumer<? super K> consumer, IterationController controller) {
+            Consumer<? super V> consumer, IterationController controller) {
         if (!controller.doReversed()) {
-            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
-                consumer.accept((K) e.key);
+            for (FastMapEntryImpl<K,V> e = map.firstEntry; e != null; e = e.next) {
+                consumer.accept((V) e.value);
                 if (controller.isTerminated())
                     break;
             }
         } else { // Reversed.
-            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
-                consumer.accept((K) e.key);
+            for (FastMapEntryImpl<K,V> e = map.lastEntry; e != null; e = e.previous) {
+                consumer.accept((V) e.value);
                 if (controller.isTerminated())
                     break;
             }
         }
-     }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return map.getLock();
     }
 
     @Override
-    public Iterator<K> iterator() {
-        return new Iterator<K>() {
-            EntryImpl current;
-            EntryImpl next = map.firstEntry;
+    public Iterator<V> iterator() {
+        return new Iterator<V>() {
+            FastMapEntryImpl<K,V> current;
+            FastMapEntryImpl<K,V> next = map.firstEntry;
 
             @Override
             public boolean hasNext() {
                 return next != null;
             }
 
-            @SuppressWarnings("unchecked")
             @Override
-            public K next() {
+            public V next() {
                 current = next;
                 if (current == null) throw new NoSuchElementException();
                 next = current.next;
-                return (K) current.key;
+                return (V) current.value;
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public void remove() {
                 if (current == null)
@@ -109,20 +95,12 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
     }
 
     @Override
-    public boolean remove(K key) {
-        int size = map.size();
-        map.remove(key);
-        return size != map.size();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public boolean removeIf(
-            Predicate<? super K> filter, IterationController controller) {
+            Predicate<? super V> filter, IterationController controller) {
         boolean removed = false;
         if (!controller.doReversed()) {
-            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
-                 if (filter.test((K) e.key)) {
+            for (FastMapEntryImpl<K,V> e = map.firstEntry; e != null; e = e.next) {
+                 if (filter.test((V) e.value)) {
                     map.remove((K) e.key);
                     removed = true;
                 }
@@ -130,8 +108,8 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
                     break;
             }
         } else { // Reversed.
-            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
-                if (filter.test((K) e.key)) {
+            for (FastMapEntryImpl<K,V> e = map.lastEntry; e != null; e = e.previous) {
+                if (filter.test((V) e.value)) {
                     map.remove((K) e.key);
                     removed = true;
                 }
@@ -143,13 +121,7 @@ public final class KeySetImpl<K, V> implements SetService<K>, Serializable {
     }
 
     @Override
-    public int size() {
-        return map.size();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public CollectionService<K>[] trySplit(int n) {
-        return new CollectionService[] { this }; // No splitting.
+    public CollectionService<V>[] trySplit(int n) {
+        return SplitCollectionImpl.splitOf(this, n);
     }
 }

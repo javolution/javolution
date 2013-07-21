@@ -9,6 +9,10 @@
 package javolution.util;
 
 import static javolution.lang.RealTime.Limit.LOG_N;
+import javolution.internal.util.table.sorted.FastSortedTableImpl;
+import javolution.internal.util.table.sorted.SharedSortedTableImpl;
+import javolution.internal.util.table.sorted.SubSortedTableImpl;
+import javolution.internal.util.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
@@ -42,7 +46,7 @@ public class FastSortedTable<E> extends FastTable<E> {
      * Creates an empty table sorted using the specified element comparator.
      */
     public FastSortedTable(EqualityComparator<? super E> comparator) {
-        super((SortedTableService<E>) null); // TODO 
+        super(new FastSortedTableImpl<E>(comparator));
     }
 
     /**
@@ -58,12 +62,17 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     @Override
     public FastSortedTable<E> unmodifiable() {
-        return null; // TODO
+        return new FastSortedTable<E>(new UnmodifiableSortedTableImpl<E>(service()));
     }
 
     @Override
     public FastSortedTable<E> shared() {
-        return null; // TODO
+        return new FastSortedTable<E>(new SharedSortedTableImpl<E>(service()));
+    }
+
+    @Override
+    public FastSortedTable<E> subTable(int fromIndex, int toIndex) {
+         return new FastSortedTable<E>(new SubSortedTableImpl<E>(service(), fromIndex, toIndex));
     }
 
     /***************************************************************************
@@ -93,6 +102,15 @@ public class FastSortedTable<E> extends FastTable<E> {
      * Misc.
      */
 
+    /** 
+     * Adds the specified element only if not already present.
+     *  
+     * @return the index of the element added or already present.
+     */
+    public int addIfAbsent(E element) {
+        return service().addIfAbsent(element);
+    }
+    
     /** 
      * Returns the would index of the specified element if it were
      * to be added to this sorted table.

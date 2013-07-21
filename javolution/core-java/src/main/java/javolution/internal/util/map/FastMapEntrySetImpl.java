@@ -11,11 +11,10 @@ package javolution.internal.util.map;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReadWriteLock;
+import java.util.NoSuchElementException;
 
-import javolution.util.function.Comparators;
+import javolution.internal.util.collection.SplitCollectionImpl;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
@@ -23,15 +22,15 @@ import javolution.util.service.CollectionService;
 import javolution.util.service.SetService;
 
 /**
- * The entries view over a map.
+ * The entries view over the fast map implementation.
  */
-public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
+public class FastMapEntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
         Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final FastMapImpl<K, V> map;
 
-    public EntrySetImpl(FastMapImpl<K, V> map) {
+    public FastMapEntrySetImpl(FastMapImpl<K, V> map) {
         this.map = map;
     }
 
@@ -40,7 +39,12 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
         int size = map.size();
         V oldValue = map.put(entry.getKey(), entry.getValue());
         return (size != map.size()) 
-                || !Comparators.STANDARD.areEqual(entry.getValue(),oldValue);
+                || !map.valueComparator.areEqual(entry.getValue(),oldValue);
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        map.atomic(update);
     }
 
     @Override
@@ -53,16 +57,10 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
         return new EqualityComparator<Entry<K, V>>() {
 
             @Override
-            public int hashCodeOf(Entry<K, V> entry) {
-                return map.keyComparator.hashCodeOf(entry.getKey())
-                        + Comparators.STANDARD.hashCodeOf(entry.getValue());
-            }
-
-            @Override
             public boolean areEqual(Entry<K, V> left, Entry<K, V> right) {
                 return map.keyComparator
                         .areEqual(left.getKey(), right.getKey())
-                        && Comparators.STANDARD.areEqual(left.getValue(),
+                        && map.valueComparator.areEqual(left.getValue(),
                                 right.getValue());
             }
 
@@ -70,28 +68,33 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
             public int compare(Entry<K, V> left, Entry<K, V> right) {
                 return map.keyComparator.compare(left.getKey(), right.getKey());
             }
+
+            @Override
+            public int hashCodeOf(Entry<K, V> entry) {
+                return map.keyComparator.hashCodeOf(entry.getKey())
+                        + map.valueComparator.hashCodeOf(entry.getValue());
+            }
         };
     }
 
     @Override
     public boolean contains(Entry<K, V> entry) {
         V value = map.get(entry.getKey());
-        return Comparators.STANDARD.areEqual(entry.getValue(), value);
+        return map.valueComparator.areEqual(entry.getValue(), value);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
+     @Override
     public void forEach(
             Consumer<? super Entry<K, V>> consumer, IterationController controller) {
         if (!controller.doReversed()) {
-            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
-                consumer.accept((Entry<K, V>) e);
+            for (FastMapEntryImpl<K,V> e = map.firstEntry; e != null; e = e.next) {
+                consumer.accept(e);
                 if (controller.isTerminated())
                     break;
             }
         } else { // Reversed.
-            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
-                consumer.accept((Entry<K, V>) e);
+            for (FastMapEntryImpl<K,V> e = map.lastEntry; e != null; e = e.previous) {
+                consumer.accept(e);
                 if (controller.isTerminated())
                     break;
             }
@@ -99,36 +102,29 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
     }
 
     @Override
-    public ReadWriteLock getLock() {
-        return map.getLock();
-    }
-
-    @Override
     public Iterator<Entry<K, V>> iterator() {
         return new Iterator<Entry<K, V>>() {
-            EntryImpl next = map.firstEntry;
-            EntryImpl current;
+            FastMapEntryImpl<K,V> current;
+            FastMapEntryImpl<K,V> next = map.firstEntry;
 
             @Override
             public boolean hasNext() {
                 return next != null;
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public Entry<K, V> next() {
                 current = next;
                 if (current == null) throw new NoSuchElementException();
                 next = current.next;
-                return (Entry<K, V>) current;
+                return current;
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public void remove() {
                 if (current == null)
                     throw new IllegalStateException();
-                map.remove((K)current.key);
+                map.remove(current.key);
                 current = null;   
             }
         };
@@ -139,24 +135,23 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
         return map.remove(entry.getKey(), entry.getValue());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean removeIf(
             Predicate<? super Entry<K, V>> filter, IterationController controller) {
         boolean removed = false;
         if (!controller.doReversed()) {
-            for (EntryImpl e = map.firstEntry; e != null; e = e.next) {
-                 if (filter.test((Entry<K, V>) e)) {
-                    remove((Entry<K, V>) e);
+            for (FastMapEntryImpl<K,V> e = map.firstEntry; e != null; e = e.next) {
+                 if (filter.test(e)) {
+                    remove(e);
                     removed = true;
                 }
                 if (controller.isTerminated())
                     break;
             }
         } else { // Reversed.
-            for (EntryImpl e = map.lastEntry; e != null; e = e.previous) {
+            for (FastMapEntryImpl<K,V> e = map.lastEntry; e != null; e = e.previous) {
                 if (filter.test((Entry<K, V>) e)) {
-                    remove((Entry<K, V>) e);
+                    remove(e);
                     removed = true;
                 }
                 if (controller.isTerminated())
@@ -171,9 +166,8 @@ public final class EntrySetImpl<K, V> implements SetService<Map.Entry<K, V>>,
         return map.size();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public CollectionService<Entry<K, V>>[] trySplit(int n) {
-        return new CollectionService[] { this }; // No splitting.
+        return SplitCollectionImpl.splitOf(this, n);
     }
 }

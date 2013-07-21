@@ -9,7 +9,6 @@
 package javolution.util.service;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -55,11 +54,11 @@ public interface CollectionService<E> {
         };
 
         /** 
-         * A standard {@link CollectionService.IterationController 
+         * A parallel {@link CollectionService.IterationController 
          * iteration controller} allowing parallel traversal over all the 
-         * collection elements in the normal iterative order.
+         * collection elements.
          */
-        public static final IterationController STANDARD = new IterationController() {
+        public static final IterationController PARALLEL = new IterationController() {
 
             @Override
             public boolean doReversed() {
@@ -104,7 +103,12 @@ public interface CollectionService<E> {
      */
     boolean add(E element);
 
-     /** 
+    /** 
+     * Executes the specified update in an atomic manner.
+     */
+    void atomic(Runnable update);
+
+    /** 
      * Returns the full comparator used for element equality or order.
      */
     EqualityComparator<? super E> comparator();
@@ -116,15 +120,6 @@ public interface CollectionService<E> {
      * @param controller the iteration controller.
      */
     void forEach(Consumer<? super E> consumer, IterationController controller);
-
-    /** 
-     * Returns the read-write lock of this collection if any; otherwise
-     * returns {@code null}. The implementation must give preference to the 
-     * waiting writer threads over the readers. That means if we have two 
-     * threads waiting to acquire the lock, the one waiting for write lock 
-     * will get the lock first. 
-     */
-    ReadWriteLock getLock();
 
    /** 
      * Returns an iterator over this collection elements.
@@ -153,4 +148,5 @@ public interface CollectionService<E> {
      * @throws IllegalArgumentException if {@code n <= 0}
      */
     CollectionService<E>[] trySplit(int n);
+    
 }

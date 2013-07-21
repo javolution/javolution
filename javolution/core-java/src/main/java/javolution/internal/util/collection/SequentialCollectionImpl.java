@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
@@ -20,8 +19,7 @@ import javolution.util.service.CollectionService;
 /**
  * A sequential view over a collection.
  */
-public final class SequentialCollectionImpl<E> extends FastCollection<E>
-        implements CollectionService<E> {
+public final class SequentialCollectionImpl<E> extends FastCollection<E> implements CollectionService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
     private final CollectionService<E> target;
@@ -35,6 +33,11 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
         return target.add(element);
     }
 
+    @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+    
     @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
@@ -60,11 +63,6 @@ public final class SequentialCollectionImpl<E> extends FastCollection<E>
                 return controller.isTerminated();
             }
         });
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override

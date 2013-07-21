@@ -12,6 +12,9 @@ import static javolution.lang.RealTime.Limit.LOG_N;
 
 import java.util.SortedSet;
 
+import javolution.internal.util.map.sorted.FastSortedMapImpl;
+import javolution.internal.util.set.sorted.SharedSortedSetImpl;
+import javolution.internal.util.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
@@ -39,7 +42,7 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     * Creates an empty sorted set ordered using the specified comparator.
     */
     public FastSortedSet(EqualityComparator<? super E> comparator) {
-        // TODO
+        super(new FastSortedMapImpl<E, Void>(comparator, Comparators.IDENTITY).keySet());
     }
 
     /**
@@ -55,12 +58,12 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
 
     @Override
     public FastSortedSet<E> unmodifiable() {
-        return null; // TODO
+        return new FastSortedSet<E>(new UnmodifiableSortedSetImpl<E>(service()));
     }
 
     @Override
     public FastSortedSet<E> shared() {
-        return null; // TODO
+        return new FastSortedSet<E>(new SharedSortedSetImpl<E>(service()));
     }
 
     /***************************************************************************
@@ -91,35 +94,30 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
 
     @Override
     @RealTime(limit = LOG_N)
-    public SortedSet<E> subSet(E fromElement, E toElement) {
-        // TODO Auto-generated method stub
-        return null;
+    public FastSortedSet<E> subSet(E fromElement, E toElement) {
+        return new FastSortedSet<E>(service().subSet(fromElement, toElement));
     }
 
     @Override
     @RealTime(limit = LOG_N)
-    public SortedSet<E> headSet(E toElement) {
-        // TODO Auto-generated method stub
-        return null;
+    public FastSortedSet<E> headSet(E toElement) {
+        return subSet(first(), toElement);
     }
 
     @Override
     @RealTime(limit = LOG_N)
-    public SortedSet<E> tailSet(E fromElement) {
-        // TODO Auto-generated method stub
-        return null;
+    public FastSortedSet<E> tailSet(E fromElement) {
+        return subSet(fromElement, last());
     }
 
     @Override
     public E first() {
-        // TODO Auto-generated method stub
-        return null;
+        return service().first();
     }
 
     @Override
     public E last() {
-        // TODO Auto-generated method stub
-        return null;
+        return service().last();
     }
 
     /***************************************************************************

@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.util.FastCollection;
@@ -51,6 +50,11 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
     }
 
     @Override
+    public void atomic(Runnable update) {
+        throw new UnsupportedOperationException("Unmodifiable Collection");
+    }
+    
+    @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
@@ -59,11 +63,6 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
     public void forEach(Consumer<? super E> consumer,
             IterationController controller) {
         target.forEach(consumer, controller);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
    @Override

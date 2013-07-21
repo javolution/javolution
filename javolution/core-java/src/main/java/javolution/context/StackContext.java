@@ -24,25 +24,25 @@ import javolution.util.function.Function;
  *     More generally speaking, logic executing in a stack contexts should 
  *     ensure that stack allocated objects do not escape from
  *     their context scope. If necessary, stack objects can be copied to 
- *     the heap using {@link HeapContext#copy copy} method. When executing 
- *     a {@link Function functor}, the function result is always copied 
- *     to the calling context.
+ *     the heap using {@link HeapContext#copy HeapContext.copy(...)} method.
+ *     When executing a {@link Function function}, the function result is always
+ *     copied to the calling context.
  *     [code]
  *     @StackSafe
  *     public class LargeInteger implements ValueType {
  *         static final Function<LargeInteger, LargeInteger> SQRT = new Function<LargeInteger, LargeInteger>() {
- *             public LargeInteger evaluate(LargeInteger that) {
+ *             public LargeInteger apply(LargeInteger that) {
  *                 LargeInteger result = ZERO;
  *                 LargeInteger k = that.shiftRight(this.bitLength() / 2)); // First approximation.
  *                 while (true) { // Newton Iteration.
  *                     result = (k.plus(this.divide(k))).shiftRight(1);
- *                     if (result.equals(k)) return result; // Exports result.
+ *                     if (result.equals(k)) return result; 
  *                     k = result;
  *                 }
  *             }
  *         });
- *         public LargeInteger sqrt() {
- *             return StackContext.execute(SQRT, this); // Does not generate garbage on RTSJ platforms!
+ *         public LargeInteger sqrt() { // Temporary objects on the stack on RTSJ VM.
+ *             return StackContext.execute(SQRT, this); // Result copied to current context.
  *         }
  *     }[/code]</p>
  * 

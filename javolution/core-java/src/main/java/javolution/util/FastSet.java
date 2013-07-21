@@ -12,6 +12,7 @@ import static javolution.lang.RealTime.Limit.CONSTANT;
 
 import java.util.Set;
 
+import javolution.internal.util.map.FastMapImpl;
 import javolution.internal.util.set.FilteredSetImpl;
 import javolution.internal.util.set.SharedSetImpl;
 import javolution.internal.util.set.UnmodifiableSetImpl;
@@ -55,7 +56,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * specified comparator for key equality.
     */
     public FastSet(EqualityComparator<? super E> comparator) {
-        service = new FastMap<E, Void>().keySet().service();
+        service = new FastMapImpl<E, Void>(comparator, Comparators.IDENTITY).keySet();
     }
 
     /**

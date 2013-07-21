@@ -10,7 +10,6 @@ package javolution.internal.util.table;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.internal.util.UnmodifiableIteratorImpl;
 import javolution.internal.util.collection.UnmodifiableCollectionImpl;
@@ -22,7 +21,7 @@ import javolution.util.service.TableService;
 /**
  * An unmodifiable view over a table.
  */
-public final class UnmodifiableTableImpl<E> implements TableService<E>,
+public class UnmodifiableTableImpl<E> implements TableService<E>,
         Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
@@ -49,6 +48,11 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
 
     @Override
     public void addLast(E element) {
+        throw new UnsupportedOperationException("Unmodifiable");
+    }
+
+    @Override
+    public void atomic(Runnable update) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
@@ -81,11 +85,6 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     @Override
     public E getLast() {
         return target.getLast();
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override
@@ -147,5 +146,9 @@ public final class UnmodifiableTableImpl<E> implements TableService<E>,
     @Override
     public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
         return UnmodifiableCollectionImpl.splitOf(target, n);
+    }
+    
+    protected TableService<E> target() {
+        return target;
     }
 }

@@ -11,12 +11,12 @@ package javolution.internal.util.table;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.lang.MathLib;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -25,9 +25,24 @@ import javolution.util.service.TableService;
  * This implementation ensures that no more than 3/4 of the table capacity is
  * ever wasted.
  */
-public final class FastTableImpl<E> implements TableService<E>, Serializable {
+public class FastTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
+
+    /**
+     * Populates this table with the elements specified.
+     */
+    public FastTableImpl<E> addAll(CollectionService<E> elements) {
+        elements.forEach(new Consumer<E>() {
+
+            @Override
+            public void accept(E e) {
+                FastTableImpl.this.add(e);
+            }
+        }, IterationController.SEQUENTIAL);
+        return this;
+
+    }
 
     @SuppressWarnings("unchecked")
     static <E> TableService<E>[] splitOf(TableService<E> table, int n) {
@@ -47,7 +62,7 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
         subTables[length - 1] = new SubTableImpl<E>(table, start, size - start);
         return subTables;
     }
-    
+
     private int capacity; // Actual memory allocated is usually far less than
                           // capacity since inner fractal tables can be null.
     private final EqualityComparator<? super E> comparator;
@@ -107,6 +122,11 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
+    public void atomic(Runnable update) {
+        update.run();
+    }
+
+    @Override
     public EqualityComparator<? super E> comparator() {
         return comparator;
     }
@@ -150,11 +170,6 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
         if (size == 0)
             emptyError();
         return get(size - 1);
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return null;
     }
 
     @Override
@@ -301,4 +316,5 @@ public final class FastTableImpl<E> implements TableService<E>, Serializable {
         fractal = (fractal == null) ? new FractalTableImpl() : fractal.upsize();
         capacity = fractal.capacity();
     }
+
 }

@@ -17,6 +17,14 @@ package javolution.util.service;
 public interface SortedTableService<E> extends TableService<E> {
 
     /** 
+     * Adds the specified element only if not already present.
+     *  
+     * @return the index of the element added or the index of the element 
+     *         already present.
+     */
+    int addIfAbsent(E element);
+
+    /** 
      * Returns the index of the specified element or -1 if not present.
      */
     int indexOf(E element);

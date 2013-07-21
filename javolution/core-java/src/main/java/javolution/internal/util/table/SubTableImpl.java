@@ -11,7 +11,6 @@ package javolution.internal.util.table;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
@@ -21,14 +20,18 @@ import javolution.util.service.TableService;
 /**
  * A view over a portion of a table. 
  */
-public final class SubTableImpl<E> implements TableService<E>, Serializable {
+public class SubTableImpl<E> implements TableService<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private int fromIndex;
+    protected int fromIndex;
+    protected int toIndex;
     private final TableService<E> target;
-    private int toIndex;
 
     public SubTableImpl(TableService<E> target, int fromIndex, int toIndex) {
+        if ((fromIndex < 0) || (toIndex > target.size()) || (fromIndex > toIndex))
+            throw new IndexOutOfBoundsException(
+                    "fromIndex: " + fromIndex + ", toIndex: " + toIndex + 
+                    ", size(): " + target.size()); // As per List.subList contract.
         this.target = target;
         this.fromIndex = fromIndex;
         this.toIndex = toIndex;
@@ -54,6 +57,11 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     @Override
     public void addLast(E element) {
         add(size(), element);
+    }
+
+    @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
     }
 
     @Override
@@ -106,11 +114,6 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
-    }
-
-    @Override
     public Iterator<E> iterator() {
         return new TableIteratorImpl<E>(this, 0);
     }
@@ -129,12 +132,12 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     public E pollFirst() {
         return (size() == 0) ? null : removeFirst();
     }
-
+    
     @Override
     public E pollLast() {
         return (size() == 0) ? null : removeLast();
     }
-    
+
     @Override
     public E remove(int index) {
         if ((index < 0) && (index >= size())) indexError(index);
@@ -193,19 +196,23 @@ public final class SubTableImpl<E> implements TableService<E>, Serializable {
     public int size() {
         return toIndex - fromIndex;
     }
-
+    
     @Override
     public TableService<E>[] trySplit(int n) {
         return FastTableImpl.splitOf(this, n);
     }
-    
+
+    protected TableService<E> target() {
+        return target;
+    }
+
     /** Throws NoSuchElementException */
-    private void emptyError() {
+    protected void emptyError() {
         throw new NoSuchElementException("Empty Table");
     }
 
-      /** Throws IndexOutOfBoundsException */
-    private void indexError(int index) {
+    /** Throws IndexOutOfBoundsException */
+    protected void indexError(int index) {
         throw new IndexOutOfBoundsException("index: " + index + ", size: "
                 + size());
     }

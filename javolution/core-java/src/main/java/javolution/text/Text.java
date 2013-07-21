@@ -726,7 +726,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
      */
     public Text intern() {
         final Text[] interned = new Text[1];
-        INTERN.atomicWrite(new Runnable() {
+        INTERN.atomic(new Runnable() {
 
             @Override
             public void run() {

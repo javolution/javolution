@@ -9,7 +9,6 @@
 package javolution.internal.util.collection;
 
 import java.util.Iterator;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
@@ -38,6 +37,11 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E>
     }
 
     @Override
+    public void atomic(Runnable update) {
+        target.atomic(update);
+    }
+    
+    @Override
     public EqualityComparator<? super E> comparator() {
         return target.comparator();
     }
@@ -62,11 +66,6 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E>
                 return controller.isTerminated();
             }
         });
-    }
-
-    @Override
-    public ReadWriteLock getLock() {
-        return target.getLock();
     }
 
     @Override
