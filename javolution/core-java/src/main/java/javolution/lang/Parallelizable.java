@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
  *     Immutable} are usually parallelizable and mutex-free.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see <a href="http://en.wikipedia.org/wiki/Mutual_exclusion">Wikipedia: Mutual Exclusion</a>
  */
 @Documented

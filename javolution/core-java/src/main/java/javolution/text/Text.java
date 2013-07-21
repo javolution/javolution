@@ -59,7 +59,7 @@ import javolution.xml.XMLSerializable;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @RealTime
 public final class Text implements CharSequence, Comparable<CharSequence>,

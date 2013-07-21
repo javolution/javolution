@@ -13,21 +13,20 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 
 /**
- *  <p> A light OSGi framework which to run bundles as "standard" 
- *      java applications (for testing/debugging purpose).
- *      It requires that the bundle activator classes are accessible (public)
+ *  <p> A light-weight OSGi run-time to run OSGi bundles in a standard 
+ *     Java application/applet/test.
  * [code]
  * public void main(String[] args) throws Exception {
  *     OSGi osgi = OSGi.newInstance();
  *     osgi.start("Javolution", new javolution.internal.osgi.JavolutionActivator());
  *     osgi.start("Foo", new org.foo.internal.osgi.FooActivator());
  *     ...
- *    osgi.stop("Javolution");
- *    osgi.stop("Foo");
- * }
- * [/code]</p>
+ *     osgi.stop("Javolution");
+ *     osgi.stop("Foo");
+ * }[/code]</p>
+ * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public abstract class OSGi {
 

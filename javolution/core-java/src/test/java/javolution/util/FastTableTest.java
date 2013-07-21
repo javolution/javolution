@@ -344,6 +344,7 @@ public class FastTableTest {
                 }
                 case 6: {
                     test = "Test peekFirst/peekLast/element/pop/push/pollFirst/pollLast";
+                    deque.push(random.nextInt());
                     deque.addFirst(deque.peekLast());
                     deque.addLast(deque.peekFirst());
                     deque.add(deque.element());

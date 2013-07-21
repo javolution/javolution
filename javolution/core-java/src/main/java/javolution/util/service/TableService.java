@@ -12,7 +12,7 @@ package javolution.util.service;
  * The set of related functionalities used to implement tables collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public interface TableService<E> extends CollectionService<E> {
 
@@ -58,25 +58,25 @@ public interface TableService<E> extends CollectionService<E> {
 
     /**
      * Retrieves, but does not remove, the first element of this table,
-     * or returns {@link null} if this table is empty (atomic operation).
+     * or returns {@code null} if this table is empty (atomic operation).
      */
     E peekFirst();
 
     /**
      * Retrieves, but does not remove, the last element of this table,
-     * or returns {@link null} if this table is empty (atomic operation).
+     * or returns {@code null} if this table is empty (atomic operation).
      */
     E peekLast();
 
     /**
      * Retrieves and removes the first element of this table,
-     * or returns {@link null} if this table is empty (atomic operation).
+     * or returns {@code null} if this table is empty (atomic operation).
      */
     E pollFirst();
 
     /**
      * Retrieves and removes the last element of this table,
-     * or returns {@link null} if this table is empty (atomic operation).
+     * or returns {@code null} if this table is empty (atomic operation).
      */
     E pollLast();
 

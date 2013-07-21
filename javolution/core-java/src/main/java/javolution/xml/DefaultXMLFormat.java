@@ -43,7 +43,7 @@ import java.lang.annotation.Target;
  * }[/code] 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @Documented
 @Inherited

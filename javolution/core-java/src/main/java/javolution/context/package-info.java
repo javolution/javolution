@@ -1,5 +1,5 @@
 /**
-<p> Provides execution {@link javolution.context.AbstractContext contexts} to facilitate 
+<p> Run-time {@link javolution.context.AbstractContext contexts} to facilitate 
     separation of concerns and achieve higher level of performance and flexibility.</p>
 
 <h2><a name="OVERVIEW">Separation of Concerns</a></h2>

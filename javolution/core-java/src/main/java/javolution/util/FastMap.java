@@ -64,7 +64,7 @@ import javolution.util.service.MapService;
  *      guarantees that the map source cannot be modified.</p>      
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @RealTime
 @Parallelizable(mutexFree = false, comment = "When using shared views.")
@@ -114,21 +114,24 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      */
 
     /**
-     * Returns an unmodifiable view of this map.
-     * Attempts to modify the map returned or the map elements (keys, values or 
-     * entries) results in an {@link UnsupportedOperationException} being thrown. 
+     * Returns an unmodifiable view over this map. Any attempt to 
+     * modify the map through this view will result into 
+     * a {@link java.lang.UnsupportedOperationException} being raised.
      */
     public FastMap<K, V> unmodifiable() {
         return new FastMap<K, V>(new UnmodifiableMapImpl<K, V>(service));
     }
 
-    /**
-     * Returns a thread-safe view over this map allowing 
-     * concurrent read without blocking and concurrent write possibly 
-     * blocking. All updates performed on this map are atomic as far as 
-     * this map's readers are concerned. To perform complex actions on a 
-     * shared map in an atomic manner, the {@link #atomicRead atomicRead} /
-     * {@link #atomicWrite atomicWrite} method should be used.
+   /**
+     * Returns a thread-safe view over this map. The shared view 
+     * uses <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+     * readers–writer locks</a> allowing concurrent read without blocking. 
+     * Since only write operation may introduce blocking, in case of 
+     * infrequent updates it may be judicious to use {@link #toImmutable()
+     * immutable} maps to be replaced at each update rather than shared views.
+     * 
+     * @see <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+     *      Readers–writer lock</a> 
      */
     public FastMap<K, V> shared() {
         return new FastMap<K, V>(new SharedMapImpl<K, V>(service));
@@ -258,8 +261,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      * Executes the specified update in an atomic manner.
      * Either the readers (including closure-based iterations) see the full 
      * effect of the update or nothing.
-     * This method is relevant only for {@link #shared shared} or
-     * {@link #parallel parallel} maps.
+     * This method is relevant only for {@link #shared shared} maps.
      *  
      * @param update the update action to be executed on this map.
      */

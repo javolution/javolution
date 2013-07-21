@@ -87,7 +87,7 @@ import javolution.util.service.TableService;
  *      is based on the table element order.</p> 
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
@@ -392,7 +392,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
-     * Replaced by {@link #subTable(int, int)
+     * Replaced by  {@link #subTable(int, int)}
      */
     @Override
     @Deprecated 

@@ -42,15 +42,15 @@ import java.lang.annotation.Target;
  * <p> Analysis tools / compilers may produce warnings if program elements 
  *     use or override elements with incompatible real-time characteristics.</p>
  *     
- * <p> Note: For multi-cores systems, if a real-time element is {@link Parellizable}
- *     but not {@link Parellizable#mutexFree() mutex-free}, response 
+ * <p> Note: For multi-cores systems, if a real-time element is {@link  Parallelizable}
+ *     but not {@link  Parallelizable#mutexFree() mutex-free}, response 
  *     time even for high priority threads may be unbounded due to 
  *     <a href="http://en.wikipedia.org/wiki/Priority_inversion">priority 
  *     inversion</a>. This is no longer the case when running on real-time 
  *     VMs due to their support for priority inheritance.</p>
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see <a href="http://en.wikipedia.org/wiki/Real-time_computing">Real-Time Computing</a>
  */
 @Documented

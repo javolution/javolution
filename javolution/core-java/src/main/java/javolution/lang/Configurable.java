@@ -40,7 +40,7 @@ import javolution.context.SecurityContext;
  *      from the system properties, etc. Low level code does not need to know.</p>
  *  *       
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see     javolution.osgi.ConfigurableService
  */
 @RealTime

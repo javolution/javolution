@@ -1,5 +1,5 @@
 /**
-<p> Light-weight OSGi framework as well as utility service classes.</p>
+<p> Light-weight OSGi framework and utility services.</p>
  */
 package javolution.osgi;
 

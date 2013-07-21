@@ -8,7 +8,7 @@
  */
 package javolution.util;
 
-import javolution.context.LocalParameter;
+import javolution.context.LocalContext;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 
@@ -22,7 +22,8 @@ public class Perfometer {
     /**
      * Hold the measure time duration in nanosecond.
      */
-    public static final LocalParameter<Long> MEASURE_DURATION_NS = new LocalParameter<Long>(
+    public static final LocalContext.Parameter<Long> MEASURE_DURATION_NS 
+       = new LocalContext.Parameter<Long>(
             1000 * 1000 * 1000L);
 
     /**

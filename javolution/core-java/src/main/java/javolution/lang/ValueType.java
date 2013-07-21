@@ -36,6 +36,6 @@ package javolution.lang;
  *     allocation at all and store values directly in registers.</p> 
  *             
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public interface ValueType<T> extends Immutable<T>, Copyable<T> {}

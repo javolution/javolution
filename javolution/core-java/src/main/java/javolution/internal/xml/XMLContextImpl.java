@@ -22,7 +22,7 @@ import javolution.xml.stream.XMLStreamException;
  * Holds the default implementation of XMLContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @SuppressWarnings("rawtypes")
 public final class XMLContextImpl extends XMLContext {

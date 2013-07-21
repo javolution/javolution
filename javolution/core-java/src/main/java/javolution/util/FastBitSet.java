@@ -25,7 +25,7 @@ import javolution.util.service.BitSetService;
  *     (same set of indices).</p>
  *   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class FastBitSet extends FastSet<Index> {
 
@@ -37,23 +37,10 @@ public class FastBitSet extends FastSet<Index> {
     private final BitSetService service;
 
     /**
-    * Creates an empty bit set whose capacity increments/decrements smoothly
-    * without large resize operations to best fit the set current size.
+    * Creates an empty bit set.
     */
     public FastBitSet() {
-        service = new BitSetServiceImpl(0);
-    }
-
-    /**
-     * Creates a bit set of specified initial capacity (in bits). 
-     * All bits are initially {@code false}.  This
-     * constructor reserves enough space to represent the indices 
-     * from {@code 0} to {@code bitSize-1}.
-     * 
-     * @param bitSize the initial capacity in bits.
-     */
-    public FastBitSet(int bitSize) {
-        service = new BitSetServiceImpl(bitSize);
+        service = new BitSetServiceImpl();
     }
 
     /**

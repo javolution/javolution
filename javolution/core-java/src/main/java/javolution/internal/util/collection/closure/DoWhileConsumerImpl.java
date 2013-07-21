@@ -16,7 +16,7 @@ import javolution.util.service.CollectionService.IterationController;
  * The consumer to perform {@code doWhile(predicate)} collections iterations.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public final class DoWhileConsumerImpl<E> implements Consumer<E>,
         IterationController {

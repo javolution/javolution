@@ -57,7 +57,7 @@ import javolution.lang.RealTime;
  *     one thread (the entering thread) configure them.</p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @RealTime
 @Parallelizable(comment="Sequential configuration, parallel use")

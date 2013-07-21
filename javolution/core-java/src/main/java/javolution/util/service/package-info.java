@@ -1,5 +1,6 @@
 /**
-<p> Defines the service interfaces to support {@link javolution.util} classes.</p> 
+<p> Service interfaces to be implemented by {@code javolution.util.*} 
+    collections and collections views.</p> 
  */
 package javolution.util.service;
 

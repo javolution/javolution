@@ -99,7 +99,7 @@ import javolution.util.service.CollectionService.IterationController;
  * <p>[code]
  * FastTable<String> names = new FastTable<String>().addAll("Oscar Thon", "Eva Poret", "Paul Auchon");
  * boolean found = names.comparator(Comparators.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
- * names.subList(0, n).clear(); // Removes the n first names (see java.util.List).
+ * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
  * names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
  * names.filtered(isLong).clear(); // Removes all the persons with long names.
  * names.parallel().filtered(isLong).clear(); // Same as above but performed concurrently.
@@ -155,7 +155,7 @@ import javolution.util.service.CollectionService.IterationController;
  * [/code]</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 @RealTime
 @Parallelizable(mutexFree = false, comment = "Shared/Parallel views use read-write locks, CopyOnWrite views have mutex-free access.")
@@ -189,7 +189,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      * readers–writer locks</a> allowing concurrent read without blocking. 
      * Since only write operation may introduce blocking, in case of 
      * infrequent updates it may be judicious to use {@link #toImmutable()
-     * immutable} collections rather than shared views.
+     * immutable} collections to be replaced at each update rather than shared views.
      * 
      * @see <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
      *      Readers–writer lock</a> 
@@ -302,7 +302,7 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     /** 
      * Iterates over this collection elements applying the specified predicate
-     * until that predicate returns {@link false} (if the collection is 
+     * until that predicate returns {@code false} (if the collection is 
      * {@link #parallel() parallel} all concurrent iterations will terminate then).
      * 
      * @param doContinue the functional predicate applied to the collection elements.

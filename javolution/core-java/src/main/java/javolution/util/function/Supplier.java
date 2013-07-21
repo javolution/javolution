@@ -18,7 +18,7 @@ package javolution.util.function;
  * @param <T> The type of result this supplier returns.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public interface Supplier<T> {
 

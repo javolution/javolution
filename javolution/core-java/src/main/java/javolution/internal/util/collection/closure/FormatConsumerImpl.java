@@ -19,7 +19,7 @@ import javolution.util.service.CollectionService.IterationController;
  * The consumer to format the collection element into an appendable.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public final class FormatConsumerImpl implements Consumer<Object>,
         IterationController {
@@ -66,7 +66,11 @@ public final class FormatConsumerImpl implements Consumer<Object>,
                     type = obj.getClass();
                     textFormat = TextContext.getFormat(type);
                 }
-                textFormat.format(obj, appendable);
+                if (textFormat == null) { // No format associated.
+                    appendable.append(obj.toString());
+                } else {
+                    textFormat.format(obj, appendable);
+                }
             } else {
                 appendable.append("null");
             }

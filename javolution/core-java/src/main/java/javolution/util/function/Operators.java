@@ -23,7 +23,7 @@ import javolution.util.service.CollectionService.IterationController;
  * <p> A set of useful {@link CollectionOperator operators} over collections.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see     FastCollection#reduce(CollectionOperator)
  */
 public class Operators {

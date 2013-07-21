@@ -16,7 +16,7 @@ import javolution.context.AbstractContext;
  * A worker thread executing in a concurrent context.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThread
 

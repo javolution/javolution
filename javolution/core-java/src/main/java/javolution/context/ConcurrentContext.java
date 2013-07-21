@@ -168,7 +168,8 @@ public abstract class ConcurrentContext extends AbstractContext {
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalParameter<Integer> CONCURRENCY = new LocalParameter<Integer>(
+    public static final LocalContext.Parameter<Integer> CONCURRENCY 
+    = new LocalContext.Parameter<Integer>(
             Runtime.getRuntime().availableProcessors());
 
     /**

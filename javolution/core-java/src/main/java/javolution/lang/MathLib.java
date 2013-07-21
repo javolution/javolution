@@ -120,27 +120,12 @@ public final class MathLib {
         if (longValue == 0)
             return 64;
         int n = 1;
-        int x = (int) (longValue >>> 32);
-        if (x == 0) {
-            n += 32;
-            x = (int) longValue;
-        }
-        if (x >>> 16 == 0) {
-            n += 16;
-            x <<= 16;
-        }
-        if (x >>> 24 == 0) {
-            n += 8;
-            x <<= 8;
-        }
-        if (x >>> 28 == 0) {
-            n += 4;
-            x <<= 4;
-        }
-        if (x >>> 30 == 0) {
-            n += 2;
-            x <<= 2;
-        }
+        int x = (int)(longValue >>> 32);
+        if (x == 0) { n += 32; x = (int)longValue; }
+        if (x >>> 16 == 0) { n += 16; x <<= 16; }
+        if (x >>> 24 == 0) { n +=  8; x <<=  8; }
+        if (x >>> 28 == 0) { n +=  4; x <<=  4; }
+        if (x >>> 30 == 0) { n +=  2; x <<=  2; }
         n -= x >>> 31;
         return n;
     }
@@ -155,38 +140,16 @@ public final class MathLib {
      */
     public static int numberOfTrailingZeros(long longValue) {
         // From Hacker's Delight
-        if (longValue == 0)
-            return 64;
         int x, y;
+        if (longValue == 0) return 64;
         int n = 63;
-        y = (int) longValue;
-        if (y != 0) {
-            n = n - 32;
-            x = y;
-        } else
-            x = (int) (longValue >>> 32);
-        y = x << 16;
-        if (y != 0) {
-            n = n - 16;
-            x = y;
-        }
-        y = x << 8;
-        if (y != 0) {
-            n = n - 8;
-            x = y;
-        }
-        y = x << 4;
-        if (y != 0) {
-            n = n - 4;
-            x = y;
-        }
-        y = x << 2;
-        if (y != 0) {
-            n = n - 2;
-            x = y;
-        }
+        y = (int)longValue; if (y != 0) { n = n -32; x = y; } else x = (int)(longValue>>>32);
+        y = x <<16; if (y != 0) { n = n -16; x = y; }
+        y = x << 8; if (y != 0) { n = n - 8; x = y; }
+        y = x << 4; if (y != 0) { n = n - 4; x = y; }
+        y = x << 2; if (y != 0) { n = n - 2; x = y; }
         return n - ((x << 1) >>> 31);
-    }
+      }
 
     /**
      * Returns the number of digits of the decimal representation of the 

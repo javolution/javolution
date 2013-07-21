@@ -35,7 +35,7 @@ import java.util.Comparator;
  * @param <T> the type of objects that may be compared for equality or order.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see Comparators
  */
 public interface EqualityComparator<T> extends Comparator<T> {

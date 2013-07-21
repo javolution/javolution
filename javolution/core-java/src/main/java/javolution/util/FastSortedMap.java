@@ -29,7 +29,7 @@ import javolution.util.service.SortedMapService;
  *     using custom {@link #FastSortedMap(EqualityComparator) comparators}.</p>
  *        
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class FastSortedMap<K, V> extends FastMap<K, V> implements
         SortedMap<K, V> {

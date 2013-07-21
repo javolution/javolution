@@ -42,4 +42,9 @@ final class FastSortedMapEntryImpl<K,V> implements Map.Entry<K, V>, Serializable
         this.value = value;
         return oldValue;
     }    
+
+    @Override
+    public String toString() {
+        return key + "=" + value;
+    }
 }

@@ -16,7 +16,7 @@ package javolution.util.function;
  * @param <R> the type of the result of the apply operation.
  *                   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see <a href="http://en.wikipedia.org/wiki/Function_(computer_science)">Wikipedia: Function<a>    
  */
 public interface Function<T, R> {

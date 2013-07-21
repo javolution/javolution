@@ -16,7 +16,7 @@ import javolution.util.function.Function;
  * Holds the default implementation of StackContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public final class StackContextImpl extends StackContext {
 

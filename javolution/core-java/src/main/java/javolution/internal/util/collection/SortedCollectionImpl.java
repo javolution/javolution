@@ -10,8 +10,9 @@ package javolution.internal.util.collection;
 
 import java.util.Iterator;
 
+import javolution.internal.util.UnmodifiableIteratorImpl;
+import javolution.internal.util.table.sorted.FastSortedTableImpl;
 import javolution.util.FastCollection;
-import javolution.util.FastTable;
 import javolution.util.function.Consumer;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
@@ -48,18 +49,23 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
     @Override
     public void forEach(Consumer<? super E> consumer,
             IterationController controller) {
-        FastTable<E> sorted = new FastTable<E>(target.comparator());
-        sorted.addAll(this);
-        sorted.sort(); // Quick-sort.
-        FastCollection.serviceOf(sorted).forEach(consumer, controller);
+        sortedCopy().forEach(consumer, controller);
+    }
+    private FastSortedTableImpl<E> sortedCopy() {
+        final FastSortedTableImpl<E> sorted = new FastSortedTableImpl<E>(target.comparator());
+        target.forEach(new Consumer<E>() {
+
+            @Override
+            public void accept(E e) {
+                sorted.add(e);
+                
+            }}, IterationController.SEQUENTIAL);
+       return sorted; 
     }
 
     @Override
     public Iterator<E> iterator() {
-        FastTable<E> sorted = new FastTable<E>(target.comparator());
-        sorted.addAll(this);
-        sorted.sort(); // Quick-sort.
-        return sorted.unmodifiable().iterator();
+        return new UnmodifiableIteratorImpl<E>(sortedCopy().iterator());
     }
 
     @Override
@@ -73,9 +79,8 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> implements
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public SortedCollectionImpl<E>[] trySplit(int n) {
-        return new SortedCollectionImpl[] { this }; // Does not make sense to split.
+    public SplitCollectionImpl<E>[] trySplit(int n) {
+        return SplitCollectionImpl.splitOf(this, n);
     }
 }

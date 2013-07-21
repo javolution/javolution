@@ -21,7 +21,7 @@ import org.osgi.service.log.LogService;
  * Holds the default implementation of LogContext.
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public final class LogContextImpl extends LogContext {
 

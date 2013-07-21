@@ -31,7 +31,7 @@ package javolution.lang;
  *      Wikipedia: Immutable Object<a>    
  * @see javolution.util.FastCollection#toImmutable
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public interface Immutable<T> {
     

@@ -1,5 +1,5 @@
 /**
-<p> Fundamental classes and interfaces.</p>
+<p> Fundamental classes, interfaces and annotations.</p>
  */
 package javolution.lang;
 

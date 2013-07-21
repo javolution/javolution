@@ -17,7 +17,7 @@ import javolution.util.Index;
  * implement bit-sets collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  * @see FastTable
  */
 public interface BitSetService extends SetService<Index> {
@@ -109,8 +109,8 @@ public interface BitSetService extends SetService<Index> {
     // Misc.
     //
 
-    /** Returns the <code>long[]</code> representation of this bitset 
-     * (new array) */
+    /** Returns the minimal length <code>long[]</code> representation of this 
+     * bitset. */
     long[] toLongArray();
 
 }

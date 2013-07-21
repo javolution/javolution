@@ -32,7 +32,7 @@ import javolution.util.service.SetService;
  *     This class permits {@code null} elements.</p>
  *      
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class FastSet<E> extends FastCollection<E> implements Set<E> {
 

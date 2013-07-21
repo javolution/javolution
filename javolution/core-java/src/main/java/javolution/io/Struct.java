@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import javolution.context.LocalParameter;
+import javolution.context.LocalContext;
 import javolution.lang.MathLib;
 import javolution.text.TextBuilder;
 
@@ -152,8 +152,8 @@ public class Struct {
      * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final LocalParameter<Integer> MAXIMUM_ALIGNMENT = new LocalParameter<Integer>(
-            4);
+    public static final LocalContext.Parameter<Integer> MAXIMUM_ALIGNMENT 
+        = new LocalContext.Parameter<Integer>(4);
 
     /**
      * Holds the outer struct if any.

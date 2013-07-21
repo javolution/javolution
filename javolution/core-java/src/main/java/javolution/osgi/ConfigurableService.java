@@ -26,23 +26,23 @@ import org.osgi.service.cm.ManagedService;
 
  *  <p> Bundles holding {@link Configurable} elements should register 
  *      a {@link ConfigurableService} to the framework as a ManagedService.
- *      [code]
- *      public class MyBundleActivator implements BundleActivator {
- *          ServiceRegistration<ManagedService> registration;
- *          public void start(BundleContext bc) throws Exception {
- *              ConfigurableService cs = new ConfigurableService("mypid"); // Note: PID for Javolution is "javolution"
- *              registration = bc.registerService(ManagedService.class, cs, cs.getProperties());
- *          }
- *          public void stop(BundleContext context) throws Exception {
- *              if (registration != null) {
- *                  registration.unregister();
- *                  registration = null;
- *              }
- *          }
- *      }[/code]</p>
+ * [code]
+ * public class MyBundleActivator implements BundleActivator {
+ *     ServiceRegistration<ManagedService> registration;
+ *     public void start(BundleContext bc) throws Exception {
+ *         ConfigurableService cs = new ConfigurableService("mypid"); // Note: PID for Javolution is "javolution"
+ *         registration = bc.registerService(ManagedService.class, cs, cs.getProperties());
+ *     }
+ *     public void stop(BundleContext context) throws Exception {
+ *        if (registration != null) {
+ *             registration.unregister();
+ *             registration = null;
+ *        }
+ *    }
+ * }[/code]</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, December 12, 2012
+ * @version 6.0, July 21, 2013
  */
 public class ConfigurableService implements ManagedService {
 
@@ -68,9 +68,6 @@ public class ConfigurableService implements ManagedService {
 
     /**
      * Updates the configurable elements using the specified configuration.
-     * 
-     * @param configuration
-     * @throws ConfigurationException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void updated(Dictionary<String, ?> configuration)
