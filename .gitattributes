@@ -264,7 +264,6 @@ javolution/core-java/src/main/java/javolution/context/FormatContext.java -text s
 javolution/core-java/src/main/java/javolution/context/HeapContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ImmortalContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/LocalContext.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/context/LocalParameter.java -text
 javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
