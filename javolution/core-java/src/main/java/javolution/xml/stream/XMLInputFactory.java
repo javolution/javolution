@@ -8,47 +8,64 @@
  */
 package javolution.xml.stream;
 
-import javolution.internal.xml.stream.XMLInputFactoryImpl;
 import java.io.InputStream;
 import java.io.Reader;
 
-/**
- * <p> The class represents the factory for getting {@link XMLStreamReader}
- *     intances.
-  *     
- * <P> Usage example:[code]
- * 
- *     // Lets read a CharSequence input.
- *     String xml = "...";
- *     CharSequenceReader in = new CharSequenceReader().setInput(xml);
+import javolution.lang.Copyable;
+import javolution.lang.Parallelizable;
 
- *     // Creates a factory of readers coalescing adjacent character data.
- *     XMLInputFactory factory = XMLInputFactory.newInstance();
- *     factory.setProperty(XMLInputFactory.IS_COALESCING, true);
+/**
+ * <p> The OSGi factory service to create {@link XMLStreamReader} instances.
+ *     For each bundle, a distinct factory instance is returned and can be 
+ *     individually configured. 
+ * [code]
+ * import javolution.xml.stream.*;
+ * public class Activator implements BundleActivator { 
+ *     public void start(BundleContext bc) throws Exception {
  *     
- *     // Creates a new reader.
- *     XMLStreamReader reader = factory.createXMLStreamReader(in);
+ *         // Configures factory. 
+ *         ServiceTracker<XMLInputFactory, XMLInputFactory> tracker 
+ *             = new ServiceTracker<>(bc, XMLInputFactory.class, null);
+ *         tracker.open();
+ *         tracker.getService().setProperty(IS_COALESCING, true);
+ *         
+ *         // Instantiates a reader.
+ *         String xml = "<test>This is a test</test>";
+ *         CharSequenceReader in = new CharSequenceReader().setInput(xml);
+ *         XMLStreamReader reader = tracker.getService().createXMLStreamReader(in);
  *     
- *     // Parses XML.
- *     for (int e=reader.next(); e != XMLStreamConstants.END_DOCUMENT; e = reader.next()) {
- *         switch (e) { // Event.
- *             ...
+ *         // Parses XML.
+ *         while (reader.hasNext()) {
+ *              int eventType = reader.next();
+ *              if (eventType == XMLStreamConstants.CHARACTERS) {
+ *                  System.out.println(reader.getText());
+ *              }
  *         }
+ *         
+ *         // Closes the reader which may be recycled back to the factory.
+ *         reader.close();
  *     }
- *     reader.close(); // Automatically recycles this writer. 
- *     in.close(); // Underlying input should be closed explicitly.
- *     [/code]</p>
+ * }[/code]</p>
+ * 
+ * <p> Bundles requiring multiple factories or stack-allocated 
+ *     instances may create new factories through {@link Copyable copy}.</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, September 4, 2006
+ * @version 6.0 December 12, 2012
  */
-public abstract class XMLInputFactory {
+@Parallelizable(comment="Factory configuration should be performed sequentially.")
+public interface XMLInputFactory extends Copyable<XMLInputFactory>{
 
     /**
      * The property that requires the parser to coalesce adjacent character data
-     * sections (type: <code>Boolean</code>, default: <code>FALSE</code>)
+     * sections.
      */
     public static final String IS_COALESCING = "javolution.xml.stream.isCoalescing";
+
+    /**
+     * The property that requires the parser to validate the input data.
+     */
+    public static final String IS_VALIDATING = "javolution.xml.stream.isValidating";
 
     /**
      * Property used to specify additional entities to be recognized by the 
@@ -59,27 +76,11 @@ public abstract class XMLInputFactory {
      *     HTML_ENTITIES.put("copy", "©");
      *     HTML_ENTITIES.put("eacute", "é");
      *     ...
-     *     XMLInputFactory factory = XMLInputFactory.newInstance();
+     *     XMLInputFactory factory = factoryRef.getService();
      *     factory.setProperty(ENTITIES, HTML_ENTITIES);
      * [/code]
      */
     public static final String ENTITIES = "javolution.xml.stream.entities";
-
-    /**
-     * Default constructor.
-     */
-    protected XMLInputFactory() {}
-
-    /**
-     * Returns a new instance of the input factory
-     * implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}).
-     * 
-     * @return a new factory instance.
-     */
-    public static XMLInputFactory newInstance() {
-        return new XMLInputFactoryImpl();
-    }
 
     /**
      * Returns a XML stream reader for the specified I/O reader.
@@ -87,7 +88,7 @@ public abstract class XMLInputFactory {
      * @param reader the XML data to read from.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamReader createXMLStreamReader(Reader reader)
+    XMLStreamReader createXMLStreamReader(Reader reader)
             throws XMLStreamException;
 
     /**
@@ -95,9 +96,10 @@ public abstract class XMLInputFactory {
      * (encoding autodetected).
      * 
      * @param stream the input stream to read from.
+     * @return a xml stream reader possibly recycled.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamReader createXMLStreamReader(InputStream stream)
+    XMLStreamReader createXMLStreamReader(InputStream stream)
             throws XMLStreamException;
 
     /**
@@ -106,9 +108,10 @@ public abstract class XMLInputFactory {
      * 
      * @param stream the input stream to read from.
      * @param encoding the character encoding of the stream.
+     * @return a xml stream reader possibly recycled.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamReader createXMLStreamReader(InputStream stream,
+    XMLStreamReader createXMLStreamReader(InputStream stream,
             String encoding) throws XMLStreamException;
 
     /**
@@ -122,8 +125,7 @@ public abstract class XMLInputFactory {
      * @param value the value of the property
      * @throws IllegalArgumentException if the property is not supported.
      */
-    public abstract void setProperty(String name, Object value)
-            throws IllegalArgumentException;
+    void setProperty(String name, Object value) throws IllegalArgumentException;
 
     /**
      * Gets the value of a feature/property from the underlying implementation.
@@ -132,8 +134,7 @@ public abstract class XMLInputFactory {
      * @return the value of the property.
      * @throws IllegalArgumentException if the property is not supported.
      */
-    public abstract Object getProperty(String name)
-            throws IllegalArgumentException;
+    Object getProperty(String name) throws IllegalArgumentException;
 
     /**
      * Queries the set of properties that this factory supports.
@@ -142,5 +143,6 @@ public abstract class XMLInputFactory {
      * @return <code>true</code> if the property is supported;
      *         <code>false</code> otherwise.
      */
-    public abstract boolean isPropertySupported(String name);
+    boolean isPropertySupported(String name);
+  
 }

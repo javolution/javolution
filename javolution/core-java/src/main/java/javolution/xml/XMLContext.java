@@ -8,11 +8,9 @@
  */
 package javolution.xml;
 
-import static javolution.internal.osgi.JavolutionActivator.XML_CONTEXT_TRACKER;
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
-import javolution.internal.xml.XMLContextImpl;
-import javolution.lang.Configurable;
+import javolution.osgi.internal.OSGiServices;
 import javolution.text.TextFormat;
 
 /**
@@ -32,22 +30,13 @@ import javolution.text.TextFormat;
  */
 public abstract class XMLContext extends FormatContext {
 
-    /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
-     */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
+     /**
      * Default constructor.
      */
     protected XMLContext() {}
 
     /**
-     * Enters a new xml context instance.
-     * 
-     * @return the new xml context implementation entered.
+     * Enters and returns a new xml context instance.
      */
     public static XMLContext enter() {
         return (XMLContext) XMLContext.currentXMLContext().enterInner();
@@ -80,8 +69,6 @@ public abstract class XMLContext extends FormatContext {
         XMLContext ctx = AbstractContext.current(XMLContext.class);
         if (ctx != null)
             return ctx;
-        return XML_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        return OSGiServices.getXMLContext();
     }
-
-    private static final XMLContextImpl DEFAULT = new XMLContextImpl();
 }

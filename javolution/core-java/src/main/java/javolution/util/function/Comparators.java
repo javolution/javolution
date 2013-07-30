@@ -1,13 +1,13 @@
 package javolution.util.function;
 
-import javolution.internal.util.comparator.ArrayComparatorImpl;
-import javolution.internal.util.comparator.IdentityComparatorImpl;
-import javolution.internal.util.comparator.LexicalCaseInsensitiveComparatorImpl;
-import javolution.internal.util.comparator.LexicalComparatorImpl;
-import javolution.internal.util.comparator.LexicalFastComparatorImpl;
-import javolution.internal.util.comparator.StandardComparatorImpl;
 import javolution.lang.Parallelizable;
 import javolution.lang.RealTime;
+import javolution.util.internal.comparator.ArrayComparatorImpl;
+import javolution.util.internal.comparator.IdentityComparatorImpl;
+import javolution.util.internal.comparator.LexicalCaseInsensitiveComparatorImpl;
+import javolution.util.internal.comparator.LexicalComparatorImpl;
+import javolution.util.internal.comparator.LexicalFastComparatorImpl;
+import javolution.util.internal.comparator.StandardComparatorImpl;
 
 import static javolution.lang.RealTime.Limit.*;
 

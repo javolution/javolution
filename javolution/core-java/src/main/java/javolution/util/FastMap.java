@@ -16,14 +16,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import javolution.internal.util.map.FastMapImpl;
-import javolution.internal.util.map.SharedMapImpl;
-import javolution.internal.util.map.UnmodifiableMapImpl;
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
+import javolution.util.internal.map.FastMapImpl;
+import javolution.util.internal.map.SharedMapImpl;
+import javolution.util.internal.map.UnmodifiableMapImpl;
 import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
@@ -67,7 +67,7 @@ import javolution.util.service.MapService;
  * @version 6.0, July 21, 2013
  */
 @RealTime
-@Parallelizable(mutexFree = false, comment = "When using shared views.")
+@Parallelizable(mutexFree = false, comment = "Shared views may use read-write locks.")
 public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         Serializable {
 

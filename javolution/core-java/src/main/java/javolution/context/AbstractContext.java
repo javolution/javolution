@@ -175,14 +175,15 @@ public abstract class AbstractContext {
 
     /**
      * Enters the scope of an inner context which becomes the current context; 
-     * the previous current context becomes the outer of this context. 
-     * @see #inner
+     * the previous current context becomes the outer of this context.
+     *  
+     * @return the inner context entered.
      */
     protected AbstractContext enterInner() {
         AbstractContext inner = inner();
         inner.outer = AbstractContext.CURRENT.get();
         AbstractContext.CURRENT.set(inner);
-        return this;
+        return inner;
     }
 
     /**

@@ -11,9 +11,10 @@ package javolution.xml;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+
+import javolution.xml.internal.stream.XMLStreamWriterImpl;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamWriter;
-import javolution.internal.xml.stream.XMLStreamWriterImpl;
 
 /**
  * <p> This class takes an object and formats it to XML; the resulting 

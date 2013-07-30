@@ -11,9 +11,10 @@ package javolution.xml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+
+import javolution.xml.internal.stream.XMLStreamReaderImpl;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
-import javolution.internal.xml.stream.XMLStreamReaderImpl;
 
 /**
  * <p> This class restores objects which have been serialized in XML

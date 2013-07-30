@@ -1,0 +1,157 @@
+<BODY>
+<H2><B><I><SPAN CLASS="style0">J</SPAN><SPAN CLASS="style1">avolution</I></B></SPAN> - Java<SUP>TM</SUP> Solution for Real-Time and Embedded Systems.</H2>
+
+<a name="license"></a>
+<h3><b>License:</b></h3>
+<p> Permission to use, copy, modify, and distribute this software is freely granted, 
+    provided that copyright notices are preserved (the full license text can be found 
+    <a href="http://javolution.org/LICENSE.txt">here</a>).</p>
+<p> <b><i>Javolution</i></b>'s users are encouraged to show their support with the
+    <a href="http://javolution.org"><img src="http://javolution.org/src/site/css/img/javolution.png"></a> button.</p>
+
+<a name="overview"></a>
+<h3><b>Overview:</b></h3>
+Although Java<sup>TM</sup> has been very successful on the server-side; It has few shortcomings limiting
+its adoption for others domains such as real-time, embedded or high-performance applications.
+For these, the <b><i>Javolution</i></b> library provides important "pieces" missing
+from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platform even more attractive.
+
+<a name="usage"></a>
+<h3><b>Usage:</b></h3>
+
+<p><b><i>Javolution</i></b> can be used as a standard OSGi bundle.</p>
+
+<div style="background: #ffffff; overflow:auto;width:auto;color:black;background:white;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">
+<span style="color: #7F0055; font-weight: bold">import</span> org.osgi.framework.*;
+<span style="color: #7F0055; font-weight: bold">import</span> org.osgi.util.tracker.ServiceTracker;
+<span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">class</span> MyActivator <span style="color: #7F0055; font-weight: bold">implements</span> BundleActivator { 
+    ServiceTracker&lt;XMLInputFactory, XMLInputFactory&gt; tracker; 
+    <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">void</span> start(BundleContext bc) <span style="color: #7F0055; font-weight: bold">throws</span> Exception {
+        tracker = <span style="color: #7F0055; font-weight: bold">new</span> ServiceTracker&lt;&gt;(bc, XMLInputFactory.<span style="color: #7F0055; font-weight: bold">class</span>, null);
+        tracker.open();
+        parse();
+    }
+    <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">void</span> stop(BundleContext bc) <span style="color: #7F0055; font-weight: bold">throws</span> Exception {
+        tracker.close();
+    }
+    <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">void</span> parse() <span style="color: #7F0055; font-weight: bold">throws</span> XMLStreamException {
+        XMLInputFactory factory = tracker.getService();  
+        factory.setProperty(XMLInputFactory.IS_COALESCING, true); <span style="color: #3F7F5F">// Configures.</span>
+
+        <span style="color: #3F7F5F">// Instantiates a new reader.</span>
+        String xml = <span style="color: #2a00ff">"&lt;test&gt;This is a test&lt;/test&gt;"</span>;
+        CharSequenceReader in = <span style="color: #7F0055; font-weight: bold">new</span> CharSequenceReader().setInput(xml);
+        XMLStreamReader reader = factory.createXMLStreamReader(in);
+       
+        <span style="color: #3F7F5F">// Parses XML.</span>
+       <span style="color: #7F0055; font-weight: bold">while</span> (reader.hasNext()) {
+          <span style="color: #7F0055; font-weight: bold">int</span> eventType = reader.next();
+          <span style="color: #7F0055; font-weight: bold">if</span> (eventType == XMLStreamConstants.CHARACTERS) {
+              System.out.println(reader.getText());
+          }
+       }
+ 
+       <span style="color: #3F7F5F">// Closes the reader which may be recycled back to the factory.</span>
+      reader.close();
+   }          
+}
+</pre></div>
+
+<p> Or as a standard Java library (does not require OSGi runtime).</p>
+
+<div style="background: #ffffff; overflow:auto;width:auto;color:black;background:white;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">
+<span style="color: #7F0055; font-weight: bold">import</span> javolution.osgi.internal.OSGiServices;
+<span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">class</span> Main {
+    <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">static</span> <span style="color: #7F0055; font-weight: bold">void</span> main(String[] args) <span style="color: #7F0055; font-weight: bold">throws</span> XMLStreamException {
+        XMLInputFactory factory = OSGiServices.getXMLInputFactory();  
+        factory.setProperty(XMLInputFactory.IS_COALESCING, true); <span style="color: #3F7F5F">// Configures.</span>
+        
+        <span style="color: #3F7F5F">// Instantiates a reader.</span>
+        String xml = <span style="color: #2a00ff">"&lt;test&gt;This is a test&lt;/test&gt;"</span>;
+        CharSequenceReader in = <span style="color: #7F0055; font-weight: bold">new</span> CharSequenceReader().setInput(xml);
+        XMLStreamReader reader = factory.createXMLStreamReader(in);
+        
+        <span style="color: #3F7F5F">// Parses XML.</span>
+        <span style="color: #7F0055; font-weight: bold">while</span> (reader.hasNext()) {
+           <span style="color: #7F0055; font-weight: bold">int</span> eventType = reader.next();
+           <span style="color: #7F0055; font-weight: bold">if</span> (eventType == XMLStreamConstants.CHARACTERS) {
+              System.out.println(reader.getText());
+           }
+        }
+ 
+        <span style="color: #3F7F5F">// Closes the reader which may be recycled back to the factory.</span>
+        reader.close();
+    }
+}
+</pre></div>
+<a name="services"></a>
+<h3><b>Services:</b></h3>
+<p><b><i>Javolution</i></b> publishes the following OSGi services.</p>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 1000px;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Published Service</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.xml.stream.XMLInputFactory}</td>
+      <td style="vertical-align: top;">StAX-like version of javax.xml.stream.XMLInputFactory avoiding {@code String} allocations.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.xml.stream.XMLOutputFactory}</td>
+      <td style="vertical-align: top;">StAX-like version of javax.xml.stream.XMLOutputFactory using {@code CharSequence} instead of {@code String}</td>
+    </tr>
+  </tbody>
+</table>
+<p> These services can be accessed through the standard OSGi registry 
+      or using {@code javolution.osgi.internal.OSGiServices} when running outside OSGi.</p>
+<p><b><i>Javolution</i></b> will use the following OSGi services implementations if published.</p>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 1000px;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Subscribed Service</span></td>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">Description</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@code org.osgi.service.log.LogService}</td>
+      <td style="vertical-align: top;">OSGi service log (see {@link javolution.context.LogContext}).</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.LogContext}</td>
+      <td style="vertical-align: top;">Service to support custom logging.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.ConcurrentContext}</td>
+      <td style="vertical-align: top;">Service to support concurrent executions.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.LocalContext}</td>
+      <td style="vertical-align: top;">Service to support local settings.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.SecurityContext}</td>
+      <td style="vertical-align: top;">Service granting security authorizations.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.HeapContext}</td>
+      <td style="vertical-align: top;">Service to support heap allocations.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.ImmortalContext}</td>
+      <td style="vertical-align: top;">Service to support allocations in immortal memory.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.context.StackContext}</td>
+      <td style="vertical-align: top;">Service to support stack allocations.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.text.TextContext}</td>
+      <td style="vertical-align: top;">Service to support text parsing/formatting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">{@link javolution.xml.XMLContext}</td>
+      <td style="vertical-align: top;">Service to support XML serialization/deserialization.</td>
+    </tr>
+  </tbody>
+</table>
+</BODY>

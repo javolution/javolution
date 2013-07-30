@@ -8,11 +8,9 @@
  */
 package javolution.text;
 
-import static javolution.internal.osgi.JavolutionActivator.TEXT_CONTEXT_TRACKER;
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
-import javolution.internal.text.TextContextImpl;
-import javolution.lang.Configurable;
+import javolution.osgi.internal.OSGiServices;
 
 /**
  * <p> A context for plain text parsing/formatting. The default text 
@@ -40,21 +38,12 @@ import javolution.lang.Configurable;
 public abstract class TextContext extends FormatContext {
 
     /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
-     */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
      * Default constructor.
      */
     protected TextContext() {}
 
     /**
-     * Enters a new text context instance.
-     * 
-     * @return the new text context implementation entered.
+     * Enters and returns a new text context instance.
      */
     public static TextContext enter() {
         return (TextContext) TextContext.currentTextContext().enterInner();
@@ -87,8 +76,6 @@ public abstract class TextContext extends FormatContext {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null)
             return ctx;
-        return TEXT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        return OSGiServices.getTextContext();
     }
-
-    private static final TextContextImpl DEFAULT = new TextContextImpl();
 }

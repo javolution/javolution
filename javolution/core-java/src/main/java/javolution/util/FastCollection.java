@@ -19,21 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javolution.internal.util.collection.ComparatorCollectionImpl;
-import javolution.internal.util.collection.DistinctCollectionImpl;
-import javolution.internal.util.collection.FilteredCollectionImpl;
-import javolution.internal.util.collection.MappedCollectionImpl;
-import javolution.internal.util.collection.ParallelCollectionImpl;
-import javolution.internal.util.collection.ReversedCollectionImpl;
-import javolution.internal.util.collection.SequentialCollectionImpl;
-import javolution.internal.util.collection.SharedCollectionImpl;
-import javolution.internal.util.collection.SortedCollectionImpl;
-import javolution.internal.util.collection.UnmodifiableCollectionImpl;
-import javolution.internal.util.collection.closure.DoWhileConsumerImpl;
-import javolution.internal.util.collection.closure.FormatConsumerImpl;
-import javolution.internal.util.collection.closure.SearchConsumerImpl;
-import javolution.internal.util.collection.closure.SingleRemoveFilterImpl;
-import javolution.internal.util.comparator.WrapperComparatorImpl;
 import javolution.lang.Copyable;
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
@@ -49,6 +34,21 @@ import javolution.util.function.EqualityComparator;
 import javolution.util.function.Function;
 import javolution.util.function.Operators;
 import javolution.util.function.Predicate;
+import javolution.util.internal.closure.DoWhileConsumerImpl;
+import javolution.util.internal.closure.FormatConsumerImpl;
+import javolution.util.internal.closure.SearchConsumerImpl;
+import javolution.util.internal.closure.SingleRemoveFilterImpl;
+import javolution.util.internal.collection.ComparatorCollectionImpl;
+import javolution.util.internal.collection.DistinctCollectionImpl;
+import javolution.util.internal.collection.FilteredCollectionImpl;
+import javolution.util.internal.collection.MappedCollectionImpl;
+import javolution.util.internal.collection.ParallelCollectionImpl;
+import javolution.util.internal.collection.ReversedCollectionImpl;
+import javolution.util.internal.collection.SequentialCollectionImpl;
+import javolution.util.internal.collection.SharedCollectionImpl;
+import javolution.util.internal.collection.SortedCollectionImpl;
+import javolution.util.internal.collection.UnmodifiableCollectionImpl;
+import javolution.util.internal.comparator.WrapperComparatorImpl;
 import javolution.util.service.CollectionService;
 import javolution.util.service.CollectionService.IterationController;
 
@@ -79,11 +79,11 @@ import javolution.util.service.CollectionService.IterationController;
  *     // Immutability is guaranteed, no reference left on the collection source.
  * [/code]</p>
  * 
- *  <p> Immutable collections may be preferred {@link #shared} views in case of infrequent updates 
- *      since they do not introduce mutex (and locking).</p>
+ *  <p> Immutable collections may be preferred to {@link #shared} views in case of infrequent updates 
+ *      since they do not have mutexes (and locking during updates).</p>
  * <p>[code]
- * static Immutable<FastSet<Unit>> basicUnits = new FastSet<Unit>().toImmutable(); // Infrequent changes.
- * synchronized void addBasicUnits(Unit... units) {
+ * static Immutable<FastSet<Unit>> basicUnits = new FastSet<Unit>().toImmutable(); 
+ * synchronized void addBasicUnits(Unit... units) { // Infrequent.
  *     basicUnits = basicUnits.values().copy().addAll(units).toImmutable();
  * }
  * [/code]</p>
@@ -158,7 +158,7 @@ import javolution.util.service.CollectionService.IterationController;
  * @version 6.0, July 21, 2013
  */
 @RealTime
-@Parallelizable(mutexFree = false, comment = "Shared/Parallel views use read-write locks, CopyOnWrite views have mutex-free access.")
+@Parallelizable(mutexFree = false, comment = "Shared/Parallel views may use read-write locks.")
 @DefaultTextFormat(FastCollection.StandardText.class)
 public abstract class FastCollection<E> implements Collection<E>,
         Copyable<FastCollection<E>>, Serializable {

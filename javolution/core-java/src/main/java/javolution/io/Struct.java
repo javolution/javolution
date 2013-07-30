@@ -146,6 +146,7 @@ import javolution.text.TextBuilder;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.5.1, April 1, 2010
  */
+@SuppressWarnings("unchecked")
 public class Struct {
 
     /**
@@ -521,7 +522,6 @@ public class Struct {
      * @throws IllegalArgumentException if the specified array contains
      *         inner structs.
      */
-    @SuppressWarnings("unchecked")
     protected <S extends Struct> S[] array(S[] structs) {
         Class<?> structClass = null;
         boolean resetIndexSaved = _resetIndex;
@@ -608,7 +608,6 @@ public class Struct {
      * @throws UnsupportedOperationException if the specified array
      *         is empty and the member type is unknown.
      */
-    @SuppressWarnings("unchecked")
     protected <M extends Member> M[] array(M[] arrayMember) {
         boolean resetIndexSaved = _resetIndex;
         if (_resetIndex) {

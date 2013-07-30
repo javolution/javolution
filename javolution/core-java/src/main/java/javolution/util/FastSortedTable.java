@@ -9,13 +9,13 @@
 package javolution.util;
 
 import static javolution.lang.RealTime.Limit.LOG_N;
-import javolution.internal.util.table.sorted.FastSortedTableImpl;
-import javolution.internal.util.table.sorted.SharedSortedTableImpl;
-import javolution.internal.util.table.sorted.SubSortedTableImpl;
-import javolution.internal.util.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
+import javolution.util.internal.table.sorted.FastSortedTableImpl;
+import javolution.util.internal.table.sorted.SharedSortedTableImpl;
+import javolution.util.internal.table.sorted.SubSortedTableImpl;
+import javolution.util.internal.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.util.service.SortedTableService;
 
 /**

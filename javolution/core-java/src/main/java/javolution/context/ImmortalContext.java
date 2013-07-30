@@ -8,9 +8,8 @@
  */
 package javolution.context;
 
-import static javolution.internal.osgi.JavolutionActivator.IMMORTAL_CONTEXT_TRACKER;
-import javolution.internal.context.ImmortalContextImpl;
 import javolution.lang.Copyable;
+import javolution.osgi.internal.OSGiServices;
 import javolution.util.function.Supplier;
 
 /**
@@ -29,13 +28,13 @@ public abstract class ImmortalContext extends AllocatorContext {
     protected ImmortalContext() {}
 
     /**
-      * Enters a heap context instance (private since heap context
-      * is not configurable).
+      * Enters and returns a new immortal context instance (method for internal 
+      * usage).
       */
     private static ImmortalContext enter() {
         ImmortalContext ctx = AbstractContext.current(ImmortalContext.class);
-        if (ctx == null) {
-            ctx = IMMORTAL_CONTEXT_TRACKER.getService(false, DEFAULT);
+        if (ctx == null) { // Root.
+            ctx = OSGiServices.getImmortalContext();
         }
         return (ImmortalContext) ctx.enterInner();
     }
@@ -77,6 +76,4 @@ public abstract class ImmortalContext extends AllocatorContext {
             ctx.exit();
         }
     }
-
-    private static final ImmortalContextImpl DEFAULT = new ImmortalContextImpl();
 }

@@ -43,10 +43,12 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>!javolution.internal.*,javolution.*</Export-Package>
-                        <Private-Package>javolution.internal.*</Private-Package>
-                        <Bundle-Activator>javolution.internal.osgi.JavolutionActivator</Bundle-Activator>
-                        <Export-Service>org.osgi.service.cm.ManagedService</Export-Service>
+                        <Export-Package>!javolution.*.internal.*,javolution.*,org.osgi.service.log</Export-Package>
+                        <Private-Package>javolution.*.internal.*</Private-Package>
+                        <Bundle-Activator>javolution.osgi.internal.JavolutionActivator</Bundle-Activator>
+                        <Export-Service>javolution.xml.stream.XMLInputFactory,
+                                        javolution.xml.stream.XMLOutputFactory,
+                                        org.osgi.service.cm.ManagedService</Export-Service>
                     </instructions>
                 </configuration>
             </plugin>
@@ -95,6 +97,7 @@
                    <sourcepath>${project.build.directory}/colorized</sourcepath>
                    <outputDirectory>${project.build.directory}/docs/api</outputDirectory>
                    <excludePackageNames>*.internal</excludePackageNames>
+                   <overview>${project.build.directory}/colorized/javolution/doc-files/overview.html</overview>
                    <docfilessubdirs>true</docfilessubdirs>
                 </configuration>
                 <executions>

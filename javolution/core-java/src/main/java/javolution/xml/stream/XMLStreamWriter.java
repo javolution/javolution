@@ -24,32 +24,25 @@ import java.lang.CharSequence;
  *     {@link javolution.text.TextBuilder TextBuilder}  
  *     (or <code>StringBuilder</code>) instance to avoid adverse effects 
  *     on memory footprint (heap), garbage collection and performance.
- *     For example:[code]
+ * [code]
+ * // Creates a new writer (potentially recycled).
+ * XMLOutputFactory factory = OSGiServices.getXMLOutputFactory();
+ * XMLStreamWriter writer = factory.createXMLStreamWriter(outputStream);
  *     
- *     // Creates a new writer (potentially recycled).
- *     XMLOutputFactory factory = XMLOutputFactory.newInstance();
- *     XMLStreamWriter writer = factory.createXMLStreamWriter(outputStream);
+ * TextBuilder tmp = new TextBuilder(); // To avoid creating new String instances.
+ * writer.writeStartDocument();
+ * writer.writeStartElement("Time"); 
+ * writer.writeAttribute("hour", tmp.clear().append(time.hour);
+ * writer.writeAttribute("minute", tmp.clear().append(time.minute);
+ * writer.writeAttribute("second", tmp.clear().append(time.second);
+ * writer.writeEndElement();
+ * writer.writeStartDocument();
  *     
- *     TextBuilder tmp = new TextBuilder();
- *     writer.writeStartDocument();
- *     ...
- *     writer.writeStartElement("Time"); 
- *     // Writes primitive types (int) attributes (no memory allocation).
- *     writer.writeAttribute("hour", tmp.clear().append(time.hour);
- *     writer.writeAttribute("minute", tmp.clear().append(time.minute);
- *     writer.writeAttribute("second", tmp.clear().append(time.second);
- *     writer.writeEndElement();
- *     ...
- *     
- *     writer.close(); // Recycles this writer.
- *     outputStream.close(); // Underlying stream has to be closed explicitly.
- *     [/code]</p>
- *          
- * <p> Note: As always, <code>null</code> parameters are not allowed unless 
- *     explicitly authorized.</p>
+ * writer.close(); // Closes the writer (does not close underlying output stream).
+ * [/code]</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, June 16, 2006
+ * @version 6.0 December 12, 2012
  */
 public interface XMLStreamWriter {
 
@@ -61,7 +54,7 @@ public interface XMLStreamWriter {
      * @param localName local name of the tag.
      * @throws XMLStreamException
      */
-    public void writeStartElement(CharSequence localName)
+    void writeStartElement(CharSequence localName)
             throws XMLStreamException;
 
     /**
@@ -73,7 +66,7 @@ public interface XMLStreamWriter {
      *         to a prefix and this writer does not {@link 
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
-    public void writeStartElement(CharSequence namespaceURI,
+    void writeStartElement(CharSequence namespaceURI,
             CharSequence localName) throws XMLStreamException;
 
     /**
@@ -86,7 +79,7 @@ public interface XMLStreamWriter {
      *         to a prefix and this writer does not {@link 
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
-    public void writeStartElement(CharSequence prefix, CharSequence localName,
+    void writeStartElement(CharSequence prefix, CharSequence localName,
             CharSequence namespaceURI) throws XMLStreamException;
 
     /**
@@ -98,7 +91,7 @@ public interface XMLStreamWriter {
      *         to a prefix and this writer does not {@link 
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
-    public void writeEmptyElement(CharSequence namespaceURI,
+    void writeEmptyElement(CharSequence namespaceURI,
             CharSequence localName) throws XMLStreamException;
 
     /**
@@ -111,7 +104,7 @@ public interface XMLStreamWriter {
      *         to a prefix and this writer does not {@link 
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
-    public void writeEmptyElement(CharSequence prefix, CharSequence localName,
+    void writeEmptyElement(CharSequence prefix, CharSequence localName,
             CharSequence namespaceURI) throws XMLStreamException;
 
     /**
@@ -120,7 +113,7 @@ public interface XMLStreamWriter {
      * @param localName local name of the tag.
      * @throws XMLStreamException
      */
-    public void writeEmptyElement(CharSequence localName)
+    void writeEmptyElement(CharSequence localName)
             throws XMLStreamException;
 
     /**
@@ -129,14 +122,14 @@ public interface XMLStreamWriter {
      * 
      * @throws XMLStreamException
      */
-    public void writeEndElement() throws XMLStreamException;
+    void writeEndElement() throws XMLStreamException;
 
     /**
      * Closes any start tags and writes corresponding end tags.
      * 
      * @throws XMLStreamException
      */
-    public void writeEndDocument() throws XMLStreamException;
+    void writeEndDocument() throws XMLStreamException;
 
     /**
      * Close this writer and free any resources associated with the writer. This
@@ -144,14 +137,14 @@ public interface XMLStreamWriter {
      * 
      * @throws XMLStreamException
      */
-    public void close() throws XMLStreamException;
+    void close() throws XMLStreamException;
 
     /**
      * Write any cached data to the underlying output mechanism.
      * 
      * @throws XMLStreamException
      */
-    public void flush() throws XMLStreamException;
+    void flush() throws XMLStreamException;
 
     /**
      * Writes an attribute to the output stream without a prefix.
@@ -162,7 +155,7 @@ public interface XMLStreamWriter {
      *         attribute writing.
      * @throws XMLStreamException
      */
-    public void writeAttribute(CharSequence localName, CharSequence value)
+    void writeAttribute(CharSequence localName, CharSequence value)
             throws XMLStreamException;
 
     /**
@@ -179,7 +172,7 @@ public interface XMLStreamWriter {
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
 
-    public void writeAttribute(CharSequence prefix, CharSequence namespaceURI,
+    void writeAttribute(CharSequence prefix, CharSequence namespaceURI,
             CharSequence localName, CharSequence value)
             throws XMLStreamException;
 
@@ -195,7 +188,7 @@ public interface XMLStreamWriter {
      *         to a prefix and this writer does not {@link 
      *         XMLOutputFactory#IS_REPAIRING_NAMESPACES repair namespaces}.
      */
-    public void writeAttribute(CharSequence namespaceURI,
+    void writeAttribute(CharSequence namespaceURI,
             CharSequence localName, CharSequence value)
             throws XMLStreamException;
 
@@ -210,7 +203,7 @@ public interface XMLStreamWriter {
      *         namespace writing.
      * @throws XMLStreamException
      */
-    public void writeNamespace(CharSequence prefix, CharSequence namespaceURI)
+    void writeNamespace(CharSequence prefix, CharSequence namespaceURI)
             throws XMLStreamException;
 
     /**
@@ -222,7 +215,7 @@ public interface XMLStreamWriter {
      *         namespace writing.
      * @throws XMLStreamException
      */
-    public void writeDefaultNamespace(CharSequence namespaceURI)
+    void writeDefaultNamespace(CharSequence namespaceURI)
             throws XMLStreamException;
 
     /**
@@ -231,7 +224,7 @@ public interface XMLStreamWriter {
      * @param data the data contained in the comment or <code>null</code>
      * @throws XMLStreamException
      */
-    public void writeComment(CharSequence data) throws XMLStreamException;
+    void writeComment(CharSequence data) throws XMLStreamException;
 
     /**
      * Writes a processing instruction.
@@ -239,7 +232,7 @@ public interface XMLStreamWriter {
      * @param target the target of the processing instruction.
      * @throws XMLStreamException
      */
-    public void writeProcessingInstruction(CharSequence target)
+    void writeProcessingInstruction(CharSequence target)
             throws XMLStreamException;
 
     /**
@@ -249,7 +242,7 @@ public interface XMLStreamWriter {
      * @param data the data contained in the processing instruction.
      * @throws XMLStreamException
      */
-    public void writeProcessingInstruction(CharSequence target,
+    void writeProcessingInstruction(CharSequence target,
             CharSequence data) throws XMLStreamException;
 
     /**
@@ -258,7 +251,7 @@ public interface XMLStreamWriter {
      * @param data the data contained in the CData Section.
      * @throws XMLStreamException
      */
-    public void writeCData(CharSequence data) throws XMLStreamException;
+    void writeCData(CharSequence data) throws XMLStreamException;
 
     /**
      * Writes a DTD section (representing the entire doctypedecl
@@ -267,7 +260,7 @@ public interface XMLStreamWriter {
      * @param dtd the DTD to be written.
      * @throws XMLStreamException
      */
-    public void writeDTD(CharSequence dtd) throws XMLStreamException;
+    void writeDTD(CharSequence dtd) throws XMLStreamException;
 
     /**
      * Writes an entity reference
@@ -275,16 +268,16 @@ public interface XMLStreamWriter {
      * @param name the name of the entity.
      * @throws XMLStreamException
      */
-    public void writeEntityRef(CharSequence name) throws XMLStreamException;
+    void writeEntityRef(CharSequence name) throws XMLStreamException;
 
     /**
      * Writes the XML Declaration. Defaults the XML version to 1.0 and the
      * encoding (if any) to the one specified when the instance is created 
-         * using {@link XMLOutputFactory}.
+     * using {@link XMLOutputFactory}.
      * 
      * @throws XMLStreamException
      */
-    public void writeStartDocument() throws XMLStreamException;
+    void writeStartDocument() throws XMLStreamException;
 
     /**
      * Writes the XML Declaration. Default the encoding (if any) to the one 
@@ -293,7 +286,7 @@ public interface XMLStreamWriter {
      * @param version the version of the xml document or <code>null</code>.
      * @throws XMLStreamException
      */
-    public void writeStartDocument(CharSequence version)
+    void writeStartDocument(CharSequence version)
             throws XMLStreamException;
 
     /**
@@ -305,7 +298,7 @@ public interface XMLStreamWriter {
      * @param version the version of the xml document or <code>null</code>.
      * @throws XMLStreamException
      */
-    public void writeStartDocument(CharSequence encoding, CharSequence version)
+    void writeStartDocument(CharSequence encoding, CharSequence version)
             throws XMLStreamException;
 
     /**
@@ -314,7 +307,7 @@ public interface XMLStreamWriter {
      * @param text the value to write or <code>null</code>.
      * @throws XMLStreamException
      */
-    public void writeCharacters(CharSequence text) throws XMLStreamException;
+    void writeCharacters(CharSequence text) throws XMLStreamException;
 
     /**
      * Writes text to the output.
@@ -324,7 +317,7 @@ public interface XMLStreamWriter {
      * @param length the number of characters to write.
      * @throws XMLStreamException
      */
-    public void writeCharacters(char[] text, int start, int length)
+    void writeCharacters(char[] text, int start, int length)
             throws XMLStreamException;
 
     /**
@@ -334,7 +327,7 @@ public interface XMLStreamWriter {
      * @return the prefix for the URI or <code>null</code>
      * @throws XMLStreamException
      */
-    public CharSequence getPrefix(CharSequence uri) throws XMLStreamException;
+    CharSequence getPrefix(CharSequence uri) throws XMLStreamException;
 
     /**
      * Sets the prefix the uri is bound to. This prefix is bound in the scope of
@@ -346,7 +339,7 @@ public interface XMLStreamWriter {
      * @param uri the uri to bind to the prefix or <code>null</code>
      * @throws XMLStreamException
      */
-    public void setPrefix(CharSequence prefix, CharSequence uri)
+    void setPrefix(CharSequence prefix, CharSequence uri)
             throws XMLStreamException;
 
     /**
@@ -358,7 +351,7 @@ public interface XMLStreamWriter {
      * @param uri the uri to bind to the default namespace or <code>null</code>.
      * @throws XMLStreamException
      */
-    public void setDefaultNamespace(CharSequence uri) throws XMLStreamException;
+    void setDefaultNamespace(CharSequence uri) throws XMLStreamException;
 
     /**
      * Gets the value of a feature/property from the underlying implementation.
@@ -367,6 +360,6 @@ public interface XMLStreamWriter {
      * @return the value of the property.
      * @throws IllegalArgumentException if the property is not supported.
      */
-    public Object getProperty(String name) throws IllegalArgumentException;
+    Object getProperty(String name) throws IllegalArgumentException;
 
 }

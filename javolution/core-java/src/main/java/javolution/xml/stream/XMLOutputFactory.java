@@ -8,42 +8,56 @@
  */
 package javolution.xml.stream;
 
-import javolution.internal.xml.stream.XMLOutputFactoryImpl;
 import java.io.OutputStream;
 import java.io.Writer;
 
+import javolution.lang.Copyable;
+import javolution.lang.Parallelizable;
+
 /**
- * <p> The class represents the factory for getting {@link XMLStreamWriter}
- *     intances.</p>
- * 
- * <P> Usage example:[code]
- *
- *     // Lets format to an appendable.
- *     TextBuilder xml = new TextBuilder();
- *     AppendableWriter out = new AppendableWriter(xml);
+ * <p> The OSGi factory service to create {@link XMLStreamWriter} instances.
+ *     For each bundle, a distinct factory instance is returned and can be 
+ *     individually configured.
+ * [code]
+ * import javolution.xml.stream.*;
+ * public class Activator implements BundleActivator { 
+ *     public void start(BundleContext bc) throws Exception {
  *     
- *     // Creates a factory producing writers using tab indentation.
- *     XMLOutpuFactory factory = XMLOutputFactory.newInstance();
- *     factory.setProperty(XMLOutputFactory.INDENTATION, "/t");
+ *         // Configures factory. 
+ *         ServiceTracker<XMLOutputFactory, XMLOutputFactory> tracker 
+ *             = new ServiceTracker<>(bc, XMLOutputFactory.class, null);
+ *         tracker.open();
+ *         tracker.getService().setProperty(XMLOutputFactory.INDENTATION, "/t"); // Use tab for indentations.
+ *         
+ *         // Instantiates a new writer.
+ *         TextBuilder xml = new TextBuilder();
+ *         AppendableWriter out = new AppendableWriter(xml);
+ *         XMLStreamWriter writer = tracker.getService().createXMLStreamWriter(out);
  *     
- *     // Creates a new writer (potentially recycled).
- *     XMLStreamWriter writer = factory.createXMLStreamReader(out);
+ *         // Formats to XML.
+ *         writer.writeStartDocument("1.0");
+ *         writer.writeCharacters("\n");
+ *         writer.writeStartElement("ns1", "sample", "http://www.e.com/ns1");
+ *         writer.writeNamespace("ns1", "http://www.e.com/ns1");
+ *         writer.writeEndElement();
+ *         writer.writeEndDocument();
+ *         
+ *         // Closes the writer which may be recycled back to the factory.
+ *         writer.close();
  *     
- *     // Formats to XML.
- *     writer.writeStartDocument();
- *     writer.writeStartElement(...); 
- *     ...
- *     writer.close(); // Automatically recycles this writer. 
- *     out.close(); // Underlying output should be closed explicitly.
- *     
- *     // Displays the formatted output.
- *     System.out.println(xml);
- *     [/code]</p>
+ *         // Displays the formatted output.
+ *         System.out.println(xml);
+ *     }
+ *  [/code]</p>
+ *  
+ * <p> Bundles requiring multiple factories or stack-allocated 
+ *     instances may create new factories through {@link Copyable copy}.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 4.0, September 4, 2006
+ * @version 6.0 December 12, 2012
  */
-public abstract class XMLOutputFactory {
+@Parallelizable(comment="Factory configuration should be performed sequentially.")
+public interface XMLOutputFactory extends Copyable<XMLOutputFactory>{
 
     /**
      * Property used to set prefix defaulting on the output side
@@ -91,28 +105,13 @@ public abstract class XMLOutputFactory {
     public final static String NO_EMPTY_ELEMENT_TAG = "javolution.xml.stream.noEmptyElementTag";
 
     /**
-     * Default constructor.
-     */
-    protected XMLOutputFactory() {}
-
-    /**
-     * Returns a new instance of the output factory
-     * implementation which may be configurated by the user 
-     * (see {@link #setProperty(String, Object)}). 
-     * 
-     * @return a new factory instance.
-     */
-    public static XMLOutputFactory newInstance() {
-        return new XMLOutputFactoryImpl();
-    }
-
-    /**
      * Returns a XML stream writer to the specified i/o writer.
      * 
      * @param writer the writer to write to.
+     * @return a xml stream writer possibly recycled.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamWriter createXMLStreamWriter(Writer writer)
+    XMLStreamWriter createXMLStreamWriter(Writer writer)
             throws XMLStreamException;
 
     /**
@@ -120,9 +119,10 @@ public abstract class XMLOutputFactory {
      * encoding).
      * 
      * @param stream the stream to write to.
+     * @return a xml stream writer possibly recycled.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamWriter createXMLStreamWriter(OutputStream stream)
+    XMLStreamWriter createXMLStreamWriter(OutputStream stream)
             throws XMLStreamException;
 
     /**
@@ -131,10 +131,11 @@ public abstract class XMLOutputFactory {
      * 
      * @param stream the stream to write to.
      * @param encoding the encoding to use.
+     * @return a xml stream writer possibly recycled.
      * @throws XMLStreamException
      */
-    public abstract XMLStreamWriter createXMLStreamWriter(OutputStream stream,
-            String encoding) throws XMLStreamException;
+    XMLStreamWriter createXMLStreamWriter(OutputStream stream, String encoding)
+            throws XMLStreamException;
 
     /**
      * Allows the user to set specific features/properties on the underlying
@@ -144,8 +145,7 @@ public abstract class XMLOutputFactory {
      * @param value  the value of the property.
      * @throws IllegalArgumentException if the property is not supported.
      */
-    public abstract void setProperty(String name, Object value)
-            throws IllegalArgumentException;
+    void setProperty(String name, Object value) throws IllegalArgumentException;
 
     /**
      * Gets a feature/property on the underlying implementation.
@@ -154,8 +154,7 @@ public abstract class XMLOutputFactory {
      * @return the value of the property
      * @throws IllegalArgumentException if the property is not supported.
      */
-    public abstract Object getProperty(String name)
-            throws IllegalArgumentException;
+    Object getProperty(String name) throws IllegalArgumentException;
 
     /**
      * Queries the set of properties that this factory supports.
@@ -164,6 +163,6 @@ public abstract class XMLOutputFactory {
      * @return <code>true</code> if the property is supported;
      *         <code>false</code> otherwise.
      */
-    public abstract boolean isPropertySupported(String name);
+    boolean isPropertySupported(String name);
 
 }

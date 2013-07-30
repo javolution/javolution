@@ -12,12 +12,12 @@ import static javolution.lang.RealTime.Limit.LOG_N;
 
 import java.util.SortedSet;
 
-import javolution.internal.util.map.sorted.FastSortedMapImpl;
-import javolution.internal.util.set.sorted.SharedSortedSetImpl;
-import javolution.internal.util.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
+import javolution.util.internal.map.sorted.FastSortedMapImpl;
+import javolution.util.internal.set.sorted.SharedSortedSetImpl;
+import javolution.util.internal.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.util.service.SortedSetService;
 
 /**

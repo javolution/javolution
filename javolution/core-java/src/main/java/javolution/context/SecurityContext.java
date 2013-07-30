@@ -8,18 +8,13 @@
  */
 package javolution.context;
 
-import static javolution.internal.osgi.JavolutionActivator.SECURITY_CONTEXT_TRACKER;
-import javolution.internal.context.SecurityContextImpl;
-import javolution.lang.Configurable;
 import javolution.lang.Permission;
+import javolution.osgi.internal.OSGiServices;
 
 /**
  * <p> A high-level security context integrated with OSGi.</p>
  *     
- * <p> To ensure that your OSGi published system security context is always used, 
- *     the configurable parameter {@link #WAIT_FOR_SERVICE} should be set
- *     (especially knowing that the default implementation grants all permissions).
- *     When granting/revoking permission the order is very important. 
+ * <p> When granting/revoking permission the order is important. 
  *     For example, the following code revokes all configurable permissions 
  *     except for concurrency settings.</p>
  * [code]
@@ -42,19 +37,12 @@ import javolution.lang.Permission;
 public abstract class SecurityContext extends AbstractContext {
 
     /**
-    * Indicates whether or not static methods will block for an OSGi published
-    * implementation this class (default configuration <code>false</code>).
-    */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
      * Default constructor.
      */
     protected SecurityContext() {}
 
     /**
-     * Enters a new security context instance.
+     * Enters and returns a new security context instance.
      * 
      * @return the new security context implementation entered. 
      */
@@ -127,9 +115,6 @@ public abstract class SecurityContext extends AbstractContext {
         SecurityContext ctx = AbstractContext.current(SecurityContext.class);
         if (ctx != null)
             return ctx;
-        return SECURITY_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(),
-                DEFAULT);
+        return OSGiServices.getSecurityContext();
     }
-
-    private static final SecurityContextImpl DEFAULT = new SecurityContextImpl();
 }

@@ -8,12 +8,13 @@
  */
 package javolution.osgi;
 
-import javolution.internal.osgi.OSGiImpl;
+import javolution.osgi.internal.runtime.OSGiImpl;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 
 /**
- *  <p> A light-weight OSGi run-time to run OSGi bundles in a standard 
+ *  <p> A light-weight OSGi run-time to run OSGi bundles from a standard 
  *     Java application/applet/test.
  * [code]
  * public void main(String[] args) throws Exception {

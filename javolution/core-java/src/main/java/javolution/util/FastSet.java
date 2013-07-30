@@ -12,14 +12,14 @@ import static javolution.lang.RealTime.Limit.CONSTANT;
 
 import java.util.Set;
 
-import javolution.internal.util.map.FastMapImpl;
-import javolution.internal.util.set.FilteredSetImpl;
-import javolution.internal.util.set.SharedSetImpl;
-import javolution.internal.util.set.UnmodifiableSetImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.internal.map.FastMapImpl;
+import javolution.util.internal.set.FilteredSetImpl;
+import javolution.util.internal.set.SharedSetImpl;
+import javolution.util.internal.set.UnmodifiableSetImpl;
 import javolution.util.service.SetService;
 
 /**

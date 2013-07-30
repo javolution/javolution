@@ -267,7 +267,16 @@ javolution/core-java/src/main/java/javolution/context/LocalContext.java -text sv
 javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/StackContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/internal/ConcurrentContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/ConcurrentThreadImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/HeapContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/ImmortalContextImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/internal/LocalContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/LogContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/SecurityContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/StackContextImpl.java -text
 javolution/core-java/src/main/java/javolution/context/package-info.java -text
+javolution/core-java/src/main/java/javolution/doc-files/overview.html -text
 javolution/core-java/src/main/java/javolution/io/AppendableWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/CharSequenceReader.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Struct.java -text svneol=unset#text/plain
@@ -285,10 +294,23 @@ javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=uns
 javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Permission.java -text
 javolution/core-java/src/main/java/javolution/lang/RealTime.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Reusable.java -text
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/ConfigurableService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/OSGi.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/JavolutionActivator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/osgi/internal/LogServiceImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/ServiceTrackerImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/XMLInputFactoryProvider.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/XMLOutputFactoryProvider.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/BundleContextImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/BundleImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/FilterImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/OSGiImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/ServiceReferenceImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/runtime/ServiceRegistrationImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/package-info.java -text
 javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
@@ -299,6 +321,7 @@ javolution/core-java/src/main/java/javolution/text/TextBuilder.java -text svneol
 javolution/core-java/src/main/java/javolution/text/TextContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/TextFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
@@ -309,6 +332,7 @@ javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svne
 javolution/core-java/src/main/java/javolution/util/FastSortedTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/doc-files/architecture.png -text
 javolution/core-java/src/main/java/javolution/util/function/CollectionOperator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Comparators.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
@@ -319,6 +343,68 @@ javolution/core-java/src/main/java/javolution/util/function/Operators.java -text
 javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/FilteredIteratorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/ReadWriteLockImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/SharedIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/UnmodifiableIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetServiceImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/SharedBitSetImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/UnmodifiableBitSetImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/closure/DoWhileConsumerImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/closure/FormatConsumerImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/closure/SearchConsumerImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/closure/SingleRemoveFilterImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ComparatorCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/DistinctCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ParallelCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ReversedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SequentialCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SplitCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/ArrayComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalCaseInsensitiveComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalFastComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/StandardComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/WrapperComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapEntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapEntrySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapKeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapValuesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FractalMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/SharedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/UnmodifiableMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapEntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapEntrySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapKeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapValuesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/SharedSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/UnmodifiableSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/FilteredSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/SharedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/UnmodifiableSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SharedSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/UnmodifiableSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/FastTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/FractalTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/QuickSort.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/ReversedTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/SharedTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/SubTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/TableIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/UnmodifiableTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/FastSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SharedSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SubSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/UnmodifiableSortedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
@@ -338,6 +424,14 @@ javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svn
 javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLReferenceResolver.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLSerializable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/AttributesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/EntitiesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/NamespacesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLInputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLOutputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLStreamReaderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/sax/Attributes.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/sax/ContentHandler.java -text svneol=unset#text/plain

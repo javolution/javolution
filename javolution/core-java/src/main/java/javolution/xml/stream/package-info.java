@@ -1,7 +1,8 @@
 /**
 <p> StAX-like XML readers/writers which do not require object
     creation (such as String) and are consequently faster than standard StAX.</p> 
-<p> The main difference with "javax.xml.stream.*" classes is the use 
+<p> The main difference with "javax.xml.stream.*" classes is the integration with
+    OSGi to retrieve {@code XMLInputFactory/XMLOutputFactory} instances and the use 
     of <code>CharSequence</code> instead of <code>String</code>. Since 
     <code>String</code> is a <code>CharSequence</code> (JDK 1.4+), most 
     existing StAX code requires very little modification to be used with these 

@@ -9,10 +9,10 @@
 package javolution.util;
 
 import static javolution.lang.RealTime.Limit.LINEAR;
-import javolution.internal.util.bitset.BitSetServiceImpl;
-import javolution.internal.util.bitset.SharedBitSetImpl;
-import javolution.internal.util.bitset.UnmodifiableBitSetImpl;
 import javolution.lang.RealTime;
+import javolution.util.internal.bitset.BitSetServiceImpl;
+import javolution.util.internal.bitset.SharedBitSetImpl;
+import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 import javolution.util.service.BitSetService;
 
 /**

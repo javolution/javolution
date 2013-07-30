@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 import javolution.context.LogContext;
-import javolution.internal.osgi.JavolutionActivator;
+import javolution.osgi.internal.JavolutionActivator;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 

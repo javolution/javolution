@@ -8,32 +8,31 @@
  */
 package javolution.context;
 
-import static javolution.internal.osgi.JavolutionActivator.LOCAL_CONTEXT_TRACKER;
-import javolution.internal.context.LocalContextImpl;
 import javolution.lang.Configurable;
 import javolution.lang.Permission;
 import javolution.lang.RealTime;
+import javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context holding local parameters values.</p>
+ * <p> A context holding locally scoped {@link Parameter parameters} values.</p>
  * <p> [code]
- *     public class ModuloInteger {
- *         public static final LocalContext.Parameter<LargeInteger> MODULO 
- *             = new LocalContext.Parameter<LargeInteger>(ONE.minus());
- *         ...
+ *     public class ModuloInteger extends Number {
+ *         public static final LocalContext.Parameter<Integer> MODULO 
+ *             = new LocalContext.Parameter<Integer>();
+ *         public ModuloInteger times(ModuloInteger that) { ... }    
  *     }     
  *     ...
  *     LocalContext ctx = LocalContext.enter(); 
  *     try {
- *         ctx.override(ModuloInteger.MODULO, m); // No impact on other threads!
- *         z = x.times(y); // Multiplication modulo m (MODULO.get() == m)
+ *         ctx.override(ModuloInteger.MODULO, 13); // Sets local modulo value.
+ *         z = x.times(y); // Multiplication modulo 13
  *     } finally {
- *         ctx.exit(); // Reverts changes. 
+ *         ctx.exit(); // Reverts to previous modulo setting. 
  *     }
  *     }[/code]</p>
  *     
- * <p> As for any context, local context settings are inherited during 
- *     {@link ConcurrentContext} executions.</p> 
+ * <p> Unlike thread-local objects, local context parameters settings are 
+ *     inherited during {@link ConcurrentContext} executions.</p> 
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -106,26 +105,17 @@ public abstract class LocalContext extends AbstractContext {
     }
 
     /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
-     */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
      * Default constructor.
      */
     protected LocalContext() {}
 
     /**
-     * Enters a new local context instance.
-     * 
-     * @return the new local context implementation entered.
+     * Enters and returns a new local context instance.
      */
     public static LocalContext enter() {
         LocalContext ctx = AbstractContext.current(LocalContext.class);
-        if (ctx == null) {
-            ctx = LOCAL_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        if (ctx == null) { // Root.
+            ctx = OSGiServices.getLocalContext();
         }
         return (LocalContext) ctx.enterInner();
     }
@@ -148,5 +138,4 @@ public abstract class LocalContext extends AbstractContext {
      */
     protected abstract <T> T getLocalValueInContext(Parameter<T> param);
     
-    private static final LocalContextImpl DEFAULT = new LocalContextImpl();
 }

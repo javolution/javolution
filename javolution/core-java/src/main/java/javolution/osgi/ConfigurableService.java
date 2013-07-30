@@ -30,7 +30,7 @@ import org.osgi.service.cm.ManagedService;
  * public class MyBundleActivator implements BundleActivator {
  *     ServiceRegistration<ManagedService> registration;
  *     public void start(BundleContext bc) throws Exception {
- *         ConfigurableService cs = new ConfigurableService("mypid"); // Note: PID for Javolution is "javolution"
+ *         ConfigurableService cs = new ConfigurableService("myPID"); // Note: PID for Javolution is "javolution"
  *         registration = bc.registerService(ManagedService.class, cs, cs.getProperties());
  *     }
  *     public void stop(BundleContext context) throws Exception {

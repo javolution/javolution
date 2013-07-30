@@ -8,9 +8,7 @@
  */
 package javolution.context;
 
-import static javolution.internal.osgi.JavolutionActivator.CONCURRENT_CONTEXT_TRACKER;
-import javolution.internal.context.ConcurrentContextImpl;
-import javolution.lang.Configurable;
+import javolution.osgi.internal.OSGiServices;
 
 /**
  * <p> A context able to take advantage of concurrent algorithms on 
@@ -155,21 +153,13 @@ import javolution.lang.Configurable;
 public abstract class ConcurrentContext extends AbstractContext {
 
     /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation (default configuration <code>false</code>).
-     */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
      * Holds the maximum number of concurrent threads usable 
      * (default <code>Runtime.getRuntime().availableProcessors()</code>).
      * For example, running with the option 
      * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
      * disables concurrency. 
      */
-    public static final LocalContext.Parameter<Integer> CONCURRENCY 
-    = new LocalContext.Parameter<Integer>(
+    public static final LocalContext.Parameter<Integer> CONCURRENCY = new LocalContext.Parameter<Integer>(
             Runtime.getRuntime().availableProcessors());
 
     /**
@@ -178,14 +168,12 @@ public abstract class ConcurrentContext extends AbstractContext {
     protected ConcurrentContext() {}
 
     /**
-     * Enters a new concurrent context instance.
-     * 
-     * @return the new concurrent context implementation entered.
+     * Enters and returns a new concurrent context instance.
      */
     public static ConcurrentContext enter() {
         ConcurrentContext ctx = AbstractContext.current(ConcurrentContext.class);
-        if (ctx == null) {
-            ctx = CONCURRENT_CONTEXT_TRACKER.getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        if (ctx == null) { // Root.
+            ctx = OSGiServices.getConcurrentContext();
         }
         return (ConcurrentContext) ctx.enterInner();
     }
@@ -244,6 +232,4 @@ public abstract class ConcurrentContext extends AbstractContext {
     public void exit() { // Redefine here for documentation purpose.
         super.exit();
     }
-
-    private static final ConcurrentContextImpl DEFAULT = new ConcurrentContextImpl();
 }

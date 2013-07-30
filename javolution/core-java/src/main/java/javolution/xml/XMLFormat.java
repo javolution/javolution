@@ -8,12 +8,12 @@
  */
 package javolution.xml;
 
-import javolution.internal.xml.stream.XMLStreamReaderImpl;
-import javolution.internal.xml.stream.XMLStreamWriterImpl;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
+import javolution.xml.internal.stream.XMLStreamReaderImpl;
+import javolution.xml.internal.stream.XMLStreamWriterImpl;
 import javolution.xml.sax.Attributes;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;

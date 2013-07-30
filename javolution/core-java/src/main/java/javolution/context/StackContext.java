@@ -8,10 +8,8 @@
  */
 package javolution.context;
 
-import static javolution.internal.osgi.JavolutionActivator.STACK_CONTEXT_TRACKER;
-import javolution.internal.context.StackContextImpl;
-import javolution.lang.Configurable;
 import javolution.lang.Copyable;
+import javolution.osgi.internal.OSGiServices;
 import javolution.util.function.Function;
 
 /**
@@ -27,11 +25,15 @@ import javolution.util.function.Function;
  *     the heap using {@link HeapContext#copy HeapContext.copy(...)} method.
  *     When executing a {@link Function function}, the function result is always
  *     copied to the calling context.
- *     [code]
- *     @StackSafe
- *     public class LargeInteger implements ValueType {
- *         static final Function<LargeInteger, LargeInteger> SQRT = new Function<LargeInteger, LargeInteger>() {
- *             public LargeInteger apply(LargeInteger that) {
+ * [code]
+ * @RealTime
+ * public class LargeInteger implements ValueType {
+ *     // Very fast when running on a RTSJ VM (temporary objects on the stack).
+ *     public LargeInteger sqrt() { 
+ *         return StackContext.execute(SQRT, this); // Execution result exported outside the stack.
+ *     }
+ *     static final Function<LargeInteger, LargeInteger> SQRT = new Function<LargeInteger, LargeInteger>() {
+ *          public LargeInteger apply(LargeInteger that) {
  *                 LargeInteger result = ZERO;
  *                 LargeInteger k = that.shiftRight(this.bitLength() / 2)); // First approximation.
  *                 while (true) { // Newton Iteration.
@@ -40,14 +42,16 @@ import javolution.util.function.Function;
  *                     k = result;
  *                 }
  *             }
- *         });
- *         public LargeInteger sqrt() { // Temporary objects on the stack on RTSJ VM.
- *             return StackContext.execute(SQRT, this); // Result copied to current context.
- *         }
- *     }[/code]</p>
+ *          });
+ * }[/code]</p>
+ * <p> Stack context are great to accelerate calculations when the cost of 
+ *     the object creation is prohibitive relatively to the action performed
+ *     (operations on complex numbers for examples). Stack contexts
+ *     can be be nested (e.g. recursive calculations).</p>
  * 
- * <p> Classes/methods identified as {@link javolution.lang.RealTime#stackSafe() 
- *     stack-safe} can safely be used in a stack context.</p>
+ * <p> Only classes/methods identified as {@link javolution.lang.RealTime#stackSafe() 
+ *     stack-safe} such as {@link javolution.lang.ValueType ValueType} instances 
+ *     should be used in a stack context.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -55,26 +59,18 @@ import javolution.util.function.Function;
 public abstract class StackContext extends AllocatorContext {
 
     /**
-     * Indicates whether or not static methods will block for an OSGi published
-     * implementation this class (default configuration <code>false</code>).
-     */
-    public static final Configurable<Boolean> WAIT_FOR_SERVICE = new Configurable<Boolean>(
-            false);
-
-    /**
      * Default constructor.
      */
     protected StackContext() {}
 
     /**
-     * Enters a stack context instance (private since instances are not 
-     * configurable).
+     * Enters and returns a new stack context instance (method for internal 
+     * usage).
      */
     private static StackContext enter() {
         StackContext ctx = AbstractContext.current(StackContext.class);
-        if (ctx == null) {
-            ctx = STACK_CONTEXT_TRACKER
-                    .getService(WAIT_FOR_SERVICE.get(), DEFAULT);
+        if (ctx == null) { // Root.
+            ctx = OSGiServices.getStackContext();
         }
         return (StackContext) ctx.enterInner();
     }
@@ -112,5 +108,4 @@ public abstract class StackContext extends AllocatorContext {
     protected abstract <P, R extends Copyable<R>> R executeInContext(
             Function<P, R> function, P parameter);
 
-    private static final StackContextImpl DEFAULT = new StackContextImpl();
-}
+ }

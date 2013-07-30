@@ -22,17 +22,17 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import javolution.internal.util.table.FastTableImpl;
-import javolution.internal.util.table.QuickSort;
-import javolution.internal.util.table.ReversedTableImpl;
-import javolution.internal.util.table.SharedTableImpl;
-import javolution.internal.util.table.SubTableImpl;
-import javolution.internal.util.table.TableIteratorImpl;
-import javolution.internal.util.table.UnmodifiableTableImpl;
 import javolution.lang.RealTime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
+import javolution.util.internal.table.FastTableImpl;
+import javolution.util.internal.table.QuickSort;
+import javolution.util.internal.table.ReversedTableImpl;
+import javolution.util.internal.table.SharedTableImpl;
+import javolution.util.internal.table.SubTableImpl;
+import javolution.util.internal.table.TableIteratorImpl;
+import javolution.util.internal.table.UnmodifiableTableImpl;
 import javolution.util.service.TableService;
 
 /**
