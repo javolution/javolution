@@ -9,7 +9,6 @@
 package javolution.xml.internal.stream;
 
 import java.util.Iterator;
-import javolution.context.HeapContext;
 import javolution.text.CharArray;
 import javolution.util.FastTable;
 import javolution.xml.stream.NamespaceContext;
@@ -171,12 +170,8 @@ public final class NamespacesImpl implements NamespaceContext {
         final int prefixLength = prefix.length();
         CharArray prefixTmp = _prefixesTmp[index];
         if ((prefixTmp == null) || (prefixTmp.array().length < prefixLength)) {
-            HeapContext.execute(new Runnable() {
-                public void run() {
-                    _prefixesTmp[index] = new CharArray().setArray(
-                            new char[prefixLength + 32], 0, 0);
-                }
-            });
+            _prefixesTmp[index] = new CharArray().setArray(
+                    new char[prefixLength + 32], 0, 0);
             prefixTmp = _prefixesTmp[index];
         }
         for (int i = 0; i < prefixLength; i++) {
@@ -187,12 +182,8 @@ public final class NamespacesImpl implements NamespaceContext {
         final int uriLength = uri.length();
         CharArray namespaceTmp = _namespacesTmp[index];
         if ((namespaceTmp == null) || (namespaceTmp.array().length < uriLength)) {
-            HeapContext.execute(new Runnable() {
-                public void run() {
-                    _namespacesTmp[index] = new CharArray().setArray(
-                            new char[uriLength + 32], 0, 0);
-                }
-            });
+            _namespacesTmp[index] = new CharArray().setArray(
+                    new char[uriLength + 32], 0, 0);
             namespaceTmp = _namespacesTmp[index];
         }
         for (int i = 0; i < uriLength; i++) {
@@ -241,17 +232,13 @@ public final class NamespacesImpl implements NamespaceContext {
     }
 
     private void resizeNamespacesCount() {
-        HeapContext.execute(new Runnable() {
-            public void run() {
-                final int oldLength = _namespacesCount.length;
-                final int newLength = oldLength * 2;
+        final int oldLength = _namespacesCount.length;
+        final int newLength = oldLength * 2;
 
-                // Resizes namespaces counts.
-                int[] tmp = new int[newLength];
-                System.arraycopy(_namespacesCount, 0, tmp, 0, oldLength);
-                _namespacesCount = tmp;
-            }
-        });
+        // Resizes namespaces counts.
+        int[] tmp = new int[newLength];
+        System.arraycopy(_namespacesCount, 0, tmp, 0, oldLength);
+        _namespacesCount = tmp;
     }
 
     // Resizes prefix mapping  stack.

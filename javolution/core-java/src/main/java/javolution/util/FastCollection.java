@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javolution.lang.Copyable;
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.RealTime;
@@ -160,8 +159,7 @@ import javolution.util.service.CollectionService.IterationController;
 @RealTime
 @Parallelizable(mutexFree = false, comment = "Shared/Parallel views may use read-write locks.")
 @DefaultTextFormat(FastCollection.StandardText.class)
-public abstract class FastCollection<E> implements Collection<E>,
-        Copyable<FastCollection<E>>, Serializable {
+public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -357,7 +355,7 @@ public abstract class FastCollection<E> implements Collection<E>,
 
     @Override
     public boolean isEmpty() {
-        return this.mapped(TO_ONE).reduce(Operators.ANY) != null;
+        return this.mapped(TO_ONE).reduce(Operators.ANY) == null;
     }
 
     @Override
@@ -414,8 +412,6 @@ public abstract class FastCollection<E> implements Collection<E>,
     @Override
     @RealTime(limit = LINEAR)
     public boolean addAll(Collection<? extends E> that) {
-        if (that instanceof FastCollection)
-            return addAll((FastCollection<? extends E>) that);
         boolean modified = false;
         for (E e : that) {
             if (add(e)) {
@@ -423,19 +419,6 @@ public abstract class FastCollection<E> implements Collection<E>,
             }
         }
         return modified;
-    }
-
-    private boolean addAll(FastCollection<? extends E> that) {
-        final boolean[] modified = new boolean[1];
-        that.forEach(new Consumer<E>() {
-            @Override
-            public void accept(E param) {
-                if (add(param)) {
-                    modified[0] = true;
-                }
-            }
-        });
-        return modified[0];
     }
     
     @Override
@@ -515,7 +498,7 @@ public abstract class FastCollection<E> implements Collection<E>,
      */
 
     /**
-     * Adds the specified elements to this collection. 
+     * Returns this collection with the specified element added. 
      * 
      * @param elements the elements to be added.
      * @return {@code this}
@@ -527,6 +510,19 @@ public abstract class FastCollection<E> implements Collection<E>,
         return this;
     }
     
+    /**
+     * Returns this collection with the specified collection's elements added. 
+     */
+    public FastCollection<E> addAll(FastCollection<? extends E> that) {
+        that.forEach(new Consumer<E>() {
+            @Override
+            public void accept(E param) {
+                add(param);
+            }
+        });
+        return this;
+    }
+   
     /** 
      * Returns the comparator uses by this collection for equality and/or 
      * ordering if this collection is ordered.
@@ -631,34 +627,10 @@ public abstract class FastCollection<E> implements Collection<E>,
         }
     };
 
-    /**
-     * Returns a copy of this collection holding a copies of its elements.
-     * For lists and sets the copy is {@link #equals} to the original 
-     * (the copy of a list is a list and the copy of a set is a set).
-     * The iterative order of the copy is the same as the original (even for 
-     * sets).
-     */
-    @Override
-    @RealTime(limit = LINEAR)
-    public FastCollection<E> copy() {
-        final FastCollection<E> copy = (this instanceof Set) ? new FastSet<E>(
-                service().comparator()) : // FastSet keeps iterative order.
-                new FastTable<E>(service().comparator());
-        service().forEach(new Consumer<E>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public void accept(E e) {
-                E c = (e instanceof Copyable) ? ((Copyable<E>) e).copy() : e;
-                copy.add(c);
-            }
-        }, IterationController.SEQUENTIAL);
-        return copy;
-    }
-
     @Override
     @RealTime(limit = LINEAR)
     public String toString() {
-        return TextContext.getFormat(FastCollection.class).format(this);
+        return TextContext.toString(this);
     }
 
     /**

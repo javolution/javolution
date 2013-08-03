@@ -16,8 +16,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
+
 import javolution.context.LogContext;
-import javolution.osgi.internal.JavolutionActivator;
+import javolution.lang.Initializer;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 
@@ -25,8 +26,8 @@ import javolution.util.function.MultiVariable;
  * Validation and performance tests of FastTable.
  */
 public class FastTableTest {
-
-    static final boolean INITIALIZE_ALL = JavolutionActivator.initializeAll();
+    static final boolean INITIALIZE_ALL 
+       = new Initializer(FastTableTest.class.getClassLoader()).initializeLoadedClasses();
 
     private static final long ONE_SECOND_IN_NS = 1000 * 1000 * 1000L;
 

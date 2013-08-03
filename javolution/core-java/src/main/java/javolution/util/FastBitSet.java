@@ -348,13 +348,12 @@ public class FastBitSet extends FastSet<Index> {
      */
 
     @Override
-    @RealTime(limit = LINEAR)
-    public FastBitSet copy() {
-        return this.get(0, length());
+    public FastBitSet addAll(Index... elements) {
+        return (FastBitSet) super.addAll(elements);
     }
 
     @Override
-    public FastBitSet addAll(Index... elements) {
+    public FastBitSet addAll(FastCollection<? extends Index> elements) {
         return (FastBitSet) super.addAll(elements);
     }
 

@@ -138,16 +138,15 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
         xmlWriter.setNoEmptyElementTag(_noEmptyElementTag.booleanValue());
         return xmlWriter;
     }
+    
     @Override
-    public XMLOutputFactoryImpl copy() {
-        XMLOutputFactoryImpl factory = new XMLOutputFactoryImpl();
-        factory._automaticEmptyElements = _automaticEmptyElements;
-        factory._indentation = _indentation;
-        factory._isRepairingNamespaces = _isRepairingNamespaces;
-        factory._lineSeparator = _lineSeparator;
-        factory._noEmptyElementTag = _noEmptyElementTag;
-        factory._repairingPrefix = _repairingPrefix;
-        return factory;
+    public XMLOutputFactory clone() {
+        try {
+            XMLOutputFactoryImpl clone = (XMLOutputFactoryImpl) super.clone();
+            clone._recycled = new FastTable<XMLStreamWriterImpl>().shared();
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new Error();// Cannot happen since cloneable.
+        }
     }
-
 }

@@ -24,7 +24,12 @@ public class Perfometer {
      */
     public static final LocalContext.Parameter<Long> MEASURE_DURATION_NS 
        = new LocalContext.Parameter<Long>(
-            1000 * 1000 * 1000L);
+            1000 * 1000 * 1000L) {
+
+                @Override
+                protected Long parse(String str) {
+                    return Long.valueOf(str);
+                }};
 
     /**
      * Indicates if the operation to be measured is actually performed.

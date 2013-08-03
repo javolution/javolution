@@ -20,9 +20,7 @@ import java.lang.annotation.Target;
  *     <a href="http://en.wikipedia.org/wiki/Worst-case_execution_time">
  *     worst-case execution time</a>. The {@link #limit limit} behavior
  *     of the execution time with the input size may be specified (if no limit 
- *     specified the worst case execution time is assumed to be constant).
- *     Real-time elements should support {@link javolution.context.StackContext 
- *     stack allocations} unless indicated {@link #stackSafe otherwise}.</p>
+ *     specified the worst case execution time is assumed to be constant).</p>
  *     
  * [code]
  * public class Comparators {
@@ -71,18 +69,6 @@ public @interface RealTime {
      * (default {@link Limit#CONSTANT}).
      */
     Limit limit() default Limit.CONSTANT;
-
-    /**
-     * Indicates if this element is safe to be used if object allocation
-     * is performed on the {@link javolution.context.StackContext stack}.
-     * Classes with no static fields or with static fields unmodifiable are 
-     * usually stack-safe (constant static fields are always allocated in 
-     * immortal memory by real-time VMs). Lazy initialization should of course
-     * be avoided or forced to be executed outside the stack (either on the 
-     * {@link javolution.context.HeapContext heap} or in
-     * {@link javolution.context.ImmortalContext immortal memory}).</p>
-     */
-    boolean stackSafe() default true;
 
     /**
      * Provides additional information (default {@code ""}).

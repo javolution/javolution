@@ -10,63 +10,62 @@ package javolution.context.internal;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.realtime.RealtimeThread;
+
 import javolution.context.AbstractContext;
 
 /**
  * A worker thread executing in a concurrent context.
  */
-public class ConcurrentThreadImpl extends Thread { // TODO: Extends RealtimeThread
+public class ConcurrentThreadImpl extends RealtimeThread { 
 
+    private static int count;
+    private ConcurrentContextImpl context;
     private AtomicBoolean isFree = new AtomicBoolean();
-
-    private int priority;
-
     private Runnable logic;
-
-    private ConcurrentContextImpl inContext;
+    private int priority;
 
     /**
      * Default constructor.
      */
     public ConcurrentThreadImpl() {
-        super("ConcurrentThread-" + ++count);
+        this.setName("ConcurrentThread-" + ++count);
         setDaemon(true);
     }
 
-    private static int count;
-
     /**
      * Executes the specified logic by this thread if ready; returns
-     * <code>false</code> if this thread is busy.
+     * {@code false} if this thread is busy.
      */
     public boolean execute(Runnable logic, ConcurrentContextImpl inContext) {
         if (!isFree.compareAndSet(true, false))
             return false;
         synchronized (this) {
             this.priority = Thread.currentThread().getPriority();
-            this.inContext = inContext;
+            this.context = inContext;
             this.logic = logic;
             this.notify();
-            return true;
         }
+        return true;
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
         while (true) { // Main loop.
             try {
-                while (logic == null) { // Waits for work.
-                    this.wait();
+                synchronized (this) {
+                    while (logic == null) this.wait();
                 }
                 this.setPriority(priority);
-                AbstractContext.inherit(inContext);
+                AbstractContext.inherit(context);
                 logic.run();
-                inContext.completed(null);
+                context.completed(null);
             } catch (Throwable error) {
-                inContext.completed(error);
+                context.completed(error);
             }
+            // Clean up.
             logic = null;
-            inContext = null;
+            context = null;
             AbstractContext.inherit(null);
             isFree.set(true);
         }

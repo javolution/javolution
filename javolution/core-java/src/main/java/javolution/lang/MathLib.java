@@ -15,7 +15,6 @@ package javolution.lang;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
- * @see javolution.context.StackContext
  */
 @RealTime
 public final class MathLib {

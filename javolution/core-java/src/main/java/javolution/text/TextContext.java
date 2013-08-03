@@ -30,7 +30,7 @@ import javolution.osgi.internal.OSGiServices;
  *       <li>java.lang.Float</li>
  *       <li>java.lang.Double</li>
  *       <li>java.lang.Class</li>
- *    </ul></code></p>
+ *     </ul></code></p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -50,18 +50,44 @@ public abstract class TextContext extends FormatContext {
     }
 
     /**
-     * Returns the plain text format for the specified type or <code>null</code> 
-     * if none defined.
+     * Returns the string representation of the specified object using 
+     * its current format (convenience method).
+     * If there is no format associated with this object; then the object 
+     * default representation is returned (e.g. {@code Object#12345}).
+     */
+    public static String toString(Object obj) {
+        TextFormat<Object> textFormat = getFormat(obj.getClass());
+        return (textFormat != null) ? textFormat.format(obj) : 
+            "Object#" + System.identityHashCode(obj);
+    }
+
+    /**
+     * Returns the object of the specified class corresponding to the 
+     * specified textual representation (convenience method).
+     * 
+     * @throws UnsupportedOperationException if the specified type has no 
+     *         format associated.
+     */
+    public static <T> T parse(CharSequence csq, Class<T> type) {
+        TextFormat<T> textFormat = getFormat(type);
+        if (textFormat == null) throw new UnsupportedOperationException(
+                "No text format defined for " + type);
+        return textFormat.parse(csq);
+    }
+
+    /**
+     * Returns the text format for the specified type or {@code null}
+     * if none.
      */
     public static <T> TextFormat<T> getFormat(Class<? extends T> type) {
         return TextContext.currentTextContext().getFormatInContext(type);
     }
 
     /**
-     * Sets the plain text format for the specified type (and its sub-types).
+     * Sets the new text format for the specified type (and its sub-types).
      */
     public abstract <T> void setFormat(Class<? extends T> type,
-            TextFormat<T> format);
+            TextFormat<T> newFormat);
 
     /**
      * Returns the plain text format for the specified type.

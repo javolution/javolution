@@ -8,32 +8,31 @@
  */
 package javolution.text;
 
-import javolution.lang.Copyable;
 import javolution.lang.Immutable;
 import javolution.lang.MathLib;
 
 /**
  * <p> A set of characters (typically used for parsing purpose where it is 
  *     significantly faster than regular expressions for simple patterns).
- *     For example:[code]
- *     // Integration with Text.
- *     Text number;
- *     int exponentIndex = num.indexOfAny(CharSet.valueOf('e', 'E'));
+ *     For example:
+ * [code]
+ * // Integration with Text.
+ * Text number;
+ * int exponentIndex = num.indexOfAny(CharSet.valueOf('e', 'E'));
  *     
- *     // Integration with TextFormat.
- *     public List<Integer> parse(CharSequence csq, Cursor cursor) {
- *         FastTable<Integer> numbers = FastTable.newInstance();
- *         while (cursor.skip(CharSet.WHITESPACES, csq)) {
- *             numbers.add(TypeFormat.parseInt(csq, cursor));
- *         }
- *         return numbers;
+ * // Integration with TextFormat.
+ * public List<Integer> parse(CharSequence csq, Cursor cursor) {
+ *     FastTable<Integer> numbers = FastTable.newInstance();
+ *     while (cursor.skip(CharSet.WHITESPACES, csq)) {
+ *         numbers.add(TypeFormat.parseInt(csq, cursor));
  *     }
- *     [/code]   
+ *     return numbers;
+ * } [/code]</p>   
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
  */
-public final class CharSet implements Immutable<CharSet>, Copyable<CharSet> {
+public final class CharSet implements Immutable<CharSet> {
 
     /**
      * Represents an empty character set.
@@ -312,10 +311,8 @@ public final class CharSet implements Immutable<CharSet>, Copyable<CharSet> {
 
     /**
      * Returns a copy of this character set.
-     *  
-     * @return an independant copy.
      */
-    public CharSet copy() {
+    private CharSet copy() {
         CharSet charSet = new CharSet(new long[this._mapping.length]);
         for (int i = _mapping.length; --i >= 0;) {
             charSet._mapping[i] = _mapping[i];

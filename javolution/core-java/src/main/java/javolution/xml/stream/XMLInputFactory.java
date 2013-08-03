@@ -11,13 +11,13 @@ package javolution.xml.stream;
 import java.io.InputStream;
 import java.io.Reader;
 
-import javolution.lang.Copyable;
 import javolution.lang.Parallelizable;
 
 /**
  * <p> The OSGi factory service to create {@link XMLStreamReader} instances.
  *     For each bundle, a distinct factory instance is returned and can be 
- *     individually configured. 
+ *     individually configured (if not enough the factory can be 
+ *     {@link #clone cloned}). 
  * [code]
  * import javolution.xml.stream.*;
  * public class Activator implements BundleActivator { 
@@ -47,14 +47,11 @@ import javolution.lang.Parallelizable;
  *     }
  * }[/code]</p>
  * 
- * <p> Bundles requiring multiple factories or stack-allocated 
- *     instances may create new factories through {@link Copyable copy}.</p>
- * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
 @Parallelizable(comment="Factory configuration should be performed sequentially.")
-public interface XMLInputFactory extends Copyable<XMLInputFactory>{
+public interface XMLInputFactory extends Cloneable {
 
     /**
      * The property that requires the parser to coalesce adjacent character data
@@ -144,5 +141,10 @@ public interface XMLInputFactory extends Copyable<XMLInputFactory>{
      *         <code>false</code> otherwise.
      */
     boolean isPropertySupported(String name);
-  
+    
+    /**
+     * Returns a clone of this factory which can be independently configured.
+     */
+    XMLInputFactory clone();
+ 
 }

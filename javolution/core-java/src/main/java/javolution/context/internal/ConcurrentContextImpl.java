@@ -16,44 +16,53 @@ import javolution.lang.MathLib;
  */
 public final class ConcurrentContextImpl extends ConcurrentContext {
 
-    // Gets all the concurrent threads ready for executions.
-    private static final int NB_THREADS = ConcurrentContext.CONCURRENCY.get();
-
-    private static final ConcurrentThreadImpl[] EXECUTORS = new ConcurrentThreadImpl[NB_THREADS];
-
-    static {
-        for (int i = 0; i < NB_THREADS; i++) {
-            EXECUTORS[i] = new ConcurrentThreadImpl();
-            EXECUTORS[i].start();
-        }
-    }
-
+    private int completedCount; // Nbr of concurrent task completed.
     private Throwable error;
 
     private int initiatedCount; // Nbr of concurrent task initiated.
+    private final ConcurrentContextImpl parent;
+    private ConcurrentThreadImpl[] threads;
 
-    private int completedCount; // Nbr of concurrent task completed.
+    /**
+     * Default root implementation (not entered by anybody).
+     */
+    public ConcurrentContextImpl() {
+        this.parent = null;
+        int nbThreads = ConcurrentContext.CONCURRENCY.get();
+        threads = new ConcurrentThreadImpl[nbThreads];
+        for (int i = 0; i < nbThreads; i++) {
+            threads[i] = new ConcurrentThreadImpl();
+            threads[i].start();
+        }
+    }
 
-    private int concurrency;
+    /**
+     * Inner implementation.
+     */
+    public ConcurrentContextImpl(ConcurrentContextImpl parent) {
+        this.parent = parent;
+        this.threads = parent.threads; // Inherit threads from parents.
+    }
 
-    @Override
-    protected ConcurrentContext inner() {
-        ConcurrentContextImpl ctx = new ConcurrentContextImpl();
-        int n = ConcurrentContext.CONCURRENCY.get();
-        ctx.concurrency = MathLib.min(n, NB_THREADS);
-        return ctx;
+    // Informs this context of the completion of a task (with possible error).
+    public synchronized void completed(Throwable error) {
+        if (error != null) {
+            this.error = error;
+        }
+        completedCount++;
+        this.notify();
     }
 
     @Override
     public void execute(Runnable logic) {
-        // Find a concurrent thread not busy, limit the search based on concurrency.
-        for (int i = NB_THREADS - concurrency; i < NB_THREADS; i++) {
-            ConcurrentThreadImpl thread = EXECUTORS[i];
+        // Find a concurrent thread not busy.
+        for (ConcurrentThreadImpl thread : threads) {
             if (thread.execute(logic, this)) {
                 initiatedCount++;
                 return;
             }
         }
+        // Executes by current thread.
         try {
             logic.run();
         } catch (Throwable e) {
@@ -80,13 +89,18 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
         throw new RuntimeException(error);
     }
 
-    // Informs this context of the completion of a task (with possible error).
-    public synchronized void completed(Throwable error) {
-        if (error != null) {
-            this.error = error;
+    @Override
+    public void setConcurrency(int concurrency) {
+        int nbThreads = MathLib.min(parent.threads.length, concurrency);
+        threads = new ConcurrentThreadImpl[nbThreads];
+        for (int i = 0; i < nbThreads; i++) {
+            threads[i] = parent.threads[i];
         }
-        completedCount++;
-        this.notify();
+    }
+
+    @Override
+    protected ConcurrentContext inner() {
+        return new ConcurrentContextImpl(this);
     }
 
 }

@@ -9,34 +9,35 @@
 package javolution.lang;
 
 /**
- * <p> An object whose value is not subject or susceptible of change or 
- *     variation. Once a class is declared immutable, any subclass must 
- *     ensure immutability as well.</p>
- *     
- * <p> {@link Immutable} objects can safely be used in a multi-threaded 
- *     environment and <b>do not require defensive copying</b>.
+ * <p> An object having a {@link #value value} not subject or susceptible of 
+ *     change or variation (see {@link ValueType} for examples of immutable).
+ *     This interface guarantees that the object returned by {@link #value value()}
+ *     is constant, but not that instance of the class itself is constant.
  * [code]
- * class Polygon extends Shape implements Immutable<Shape> {
+ * class Polygon extends Shape implements Immutable<Shape> { // Here the class and value type are the same.
  *     private List<Point2D> vertices;
- *     public Polygon(Immutable<List<Point2D>> vertices) {
- *         this.vertices = vertices.value(); // No defensive copying required.
+ *     public Polygon(Immutable<List<Point2D>> vertices) { // Immutable<List> is not necessarily a List !
+ *         this.vertices = vertices.value(); // No defensive copying required (vertices.value() is certified constant).
  *     }
- *     public Polygon value() { return this; }
- * }
- * ...
- * // FastCollection/FastMap can be converted directly to immutable.
+ *     public Polygon value() { return this; } 
+ * }[/code]</p>
+ * <p> {@link javolution.util.FastCollection FastCollection/FastMap} have 
+ *     direct support for immutable.
+ * [code]
  * Polygone triangle = new Polygon(new FastTable<Point2D>().addAll(p1, p2, p3).toImmutable());
- * ...[/code]</p>
+ * [/code]</p>
+ * 
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 6.0, July 21, 2013
+ * @param <T> The type of the immutable constant value.
  * @see <a href="http://en.wikipedia.org/wiki/Immutable_object">
  *      Wikipedia: Immutable Object<a>    
  * @see javolution.util.FastCollection#toImmutable
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
  */
 public interface Immutable<T> {
     
     /**
-     * Returns the unmodifiable value.
+     * Returns the constant value. 
      */
     T value();
 

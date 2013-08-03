@@ -14,7 +14,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-import javolution.context.HeapContext;
 import javolution.io.UTF8StreamReader;
 import javolution.text.CharArray;
 import javolution.xml.sax.Attributes;
@@ -185,8 +184,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
      * Holds the reader for input streams.
      */
     private final UTF8StreamReader _utf8StreamReader = new UTF8StreamReader();
-    
-    
+
     /**
      * Holds the factory (if any) 
      */
@@ -1006,9 +1004,10 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
         _startOffset = 0;
         _state = STATE_CHARACTERS;
         _utf8StreamReader.reset();
-    
+
         // Recycles if factory produced.
-        if (_factory != null) _factory.recycle(this);
+        if (_factory != null)
+            _factory.recycle(this);
     }
 
     // Returns a new character sequence from the pool.
@@ -1019,7 +1018,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     }
 
     private CharArray newSeq2() {
-        HeapContext.execute(_createSeqLogic);
+        _createSeqLogic.run();
         return _seqs[_seqsIndex++];
     }
 
@@ -1050,34 +1049,21 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
         //       This accumulation may cause resize of the data buffer if
         //       numerous elements at the same nesting level are separated by 
         //       spaces or indentation.
-        HeapContext.execute(new Runnable() {
-
-            public void run() {
-                char[] tmp = new char[_data.length * 2];
-                javolution.context.LogContext.info(new CharArray(
-                        "XMLStreamReaderImpl: Data buffer increased to "
-                                + tmp.length));
-                System.arraycopy(_data, 0, tmp, 0, _data.length);
-                _data = tmp;
-            }
-
-        });
+        char[] tmp = new char[_data.length * 2];
+        javolution.context.LogContext.info(new CharArray(
+                "XMLStreamReaderImpl: Data buffer increased to " + tmp.length));
+        System.arraycopy(_data, 0, tmp, 0, _data.length);
+        _data = tmp;
     }
 
     // Increases statck.
     private void increaseStack() {
-        HeapContext.execute(new Runnable() {
-
-            public void run() {
-                CharArray[] tmp = new CharArray[_elemStack.length * 2];
-                javolution.context.LogContext.info(new CharArray(
-                        "XMLStreamReaderImpl: CharArray stack increased to "
-                                + tmp.length));
-                System.arraycopy(_elemStack, 0, tmp, 0, _elemStack.length);
-                _elemStack = tmp;
-            }
-
-        });
+        CharArray[] tmp = new CharArray[_elemStack.length * 2];
+        javolution.context.LogContext.info(new CharArray(
+                "XMLStreamReaderImpl: CharArray stack increased to "
+                        + tmp.length));
+        System.arraycopy(_elemStack, 0, tmp, 0, _elemStack.length);
+        _elemStack = tmp;
     }
 
     /**

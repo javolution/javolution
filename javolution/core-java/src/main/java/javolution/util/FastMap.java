@@ -257,6 +257,15 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      * Misc.
      */
 
+    /**
+     * Returns this map with the specified map's entries added.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public FastMap<K,V> putAll(FastMap<? extends K, ? extends V> that) {   
+        ((FastSet)entrySet()).addAll((FastSet)that.entrySet());
+        return this;
+    }
+
     /** 
      * Executes the specified update in an atomic manner.
      * Either the readers (including closure-based iterations) see the full 
@@ -282,8 +291,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
             @Override
             public T value() {
                 return value;
-            }
-            
+            }            
         };
     }
     

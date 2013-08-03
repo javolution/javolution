@@ -155,6 +155,12 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
 
     @Override
     @RealTime(limit = CONSTANT)
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    @Override
+    @RealTime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
@@ -389,6 +395,11 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     @Override
     public FastTable<E> addAll(E... elements) {
         return (FastTable<E>) super.addAll(elements);
+    }
+
+    @Override
+    public FastTable<E> addAll(FastCollection<? extends E> that) {
+        return (FastTable<E>) super.addAll(that);
     }
 
     /**

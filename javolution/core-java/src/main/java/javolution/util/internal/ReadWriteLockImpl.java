@@ -24,8 +24,9 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
     private static final long serialVersionUID = 0x600L; // Version.
     private final ReadLock readLock = new ReadLock();
     private final WriteLock writeLock = new WriteLock();
-    private int givenLocks;
+    private int givenLocks; 
     private int waitingWriters;
+    private Thread writerThread;
 
     public final class ReadLock implements Lock, Serializable {
         private static final long serialVersionUID = 0x600L; // Version.
@@ -42,7 +43,8 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         @Override
         public void lockInterruptibly() throws InterruptedException {
             synchronized (ReadWriteLockImpl.this) {
-                while ((givenLocks == -1) || (waitingWriters != 0)) {
+                if (writerThread == Thread.currentThread()) return; // Current thread has the writer lock.
+                while ((writerThread != null) || (waitingWriters != 0)) {
                     ReadWriteLockImpl.this.wait();
                 }
                 givenLocks++;
@@ -68,6 +70,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         @Override
         public void unlock() {
             synchronized (ReadWriteLockImpl.this) {
+                if (writerThread == Thread.currentThread()) return; // Itself is the writing thread.
                 assert (givenLocks > 0);
                 givenLocks--;
                 ReadWriteLockImpl.this.notifyAll();
@@ -96,7 +99,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
                     ReadWriteLockImpl.this.wait();
                 }
                 waitingWriters--;
-                givenLocks = -1;
+                writerThread = Thread.currentThread();
             }
         }
 
@@ -119,8 +122,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         @Override
         public void unlock() {
             synchronized (ReadWriteLockImpl.this) {
-                assert (givenLocks == -1);
-                givenLocks = 0;
+                writerThread = null;
                 ReadWriteLockImpl.this.notifyAll();
             }
         }

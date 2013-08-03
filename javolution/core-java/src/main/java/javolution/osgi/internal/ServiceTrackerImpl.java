@@ -12,17 +12,19 @@ import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
- * Mutex-free wrapper around a service tracker.
+ * Bridge to service tracker (does not trigger class loading exception 
+ * if running outside OSGi).
  */
 public final class ServiceTrackerImpl<C> {
 
     private volatile ServiceTracker<C, C> tracker;
     private final Class<C> type;
-    private final C defaultImpl;
+    private final Class<? extends C> defaultImplClass;
+    private C defaultImpl;
 
     /** Creates a context tracker for the specified context type. */
-    public ServiceTrackerImpl(Class<C> type, C defaultImpl) {
-        this.defaultImpl = defaultImpl;
+    public ServiceTrackerImpl(Class<C> type, Class<? extends C> defaultImplClass) {
+        this.defaultImplClass = defaultImplClass;
         this.type = type;
     }
 
@@ -39,12 +41,22 @@ public final class ServiceTrackerImpl<C> {
         tracker = null;
     }
 
-    /** Returns the published service or the default implementation if none. */
-    public C getService() {
+    /** Returns the published services or the default implementation if none. */
+    public Object[] getServices() {
         ServiceTracker<C, C> trk = tracker;
-        if (trk == null)
-            return defaultImpl;
-        C service = trk.getService();
-        return (service != null) ? service : defaultImpl;
+        if (trk != null) {
+            Object[] services = trk.getServices();
+            if (services != null) return services;        
+        }
+        synchronized (this) {
+            if (defaultImpl == null) {
+                try {
+                    defaultImpl = defaultImplClass.newInstance();
+                } catch (Throwable error) {
+                    throw new RuntimeException(error);
+                } 
+            }
+        }
+        return new Object[] { defaultImpl };
     }
 }

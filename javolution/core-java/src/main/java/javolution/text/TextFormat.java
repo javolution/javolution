@@ -10,6 +10,8 @@ package javolution.text;
 
 import java.io.IOException;
 
+import javolution.lang.Parallelizable;
+
 /**
  * <p> The service for plain text parsing and formatting;
  *     it supports {@link CharSequence} and {@link Appendable} interfaces 
@@ -17,28 +19,28 @@ import java.io.IOException;
  * 
  * <p> Instances of this class are typically retrieved from the 
  *     current {@link TextContext} (OSGi service or not).
- *     [code]
- *     @TextFormat(Complex.Cartesian.class) 
- *     public class Complex extends Number {
- *         public static Complex valueOf(CharSequence csq) {
- *             return TextContext.getFormat(Complex.class).parse(csq);
- *         }
- *         public String toString() {
- *             return TextContext.getFormat(Complex.class).format(this);
- *         }
- *         public static class Cartesian extends javolution.text.TextFormat<Complex> { ... }
- *     }[/code]
- *     Text formats can be locally overridden.
- *     [code]
- *     TextContext ctx = TextContext.enter();
- *     try {
- *          TextFormat<Complex> polarFormat = new TextFormat() {...};
- *          ctx.setFormat(Complex.class, polarFormat); // No impact on others threads.
- *          System.out.println(complexMatrix); // Displays complex numbers in polar coordinates.
- *     } finally {
- *          ctx.exit(); // Reverts to previous cartesian format for complex number.
- *     }[/code]
- * </p>
+ * [code]
+ * @DefaultTextFormat(Complex.Cartesian.class) 
+ * public class Complex extends Number {
+ *     public static Complex valueOf(CharSequence csq) {
+ *         return TextContext.valueOf(csq, Complex.class);
+ *     }
+ *     public String toString() {
+ *         return TextContext.toString(this);
+ *     }
+ *     public static class Cartesian extends javolution.text.TextFormat<Complex> { ... }
+ *     public static class Polar extends javolution.text.TextFormat<Complex> { ... }
+ * }[/code]</p>
+ * 
+ * <p> Text formats can be locally overridden.
+ * [code]
+ * TextContext ctx = TextContext.enter();
+ * try {
+ *      ctx.setFormat(Complex.class, Complex.Polar.class); // No impact on others threads.
+ *      System.out.println(complexMatrix); // Displays complex numbers in polar coordinates.
+ * } finally {
+ *      ctx.exit(); // Reverts to previous cartesian format for complex numbers.
+ * }[/code]</p>
  *
  * <p> For parsing/formatting of primitive types, the {@link TypeFormat}
  *     utility class is recommended.</p>
@@ -46,6 +48,7 @@ import java.io.IOException;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0, July 21, 2013
  */
+@Parallelizable
 public abstract class TextFormat<T> {
 
     /**
@@ -119,5 +122,4 @@ public abstract class TextFormat<T> {
         return this.format(obj, new TextBuilder()).toString();
 
     }
-
 }

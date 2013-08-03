@@ -154,7 +154,12 @@ public class Struct {
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
     public static final LocalContext.Parameter<Integer> MAXIMUM_ALIGNMENT 
-        = new LocalContext.Parameter<Integer>(4);
+        = new LocalContext.Parameter<Integer>(4) {
+
+            @Override
+            protected Integer parse(String str) {
+                return Integer.valueOf(str);
+            }};
 
     /**
      * Holds the outer struct if any.

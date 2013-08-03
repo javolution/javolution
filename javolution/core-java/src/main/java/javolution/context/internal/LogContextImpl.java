@@ -15,101 +15,17 @@ import javolution.text.TextBuilder;
 import org.osgi.service.log.LogService;
 
 /**
- * Holds the default implementation of LogContext.
+ * The default implementation of LogContext.
  */
 public final class LogContextImpl extends LogContext {
 
-    /** LogEvent handled to the logging thread. */
-    private static class LogEvent {
-        Level level;
-        Object[] message;
-        LogEvent next;
-        Object[] prefix;
-        Object[] suffix;
-    }
-    
-    /** LoggingThread */
-    private static class LoggingThread extends Thread {
-        private LogEvent last;
-        private TextBuilder message = new TextBuilder();
-        private LogEvent next;
-
-        public LoggingThread() {
-            super("Javolution Logging");
-            setDaemon(true);
-        }
-
-        public void run() {
-            while (true) {
-                try {
-                    log(next());
-                } catch (Throwable error) {
-                    error.printStackTrace();
-                }
-            }
-        }
-
-        synchronized void add(LogEvent event) {
-            if (last == null) {
-                last = next = event;
-                this.notify();
-            } else {
-                last.next = event;
-                last = event;
-            }
-        }
-
-        synchronized LogEvent next() throws InterruptedException {
-            while (next == null)
-                this.wait();
-            LogEvent event = next;
-            next = next.next;
-            if (next == null) {
-                last = null;
-            }
-            return event;
-        }
-
-        private void log(LogEvent event) {
-            message.clear();
-            Throwable exception = null;
-            for (Object pfx : event.prefix) {
-                message.append(pfx);
-            }
-            for (Object obj : event.message) {
-                if ((exception == null) && (obj instanceof Throwable)) {
-                    exception = (Throwable) obj;
-                } else {
-                    message.append(obj);
-                }
-            }
-            for (Object sfx : event.suffix) {
-                message.append(sfx);
-            }
-            OSGiServices.getLogService().log(
-                    TO_OSGI_LEVEL[event.level.ordinal()], message.toString(),
-                    exception);
-        }
-    }
+    private static final Object[] NONE = new Object[0];
     private static final int[] TO_OSGI_LEVEL = { LogService.LOG_DEBUG,
             LogService.LOG_INFO, LogService.LOG_WARNING, LogService.LOG_ERROR };
+
     private Level level; // Null to use configurable LEVEL.
-    private final LoggingThread loggingThread;
-
-    private Object[] prefix = new Object[0];
-
-    private Object[] suffix = new Object[0];
-
-    /** Default constructor. */
-    public LogContextImpl() {
-        loggingThread = new LoggingThread();
-        loggingThread.start();
-    }
-
-    /** Creates an inner context using the specified logging thread. */
-    public LogContextImpl(LoggingThread loggingThread) {
-        this.loggingThread = loggingThread;
-    }
+    private Object[] prefix = NONE;
+    private Object[] suffix = NONE;
 
     @Override
     public void prefix(Object... pfx) {
@@ -134,7 +50,7 @@ public final class LogContextImpl extends LogContext {
 
     @Override
     protected LogContext inner() {
-        LogContextImpl ctx = new LogContextImpl(loggingThread);
+        LogContextImpl ctx = new LogContextImpl();
         ctx.prefix = prefix;
         ctx.suffix = suffix;
         ctx.level = level;
@@ -146,11 +62,26 @@ public final class LogContextImpl extends LogContext {
         Level thisLevel = (this.level != null) ? this.level : LEVEL.get();
         if (level.compareTo(thisLevel) < 0)
             return;
-        LogEvent logEvent = new LogEvent();
-        logEvent.level = level;
-        logEvent.prefix = prefix;
-        logEvent.message = message;
-        logEvent.suffix = suffix;
-        loggingThread.add(logEvent);
+        TextBuilder tmp = new TextBuilder();
+        Throwable exception = null;
+        for (Object pfx : prefix) {
+            tmp.append(pfx); // Uses TextContext for formatting.
+        }
+        for (Object obj : message) {
+            if ((exception == null) && (obj instanceof Throwable)) {
+                exception = (Throwable) obj;
+            } else {
+                tmp.append(obj); // Uses TextContext for formatting.
+            }
+        }
+        for (Object sfx : suffix) {
+            tmp.append(sfx); // Uses TextContext for formatting.
+        }
+        int osgiLevel = TO_OSGI_LEVEL[level.ordinal()];
+        String msg = tmp.toString();
+        Object[] logServices = OSGiServices.getLogServices();
+        for (Object logService : logServices) {
+            ((LogService)logService).log(osgiLevel, msg, exception);
+        }
     }
 }

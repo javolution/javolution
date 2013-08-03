@@ -96,6 +96,12 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
 
     @Override
     @RealTime(limit = CONSTANT)
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    @Override
+    @RealTime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
@@ -127,6 +133,11 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     @Override
     public FastSet<E> addAll(E... elements) {
         return (FastSet<E>) super.addAll(elements);
+    }
+
+    @Override
+    public FastSet<E> addAll(FastCollection<? extends E> that) {
+        return (FastSet<E>) super.addAll(that);
     }
 
     @Override

@@ -126,6 +126,11 @@ public class FastSortedTable<E> extends FastTable<E> {
     }
 
     @Override
+    public FastSortedTable<E> addAll(FastCollection<? extends E> that) {
+        return (FastSortedTable<E>) super.addAll(that);
+    }
+
+    @Override
     protected SortedTableService<E> service() {
         return (SortedTableService<E>) super.service();
     }

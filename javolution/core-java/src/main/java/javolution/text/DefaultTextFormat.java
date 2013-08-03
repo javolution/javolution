@@ -26,10 +26,10 @@ import java.lang.annotation.Target;
  * @DefaultTextFormat(Complex.Cartesian.class) 
  * public class Complex {
  *     public String toString() { // Uses the default format unless locally overridden.
- *         return TextContext.getFormat(Complex.class).format(this);
+ *         return TextContext.toString(this);
  *     }
  *     public static Complex valueOf(CharSequence csq) {
- *         return TextContext.getFormat(Complex.class).parse(csq);
+ *         return TextContext.parse(csq, Complex.class);
  *     }
  *     public static class Cartesian extends TextFormat<Complex> { ... }
  *     public static class Polar extends TextFormat<Complex> { ... }
@@ -55,7 +55,6 @@ public @interface DefaultTextFormat {
     /**
      * Returns the default text format of the annotated class.
      */
-    @SuppressWarnings("rawtypes")
-    Class<? extends TextFormat> value();
+    Class<? extends TextFormat<?>> value();
 
 }

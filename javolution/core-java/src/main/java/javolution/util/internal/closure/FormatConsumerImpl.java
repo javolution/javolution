@@ -26,9 +26,8 @@ public final class FormatConsumerImpl implements Consumer<Object>,
 
     private final Appendable appendable;
     private volatile IOException ioException;
-    private boolean isFirst = true;
-    private TextFormat<Object> textFormat;
-    private Class<?> type;
+    private TextFormat<Object> textFormat; // Previous format.
+    private Class<?> type; // Previous element type. 
 
     public FormatConsumerImpl(Appendable appendable) {
         this.appendable = appendable;
@@ -56,13 +55,13 @@ public final class FormatConsumerImpl implements Consumer<Object>,
     @Override
     public void accept(Object obj) {
         try {
-            if (!isFirst) {
+            if (type != null) { 
                 appendable.append(", ");
-            } else {
-                isFirst = false;
+            } else { // First.
+                type = Void.class;
             }
             if (obj != null) {
-                if ((type == null) || (!type.equals(obj.getClass()))) {
+                if (!type.equals(obj.getClass())) {
                     type = obj.getClass();
                     textFormat = TextContext.getFormat(type);
                 }

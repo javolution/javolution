@@ -44,11 +44,10 @@
                 <configuration>
                     <instructions>
                         <Export-Package>!javolution.*.internal.*,javolution.*,org.osgi.service.log</Export-Package>
-                        <Private-Package>javolution.*.internal.*</Private-Package>
+                        <Private-Package>javolution.*.internal.*,javax.realtime.*</Private-Package>
                         <Bundle-Activator>javolution.osgi.internal.JavolutionActivator</Bundle-Activator>
                         <Export-Service>javolution.xml.stream.XMLInputFactory,
-                                        javolution.xml.stream.XMLOutputFactory,
-                                        org.osgi.service.cm.ManagedService</Export-Service>
+                                        javolution.xml.stream.XMLOutputFactory</Export-Service>
                     </instructions>
                 </configuration>
             </plugin>

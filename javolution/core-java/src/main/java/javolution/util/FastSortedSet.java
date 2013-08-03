@@ -130,6 +130,11 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     }
 
     @Override
+    public FastSortedSet<E> addAll(FastCollection<? extends E> that) {
+        return (FastSortedSet<E>) super.addAll(that);
+    }
+    
+   @Override
     protected SortedSetService<E> service() {
         return (SortedSetService<E>) super.service();
     }

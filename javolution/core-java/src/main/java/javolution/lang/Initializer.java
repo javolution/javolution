@@ -9,7 +9,6 @@
 package javolution.lang;
 
 import java.util.Vector;
-
 import javolution.context.LogContext;
 
 /**
@@ -21,15 +20,16 @@ import javolution.context.LogContext;
  * 
  * <p> Class loading can be performed in a lazy manner and therefore some parts 
  *     of the class loading process may be done on first use rather than at 
- *     load time. Javolution activator loads unreferenced classes to ensure that
- *     <b>all</b> classes can be initialized during bundle activation.
+ *     load time. Javolution bundle activator ensure that <b>all</b> its classes
+ *     are initialized at start up.
  *     The following code illustrates how this can be done for any bundle.
  * [code]
  * public class MyActivator implements BundleActivator {
  *     public void start(BundleContext bc) throws Exception {
  *         Initializer initializer = new Initializer(MyActivator.class.getClassLoader());
- *         initializer.loadClass("com.foo.internal.UnreferencedClass");
- *         ... // Load explicitly classes not yet referenced.
+ *         initializer.loadClass(com.foo.internal.UnreferencedClass.class);
+ *             // Load explicitly classes not directly or indirectly referenced.
+ *         ... 
  *         initializer.initializeLoadedClasses(); // Recursive loading/initialization.
  *         ... // Continue activation
  *     }
@@ -43,11 +43,19 @@ import javolution.context.LogContext;
  */
 public class Initializer {
 
+    /**
+     * Indicates if the class being initialized should be logged as debug
+     * messages (default {@code false}). 
+     */
+    public static final Configurable<Boolean> DEBUG = new Configurable<Boolean>(false) {
+        @Override
+        protected Boolean parse(String str) {
+            return Boolean.parseBoolean(str);
+        }
+    };
+
     /** The class loader for this initializer */
     private final ClassLoader classLoader;
-
-    /** Indicates if the initialization has been performed successfully. */
-    private boolean isInitializationSuccessful = false;
 
     /** 
      * Creates an initializer for the specified class loader.
@@ -86,11 +94,11 @@ public class Initializer {
      * Loads the specified class (does not perform any initialization).
      * This method is typically used to load unreferenced classes.
      */
-    public void loadClass(String className) {
+    public void loadClass(Class<?> cls) {
         try {
-            classLoader.loadClass(className);
+            classLoader.loadClass(cls.getName());
         } catch (ClassNotFoundException e) {
-            LogContext.error("Class " + className + " not found.");
+            LogContext.error("Class " + cls + " not found.");
         }
     }
 
@@ -98,23 +106,28 @@ public class Initializer {
      * Initializes all the loaded classes. If the initialization leads to more 
      * classes being loaded, these classes are initialized as well 
      * (recursive process).
+     * 
+     * @return {@code true} if initialization has been performed successfully;
+     *         {@code false} otherwise.
      */
-    public void initializeLoadedClasses() {
+    public boolean initializeLoadedClasses() {
+        boolean isInitializationSuccessful = true;
         int nbrClassesInitialized = 0;
         while (true) {
             Class<?>[] classes = loadedClasses();
             if (classes == null) {
-                LogContext
-                        .warning("Automatic class initialization not supported.");
-                return;
+                LogContext.warning("Automatic class initialization not supported.");
+                return false;
             }
             if (nbrClassesInitialized >= classes.length)
                 break; // Done.
             for (int i = nbrClassesInitialized; i < classes.length; i++) {
                 Class<?> cls = classes[i];
                 try {
+                    if (DEBUG.get()) LogContext.debug("Initialize ", cls.getName());
                     Class.forName(cls.getName(), true, classLoader);
                 } catch (ClassNotFoundException ex) {
+                    isInitializationSuccessful = false;
                     LogContext.error(ex); // Should never happen.
                 }
             }
@@ -122,12 +135,6 @@ public class Initializer {
         }
         LogContext.info("Initialization of ", nbrClassesInitialized,
                 " classes loaded by ", classLoader);
-    }
-
-    /**
-     * Indicates whether or not initialization has been successful.
-     */
-    public boolean isInitializationSuccessful() {
         return isInitializationSuccessful;
     }
 

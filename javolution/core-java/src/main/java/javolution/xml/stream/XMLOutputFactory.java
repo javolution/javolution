@@ -11,13 +11,13 @@ package javolution.xml.stream;
 import java.io.OutputStream;
 import java.io.Writer;
 
-import javolution.lang.Copyable;
 import javolution.lang.Parallelizable;
 
 /**
  * <p> The OSGi factory service to create {@link XMLStreamWriter} instances.
  *     For each bundle, a distinct factory instance is returned and can be 
- *     individually configured.
+ *     individually configured  (if not enough the factory can be 
+ *     {@link #clone cloned}).
  * [code]
  * import javolution.xml.stream.*;
  * public class Activator implements BundleActivator { 
@@ -49,15 +49,12 @@ import javolution.lang.Parallelizable;
  *         System.out.println(xml);
  *     }
  *  [/code]</p>
- *  
- * <p> Bundles requiring multiple factories or stack-allocated 
- *     instances may create new factories through {@link Copyable copy}.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
 @Parallelizable(comment="Factory configuration should be performed sequentially.")
-public interface XMLOutputFactory extends Copyable<XMLOutputFactory>{
+public interface XMLOutputFactory extends Cloneable {
 
     /**
      * Property used to set prefix defaulting on the output side
@@ -164,5 +161,9 @@ public interface XMLOutputFactory extends Copyable<XMLOutputFactory>{
      *         <code>false</code> otherwise.
      */
     boolean isPropertySupported(String name);
-
+    
+    /**
+     * Returns a clone of this factory which can be independently configured.
+     */
+    XMLOutputFactory clone();
 }

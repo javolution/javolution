@@ -31,8 +31,7 @@ import javolution.text.TypeFormat;
  * <p> Index performance is on-par with the primitive {@code int} type
  *     for small values and similar to {@link Integer} instances for large
  *     values. Small indexes have no adverse effect on the garbage collector
- *     (permanent memory) and have fast {@link #equals(Object) equals}  
- *     method due to their unicity.</p>
+ *     and have fast {@link #equals(Object) equals} method due to their unicity.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
@@ -61,12 +60,16 @@ public final class Index extends Number implements Comparable<Index>,
     }
 
     /**
-     * Holds the number of preallocated instances (default {@code 1024}).
-     * Preallocate instances are allocated in permanent memory (e.g. 
-     * immortal memory) and are unique (fast equals method).
+     * Holds the number of unique preallocated instances (default {@code 1024}). 
+     * This number is configurable, for example 
+     * {@code -Djavolution.util.Index#PREALLOCATED=0} disables preallocation.
      */
-    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(
-            1024);
+    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(1024) {
+
+        @Override
+        protected Integer parse(String str) {
+            return Integer.valueOf(str);
+        }};
 
     /**
      * Holds the index zero (value <code>0</code>).

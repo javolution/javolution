@@ -93,12 +93,15 @@ public final class XMLInputFactoryImpl implements XMLInputFactory {
         }
         return xmlReader;
     }
-
+    
     @Override
-    public XMLInputFactoryImpl copy() {
-        XMLInputFactoryImpl factory = new XMLInputFactoryImpl();
-        factory._entities = _entities;
-        return factory;
+    public XMLInputFactory clone() {
+        try {
+            XMLInputFactoryImpl clone = (XMLInputFactoryImpl) super.clone();
+            clone._recycled = new FastTable<XMLStreamReaderImpl>().shared();
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new Error();// Cannot happen since cloneable.
+        }
     }
-
 }

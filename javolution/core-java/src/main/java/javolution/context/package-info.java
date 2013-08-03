@@ -30,7 +30,6 @@
       (the one who knows what to do, when running OSGi it is typically a separate bundle).
        Then, your code looks a lot cleaner and is way more flexible as you don't have
        to worry about logging, security, performance etc. in your low level methods. 
-       For example:
 [code]
 void myMethod() {
     ...
@@ -41,27 +40,23 @@ void myMethod() {
    <p> Used properly <i><b>J</b>avolution</i>'s {@link javolution.context.AbstractContext contexts}
        greatly facilitate the separation of concerns. Contexts are fully 
        integrated with OSGi (they are published services). Applications 
-       may dynamically plug-in the right context using the OSGi mechanisms. 
-       For example, the {@link javolution.context.SecurityContext SecurityContext} might only be known 
-       at runtime.</p>
+       may dynamically plug-in the "right context" using OSGi mechanisms. 
+       For example, the {@link javolution.context.SecurityContext SecurityContext}
+       might only be known at runtime.</p>
      
  <h2><a name="PREDEFINED">Predefined Contexts:</a></h2>
   <p> <i><b>J</b>avolution</i> provides many useful runtime contexts:<ul>
-      <li>{@link javolution.context.AllocatorContext AllocatorContext} - To control 
-           object allocation, such as the {@link javolution.context.StackContext StackContext}
-           to allocate on the stack (ScopedMemory when running on a RTSJ VM).</li>
-      <li>{@link javolution.context.ConcurrentContext ConcurrentContext} - To take advantage of concurrent 
-          algorithms on multi-cores systems.</li>
-      <li>{@link javolution.context.LogContext LogContext} - To log events according 
-           to the runtime environment ({@link org.osgi.service.log.LogService} when running OSGi, 
-           {@link java.util.logging.Logger} for standard applications, etc.)</li>     
-      <li>{@link javolution.context.LocalContext LocalContext} - For the user to be able to define locally 
-           scoped environment settings.</li>
-      <li>{@link javolution.context.SecurityContext SecurityContext} - To address any application-level security 
-          concerns.</li>
-      <li>{@link javolution.context.FormatContext FormatContext} - For customizable objects parsing/formatting. 
-           For example  {@link javolution.text.TextContext TextContext} for plain text, 
-           {@link javolution.xml.XMLContext XMLContext} for xml serialization/deserialization.</li>
+      <li>{@link javolution.context.ConcurrentContext ConcurrentContext} 
+      - To take advantage of concurrent algorithms on multi-cores systems.</li>
+      <li>{@link javolution.context.LogContext LogContext} 
+      - To log events according to the runtime environment (e.g. {@link org.osgi.service.log.LogService} when running OSGi).</li>     
+      <li>{@link javolution.context.LocalContext LocalContext} 
+      - To define locally  scoped environment settings.</li>
+      <li>{@link javolution.context.SecurityContext SecurityContext} 
+      - To address application-level security concerns.</li>
+      <li>{@link javolution.context.FormatContext FormatContext} 
+      - For plugable objects parsing/formatting. Such as  {@link javolution.text.TextContext TextContext} for plain text, 
+        or {@link javolution.xml.XMLContext XMLContext} for XML serialization/deserialization.</li>
       <li>...add your own !</li>
       </ul>
   </p>
@@ -97,19 +92,6 @@ class MyThread extends Thread {
         Otherwise, you can only configure a context that you have entered (for obvious safety reasons).</p>
 <p></p>
     </li> 
-    <a name="FAQ-3"></a>
-    <li><b>I am writing an application using third party libraries. 
-          I cannot avoid GC unless I get the source and patch it to Javolution.
-          Can I still make my application real-time using {@link javolution.context.StackContext StackContext}?</b>
-    <p> You cannot get determinism using "any" library (including Java standard library) 
-    regardless of the garbage collector issue. Array resizing, lazy initialization, map rehashing (...)
-    would all introduce unexpected  delay, this is why Javolution comes with its own 
-    real-time collections implementation (fractal-based). That being said, if your are running 
-    on a RTSJ VM, entering a {@link javolution.context.StackContext StackContext} will force 
-    new objects allocations to be performed on ScopedMemory with no adverse effect on GC.</p>
-<p></p>
-    </li> 
-    
  </ol>
 
 */

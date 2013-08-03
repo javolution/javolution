@@ -9,52 +9,52 @@
 package javolution.context;
 
 import javolution.lang.Configurable;
-import javolution.lang.RealTime;
 import javolution.osgi.internal.OSGiServices;
+import javolution.text.TextContext;
 
 /**
- * <p> Asynchronous logging context adapting to the runtime environment.
- *     Log events are delivered asynchronously either to the OSGi 
- *     {@code org.osgi.service.log.LogService LogService} or to the standard 
- *     output stream when running outside OSGi.</p>
+ * <p> Asynchronous logging context integrated with the OSGi logging framework.
+ *     The logging back-end, or how the log entries are displayed, stored, or
+ *     processed is unspecified but always performed asynchronously. 
+ *     When running outside OSGi, log messages are sent to {@link System#out}. 
+ *     Message formatting itself (using the current objects values) is always 
+ *     performed synchronously using the actual {@link TextContext}.</p> 
  *     
  * <p> Logging contexts support automatic prefixing/suffixing of any information 
- *     relevant to the user/developer (thread id, user id, and so on). 
+ *     relevant to the user/developer (thread info, user id, and so on). 
  * [code]
- * void performTransaction(UserID userId) {
+ * void run() {
  *     LogContext ctx = LogContext.enter(); 
  *     try {
- *         ctx.prefix("[ID: ", userId, "] "); 
+ *         // Prefix the executing thread to any message being logged.
+ *         ctx.prefix("[Thread: ", Thead.currentThread(), "] "); 
  *         ... 
- *             // Somewhere in an a function being called.
- *             LogContext.info("Overdraft of ", amount); // Asynchronously logs "[ID: <userId>] Overdraft of <amount>"
- *         ...
  *      } finally {
- *         ctx.exit(); // Reverts to previous log settings.
+ *         ctx.exit();
  *      }
  *  }[/code]</p>
  *  
- *  <p> Application should separate messages elements by commas and not 
- *      use {@link String} concatenations when calling log methods 
- *      (otherwise the concatenation is performed by the current thread  
- *       even when log events are filtered out).
+ *  <p> Note: Applications should separate messages elements by commas and not 
+ *      use {@link String} concatenations when calling log methods otherwise 
+ *      the concatenation is performed even when log events are filtered out.
  *  [code]
  *  LogContext ctx = LogContext.enter();
  *  try {
- *      ctx.setLevel(Level.WARNING); // Logs only error/warnings. 
+ *      ctx.setLevel(Level.INFO); // Does not log debug messages. 
  *      ... 
- *          LogContext.info("Index: ", index, " at maximum value"); // GOOD (always fast)!
- *          LogContext.info("Index: " + index + " at maximum value"); // BAD (slow down current thread)!
+ *      LogContext.debug("Index: ", index, " at maximum value"); // GOOD, no formatting performed !
+ *      LogContext.debug("Index: " + index + " at maximum value"); // BAD, formatting performed even though nothing is logged !
  *      ...
  *  } finally {
- *      ctx.exit(); // Reverts to previous settings.
+ *      ctx.exit();
  *  }[/code]</p>
  *  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
+ * @see <a href="https://code.google.com/p/osgi-logging/wiki/UnderstandingTheOSGiLogging">
+ *      Understanding OSGi Logging</a>. </p>
  * @see javolution.text.TextContext
  */
-@RealTime(stackSafe = false, comment = "Message formatting is perormed asynchronously, stack objects cannot be logged directly")
 public abstract class LogContext extends AbstractContext {
 
     /**
@@ -72,8 +72,12 @@ public abstract class LogContext extends AbstractContext {
      * the option <code>-Djavolution.context.LogContext#LEVEL=WARNING</code>  
      * causes the debug/info not to be logged. 
      */
-    public static final Configurable<Level> LEVEL = new Configurable<Level>(
-            Level.DEBUG);
+    public static final Configurable<Level> LEVEL = new Configurable<Level>(Level.DEBUG) {
+        @Override
+        public Level parse(String str) {
+            return Level.valueOf(str);
+        }
+    };
 
     /**
      * Logs the specified debug message. 
@@ -112,7 +116,7 @@ public abstract class LogContext extends AbstractContext {
     }
 
     private static LogContext currentLogContext() {
-        LogContext ctx = AbstractContext.current(LogContext.class);
+        LogContext ctx = current(LogContext.class);
         if (ctx != null)
             return ctx;
         return OSGiServices.getLogContext();

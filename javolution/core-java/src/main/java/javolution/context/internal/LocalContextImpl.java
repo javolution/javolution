@@ -13,36 +13,32 @@ import javolution.util.FastMap;
 
 /**
  * Holds the default implementation of LocalContext.
- * @version 6.0, July 21, 2013
  */
 public final class LocalContextImpl extends LocalContext {
 
-    private FastMap<Parameter<?>, Object> localSettings;
-    private LocalContextImpl outer;
+    private FastMap<Parameter<?>, Object> localSettings = new FastMap<Parameter<?>, Object>();
+    private LocalContextImpl parent;
 
     @Override
     protected LocalContext inner() {
         LocalContextImpl ctx = new LocalContextImpl();
-        ctx.outer = this;
+        ctx.parent = this;
         return ctx;
     }
 
     @Override
-    public <T> void override(Parameter<T> param, T localValue) {
-        if (localSettings == null) {
-            localSettings = new FastMap<Parameter<?>, Object>();
-        }
+    public <T> void supersede(Parameter<T> param, T localValue) {
         localSettings.put(param, localValue);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> T getLocalValueInContext(Parameter<T> param) {
-        if ((localSettings != null) && localSettings.containsKey(param))
-            return (T) localSettings.get(param);
-        if (outer != null)
-            return outer.getLocalValueInContext(param);
-        return param.getDefault().get();
+    protected <T> T getValue(Parameter<T> param) {
+        Object value = localSettings.get(param);
+        if (value != null) return (T) value;
+        if (localSettings.containsKey(param)) return null; // Value set to null.
+        if (parent != null) return parent.getValue(param);
+        return param.getDefault();
     }
 
 }

@@ -20,7 +20,8 @@ import javolution.lang.MathLib;
  *     (<code>O(Log(n))</code> {@link Text#insert insertion} and 
  *     {@link Text#delete deletion} capabilities).</p>
  *     
- * <p> This implementation is not synchronized.</p>
+ * <p> The textual format of any appended object is retrieved 
+ *     from the current {@link TextContext}.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, January 20, 2008
@@ -208,31 +209,14 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
 
     /**
      * Appends the textual representation of the specified object. 
-     * This method is equivalent to <code>append(Text.valueOf(obj))</code>
-     *
-     * @param obj the object to represent or <code>null</code>.
-     * @return <code>this</code>
-     * @see Text#valueOf(Object)
+     * This method is equivalent to 
+     * {@code TextContext.getFormat(obj.getClass()).format(obj, this)}
      */
     public final TextBuilder append(Object obj) {
-        if (obj instanceof String)
-            return append((String) obj);
-        if (obj instanceof Number)
-            return appendNumber((Number) obj);
-        return append(String.valueOf(obj));
-    }
-
-    // For Integer, Long, Float and Double use direct formatting.
-    private TextBuilder appendNumber(Object num) {
-        if (num instanceof Integer)
-            return append(((Integer) num).intValue());
-        if (num instanceof Long)
-            return append(((Long) num).longValue());
-        if (num instanceof Float)
-            return append(((Float) num).floatValue());
-        if (num instanceof Double)
-            return append(((Double) num).doubleValue());
-        return append(String.valueOf(num));
+        if (obj == null) return append("null");
+        TextFormat<Object> textFormat = TextContext.getFormat(obj.getClass());
+        if (textFormat == null) return append(obj.toString());
+        return textFormat.format(obj, this);
     }
 
     /**
@@ -243,7 +227,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  csq the character sequence to append or <code>null</code>.
      * @return <code>this</code>
      */
-    public final TextBuilder append(java.lang.CharSequence csq) {
+    public final TextBuilder append(CharSequence csq) {
         return (csq == null) ? append("null") : append(csq, 0, csq.length());
     }
 
@@ -259,7 +243,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
      *         || (start > end) || (end > csq.length())</code>
      */
-    public final TextBuilder append(java.lang.CharSequence csq, int start,
+    public final TextBuilder append(CharSequence csq, int start,
             int end) {
         if (csq == null)
             return append("null");
@@ -777,9 +761,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
     }
 
     /**
-     * Returns the {@link Text} corresponding to this {@link TextBuilder}
-     * (allocated on the "stack" when executing in a 
-     * {@link javolution.context.StackContext StackContext}).
+     * Returns the {@link Text} corresponding to this {@link TextBuilder}.
      *
      * @return the corresponding {@link Text} instance.
      */

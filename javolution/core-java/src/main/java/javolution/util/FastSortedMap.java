@@ -183,6 +183,11 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
     /***************************************************************************
      * Misc.
      */
+  
+    @Override
+    public FastSortedMap<K,V> putAll(FastMap<? extends K, ? extends V> that) {        
+        return (FastSortedMap<K, V>) super.putAll(that);
+    }
 
     @Override
     protected SortedMapService<K, V> service() {

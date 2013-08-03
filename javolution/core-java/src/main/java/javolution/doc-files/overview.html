@@ -105,7 +105,7 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
 </table>
 <p> These services can be accessed through the standard OSGi registry 
       or using {@code javolution.osgi.internal.OSGiServices} when running outside OSGi.</p>
-<p><b><i>Javolution</i></b> will use the following OSGi services implementations if published.</p>
+<p><b><i>Javolution</i></b> listen to the following OSGi services.</p>
 <table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 1000px;">
   <tbody>
     <tr>
@@ -114,7 +114,7 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
     </tr>
     <tr>
       <td style="vertical-align: top;">{@code org.osgi.service.log.LogService}</td>
-      <td style="vertical-align: top;">OSGi service log (see {@link javolution.context.LogContext}).</td>
+      <td style="vertical-align: top;">OSGi service to log message ).</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">{@link javolution.context.LogContext}</td>
@@ -131,18 +131,6 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
     <tr>
       <td style="vertical-align: top;">{@link javolution.context.SecurityContext}</td>
       <td style="vertical-align: top;">Service granting security authorizations.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">{@link javolution.context.HeapContext}</td>
-      <td style="vertical-align: top;">Service to support heap allocations.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ImmortalContext}</td>
-      <td style="vertical-align: top;">Service to support allocations in immortal memory.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">{@link javolution.context.StackContext}</td>
-      <td style="vertical-align: top;">Service to support stack allocations.</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">{@link javolution.text.TextContext}</td>

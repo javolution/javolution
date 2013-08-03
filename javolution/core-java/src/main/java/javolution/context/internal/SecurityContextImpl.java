@@ -9,7 +9,6 @@
 package javolution.context.internal;
 
 import javolution.context.SecurityContext;
-import javolution.lang.Permission;
 import javolution.util.FastTable;
 
 /**

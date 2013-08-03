@@ -13,9 +13,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import javolution.context.HeapContext;
+
 import javolution.io.UTF8StreamWriter;
-import javolution.lang.Reusable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.xml.stream.XMLOutputFactory;
@@ -32,7 +31,7 @@ import javolution.xml.stream.XMLStreamWriter;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
-public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
+public final class XMLStreamWriterImpl implements XMLStreamWriter {
 
     /** 
      * Holds the length of intermediate buffer.
@@ -154,7 +153,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
      * Factory-based constructor.
      */
     XMLStreamWriterImpl(XMLOutputFactoryImpl factory) {
-       _factory = factory;        
+        _factory = factory;
         for (int i = 0; i < _qNames.length;) {
             _qNames[i++] = new TextBuilder();
         }
@@ -295,8 +294,9 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
         _repairingPrefix = "ns";
         _utf8StreamWriter.reset();
         _writer = null;
-        
-        if (_factory != null) _factory.recycle(this);
+
+        if (_factory != null)
+            _factory.recycle(this);
     }
 
     // Implements XMLStreamWriter interface.
@@ -779,20 +779,16 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter, Reusable {
 
     // Resizes element stack  (same memory area as the writer).
     private void resizeElemStack() {
-        HeapContext.execute(new Runnable() {
-            public void run() {
-                final int oldLength = _qNames.length;
-                final int newLength = oldLength * 2;
+        final int oldLength = _qNames.length;
+        final int newLength = oldLength * 2;
 
-                // Resizes elements qNames stack.
-                TextBuilder[] tmp = new TextBuilder[newLength];
-                System.arraycopy(_qNames, 0, tmp, 0, oldLength);
-                _qNames = tmp;
-                for (int i = oldLength; i < newLength; i++) {
-                    _qNames[i] = new TextBuilder();
-                }
-            }
-        });
+        // Resizes elements qNames stack.
+        TextBuilder[] tmp = new TextBuilder[newLength];
+        System.arraycopy(_qNames, 0, tmp, 0, oldLength);
+        _qNames = tmp;
+        for (int i = oldLength; i < newLength; i++) {
+            _qNames[i] = new TextBuilder();
+        }
     }
 
     // Writes methods.

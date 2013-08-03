@@ -10,7 +10,6 @@ package javolution.text;
 
 import java.io.PrintStream;
 
-import javolution.context.ImmortalContext;
 import javolution.lang.MathLib;
 import javolution.lang.RealTime;
 import javolution.lang.ValueType;
@@ -37,9 +36,6 @@ import javolution.xml.XMLSerializable;
  *          larger string from being garbage collected).</li>
  *     <li> More flexible as they allows for search and comparison with any 
  *          <code>java.lang.String</code> or <code>CharSequence</code>.</li>
- *     <li> Support custom allocation policies (instances allocated on the 
- *          "stack" when executing in a 
- *          {@link javolution.context.StackContext StackContext}).</li>
  *     </ul></p>
  * <p> {@link Text} literals should be explicitly {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
@@ -139,25 +135,10 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
      * Returns the text representing the specified object.
      *
      * @param  obj the object to represent as text.
-     * @return the textual representation of the specified object.
+     * @return {@code new TextBuilder().append(obj).toText()}
      */
     public static Text valueOf(Object obj) {
-        if (obj instanceof Number) // Use faster primitive formatting.
-            return Text.valueOfNumber(obj);
-        return Text.valueOf(String.valueOf(obj));
-    }
-
-    // For Integer, Long, Float and Double use direct formatting.
-    private static Text valueOfNumber(Object num) {
-        if (num instanceof Integer)
-            return Text.valueOf(((Integer) num).intValue());
-        if (num instanceof Long)
-            return Text.valueOf(((Long) num).longValue());
-        if (num instanceof Float)
-            return Text.valueOf(((Float) num).floatValue());
-        if (num instanceof Double)
-            return Text.valueOf(((Double) num).doubleValue());
-        return Text.valueOf(String.valueOf(num));
+        return new TextBuilder().append(obj).toText();
     }
 
     private static Text valueOf(String str) {
@@ -719,8 +700,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 
     /**
      * Returns a text equals to this one from a pool of
-     * unique text instances in {@link javolution.context.ImmortalContext
-     * immortal memory}.  
+     * unique text instances.  
      * 
      * @return an unique text instance allocated in permanent memory.
      */
@@ -732,7 +712,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
             public void run() {
                 interned[0] = INTERN.get(Text.this);
                 if (interned[0] == null) {
-                    interned[0] = ImmortalContext.copy(Text.this);
+                    interned[0] = Text.this;
                     INTERN.put(interned[0], interned[0]);
                 }
             }
