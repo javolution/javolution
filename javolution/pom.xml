@@ -40,7 +40,7 @@
     <name>Javolution</name>
     <url>http://javolution.org</url>
     <description>Javolution - Java Solution for Real-Time and Embedded Systems.
-        This project provides a Java library and a (mirror) C++ library for real-time applications.
+        This project provides a Java library and a (mirror) C++ library.
         Both libraries are maven-based and can be used to build multi-platform real-time applications 
         or to port Java applications to C++. The C++ library contains already a port of OSGi and JUnit 
         (demonstrated by the subproject test-cpp).            
@@ -65,8 +65,8 @@
             <name>Jean-Marie Dautelle</name>
             <id>dautelle</id>
             <email>jean-marie@dautelle.com</email>
-            <organization>Thales</organization>
-            <organizationUrl>http://www.thales.com</organizationUrl>
+            <organization>Airbus</organization>
+            <organizationUrl>http://www.airbus.com</organizationUrl>
             <timezone>+1</timezone>
             <roles>
                 <role>Project Founder</role>
@@ -83,6 +83,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <native.compilerConcurrency>1</native.compilerConcurrency>                
     </properties>
+    
+    <!-- ======================================================= -->
+    <!--     Native compiler options (platform based)            -->
+    <!-- ======================================================= -->
     <profiles>
         <profile> 
             <id>windows</id>
@@ -198,7 +202,6 @@
     </profiles>
 
     <build>
-
         <!-- ================================== -->
         <!--     Default plugin configuration   -->
         <!-- ================================== -->
@@ -257,62 +260,7 @@
                     <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
                 </configuration>
             </plugin>
-            
-            <!-- ======================================================= -->
-            <!--     Site Building Configuration                         -->
-            <!-- ======================================================= -->  
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <reportPlugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-project-info-reports-plugin</artifactId>
-                            <version>2.4</version>
-                        </plugin>
-                        <!-- ======================================================= -->
-                        <!--     JavaDoc Report                                      -->
-                        <!-- ======================================================= -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <version>2.8.1</version>
-                            <configuration>
-                                <excludePackageNames>javax</excludePackageNames>
-                                <stylesheetfile>${basedir}/src/site/css/javadoc.css</stylesheetfile>
-                                <source>1.5</source>             <!-- Enables javadoc to handle assertions present in J2SE 1.4.  -->
-                                <encoding>UTF-8</encoding>       <!-- The encoding of the source files.                          -->
-                                <docencoding>UTF-8</docencoding> <!-- The encoding of the generated HTML files.                  -->
-                                <charset>UTF-8</charset>         <!-- Specifies the HTML character set for this document.        -->
-                                <locale>en</locale>              <!-- Locale that javadoc uses when generating documentation.    -->
-                                <noqualifier>all</noqualifier>   <!-- Omit qualifying package name before class names in output. -->
-                                <quiet>true</quiet>              <!-- Shuts off non-error and non-warning messages.              -->
-                                <keywords>true</keywords>        <!-- Adds HTML meta keyword tags to the generated files.        -->
-                            </configuration>
-                        </plugin>
-                        <!-- ======================================================= -->
-                        <!--     Report on test results                              -->
-                        <!-- ======================================================= -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-report-plugin</artifactId>
-                            <version>2.12.2</version>
-                        </plugin>
-
-                        <!-- ======================================================= -->
-                        <!--     Report on test coverage                             -->
-                        <!-- ======================================================= -->
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>emma-maven-plugin</artifactId>
-                            <version>1.0-alpha-3</version>
-                        </plugin>
-                    </reportPlugins>
-                </configuration>
-            </plugin>
-
+ 
             <!-- ======================================================= -->
             <!--     Deployement Configuration                           -->
             <!-- ======================================================= -->                   
