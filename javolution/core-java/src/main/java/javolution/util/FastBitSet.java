@@ -8,15 +8,15 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.LINEAR;
-import javolution.lang.RealTime;
+import static javolution.lang.Realtime.Limit.LINEAR;
+import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;
 import javolution.util.internal.bitset.SharedBitSetImpl;
 import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 import javolution.util.service.BitSetService;
 
 /**
- * <p> A high-performance bit set with {@link RealTime real-time} behavior; 
+ * <p> A high-performance bit set with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  * 
  * <p> This class is integrated with the collection framework as 
@@ -75,7 +75,7 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void and(FastBitSet that) {
         service.and(that.service);
     }
@@ -88,7 +88,7 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void andNot(FastBitSet that) {
         service.andNot(that.service);
     }
@@ -131,7 +131,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void clear(int fromIndex, int toIndex) {
         service.clear(fromIndex, toIndex);
     }
@@ -154,7 +154,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void flip(int fromIndex, int toIndex) {
         service.flip(fromIndex, toIndex);
     }
@@ -180,7 +180,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public FastBitSet get(int fromIndex, int toIndex) {
         return new FastBitSet(service.get(fromIndex, toIndex));
     }
@@ -192,7 +192,7 @@ public class FastBitSet extends FastSet<Index> {
      * @param that the bit set to check for intersection
      * @return {@code true} if the sets intersect; {@code false} otherwise.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean intersects(FastBitSet that) {
         return service.intersects(that.service);
     }
@@ -273,7 +273,7 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void or(FastBitSet that) {
         service.or(that.service);
     }
@@ -309,7 +309,7 @@ public class FastBitSet extends FastSet<Index> {
      * @throws IndexOutOfBoundsException if 
      *          {@code (fromIndex < 0) | (toIndex < fromIndex)}
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void set(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex < fromIndex))
             throw new IndexOutOfBoundsException();
@@ -325,7 +325,7 @@ public class FastBitSet extends FastSet<Index> {
      * @param value the value to set it to.
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0}
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void set(int fromIndex, int toIndex, boolean value) {
         service.set(fromIndex, toIndex, value);
     }
@@ -338,7 +338,7 @@ public class FastBitSet extends FastSet<Index> {
      *
      * @param that the second bit set.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void xor(FastBitSet that) {
         service.xor(that.service);
     }

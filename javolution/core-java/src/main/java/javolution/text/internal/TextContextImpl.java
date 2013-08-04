@@ -54,7 +54,7 @@ public final class TextContextImpl extends TextContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> TextFormat<T> getFormatInContext(Class<? extends T> type) {
+    protected <T> TextFormat<T> searchFormat(Class<? extends T> type) {
         if (localFormats.size() > 0) { // Checks local settings.
             TextFormat<T> tf = (TextFormat<T>) localFormats.get(type);
             if (tf != null)
@@ -65,10 +65,10 @@ public final class TextContextImpl extends TextContext {
             return tf;
         if (annotatedFormats.containsKey(type))
             return null;
-        return (TextFormat<T>) searchFormat(type);
+        return (TextFormat<T>) searchDefaultFormat(type);
     }
 
-    private TextFormat<?> searchFormat(Class<?> type) {
+    private TextFormat<?> searchDefaultFormat(Class<?> type) {
         DefaultTextFormat format = type.getAnnotation(DefaultTextFormat.class);
         if (format != null) {
             Class<? extends TextFormat<?>> formatClass = format.value();

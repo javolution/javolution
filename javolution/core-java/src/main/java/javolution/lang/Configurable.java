@@ -53,7 +53,6 @@ import javolution.osgi.internal.OSGiServices;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-@RealTime
 public abstract class Configurable<T> {
 
     /**
@@ -109,7 +108,8 @@ public abstract class Configurable<T> {
                 Configurable.class, "reconfigure", this);
         this.value = value;
         String name = getName();
-        if (name == null) return; // Anonymous.
+        if (name == null)
+            return; // Anonymous.
         try { // Check system properties.
             String property = System.getProperty(getName());
             if (property != null) {
@@ -148,17 +148,21 @@ public abstract class Configurable<T> {
      */
     public String getName() {
         Class<?> enclosingClass = this.getClass().getEnclosingClass();
-        String name = null;
-         for (Field field : enclosingClass.getFields()) {
-            if (Configurable.class.isAssignableFrom(this.getClass())) {
-                if (name != null) 
+        String fieldName = null;
+        for (Field field : enclosingClass.getFields()) {
+            if (Configurable.class.isAssignableFrom(field.getType())) {                
+                if (fieldName != null)
                     throw new UnsupportedOperationException(
-                            "Multiple configurable fields, " +
-                            "Configurable.getName() should be overriden.");
-                name = enclosingClass.getName() + "#" + field.getName();
+                            "Multiple configurable fields: "
+                                    + fieldName
+                                    + ", " 
+                                    + field.getName()
+                                    + ". Configurable.getName() should be overriden.");
+                fieldName = field.getName();
             }
         }
-        return name;
+        return (fieldName != null) ? enclosingClass.getName() + "#" + fieldName
+                : null;
     }
 
     /**
@@ -183,7 +187,8 @@ public abstract class Configurable<T> {
             this.value = newValue;
             Object[] listeners = OSGiServices.getConfigurableListeners();
             for (Object listener : listeners) {
-                ((Listener)listener).configurableChanged(this, oldValue, newValue);
+                ((Listener) listener).configurableChanged(this, oldValue,
+                        newValue);
             }
         }
     }

@@ -10,7 +10,7 @@ package javolution.text;
 
 import java.io.IOException;
 import javolution.lang.MathLib;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 
 /**
  * <p> Utility class to parse {@link CharSequence} into primitive types and 
@@ -39,7 +39,7 @@ import javolution.lang.RealTime;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, February 15, 2009
  */
-@RealTime
+@Realtime
 public final class TypeFormat {
 
     /**

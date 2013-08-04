@@ -8,7 +8,6 @@
  */
 package javolution.osgi.internal;
 
-import javolution.context.LogContext;
 import javolution.xml.internal.stream.XMLInputFactoryImpl;
 import javolution.xml.stream.XMLInputFactory;
 
@@ -24,7 +23,6 @@ public final class XMLInputFactoryProvider implements ServiceFactory<XMLInputFac
     @Override
     public XMLInputFactory getService(Bundle bundle,
             ServiceRegistration<XMLInputFactory> registration) {
-        LogContext.debug("Creates a new XMLInputFactory for ", bundle.getSymbolicName());
         return new XMLInputFactoryImpl();
     }
 
@@ -32,6 +30,5 @@ public final class XMLInputFactoryProvider implements ServiceFactory<XMLInputFac
     public void ungetService(Bundle bundle,
             ServiceRegistration<XMLInputFactory> registration,
             XMLInputFactory service) {
-        LogContext.debug("Release XMLInputFactory for ", bundle.getSymbolicName());
     }
 }

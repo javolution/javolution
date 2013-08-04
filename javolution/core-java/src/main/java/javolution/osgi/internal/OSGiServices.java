@@ -17,12 +17,23 @@ import javolution.context.internal.LocalContextImpl;
 import javolution.context.internal.LogContextImpl;
 import javolution.context.internal.SecurityContextImpl;
 import javolution.lang.Configurable;
+import javolution.lang.Initializer;
+import javolution.lang.MathLib;
+import javolution.text.Text;
 import javolution.text.TextContext;
+import javolution.text.TypeFormat;
 import javolution.text.internal.TextContextImpl;
+import javolution.util.FastBitSet;
+import javolution.util.FastSortedMap;
+import javolution.util.FastSortedSet;
+import javolution.util.FastSortedTable;
+import javolution.util.Index;
 import javolution.xml.XMLContext;
 import javolution.xml.internal.XMLContextImpl;
 import javolution.xml.internal.stream.XMLInputFactoryImpl;
 import javolution.xml.internal.stream.XMLOutputFactoryImpl;
+import javolution.xml.internal.stream.XMLStreamReaderImpl;
+import javolution.xml.internal.stream.XMLStreamWriterImpl;
 import javolution.xml.stream.XMLInputFactory;
 import javolution.xml.stream.XMLOutputFactory;
 
@@ -105,5 +116,20 @@ public class OSGiServices {
     public static XMLOutputFactory getXMLOutputFactory() {
         return (XMLOutputFactory)XML_OUTPUT_FACTORY_TRACKER.getServices()[0];
     }
-    
+
+    /** Initializes all real-time classes.  */ 
+    public static boolean initializeRealtimeClasses() {
+        Initializer initializer = new Initializer(OSGiServices.class.getClassLoader());
+        initializer.loadClass(MathLib.class);
+        initializer.loadClass(Text.class);
+        initializer.loadClass(TypeFormat.class);
+        initializer.loadClass(FastBitSet.class);
+        initializer.loadClass(FastSortedMap.class);
+        initializer.loadClass(FastSortedSet.class);
+        initializer.loadClass(FastSortedTable.class);
+        initializer.loadClass(Index.class); // Preallocates.
+        initializer.loadClass(XMLStreamReaderImpl.class); 
+        initializer.loadClass(XMLStreamWriterImpl.class); 
+        return initializer.initializeLoadedClasses();                                              
+    }
 }

@@ -11,7 +11,7 @@ package javolution.text;
 import java.io.PrintStream;
 
 import javolution.lang.MathLib;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
 import javolution.util.function.Comparators;
@@ -57,7 +57,7 @@ import javolution.xml.XMLSerializable;
  * @author Wilfried Middleton
  * @version 6.0, July 21, 2013
  */
-@RealTime
+@Realtime
 public final class Text implements CharSequence, Comparable<CharSequence>,
         XMLSerializable, ValueType<Text> {
 

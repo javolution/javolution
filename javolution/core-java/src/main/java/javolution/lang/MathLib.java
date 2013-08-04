@@ -10,13 +10,13 @@ package javolution.lang;
 
 
 /**
- * <p> An utility class providing a {@link RealTime} implementation of 
+ * <p> An utility class providing a {@link Realtime} implementation of 
  *     the math library.</p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
  */
-@RealTime
+@Realtime
 public final class MathLib {
 
     /**

@@ -34,10 +34,9 @@ Webhostinghub.com/support/edu</a>.</i></p>
 </p>
 
 <p> The default XML format for a class is typically defined using 
-    the <code>@Format</code> inheritable annotation tag. 
-    For example:
+    the {@link javolution.xml.DefaultXMLFormat} annotation tag. 
 [code]
-@Format(xml=Graphic.XML.class)     
+@DefaultXMLFormat(Graphic.XML.class)     
 public abstract class Graphic implements XMLSerializable {
     private boolean isVisible;
     private Paint paint; // null if none.
@@ -63,7 +62,7 @@ public abstract class Graphic implements XMLSerializable {
 }[/code]
     Sub-classes may override the inherited XML format:
 [code]
-@Format(xml=Area.XML.class)     
+@DefaultXMLFormat(Area.XML.class)     
 public class Area extends Graphic {
     private Shape geometry;  
 
@@ -84,27 +83,28 @@ public class Area extends Graphic {
 The following writes a graphic area to a file, then reads it:
 
 [code]    
-      // Creates some useful aliases for class names.
-      XMLBinding binding = new XMLBinding();
-      binding.setAlias(Color.class, "Color");
-      binding.setAlias(Polygon.class, "Polygon");
-      binding.setClassAttribute("type"); // Use "type" instead of "class" for class attribute.
+// Creates some useful aliases for class names.
+XMLBinding binding = new XMLBinding();
+binding.setAlias(Color.class, "Color");
+binding.setAlias(Polygon.class, "Polygon");
+binding.setClassAttribute("type"); // Use "type" instead of "class" for class attribute.
     
-      // Writes the area to a file.
-      XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream("C:/area.xml"));
-      writer.setBinding(binding); // Optional.
-      writer.setIndentation("\t"); // Optional (use tabulation for indentation).
-      writer.write(area, "Area", Area.class);
-      writer.close(); 
+// Writes the area to a file.
+XMLObjectWriter writer = XMLObjectWriter.newInstance(new FileOutputStream("C:/area.xml"));
+writer.setBinding(binding); // Optional.
+writer.setIndentation("\t"); // Optional (use tabulation for indentation).
+writer.write(area, "Area", Area.class);
+writer.close(); 
 
-      // Reads the area back
-      XMLObjectReader reader = XMLObjectReader.newInstance(new FileInputStream("C:/area.xml"));
-      reader.setBinding(binding);
-      Area a = reader.read("Area", Area.class);
-      reader.close();
+// Reads the area back
+XMLObjectReader reader = XMLObjectReader.newInstance(new FileInputStream("C:/area.xml"));
+reader.setBinding(binding);
+Area a = reader.read("Area", Area.class);
+reader.close();
 [/code]
  
-    Here is an example of valid XML representation for an area:
+     Here is an example of valid XML representation for an area:
+
 [code]
 <Area isVisible="true">
     <Paint type="Color" rgb="#F3EBC6" />
@@ -223,7 +223,7 @@ XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     or even retrieved from a collection 
     (if the object is shared or unique). For example:
 [code]
-@Format(xml=Point.XML.class)     
+@DefaultXMLFormat(Point.XML.class)     
 public final class Point implements XMLSerializable { 
     private int x;
     private int y;
@@ -250,7 +250,7 @@ public final class Point implements XMLSerializable {
 <p> Document cross-references are supported, including circular references. 
     Let's take for example:
 [code]
-@Format(xml=Polygon.XML.class)     
+@DefaultXMLFormat(xml=Polygon.XML.class)     
 public class Polygon implements Shape, XMLSerializable { 
     private Point[] vertices;
     public static class XML extends XMLFormat<Polygon> {

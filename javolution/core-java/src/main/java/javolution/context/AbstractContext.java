@@ -10,7 +10,7 @@ package javolution.context;
 
 import javolution.lang.Parallelizable;
 import javolution.context.SecurityContext.Permission;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 
 /**
  * <p> The parent class for all contexts. 
@@ -35,7 +35,7 @@ import javolution.lang.RealTime;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-@RealTime
+@Realtime
 @Parallelizable(comment = "Sequential configuration, parallel use")
 public abstract class AbstractContext {
 

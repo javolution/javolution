@@ -8,8 +8,8 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.LOG_N;
-import javolution.lang.RealTime;
+import static javolution.lang.Realtime.Limit.LOG_N;
+import javolution.lang.Realtime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.internal.table.sorted.FastSortedTableImpl;
@@ -19,7 +19,7 @@ import javolution.util.internal.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.util.service.SortedTableService;
 
 /**
- * <p> A high-performance sorted table with {@link RealTime real-time} behavior; 
+ * <p> A high-performance sorted table with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint.
  *     Fast sorted table have significantly faster {@link #contains}, 
  *     {@link #indexOf} and {@link #remove} methods).</p>
@@ -80,20 +80,20 @@ public class FastSortedTable<E> extends FastTable<E> {
      */
 
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public boolean contains(Object obj) {
         return service().indexOf((E) obj) >= 0;
     }
 
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public boolean remove(Object obj) {
         return service().remove((E) obj);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public int indexOf(final Object obj) {
         return service().indexOf((E) obj);
     }
@@ -115,7 +115,7 @@ public class FastSortedTable<E> extends FastTable<E> {
      * Returns the would index of the specified element if it were
      * to be added to this sorted table.
      */
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public int slotOf(E element) {
         return service().slotOf(element);
     }

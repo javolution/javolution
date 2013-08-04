@@ -15,7 +15,7 @@ import javolution.osgi.internal.OSGiServices;
  *     
  * <p> When granting/revoking permission the order is important. 
  *     For example, the following code revokes all configurable permissions 
- *     except for setting the concurrency level.</p>
+ *     except for setting the concurrency level.
  * [code]
  * SecurityContext ctx = SecurityContext.enter(); 
  * try {
@@ -26,8 +26,7 @@ import javolution.osgi.internal.OSGiServices;
  *     ...
  *  } finally {
  *     ctx.exit(); // Back to previous security settings. 
- *  }
- *  [/code]
+ *  }[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013

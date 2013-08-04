@@ -8,7 +8,6 @@
  */
 package javolution.osgi.internal;
 
-import javolution.context.LogContext;
 import javolution.xml.internal.stream.XMLOutputFactoryImpl;
 import javolution.xml.stream.XMLOutputFactory;
 
@@ -24,7 +23,6 @@ public final class XMLOutputFactoryProvider implements ServiceFactory<XMLOutputF
     @Override
     public XMLOutputFactory getService(Bundle bundle,
             ServiceRegistration<XMLOutputFactory> registration) {
-        LogContext.debug("Creates a new XMLOutputFactory for ", bundle.getSymbolicName());
         return new XMLOutputFactoryImpl();
     }
 
@@ -32,6 +30,5 @@ public final class XMLOutputFactoryProvider implements ServiceFactory<XMLOutputF
     public void ungetService(Bundle bundle,
             ServiceRegistration<XMLOutputFactory> registration,
             XMLOutputFactory service) {
-        LogContext.debug("Release XMLOutputFactory for ", bundle.getSymbolicName());
     }
 }

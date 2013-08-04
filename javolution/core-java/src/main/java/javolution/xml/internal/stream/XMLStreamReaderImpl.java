@@ -15,6 +15,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import javolution.io.UTF8StreamReader;
+import javolution.lang.Realtime;
 import javolution.text.CharArray;
 import javolution.xml.sax.Attributes;
 import javolution.xml.stream.Location;
@@ -33,6 +34,7 @@ import javolution.xml.stream.XMLStreamReader;
  * the {@link #setEntities} method (e.g. after parsing/resolving 
  * external entities).
  */
+@Realtime
 public final class XMLStreamReaderImpl implements XMLStreamReader {
 
     /**

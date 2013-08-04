@@ -8,11 +8,11 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.CONSTANT;
+import static javolution.lang.Realtime.Limit.CONSTANT;
 
 import java.util.Set;
 
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
@@ -23,7 +23,7 @@ import javolution.util.internal.set.UnmodifiableSetImpl;
 import javolution.util.service.SetService;
 
 /**
- * <p> A high-performance set with {@link RealTime real-time} behavior; 
+ * <p> A high-performance set with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * <p> The iteration order over the set elements is deterministic 
@@ -95,33 +95,33 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      */
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
         return size() == 0;
     }
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public void clear() {
         service.clear();
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public boolean contains(Object obj) {
         return service.contains((E) obj);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public boolean remove(Object obj) {
         return service.remove((E) obj);
     }

@@ -8,13 +8,13 @@
  */
 package javolution.util.function;
 
-import static javolution.lang.RealTime.Limit.LINEAR;
+import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javolution.lang.Parallelizable;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.util.FastCollection;
 import javolution.util.service.CollectionService;
 import javolution.util.service.CollectionService.IterationController;
@@ -33,7 +33,7 @@ public class Operators {
      * a non-null element is found.
      */
     @Parallelizable
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Object> ANY = new CollectionOperator<Object>() {
 
         @Override
@@ -78,7 +78,7 @@ public class Operators {
      * comparator (returns {@code null} if the collection is empty).
      */
     @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Object> MAX = new CollectionOperator<Object>() {
 
         @Override
@@ -119,7 +119,7 @@ public class Operators {
      * comparator (returns {@code null} if the collection is empty).
      */
     @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Object> MIN = new CollectionOperator<Object>() {
 
         @Override
@@ -161,7 +161,7 @@ public class Operators {
     * is found.
     */
     @Parallelizable
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Boolean> AND = new CollectionOperator<Boolean>() {
 
         @Override
@@ -205,7 +205,7 @@ public class Operators {
     * is found.
      */
     @Parallelizable
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Boolean> OR = new CollectionOperator<Boolean>() {
 
         @Override
@@ -248,7 +248,7 @@ public class Operators {
      * if the collection is empty).
      */
     @Parallelizable(comment="Internal use of AtomicInteger")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static final CollectionOperator<Integer> SUM = new CollectionOperator<Integer>() {
 
         @Override

@@ -8,8 +8,8 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.LINEAR;
-import static javolution.lang.RealTime.Limit.N_SQUARE;
+import static javolution.lang.Realtime.Limit.LINEAR;
+import static javolution.lang.Realtime.Limit.N_SQUARE;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.text.Cursor;
 import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
@@ -52,7 +52,7 @@ import javolution.util.service.CollectionService;
 import javolution.util.service.CollectionService.IterationController;
 
 /**
- * <p> A high-performance collection with {@link RealTime real-time} behavior; 
+ * <p> A high-performance collection with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint. 
  *     Fast collections support multiple views which can be chained.
  * <ul>
@@ -156,7 +156,7 @@ import javolution.util.service.CollectionService.IterationController;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-@RealTime
+@Realtime
 @Parallelizable(mutexFree = false, comment = "Shared/Parallel views may use read-write locks.")
 @DefaultTextFormat(FastCollection.StandardText.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
@@ -293,7 +293,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * 
      * @param consumer the functional consumer applied to the collection elements.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void forEach(Consumer<? super E> consumer) {
         service().forEach(consumer, IterationController.PARALLEL);
     }
@@ -307,7 +307,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return {@code true} if the iteration has not been interrupted (no predicate 
      *         evaluation returned {@code false}); {@code true} otherwise.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean doWhile(Predicate<? super E> doContinue) {
         DoWhileConsumerImpl<E> doWhile = new DoWhileConsumerImpl<E>(doContinue);
         service().forEach(doWhile, doWhile);
@@ -323,7 +323,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return {@code true} if at least one element has been removed;
      *         {@code false} otherwise.
      */
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean removeIf(final Predicate<? super E> filter) {
         return service().removeIf(filter, IterationController.PARALLEL);
     }
@@ -339,7 +339,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return {@code operator.apply(this.getService())}
      */
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public E reduce(CollectionOperator<? super E> operator) {
         return ((CollectionOperator<E>) operator).apply(service());
     }
@@ -359,7 +359,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public int size() {
         return this.mapped(TO_ONE).reduce(Operators.SUM);
     }
@@ -375,7 +375,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     };
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void clear() {
         removeIf(new Predicate<E>() {
             @Override
@@ -387,7 +387,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     @Override
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean contains(final Object element) {
         SearchConsumerImpl<E> search = new SearchConsumerImpl<E>((E) element,
                 service().comparator());
@@ -396,7 +396,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean remove(final Object element) {
         SingleRemoveFilterImpl<E> removeFilter = new SingleRemoveFilterImpl<E>(
                 (E) element, service().comparator());
@@ -410,7 +410,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean addAll(Collection<? extends E> that) {
         boolean modified = false;
         for (E e : that) {
@@ -422,7 +422,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
     
     @Override
-    @RealTime(limit = N_SQUARE)
+    @Realtime(limit = N_SQUARE)
     public boolean containsAll(Collection<?> that) {
         if (that instanceof FastCollection)
             return containsAll((FastCollection<?>) that);
@@ -444,7 +444,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = N_SQUARE)
+    @Realtime(limit = N_SQUARE)
     public boolean removeAll(final Collection<?> that) {
         return removeIf(new Predicate<E>() {
             public boolean test(E param) {
@@ -454,7 +454,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = N_SQUARE)
+    @Realtime(limit = N_SQUARE)
     public boolean retainAll(final Collection<?> that) {
         return removeIf(new Predicate<E>() {
             public boolean test(E param) {
@@ -464,14 +464,14 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public <T> T[] toArray(final T[] array) {
         final int size = size();
         final T[] result = (size <= array.length) ? array
@@ -546,9 +546,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      }
 
     /** 
-     * Returns an immutable reference over this collection. The method should 
-     * only be called if this collection cannot be modified after this call (for 
-     * example if there is no reference left to this collection).
+     * Returns an immutable reference over this collection. The immutable 
+     * value is an {@link #unmodifiable() unmodifiable} view of this collection
+     * for which the caller guarantees that no change will ever be made 
+     * (e.g. there is no reference left to the original collection).
      */
     public <T extends Collection<E>> Immutable<T> toImmutable() {
         return new Immutable<T>() {
@@ -580,7 +581,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     @SuppressWarnings("unchecked")
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -600,7 +601,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public int hashCode() {
         if (this instanceof Set) {
             return mapped(TO_HASH).reduce(Operators.SUM); // Can be performed in parallel.            
@@ -628,7 +629,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     };
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public String toString() {
         return TextContext.toString(this);
     }
@@ -660,7 +661,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * a large number of temporary {@link String} objects). 
      */
     @Parallelizable
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public static class StandardText extends TextFormat<FastCollection<?>> {
 
         @Override

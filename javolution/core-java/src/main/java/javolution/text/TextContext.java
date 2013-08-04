@@ -13,10 +13,11 @@ import javolution.context.FormatContext;
 import javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context for plain text parsing/formatting. The default text 
- *     format for any class is given by the 
- *     {@link javolution.text.DefaultTextFormat DefaultTextFormat} 
- *     inheritable annotation.</p>
+ * <p> A context for plain text parsing/formatting. This context provides 
+ *     the {@link javolution.text.TextFormat TextFormat} to parse/format objects
+ *     of any class. If not superseded, the text format for a class is specified
+ *     by the {@link javolution.text.DefaultTextFormat DefaultTextFormat} 
+ *     annotation.</p>
  * 
  * <p> A default format exists for the following predefined types:
  *     <code><ul>
@@ -62,8 +63,8 @@ public abstract class TextContext extends FormatContext {
     }
 
     /**
-     * Returns the object of the specified class corresponding to the 
-     * specified textual representation (convenience method).
+     * Returns the object corresponding to the specified textual representation 
+     * using the text format for the specified type (convenience method).
      * 
      * @throws UnsupportedOperationException if the specified type has no 
      *         format associated.
@@ -80,25 +81,24 @@ public abstract class TextContext extends FormatContext {
      * if none.
      */
     public static <T> TextFormat<T> getFormat(Class<? extends T> type) {
-        return TextContext.currentTextContext().getFormatInContext(type);
+        return TextContext.currentTextContext().searchFormat(type);
     }
 
     /**
-     * Sets the new text format for the specified type (and its sub-types).
+     * Sets the text format for the specified type (and its sub-types).
      */
     public abstract <T> void setFormat(Class<? extends T> type,
             TextFormat<T> newFormat);
 
     /**
-     * Returns the plain text format for the specified type.
+     * Searches the plain text format for the specified type in this context.
      */
-    protected abstract <T> TextFormat<T> getFormatInContext(
-            Class<? extends T> type);
+    protected abstract <T> TextFormat<T> searchFormat(Class<? extends T> type);
 
     /**
      * Returns the current text context.
      */
-    protected static TextContext currentTextContext() {
+    private static TextContext currentTextContext() {
         TextContext ctx = AbstractContext.current(TextContext.class);
         if (ctx != null)
             return ctx;

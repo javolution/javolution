@@ -17,8 +17,8 @@ import javolution.text.TextContext;
  *     The logging back-end, or how the log entries are displayed, stored, or
  *     processed is unspecified but always performed asynchronously. 
  *     When running outside OSGi, log messages are sent to {@link System#out}. 
- *     Message formatting itself (using the current objects values) is always 
- *     performed synchronously using the actual {@link TextContext}.</p> 
+ *     Message formatting itself is always performed synchronously using the 
+ *     current {@link TextContext}.</p> 
  *     
  * <p> Logging contexts support automatic prefixing/suffixing of any information 
  *     relevant to the user/developer (thread info, user id, and so on). 
@@ -34,26 +34,24 @@ import javolution.text.TextContext;
  *      }
  *  }[/code]</p>
  *  
- *  <p> Note: Applications should separate messages elements by commas and not 
+ *  <p> Applications should separate messages elements by commas and not 
  *      use {@link String} concatenations when calling log methods otherwise 
  *      the concatenation is performed even when log events are filtered out.
- *  [code]
- *  LogContext ctx = LogContext.enter();
- *  try {
- *      ctx.setLevel(Level.INFO); // Does not log debug messages. 
- *      ... 
- *      LogContext.debug("Index: ", index, " at maximum value"); // GOOD, no formatting performed !
- *      LogContext.debug("Index: " + index + " at maximum value"); // BAD, formatting performed even though nothing is logged !
- *      ...
- *  } finally {
- *      ctx.exit();
- *  }[/code]</p>
+ * [code]
+ * LogContext ctx = LogContext.enter();
+ * try {
+ *     ctx.setLevel(Level.INFO); // Does not log debug messages. 
+ *     ... 
+ *     LogContext.debug("Index: ", index, " at maximum value"); // GOOD, no formatting performed !
+ *     LogContext.debug("Index: " + index + " at maximum value"); // BAD, formatting performed even though nothing is logged !
+ *     ...
+ * } finally {
+ *     ctx.exit();
+ * }[/code]</p>
  *  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
- * @see <a href="https://code.google.com/p/osgi-logging/wiki/UnderstandingTheOSGiLogging">
- *      Understanding OSGi Logging</a>. </p>
- * @see javolution.text.TextContext
+ * @see <a href="https://code.google.com/p/osgi-logging/wiki/UnderstandingTheOSGiLogging">Understanding OSGi Logging</a>
  */
 public abstract class LogContext extends AbstractContext {
 

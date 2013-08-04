@@ -286,6 +286,7 @@ javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/RealTime.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/ConfigurableListenerImpl.java -text
@@ -407,6 +408,7 @@ javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svn
 javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLReferenceResolver.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLSerializable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/doc-files/xmlDataBinding.png -text
 javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/stream/AttributesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/internal/stream/EntitiesImpl.java -text svneol=unset#text/plain

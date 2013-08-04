@@ -15,6 +15,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import javolution.io.UTF8StreamWriter;
+import javolution.lang.Realtime;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.xml.stream.XMLOutputFactory;
@@ -31,6 +32,7 @@ import javolution.xml.stream.XMLStreamWriter;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
  */
+@Realtime
 public final class XMLStreamWriterImpl implements XMLStreamWriter {
 
     /** 

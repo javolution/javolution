@@ -66,7 +66,7 @@ public @interface Parallelizable {
      * <a href="http://en.wikipedia.org/wiki/Priority_inversion">
      * priority inversion</a> and possibly unbounded response times,
      * a real-time VM (with priority inheritance) is recommended
-     * when using {@link RealTime real-time} elements which are not mutex-free.
+     * when using {@link Realtime real-time} elements which are not mutex-free.
      */
     boolean mutexFree() default true;
 

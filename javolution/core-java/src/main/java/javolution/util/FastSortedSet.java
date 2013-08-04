@@ -8,11 +8,11 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.LOG_N;
+import static javolution.lang.Realtime.Limit.LOG_N;
 
 import java.util.SortedSet;
 
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.internal.map.sorted.FastSortedMapImpl;
@@ -21,7 +21,7 @@ import javolution.util.internal.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.util.service.SortedSetService;
 
 /**
- * <p> A high-performance sorted set with {@link RealTime real-time} behavior; 
+ * <p> A high-performance sorted set with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -71,19 +71,19 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
      */
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public boolean add(E e) {
         return super.add(e);
     }
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public boolean contains(Object obj) {
         return super.contains(obj);
     }
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public boolean remove(Object obj) {
         return super.remove(obj);
     }
@@ -93,19 +93,19 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
      */
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public FastSortedSet<E> subSet(E fromElement, E toElement) {
         return new FastSortedSet<E>(service().subSet(fromElement, toElement));
     }
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public FastSortedSet<E> headSet(E toElement) {
         return subSet(first(), toElement);
     }
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public FastSortedSet<E> tailSet(E fromElement) {
         return subSet(fromElement, last());
     }

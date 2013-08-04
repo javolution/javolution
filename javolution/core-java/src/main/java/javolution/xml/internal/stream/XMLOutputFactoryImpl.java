@@ -14,7 +14,6 @@ import java.io.Writer;
 import javolution.util.FastTable;
 import javolution.xml.stream.XMLOutputFactory;
 import javolution.xml.stream.XMLStreamException;
-import javolution.xml.stream.XMLStreamWriter;
 
 /**
  * This default XML Output factory implementation.
@@ -43,7 +42,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
             .shared();
 
     // Implements XMLOutputFactory abstract method.
-    public XMLStreamWriter createXMLStreamWriter(OutputStream stream)
+    public XMLStreamWriterImpl createXMLStreamWriter(OutputStream stream)
             throws XMLStreamException {
         XMLStreamWriterImpl xmlWriter = newWriter();
         xmlWriter.setOutput(stream);
@@ -51,7 +50,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     }
 
     // Implements XMLOutputFactory abstract method.
-    public XMLStreamWriter createXMLStreamWriter(OutputStream stream,
+    public XMLStreamWriterImpl createXMLStreamWriter(OutputStream stream,
             String encoding) throws XMLStreamException {
         if ((encoding == null) || encoding.equals("UTF-8")
                 || encoding.equals("utf-8"))
@@ -62,7 +61,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     }
 
     // Implements XMLOutputFactory abstract method.
-    public XMLStreamWriter createXMLStreamWriter(Writer writer)
+    public XMLStreamWriterImpl createXMLStreamWriter(Writer writer)
             throws XMLStreamException {
         XMLStreamWriterImpl xmlWriter = newWriter();
         xmlWriter.setOutput(writer);

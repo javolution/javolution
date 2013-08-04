@@ -8,11 +8,11 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.CONSTANT;
-import static javolution.lang.RealTime.Limit.LINEAR;
-import static javolution.lang.RealTime.Limit.LOG_N;
-import static javolution.lang.RealTime.Limit.N_LOG_N;
-import static javolution.lang.RealTime.Limit.N_SQUARE;
+import static javolution.lang.Realtime.Limit.CONSTANT;
+import static javolution.lang.Realtime.Limit.LINEAR;
+import static javolution.lang.Realtime.Limit.LOG_N;
+import static javolution.lang.Realtime.Limit.N_LOG_N;
+import static javolution.lang.Realtime.Limit.N_SQUARE;
 
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
@@ -36,7 +36,7 @@ import javolution.util.internal.table.UnmodifiableTableImpl;
 import javolution.util.service.TableService;
 
 /**
- * <p> A high-performance table (fractal-based) with {@link RealTime real-time} 
+ * <p> A high-performance table (fractal-based) with {@link Realtime real-time} 
  *     behavior; smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * <p> The fractal-based implementation ensures that add/insertion/deletion operations 
@@ -154,19 +154,19 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
         return size() == 0;
     }
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
 
     @Override
-    @RealTime(limit = CONSTANT)
+    @Realtime(limit = CONSTANT)
     public void clear() {
         service.clear();
     }
@@ -176,19 +176,19 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public void add(int index, E element) {
         service.add(index, element);
     }
 
     @Override
-    @RealTime(limit = N_LOG_N)
+    @Realtime(limit = N_LOG_N)
     public boolean addAll(final int index, Collection<? extends E> elements) {
         return subList(index, index).addAll(elements);
     }
 
     @Override
-    @RealTime(limit = LOG_N)
+    @Realtime(limit = LOG_N)
     public E remove(int index) {
         return service.remove(index);
     }
@@ -204,7 +204,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public int indexOf(final Object element) {
         final EqualityComparator<? super E> cmp = comparator();
         final int[] count = new int[] { -1 };
@@ -221,7 +221,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public int lastIndexOf(final Object element) {
         final EqualityComparator<? super E> cmp = comparator();
         final int[] count = new int[] { -1 };
@@ -380,7 +380,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Sorts this table in place (quick sort).
      */
-    @RealTime(limit = N_SQUARE)
+    @Realtime(limit = N_SQUARE)
     public void sort() {
         atomic(new Runnable() {
             @Override

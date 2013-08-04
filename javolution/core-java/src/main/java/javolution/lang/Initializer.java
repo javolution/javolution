@@ -47,7 +47,8 @@ public class Initializer {
      * Indicates if the class being initialized should be logged as debug
      * messages (default {@code false}). 
      */
-    public static final Configurable<Boolean> DEBUG = new Configurable<Boolean>(false) {
+    public static final Configurable<Boolean> DEBUG = new Configurable<Boolean>(
+            false) {
         @Override
         protected Boolean parse(String str) {
             return Boolean.parseBoolean(str);
@@ -124,7 +125,8 @@ public class Initializer {
             for (int i = nbrClassesInitialized; i < classes.length; i++) {
                 Class<?> cls = classes[i];
                 try {
-                    if (DEBUG.get()) LogContext.debug("Initialize ", cls.getName());
+                    if (DEBUG.get())
+                        LogContext.debug("Initialize ", cls.getName());
                     Class.forName(cls.getName(), true, classLoader);
                 } catch (ClassNotFoundException ex) {
                     isInitializationSuccessful = false;

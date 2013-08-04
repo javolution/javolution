@@ -8,7 +8,6 @@
  */
 package javolution.osgi.internal;
 
-import javolution.lang.Initializer;
 import javolution.xml.stream.XMLInputFactory;
 import javolution.xml.stream.XMLOutputFactory;
 
@@ -30,6 +29,8 @@ public class JavolutionActivator implements BundleActivator {
 
     @SuppressWarnings("unchecked")
     public void start(BundleContext bc) throws Exception {
+        
+        // Activate services trackers.
         OSGiServices.CONCURRENT_CONTEXT_TRACKER.activate(bc);
         OSGiServices.CONFIGURABLE_LISTENER_TRACKER.activate(bc);
         OSGiServices.LOCAL_CONTEXT_TRACKER.activate(bc);
@@ -40,7 +41,7 @@ public class JavolutionActivator implements BundleActivator {
         OSGiServices.XML_CONTEXT_TRACKER.activate(bc);
         OSGiServices.XML_INPUT_FACTORY_TRACKER.activate(bc);
         OSGiServices.XML_OUTPUT_FACTORY_TRACKER.activate(bc);
-
+        
         // Publish XMLInputFactory/XMLOutputFactory services.
         xmlInputFactoryRegistration = (ServiceRegistration<XMLInputFactory>) bc
                 .registerService(XMLInputFactory.class.getName(),
@@ -49,8 +50,8 @@ public class JavolutionActivator implements BundleActivator {
                 .registerService(XMLOutputFactory.class.getName(),
                         new XMLOutputFactoryProvider(), null);
 
-        // Initialize all classes loaded.
-        new Initializer(JavolutionActivator.class.getClassLoader()).initializeLoadedClasses();     
+        // Ensures low latency for real-time classes.
+        OSGiServices.initializeRealtimeClasses();
     }
 
     public void stop(BundleContext bc) throws Exception {

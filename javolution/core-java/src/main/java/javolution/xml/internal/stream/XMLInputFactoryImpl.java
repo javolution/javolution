@@ -15,7 +15,6 @@ import java.util.Map;
 import javolution.util.FastTable;
 import javolution.xml.stream.XMLInputFactory;
 import javolution.xml.stream.XMLStreamException;
-import javolution.xml.stream.XMLStreamReader;
 
 /**
  * The default XML input factory implementation.
@@ -26,7 +25,7 @@ public final class XMLInputFactoryImpl implements XMLInputFactory {
             .shared();
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(InputStream stream)
+    public XMLStreamReaderImpl createXMLStreamReader(InputStream stream)
             throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(stream);
@@ -34,7 +33,7 @@ public final class XMLInputFactoryImpl implements XMLInputFactory {
     }
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(InputStream stream,
+    public XMLStreamReaderImpl createXMLStreamReader(InputStream stream,
             String encoding) throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(stream, encoding);
@@ -42,7 +41,7 @@ public final class XMLInputFactoryImpl implements XMLInputFactory {
     }
 
     // Implements XMLInputFactory abstract method.
-    public XMLStreamReader createXMLStreamReader(Reader reader)
+    public XMLStreamReaderImpl createXMLStreamReader(Reader reader)
             throws XMLStreamException {
         XMLStreamReaderImpl xmlReader = newReader();
         xmlReader.setInput(reader);

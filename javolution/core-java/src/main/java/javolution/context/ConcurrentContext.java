@@ -28,12 +28,11 @@ import javolution.osgi.internal.OSGiServices;
  * } finally {
  *     ctx.exit(); // Waits for all concurrent executions to complete.
  *                 // Re-exports any exception raised during concurrent executions. 
- * }
- * [/code]</p>
+ * }[/code]</p>
+ * 
  * <p> or equivalent shorter notation:
  * [code]
- * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});
- * [/code]</p>
+ * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});[/code]</p>
  *     
  * <p> Only after all concurrent executions are completed, is the current 
  *     thread allowed to exit the scope of the concurrent context 
@@ -154,7 +153,7 @@ public abstract class ConcurrentContext extends AbstractContext {
      * Holds the maximum concurrency  
      * (default <code>Runtime.getRuntime().availableProcessors()</code>).
      * The maximum concurrency is configurable. For example, the JVM option 
-     * <code>-Djavolution.context.ConcurrentContext#CONCURRENCY=0</code>
+     * {@code -Djavolution.context.ConcurrentContext#CONCURRENCY=0}
      * disables concurrency. 
      */
     public static final Configurable<Integer> CONCURRENCY = new Configurable<Integer>(
@@ -185,15 +184,14 @@ public abstract class ConcurrentContext extends AbstractContext {
      * Convenience method to executes the specified logics concurrently. 
      * This method is equivalent to:
      * [code]
-     *     ConcurrentContext ctx = ConcurrentContext.enter();
-     *     try {
-     *         ctx.execute(logics[0]);
-     *         ctx.execute(logics[1]);
-     *         ...
-     *     } finally {
-     *         ctx.exit();
-     *     }
-     * [/code]
+     * ConcurrentContext ctx = ConcurrentContext.enter();
+     * try {
+     *     ctx.execute(logics[0]);
+     *     ctx.execute(logics[1]);
+     *     ...
+     * } finally {
+     *     ctx.exit();
+     * }[/code]
      * 
      * @param  logics the logics to execute concurrently if possible.
      */

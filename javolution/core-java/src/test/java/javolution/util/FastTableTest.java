@@ -18,7 +18,7 @@ import java.util.ListIterator;
 import java.util.Random;
 
 import javolution.context.LogContext;
-import javolution.lang.Initializer;
+import javolution.osgi.internal.OSGiServices;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 
@@ -26,8 +26,8 @@ import javolution.util.function.MultiVariable;
  * Validation and performance tests of FastTable.
  */
 public class FastTableTest {
-    static final boolean INITIALIZE_ALL 
-       = new Initializer(FastTableTest.class.getClassLoader()).initializeLoadedClasses();
+    static final boolean INITIALIZE_REALTIME_CLASSES 
+    = OSGiServices.initializeRealtimeClasses();
 
     private static final long ONE_SECOND_IN_NS = 1000 * 1000 * 1000L;
 

@@ -45,7 +45,7 @@ void myMethod() {
        might only be known at runtime.</p>
      
  <h2><a name="PREDEFINED">Predefined Contexts:</a></h2>
-  <p> <i><b>J</b>avolution</i> provides many useful runtime contexts:<ul>
+  <p> <i><b>J</b>avolution</i> provides several useful runtime contexts:<ul>
       <li>{@link javolution.context.ConcurrentContext ConcurrentContext} 
       - To take advantage of concurrent algorithms on multi-cores systems.</li>
       <li>{@link javolution.context.LogContext LogContext} 

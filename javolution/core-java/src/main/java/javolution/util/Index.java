@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 
 import javolution.lang.Configurable;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
 import javolution.text.DefaultTextFormat;
@@ -36,7 +36,7 @@ import javolution.text.TypeFormat;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.1, July 26, 2007
  */
-@RealTime
+@Realtime
 @DefaultTextFormat(Index.Decimal.class)
 public final class Index extends Number implements Comparable<Index>,
         ValueType<Index> {

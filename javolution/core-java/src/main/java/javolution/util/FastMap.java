@@ -8,7 +8,7 @@
  */
 package javolution.util;
 
-import static javolution.lang.RealTime.Limit.LINEAR;
+import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
-import javolution.lang.RealTime;
+import javolution.lang.Realtime;
 import javolution.util.function.Comparators;
 import javolution.util.function.EqualityComparator;
 import javolution.util.internal.map.FastMapImpl;
@@ -28,7 +28,7 @@ import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
 /**
- * <p> A high-performance map with {@link RealTime real-time} behavior; 
+ * <p> A high-performance map with {@link Realtime real-time} behavior; 
  *     smooth capacity increase/decrease and minimal memory footprint. 
  *     Fast maps support multiple views which can be chained.
  * <ul>
@@ -66,7 +66,7 @@ import javolution.util.service.MapService;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0, July 21, 2013
  */
-@RealTime
+@Realtime
 @Parallelizable(mutexFree = false, comment = "Shared views may use read-write locks.")
 public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         Serializable {
@@ -193,7 +193,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     }
 
     @Override
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public boolean containsValue(Object value) {
         return values().contains(value);
     }
@@ -211,7 +211,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
 
     @Override
     @SuppressWarnings("unchecked")
-    @RealTime(limit = LINEAR)
+    @Realtime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
         Set<?> entries = map.entrySet();
         entrySet().addAll((Collection<? extends java.util.Map.Entry<K, V>>) entries);
@@ -280,9 +280,10 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      }
 
     /** 
-     * Returns an immutable reference over this collection. The method should 
-     * only be called if this collection cannot be modified after this call (for 
-     * example if there is no reference left to this collection).
+     * Returns an immutable reference over this map. The immutable 
+     * value is an {@link #unmodifiable() unmodifiable} view of this map
+     * for which the caller guarantees that no change will ever be made 
+     * (e.g. there is no reference left to the original map).
      */
     public <T extends Map<K,V>> Immutable<T> toImmutable() {
         return new Immutable<T>() {
