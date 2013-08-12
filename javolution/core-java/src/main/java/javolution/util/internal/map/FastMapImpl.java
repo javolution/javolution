@@ -8,13 +8,11 @@
  */
 package javolution.util.internal.map;
 
-import java.io.Serializable;
-import java.util.Map.Entry;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import javolution.util.function.EqualityComparator;
-import javolution.util.service.CollectionService;
+import javolution.util.function.Equality;
 import javolution.util.service.MapService;
-import javolution.util.service.SetService;
 
 /**
  * The default {@link javolution.util.FastMap FastMap} implementation 
@@ -22,26 +20,22 @@ import javolution.util.service.SetService;
  * This implementation ensures that no more than 3/4 of the map capacity is
  * ever wasted.
  */
-public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
+public class FastMapImpl<K, V> extends MapView<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    final EqualityComparator<? super K> keyComparator; 
-    final EqualityComparator<? super V> valueComparator; 
-    FastMapEntryImpl<K,V> firstEntry = null;
-    FastMapEntryImpl<K,V> lastEntry = null;
-    FractalMapImpl fractal = new FractalMapImpl();
-    FastMapEntryImpl<K,V> freeEntry = new FastMapEntryImpl<K,V>();
-    int size;
+    transient FastMapEntryImpl<K,V> firstEntry = null; 
+    transient FractalMapImpl fractal = new FractalMapImpl(); 
+    transient FastMapEntryImpl<K,V> freeEntry = new FastMapEntryImpl<K,V>();
+    final Equality<? super K> keyComparator;
+    transient FastMapEntryImpl<K,V> lastEntry = null;
+    transient int size;
+    final Equality<? super V> valueComparator;
     
-    public FastMapImpl(EqualityComparator<? super K> keyComparator, 
-            final EqualityComparator<? super V> valueComparator) {
+    public FastMapImpl(Equality<? super K> keyComparator, 
+            final Equality<? super V> valueComparator) {
+        super(null); // Root.
         this.keyComparator = keyComparator;
         this.valueComparator = valueComparator;
-    }
-
-    @Override
-    public void atomic(Runnable update) {
-        update.run();
     }
 
     @Override
@@ -53,26 +47,29 @@ public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
     }
 
     @Override
-    public boolean containsKey(K key) {        
-        return fractal.getEntry(key, keyComparator.hashCodeOf(key)) != null;
+    public FastMapImpl<K,V> clone() { // Makes a copy.
+        FastMapImpl<K,V> copy = new FastMapImpl<K,V>(keyComparator(), valueComparator());
+        copy.putAll(this);
+        return copy;
     }
-
+ 
+    @SuppressWarnings("unchecked")
     @Override
-    public SetService<Entry<K, V>> entrySet() {
-        return new FastMapEntrySetImpl<K, V>(this);
+    public boolean containsKey(Object key) {        
+        return fractal.getEntry(key, keyComparator.hashCodeOf((K)key)) != null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public V get(K key) {
-        FastMapEntryImpl<K,V> entry = fractal.getEntry(key, keyComparator.hashCodeOf(key));
+    public V get(Object key) {
+        FastMapEntryImpl<K,V> entry = fractal.getEntry(key, keyComparator.hashCodeOf((K)key));
         if (entry == null) return null;
         return entry.value;
     }
-
+    
     @Override
-    public SetService<K> keySet() {
-        return new FastMapKeySetImpl<K, V>(this);
+    public Equality<? super K> keyComparator() {
+        return keyComparator;
     }
     
     @SuppressWarnings("unchecked")
@@ -115,21 +112,21 @@ public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
     
     @SuppressWarnings("unchecked")
     @Override
-    public V remove(K key) {
-        FastMapEntryImpl<K,V> entry = fractal.removeEntry(key, keyComparator.hashCodeOf(key));
+    public V remove(Object key) {
+        FastMapEntryImpl<K,V> entry = fractal.removeEntry(key, keyComparator.hashCodeOf((K)key));
         if (entry == null) return null;
         detachEntry(entry); // Entry is not referenced anymore and will be gc.
         size--;
         return entry.value;  
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
-    public boolean remove(K key, V value) {
-        int hash = keyComparator.hashCodeOf(key);
+    public boolean remove(Object key, Object value) {
+        int hash = keyComparator.hashCodeOf((K)key);
         FastMapEntryImpl<K,V> entry = fractal.getEntry(key, hash);
         if (entry == null) return false;
-        if (!valueComparator.areEqual(entry.value, value)) return false;
+        if (!valueComparator.areEqual((V)entry.value, (V)value)) return false;
         fractal.removeEntry(key, hash);
         detachEntry(entry); // Entry is not referenced anymore and will be gc.
         size--;
@@ -161,9 +158,45 @@ public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
         return size;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<V> values() {
-        return new FastMapValuesImpl<K, V>(this);
+    public MapService<K, V>[] subViews(int n) {
+        return new MapService[] { this };  // No splitting supported yet.
+    }
+
+    @Override
+    public Equality<? super V> valueComparator() {
+        return valueComparator;
+    }
+    
+    /** Iterator over this map entries */
+    protected Iterator<Entry<K, V>> iterator() {
+        return new Iterator<Entry<K,V>>() {
+            FastMapEntryImpl<K,V> current; 
+            FastMapEntryImpl<K,V> next = firstEntry; 
+                   
+                    
+            @Override
+            public boolean hasNext() {
+                return (next != null);
+            }
+
+            @Override
+            public java.util.Map.Entry<K, V> next() {
+                if (next == null) throw new NoSuchElementException();
+                current = next;
+                next = next.next;
+                return current;
+            }
+
+            @Override
+            public void remove() {
+                if (current == null) throw new IllegalStateException();
+                fractal.removeEntry(current.key, current.hash);
+                detachEntry(current); // Entry is not referenced anymore and will be gc.
+                size--;
+            }};
+       
     }
 
     private void attachEntry(FastMapEntryImpl<K,V> entry) {
@@ -176,7 +209,6 @@ public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
             firstEntry = entry;
         }
     }
-
     private void detachEntry(FastMapEntryImpl<K,V> entry) {
         if (entry == firstEntry) {
             firstEntry = entry.next;
@@ -192,6 +224,32 @@ public class FastMapImpl<K, V> implements MapService<K, V>, Serializable {
         if (next != null) {
             next.previous = previous;
         }       
+    }    
+    
+    /** For serialization support */
+    @SuppressWarnings("unchecked")
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject(); // Deserialize comparator.
+        fractal = new FractalMapImpl(); 
+        freeEntry = new FastMapEntryImpl<K,V>();
+        int n = s.readInt();
+        for (int i = 0; i < n; i++) {
+            put((K)s.readObject(), (V)s.readObject());
+        }
+    }
+
+    /** For serialization support */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException{
+        s.defaultWriteObject(); // Serialize comparators.
+        s.writeInt(size);
+        Iterator<Entry<K,V>> it = iterator();
+        while (it.hasNext()) {
+            Entry<K,V> e = it.next();
+            s.writeObject(e.getKey());
+            s.writeObject(e.getValue());
+        }
     }
     
 }

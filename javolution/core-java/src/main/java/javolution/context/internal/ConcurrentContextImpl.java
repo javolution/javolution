@@ -17,14 +17,14 @@ import javolution.lang.MathLib;
 public final class ConcurrentContextImpl extends ConcurrentContext {
 
     private int completedCount; // Nbr of concurrent task completed.
-    private Throwable error;
+    private Throwable error; // Any error raised.
 
     private int initiatedCount; // Nbr of concurrent task initiated.
     private final ConcurrentContextImpl parent;
     private ConcurrentThreadImpl[] threads;
 
     /**
-     * Default root implementation (not entered by anybody).
+     * Default constructor (root).
      */
     public ConcurrentContextImpl() {
         this.parent = null;
@@ -55,7 +55,7 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
 
     @Override
     public void execute(Runnable logic) {
-        // Find a concurrent thread not busy.
+        // Find a thread not busy.
         for (ConcurrentThreadImpl thread : threads) {
             if (thread.execute(logic, this)) {
                 initiatedCount++;
@@ -90,10 +90,17 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
     }
 
     @Override
+    public int getConcurrency() {
+        return threads.length;
+    }
+
+    @Override
     public void setConcurrency(int concurrency) {
+        // The setting of the concurrency can only reduce the number 
+        // of threads available in the context.
         int nbThreads = MathLib.min(parent.threads.length, concurrency);
         threads = new ConcurrentThreadImpl[nbThreads];
-        for (int i = 0; i < nbThreads; i++) {
+        for (int i = 0; i < nbThreads; i++) { // Reused from parent threads.
             threads[i] = parent.threads[i];
         }
     }

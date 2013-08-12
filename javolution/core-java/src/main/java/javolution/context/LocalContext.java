@@ -20,10 +20,8 @@ import javolution.osgi.internal.OSGiServices;
  * [code]
  * import javolution.context.LocalContext.Parameter;
  * public class ModuloInteger extends Number {
- *     public static final Parameter<Integer> MODULO = new Parameter<Integer>(-1) {
- *          protected Integer parse(String str) {
- *              return Integer.valueOf(str);
- *          }
+ *     public static final Parameter<Integer> MODULO = new Parameter<Integer>() {
+ *          protected Integer getDefault() { return -1; }
  *     }; 
  *     public ModuloInteger times(ModuloInteger that) { ... }    
  * }     
@@ -63,11 +61,9 @@ public abstract class LocalContext extends AbstractContext {
         private final Permission<Parameter<T>> supersedePermission;
 
         /**
-         * Creates a parameter having the specified default value
-         * (configurable).
+         * Creates a new parameter (configurable).
          */
-        public Parameter(T defaultValue) {
-            super(defaultValue);
+        public Parameter() {
             this.supersedePermission = new Permission<Parameter<T>>(
                     Parameter.class, "supersede", this);
         }
@@ -81,19 +77,12 @@ public abstract class LocalContext extends AbstractContext {
         }
 
         /**
-         * Returns the current parameter value (the {@link #getDefault() default}
-         * value if not {@link LocalContext#supersede superseded}).
+         * Returns the current parameter value (the default value if not 
+         * reconfigured nor {@link LocalContext#supersede superseded}).
          */
         public T get() {
             LocalContext ctx = current(LocalContext.class);
-            return (ctx != null) ? ctx.getValue(this) : getDefault();
-        }
-
-        /**
-         * Returns this parameter default value (configurable).
-         */
-        public T getDefault() {
-            return super.get();
+            return (ctx != null) ? ctx.getValue(this, super.get()) : super.get();
         }
     }
 
@@ -120,15 +109,17 @@ public abstract class LocalContext extends AbstractContext {
      * @param  localValue the new local value.
      * @throws SecurityException if the permission to override the specified 
      *         parameter is not granted.
+     * @throws NullPointerException if the specified local value is {@code null}.
      */
     public abstract <T> void supersede(Parameter<T> param, T localValue);
 
     /**
-     * Returns the local value of the specified parameter 
-     * (its default value if not {@link LocalContext#supersede superseded}). 
+     * Returns the local value of the specified parameter or the specified 
+     * default value if not {@link LocalContext#supersede superseded}. 
      * 
-     * @param  param the local parameter whose local value is returned.
+     * @param param the local parameter whose local value is returned.
+     * @param defaultValue the parameter value if not superseded.
      */
-    protected abstract <T> T getValue(Parameter<T> param);
+    protected abstract <T> T getValue(Parameter<T> param, T defaultValue);
     
 }

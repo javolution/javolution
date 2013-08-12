@@ -10,8 +10,9 @@ package javolution.util.function;
 
 import java.util.Comparator;
 
+
 /**
- * <p> A coherent comparator to be used for equality as well as for 
+ * <p> A comparator to be used for element equality as well as for 
  *     ordering. Implementing classes should ensure that:
  *     <ul>
  *        <li> The {@link #compare compare} function is consistent with 
@@ -24,21 +25,18 @@ import java.util.Comparator;
  *             {@link #areEqual equals}: If two objects are equals, they have 
  *             the same hashcode (the reciprocal is not true).</li>
  *        <li> The {@code null} value is supported (even for 
- *             {@link #compare comparisons}) and its {@link #hashCodeOf(Object)
- *             hashcode} value is always {@code 0}.</li>
+ *             {@link #compare comparisons}) and the {@link #hashCodeOf(Object)
+ *             hashcode} value of {@code null} is {@code 0}.</li>
  *     </ul>
  * </p>
  * 
- * <p> Note: In future versions, this interface will be a functional interface
- *           with {@link #areEqual(Object, Object) areEquals} abstract.</p>
- *           
  * @param <T> the type of objects that may be compared for equality or order.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
- * @see Comparators
+ * @see Equalities
  */
-public interface EqualityComparator<T> extends Comparator<T> {
+public interface Equality<T> extends Comparator<T> {
 
     /**
      * Returns the hash code for the specified object (consistent with 

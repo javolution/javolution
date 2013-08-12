@@ -8,7 +8,6 @@
  */
 package javolution.util.internal.table;
 
-import java.io.Serializable;
 
 /**
  * A fractal-based table with fast insertion/deletion capabilities regardless 
@@ -16,13 +15,12 @@ import java.io.Serializable;
  * patterns at any scale (large tables have the same structure as smaller tables
  * which have similar structure as even smaller tables and so on). 
   */
-final class FractalTableImpl implements Serializable {
+final class FractalTableImpl {
 
     static final int SHIFT = 10;
     static final int BASE_CAPACITY_MAX = 1 << SHIFT;
     static final int BASE_CAPACITY_MIN = 16;
     private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
-    private static final long serialVersionUID = 0x600L; // Version.
 
     /** Offset value, it is the index of the first element (modulo data.length). */
     int offset;
@@ -52,6 +50,18 @@ final class FractalTableImpl implements Serializable {
 
     public int capacity() {
         return data.length << shift;
+    }
+
+    @Override
+    public  FractalTableImpl clone() throws CloneNotSupportedException {
+        FractalTableImpl copy = (FractalTableImpl)super.clone();
+        Object[] copyData = copy.data;
+        for (int i=0; i < copyData.length; i++) {
+            if (copyData[i] instanceof FractalTableImpl) {
+                copyData[i] = ((FractalTableImpl)copyData[i]).clone();
+            }
+        }
+        return copy;
     }
 
     public FractalTableImpl downsize(int minsize) {

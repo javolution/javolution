@@ -13,11 +13,9 @@ import static javolution.lang.Realtime.Limit.LOG_N;
 import java.util.SortedSet;
 
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
 import javolution.util.internal.map.sorted.FastSortedMapImpl;
-import javolution.util.internal.set.sorted.SharedSortedSetImpl;
-import javolution.util.internal.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.util.service.SortedSetService;
 
 /**
@@ -35,14 +33,14 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
      * Creates an empty sorted set ordered on elements natural order.
      */
     public FastSortedSet() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
     * Creates an empty sorted set ordered using the specified comparator.
     */
-    public FastSortedSet(EqualityComparator<? super E> comparator) {
-        super(new FastSortedMapImpl<E, Void>(comparator, Comparators.IDENTITY).keySet());
+    public FastSortedSet(Equality<? super E> comparator) {
+        super(new FastSortedMapImpl<E, Void>(comparator, Equalities.IDENTITY).keySet());
     }
 
     /**
@@ -58,12 +56,12 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
 
     @Override
     public FastSortedSet<E> unmodifiable() {
-        return new FastSortedSet<E>(new UnmodifiableSortedSetImpl<E>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override
     public FastSortedSet<E> shared() {
-        return new FastSortedSet<E>(new SharedSortedSetImpl<E>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     /***************************************************************************

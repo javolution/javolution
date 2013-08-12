@@ -11,8 +11,6 @@ package javolution.util;
 import static javolution.lang.Realtime.Limit.LINEAR;
 import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;
-import javolution.util.internal.bitset.SharedBitSetImpl;
-import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 import javolution.util.service.BitSetService;
 
 /**
@@ -56,12 +54,12 @@ public class FastBitSet extends FastSet<Index> {
 
     @Override
     public FastBitSet unmodifiable() {
-        return new FastBitSet(new UnmodifiableBitSetImpl(service));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override
     public FastBitSet shared() {
-        return new FastBitSet(new SharedBitSetImpl(service));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     /***************************************************************************

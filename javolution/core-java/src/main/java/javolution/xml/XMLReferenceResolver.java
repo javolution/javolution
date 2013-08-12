@@ -13,7 +13,7 @@ import javolution.text.TextBuilder;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
 import javolution.util.Index;
-import javolution.util.function.Comparators;
+import javolution.util.function.Equalities;
 import javolution.xml.stream.XMLStreamException;
 
 /**
@@ -33,7 +33,7 @@ public class XMLReferenceResolver {
      * Holds object to identifier (FastTable.Index) mapping.
      */
     private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>(
-            Comparators.IDENTITY);
+            Equalities.IDENTITY);
 
     /**
      * Holds the objects (index to object mapping).

@@ -8,156 +8,179 @@
  */
 package javolution.util.internal.map;
 
-import java.io.Serializable;
-import java.util.Map.Entry;
+import java.util.Map;
 
-import javolution.util.internal.ReadWriteLockImpl;
-import javolution.util.internal.collection.SharedCollectionImpl;
-import javolution.util.internal.set.SharedSetImpl;
-import javolution.util.service.CollectionService;
+import javolution.util.internal.collection.ReadWriteLockImpl;
 import javolution.util.service.MapService;
-import javolution.util.service.SetService;
 
 /**
- *  * A shared view over a map.
+ * A shared view over a map.
  */
-public class SharedMapImpl<K, V> implements MapService<K, V>, Serializable {
+public class SharedMapImpl<K, V> extends MapView<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    protected final ReadWriteLockImpl rwLock;
-    protected final MapService<K, V> target;
+    protected ReadWriteLockImpl lock;
+    protected transient Thread updatingThread; // The thread executing an update.
 
     public SharedMapImpl(MapService<K, V> target) {
-        this(target, new ReadWriteLockImpl());
+        this(target, new ReadWriteLockImpl());        
     }
 
-    public SharedMapImpl(MapService<K, V> target, ReadWriteLockImpl rwLock) {
-        this.target = target;
-        this.rwLock = rwLock;
+    public SharedMapImpl(MapService<K, V> target, ReadWriteLockImpl lock) {
+        super(target);
+        this.lock = lock;
     }
 
     @Override
-    public void atomic(Runnable update) {
-        rwLock.writeLock().lock();
+    public int size() {
+        lock.readLock.lock();
         try {
-            target.atomic(update);
+            return target().size();
         } finally {
-            rwLock.writeLock().unlock();
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean isEmpty() {
+        lock.readLock.lock();
+        try {
+            return target().isEmpty();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        lock.readLock.lock();
+        try {
+            return target().containsKey(key);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        lock.readLock.lock();
+        try {
+            return target().containsValue(value);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public V get(Object key) {
+        lock.readLock.lock();
+        try {
+            return target().get(key);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public V put(K key, V value) {
+        lock.writeLock.lock();
+        try {
+            return target().put(key, value);
+        } finally {
+            lock.writeLock.unlock();
+        }
+    }
+
+    @Override
+    public V remove(Object key) {
+        lock.writeLock.lock();
+        try {
+            return target().remove(key);
+        } finally {
+            lock.writeLock.unlock();
+        }
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        lock.writeLock.lock();
+        try {
+            target().putAll(m);
+        } finally {
+            lock.writeLock.unlock();
         }
     }
 
     @Override
     public void clear() {
-        rwLock.writeLock().lock();
+        lock.writeLock.lock();
         try {
-            target.clear();
+            target().clear();
         } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public boolean containsKey(K key) {
-        rwLock.readLock().lock();
-        try {
-            return target.containsKey(key);
-        } finally {
-            rwLock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public SetService<Entry<K, V>> entrySet() {
-        return new SharedSetImpl<Entry<K, V>>(target.entrySet(), rwLock);
-    }
-
-    @Override
-    public V get(K key) {
-        rwLock.readLock().lock();
-        try {
-            return target.get(key);
-        } finally {
-            rwLock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public SetService<K> keySet() {
-        return new SharedSetImpl<K>(target.keySet(), rwLock);
-    }
-
-    @Override
-    public V put(K key, V value) {
-        rwLock.writeLock().lock();
-        try {
-            return target.put(key, value);
-        } finally {
-            rwLock.writeLock().unlock();
+            lock.writeLock.unlock();
         }
     }
 
     @Override
     public V putIfAbsent(K key, V value) {
-        rwLock.writeLock().lock();
+        lock.writeLock.lock();
         try {
-            return target.putIfAbsent(key, value);
+            return target().putIfAbsent(key, value);
         } finally {
-            rwLock.writeLock().unlock();
+            lock.writeLock.unlock();
         }
     }
 
     @Override
-    public V remove(K key) {
-        rwLock.writeLock().lock();
+    public boolean remove(Object key, Object value) {
+        lock.writeLock.lock();
         try {
-            return target.remove(key);
+            return target().remove(key, value);
         } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public boolean remove(K key, V value) {
-        rwLock.writeLock().lock();
-        try {
-            return target.remove(key, value);
-        } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public V replace(K key, V value) {
-        rwLock.writeLock().lock();
-        try {
-            return target.replace(key, value);
-        } finally {
-            rwLock.writeLock().unlock();
+            lock.writeLock.unlock();
         }
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        rwLock.writeLock().lock();
+        lock.writeLock.lock();
         try {
-            return target.replace(key, oldValue, newValue);
+            return target().replace(key, oldValue, newValue);
         } finally {
-            rwLock.writeLock().unlock();
+            lock.writeLock.unlock();
         }
     }
 
     @Override
-    public int size() {
-        rwLock.readLock().lock();
+    public V replace(K key, V value) {
+        lock.writeLock.lock();
         try {
-            return target.size();
+            return target().replace(key, value);
         } finally {
-            rwLock.readLock().unlock();
+            lock.writeLock.unlock();
         }
     }
 
+    /** 
+     * The default implementation shares the lock between sub-collections, which 
+     * prevents concurrent closure-based removal. Sub-classes may override
+     * this method to avoid such limitation (e.g. {@code SharedTableImpl}).
+     */
+    @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<V> values() {
-        return new SharedCollectionImpl<V>(target.values(), rwLock);
+    public MapService<K, V>[] subViews(int n) {
+        MapService<K, V>[] tmp;
+        lock.readLock.lock();
+        try {
+            tmp = target().subViews(n);
+        } finally {
+            lock.readLock.unlock();
+        }
+        MapService<K, V>[] result = new MapService[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            result[i] = new SharedMapImpl<K,V>(tmp[i], lock); // Same lock.
+        }
+        return result;
     }
+    
 }

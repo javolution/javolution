@@ -12,13 +12,12 @@ import javolution.util.internal.comparator.StandardComparatorImpl;
 import static javolution.lang.Realtime.Limit.*;
 
 /**
- * <p> A set of useful {@link EqualityComparator comparators} 
- *     for equality and ordering.</p>
+ * <p> A set of useful equalities comparators.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public class Comparators {
+public class Equalities {
 
     /**
      * A standard object comparator (based on the object hashCode and equals 
@@ -29,7 +28,7 @@ public class Comparators {
      */
     @Parallelizable
     @Realtime(limit = UNKNOWN)
-    public static final EqualityComparator<Object> STANDARD = new StandardComparatorImpl<Object>();
+    public static final Equality<Object> STANDARD = new StandardComparatorImpl<Object>();
 
     /**
      * A comparator for which instances are only equals to themselves.
@@ -38,7 +37,7 @@ public class Comparators {
      */
     @Parallelizable
     @Realtime(limit = CONSTANT)
-    public static final EqualityComparator<Object> IDENTITY = new IdentityComparatorImpl<Object>();
+    public static final Equality<Object> IDENTITY = new IdentityComparatorImpl<Object>();
 
     /**
      * A content array comparator. If the content of an array is also 
@@ -48,21 +47,21 @@ public class Comparators {
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
-    public static final EqualityComparator<Object> ARRAY = new ArrayComparatorImpl();
+    public static final Equality<Object> ARRAY = new ArrayComparatorImpl();
 
     /**
      * A lexicographic comparator for any {@link CharSequence}.
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL = new LexicalComparatorImpl();
+    public static final Equality<CharSequence> LEXICAL = new LexicalComparatorImpl();
 
     /**
      * A case insensitive lexicographic comparator for any {@link CharSequence}.
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL_CASE_INSENSITIVE = new LexicalCaseInsensitiveComparatorImpl();
+    public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE = new LexicalCaseInsensitiveComparatorImpl();
 
     /**
      * An optimized lexical comparator for any {@link CharSequence} taking 
@@ -71,10 +70,10 @@ public class Comparators {
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
-    public static final EqualityComparator<CharSequence> LEXICAL_FAST = new LexicalFastComparatorImpl();
+    public static final Equality<CharSequence> LEXICAL_FAST = new LexicalFastComparatorImpl();
 
     /**
      * Utility class (private constructor).
      */
-    private Comparators() {}
+    private Equalities() {}
 }

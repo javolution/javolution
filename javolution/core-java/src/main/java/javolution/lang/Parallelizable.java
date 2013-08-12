@@ -23,22 +23,22 @@ import java.lang.annotation.Target;
  * [code]
  * public class Operators {
  *    @Parallelizable
- *    public static final CollectionOperator<Object> ANY = new CollectionOperator<Object>() { ... }
+ *    public static final Reducer<Object> ANY = new Reducer<Object>() { ... }
  *    
  *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final CollectionOperator<Object> MAX = new CollectionOperator<Object>() { ... }
+ *    public static final Reducer<Object> MAX = new Reducer<Object>() { ... }
  *    
  *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final CollectionOperator<Object> MIN = new CollectionOperator<Object>() { ... }
+ *    public static final Reducer<Object> MIN = new Reducer<Object>() { ... }
  *    
  *    @Parallelizable
- *    public static final CollectionOperator<Boolean> AND = new CollectionOperator<Boolean>() { ... }
+ *    public static final Reducer<Boolean> AND = new Reducer<Boolean>() { ... }
  *    
  *    @Parallelizable
- *    public static final CollectionOperator<Boolean> OR = new CollectionOperator<Boolean>() { ... }
+ *    public static final Reducer<Boolean> OR = new Reducer<Boolean>() { ... }
  *    
  *    @Parallelizable(comment="Internal use of AtomicInteger")
- *    public static final CollectionOperator<Integer> SUM = new CollectionOperator<Integer>() { ... }
+ *    public static final Reducer<Integer> SUM = new Reducer<Integer>() { ... }
  * }[/code]
  *  
  * <p> Classes with no internal fields or {@link javolution.lang.Immutable 

@@ -8,7 +8,7 @@
  */
 package javolution.util;
 
-import javolution.context.LocalContext;
+import javolution.lang.Configurable;
 import javolution.util.function.Function;
 import javolution.util.function.MultiVariable;
 
@@ -20,16 +20,37 @@ public class Perfometer {
     volatile boolean doPerform = true;
 
     /**
-     * Hold the measure time duration in nanosecond.
+     * Indicates if the perfometer measurement should be skipped.
      */
-    public static final LocalContext.Parameter<Long> MEASURE_DURATION_NS 
-       = new LocalContext.Parameter<Long>(
-            1000 * 1000 * 1000L) {
+    public static final Configurable<Boolean> SKIP = new Configurable<Boolean>() {
 
-                @Override
-                protected Long parse(String str) {
-                    return Long.valueOf(str);
-                }};
+        @Override
+        protected Boolean getDefault() {
+            return true;
+        }
+
+        @Override
+        public String getName() { // Requires since there are multiple configurable fields.
+            return this.getClass().getEnclosingClass().getName() + "#SKIP";
+        }
+    };
+
+    /**
+     * Hold the measure time duration in milliseconds (default 100 ms)
+     */
+    public static final Configurable<Long> MEASURE_DURATION_MS = new Configurable<Long>() {
+
+        @Override
+        protected Long getDefault() {
+            return 100L;
+        }
+
+        @Override
+        public String getName() { // Requires since there are multiple configurable fields.
+            return this.getClass().getEnclosingClass().getName() + "#MEASURE_DURATION_MS";
+        }
+
+    };
 
     /**
      * Indicates if the operation to be measured is actually performed.
@@ -74,7 +95,7 @@ public class Perfometer {
             }
             count++;
             executionTime = System.nanoTime() - startTime;
-            if (executionTime > MEASURE_DURATION_NS.get())
+            if (executionTime > MEASURE_DURATION_MS.get() * 1000000L)
                 break;
         }
         return cumulatedTime / count;

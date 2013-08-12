@@ -15,7 +15,6 @@ import static javolution.lang.Realtime.Limit.N_LOG_N;
 import static javolution.lang.Realtime.Limit.N_SQUARE;
 
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -23,15 +22,15 @@ import java.util.ListIterator;
 import java.util.RandomAccess;
 
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
+import javolution.util.function.Consumer;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
+import javolution.util.internal.table.AtomicTableImpl;
 import javolution.util.internal.table.FastTableImpl;
 import javolution.util.internal.table.QuickSort;
 import javolution.util.internal.table.ReversedTableImpl;
 import javolution.util.internal.table.SharedTableImpl;
 import javolution.util.internal.table.SubTableImpl;
-import javolution.util.internal.table.TableIteratorImpl;
 import javolution.util.internal.table.UnmodifiableTableImpl;
 import javolution.util.service.TableService;
 
@@ -40,57 +39,51 @@ import javolution.util.service.TableService;
  *     behavior; smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * <p> The fractal-based implementation ensures that add/insertion/deletion operations 
- *     <b>worst</b> execution time is always in <i><b>O(log(size))</b></i> (for  
- *     comparison {@code ArrayList.add} is in  <i><b>O(size)</b></i> due to resize).
- *     The capacity of a fast table 
- *     is automatically adjusted to best fit its size (e.g. when a table is cleared
- *     its memory footprint is minimal).</p>
+ *     <b>worst</b> execution time is always in less than <i><b>O(log(size))</b></i> (for  
+ *     comparison {@code ArrayList.add} is in <i><b>O(size)</b></i> due to resize).
+ *     The capacity of a fast table is automatically adjusted to best fit its size 
+ *     (e.g. when a table is cleared its memory footprint is minimal).</p>
  *
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance.
- *     Fast tables can be concurrently iterated / modified through their {@link #shared() shared} 
- *     views. They inherit all the fast collection
- *     views and support the new {@link #subList subList} view over a portion of the table.</p>
+ *     Fast tables can be concurrently iterated / modified through their {@link #shared() shared}/{@link #atomic() atomic} 
+ *     views. They inherit all the fast collection views and support the {@link #subTable subTable} view over a portion of the table.</p>
  * [code]
  * FastTable<String> names = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil");
- * names.sort(Comparators.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
+ * names.sort(Equalities.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
  * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
- * names.parallel().filtered(str -> str.startsWith("A")).clear(); // Same as above but performed concurrently !
+ * names.filtered(str -> str.startsWith("A")).parallel().clear(); // Same as above but performed concurrently and atomically !
  * [/code]
  *
- * <p> As for any {@link FastCollection fast collection}, iterations are faster
- *     when performed using closures (and the notation shorter with Java 8).
- *     This is also the preferred mean of iterating over {@link FastTable#shared shared}
- *     instances since {@link ConcurrentModificationException} cannot occur. 
+ * <p> As for any {@link FastCollection fast collection}, iterations can be 
+ *     performed using closures and the notation is shorter with Java 8.
  * [code]
- * FastTable<Person> persons = new FastTable<Person>().shared(); // Thread-safe view.
- * ...
+ * FastTable<Person> persons = ...
  * Person findWithName(final String name) { 
  *     return persons.filtered(new Predicate<Person>() { 
  *         public boolean test(Person person) {
  *             return (person.getName().equals(name));
  *         }
- *     }).reduce(Operators.ANY);
+ *     }).any(Person.class);
  * }
- * [/code]
- * The code above can be simplified using Java 8.
+ * [/code]</p>
+ * <p> The same code using Java 8.
  * [code]
  * Person findWithName(String name) {
- *     return persons.filtered(person -> person.getName().equals(name)).reduce(Operators.ANY);
+ *     return persons.filtered(person -> person.getName().equals(name)).any(Person.class);
  * }
  * [/code]
  * </p>
  *  <p> FastTable iteration order is the {@link #add insertion} order; specialization may 
  *      have a different order, for example the iteration order of {@link FastSortedTable} 
- *      is based on the table element order.</p> 
+ *      is based on the table sorting order.</p> 
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public class FastTable<E> extends FastCollection<E> implements List<E>,
-        Deque<E>, RandomAccess {
+public class FastTable<E> extends FastCollection<E> implements List<E>, Deque<E>, RandomAccess {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -104,14 +97,14 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      * without large resize operations to best fit the table current size.
      */
     public FastTable() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
      * Creates an empty table using the specified comparator for element 
      * equality.
     */
-    public FastTable(EqualityComparator<? super E> comparator) {
+    public FastTable(Equality<? super E> comparator) {
         service = new FastTableImpl<E>(comparator);
     }
 
@@ -132,6 +125,11 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Override
+    public FastTable<E> atomic() {
+        return new FastTable<E>(new AtomicTableImpl<E>(service));
+    }
+
+    @Override
     public FastTable<E> shared() {
         return new FastTable<E>(new SharedTableImpl<E>(service));
     }
@@ -146,17 +144,18 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      * {@link java.util.List#subList(int, int)}).
      */
     public FastTable<E> subTable(int fromIndex, int toIndex) {
-        return new FastTable<E>(new SubTableImpl<E>(service, fromIndex, toIndex));
+        return new FastTable<E>(
+                new SubTableImpl<E>(service, fromIndex, toIndex));
     }
-        
+
     /***************************************************************************
-     * Collection operations.
+     * Collection operations (here because of the change in annotation).
      */
 
     @Override
     @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
-        return size() == 0;
+        return service.isEmpty();
     }
 
     @Override
@@ -184,7 +183,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     @Override
     @Realtime(limit = N_LOG_N)
     public boolean addAll(final int index, Collection<? extends E> elements) {
-        return subList(index, index).addAll(elements);
+        return service.addAll(index, elements);
     }
 
     @Override
@@ -194,183 +193,175 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E get(int index) {
         return service.get(index);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E set(int index, E element) {
         return service.set(index, element);
     }
 
     @Override
     @Realtime(limit = LINEAR)
-    public int indexOf(final Object element) {
-        final EqualityComparator<? super E> cmp = comparator();
-        final int[] count = new int[] { -1 };
-        boolean notFound = sequential().doWhile(new Predicate<E>() {
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public boolean test(E param) {
-                count[0]++;
-                return !cmp.areEqual((E) element, param);
-            }
-        });
-        return notFound ? -1 : count[0];
+    public int indexOf(Object element) {
+        return service.indexOf(element);
     }
 
     @Override
     @Realtime(limit = LINEAR)
     public int lastIndexOf(final Object element) {
-        final EqualityComparator<? super E> cmp = comparator();
-        final int[] count = new int[] { -1 };
-        boolean notFound = reversed().sequential().doWhile(new Predicate<E>() {
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public boolean test(E param) {
-                if (count[0] < 0)
-                    count[0] = size();
-                count[0]--;
-                return !cmp.areEqual((E) element, param);
-            }
-        });
-        return notFound ? -1 : count[0];
+        return service.lastIndexOf(element);
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return listIterator();
-    }
-
-    @Override
+    @Realtime(limit = CONSTANT)
     public ListIterator<E> listIterator() {
-        return new TableIteratorImpl<E>(service, 0);
+        return service.listIterator();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public ListIterator<E> listIterator(int index) {
-        if ((index < 0) || (index > size()))
-            throw new IndexOutOfBoundsException("index: " + index + ", size: "
-                    + size());
-        return new TableIteratorImpl<E>(service, index);
+        return service.listIterator(index);
     }
 
     /***************************************************************************
-     * Deque operations (atomic when the table is shared).
+     * Deque operations.
      */
 
     @Override
-    public E getFirst() {
-        return service.getFirst();
-    }
-
-    @Override
-    public E getLast() {
-        return service.getLast();
-    }
-
-    @Override
+    @Realtime(limit = CONSTANT)
     public void addFirst(E element) {
         service.addFirst(element);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public void addLast(E element) {
         service.addLast(element);
     }
-
+    
     @Override
-    public E removeFirst() {
-        return service.removeFirst();
+    @Realtime(limit = CONSTANT)
+    public E getFirst() {
+        return service.getFirst();
     }
 
     @Override
-    public E removeLast() {
-        return service.removeLast();
+    @Realtime(limit = CONSTANT)
+    public E getLast() {
+        return service.getLast();
     }
 
     @Override
-    public E pollFirst() {
-        return service.pollFirst();
-    }
-
-    @Override
-    public E pollLast() {
-        return service.pollLast();
-    }
-
-    @Override
+    @Realtime(limit = CONSTANT)
     public E peekFirst() {
         return service.peekFirst();
     }
-
+    
     @Override
+    @Realtime(limit = CONSTANT)
     public E peekLast() {
         return service.peekLast();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
+    public E pollFirst() {
+        return service.pollFirst();
+    }
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public E pollLast() {
+        return service.pollLast();
+    }
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public E removeFirst() {
+        return service.removeFirst();
+    }
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public E removeLast() {
+        return service.removeLast();
+    }
+
+    @Override
+    @Realtime(limit = CONSTANT)
     public boolean offerFirst(E e) {
-        addFirst(e);
-        return true;
+        return service.offerFirst(e);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public boolean offerLast(E e) {
-        addLast(e);
-        return true;
+        return service.offerLast(e);
     }
 
     @Override
-    public boolean removeFirstOccurrence(Object obj) {
-        return remove(obj);
+    @Realtime(limit = LINEAR)
+    public boolean removeFirstOccurrence(Object o) {
+        return service.removeFirstOccurrence(o);
     }
 
     @Override
-    public boolean removeLastOccurrence(Object obj) {
-        return reversed().removeFirstOccurrence(obj);
+    @Realtime(limit = LINEAR)
+    public boolean removeLastOccurrence(Object o) {
+        return service.removeLastOccurrence(o);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public boolean offer(E e) {
-        return offerLast(e);
+        return service.offer(e);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E remove() {
-        return removeFirst();
+        return service.remove();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E poll() {
-        return pollFirst();
+        return service.poll();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E element() {
-        return getFirst();
+        return service.element();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E peek() {
-        return peekFirst();
+        return service.peek();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public void push(E e) {
-        addFirst(e);
+        service.push(e);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public E pop() {
-        return removeFirst();
+        return service.pop();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public Iterator<E> descendingIterator() {
-        return reversed().iterator();
+        return service.descendingIterator();
     }
 
     /***************************************************************************
@@ -382,35 +373,36 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
      */
     @Realtime(limit = N_SQUARE)
     public void sort() {
-        atomic(new Runnable() {
+        update(new Consumer<TableService<E>>() {
             @Override
-            public void run() {
-                QuickSort<E> qs = new QuickSort<E>(service,
-                        service.comparator());
+            public void accept(TableService<E> table) {
+                QuickSort<E> qs = new QuickSort<E>(table, table.comparator());
                 qs.sort();
-            }
-        });
+            }});
     }
 
     @Override
+    @Realtime(limit = LINEAR)
     public FastTable<E> addAll(E... elements) {
         return (FastTable<E>) super.addAll(elements);
     }
 
     @Override
+    @Realtime(limit = LINEAR)
     public FastTable<E> addAll(FastCollection<? extends E> that) {
         return (FastTable<E>) super.addAll(that);
     }
 
     /**
-     * Replaced by  {@link #subTable(int, int)}
+     * Replaced by  {@link #subTable(int, int)}. The term "List" for an 
+     * interface with random access is disturbing !
      */
     @Override
-    @Deprecated 
+    @Deprecated
     public FastTable<E> subList(int fromIndex, int toIndex) {
         return subTable(fromIndex, toIndex);
     }
-    
+
     @Override
     protected TableService<E> service() {
         return service;

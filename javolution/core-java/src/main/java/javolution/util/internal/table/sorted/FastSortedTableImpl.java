@@ -8,7 +8,7 @@
  */
 package javolution.util.internal.table.sorted;
 
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equality;
 import javolution.util.internal.table.FastTableImpl;
 import javolution.util.service.SortedTableService;
 
@@ -20,34 +20,36 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
 
     private static final long serialVersionUID = 0x600L; // Version.
 
-    public FastSortedTableImpl(EqualityComparator<? super E> comparator) {
+    public FastSortedTableImpl(Equality<? super E> comparator) {
         super(comparator);
     }
     @Override
     public boolean add(E element) {
-        add(slotOf(element), element);
+        add(positionOf(element), element);
         return true;
     }
 
     @Override
-    public int addIfAbsent(E element) {
-        int i = slotOf(element);
+    public boolean addIfAbsent(E element) {
+        int i = positionOf(element);
         if (i >= size() || !comparator().areEqual(get(i), element)) { // Absent.
             add(i, element);
+            return true;
         }
-        return i;
+        return false;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public int indexOf(E element) {
-        int i = slotOf(element);
-        if (i >= size() || !comparator().areEqual(get(i), element))
+    public int indexOf(Object element) {
+        int i = positionOf((E)element);
+        if (i >= size() || !comparator().areEqual(get(i), (E)element))
             return -1;
         return i;
     }
 
     @Override
-    public boolean remove(E element) {
+    public boolean remove(Object element) {
         int i = indexOf(element);
         if (i < 0)
             return false;
@@ -56,11 +58,11 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
     }
 
     @Override
-    public int slotOf(E element) {
+    public int positionOf(E element) {
         return slotOf(element, 0, size(), comparator());
     }
     private int slotOf(E element, int start, int length,
-            EqualityComparator<? super E> cmp) {
+            Equality<? super E> cmp) {
         if (length == 0)
             return start;
         int half = length >> 1;

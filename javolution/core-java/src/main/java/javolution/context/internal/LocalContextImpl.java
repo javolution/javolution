@@ -28,17 +28,17 @@ public final class LocalContextImpl extends LocalContext {
 
     @Override
     public <T> void supersede(Parameter<T> param, T localValue) {
+        if (localValue == null) throw new NullPointerException();
         localSettings.put(param, localValue);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> T getValue(Parameter<T> param) {
+    protected <T> T getValue(Parameter<T> param, T defaultValue) {
         Object value = localSettings.get(param);
         if (value != null) return (T) value;
-        if (localSettings.containsKey(param)) return null; // Value set to null.
-        if (parent != null) return parent.getValue(param);
-        return param.getDefault();
+        if (parent != null) return parent.getValue(param, defaultValue);
+        return defaultValue;
     }
 
 }

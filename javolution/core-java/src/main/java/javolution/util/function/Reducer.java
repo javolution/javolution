@@ -8,7 +8,8 @@
  */
 package javolution.util.function;
 
-import javolution.util.service.CollectionService;
+import java.util.Collection;
+
 
 /**
  * <p> An operator upon multiple elements of a collection yielding a result 
@@ -18,9 +19,8 @@ import javolution.util.service.CollectionService;
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
- * @see     Operators
+ * @see     Reducers
  */
-public interface CollectionOperator<E> extends
-        Function<CollectionService<E>, E> {
+public interface Reducer<E> extends Consumer<Collection<E>>, Supplier<E> {
 
 }

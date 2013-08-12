@@ -8,98 +8,54 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
+import java.util.Collection;
 
-import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
  * A sequential view over a collection.
  */
-public final class SequentialCollectionImpl<E> extends FastCollection<E> implements CollectionService<E> {
+public class SequentialCollectionImpl<E> extends CollectionView<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final CollectionService<E> target;
 
     public SequentialCollectionImpl(CollectionService<E> target) {
-        this.target = target;
+        super(target);
     }
 
     @Override
-    public boolean add(E element) {
-        return target.add(element);
+    public void clear() {
+        target().clear();
     }
 
     @Override
-    public void atomic(Runnable update) {
-        target.atomic(update);
+    public boolean contains(Object obj) {
+        return target().contains(obj);
     }
     
     @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
+    public boolean isEmpty() {
+        return target().isEmpty();
     }
 
     @Override
-    public void forEach(final Consumer<? super E> consumer,
-            final IterationController controller) {
-        target.forEach(consumer, new IterationController() {
-
-            @Override
-            public boolean doReversed() {
-                return controller.doReversed();
-            }
-
-            @Override
-            public boolean doSequential() {
-                return true;
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return controller.isTerminated();
-            }
-        });
+    public void perform(Consumer<Collection<E>> action, CollectionService<E> view) {
+        action.accept(view); // Executes immediately.
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return target.iterator();
+    public boolean remove(Object obj) {
+        return target().remove(obj);
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            final IterationController controller) {
-        return target.removeIf(filter, new IterationController() {
-
-            @Override
-            public boolean doReversed() {
-                return controller.doReversed();
-            }
-
-            @Override
-            public boolean doSequential() {
-                return true;
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return controller.isTerminated();
-            }
-        });
-    }
-
+    public int size() {
+        return target().size();
+   }
+    
     @Override
-    protected SequentialCollectionImpl<E> service() {
-        return this;
+    public void update(final Consumer<Collection<E>> action, CollectionService<E> view) {
+        action.accept(view); // Executes immediately.
     }
-
-    @Override
-    public CollectionService<E>[] trySplit(int n) {
-        return target.trySplit(n); // Forwards (view affects iteration controller only).
-    }
-
 }

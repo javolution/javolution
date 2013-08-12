@@ -14,11 +14,9 @@ import java.util.Comparator;
 import java.util.SortedMap;
 
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
 import javolution.util.internal.map.sorted.FastSortedMapImpl;
-import javolution.util.internal.map.sorted.SharedSortedMapImpl;
-import javolution.util.internal.map.sorted.UnmodifiableSortedMapImpl;
 import javolution.util.service.SortedMapService;
 
 /**
@@ -26,7 +24,7 @@ import javolution.util.service.SortedMapService;
  *     smooth capacity increase/decrease and minimal memory footprint.</p>
  *     
  * <p> This map provides a total ordering based on the keys natural order or 
- *     using custom {@link #FastSortedMap(EqualityComparator) comparators}.</p>
+ *     using custom {@link #FastSortedMap(Equality) comparators}.</p>
  *        
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -40,23 +38,23 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
      * Creates an empty sorted map ordered on keys natural order.
      */
     public FastSortedMap() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
       * Creates an empty sorted map ordered using the specified comparator 
       * for order.
     */
-    public FastSortedMap(EqualityComparator<? super K> keyComparator) {
-        this(keyComparator, Comparators.STANDARD); 
+    public FastSortedMap(Equality<? super K> keyComparator) {
+        this(keyComparator, Equalities.STANDARD); 
     }
 
     /**
       * Creates an empty sorted map ordered using the specified key comparator 
       * for order and value comparator for values equality.
     */
-    public FastSortedMap(EqualityComparator<? super K> keyComparator, 
-            EqualityComparator<? super V> valueComparator) {
+    public FastSortedMap(Equality<? super K> keyComparator, 
+            Equality<? super V> valueComparator) {
         super(new FastSortedMapImpl<K,V>(keyComparator, valueComparator)); 
     }
 
@@ -73,12 +71,12 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
 
     @Override
     public FastSortedMap<K, V> unmodifiable() {
-        return new FastSortedMap<K, V>(new UnmodifiableSortedMapImpl<K, V>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override
     public FastSortedMap<K, V> shared() {
-        return new FastSortedMap<K, V>(new SharedSortedMapImpl<K, V>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override

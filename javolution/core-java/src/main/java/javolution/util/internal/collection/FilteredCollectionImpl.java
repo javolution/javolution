@@ -10,97 +10,87 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
-import javolution.util.FastCollection;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
 import javolution.util.function.Predicate;
-import javolution.util.internal.FilteredIteratorImpl;
 import javolution.util.service.CollectionService;
 
 /**
  * A filtered view over a collection.
  */
-public final class FilteredCollectionImpl<E> extends FastCollection<E>
-        implements CollectionService<E> {
+public class FilteredCollectionImpl<E> extends CollectionView<E> {
+
+    protected class IteratorImpl implements Iterator<E> {
+
+        private boolean ahead; // Indicates if the iterator is ahead (on next element)
+        private final Predicate<? super E> filter;
+        private E next;
+        private final Iterator<E> targetIterator;
+
+        public IteratorImpl(Predicate<? super E> filter) {
+            this.filter = filter;
+            targetIterator = target.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (ahead)
+                return true;
+            while (targetIterator.hasNext()) {
+                next = targetIterator.next();
+                if (filter.test(next)) {
+                    ahead = true;
+                    break;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public E next() {
+            hasNext(); // Moves ahead.
+            ahead = false;
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            targetIterator.remove();
+        }
+    }
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final Predicate<? super E> filter;
-    private final CollectionService<E> target;
 
-    /**
-     * Splits the specified collection into filtered sub-collections.
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> FilteredCollectionImpl<E>[] splitOf(
-            CollectionService<E> target, int n, Predicate<? super E> filter) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        FilteredCollectionImpl<E>[] filtereds = new FilteredCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            filtereds[i] = new FilteredCollectionImpl<E>(tmp[i], filter);
-        }
-        return filtereds;
-    }
+    protected final Predicate<? super E> filter;
+    protected CollectionService<E> target;
 
     public FilteredCollectionImpl(CollectionService<E> target,
             Predicate<? super E> filter) {
-        this.target = target;
+        super(target);
         this.filter = filter;
     }
 
     @Override
     public boolean add(E element) {
-        return filter.test(element) && target.add(element);
+        if (!filter.test(element)) return false;
+        return target.add(element);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void atomic(Runnable update) {
-        target.atomic(update);
-    }
-    
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
-    }
-
-    @Override
-    public void forEach(final Consumer<? super E> consumer,
-            IterationController controller) {
-        target.forEach(new Consumer<E>() {
-            @Override
-            public void accept(E e) {
-                if (filter.test(e)) {
-                    consumer.accept(e);
-                }
-            }
-        }, controller);
-
+    public boolean contains(Object o) {
+        if (!filter.test((E)o)) return false;
+        return target.contains(o);
     }
 
     @Override
     public Iterator<E> iterator() {
-        return new FilteredIteratorImpl<E>(target.iterator(), filter);
+        return new IteratorImpl(filter);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public boolean removeIf(final Predicate<? super E> doRemove,
-            IterationController controller) {
-        return target.removeIf(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                // Remove only if pass the first filter.
-                return filter.test(param) && doRemove.test(param);
-            }
-        }, controller);
+    public boolean remove(Object o) {
+        if (!filter.test((E)o)) return false;
+        return target.remove(o);
     }
 
-    @Override
-    protected FilteredCollectionImpl<E> service() {
-        return this;
-    }
-
-    @Override
-    public FilteredCollectionImpl<E>[] trySplit(int n) {
-        return splitOf(target, n, filter);
-    }
 }

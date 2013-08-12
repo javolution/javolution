@@ -21,7 +21,7 @@ public class ConcurrentThreadImpl extends RealtimeThread {
 
     private static int count;
     private ConcurrentContextImpl context;
-    private AtomicBoolean isFree = new AtomicBoolean();
+    private AtomicBoolean isBusy = new AtomicBoolean();
     private Runnable logic;
     private int priority;
 
@@ -38,7 +38,7 @@ public class ConcurrentThreadImpl extends RealtimeThread {
      * {@code false} if this thread is busy.
      */
     public boolean execute(Runnable logic, ConcurrentContextImpl inContext) {
-        if (!isFree.compareAndSet(true, false))
+        if (!isBusy.compareAndSet(false, true))
             return false;
         synchronized (this) {
             this.priority = Thread.currentThread().getPriority();
@@ -67,7 +67,7 @@ public class ConcurrentThreadImpl extends RealtimeThread {
             logic = null;
             context = null;
             AbstractContext.inherit(null);
-            isFree.set(true);
+            isBusy.set(false);
         }
     }
 

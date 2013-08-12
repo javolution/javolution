@@ -8,7 +8,11 @@
  */
 package javolution.util.service;
 
-import java.util.Map.Entry;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+
+import javolution.util.function.Equality;
 
 /**
  * The set of related map functionalities which can be used/reused to implement 
@@ -18,86 +22,59 @@ import java.util.Map.Entry;
  * @version 6.0, July 21, 2013
  * @see javolution.util.FastMap#FastMap()
  */
-public interface MapService<K, V> {
+public interface MapService<K, V> extends Map<K, V>, ConcurrentMap<K, V>,
+        Serializable, Cloneable {
 
     /** 
-     * Executes the specified update in an atomic manner.
+     * Returns a copy of this map; updates of the copy should not 
+     * impact the original.
      */
-    void atomic(Runnable update);
+    MapService<K, V> clone() throws CloneNotSupportedException;
 
     /**
-     * Removes all of the entries from this map.
+     * Returns a set view over the entries of this map. The set 
+     * support adding/removing entries. Two entries are considered 
+     * equals if they have the same key regardless of their values.
      */
-    void clear();
+    @Override
+    SetService<Map.Entry<K, V>> entrySet();
 
     /** 
-      * Indicates if the map contains the specified key.
-      */
-    boolean containsKey(K key);
-
-    /** 
-    * Returns the set view of this map entries.
-    * Unlike {@link java.util.Map#entrySet()} the view supports adding new 
-    * entries to the map.
+    * Returns the key comparator used for key equality or order if the 
+    * map is sorted.
     */
-    SetService<Entry<K, V>> entrySet();
+    Equality<? super K> keyComparator();
 
-    /** 
-     * Returns the value associated to the specified key.
+    /**
+     * Returns a set view over the key of this map, the set support 
+     * adding new key for which the value is automatically {@code null}.
      */
-    V get(K key);
-   
-    /** 
-    * Returns the set view of this map keys.
-    * Unlike {@link java.util.Map#keySet()} the view supports adding new 
-    * keys to the map (associated value is {@code null}).
-    */
+    @Override
     SetService<K> keySet();
 
     /** 
-    * Associates the specified value to the specified key; returns 
-    * the previously associated value if any.
+     * Returns {@code n} sub-views over distinct parts of this map.
+     * If {@code n == 1} or if this map cannot be split, 
+     * this method returns an array holding a single element.
+     * If {@code n > this.size()} this method may return empty views.
+     *  
+     * @param n the number of sub-views to return.
+     * @return the sub-views.
+     * @throws IllegalArgumentException if {@code n <= 1}
+     */
+    MapService<K, V>[] subViews(int n);
+
+
+    /** 
+    * Returns the value comparator used for value equality.
     */
-    V put(K key, V value);
-
-    /** 
-     *  Associates the specified key with the specified value unless 
-     *  it is already associated.
-     */
-    V putIfAbsent(K key, V value);
+    Equality<? super V> valueComparator();
 
     /**
-     * Removes the specified key and returns the previously associated value
-     * if any. 
+     * Returns a collection view over the values of this map, the collection 
+     * support value/entry removal but not adding new values.
      */
-    V remove(K key);
-
-    /** 
-     * Removes the entry for a key only if currently mapped to the 
-     * specified value.
-     */
-    boolean remove(K key, V value);
-
-    /** 
-     * Replaces the entry for a key only if currently mapped to the
-     * specified value.
-     */
-    V replace(K key, V value);
-
-    /** 
-     * Replaces the entry for a key only if currently mapped to the
-     * specified value.
-     */
-    boolean replace(K key, V oldValue, V newValue);
-
-    /**
-     * Returns the number of entries in this map.
-     */
-    int size();
-
-    /** 
-     * Returns the collection view of this map values.
-     */
+    @Override
     CollectionService<V> values();
-
+ 
 }

@@ -8,30 +8,23 @@
  */
 package javolution.util.service;
 
+import java.util.SortedSet;
+
 /**
  * The set of related functionalities used to implement sorted set collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public interface SortedSetService<E> extends SetService<E> {
+public interface SortedSetService<E> extends SetService<E>, SortedSet<E> {
 
-    /**
-     * Returns the first (lowest) element currently in this set.
-     */
-    E first();
+    @Override
+    SortedSetService<E> headSet(E toElement);
 
-    /**
-     * Returns the last (highest) element currently in this set.
-     */
-    E last();
-
-    /**
-     * Returns a view over a portion of this set.
-     * 
-     * @param fromElement the low endpoint inclusive or {@code null} if none (head set).
-     * @param toElement the high endpoint exclusive  or {@code null} if none (tail set).        
-     */
+    @Override
     SortedSetService<E> subSet(E fromElement, E toElement);
+
+    @Override
+    SortedSetService<E> tailSet(E fromElement);
 
 }

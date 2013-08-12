@@ -13,7 +13,6 @@ import java.util.Map;
 import javolution.text.CharArray;
 import javolution.util.FastTable;
 import javolution.util.function.Function;
-import javolution.util.function.Operators;
 import javolution.xml.stream.XMLStreamException;
 
 /**
@@ -135,7 +134,7 @@ public final class EntitiesImpl {
             @Override
             public Integer apply(CharSequence csq) {
                 return csq.length();
-            }}).reduce(Operators.MAX);
+            }}).max();
         
           _entitiesMapping = entityToReplacementText;
     }

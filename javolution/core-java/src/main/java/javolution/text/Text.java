@@ -14,7 +14,7 @@ import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
-import javolution.util.function.Comparators;
+import javolution.util.function.Equalities;
 import javolution.xml.XMLSerializable;
 
 /**
@@ -705,19 +705,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
      * @return an unique text instance allocated in permanent memory.
      */
     public Text intern() {
-        final Text[] interned = new Text[1];
-        INTERN.atomic(new Runnable() {
-
-            @Override
-            public void run() {
-                interned[0] = INTERN.get(Text.this);
-                if (interned[0] == null) {
-                    interned[0] = Text.this;
-                    INTERN.put(interned[0], interned[0]);
-                }
-            }
-        });
-        return interned[0];
+        Text txt = INTERN.putIfAbsent(this, this);
+        return txt == null ? this : txt;
     }
 
     /**
@@ -817,7 +806,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
      *          <code>CharSequence</code> or a <code>String</code>.
      */
     public int compareTo(CharSequence csq) {
-        return Comparators.LEXICAL.compare(this, csq);
+        return Equalities.LEXICAL.compare(this, csq);
     }
 
     /**

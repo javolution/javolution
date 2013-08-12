@@ -13,10 +13,11 @@ import static javolution.lang.Realtime.Limit.CONSTANT;
 import java.util.Set;
 
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
 import javolution.util.internal.map.FastMapImpl;
+import javolution.util.internal.set.AtomicSetImpl;
 import javolution.util.internal.set.FilteredSetImpl;
 import javolution.util.internal.set.SharedSetImpl;
 import javolution.util.internal.set.UnmodifiableSetImpl;
@@ -48,15 +49,15 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * the same real-time characteristics.
      */
     public FastSet() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
      * Creates an empty set backed up by a {@link FastMap} and using the 
      * specified comparator for key equality.
     */
-    public FastSet(EqualityComparator<? super E> comparator) {
-        service = new FastMapImpl<E, Void>(comparator, Comparators.IDENTITY).keySet();
+    public FastSet(Equality<? super E> comparator) {
+        service = new FastMapImpl<E, Void>(comparator, Equalities.IDENTITY).keySet();
     }
 
     /**
@@ -71,13 +72,8 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      */
 
     @Override
-    public FastSet<E> unmodifiable() {
-        return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
-    }
-
-    @Override
-    public FastSet<E> shared() {
-        return new FastSet<E>(new SharedSetImpl<E>(service()));
+    public FastSet<E> atomic() {
+        return new FastSet<E>(new AtomicSetImpl<E>(service()));
     }
 
     @Override
@@ -86,9 +82,15 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     }
 
     @Override
-    public FastSet<E> distinct() {
-        return this; // Elements already distinct.
+    public FastSet<E> shared() {
+        return new FastSet<E>(new SharedSetImpl<E>(service()));
     }
+
+    @Override
+    public FastSet<E> unmodifiable() {
+        return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
+    }
+
 
     /***************************************************************************
      * Set operations optimizations.
@@ -113,17 +115,15 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Realtime(limit = CONSTANT)
     public boolean contains(Object obj) {
-        return service.contains((E) obj);
+        return service.contains(obj);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Realtime(limit = CONSTANT)
     public boolean remove(Object obj) {
-        return service.remove((E) obj);
+        return service.remove(obj);
     }
 
     /***************************************************************************

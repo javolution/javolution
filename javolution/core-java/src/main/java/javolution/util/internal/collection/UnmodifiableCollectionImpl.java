@@ -10,80 +10,69 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
-import javolution.util.FastCollection;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
-import javolution.util.internal.UnmodifiableIteratorImpl;
 import javolution.util.service.CollectionService;
 
 /**
  * An unmodifiable view over a collection.
  */
-public class UnmodifiableCollectionImpl<E> extends FastCollection<E> implements
-        CollectionService<E> {
+public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final CollectionService<E> target;
-
-    /**
-     * Splits the specified collection into unmodifiable sub-collections.
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> UnmodifiableCollectionImpl<E>[] splitOf(
-            CollectionService<E> target, int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        UnmodifiableCollectionImpl<E>[] unmodifiables = new UnmodifiableCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            unmodifiables[i] = new UnmodifiableCollectionImpl<E>(tmp[i]);
-        }
-        return unmodifiables;
-    }
 
     public UnmodifiableCollectionImpl(CollectionService<E> target) {
-        this.target = target;
+        super(target);
     }
 
     @Override
     public boolean add(E element) {
-        throw new UnsupportedOperationException("Unmodifiable Collection");
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
-    public void atomic(Runnable update) {
-        throw new UnsupportedOperationException("Unmodifiable Collection");
+    public void clear() {
+        throw new UnsupportedOperationException("Read-Only Collection.");
+    }
+
+    @Override
+    public boolean contains(Object obj) {
+        return target().contains(obj);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return target().isEmpty();
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return new Iterator<E>() {
+            Iterator<E> it = target().iterator();
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public E next() {
+                return it.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Read-Only Collection.");
+            }
+        };
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException("Read-Only Collection.");
+    }
+
+    @Override
+    public int size() {
+        return target().size();
     }
     
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
-    }
-
-    @Override
-    public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {
-        target.forEach(consumer, controller);
-    }
-
-   @Override
-    public Iterator<E> iterator() {
-        return new UnmodifiableIteratorImpl<E>(target.iterator());
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        throw new UnsupportedOperationException("Unmodifiable Collection");
-    }
-
-    @Override
-    protected CollectionService<E> service() {
-        return this;
-    }
-
-    @Override
-    public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
-        return UnmodifiableCollectionImpl.splitOf(target, n);
-    }
-
 }

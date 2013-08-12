@@ -8,79 +8,97 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Comparator;
 import java.util.Iterator;
 
-import javolution.util.FastCollection;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
-import javolution.util.internal.UnmodifiableIteratorImpl;
-import javolution.util.internal.table.sorted.FastSortedTableImpl;
+import javolution.util.FastTable;
+import javolution.util.function.Equality;
+import javolution.util.internal.comparator.WrapperComparatorImpl;
 import javolution.util.service.CollectionService;
 
 /**
- * An unmodifiable sorted view over a collection.
+ * A sorted view over a collection.
  */
-public final class SortedCollectionImpl<E> extends FastCollection<E> implements
-        CollectionService<E> {
+public class SortedCollectionImpl<E> extends CollectionView<E>  {
 
+    protected class IteratorImpl implements Iterator<E> {
+        private final Iterator<E> iterator;
+        private E next;
+        
+        public IteratorImpl() {
+            FastTable<E> sorted = new FastTable<E>(comparator);
+            Iterator<E> it = target().iterator();            
+            while (it.hasNext()) {
+                sorted.add(it.next());
+            }
+            sorted.sort();
+            iterator = sorted.iterator();
+        }
+        
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            next = iterator.next();
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            if (next == null) throw new IllegalStateException();
+            target().remove(next);
+            next = null;
+        }
+
+    }
+   
     private static final long serialVersionUID = 0x600L; // Version.
-    private final CollectionService<E> target;
-
-    public SortedCollectionImpl(CollectionService<E> that) {
-        this.target = that;
-    }
-
-    @Override
-    public boolean add(E element) {
-        throw new UnsupportedOperationException("Sorted views are unmodifiable");
-    }
-
-    @Override
-    public void atomic(Runnable update) {
-        target.atomic(update);
-    }
     
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
+    protected final Equality<E> comparator;
+
+    @SuppressWarnings("unchecked")
+    public SortedCollectionImpl(CollectionService<E> target, Comparator<? super E> comparator) {
+        super(target);
+        this.comparator = (comparator instanceof Equality) ?
+                (Equality<E>) comparator : new WrapperComparatorImpl<E>(comparator);
     }
 
     @Override
-    public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {
-        sortedCopy().forEach(consumer, controller);
+    public void clear() {
+        target().clear();
     }
-    private FastSortedTableImpl<E> sortedCopy() {
-        final FastSortedTableImpl<E> sorted = new FastSortedTableImpl<E>(target.comparator());
-        target.forEach(new Consumer<E>() {
 
-            @Override
-            public void accept(E e) {
-                sorted.add(e);
-                
-            }}, IterationController.SEQUENTIAL);
-       return sorted; 
+    @Override
+    public Equality<? super E> comparator() {
+        return comparator;
+    }
+
+    @Override
+    public boolean contains(Object obj) {
+        return target().contains(obj);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return target().isEmpty();
     }
 
     @Override
     public Iterator<E> iterator() {
-        return new UnmodifiableIteratorImpl<E>(sortedCopy().iterator());
+        return new IteratorImpl();
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        throw new UnsupportedOperationException("Sorted views are unmodifiable");
+    public boolean remove(Object obj) {
+        return target().remove(obj);
     }
 
     @Override
-    protected SortedCollectionImpl<E> service() {
-        return this;
+    public int size() {
+        return target().size();
     }
-
-    @Override
-    public SplitCollectionImpl<E>[] trySplit(int n) {
-        return SplitCollectionImpl.splitOf(this, n);
-    }
+    
 }

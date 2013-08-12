@@ -9,6 +9,7 @@
 package javolution.context;
 
 import javolution.lang.Configurable;
+import javolution.lang.MathLib;
 import javolution.osgi.internal.OSGiServices;
 
 /**
@@ -156,11 +157,21 @@ public abstract class ConcurrentContext extends AbstractContext {
      * {@code -Djavolution.context.ConcurrentContext#CONCURRENCY=0}
      * disables concurrency. 
      */
-    public static final Configurable<Integer> CONCURRENCY = new Configurable<Integer>(
-            Runtime.getRuntime().availableProcessors()) {
+    public static final Configurable<Integer> CONCURRENCY = new Configurable<Integer>() {
         @Override
-        protected Integer parse(String str) {
-            return Integer.valueOf(str);
+        protected Integer getDefault() {
+            return Runtime.getRuntime().availableProcessors();
+        }
+
+        @Override
+        protected Integer initialized(Integer value) {
+            return MathLib.min(value, 65536); // Hard-limiting
+        }
+
+        @Override
+        protected Integer reconfigured(Integer oldCount, Integer newCount) {
+            throw new UnsupportedOperationException(
+                    "Concurrency reconfiguration not supported.");
         }
     };
 
@@ -217,12 +228,16 @@ public abstract class ConcurrentContext extends AbstractContext {
     public abstract void execute(Runnable logic);
 
     /**
-     * Sets the maximum concurrency. Setting a value greater than 
-     * the default maximum concurrency has no effect.
-     * 
-     * @param  concurrency the new maximum concurrency.
+     * Sets the maximum concurrency. Setting a value greater than the 
+     * {@link #getConcurrency() current concurrency} has no effect 
+     * (concurrency can only be reduced).
      */
     public abstract void setConcurrency(int concurrency);
+
+    /**
+     * Returns the current concurrency.
+     */
+    public abstract int getConcurrency();
 
     /**
      * Exits the scope of this concurrent context; this method blocks until 

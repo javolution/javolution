@@ -59,8 +59,7 @@ public final class LogContextImpl extends LogContext {
 
     @Override
     protected void log(Level level, Object... message) {
-        Level thisLevel = (this.level != null) ? this.level : LEVEL.get();
-        if (level.compareTo(thisLevel) < 0)
+        if (level.compareTo(currentLevel()) < 0)
             return;
         TextBuilder tmp = new TextBuilder();
         Throwable exception = null;
@@ -83,5 +82,10 @@ public final class LogContextImpl extends LogContext {
         for (Object logService : logServices) {
             ((LogService)logService).log(osgiLevel, msg, exception);
         }
+    }
+    private Level currentLevel() {
+        if (LEVEL == null) return Level.DEBUG; // Only during class initialization.
+        if (level == null) return LEVEL.get();
+        return level;
     }
 }

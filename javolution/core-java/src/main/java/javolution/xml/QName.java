@@ -15,7 +15,7 @@ import javolution.lang.Immutable;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.util.FastMap;
-import javolution.util.function.Comparators;
+import javolution.util.function.Equalities;
 
 /**
  * <p> This class represents unique identifiers for XML elements (tags) or 
@@ -55,7 +55,7 @@ public final class QName implements XMLSerializable, Immutable<QName>, CharSeque
      * Holds the full name (String) to QName mapping.
      */
     private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME = new FastMap<CharSequence, QName>(
-            Comparators.LEXICAL);
+            Equalities.LEXICAL);
 
     /**
      * Creates a qualified name having the specified local name and namespace 

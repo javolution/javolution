@@ -702,10 +702,11 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
         if ((index < 0) || (index > _length))
             throw new IndexOutOfBoundsException("index: " + index);
         final int shift = csq.length();
-        _length += shift;
-        while (_length >= _capacity) {
+        int newLength = _length + shift;
+        while (newLength >= _capacity) {
             increaseCapacity();
         }
+        _length = newLength;
         for (int i = _length - shift; --i >= index;) {
             this.setCharAt(i + shift, this.charAt(i));
         }

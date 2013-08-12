@@ -19,25 +19,15 @@ public interface SortedTableService<E> extends TableService<E> {
     /** 
      * Adds the specified element only if not already present.
      *  
-     * @return the index of the element added or the index of the element 
-     *         already present.
+     * @return {@code true} if the element has been added; 
+     *         {@code false} otherwise.
      */
-    int addIfAbsent(E element);
-
-    /** 
-     * Returns the index of the specified element or -1 if not present.
-     */
-    int indexOf(E element);
-
-    /** 
-     * Removes the specified element if present.
-     */
-    boolean remove(E element);
+    boolean addIfAbsent(E element);
 
     /** 
      * Returns what would be the index of the specified element if it were
-     * to be added.
+     * to be added or the index of the specified element if already present.
      */
-    int slotOf(E element);
+    int positionOf(E element);
 
 }

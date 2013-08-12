@@ -13,15 +13,20 @@ import javolution.lang.Configurable;
 
 /**
  * Holds the default implementation of Configurable.Listener when running 
- * outside OSGi (logs configuration changes).
+ * outside OSGi (logs configuration events).
  */
 public final class ConfigurableListenerImpl implements Configurable.Listener {
 
     @Override
-    public <T> void configurableChanged(Configurable<T> configurable,
-            T oldValue, T newValue) {
-        LogContext.info("Configurable: ", configurable.getName(),  
-             " changed from ", oldValue, " to ", newValue);
+    public <T> void configurableInitialized(Configurable<T> configurable,
+            T value) {
+        LogContext.debug(configurable.getName(), "=", value);
     }
 
+    @Override
+    public <T> void configurableReconfigured(Configurable<T> configurable,
+            T oldValue, T newValue) {
+        LogContext.debug(configurable.getName(),  
+             " reconfigured from ", oldValue, " to ", newValue);
+    }
 }

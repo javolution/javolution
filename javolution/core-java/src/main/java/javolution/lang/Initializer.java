@@ -12,11 +12,17 @@ import java.util.Vector;
 import javolution.context.LogContext;
 
 /**
- * <p> An initializer for all classes loaded by any specified class loader.</p>
+ * <p> An initializer for all classes loaded by any given class loader.</p>
  * 
- * <p> Initialization of loaded classes at startup (or during bundle activation)
- *     ensures that the run-time behavior is more time deterministic 
- *     (aka real-time).</p> 
+ * <p> Initialization of classes at startup (or during bundle activation) 
+ *     ensures a significantly improved worst case execution time especially 
+ *     if the classes has {@link Configurable configuration logic} to be
+ *     executed then.</p>
+ * 
+ * <p> Javolution activator initialize {@link Realtime} classes when started.
+ *     When running outside OSGi the method
+ *     {@code javolution.osgi.internal.OSGiServices.initializeRealtimeClasses()}
+ *     can be used to that effect..</p> 
  * 
  * <p> Class loading can be performed in a lazy manner and therefore some parts 
  *     of the class loading process may be done on first use rather than at 
@@ -44,14 +50,13 @@ import javolution.context.LogContext;
 public class Initializer {
 
     /**
-     * Indicates if the class being initialized should be logged as debug
-     * messages (default {@code false}). 
+     * Indicates if the class being initialized should be logged 
+     * (default {@code false}). 
      */
-    public static final Configurable<Boolean> DEBUG = new Configurable<Boolean>(
-            false) {
+    public static final Configurable<Boolean> SHOW_INITIALIZED = new Configurable<Boolean>() {
         @Override
-        protected Boolean parse(String str) {
-            return Boolean.parseBoolean(str);
+        protected Boolean getDefault() {
+            return false;
         }
     };
 
@@ -99,7 +104,7 @@ public class Initializer {
         try {
             classLoader.loadClass(cls.getName());
         } catch (ClassNotFoundException e) {
-            LogContext.error("Class " + cls + " not found.");
+            LogContext.debug("Class " + cls + " not found.");
         }
     }
 
@@ -117,7 +122,8 @@ public class Initializer {
         while (true) {
             Class<?>[] classes = loadedClasses();
             if (classes == null) {
-                LogContext.warning("Automatic class initialization not supported.");
+                LogContext
+                        .debug("Automatic class initialization not supported.");
                 return false;
             }
             if (nbrClassesInitialized >= classes.length)
@@ -125,7 +131,7 @@ public class Initializer {
             for (int i = nbrClassesInitialized; i < classes.length; i++) {
                 Class<?> cls = classes[i];
                 try {
-                    if (DEBUG.get())
+                    if (SHOW_INITIALIZED.get())
                         LogContext.debug("Initialize ", cls.getName());
                     Class.forName(cls.getName(), true, classLoader);
                 } catch (ClassNotFoundException ex) {
@@ -135,7 +141,7 @@ public class Initializer {
             }
             nbrClassesInitialized = classes.length;
         }
-        LogContext.info("Initialization of ", nbrClassesInitialized,
+        LogContext.debug("Initialization of ", nbrClassesInitialized,
                 " classes loaded by ", classLoader);
         return isInitializationSuccessful;
     }

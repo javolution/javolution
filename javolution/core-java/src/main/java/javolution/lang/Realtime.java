@@ -23,18 +23,18 @@ import java.lang.annotation.Target;
  *     specified the worst case execution time is assumed to be constant).</p>
  *     
  * [code]
- * public class Comparators {
+ * public class Equalities {
  *     @Realtime(limit = UNKNOWN)
- *     public static final EqualityComparator<Object> STANDARD = new StandardComparatorImpl<Object>();
+ *     public static final Equality<Object> STANDARD = new StandardComparatorImpl<Object>();
  *     
  *     @Realtime(limit = CONSTANT)
- *     public static final EqualityComparator<Object> IDENTITY = new IdentityComparatorImpl<Object>();
+ *     public static final Equality<Object> IDENTITY = new IdentityComparatorImpl<Object>();
  *     
  *     @Realtime(limit = LINEAR)
- *     public static final EqualityComparator<Object> ARRAY = new ArrayComparatorImpl();
+ *     public static final Equality<Object> ARRAY = new ArrayComparatorImpl();
  *     
  *     @Realtime(limit = LINEAR)
- *     public static final EqualityComparator<CharSequence> LEXICAL = new LexicalComparatorImpl();
+ *     public static final Equality<CharSequence> LEXICAL = new LexicalComparatorImpl();
  * }[/code]      
  *     
  * <p> Analysis tools / compilers may produce warnings if program elements 

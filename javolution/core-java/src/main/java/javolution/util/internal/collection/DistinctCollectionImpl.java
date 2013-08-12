@@ -10,91 +10,77 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
-import javolution.util.FastCollection;
 import javolution.util.FastSet;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
-import javolution.util.internal.FilteredIteratorImpl;
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
- * A view which does not iterate twice over the same elements and which 
- * maintains element unicity.
+ * A view which does not iterate twice over the same elements.
  */
-public final class DistinctCollectionImpl<E> extends FastCollection<E>
-        implements CollectionService<E> {
+public class DistinctCollectionImpl<E> extends CollectionView<E> {
+
+    protected class IteratorImpl implements Iterator<E> {
+
+        private boolean ahead; // Indicates if the iterator is ahead (on next element)
+        private final FastSet<E> iterated;
+        private E next;
+        private final Iterator<E> targetIterator;
+
+        public IteratorImpl(Equality<? super E> cmp) {
+            iterated = new FastSet<E>(cmp);
+            targetIterator = target().iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (ahead) return true;
+            while (targetIterator.hasNext()) {
+                next = targetIterator.next();
+                if (!iterated.contains(next)) {
+                    ahead = true;
+                    break;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public E next() {
+            hasNext(); // Moves ahead.
+            ahead = false;
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            targetIterator.remove();
+        }
+    }
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final CollectionService<E> target;
 
     public DistinctCollectionImpl(CollectionService<E> target) {
-        this.target = target;
+        super(target);
     }
 
     @Override
     public boolean add(E element) {
-        return contains(element) ? false : target.add(element);
+        if (target().contains(element)) return false;
+        return target().add(element);
     }
 
-    @Override
-    public void atomic(Runnable update) {
-        target.atomic(update);
-    }
-    
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
-    }
-
-    @Override
-    public void forEach(final Consumer<? super E> consumer,
-            IterationController controller) {
-        target.forEach(new Consumer<E>() {
-            FastSet<E> iterated = new FastSet<E>(target.comparator()).shared(); // Supports parallel iterations.
-
-            @Override
-            public void accept(E e) {
-                if (!iterated.add(e))
-                    return; // Already iterated over.
-                consumer.accept(e);
-            }
-        }, controller);
-
-    }
- 
     @Override
     public Iterator<E> iterator() {
-        return new FilteredIteratorImpl<E>(target.iterator(),
-                new Predicate<E>() {
-                    FastSet<E> iterated = new FastSet<E>(target.comparator());
-
-                    @Override
-                    public boolean test(E param) {
-                        return iterated.add(param);
-                    }
-                });
+        return new IteratorImpl(this.comparator());
     }
 
     @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        return target.removeIf(filter, controller);
-    }
-
-    @Override
-    protected DistinctCollectionImpl<E> service() {
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public DistinctCollectionImpl<E>[] trySplit(int n) {
-        CollectionService<E>[] tmp = target.trySplit(n);
-        DistinctCollectionImpl<E>[] result = new DistinctCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            result[i] = new DistinctCollectionImpl<E>(tmp[i]);
+    public boolean remove(Object o) { // Remove all instances.
+        boolean changed = false;
+        while (true) {
+            if (!remove(o)) return changed;
+            changed = true;
         }
-        return result;
     }
+
 }

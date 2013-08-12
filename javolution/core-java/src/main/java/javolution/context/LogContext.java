@@ -70,7 +70,11 @@ public abstract class LogContext extends AbstractContext {
      * the option <code>-Djavolution.context.LogContext#LEVEL=WARNING</code>  
      * causes the debug/info not to be logged. 
      */
-    public static final Configurable<Level> LEVEL = new Configurable<Level>(Level.DEBUG) {
+    public static final Configurable<Level> LEVEL = new Configurable<Level>() {
+        @Override
+        protected Level getDefault() {
+            return Level.DEBUG;
+        }
         @Override
         public Level parse(String str) {
             return Level.valueOf(str);

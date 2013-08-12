@@ -8,7 +8,16 @@
  */
 package javolution.text.internal;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 import javolution.context.LogContext;
 import javolution.text.CharSet;
@@ -27,16 +36,40 @@ import javolution.util.FastMap;
  */
 public final class TextContextImpl extends TextContext {
 
+    private static final TextFormat<?> OBJECT_FORMAT = new TextFormat<Object>() {
+        ThreadLocal<Object> objToString = new ThreadLocal<Object>();
+
+        public Appendable format(Object obj, Appendable dest)
+                throws IOException {
+            if (obj == null) return dest.append("null");
+            if (objToString.get() == obj) // Circularity in toString !
+            return TypeFormat.format(System.identityHashCode(obj),
+                    dest.append("Object#"));
+            objToString.set(obj);
+            try {
+                String str = obj.toString();
+                return dest.append(str);
+            } finally {
+                objToString.set(null);
+            }
+        }
+
+        public Object parse(CharSequence csq, Cursor cursor) {
+            throw new UnsupportedOperationException(
+                    "Generic object parsing not supported.");
+        }
+
+    };
     // Holds class->format local mapping. 
     private final FastMap<Class<?>, TextFormat<?>> localFormats;
 
     // Caches class->format from class annotations. 
-    private final FastMap<Class<?>, TextFormat<?>> annotatedFormats;
+    private final FastMap<Class<?>, TextFormat<?>> defaultFormats;
 
     /** Default constructor for root */
     public TextContextImpl() {
         localFormats = new FastMap<Class<?>, TextFormat<?>>(); // Updated only during configuration.
-        annotatedFormats = new FastMap<Class<?>, TextFormat<?>>().shared(); // Can be updated concurrently.
+        defaultFormats = new FastMap<Class<?>, TextFormat<?>>().shared(); // Can be updated concurrently.
         storePrimitiveTypesFormats();
     }
 
@@ -44,7 +77,7 @@ public final class TextContextImpl extends TextContext {
     public TextContextImpl(TextContextImpl parent) {
         localFormats = new FastMap<Class<?>, TextFormat<?>>()
                 .putAll(parent.localFormats);
-        annotatedFormats = parent.annotatedFormats;
+        defaultFormats = parent.defaultFormats;
     }
 
     @Override
@@ -55,33 +88,41 @@ public final class TextContextImpl extends TextContext {
     @SuppressWarnings("unchecked")
     @Override
     protected <T> TextFormat<T> searchFormat(Class<? extends T> type) {
-        if (localFormats.size() > 0) { // Checks local settings.
-            TextFormat<T> tf = (TextFormat<T>) localFormats.get(type);
-            if (tf != null)
-                return tf;
-        }
-        TextFormat<T> tf = (TextFormat<T>) annotatedFormats.get(type);
-        if (tf != null)
-            return tf;
-        if (annotatedFormats.containsKey(type))
-            return null;
-        return (TextFormat<T>) searchDefaultFormat(type);
-    }
-
-    private TextFormat<?> searchDefaultFormat(Class<?> type) {
-        DefaultTextFormat format = type.getAnnotation(DefaultTextFormat.class);
-        if (format != null) {
-            Class<? extends TextFormat<?>> formatClass = format.value();
-            try {
-                TextFormat<?> tf = formatClass.newInstance();
-                annotatedFormats.put(type, tf);
-                return tf;
-            } catch (Throwable error) {
-                LogContext.warning(error);
+        Class<?> cls = type;
+        while (cls != null) {
+            TextFormat<?> format;
+            // Search local format first.
+            if (localFormats.size() > 0) {
+                format = localFormats.get(cls);
+                if (format != null) return (TextFormat<T>) format;
             }
+            // Then search default format.
+            format = defaultFormats.get(cls);
+            if (format != null) return (TextFormat<T>) format;
+
+            // Search annotations.
+            DefaultTextFormat annotation = cls
+                    .getAnnotation(DefaultTextFormat.class);
+            if (annotation != null) { // Found it.
+                try {
+                    format = annotation.value().newInstance();
+                } catch (Throwable error) {
+                    LogContext.warning(error);
+                }
+                // Updates the default mapping.
+                Class<?> mappedClass = type;
+                while (true) {
+                    defaultFormats.put(mappedClass, format);
+                    if (mappedClass.equals(cls)) break;
+                    mappedClass = mappedClass.getSuperclass();
+                }
+                return (TextFormat<T>) format;
+            }
+
+            // Search superclass.
+            cls = cls.getSuperclass();
         }
-        annotatedFormats.put(type, null);
-        return null;
+        throw new Error("Object default format not found !");
     }
 
     @Override
@@ -94,7 +135,8 @@ public final class TextContextImpl extends TextContext {
     ////////////////////////
 
     private void storePrimitiveTypesFormats() {
-        annotatedFormats.put(Boolean.class, new TextFormat<Boolean>() {
+        defaultFormats.put(Object.class, OBJECT_FORMAT);
+        defaultFormats.put(Boolean.class, new TextFormat<Boolean>() {
 
             public Appendable format(Boolean obj, Appendable dest)
                     throws IOException {
@@ -106,8 +148,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Character.class, new TextFormat<Character>() {
+        defaultFormats.put(Character.class, new TextFormat<Character>() {
 
             public Appendable format(Character obj, Appendable dest)
                     throws IOException {
@@ -119,8 +160,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Byte.class, new TextFormat<Byte>() {
+        defaultFormats.put(Byte.class, new TextFormat<Byte>() {
 
             public Appendable format(Byte obj, Appendable dest)
                     throws IOException {
@@ -132,8 +172,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Short.class, new TextFormat<Short>() {
+        defaultFormats.put(Short.class, new TextFormat<Short>() {
 
             public Appendable format(Short obj, Appendable dest)
                     throws IOException {
@@ -145,8 +184,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Integer.class, new TextFormat<Integer>() {
+        defaultFormats.put(Integer.class, new TextFormat<Integer>() {
 
             public Appendable format(Integer obj, Appendable dest)
                     throws IOException {
@@ -158,8 +196,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Long.class, new TextFormat<Long>() {
+        defaultFormats.put(Long.class, new TextFormat<Long>() {
 
             public Appendable format(Long obj, Appendable dest)
                     throws IOException {
@@ -171,8 +208,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Float.class, new TextFormat<Float>() {
+        defaultFormats.put(Float.class, new TextFormat<Float>() {
 
             public Appendable format(Float obj, Appendable dest)
                     throws IOException {
@@ -184,8 +220,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Double.class, new TextFormat<Double>() {
+        defaultFormats.put(Double.class, new TextFormat<Double>() {
 
             public Appendable format(Double obj, Appendable dest)
                     throws IOException {
@@ -197,8 +232,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(String.class, new TextFormat<String>() {
+        defaultFormats.put(String.class, new TextFormat<String>() {
 
             public Appendable format(String obj, Appendable dest)
                     throws IOException {
@@ -213,8 +247,7 @@ public final class TextContextImpl extends TextContext {
             }
 
         });
-
-        annotatedFormats.put(Class.class, new TextFormat<Class<?>>() {
+        defaultFormats.put(Class.class, new TextFormat<Class<?>>() {
 
             public Appendable format(Class<?> obj, Appendable dest)
                     throws IOException {
@@ -229,6 +262,80 @@ public final class TextContextImpl extends TextContext {
                     throw new IllegalArgumentException("Class " + name
                             + " Not Found");
                 }
+            }
+
+        });
+        defaultFormats.put(Date.class, new TextFormat<Date>() {
+            TimeZone tz = TimeZone.getTimeZone("UTC");
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+            {
+                df.setTimeZone(tz);
+            }
+
+            public Appendable format(Date obj, Appendable dest)
+                    throws IOException {
+                return dest.append(df.format(obj));
+            }
+
+            public Date parse(CharSequence csq, Cursor cursor) {
+                CharSequence date = cursor.nextToken(csq, CharSet.WHITESPACES);
+                try {
+                    return df.parse(date.toString());
+                } catch (ParseException error) {
+                    throw new IllegalArgumentException(error);
+                }
+            }
+        });
+        defaultFormats.put(BigInteger.class, new TextFormat<BigInteger>() {
+
+            public Appendable format(BigInteger obj, Appendable dest)
+                    throws IOException {
+                return dest.append(obj.toString());
+            }
+
+            public BigInteger parse(CharSequence csq, Cursor cursor) {
+                CharSequence value = cursor.nextToken(csq, CharSet.WHITESPACES);
+                return new BigInteger(value.toString());
+            }
+
+        });
+        defaultFormats.put(BigDecimal.class, new TextFormat<BigDecimal>() {
+
+            public Appendable format(BigDecimal obj, Appendable dest)
+                    throws IOException {
+                return dest.append(obj.toString());
+            }
+
+            public BigDecimal parse(CharSequence csq, Cursor cursor) {
+                CharSequence value = cursor.nextToken(csq, CharSet.WHITESPACES);
+                return new BigDecimal(value.toString());
+            }
+
+        });
+        defaultFormats.put(Font.class, new TextFormat<Font>() {
+
+            public Appendable format(Font obj, Appendable dest)
+                    throws IOException {
+                return dest.append(obj.getName());
+            }
+
+            public Font parse(CharSequence csq, Cursor cursor) {
+                CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
+                return Font.decode(name.toString());
+            }
+
+        });
+        defaultFormats.put(Color.class, new TextFormat<Color>() {
+
+            public Appendable format(Color obj, Appendable dest)
+                    throws IOException {
+                return dest.append('#').append(
+                        Integer.toHexString(obj.getRGB()));
+            }
+
+            public Color parse(CharSequence csq, Cursor cursor) {
+                CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
+                return Color.decode(name.toString());
             }
 
         });

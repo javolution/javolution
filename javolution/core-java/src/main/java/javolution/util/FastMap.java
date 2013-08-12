@@ -8,19 +8,20 @@
  */
 package javolution.util;
 
+import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
+import javolution.util.internal.map.AtomicMapImpl;
 import javolution.util.internal.map.FastMapImpl;
 import javolution.util.internal.map.SharedMapImpl;
 import javolution.util.internal.map.UnmodifiableMapImpl;
@@ -34,13 +35,15 @@ import javolution.util.service.MapService;
  * <ul>
  *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
+ *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
+ *    and map updates (e.g. {@link #putAll}) are atomic.</li>
  *    <li>{@link #entrySet} - {@link FastSet} view over the map entries allowing 
- *                            new entries to be added.</li>
- *    <li>{@link #keySet} - {@link FastSet} view over the map keys allowing 
- *                           new keys to be added ({@code null} value).</li>
+ *                            entries to be added/removed.</li>
+ *    <li>{@link #keySet} - {@link FastSet} view over the map keys allowing keys 
+ *                           to be added (map entry with {@code null} value).</li>
  *    <li>{@link #values} - {@link FastCollection} view over the map values.</li>
  * </ul>      
- * <p> The iteration order over the fast map keys, values or entries is deterministic 
+ * <p> The iteration order over the map keys, values or entries is deterministic 
  *     (unlike {@link java.util.HashMap}). It is either the insertion order (default) 
  *     or the key order for the {@link FastSortedMap} subclass. 
  *     This class permits {@code null} keys.</p> 
@@ -53,23 +56,39 @@ import javolution.util.service.MapService;
  *  FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
  *  FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
  *  FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
- *  FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Comparators.IDENTITY);
- *  FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Comparators.LEXICAL);  // Allows for value retrieval using any CharSequence key.
- *  FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Comparators.LEXICAL_FAST);  // Use constant-time hashcode calculation.
- *  ...                                                                                   
+ *  FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Equalities.IDENTITY);
+ *  [/code]</p>
+ *  <p> and adds more ... 
+ * <p>[code]
+ *  FastMap<Foo, Bar> atomicMap = new FastMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
+ *  FastMap<Foo, Bar> atomicTree = new FastSortedMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
+ *  FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Equalities.LEXICAL);  // Allows for value retrieval using any CharSequence key.
+ *  FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Equalities.LEXICAL_FAST);  // Same with faster hashcode calculations.
+ *  ...
  *  [/code]</p>
  *  
- *  <p> As for fast collections, an {@link javolution.lang.Immutable immutable}. 
- *      reference (or const reference) can be {@link #toImmutable() obtained} when the originator  
- *      guarantees that the map source cannot be modified.</p>      
+ *  <p> Of course all views (entry, key, values) over a fast map are fast collections 
+ *      and allow parallel processing.
+ * [code]
+ * Consumer<Collection<String>> removeNull = new Consumer<Collection<String>>() {  
+ *     public void accept(Collection<String> view) {
+ *          Iterator<String> it = view.iterator();
+ *          while (it.hasNext()) {
+ *             if (it.next() == null) it.remove();
+ *         }
+ *     }
+ * };
+ * FastMap<Person, String> names = ...
+ * names.values().update(removeNull); // Remove all entries with null values.
+ * names.atomic().values().update(removeNull); // Same but performed atomically on names.
+ * names.values().parallel().update(removeNull); // Same but performed in parallel.
+ * [/code]</p> 
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0, July 21, 2013
  */
 @Realtime
-@Parallelizable(mutexFree = false, comment = "Shared views may use read-write locks.")
-public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
-        Serializable {
+public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -82,23 +101,23 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      * Creates an empty fast map.
      */
     public FastMap() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
      * Creates an empty fast map using the specified comparator for keys 
      * equality.
      */
-    public FastMap(EqualityComparator<? super K> keyEquality) {
-        this(keyEquality, Comparators.STANDARD);
+    public FastMap(Equality<? super K> keyEquality) {
+        this(keyEquality, Equalities.STANDARD);
     }
 
     /**
      * Creates an empty fast map using the specified comparators for keys 
      * equality and values equality.
      */
-    public FastMap(EqualityComparator<? super K> keyEquality, 
-            EqualityComparator<? super V> valueEquality) {
+    public FastMap(Equality<? super K> keyEquality, 
+            Equality<? super V> valueEquality) {
         service = new FastMapImpl<K, V>(keyEquality, valueEquality);
     }
 
@@ -122,17 +141,27 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         return new FastMap<K, V>(new UnmodifiableMapImpl<K, V>(service));
     }
 
-   /**
-     * Returns a thread-safe view over this map. The shared view 
-     * uses <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-     * readers–writer locks</a> allowing concurrent read without blocking. 
-     * Since only write operation may introduce blocking, in case of 
-     * infrequent updates it may be judicious to use {@link #toImmutable()
-     * immutable} maps to be replaced at each update rather than shared views.
-     * 
-     * @see <a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-     *      Readers–writer lock</a> 
+    /**
+     * Returns an atomic view over this map. All operations that write 
+     * or access multiple elements in the map (such as putAll(), 
+     * keySet().retainAll(), ...) are atomic. 
+     * Iterators on atomic collections are read-only (do not support element 
+     * {@link Iterator#remove() removal}) except during {@link FastCollection#update updates}.   
      */
+    @Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
+    public FastMap<K,V> atomic() {
+        return new FastMap<K, V>(new AtomicMapImpl<K, V>(service));
+    }
+
+
+    /**
+     * Returns a thread-safe view over this map. The shared view
+     * allows for concurrent read as long as there is no writer. 
+     * The default implementation is based on <a href=
+     * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+     * readers-writers locks</a> giving priority to writers. 
+     */
+    @Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
     public FastMap<K, V> shared() {
         return new FastMap<K, V>(new SharedMapImpl<K, V>(service));
     }
@@ -140,7 +169,9 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     /**
      * Returns a set view of the keys contained in this map.
      * The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa.
+     * reflected in the set, and vice-versa.  The set supports 
+     * adding new keys for which the corresponding entry value 
+     * is always {@code null}.
      */
     public FastSet<K> keySet() {
         return new FastSet<K>(service.keySet());
@@ -149,7 +180,8 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     /**
      * Returns a collection view of the values contained in this map.
      * The collection is backed by the map, so changes to the map are
-     * reflected in the collection, and vice-versa. 
+     * reflected in the collection, and vice-versa. The collection
+     * supports removing values (hence entries) but not adding new values. 
      */
     public FastCollection<V> values() {
         return new FastCollection<V>() {
@@ -166,7 +198,10 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     /**
      * Returns a set view of the mappings contained in 
      * this map. The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa. 
+     * reflected in the set, and vice-versa. The set 
+     * support adding/removing entries. As far as the set is concerned,
+     * two entries are considered equals if they have the same keys regardless
+     * of their values. 
      */
     public FastSet<Entry<K, V>> entrySet() {
         return new FastSet<Entry<K, V>>(service.entrySet());
@@ -177,53 +212,55 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      */
 
     @Override
+    @Realtime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
-        return size() == 0;
+        return service.isEmpty();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @Realtime(limit = CONSTANT)
     public boolean containsKey(Object key) {
-        return service.containsKey((K) key);
+        return service.containsKey(key);
     }
 
     @Override
     @Realtime(limit = LINEAR)
     public boolean containsValue(Object value) {
-        return values().contains(value);
+        return service.containsValue(value);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @Realtime(limit = CONSTANT)
     public V get(Object key) {
-        return service.get((K) key);
+        return service.get(key);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public V put(K key, V value) {
         return service.put(key, value);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Realtime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
-        Set<?> entries = map.entrySet();
-        entrySet().addAll((Collection<? extends java.util.Map.Entry<K, V>>) entries);
+        service.putAll(map);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @Realtime(limit = CONSTANT)
     public V remove(Object key) {
-        return service.remove((K) key);
+        return service.remove(key);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public void clear() {
         service.clear();
     }
@@ -233,22 +270,25 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      */
 
     @Override
+    @Realtime(limit = CONSTANT)
     public V putIfAbsent(K key, V value) {
         return service.putIfAbsent(key, value);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    @Realtime(limit = CONSTANT)
     public boolean remove(Object key, Object value) {
-        return service.remove((K) key, (V) value);
+        return service.remove(key, value);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public boolean replace(K key, V oldValue, V newValue) {
         return service.replace(key, oldValue, newValue);
     }
 
     @Override
+    @Realtime(limit = CONSTANT)
     public V replace(K key, V value) {
         return service.replace(key, value);
     }
@@ -260,24 +300,10 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     /**
      * Returns this map with the specified map's entries added.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public FastMap<K,V> putAll(FastMap<? extends K, ? extends V> that) {   
-        ((FastSet)entrySet()).addAll((FastSet)that.entrySet());
+        putAll((Map<? extends K, ? extends V>)that);
         return this;
     }
-
-    /** 
-     * Executes the specified update in an atomic manner.
-     * Either the readers (including closure-based iterations) see the full 
-     * effect of the update or nothing.
-     * This method is relevant only for {@link #shared shared} maps.
-     *  
-     * @param update the update action to be executed on this map.
-     */
-    @Parallelizable(mutexFree = false, comment = "The map is locked during atomic updates")
-    public void atomic(Runnable update) {
-        service.atomic(update);
-     }
 
     /** 
      * Returns an immutable reference over this map. The immutable 

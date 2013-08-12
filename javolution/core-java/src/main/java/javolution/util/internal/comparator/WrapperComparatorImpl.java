@@ -11,14 +11,14 @@ package javolution.util.internal.comparator;
 import java.io.Serializable;
 import java.util.Comparator;
 
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equality;
 
 /**
  * A comparator service wrapping a {@ link Comparator}, since 
  * consistency with hashcode cannot be maintained. The hashcode
  * calculation method throws UnsupportedOperationException. 
  */
-public final class WrapperComparatorImpl<E> implements EqualityComparator<E>,
+public final class WrapperComparatorImpl<E> implements Equality<E>,
         Serializable {
 
     private static final long serialVersionUID = 8775282553794347279L;
@@ -33,7 +33,7 @@ public final class WrapperComparatorImpl<E> implements EqualityComparator<E>,
         throw new UnsupportedOperationException(
                 "Standard comparator (java.util.Comparator) cannot be used for "
                         + "hashcode calculations; please use a coherent equality comparator "
-                        + "instead (javolution.util.function.EqualityComparator).");
+                        + "instead (javolution.util.function.ComparatorService).");
     }
 
     @Override

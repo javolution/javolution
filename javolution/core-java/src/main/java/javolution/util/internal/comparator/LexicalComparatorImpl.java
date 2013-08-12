@@ -11,12 +11,12 @@ package javolution.util.internal.comparator;
 import java.io.Serializable;
 
 import javolution.lang.MathLib;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equality;
 
 /**
  * The lexical comparator implementation (optimized for String).
  */
-public class LexicalComparatorImpl implements EqualityComparator<CharSequence>,
+public class LexicalComparatorImpl implements Equality<CharSequence>,
         Serializable {
 
     private static final long serialVersionUID = 7904852144917623728L;

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 
 import javolution.lang.Configurable;
+import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.text.Cursor;
@@ -22,11 +23,12 @@ import javolution.text.TypeFormat;
 
 /**
  * <p> A non-negative number representing a position in an arrangement.
- *     For example:[code]
- *         class SparseVector<F> {
- *             FastMap<Index, F> elements = new FastMap<Index, F>();
- *             ...
- *         }[/code]</p>
+ *     For example:
+ * [code]
+ * class SparseVector<F> {
+ *     FastMap<Index, F> elements = new FastMap<Index, F>();
+ *     ...
+ * }[/code]</p>
 
  * <p> Index performance is on-par with the primitive {@code int} type
  *     for small values and similar to {@link Integer} instances for large
@@ -61,15 +63,27 @@ public final class Index extends Number implements Comparable<Index>,
 
     /**
      * Holds the number of unique preallocated instances (default {@code 1024}). 
-     * This number is configurable, for example 
-     * {@code -Djavolution.util.Index#PREALLOCATED=0} disables preallocation.
+     * This number is configurable, for example with
+     * {@code -Djavolution.util.Index#UNIQUE=0} there is no unique instance.
      */
-    public static final Configurable<Integer> PREALLOCATED = new Configurable<Integer>(1024) {
+    public static final Configurable<Integer> UNIQUE = new Configurable<Integer>() {
 
         @Override
-        protected Integer parse(String str) {
-            return Integer.valueOf(str);
-        }};
+        protected Integer getDefault() {
+            return 1024;
+        }        
+     
+        @Override
+        protected Integer initialized(Integer value) {
+            return MathLib.min(value, 65536); // Hard-limiting
+        }
+
+        @Override
+        protected Integer reconfigured(Integer oldCount, Integer newCount) {
+             throw new UnsupportedOperationException(
+                     "Unicity reconfiguration not supported."); 
+        }
+    };
 
     /**
      * Holds the index zero (value <code>0</code>).
@@ -77,7 +91,7 @@ public final class Index extends Number implements Comparable<Index>,
     public static final Index ZERO = new Index(0);
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private static final Index[] INSTANCES = new Index[PREALLOCATED.get()];
+    private static final Index[] INSTANCES = new Index[UNIQUE.get()];
     static {
         INSTANCES[0] = ZERO;
         for (int i = 1; i < INSTANCES.length; i++) {

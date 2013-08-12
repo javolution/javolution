@@ -19,9 +19,12 @@ import javolution.osgi.internal.OSGiServices;
  *     by the {@link javolution.text.DefaultTextFormat DefaultTextFormat} 
  *     annotation.</p>
  * 
- * <p> A default format exists for the following predefined types:
+ * <p> A text context always returns the most specialized format. If the class 
+ *     has no default format annotation (inherited or not), then the default 
+ *     {@link java.lang.Object} format (which calls {@link Object#toString})
+ *     is returned. A predefined format exists for the following standard types:
  *     <code><ul>
- *       <li>java.lang.String</li>
+ *       <li>java.lang.Object (parsing not supported, formatting calls toString())</li>
  *       <li>java.lang.Boolean</li>
  *       <li>java.lang.Character</li>
  *       <li>java.lang.Byte</li>
@@ -31,8 +34,15 @@ import javolution.osgi.internal.OSGiServices;
  *       <li>java.lang.Float</li>
  *       <li>java.lang.Double</li>
  *       <li>java.lang.Class</li>
- *     </ul></code></p>
- * 
+ *       <li>java.lang.String</li>
+ *       <li>java.util.Date (ISO 8601)</li> 
+ *       <li>java.math.BigInteger</li>
+ *       <li>java.math.BigDecimal</li>
+ *       <li>java.awt.Color (hexadecimal RGB value, e.g. {@code 0x112233})</li>
+ *       <li>java.awt.Font</li>
+ *     </ul></code>
+ *     </p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
@@ -51,34 +61,10 @@ public abstract class TextContext extends FormatContext {
     }
 
     /**
-     * Returns the string representation of the specified object using 
-     * its current format (convenience method).
-     * If there is no format associated with this object; then the object 
-     * default representation is returned (e.g. {@code Object#12345}).
-     */
-    public static String toString(Object obj) {
-        TextFormat<Object> textFormat = getFormat(obj.getClass());
-        return (textFormat != null) ? textFormat.format(obj) : 
-            "Object#" + System.identityHashCode(obj);
-    }
-
-    /**
-     * Returns the object corresponding to the specified textual representation 
-     * using the text format for the specified type (convenience method).
-     * 
-     * @throws UnsupportedOperationException if the specified type has no 
-     *         format associated.
-     */
-    public static <T> T parse(CharSequence csq, Class<T> type) {
-        TextFormat<T> textFormat = getFormat(type);
-        if (textFormat == null) throw new UnsupportedOperationException(
-                "No text format defined for " + type);
-        return textFormat.parse(csq);
-    }
-
-    /**
-     * Returns the text format for the specified type or {@code null}
-     * if none.
+     * Returns the text format for the specified type. It is the most 
+     * specialized format able to parse/format instances of the specified 
+     * class. If there is no default format for the specified class, 
+     * the standard object format (toString based) is returned.
      */
     public static <T> TextFormat<T> getFormat(Class<? extends T> type) {
         return TextContext.currentTextContext().searchFormat(type);
@@ -91,7 +77,7 @@ public abstract class TextContext extends FormatContext {
             TextFormat<T> newFormat);
 
     /**
-     * Searches the plain text format for the specified type in this context.
+     * Searches the most specialized format for the specified type.
      */
     protected abstract <T> TextFormat<T> searchFormat(Class<? extends T> type);
 

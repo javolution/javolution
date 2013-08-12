@@ -23,10 +23,10 @@ import javolution.lang.Parallelizable;
  * @DefaultTextFormat(Complex.Cartesian.class) 
  * public class Complex extends Number {
  *     public static Complex valueOf(CharSequence csq) {
- *         return TextContext.valueOf(csq, Complex.class);
+ *         return TextContext.getFormat(Complex.class).parse(csq);
  *     }
  *     public String toString() {
- *         return TextContext.toString(this);
+ *         return TextContext.getFormat(Complex.class).format(this);
  *     }
  *     public static class Cartesian extends javolution.text.TextFormat<Complex> { ... }
  *     public static class Polar extends javolution.text.TextFormat<Complex> { ... }

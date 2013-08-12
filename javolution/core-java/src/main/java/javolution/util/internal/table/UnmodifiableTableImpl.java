@@ -8,32 +8,25 @@
  */
 package javolution.util.internal.table;
 
-import java.io.Serializable;
 import java.util.Iterator;
+import java.util.ListIterator;
 
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
-import javolution.util.internal.UnmodifiableIteratorImpl;
-import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 import javolution.util.service.TableService;
 
 /**
  * An unmodifiable view over a table.
  */
-public class UnmodifiableTableImpl<E> implements TableService<E>,
-        Serializable {
+public class UnmodifiableTableImpl<E> extends TableView<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final TableService<E> target;
 
     public UnmodifiableTableImpl(TableService<E> target) {
-        this.target = target;
+        super(target);
     }
 
     @Override
     public boolean add(E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
@@ -42,113 +35,80 @@ public class UnmodifiableTableImpl<E> implements TableService<E>,
     }
 
     @Override
-    public void addFirst(E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public void addLast(E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public void atomic(Runnable update) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
     public void clear() {
-        throw new UnsupportedOperationException("Unmodifiable");
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
-    }
+    public ListIterator<E> listIterator(final int index) {
+        return new ListIterator<E>() {
+            ListIterator<E> it = target().listIterator(index);
 
-    @Override
-    public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {
-        target.forEach(consumer, controller);
-    }
+            @Override
+            public void add(E e) {
+                throw new UnsupportedOperationException("Read-Only Iterator");
+            }
 
-    @Override
-    public E get(int index) {
-        return target.get(index);
-    }
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
 
-    @Override
-    public E getFirst() {
-        return target.getFirst();
-    }
+            @Override
+            public boolean hasPrevious() {
+                return it.hasPrevious();
+            }
 
-    @Override
-    public E getLast() {
-        return target.getLast();
-    }
+            @Override
+            public E next() {
+                return it.next();
+            }
 
-    @Override
-    public Iterator<E> iterator() {
-        return new UnmodifiableIteratorImpl<E>(target.iterator());
-    }
+            @Override
+            public int nextIndex() {
+                return it.nextIndex();
+            }
 
-    @Override
-    public E peekFirst() {
-        return target.peekFirst();
-    }
+            @Override
+            public E previous() {
+                return it.previous();
+            }
 
-    @Override
-    public E peekLast() {
-        return target.peekLast();
-    }
+            @Override
+            public int previousIndex() {
+                return it.previousIndex();
+            }
 
-    @Override
-    public E pollFirst() {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Read-Only Iterator");
+            }
 
-    @Override
-    public E pollLast() {
-        throw new UnsupportedOperationException("Unmodifiable");
+            @Override
+            public void set(E e) {
+                throw new UnsupportedOperationException("Read-Only Iterator");
+            }
+        };
     }
 
     @Override
     public E remove(int index) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
-    public E removeFirst() {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
-
-    @Override
-    public E removeLast() {
-        throw new UnsupportedOperationException("Unmodifiable");
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
     public E set(int index, E element) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
     @Override
     public int size() {
-        return target.size();
+        return target().size();
     }
-
-    @Override
-    public UnmodifiableCollectionImpl<E>[] trySplit(int n) {
-        return UnmodifiableCollectionImpl.splitOf(target, n);
-    }
-    
-    protected TableService<E> target() {
-        return target;
-    }
+  
 }

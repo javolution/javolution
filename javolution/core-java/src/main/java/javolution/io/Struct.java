@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 
 import javolution.context.LocalContext;
 import javolution.lang.MathLib;
+import javolution.lang.Realtime;
 import javolution.text.TextBuilder;
 
 /**
@@ -147,6 +148,7 @@ import javolution.text.TextBuilder;
  * @version 5.5.1, April 1, 2010
  */
 @SuppressWarnings("unchecked")
+@Realtime
 public class Struct {
 
     /**
@@ -154,11 +156,10 @@ public class Struct {
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
     public static final LocalContext.Parameter<Integer> MAXIMUM_ALIGNMENT 
-        = new LocalContext.Parameter<Integer>(4) {
-
+        = new LocalContext.Parameter<Integer>() {
             @Override
-            protected Integer parse(String str) {
-                return Integer.valueOf(str);
+            protected Integer getDefault() {
+                return 4;
             }};
 
     /**

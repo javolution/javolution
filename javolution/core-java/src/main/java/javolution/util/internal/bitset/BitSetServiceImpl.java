@@ -13,16 +13,15 @@ import java.util.Iterator;
 
 import javolution.lang.MathLib;
 import javolution.util.Index;
-import javolution.util.function.Comparators;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
+import javolution.util.internal.set.SetView;
 import javolution.util.service.BitSetService;
 
 /**
  * A table of indices implemented using packed bits (long[]).
  */
-public class BitSetServiceImpl implements BitSetService, Serializable {
+public class BitSetServiceImpl extends SetView<Index> implements BitSetService, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -31,6 +30,7 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
 
     /** Creates a bit set  (all bits are cleared). */
     public BitSetServiceImpl() {
+        super(null); // Root.
         bits = new long[0];
     }
 
@@ -60,11 +60,6 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
             this.bits[i] &= ~thatBits[i];
         }
         trim();
-    }
-
-    @Override
-    public void atomic(Runnable update) {
-        update.run();
     }
 
     @Override
@@ -113,13 +108,13 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
     }
 
     @Override
-    public EqualityComparator<? super Index> comparator() {
-        return Comparators.IDENTITY;
+    public Equality<? super Index> comparator() {
+        return Equalities.IDENTITY;
     }
 
     @Override
-    public boolean contains(Index index) {
-        return get(index.intValue());
+    public boolean contains(Object index) {
+        return get(((Index)index).intValue());
     }
 
     @Override
@@ -147,24 +142,6 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
             bits[k] ^= -1;
         }
         trim();
-    }
-
-    @Override
-    public void forEach(Consumer<? super Index> consumer,
-            IterationController controller) {
-        if (!controller.doReversed()) {
-            for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i + 1)) {
-                consumer.accept(Index.valueOf(i));
-                if (controller.isTerminated())
-                    break;
-            }
-        } else { // Reversed.
-            for (int i = length(); (i = previousSetBit(i - 1)) >= 0;) {
-                consumer.accept(Index.valueOf(i));
-                if (controller.isTerminated())
-                    break;
-            }
-        }
     }
 
     @Override
@@ -309,34 +286,8 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
     }
 
     @Override
-    public boolean remove(Index index) {
-        return getAndSet(index.intValue(), false);
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super Index> filter,
-            IterationController controller) {
-        boolean modified = false;
-        if (!controller.doReversed()) {
-            for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i + 1)) {
-                if (filter.test(Index.valueOf(i))) {
-                    clear(i);
-                    modified = true;
-                }
-                if (controller.isTerminated())
-                    break;
-            }
-        } else { // Reversed.
-            for (int i = length(); (i = previousSetBit(i - 1)) >= 0;) {
-                if (filter.test(Index.valueOf(i))) {
-                    clear(i);
-                    modified = true;
-                }
-                if (controller.isTerminated())
-                    break;
-            }
-        }
-        return modified;
+    public boolean remove(Object index) {
+        return getAndSet(((Index)index).intValue(), false);
     }
 
     @Override
@@ -393,7 +344,7 @@ public class BitSetServiceImpl implements BitSetService, Serializable {
     }
 
     @Override
-    public BitSetServiceImpl[] trySplit(int n) {
+    public BitSetServiceImpl[] subViews(int n) {
         return new BitSetServiceImpl[] { this }; // No split.
     }
 

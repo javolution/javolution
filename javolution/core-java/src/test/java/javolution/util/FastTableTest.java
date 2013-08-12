@@ -26,8 +26,8 @@ import javolution.util.function.MultiVariable;
  * Validation and performance tests of FastTable.
  */
 public class FastTableTest {
-    static final boolean INITIALIZE_REALTIME_CLASSES 
-    = OSGiServices.initializeRealtimeClasses();
+    static final boolean INITIALIZE_REALTIME_CLASSES = OSGiServices
+            .initializeRealtimeClasses();
 
     private static final long ONE_SECOND_IN_NS = 1000 * 1000 * 1000L;
 
@@ -113,7 +113,8 @@ public class FastTableTest {
         }
     };
 
-    public void ttestCreation() {
+    public void testCreation() {
+        if (Perfometer.SKIP.get()) return;
         long ns = perfometer.measure(newFastTable);
         long alns = perfometer.measure(newArrayList);
         long llns = perfometer.measure(newLinkedList);
@@ -121,7 +122,8 @@ public class FastTableTest {
                 " ns for ArrayList, ", llns, " ns for LinkedList)");
     }
 
-    public void ttestAddToList() {
+    public void testAddToList() {
+        if (Perfometer.SKIP.get()) return;
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(addToList, i, newFastTable);
             long alns = perfometer.measure(addToList, i, newArrayList);
@@ -132,7 +134,8 @@ public class FastTableTest {
         }
     }
 
-    public void ttestInsertToList() {
+    public void testInsertToList() {
+        if (Perfometer.SKIP.get()) return;
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(insertToList, i, newFastTable);
             long alns = perfometer.measure(insertToList, i, newArrayList);
@@ -144,7 +147,8 @@ public class FastTableTest {
         }
     }
 
-    public void ttestRemoveFromList() {
+    public void testRemoveFromList() {
+        if (Perfometer.SKIP.get()) return;
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(removeFromList, i, addToList, i,
                     newFastTable);
@@ -158,7 +162,8 @@ public class FastTableTest {
         }
     }
 
-    public void ttestAddFirstToList() {
+    public void testAddFirstToList() {
+        if (Perfometer.SKIP.get()) return;
         for (int i = 16; i <= 1024 * 256; i *= 4) {
             long ns = perfometer.measure(addFirstToList, i, newFastTable);
             long alns = perfometer.measure(addFirstToList, i, newArrayList);

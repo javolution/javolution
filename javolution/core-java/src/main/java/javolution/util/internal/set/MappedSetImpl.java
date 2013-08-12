@@ -8,19 +8,21 @@
  */
 package javolution.util.internal.set;
 
-import javolution.util.internal.collection.SharedCollectionImpl;
+import javolution.util.function.Function;
+import javolution.util.internal.collection.MappedCollectionImpl;
 import javolution.util.service.SetService;
 
 /**
- * A shared view over a set allowing concurrent access and sequential updates.
+ * A mapped view over a set.
  */
-public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements
-        SetService<E> {
+public class MappedSetImpl<E, R> extends MappedCollectionImpl<E, R> implements SetService<R> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
-    public SharedSetImpl(SetService<E> target) {
-        super(target);
+    public MappedSetImpl(SetService<E> target,
+            Function<? super E, ? extends R> function) {
+        super(target, function);
     }
+
 
 }

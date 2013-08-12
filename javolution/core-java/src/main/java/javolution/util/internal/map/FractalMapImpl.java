@@ -8,7 +8,6 @@
  */
 package javolution.util.internal.map;
 
-import java.io.Serializable;
 
 /**
  * A fractal-based map with rehash performed only on limited size maps.
@@ -17,13 +16,12 @@ import java.io.Serializable;
  * starting by the last bits. 
  */
 @SuppressWarnings("rawtypes")
-final class FractalMapImpl implements Serializable {
+final class FractalMapImpl  {
 
     static final int SHIFT = 10; // Number of hashcode bits per depth. 
     static final int EMPTINESS_LEVEL = 2; // Can be 1 (load factor 0.5), 2 (load factor 0.25) or any greater value.
     static final int INITIAL_BLOCK_CAPACITY = 2 << EMPTINESS_LEVEL;
     static final int MAX_BLOCK_CAPACITY = 1 << SHIFT;
-    private static final long serialVersionUID = 0x600L; // Version.
     private int count; // Number of entries different from null in this block.
     private FastMapEntryImpl[] entries = new FastMapEntryImpl[INITIAL_BLOCK_CAPACITY]; // Entries value can be a sub-map.
     private final int shift; // Zero if base map.

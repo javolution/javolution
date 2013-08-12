@@ -8,16 +8,10 @@
  */
 package javolution.util.internal.table;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import javolution.lang.MathLib;
-import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
-import javolution.util.service.TableService;
+import javolution.util.function.Equality;
 
 /**
  * The default {@link javolution.util.FastTable FastTable} implementation 
@@ -25,52 +19,43 @@ import javolution.util.service.TableService;
  * This implementation ensures that no more than 3/4 of the table capacity is
  * ever wasted.
  */
-public class FastTableImpl<E> implements TableService<E>, Serializable {
+public class FastTableImpl<E> extends TableView<E> {
+
+    /** Internal iterator faster than generic TableIteratorImpl */
+    private final class IteratorImpl implements Iterator<E> {
+        private int currentIndex = -1;
+        private int nextIndex;
+
+        @Override
+        public boolean hasNext() {
+            return nextIndex < size;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public E next() {
+            if (nextIndex >= size) throw new NoSuchElementException();
+            currentIndex = nextIndex++;
+            return (E) fractal.get(currentIndex);
+        }
+
+        @Override
+        public void remove() {
+            if (currentIndex < 0) throw new IllegalStateException();
+            FastTableImpl.this.remove(currentIndex);
+            nextIndex--;
+            currentIndex = -1;
+        }
+    }
 
     private static final long serialVersionUID = 0x600L; // Version.
+    private transient int capacity; // Actual memory allocated is usually far less than capacity since inner fractal tables can be null.
+    private final Equality<? super E> comparator;
+    private transient FractalTableImpl fractal; // Null if empty (capacity 0)
+    private transient int size;
 
-    /**
-     * Populates this table with the elements specified.
-     */
-    public FastTableImpl<E> addAll(CollectionService<E> elements) {
-        elements.forEach(new Consumer<E>() {
-
-            @Override
-            public void accept(E e) {
-                FastTableImpl.this.add(e);
-            }
-        }, IterationController.SEQUENTIAL);
-        return this;
-
-    }
-
-    @SuppressWarnings("unchecked")
-    static <E> TableService<E>[] splitOf(TableService<E> table, int n) {
-        int size = table.size();
-        if (n <= 0)
-            throw new IllegalArgumentException("Invalid argument n: " + n);
-        int length = MathLib.min(n, size);
-        if (length < 2)
-            return new TableService[] { table }; // No split.
-        TableService<E>[] subTables = new TableService[length];
-        int div = size / length;
-        int start = 0;
-        for (int i = 0; i < length - 1; i++) {
-            subTables[i] = new SubTableImpl<E>(table, start, start + div);
-            start += div;
-        }
-        subTables[length - 1] = new SubTableImpl<E>(table, start, size - start);
-        return subTables;
-    }
-
-    private int capacity; // Actual memory allocated is usually far less than
-                          // capacity since inner fractal tables can be null.
-    private final EqualityComparator<? super E> comparator;
-    private FractalTableImpl fractal; // Null if empty (capacity 0)
-
-    private int size;
-
-    public FastTableImpl(EqualityComparator<? super E> comparator) {
+    public FastTableImpl(Equality<? super E> comparator) {
+        super(null); // Root class.
         this.comparator = comparator;
     }
 
@@ -82,22 +67,15 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
 
     @Override
     public void add(int index, E element) {
-        if (index == 0) {
-            addFirst(element);
-        } else if (index == size) {
-            addLast(element);
+        if ((index < 0) || (index > size)) indexError(index);
+        checkUpsize();
+        if (index >= (size >> 1)) {
+            fractal.shiftRight(element, index, size - index);
         } else {
-            if ((index < 0) || (index > size))
-                indexError(index);
-            checkUpsize();
-            if (index >= (size >> 1)) {
-                fractal.shiftRight(element, index, size - index);
-            } else {
-                fractal.shiftLeft(element, index - 1, index);
-                fractal.offset--;
-            }
-            size++;
+            fractal.shiftLeft(element, index - 1, index);
+            fractal.offset--;
         }
+        size++;
     }
 
     @Override
@@ -122,90 +100,45 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public void atomic(Runnable update) {
-        update.run();
+    public FastTableImpl<E> clone() { // Makes a copy.
+        FastTableImpl<E> copy = new FastTableImpl<E>(comparator());
+        copy.addAll(this);
+        return copy;
     }
 
     @Override
-    public EqualityComparator<? super E> comparator() {
+    public Equality<? super E> comparator() {
         return comparator;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void forEach(Consumer<? super E> consumer,
-            IterationController controller) {
-        if (!controller.doReversed()) {
-            for (int i = 0; i < size; i++) {
-                consumer.accept((E) fractal.get(i));
-                if (controller.isTerminated())
-                    break;
-            }
-        } else { // Reversed.
-            for (int i = size; --i >= 0;) {
-                consumer.accept((E) fractal.get(i));
-                if (controller.isTerminated())
-                    break;
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public E get(int index) {
-        if ((index < 0) && (index >= size))
-            indexError(index);
+        if ((index < 0) && (index >= size)) indexError(index);
         return (E) fractal.get(index);
     }
 
     @Override
     public E getFirst() {
-        if (size == 0)
-            emptyError();
+        if (size == 0) emptyError();
         return get(0);
     }
 
     @Override
     public E getLast() {
-        if (size == 0)
-            emptyError();
+        if (size == 0) emptyError();
         return get(size - 1);
     }
 
     @Override
     public Iterator<E> iterator() {
-        return new TableIteratorImpl<E>(this, 0);
-    }
-
-    @Override
-    public E peekFirst() {
-        return (size == 0) ? null : getFirst();
-    }
-
-    @Override
-    public E peekLast() {
-        return (size == 0) ? null : getLast();
-    }
-
-    @Override
-    public E pollFirst() {
-        return (size == 0) ? null : removeFirst();
-    }
-
-    @Override
-    public E pollLast() {
-        return (size == 0) ? null : removeLast();
+        return new IteratorImpl();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public E remove(int index) {
-        if (index == 0)
-            return removeFirst();
-        if (index == (size - 1))
-            return removeLast();
-        if ((index < 0) || (index >= size))
-            indexError(index);
+        if ((index < 0) || (index >= size)) indexError(index);
         E removed = (E) fractal.get(index);
         if (index >= (size >> 1)) {
             fractal.shiftLeft(null, size - 1, size - index - 1);
@@ -221,8 +154,7 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
     @SuppressWarnings("unchecked")
     @Override
     public E removeFirst() {
-        if (size == 0)
-            emptyError();
+        if (size == 0) emptyError();
         E first = (E) fractal.set(0, null);
         fractal.offset++;
         size--;
@@ -232,36 +164,8 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean removeIf(Predicate<? super E> filter,
-            IterationController controller) {
-        boolean removed = false;
-        if (!controller.doReversed()) {
-            for (int i = 0; i < size; i++) {
-                if (filter.test((E) fractal.get(i))) {
-                    remove(i--);
-                    removed = true;
-                }
-                if (controller.isTerminated())
-                    break;
-            }
-        } else { // Reversed.
-            for (int i = size; --i >= 0;) {
-                if (filter.test((E) fractal.get(i))) {
-                    remove(i);
-                    removed = true;
-                }
-                if (controller.isTerminated())
-                    break;
-            }
-        }
-        return removed;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public E removeLast() {
-        if (size == 0)
-            emptyError();
+        if (size == 0) emptyError();
         E last = (E) fractal.set(--size, null);
         checkDownsize();
         return last;
@@ -270,8 +174,7 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
     @SuppressWarnings("unchecked")
     @Override
     public E set(int index, E element) {
-        if ((index < 0) && (index >= size))
-            indexError(index);
+        if ((index < 0) && (index >= size)) indexError(index);
         return (E) fractal.set(index, element);
     }
 
@@ -281,19 +184,17 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
     }
 
     @Override
-    public TableService<E>[] trySplit(int n) {
-        return splitOf(this, n);
+    public SubTableImpl<E>[] subViews(int n) {
+        return SubTableImpl.splitOf(this, n);
     }
 
     private void checkDownsize() {
         if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN)
-                && (size <= (capacity >> 2)))
-            downsize();
+                && (size <= (capacity >> 2))) downsize();
     }
 
     private void checkUpsize() {
-        if (size >= capacity)
-            upsize();
+        if (size >= capacity) upsize();
     }
 
     private void downsize() {
@@ -301,20 +202,26 @@ public class FastTableImpl<E> implements TableService<E>, Serializable {
         capacity = fractal.capacity();
     }
 
-    /** Throws NoSuchElementException */
-    private void emptyError() {
-        throw new NoSuchElementException("Empty Table");
+    /** For serialization support */
+    @SuppressWarnings("unchecked")
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject(); // Deserialize comparator.
+        int n = s.readInt();
+        for (int i = 0; i < n; i++) addLast((E)s.readObject());
     }
-
-    /** Throws IndexOutOfBoundsException */
-    private void indexError(int index) {
-        throw new IndexOutOfBoundsException("index: " + index + ", size: "
-                + size());
-    }
-
+   
     private void upsize() {
         fractal = (fractal == null) ? new FractalTableImpl() : fractal.upsize();
         capacity = fractal.capacity();
+    }
+
+    /** For serialization support */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException{
+        s.defaultWriteObject(); // Serialize comparator.
+        s.writeInt(size);
+        for (int i = 0; i < size; i++) s.writeObject(fractal.get(i));
     }
 
 }

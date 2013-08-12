@@ -12,14 +12,14 @@ import javolution.util.internal.collection.SharedCollectionImpl;
 import javolution.util.service.SetService;
 
 /**
- * A shared view over a set allowing concurrent access and sequential updates.
+ * An atomic view over a set allowing concurrent access and sequential updates.
  */
-public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements
+public class AtomicSetImpl<E> extends SharedCollectionImpl<E> implements
         SetService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
-    public SharedSetImpl(SetService<E> target) {
+    public AtomicSetImpl(SetService<E> target) {
         super(target);
     }
 

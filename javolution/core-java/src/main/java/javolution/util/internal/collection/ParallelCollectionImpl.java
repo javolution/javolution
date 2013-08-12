@@ -8,119 +8,96 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
+import java.util.Collection;
 
 import javolution.context.ConcurrentContext;
-import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
 /**
- * A parallel view over a collection.
+ * A parallel view over a collection. 
  */
-public final class ParallelCollectionImpl<E> extends FastCollection<E>
-        implements CollectionService<E> {
+public class ParallelCollectionImpl<E> extends CollectionView<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    private final CollectionService<E> target;
 
     public ParallelCollectionImpl(CollectionService<E> target) {
-        this.target = new SharedCollectionImpl<E>(target); // Ensures the target collection is shared.
+        super(target);
     }
 
     @Override
-    public boolean add(E element) {
-        return target.add(element);
+    public void clear() {
+        target().clear();
     }
 
     @Override
-    public void atomic(Runnable update) {
-        target.atomic(update);
-    }
-    
-    @Override
-    public EqualityComparator<? super E> comparator() {
-        return target.comparator();
+    public boolean contains(Object obj) {
+        return target().contains(obj);
     }
 
     @Override
-    public void forEach(final Consumer<? super E> consumer,
-            final IterationController controller) {
-        if (controller.doSequential()) {
-            target.forEach(consumer, controller); // Sequential.
-            return;
-        }
-        CollectionService<E>[] split = target
-                .trySplit(ConcurrentContext.CONCURRENCY.get());
-        if (split.length == 0)
-            return;
-        if (split.length == 1) {
-            split[0].forEach(consumer, controller);
-        }
+    public boolean isEmpty() {
+        return target().isEmpty();
+    }
 
-        // Parallelization.
-        ConcurrentContext ctx = ConcurrentContext.enter();
+    @Override
+    public void perform(final Consumer<Collection<E>> action,
+            CollectionService<E> view) {
+        final ConcurrentContext ctx = ConcurrentContext.enter();
         try {
-            for (int i = 0; i < split.length; i++) {
-                final CollectionService<E> subcollection = split[i];
+            int concurrency = ctx.getConcurrency();
+            CollectionService<E>[] subViews = view.subViews(concurrency + 1);
+            if (subViews.length == 1) { // No concurrency.
+                target().perform(action, subViews[0]);
+                return;
+            }
+            for (final CollectionService<E> subView : subViews) {
                 ctx.execute(new Runnable() {
                     @Override
                     public void run() {
-                        subcollection.forEach(consumer, controller);
+                        target().perform(action, subView); // Non-recursive.
                     }
                 });
             }
         } finally {
+            // Any exception raised during parallel iterations will be re-raised here.                       
             ctx.exit();
         }
     }
 
-   @Override
-    public Iterator<E> iterator() {
-        return target.iterator();
+    @Override
+    public boolean remove(Object obj) {
+        return target().remove(obj);
     }
 
     @Override
-    public boolean removeIf(final Predicate<? super E> filter,
-            final IterationController controller) {
-        if (controller.doSequential())
-            return target.removeIf(filter, controller); // Sequential.
-        CollectionService<E>[] split = target
-                .trySplit(ConcurrentContext.CONCURRENCY.get());
-        if (split.length == 1)
-            return split[0].removeIf(filter, controller);
+    public int size() {
+        return target().size();
+    }
 
-        // Parallelization.
-        ConcurrentContext ctx = ConcurrentContext.enter();
-        final boolean[] atLeastOneRemoved = new boolean[1];
+    @Override
+    public void update(final Consumer<Collection<E>> action,
+            CollectionService<E> view) {
+        final ConcurrentContext ctx = ConcurrentContext.enter();
         try {
-            for (int i = 0; i < split.length; i++) {
-                final CollectionService<E> subcollection = split[i];
+            int concurrency = ctx.getConcurrency();
+            CollectionService<E>[] subViews = view.subViews(concurrency + 1);
+            if (subViews.length == 1) { // No concurrency.
+                target().update(action, subViews[0]);
+                return;
+            }
+            for (final CollectionService<E> subView : subViews) {
                 ctx.execute(new Runnable() {
                     @Override
                     public void run() {
-                        if (subcollection.removeIf(filter, controller)) {
-                            atLeastOneRemoved[0] = true;
-                        }
+                        target().update(action, subView); // Non-recursive.
                     }
                 });
             }
         } finally {
+            // Any exception raised during parallel iterations will be re-raised here.                       
             ctx.exit();
         }
-        return atLeastOneRemoved[0];
-    }
-
-    @Override
-    protected ParallelCollectionImpl<E> service() {
-        return this;
-    }
-
-    @Override
-    public CollectionService<E>[] trySplit(int n) {
-        return target.trySplit(n); // Forwards (view affects iteration controller only).
     }
 
 }

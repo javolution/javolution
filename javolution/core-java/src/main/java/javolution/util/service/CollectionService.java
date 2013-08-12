@@ -8,145 +8,62 @@
  */
 package javolution.util.service;
 
-import java.util.Iterator;
+import java.io.Serializable;
+import java.util.Collection;
 
 import javolution.util.function.Consumer;
-import javolution.util.function.EqualityComparator;
-import javolution.util.function.Predicate;
+import javolution.util.function.Equality;
 
 /**
  * The fundamental set of related functionalities required to implement 
- * collections.
+ * fast collections.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public interface CollectionService<E> {
-
-    /**
-     * The controller used during closure-based iterations.
-     * 
-     * @see CollectionService#forEach
-     * @see CollectionService#removeIf
-     */
-    public interface IterationController {
-        /** 
-         * A sequential {@link CollectionService.IterationController 
-         * iteration controller} over all the collection elements in the normal 
-         * iterative order.
-         */
-        public static final IterationController SEQUENTIAL = new IterationController() {
-
-            @Override
-            public boolean doReversed() {
-                return false;
-            }
-
-            @Override
-            public boolean doSequential() {
-                return true;
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return false;
-            }
-        };
-
-        /** 
-         * A parallel {@link CollectionService.IterationController 
-         * iteration controller} allowing parallel traversal over all the 
-         * collection elements.
-         */
-        public static final IterationController PARALLEL = new IterationController() {
-
-            @Override
-            public boolean doReversed() {
-                return false;
-            }
-
-            @Override
-            public boolean doSequential() {
-                return false;
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return false;
-            }
-        };
-
-        /** 
-         * Indicates if the iterations should be performed in reversed order.
-         */
-        boolean doReversed();
-
-        /** 
-         * Indicates if the iterations should be performed sequentially.
-         */
-        boolean doSequential();
-
-        /** 
-         * Indicates if the iterations should be terminated; this method is 
-         * always called after the {@link Consumer#accept(Object) consumer 
-         * accept} method.
-         */
-        boolean isTerminated();
-
-    }
+public interface CollectionService<E> extends Collection<E>, Serializable,
+        Cloneable {
 
     /** 
-     * Adds the specified element to this collection.
-     * 
-     * @return <code>true</code> if an element was added as a result of 
-     *        this call; <code>false</code> otherwise.
+     * Returns a copy of this collection; updates of the copy should not 
+     * impact the original.
      */
-    boolean add(E element);
+    CollectionService<E> clone() throws CloneNotSupportedException;
 
     /** 
-     * Executes the specified update in an atomic manner.
+     * Returns the comparator used for element equality or order if the 
+     * collection is sorted.
      */
-    void atomic(Runnable update);
+    Equality<? super E> comparator();
 
     /** 
-     * Returns the full comparator used for element equality or order.
+     * Executes the specified (read-only) action on this collection.
+     *       
+     * @param action the read-only action.
+     * @param view the view handle to be passed to the action.
+     * @throws UnsupportedOperationException if the action tries to update this 
+     *         collection.
      */
-    EqualityComparator<? super E> comparator();
+    void perform(Consumer<Collection<E>> action, CollectionService<E> view);
 
     /** 
-     * Traverses the elements of this collection.
-     * 
-     * @param consumer the consumer called upon the elements of this collection.
-     * @param controller the iteration controller.
+     * Returns {@code n} sub-views over distinct parts of this collections.
+     * If {@code n == 1} or if this collection cannot be split, 
+     * this method returns an array holding a single element.
+     * If {@code n > this.size()} this method may return empty views.
+     *  
+     * @param n the number of sub-views to return.
+     * @return the sub-views.
+     * @throws IllegalArgumentException if {@code n <= 1}
      */
-    void forEach(Consumer<? super E> consumer, IterationController controller);
-
-   /** 
-     * Returns an iterator over this collection elements.
-     */
-    Iterator<E> iterator();
-
-    /**
-     * Removes from this collection the elements matching the specified
-     * predicate.
-     * 
-     * @param filter a predicate returning {@code true} for elements to be removed.
-     * @param controller the iteration controller.
-     * @return {@code true} if at least one element has been removed;
-     *         {@code false} otherwise.
-     */
-    boolean removeIf(final Predicate<? super E> filter,
-            IterationController controller);
+    CollectionService<E>[] subViews(int n);
 
     /** 
-     * Try to splits this collection in {@code n} sub-collections;
-     * if not possible may return an array of length less than 
-     * {@code n} (for example of length one if no split). 
-     * 
-     * @param n the number of sub-collection to return.
-     * @return the sub-collections elements.
-     * @throws IllegalArgumentException if {@code n <= 0}
+     * Executes the specified update action on this collection.
+     *       
+     * @param action the action authorized to update this collection.
+     * @param view the view handle to be passed to the action.
      */
-    CollectionService<E>[] trySplit(int n);
-    
+    void update(Consumer<Collection<E>> action, CollectionService<E> view);
+
 }

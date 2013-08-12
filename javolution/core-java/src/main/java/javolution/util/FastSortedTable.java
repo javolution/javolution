@@ -10,12 +10,9 @@ package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LOG_N;
 import javolution.lang.Realtime;
-import javolution.util.function.Comparators;
-import javolution.util.function.EqualityComparator;
+import javolution.util.function.Equalities;
+import javolution.util.function.Equality;
 import javolution.util.internal.table.sorted.FastSortedTableImpl;
-import javolution.util.internal.table.sorted.SharedSortedTableImpl;
-import javolution.util.internal.table.sorted.SubSortedTableImpl;
-import javolution.util.internal.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.util.service.SortedTableService;
 
 /**
@@ -39,13 +36,13 @@ public class FastSortedTable<E> extends FastTable<E> {
       * Creates an empty table sorted using its elements natural order.     
      */
     public FastSortedTable() {
-        this(Comparators.STANDARD);
+        this(Equalities.STANDARD);
     }
 
     /**
      * Creates an empty table sorted using the specified element comparator.
      */
-    public FastSortedTable(EqualityComparator<? super E> comparator) {
+    public FastSortedTable(Equality<? super E> comparator) {
         super(new FastSortedTableImpl<E>(comparator));
     }
 
@@ -62,17 +59,17 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     @Override
     public FastSortedTable<E> unmodifiable() {
-        return new FastSortedTable<E>(new UnmodifiableSortedTableImpl<E>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override
     public FastSortedTable<E> shared() {
-        return new FastSortedTable<E>(new SharedSortedTableImpl<E>(service()));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     @Override
     public FastSortedTable<E> subTable(int fromIndex, int toIndex) {
-         return new FastSortedTable<E>(new SubSortedTableImpl<E>(service(), fromIndex, toIndex));
+        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
     /***************************************************************************
@@ -105,9 +102,10 @@ public class FastSortedTable<E> extends FastTable<E> {
     /** 
      * Adds the specified element only if not already present.
      *  
-     * @return the index of the element added or already present.
+     * @return {@code true} if the element has been added; 
+     *         {@code false} otherwise.
      */
-    public int addIfAbsent(E element) {
+    public boolean addIfAbsent(E element) {
         return service().addIfAbsent(element);
     }
     
@@ -117,7 +115,7 @@ public class FastSortedTable<E> extends FastTable<E> {
      */
     @Realtime(limit = LOG_N)
     public int slotOf(E element) {
-        return service().slotOf(element);
+        return service().positionOf(element);
     }
 
     @Override

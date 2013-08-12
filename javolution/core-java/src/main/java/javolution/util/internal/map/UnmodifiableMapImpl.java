@@ -8,31 +8,19 @@
  */
 package javolution.util.internal.map;
 
-import java.io.Serializable;
-import java.util.Map.Entry;
+import java.util.Iterator;
 
-import javolution.util.internal.collection.UnmodifiableCollectionImpl;
-import javolution.util.internal.set.UnmodifiableSetImpl;
-import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
-import javolution.util.service.SetService;
 
 /**
  *  * An unmodifiable view over a map.
  */
-public class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
-        Serializable {
+public class UnmodifiableMapImpl<K, V> extends MapView<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-    protected final MapService<K, V> target;
 
     public UnmodifiableMapImpl(MapService<K, V> target) {
-        this.target = target;
-    }
-
-    @Override
-    public void atomic(Runnable update) {
-        throw new UnsupportedOperationException("Unmodifiable");
+        super(target);
     }
 
     @Override
@@ -41,62 +29,35 @@ public class UnmodifiableMapImpl<K, V> implements MapService<K, V>,
     }
 
     @Override
-    public boolean containsKey(K key) {
-        return target.containsKey(key);
-    }
-
-    @Override
-    public SetService<Entry<K, V>> entrySet() {
-        return new UnmodifiableSetImpl<Entry<K, V>>(target.entrySet());
-    }
-
-    @Override
-    public V get(K key) {
-        return target.get(key);
-    }
-
-    @Override
-    public SetService<K> keySet() {
-        return new UnmodifiableSetImpl<K>(target.keySet());
-    }
-
-    @Override
     public V put(K key, V value) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
     @Override
-    public V putIfAbsent(K key, V value) {
+    public V remove(Object key) {
         throw new UnsupportedOperationException("Unmodifiable");
     }
 
-    @Override
-    public V remove(K key) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
+    /** Iterator over this map entries */
+    protected Iterator<Entry<K, V>> iterator() {
+        return new Iterator<Entry<K, V>>() {
+            Iterator<Entry<K, V>> it = target().entrySet().iterator();
 
-    @Override
-    public boolean remove(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
 
-    @Override
-    public V replace(K key, V value) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
+            @Override
+            public Entry<K, V> next() {
+                return it.next();
+            }
 
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        throw new UnsupportedOperationException("Unmodifiable");
-    }
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Read-Only Map.");
+            }
+        };
 
-    @Override
-    public int size() {
-        return target.size();
-    }
-
-    @Override
-    public CollectionService<V> values() {
-        return new UnmodifiableCollectionImpl<V>(target.values());
     }
 }
