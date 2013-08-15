@@ -23,6 +23,7 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
     public FastSortedTableImpl(Equality<? super E> comparator) {
         super(comparator);
     }
+
     @Override
     public boolean add(E element) {
         add(positionOf(element), element);
@@ -32,43 +33,35 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
     @Override
     public boolean addIfAbsent(E element) {
         int i = positionOf(element);
-        if (i >= size() || !comparator().areEqual(get(i), element)) { // Absent.
-            add(i, element);
-            return true;
-        }
-        return false;
+        if ((i < size()) && comparator().areEqual(element, get(i))) return false; // Already there.
+        add(i, element);
+        return true;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int indexOf(Object element) {
-        int i = positionOf((E)element);
-        if (i >= size() || !comparator().areEqual(get(i), (E)element))
-            return -1;
+        int i = positionOf((E) element);
+        if (i >= size() || !comparator().areEqual(get(i), (E) element)) return -1;
         return i;
     }
 
     @Override
-    public boolean remove(Object element) {
-        int i = indexOf(element);
-        if (i < 0)
-            return false;
-        remove(i);
-        return true;
+    public int positionOf(E element) {
+        return positionOf(element, 0, size());
     }
 
     @Override
-    public int positionOf(E element) {
-        return slotOf(element, 0, size(), comparator());
+    public SortedTableService<E> threadSafe() {
+        return new SharedSortedTableImpl<E>(this);
     }
-    private int slotOf(E element, int start, int length,
-            Equality<? super E> cmp) {
-        if (length == 0)
-            return start;
+
+    private int positionOf(E element, int start, int length) {
+        if (length == 0) return start;
         int half = length >> 1;
-        return (cmp.compare(element, get(start + half)) <= 0) ? slotOf(element,
-                start, half, cmp) : slotOf(element, start + half + 1, length
-                - half - 1, cmp);
+        return (comparator().compare(element, get(start + half)) <= 0) ? positionOf(
+                element, start, half) : positionOf(element, start + half + 1,
+                length - half - 1);
     }
 
 }

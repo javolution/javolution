@@ -15,12 +15,18 @@ import javolution.util.service.SetService;
 /**
  * A filtered view over a set.
  */
-public class FilteredSetImpl<E> extends FilteredCollectionImpl<E> implements SetService<E> {
+public class FilteredSetImpl<E> extends FilteredCollectionImpl<E> implements
+        SetService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
- 
+
     public FilteredSetImpl(SetService<E> target, Predicate<? super E> filter) {
         super(target, filter);
     }
-    
+
+    @Override
+    public SetService<E> threadSafe() {
+        return new SharedSetImpl<E>(this);
+    }
+
 }

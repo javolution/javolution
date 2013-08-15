@@ -8,9 +8,10 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
@@ -25,22 +26,37 @@ public class SequentialCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public boolean add(E e) {
+        return target().add(e);
+    }
+
+    @Override
     public void clear() {
         target().clear();
+    }
+    
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
     }
 
     @Override
     public boolean contains(Object obj) {
         return target().contains(obj);
     }
-    
+
     @Override
     public boolean isEmpty() {
         return target().isEmpty();
     }
 
     @Override
-    public void perform(Consumer<Collection<E>> action, CollectionService<E> view) {
+    public Iterator<E> iterator() {
+        return target().iterator();
+    }
+    
+    @Override
+    public void perform(Consumer<CollectionService<E>> action, CollectionService<E> view) {
         action.accept(view); // Executes immediately.
     }
 
@@ -53,9 +69,9 @@ public class SequentialCollectionImpl<E> extends CollectionView<E> {
     public int size() {
         return target().size();
    }
-    
+
     @Override
-    public void update(final Consumer<Collection<E>> action, CollectionService<E> view) {
+    public void update(Consumer<CollectionService<E>> action, CollectionService<E> view) {
         action.accept(view); // Executes immediately.
     }
 }

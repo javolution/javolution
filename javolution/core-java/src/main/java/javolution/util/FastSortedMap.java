@@ -16,7 +16,10 @@ import java.util.SortedMap;
 import javolution.lang.Realtime;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
+import javolution.util.internal.map.sorted.AtomicSortedMapImpl;
 import javolution.util.internal.map.sorted.FastSortedMapImpl;
+import javolution.util.internal.map.sorted.SharedSortedMapImpl;
+import javolution.util.internal.map.sorted.UnmodifiableSortedMapImpl;
 import javolution.util.service.SortedMapService;
 
 /**
@@ -70,13 +73,18 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
      */
 
     @Override
-    public FastSortedMap<K, V> unmodifiable() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+    public FastSortedMap<K, V> atomic() {
+        return new FastSortedMap<K, V>(new AtomicSortedMapImpl<K,V>(service()));
     }
 
     @Override
     public FastSortedMap<K, V> shared() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+        return new FastSortedMap<K, V>(new SharedSortedMapImpl<K,V>(service()));
+    }
+
+    @Override
+    public FastSortedMap<K, V> unmodifiable() {
+        return new FastSortedMap<K, V>(new UnmodifiableSortedMapImpl<K,V>(service()));
     }
 
     @Override
@@ -90,19 +98,16 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
     }
     
     @Override
-    @Realtime(limit = LOG_N)
     public FastSortedMap<K, V> subMap(K fromKey, K toKey) {
         return new FastSortedMap<K, V>(service().subMap(fromKey, toKey));
     }
 
     @Override
-    @Realtime(limit = LOG_N)
     public FastSortedMap<K, V> headMap(K toKey) {
         return new FastSortedMap<K, V>(service().subMap(firstKey(), toKey));
     }
 
     @Override
-    @Realtime(limit = LOG_N)
     public FastSortedMap<K, V> tailMap(K fromKey) {
         return new FastSortedMap<K, V>(service().subMap(fromKey, lastKey()));
     }

@@ -12,17 +12,21 @@ import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.io.Serializable;
-import java.util.Iterator;
+import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
+import javolution.text.TextContext;
+import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.internal.map.AtomicMapImpl;
 import javolution.util.internal.map.FastMapImpl;
+import javolution.util.internal.map.ParallelMapImpl;
+import javolution.util.internal.map.SequentialMapImpl;
 import javolution.util.internal.map.SharedMapImpl;
 import javolution.util.internal.map.UnmodifiableMapImpl;
 import javolution.util.service.CollectionService;
@@ -36,12 +40,14 @@ import javolution.util.service.MapService;
  *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
  *    <li>{@link #shared} - View allowing concurrent modifications.</li>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
- *    and map updates (e.g. {@link #putAll}) are atomic.</li>
+ *    and map updates (e.g. {@link #putAll putAll}) are atomic.</li>
+ *    <li>{@link #parallel} - A view allowing parallel processing including {@link #update updates}.</li>
+ *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  *    <li>{@link #entrySet} - {@link FastSet} view over the map entries allowing 
  *                            entries to be added/removed.</li>
  *    <li>{@link #keySet} - {@link FastSet} view over the map keys allowing keys 
  *                           to be added (map entry with {@code null} value).</li>
- *    <li>{@link #values} - {@link FastCollection} view over the map values.</li>
+ *    <li>{@link #values} - {@link FastCollection} view over the map values (add not supported).</li>
  * </ul>      
  * <p> The iteration order over the map keys, values or entries is deterministic 
  *     (unlike {@link java.util.HashMap}). It is either the insertion order (default) 
@@ -53,15 +59,16 @@ import javolution.util.service.MapService;
  *  FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
  *  FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
  *  FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
- *  FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
  *  FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
  *  FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
  *  FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Equalities.IDENTITY);
  *  [/code]</p>
  *  <p> and adds more ... 
  * <p>[code]
- *  FastMap<Foo, Bar> atomicMap = new FastMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
+ *  FastMap<Foo, Bar> atomicMap = new FastMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics (unlike ConcurrentHashMap).
  *  FastMap<Foo, Bar> atomicTree = new FastSortedMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
+ *  FastMap<Foo, Bar> parallelMap = new FastMap<Foo, Bar>().parallel(); // Map actions (perform/update) performed concurrently.
+ *  FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
  *  FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Equalities.LEXICAL);  // Allows for value retrieval using any CharSequence key.
  *  FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Equalities.LEXICAL_FAST);  // Same with faster hashcode calculations.
  *  ...
@@ -80,8 +87,8 @@ import javolution.util.service.MapService;
  * };
  * FastMap<Person, String> names = ...
  * names.values().update(removeNull); // Remove all entries with null values.
- * names.atomic().values().update(removeNull); // Same but performed atomically on names.
- * names.values().parallel().update(removeNull); // Same but performed in parallel.
+ * names.atomic().values().update(removeNull); // Same but performed atomically.
+ * names.parallel().values().update(removeNull); // Same but performed in parallel.
  * [/code]</p> 
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
@@ -133,26 +140,16 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      */
 
     /**
-     * Returns an unmodifiable view over this map. Any attempt to 
-     * modify the map through this view will result into 
-     * a {@link java.lang.UnsupportedOperationException} being raised.
-     */
-    public FastMap<K, V> unmodifiable() {
-        return new FastMap<K, V>(new UnmodifiableMapImpl<K, V>(service));
-    }
-
-    /**
      * Returns an atomic view over this map. All operations that write 
      * or access multiple elements in the map (such as putAll(), 
      * keySet().retainAll(), ...) are atomic. 
-     * Iterators on atomic collections are read-only (do not support element 
-     * {@link Iterator#remove() removal}) except during {@link FastCollection#update updates}.   
+     * Iterators on atomic collections are <b>thread-safe</b> 
+     * (no {@link ConcurrentModificationException} possible).
      */
     @Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
     public FastMap<K,V> atomic() {
         return new FastMap<K, V>(new AtomicMapImpl<K, V>(service));
     }
-
 
     /**
      * Returns a thread-safe view over this map. The shared view
@@ -160,10 +157,43 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * The default implementation is based on <a href=
      * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
      * readers-writers locks</a> giving priority to writers. 
+     * Iterators on shared collections are <b>thread-safe</b> 
+     * (no {@link ConcurrentModificationException} possible).
      */
     @Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
     public FastMap<K, V> shared() {
         return new FastMap<K, V>(new SharedMapImpl<K, V>(service));
+    }
+
+    /** 
+     * Returns a parallel map. Parallel maps affect closure-based operations
+     * over the map or any of its views (entry, key, values, etc.), all others 
+     * operations behaving the same. Parallel maps do not require this map 
+     * to be thread-safe (internal synchronization).
+     * 
+     * @see #perform(Consumer)
+     * @see #update(Consumer)
+     * @see FastCollection#parallel()
+     */
+    public FastMap<K,V> parallel() {
+        return new FastMap<K, V>(new ParallelMapImpl<K, V>(service));
+    }
+
+    /** 
+     * Returns a sequential view of this collection. Using this view, 
+     * all closure-based iterations are performed sequentially.
+     */
+    public FastMap<K,V> sequential() {
+        return new FastMap<K,V>(new SequentialMapImpl<K, V>(service));
+    }
+
+    /**
+     * Returns an unmodifiable view over this map. Any attempt to 
+     * modify the map through this view will result into 
+     * a {@link java.lang.UnsupportedOperationException} being raised.
+     */
+    public FastMap<K, V> unmodifiable() {
+        return new FastMap<K, V>(new UnmodifiableMapImpl<K, V>(service));
     }
 
     /**
@@ -186,7 +216,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
     public FastCollection<V> values() {
         return new FastCollection<V>() {
             private static final long serialVersionUID = 0x600L; // Version.
-            CollectionService<V> serviceValues = service.values();
+            private final CollectionService<V> serviceValues = service.values();
 
             @Override
             protected CollectionService<V> service() {
@@ -205,6 +235,46 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      */
     public FastSet<Entry<K, V>> entrySet() {
         return new FastSet<Entry<K, V>>(service.entrySet());
+    }
+
+    /***************************************************************************
+     * Closure operations.
+     */
+
+    /** 
+     * Executes the specified read-only action on this map.
+     * That logic may be performed concurrently on sub-maps 
+     * if this map is {@link #parallel() parallel}.
+     *    
+     * @param action the read-only action.
+     * @throws UnsupportedOperationException if the action tries to update 
+     *         this map.
+     * @throws ClassCastException if the action type is not compatible with 
+     *         this map (e.g. action on sorted map and this is a hash map). 
+     * @see #update(Consumer)
+     */
+    @Realtime(limit = LINEAR)
+    @SuppressWarnings("unchecked")
+    public void perform(Consumer<? extends Map<K,V>> action) {
+        service().perform((Consumer<MapService<K, V>>) action, service());
+    }
+
+    /** 
+     * Executes the specified update action on this map. 
+     * That logic may be performed concurrently on sub-maps
+     * if this map is {@link #parallel() parallel}.
+     * For {@link #atomic() atomic} maps the update is atomic (either concurrent 
+     * readers see the full result of the action or nothing).
+     *    
+     * @param action the update action.
+     * @throws ClassCastException if the action type is not compatible with 
+     *         this map (e.g. action on sorted map and this is a hash map). 
+     * @see #perform(Consumer)
+     */
+    @Realtime(limit = LINEAR)
+    @SuppressWarnings("unchecked")
+    public void update(Consumer<? extends Map<K,V>> action) {
+        service().update((Consumer<MapService<K, V>>) action, service());
     }
 
     /***************************************************************************
@@ -322,6 +392,12 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
         };
     }
     
+    @Override
+    @Realtime(limit = LINEAR)
+    public String toString() {
+        return TextContext.getFormat(FastCollection.class).format(entrySet());
+    }
+
     /**
       * Returns this map service implementation.
       */

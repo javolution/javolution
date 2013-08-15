@@ -10,6 +10,7 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
+import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
 import javolution.util.service.CollectionService;
 
@@ -18,7 +19,8 @@ import javolution.util.service.CollectionService;
  */
 public class FilteredCollectionImpl<E> extends CollectionView<E> {
 
-    protected class IteratorImpl implements Iterator<E> {
+    /** Peeking ahead iterator. */
+    private class IteratorImpl implements Iterator<E> {
 
         private boolean ahead; // Indicates if the iterator is ahead (on next element)
         private final Predicate<? super E> filter;
@@ -32,8 +34,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
 
         @Override
         public boolean hasNext() {
-            if (ahead)
-                return true;
+            if (ahead) return true;
             while (targetIterator.hasNext()) {
                 next = targetIterator.next();
                 if (filter.test(next)) {
@@ -74,10 +75,15 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
         return target.add(element);
     }
 
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public boolean contains(Object o) {
-        if (!filter.test((E)o)) return false;
+        if (!filter.test((E) o)) return false;
         return target.contains(o);
     }
 
@@ -89,8 +95,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        if (!filter.test((E)o)) return false;
+        if (!filter.test((E) o)) return false;
         return target.remove(o);
     }
-
 }

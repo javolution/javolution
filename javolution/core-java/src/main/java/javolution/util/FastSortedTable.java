@@ -12,7 +12,10 @@ import static javolution.lang.Realtime.Limit.LOG_N;
 import javolution.lang.Realtime;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
+import javolution.util.internal.table.sorted.AtomicSortedTableImpl;
 import javolution.util.internal.table.sorted.FastSortedTableImpl;
+import javolution.util.internal.table.sorted.SharedSortedTableImpl;
+import javolution.util.internal.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.util.service.SortedTableService;
 
 /**
@@ -58,41 +61,38 @@ public class FastSortedTable<E> extends FastTable<E> {
      */
 
     @Override
-    public FastSortedTable<E> unmodifiable() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+    public FastSortedTable<E> atomic() {
+        return new FastSortedTable<E>(new AtomicSortedTableImpl<E>(service()));
     }
 
     @Override
     public FastSortedTable<E> shared() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+        return new FastSortedTable<E>(new SharedSortedTableImpl<E>(service()));
     }
 
     @Override
-    public FastSortedTable<E> subTable(int fromIndex, int toIndex) {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+    public FastSortedTable<E> unmodifiable() {
+        return new FastSortedTable<E>(new UnmodifiableSortedTableImpl<E>(service()));
     }
 
     /***************************************************************************
      * Sorted table operations optimizations.
      */
 
-    @SuppressWarnings("unchecked")
     @Realtime(limit = LOG_N)
     public boolean contains(Object obj) {
-        return service().indexOf((E) obj) >= 0;
+        return service().contains(obj);
     }
 
-    @SuppressWarnings("unchecked")
     @Realtime(limit = LOG_N)
     public boolean remove(Object obj) {
-        return service().remove((E) obj);
+        return service().remove(obj);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     @Realtime(limit = LOG_N)
     public int indexOf(final Object obj) {
-        return service().indexOf((E) obj);
+        return service().indexOf(obj);
     }
 
     /***************************************************************************
@@ -105,16 +105,17 @@ public class FastSortedTable<E> extends FastTable<E> {
      * @return {@code true} if the element has been added; 
      *         {@code false} otherwise.
      */
+    @Realtime(limit = LOG_N)
     public boolean addIfAbsent(E element) {
         return service().addIfAbsent(element);
     }
     
     /** 
-     * Returns the would index of the specified element if it were
-     * to be added to this sorted table.
+     * Returns what would be the index of the specified element if it were
+     * to be added or the index of the specified element if already present.
      */
     @Realtime(limit = LOG_N)
-    public int slotOf(E element) {
+    public int positionOf(E element) {
         return service().positionOf(element);
     }
 

@@ -20,7 +20,8 @@ import javolution.util.service.CollectionService;
  */
 public class MappedCollectionImpl<E, R> extends CollectionView<R> {
 
-    protected class IteratorImpl implements Iterator<R> {
+    /** Mapping iterator. */
+    private class IteratorImpl implements Iterator<R> {
         private final Iterator<E> targetIterator;
 
         @SuppressWarnings("unchecked")
@@ -46,7 +47,6 @@ public class MappedCollectionImpl<E, R> extends CollectionView<R> {
     }
 
     private static final long serialVersionUID = 0x600L; // Version.
-
     protected final Function<? super E, ? extends R> function;
 
     @SuppressWarnings("unchecked")
@@ -63,23 +63,23 @@ public class MappedCollectionImpl<E, R> extends CollectionView<R> {
     }
 
     @Override
-    public Equality<? super R> comparator() {
-        return Equalities.STANDARD;
-    }
-
-    @Override
-    public Iterator<R> iterator() {
-        return new IteratorImpl();
-    }
-
-    @Override
     public void clear() {
         target().clear();
     }
 
     @Override
+    public Equality<? super R> comparator() {
+        return Equalities.STANDARD;
+    }
+
+    @Override
     public boolean isEmpty() {
         return target().isEmpty();
+    }
+
+    @Override
+    public Iterator<R> iterator() {
+        return new IteratorImpl();
     }
     
     @Override

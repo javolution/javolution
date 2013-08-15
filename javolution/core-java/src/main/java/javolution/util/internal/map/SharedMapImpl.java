@@ -8,8 +8,10 @@
  */
 package javolution.util.internal.map;
 
+import java.util.Iterator;
 import java.util.Map;
 
+import javolution.util.function.Equality;
 import javolution.util.internal.collection.ReadWriteLockImpl;
 import javolution.util.service.MapService;
 
@@ -18,12 +20,45 @@ import javolution.util.service.MapService;
  */
 public class SharedMapImpl<K, V> extends MapView<K, V> {
 
+    /** Thread-Safe Iterator. */
+    private class IteratorImpl implements Iterator<Entry<K, V>> {
+        private Entry<K, V> next;
+        private final Iterator<Entry<K, V>> targetIterator;
+
+        public IteratorImpl() {
+            lock.readLock.lock();
+            try {
+                targetIterator = cloneTarget().entrySet().iterator(); // Copy.
+            } finally {
+                lock.readLock.unlock();
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return targetIterator.hasNext();
+        }
+
+        @Override
+        public Entry<K, V> next() {
+            next = targetIterator.next();
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            if (next == null) throw new IllegalStateException();
+            SharedMapImpl.this.remove(next.getKey());
+            next = null;
+        }
+    }
+
     private static final long serialVersionUID = 0x600L; // Version.
     protected ReadWriteLockImpl lock;
     protected transient Thread updatingThread; // The thread executing an update.
 
     public SharedMapImpl(MapService<K, V> target) {
-        this(target, new ReadWriteLockImpl());        
+        this(target, new ReadWriteLockImpl());
     }
 
     public SharedMapImpl(MapService<K, V> target, ReadWriteLockImpl lock) {
@@ -32,22 +67,12 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
-    public int size() {
-        lock.readLock.lock();
+    public void clear() {
+        lock.writeLock.lock();
         try {
-            return target().size();
+            target().clear();
         } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public boolean isEmpty() {
-        lock.readLock.lock();
-        try {
-            return target().isEmpty();
-        } finally {
-            lock.readLock.unlock();
+            lock.writeLock.unlock();
         }
     }
 
@@ -82,20 +107,30 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
-    public V put(K key, V value) {
-        lock.writeLock.lock();
+    public boolean isEmpty() {
+        lock.readLock.lock();
         try {
-            return target().put(key, value);
+            return target().isEmpty();
         } finally {
-            lock.writeLock.unlock();
+            lock.readLock.unlock();
         }
     }
 
     @Override
-    public V remove(Object key) {
+    public Iterator<Entry<K, V>> iterator() {
+        return new IteratorImpl();
+    }
+
+    @Override
+    public Equality<? super K> keyComparator() {
+        return target().keyComparator();
+    }
+
+    @Override
+    public V put(K key, V value) {
         lock.writeLock.lock();
         try {
-            return target().remove(key);
+            return target().put(key, value);
         } finally {
             lock.writeLock.unlock();
         }
@@ -112,20 +147,20 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
-    public void clear() {
+    public V putIfAbsent(K key, V value) {
         lock.writeLock.lock();
         try {
-            target().clear();
+            return target().putIfAbsent(key, value);
         } finally {
             lock.writeLock.unlock();
         }
     }
 
     @Override
-    public V putIfAbsent(K key, V value) {
+    public V remove(Object key) {
         lock.writeLock.lock();
         try {
-            return target().putIfAbsent(key, value);
+            return target().remove(key);
         } finally {
             lock.writeLock.unlock();
         }
@@ -142,6 +177,16 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
+    public V replace(K key, V value) {
+        lock.writeLock.lock();
+        try {
+            return target().replace(key, value);
+        } finally {
+            lock.writeLock.unlock();
+        }
+    }
+
+    @Override
     public boolean replace(K key, V oldValue, V newValue) {
         lock.writeLock.lock();
         try {
@@ -152,35 +197,49 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
-    public V replace(K key, V value) {
-        lock.writeLock.lock();
+    public int size() {
+        lock.readLock.lock();
         try {
-            return target().replace(key, value);
+            return target().size();
         } finally {
-            lock.writeLock.unlock();
+            lock.readLock.unlock();
         }
     }
 
-    /** 
-     * The default implementation shares the lock between sub-collections, which 
-     * prevents concurrent closure-based removal. Sub-classes may override
-     * this method to avoid such limitation (e.g. {@code SharedTableImpl}).
-     */
     @SuppressWarnings("unchecked")
     @Override
-    public MapService<K, V>[] subViews(int n) {
+    public MapService<K, V>[] split(int n) {
         MapService<K, V>[] tmp;
         lock.readLock.lock();
         try {
-            tmp = target().subViews(n);
+            tmp = target().split(n);
         } finally {
             lock.readLock.unlock();
         }
         MapService<K, V>[] result = new MapService[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
-            result[i] = new SharedMapImpl<K,V>(tmp[i], lock); // Same lock.
+            result[i] = new SharedMapImpl<K, V>(tmp[i], lock); // Same lock.
         }
         return result;
     }
-    
+
+    @Override
+    public MapService<K, V> threadSafe() {
+        return this;
+    }
+
+    @Override
+    public Equality<? super V> valueComparator() {
+        return target().valueComparator();
+    }
+
+    /** Returns a clone copy of target. */
+    protected MapService<K, V> cloneTarget() {
+        try {
+            return target().clone();
+        } catch (CloneNotSupportedException e) {
+            throw new Error("Cannot happen since target is Cloneable.");
+        }
+    }
+
 }

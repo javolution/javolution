@@ -8,7 +8,6 @@
  */
 package javolution.util.internal.table;
 
-
 /**
  * A fractal-based table with fast insertion/deletion capabilities regardless 
  * of the collection size. It is based on a fractal structure with self-similar
@@ -17,9 +16,9 @@ package javolution.util.internal.table;
   */
 final class FractalTableImpl {
 
-    static final int SHIFT = 10;
-    static final int BASE_CAPACITY_MAX = 1 << SHIFT;
     static final int BASE_CAPACITY_MIN = 16;
+    static final int SHIFT = 10;
+    private static final int BASE_CAPACITY_MAX = 1 << SHIFT;
     private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
 
     /** Offset value, it is the index of the first element (modulo data.length). */
@@ -53,12 +52,12 @@ final class FractalTableImpl {
     }
 
     @Override
-    public  FractalTableImpl clone() throws CloneNotSupportedException {
-        FractalTableImpl copy = (FractalTableImpl)super.clone();
+    public FractalTableImpl clone() throws CloneNotSupportedException {
+        FractalTableImpl copy = (FractalTableImpl) super.clone();
         Object[] copyData = copy.data;
-        for (int i=0; i < copyData.length; i++) {
+        for (int i = 0; i < copyData.length; i++) {
             if (copyData[i] instanceof FractalTableImpl) {
-                copyData[i] = ((FractalTableImpl)copyData[i]).clone();
+                copyData[i] = ((FractalTableImpl) copyData[i]).clone();
             }
         }
         return copy;
@@ -105,8 +104,7 @@ final class FractalTableImpl {
 
     public Object set(int index, Object element) {
         int i = ((index + offset) >> shift) & (data.length - 1);
-        if (shift != 0)
-            return F(i).set(index + offset, element);
+        if (shift != 0) return F(i).set(index + offset, element);
         Object previous = data[i];
         data[i] = element;
         return previous;
@@ -188,8 +186,7 @@ final class FractalTableImpl {
         int i = (offset >> shift);
         System.arraycopy(data, i, tmp, i, data.length - i);
         System.arraycopy(data, 0, tmp, data.length, i);
-        if (shift > 0)
-            tmp[data.length + i] = F(i).extract(0, offset);
+        if (shift > 0) tmp[data.length + i] = F(i).extract(0, offset);
         data = tmp;
         return this;
     }

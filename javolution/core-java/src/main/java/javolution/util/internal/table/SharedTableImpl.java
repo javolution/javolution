@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import javolution.util.internal.collection.SharedCollectionImpl;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -69,8 +70,7 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
 
     @Override
     public Iterator<E> descendingIterator() {
-        return updateInProgress() ? target().descendingIterator()
-                : new UnmodifiableTableImpl<E>(target()).descendingIterator();
+        return new ReversedTableImpl<E>(this).iterator(); // View on this.
     }
 
     @Override
@@ -119,6 +119,11 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
     }
 
     @Override
+    public ListIterator<E> iterator() {
+        return target().listIterator(0);
+    }
+
+    @Override
     public int lastIndexOf(Object element) {
         lock.readLock.lock();
         try {
@@ -130,13 +135,12 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
 
     @Override
     public ListIterator<E> listIterator() {
-        return listIterator(0);
+        return target().listIterator(0);
     }
 
     @Override
     public ListIterator<E> listIterator(int index) {
-        return updateInProgress() ? target().listIterator()
-                : new UnmodifiableTableImpl<E>(cloneTarget()).listIterator(index);
+        return new TableIteratorImpl<E>(this, index); // View on this.
     }
 
     @Override
@@ -290,19 +294,24 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
     }
 
     @Override
+    public CollectionService<E>[] split(int n) {
+        return SubTableImpl.splitOf(this, n); // Sub-views over this.
+    }
+
+    @Override
     public TableService<E> subList(int fromIndex, int toIndex) {
-        return updateInProgress() ? target().subList(fromIndex, toIndex)
-                : new UnmodifiableTableImpl<E>(cloneTarget()).subList(fromIndex,
-                        toIndex);
+        return new SubTableImpl<E>(this, fromIndex, toIndex); // View on this.
+    }
+
+    @Override
+    public TableService<E> threadSafe() {
+        return this;
     }
 
     /** Returns the actual target */
+    @Override
     protected TableService<E> target() {
         return (TableService<E>) super.target();
     }
 
-    /** Returns a clone copy of target. */
-    protected TableService<E> cloneTarget() {
-        return (TableService<E>) super.cloneTarget();
-    }
 }

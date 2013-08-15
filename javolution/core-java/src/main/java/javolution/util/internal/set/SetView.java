@@ -13,12 +13,9 @@ import javolution.util.service.SetService;
 
 /**
  * Set view implementation; can be used as root class for implementations 
- * if target is {@code null}, then of course methods calling target have to be
- * overridden.
- * For efficiency sub-classes should forward to the actual target for the methods
- * clear, contains, remove and size rather than to use their default implementation.
+ * if target is {@code null}.
  */
-public class SetView<E> extends CollectionView<E> implements SetService<E> {
+public abstract class SetView<E> extends CollectionView<E> implements SetService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -28,10 +25,26 @@ public class SetView<E> extends CollectionView<E> implements SetService<E> {
     public SetView(SetService<E> target) {
         super(target);
     }
- 
+
+    @Override
+    public abstract int size();
+
+    @Override
+    public abstract boolean contains(Object o);
+
+    @Override
+    public abstract boolean remove(Object o);
+
+    @Override
+    public SetService<E> threadSafe() {
+        return new SharedSetImpl<E>(this);
+    }
+
     /** Returns the actual target */
+    @Override
     protected SetService<E> target() {
         return (SetService<E>) super.target();
     }
 
+    
 }

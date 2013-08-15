@@ -120,23 +120,23 @@ public class FastTable<E> extends FastCollection<E> implements List<E>, Deque<E>
     */
 
     @Override
-    public FastTable<E> unmodifiable() {
-        return new FastTable<E>(new UnmodifiableTableImpl<E>(service));
-    }
-
-    @Override
     public FastTable<E> atomic() {
         return new FastTable<E>(new AtomicTableImpl<E>(service));
     }
 
+    @Override
+    public FastTable<E> reversed() {
+        return new FastTable<E>(new ReversedTableImpl<E>(service));
+    }
+    
     @Override
     public FastTable<E> shared() {
         return new FastTable<E>(new SharedTableImpl<E>(service));
     }
 
     @Override
-    public FastTable<E> reversed() {
-        return new FastTable<E>(new ReversedTableImpl<E>(service));
+    public FastTable<E> unmodifiable() {
+        return new FastTable<E>(new UnmodifiableTableImpl<E>(service));
     }
 
     /**

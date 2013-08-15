@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 import javolution.lang.Immutable;
@@ -54,7 +55,7 @@ import javolution.util.service.CollectionService;
  *    on mutex (<a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
  *    readers-writer locks).</li>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
- *    and collection updates (including {@link #addAll}, {@link #removeIf}} are atomic.</li>
+ *    and collection updates (including {@link #addAll addAll}, {@link #removeIf removeIf}} are atomic.</li>
  *    <li>{@link #parallel} - A view allowing parallel processing including {@link #update updates}.</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  *    <li>{@link #filtered filtered(filter)} - View exposing only the elements matching the specified filter.</li>
@@ -86,7 +87,7 @@ import javolution.util.service.CollectionService;
  * // Replace null with "" in tokens. If tokens is atomic the update is atomic.
  * // If tokens is parallel, the update is also performed concurrently !
  * tokens.update(new Consumer<List<String>>() {  
- *     public void accept(List<String> view) { // If tokens is a parallel list, view is a sublist.
+ *     public void accept(List<String> view) {
  *         for (int i=0, n = view.size(); i < n; i++)
  *             if (view.get(i) == null) view.set(i, "");
  *         }
@@ -105,9 +106,7 @@ import javolution.util.service.CollectionService;
  *     and actions on a view can impact the original collection. Collection views are nothing "new" 
  *     since they already existed in the original java.util collection classes (e.g. List.subList(...),
  *     Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
- *     which addresses the concern of class proliferation (see
- *     <a href="http://cr.openjdk.java.net/~briangoetz/lambda/collections-overview.html">
- *     State of the Lambda: Libraries Edition</a>).</p> 
+ *     which addresses the concern of class proliferation.</p> 
  * <p>[code]
  * FastTable<String> names = new FastTable<String>().addAll("Oscar Thon", "Eva Poret", "Paul Auchon");
  * boolean found = names.comparator(Equalities.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
@@ -181,20 +180,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
 
     /**
-     * Returns an unmodifiable view over this collection. Any attempt to 
-     * modify the collection through this view will result into 
-     * a {@link java.lang.UnsupportedOperationException} being raised.
-     */
-    public FastCollection<E> unmodifiable() {
-        return new UnmodifiableCollectionImpl<E>(service());
-    }
-
-    /**
      * Returns an atomic view over this collection. All operations that write 
      * or access multiple elements in the collection (such as addAll(), 
      * retainAll()) are atomic. 
-     * Iterators on atomic collections are read-only (do not support element 
-     * {@link Iterator#remove() removal}) except during {@link #update updates}.   
+     * Iterators on atomic collections are <b>thread-safe</b> 
+     * (no {@link ConcurrentModificationException} possible).
      */
     @Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
     public FastCollection<E> atomic() {
@@ -207,8 +197,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * The default implementation is based on <a href=
      * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
      * readers-writers locks</a> giving priority to writers. 
-     * Iterators on shared collections are read-only (do not support element 
-     * {@link Iterator#remove() removal}) except during {@link #update updates}.   
+     * Iterators on shared collections are <b>thread-safe</b> 
+     * (no {@link ConcurrentModificationException} possible).
      */
     @Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
     public FastCollection<E> shared() {
@@ -223,8 +213,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * The number of parallel views is derived from the context
      * {@link javolution.context.ConcurrentContext#getConcurrency() 
      * concurrency} ({@code number of parallel views = concurrency + 1}).
-     * When applied to an already parallel collection, the number of 
-     * parallel views gets multiplied.
+     * Parallel views do not require this collection to be thread-safe
+     * (internal synchronization).
      * 
      * @see #perform(Consumer)
      * @see #update(Consumer)
@@ -242,6 +232,15 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      */
     public FastCollection<E> sequential() {
         return new SequentialCollectionImpl<E>(service());
+    }
+
+    /**
+     * Returns an unmodifiable view over this collection. Any attempt to 
+     * modify the collection through this view will result into 
+     * a {@link java.lang.UnsupportedOperationException} being raised.
+     */
+    public FastCollection<E> unmodifiable() {
+        return new UnmodifiableCollectionImpl<E>(service());
     }
 
     /** 
@@ -292,7 +291,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * over the {@link #comparator() same} elements). Adding elements already 
      * in the collection through this view has no effect. If this collection is 
      * initially empty, using a distinct view to add new elements ensures that
-     * this collection has no duplicate.   
+     * this collection has no duplicate.  
      */
     public FastCollection<E> distinct() {
         return new DistinctCollectionImpl<E>(service());
@@ -302,40 +301,41 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Closure operations.
      */
 
+    @SuppressWarnings("unchecked")
     /** 
      * Executes the specified read-only action on this collection.
-     * That logic may be performed concurrently on sub-views of this 
-     * collection if this collection is {@link #parallel() parallel}.
-     * The framework guarantees that the view passed to the action is always
-     * of this collection service type (e.g. a {@link java.util.List} or 
-     * a  {@link java.util.Deque} if this collection is a {@link FastTable}).
+     * That logic may be performed concurrently on sub-collections 
+     * if this collection is {@link #parallel() parallel}.
      *    
      * @param action the read-only action.
      * @throws UnsupportedOperationException if the action tries to update 
      *         this collection and this collection is thread-safe.
+     * @throws ClassCastException if the action type is not compatible with 
+     *         this collection (e.g. action on set and this is a list). 
      * @see #update(Consumer)
      */
-    @SuppressWarnings("unchecked")
     @Realtime(limit = LINEAR)
     public void perform(Consumer<? extends Collection<E>> action) {
-        service().perform((Consumer<Collection<E>>) action, service());
+        service().perform((Consumer<CollectionService<E>>) action, service());
     }
 
     /** 
      * Executes the specified update action on this collection. 
-     * That logic may be performed concurrently on sub-views of this 
-     * collection if this collection is {@link #parallel() parallel}.
-     * The framework guarantees that the view passed to the action is always
-     * of this collection service type (e.g. a {@link java.util.List} or 
-     * a  {@link java.util.Deque} if this collection is a {@link FastTable}).
+     * That logic may be performed concurrently on sub-collections
+     * if this collection is {@link #parallel() parallel}.
+     * For {@link #atomic() atomic} collections the update is atomic 
+     * (either concurrent readers see the full result of the action or
+     * nothing).
      *    
      * @param action the update action.
+     * @throws ClassCastException if the action type is not compatible with 
+     *         this collection (e.g. action on set and this is a list). 
      * @see #perform(Consumer)
      */
-    @SuppressWarnings("unchecked")
+     @SuppressWarnings("unchecked")
     @Realtime(limit = LINEAR)
     public void update(Consumer<? extends Collection<E>> action) {
-        service().update((Consumer<Collection<E>>) action, service());
+         service().update((Consumer<CollectionService<E>>) action, service());
     }
 
     /** 

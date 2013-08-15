@@ -15,10 +15,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
- * Simple and efficient read/write lock implementation giving preferences 
- * to writers.
+ * Simple and efficient read/write lock implementation giving 
+ * preferences to writers. Acquiring a write lock then a read lock is 
+ * supported. Writers may acquire a read lock after having the write lock
+ * but the reverse would result in deadlock.
  */
 public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
+    
+    /** Read-Lock Implementation. */
     public final class ReadLock implements Lock, Serializable {
         private static final long serialVersionUID = 0x600L; // Version.
 
@@ -65,9 +69,9 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
                 ReadWriteLockImpl.this.notifyAll();
             }
         }
-
     }
 
+    /** Write-Lock Implementation. */
     public final class WriteLock implements Lock, Serializable {
         private static final long serialVersionUID = 0x600L; // Version.
 
@@ -113,15 +117,14 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
                 ReadWriteLockImpl.this.notifyAll();
             }
         }
-
     }
 
     private static final long serialVersionUID = 0x600L; // Version.
     public final ReadLock readLock = new ReadLock();
     public final WriteLock writeLock = new WriteLock();
-    private int givenLocks;
-    private int waitingWriters;
-    private Thread writerThread;
+    private transient int givenLocks;
+    private transient int waitingWriters;
+    private transient Thread writerThread;
 
     @Override
     public ReadLock readLock() {

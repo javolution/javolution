@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
@@ -19,176 +20,179 @@ import javolution.util.service.CollectionService;
  */
 public class AtomicCollectionImpl<E> extends CollectionView<E> {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+    /** Thread-Safe Iterator. */
+    private class IteratorImpl implements Iterator<E> {
+        private E current;
+        private final Iterator<E> targetIterator;
 
-    protected Object lock;
-    protected volatile CollectionService<E> targetCopy; // The copy used by readers.
+        public IteratorImpl() {
+            targetIterator = immutable.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return targetIterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            current = targetIterator.next();
+            return current;
+        }
+
+        @Override
+        public void remove() {
+            if (current == null) throw new IllegalStateException();
+            AtomicCollectionImpl.this.remove(current);
+            current = null;
+        }
+    }
+
+    private static final long serialVersionUID = 0x600L; // Version.
+    protected volatile CollectionService<E> immutable; // The copy used by readers.
     protected transient Thread updatingThread; // The thread executing an update.
 
     public AtomicCollectionImpl(CollectionService<E> target) {
-        this(target, new Object());
-    }
-
-    public AtomicCollectionImpl(CollectionService<E> target, Object lock) {
         super(target);
-        this.lock = lock;
-        this.targetCopy = cloneTarget();
+        this.immutable = cloneTarget();
     }
 
     @Override
-    public boolean add(E element) {
-        synchronized (lock) {
-            boolean changed = target().add(element);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
+    public synchronized boolean add(E element) {
+        boolean changed = target().add(element);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public synchronized boolean addAll(Collection<? extends E> c) {
+        boolean changed = target().addAll(c);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public synchronized void clear() {
+        clear();
+        if (!updateInProgress()) {
+            immutable = cloneTarget();
         }
     }
 
     @Override
-    public boolean addAll(Collection<? extends E> c) {
-        synchronized (lock) {
-            boolean changed = target().addAll(c);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        }
+    public synchronized AtomicCollectionImpl<E> clone() { // Synchronized required since working with real target.
+        AtomicCollectionImpl<E> copy = (AtomicCollectionImpl<E>) super.clone();
+        copy.updatingThread = null;
+        return copy;
     }
 
     @Override
-    public void clear() {
-        synchronized (lock) {
-            clear();
-            if (!updateInProgress()) {
-                targetCopy = cloneTarget();
-            }
-        }
-    }
-
-    @Override
-    public AtomicCollectionImpl<E> clone() {
-        synchronized (lock) { // Necessary since a copy of target is performed.
-            AtomicCollectionImpl<E> copy = (AtomicCollectionImpl<E>) super
-                    .clone();
-            copy.updatingThread = null;
-            copy.lock = new Object(); // No need to share the same lock.
-            return copy;
-        }
+    public Equality<? super E> comparator() {
+        return immutable.comparator();
     }
 
     @Override
     public boolean contains(Object o) {
-        return targetCopy.contains(o);
+        return immutable.contains(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return targetCopy.containsAll(c);
+        return immutable.containsAll(c);
     }
 
     @Override
     public boolean equals(Object o) {
-        return targetCopy.equals(o);
+        return immutable.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return targetCopy.hashCode();
+        return immutable.hashCode();
     }
-    
+
     @Override
     public boolean isEmpty() {
-        return targetCopy.isEmpty();
+        return immutable.isEmpty();
     }
 
     @Override
-    public Iterator<E> iterator() { 
-        // If not within an update scope, the iterator is read-only.
-        return updateInProgress() ? target().iterator() : 
-            new UnmodifiableCollectionImpl<E>(targetCopy).iterator();
+    public Iterator<E> iterator() {
+        return updateInProgress() ? target().iterator() : new IteratorImpl();
     }
 
     @Override
-    public boolean remove(Object o) {
-        synchronized (lock) {
-            boolean changed = target().remove(o);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        }
+    public synchronized boolean remove(Object o) {
+        boolean changed = target().remove(o);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
-        synchronized (lock) {
-            boolean changed = target().removeAll(c);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        }
+    public synchronized boolean removeAll(Collection<?> c) {
+        boolean changed = target().removeAll(c);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
-        synchronized (lock) {
-            boolean changed = target().retainAll(c);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        }
+    public synchronized boolean retainAll(Collection<?> c) {
+        boolean changed = target().retainAll(c);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
     }
 
     @Override
     public int size() {
-        return targetCopy.size();
+        return immutable.size();
     }
 
-    /** 
-     * The default implementation shares the lock between sub-collections, which 
-     * prevents concurrent closure-based removal. Sub-classes may override
-     * this method to avoid such limitation (e.g. {@code AtomicTableImpl}).
-     */
     @SuppressWarnings("unchecked")
     @Override
-    public AtomicCollectionImpl<E>[] subViews(int n) {
-        CollectionService<E>[] tmp;
-        synchronized (lock) {
-            tmp = target().subViews(n); // We need sub-views of the real target
-        }
-        AtomicCollectionImpl<E>[] result = new AtomicCollectionImpl[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            result[i] = new AtomicCollectionImpl<E>(tmp[i], lock); // Same lock.
-        }
-        return result;
+    public CollectionService<E>[] split(int n) { // Split not supported.
+        return new CollectionService[] { this };
+    }
+
+    @Override
+    public CollectionService<E> threadSafe() {
+        return this; 
     }
 
     @Override
     public Object[] toArray() {
-        return targetCopy.toArray();
+        return immutable.toArray();
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return targetCopy.toArray(a);
+        return immutable.toArray(a);
     }
 
     @Override
-    public void update(Consumer<Collection<E>> action, CollectionService<E> view) {
-        synchronized (lock) {
-            updatingThread = Thread.currentThread(); // Update in progress.
-            try {
-                target().update(action, view); // No copy performed.
-            } finally {
-                updatingThread = null;
-                targetCopy = cloneTarget(); // One single copy !
-            }
+    public synchronized void update(Consumer<CollectionService<E>> action,
+            CollectionService<E> view) {
+        updatingThread = Thread.currentThread(); // Update in progress.
+        try {
+            target().update(action, view); // No copy performed.
+        } finally {
+            updatingThread = null;
+            immutable = cloneTarget(); // One single copy !
         }
     }
- 
- 
+
+    /** Returns a clone copy of target. */
+    protected CollectionService<E> cloneTarget() {
+        try {
+            return target().clone();
+        } catch (CloneNotSupportedException e) {
+            throw new Error("Cannot happen since target is Cloneable.");
+        }
+    }
+
     /** Indicates if the current thread is doing an atomic update. */
     protected final boolean updateInProgress() {
         return updatingThread == Thread.currentThread();
-    }
 
+    }
 }
+

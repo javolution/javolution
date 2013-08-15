@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import javolution.util.internal.collection.AtomicCollectionImpl;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -28,132 +29,68 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
     }
 
     @Override
-    public void add(int index, E element) {
-        synchronized (lock) {
-            target().add(index, element);
-            if (!updateInProgress()) targetCopy = cloneTarget();
-        }
+    public synchronized void add(int index, E element) {
+        target().add(index, element);
+        if (!updateInProgress()) immutable = cloneTarget();
     }
 
     @Override
-    public void addFirst(E element) {
-        synchronized (lock) {
-            target().addFirst(element);
-            if (!updateInProgress()) targetCopy = cloneTarget();
-        }
+    public synchronized boolean addAll(int index, Collection<? extends E> c) {
+        boolean changed = target().addAll(index, c);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
     }
 
     @Override
-    public void addLast(E element) {
-        synchronized (lock) {
-            target().addLast(element);
-            if (!updateInProgress()) targetCopy = cloneTarget();
-        }
+    public synchronized void addFirst(E element) {
+        target().addFirst(element);
+        if (!updateInProgress()) immutable = cloneTarget();
+    }
+
+    @Override
+    public synchronized void addLast(E element) {
+        target().addLast(element);
+        if (!updateInProgress()) immutable = cloneTarget();
+    }
+
+    @Override
+    public Iterator<E> descendingIterator() {
+        return new ReversedTableImpl<E>(this).iterator();
+    }
+
+    @Override
+    public E element() {
+        return getFirst();
     }
 
     @Override
     public E get(int index) {
-        return targetCopy().get(index);
+        return immutable().get(index);
     }
 
     @Override
     public E getFirst() {
-        return targetCopy().getFirst();
+        return immutable().getFirst();
     }
 
     @Override
     public E getLast() {
-        return targetCopy().getLast();
+        return immutable().getLast();
     }
 
     @Override
     public int indexOf(Object element) {
-        return targetCopy().indexOf(element);
+        return immutable().indexOf(element);
+    }
+
+    @Override
+    public ListIterator<E> iterator() {
+        return listIterator(0);
     }
 
     @Override
     public int lastIndexOf(Object element) {
-        return targetCopy().lastIndexOf(element);
-    }
-
-    @Override
-    public E peekFirst() {
-        return targetCopy().peekFirst();
-    }
-
-    @Override
-    public E peekLast() {
-        return targetCopy().peekLast();
-    }
-
-    @Override
-    public E pollFirst() {
-        synchronized (lock) {
-            E e = target().pollFirst();
-            if ((e != null) && !updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public E pollLast() {
-        synchronized (lock) {
-            E e = target().pollLast();
-            if ((e != null) && !updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public E remove(int index) {
-        synchronized (lock) {
-            E e = target().remove(index);
-            if (!updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public E removeFirst() {
-        synchronized (lock) {
-            E e = target().removeFirst();
-            if (!updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public E removeLast() {
-        synchronized (lock) {
-            E e = target().removeLast();
-            if (!updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public E set(int index, E element) {
-        synchronized (lock) {
-            E e = target().set(index, element);
-            if (!updateInProgress())
-                targetCopy = cloneTarget();
-            return e;
-        }
-    }
-
-    @Override
-    public boolean addAll(int index, Collection<? extends E> c) {
-        synchronized (lock) {
-            boolean changed = target().addAll(index, c);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        }
+        return immutable().lastIndexOf(element);
     }
 
     @Override
@@ -163,61 +100,7 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
 
     @Override
     public ListIterator<E> listIterator(int index) {
-        return updateInProgress() ? target().listIterator()
-                : new UnmodifiableTableImpl<E>(targetCopy()).listIterator(index);
-    }
-
-
-    @Override
-    public TableService<E> subList(int fromIndex, int toIndex) {
-        return updateInProgress() ? target().subList(fromIndex, toIndex)
-                : new UnmodifiableTableImpl<E>(targetCopy()).subList(fromIndex,
-                        toIndex);
-    }
-
-    /** Returns the actual target */
-    protected TableService<E> target() {
-        return (TableService<E>) super.target();
-    }
-
-    @Override
-    public boolean offerFirst(E e) {
-        synchronized (lock) {
-            boolean changed = target().offerFirst(e);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        } 
-    }
-
-    @Override
-    public boolean offerLast(E e) {
-        synchronized (lock) {
-            boolean changed = target().offerLast(e);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        } 
-    }
-
-    @Override
-    public boolean removeFirstOccurrence(Object o) {
-        synchronized (lock) {
-            boolean changed = target().removeFirstOccurrence(o);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        } 
-    }
-
-    @Override
-    public boolean removeLastOccurrence(Object o) {
-        synchronized (lock) {
-            boolean changed = target().removeLastOccurrence(o);
-            if (changed && !updateInProgress())
-                targetCopy = cloneTarget();
-            return changed;
-        } 
+        return new TableIteratorImpl<E>(this, index); // Iterator view on this.
     }
 
     @Override
@@ -226,8 +109,32 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
     }
 
     @Override
-    public E remove() {
-        return removeFirst();
+    public synchronized boolean offerFirst(E e) {
+        boolean changed = target().offerFirst(e);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public synchronized boolean offerLast(E e) {
+        boolean changed = target().offerLast(e);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public E peek() {
+        return peekFirst();
+    }
+
+    @Override
+    public E peekFirst() {
+        return immutable().peekFirst();
+    }
+
+    @Override
+    public E peekLast() {
+        return immutable().peekLast();
     }
 
     @Override
@@ -236,18 +143,17 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
     }
 
     @Override
-    public E element() {
-        return getFirst();
+    public synchronized E pollFirst() {
+        E e = target().pollFirst();
+        if ((e != null) && !updateInProgress()) immutable = cloneTarget();
+        return e;
     }
 
     @Override
-    public E peek() {
-        return peekFirst(); 
-    }
-
-    @Override
-    public void push(E e) {
-        addFirst(e); 
+    public synchronized E pollLast() {
+        E e = target().pollLast();
+        if ((e != null) && !updateInProgress()) immutable = cloneTarget();
+        return e;
     }
 
     @Override
@@ -256,13 +162,81 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return updateInProgress() ? target().descendingIterator()
-                : new UnmodifiableTableImpl<E>(targetCopy()).descendingIterator();
+    public void push(E e) {
+        addFirst(e);
     }
-    
-    /** TableService view over targetCopy */
-    protected TableService<E> targetCopy() {
-        return (TableService<E>)targetCopy;
+
+    @Override
+    public E remove() {
+        return removeFirst();
     }
- }
+
+    @Override
+    public synchronized E remove(int index) {
+        E e = target().remove(index);
+        if (!updateInProgress()) immutable = cloneTarget();
+        return e;
+    }
+
+    @Override
+    public synchronized E removeFirst() {
+        E e = target().removeFirst();
+        if (!updateInProgress()) immutable = cloneTarget();
+        return e;
+    }
+
+    @Override
+    public synchronized boolean removeFirstOccurrence(Object o) {
+        boolean changed = target().removeFirstOccurrence(o);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public synchronized E removeLast() {
+        E e = target().removeLast();
+        if (!updateInProgress()) immutable = cloneTarget();
+        return e;
+    }
+
+    @Override
+    public synchronized boolean removeLastOccurrence(Object o) {
+        boolean changed = target().removeLastOccurrence(o);
+        if (changed && !updateInProgress()) immutable = cloneTarget();
+        return changed;
+    }
+
+    @Override
+    public synchronized E set(int index, E element) {
+        E e = target().set(index, element);
+        if (!updateInProgress()) immutable = cloneTarget();
+        return e;
+    }
+
+    @Override
+    public CollectionService<E>[] split(int n) {
+        return SubTableImpl.splitOf(this, n); // Sub-views over this.
+    }
+
+    @Override
+    public TableService<E> subList(int fromIndex, int toIndex) {
+        return new SubTableImpl<E>(this, fromIndex, toIndex); // View on this.
+    }
+
+    @Override
+    public TableService<E> threadSafe() {
+        return this;
+    }
+
+    /** TableService view over immutable */
+    protected TableService<E> immutable() {
+        return (TableService<E>) immutable;
+    }
+
+    /** Returns the actual target */
+    @Override
+    protected TableService<E> target() {
+        return (TableService<E>) super.target();
+    }
+
+}

@@ -12,28 +12,59 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
-import javolution.util.service.TableService;
 
 /**
  * A shared view over a collection (reads-write locks). 
  */
 public class SharedCollectionImpl<E> extends CollectionView<E> {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+    /** Thread-Safe Iterator. */
+    private class IteratorImpl implements Iterator<E> { // Thread-Safe.
+        private E next;
+        private final Iterator<E> targetIterator;
 
-    protected ReadWriteLockImpl lock;
-    protected transient Thread updatingThread; // The thread executing an update.
+        public IteratorImpl() {
+            lock.readLock.lock();
+            try {
+                targetIterator = cloneTarget().iterator(); // Copy.
+            } finally {
+                lock.readLock.unlock();
+            }
+        }
 
-    public SharedCollectionImpl(CollectionService<E> target) {
-        this(target, new ReadWriteLockImpl());        
+        @Override
+        public boolean hasNext() {
+            return targetIterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            next = targetIterator.next();
+            return next;
+        }
+
+        @Override
+        public void remove() {
+            if (next == null) throw new IllegalStateException();
+            SharedCollectionImpl.this.remove(next);
+            next = null;
+        }
     }
 
-    public SharedCollectionImpl(CollectionService<E> target, ReadWriteLockImpl lock) {
+    private static final long serialVersionUID = 0x600L; // Version.
+    protected ReadWriteLockImpl lock;
+
+    public SharedCollectionImpl(CollectionService<E> target) {
+        this(target, new ReadWriteLockImpl());
+    }
+
+    public SharedCollectionImpl(CollectionService<E> target,
+            ReadWriteLockImpl lock) {
         super(target);
         this.lock = lock;
     }
-
 
     @Override
     public boolean add(E element) {
@@ -63,11 +94,11 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
         } finally {
             lock.writeLock.unlock();
         }
-     }
+    }
 
     @Override
     public SharedCollectionImpl<E> clone() {
-        lock.readLock.lock(); // Necessary since a copy of target is performed.
+        lock.readLock.lock();
         try {
             SharedCollectionImpl<E> copy = (SharedCollectionImpl<E>) super
                     .clone();
@@ -76,8 +107,13 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
         } finally {
             lock.readLock.unlock();
         }
-     }
-    
+    }
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
     @Override
     public boolean contains(Object o) {
         lock.readLock.lock();
@@ -117,7 +153,7 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
             lock.readLock.unlock();
         }
     }
-  
+
     @Override
     public boolean isEmpty() {
         lock.readLock.lock();
@@ -129,13 +165,12 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
-    public Iterator<E> iterator() { 
-        return updateInProgress() ? target().iterator() : 
-            new UnmodifiableCollectionImpl<E>(cloneTarget()).iterator();
+    public Iterator<E> iterator() {
+        return new IteratorImpl();
     }
 
     @Override
-    public void perform(Consumer<Collection<E>> action,
+    public void perform(Consumer<CollectionService<E>> action,
             CollectionService<E> view) {
         lock.readLock.lock();
         try {
@@ -185,26 +220,26 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
         }
     }
 
-    /** 
-     * The default implementation shares the lock between sub-collections, which 
-     * prevents concurrent closure-based removal. Sub-classes may override
-     * this method to avoid such limitation (e.g. {@code SharedTableImpl}).
-     */
     @SuppressWarnings("unchecked")
     @Override
-    public SharedCollectionImpl<E>[] subViews(int n) {
+    public CollectionService<E>[] split(int n) { // Shares the same locks.
         CollectionService<E>[] tmp;
         lock.readLock.lock();
         try {
-            tmp = target().subViews(n);
+            tmp = target().split(n);
         } finally {
             lock.readLock.unlock();
         }
-        SharedCollectionImpl<E>[] result = new SharedCollectionImpl[tmp.length];
+        CollectionService<E>[] result = new CollectionService[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
-            result[i] = new SharedCollectionImpl<E>(tmp[i], lock); // Same lock.
+            result[i] = new SharedCollectionImpl<E>(tmp[i], lock);
         }
         return result;
+    }
+
+    @Override
+    public CollectionService<E> threadSafe() {
+        return this;
     }
 
     @Override
@@ -227,30 +262,13 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
         }
     }
 
-    @Override
-    public void update(Consumer<Collection<E>> action, CollectionService<E> view) {
-        lock.writeLock.lock();
-        try {
-            updatingThread = Thread.currentThread();
-            target().update(action, view);
-        } finally {
-            lock.writeLock.unlock();
-            updatingThread = null;
-        }
-    }
-
     /** Returns a clone copy of target. */
-    protected TableService<E> cloneTarget() {
-        lock.readLock.lock();
+    protected CollectionService<E> cloneTarget() {
         try {
-            return (TableService<E>) super.cloneTarget();
-        } finally {
-            lock.readLock.unlock();
+            return target().clone();
+        } catch (CloneNotSupportedException e) {
+            throw new Error("Cannot happen since target is Cloneable.");
         }
     }
 
-    /** Indicates if the current thread is doing an atomic update. */
-    protected final boolean updateInProgress() {
-        return updatingThread == Thread.currentThread();
-    }    
 }

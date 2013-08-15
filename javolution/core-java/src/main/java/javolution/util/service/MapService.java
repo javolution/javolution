@@ -9,27 +9,29 @@
 package javolution.util.service;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import javolution.util.function.Equality;
+import javolution.util.function.Splittable;
 
 /**
- * The set of related map functionalities which can be used/reused to implement 
- * map collections.
+ * The set of related map functionalities required to implement fast maps.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  * @see javolution.util.FastMap#FastMap()
  */
-public interface MapService<K, V> extends Map<K, V>, ConcurrentMap<K, V>,
-        Serializable, Cloneable {
+public interface MapService<K, V> extends 
+        Map<K, V>, ConcurrentMap<K, V>, Splittable<MapService<K, V>>, Serializable, Cloneable {
 
     /** 
      * Returns a copy of this map; updates of the copy should not 
      * impact the original.
      */
     MapService<K, V> clone() throws CloneNotSupportedException;
+
 
     /**
      * Returns a set view over the entries of this map. The set 
@@ -38,6 +40,11 @@ public interface MapService<K, V> extends Map<K, V>, ConcurrentMap<K, V>,
      */
     @Override
     SetService<Map.Entry<K, V>> entrySet();
+
+    /**
+     *  Returns an iterator over this map entries.
+     */
+    Iterator<Entry<K, V>> iterator();
 
     /** 
     * Returns the key comparator used for key equality or order if the 
@@ -53,17 +60,10 @@ public interface MapService<K, V> extends Map<K, V>, ConcurrentMap<K, V>,
     SetService<K> keySet();
 
     /** 
-     * Returns {@code n} sub-views over distinct parts of this map.
-     * If {@code n == 1} or if this map cannot be split, 
-     * this method returns an array holding a single element.
-     * If {@code n > this.size()} this method may return empty views.
-     *  
-     * @param n the number of sub-views to return.
-     * @return the sub-views.
-     * @throws IllegalArgumentException if {@code n <= 1}
+     * Returns a thread-safe version of this service (used during 
+     * parallel updates).
      */
-    MapService<K, V>[] subViews(int n);
-
+    MapService<K,V> threadSafe();
 
     /** 
     * Returns the value comparator used for value equality.
@@ -75,6 +75,5 @@ public interface MapService<K, V> extends Map<K, V>, ConcurrentMap<K, V>,
      * support value/entry removal but not adding new values.
      */
     @Override
-    CollectionService<V> values();
- 
+    CollectionService<V> values(); 
 }

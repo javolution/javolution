@@ -18,20 +18,19 @@ import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
+import javolution.util.service.MapService;
 
 /**
  * Collection view implementation; can be used as root class for implementations 
- * if target is {@code null}, then of course methods calling target have to be
- * overridden.
- * For efficiency sub-classes should forward to the actual target for the methods
- * clear, remove, contains, size and isEmpty rather than to use their default 
+ * if target is {@code null}.
+ * When possible sub-classes should forward to the actual target for the methods
+ * clear, remove, contains, size and isEmpty rather than using the default 
  * implementation.
  */
-public class CollectionView<E> extends FastCollection<E> implements CollectionService<E> {
-//public class CollectionView<E> implements CollectionService<E> {
+public abstract class CollectionView<E> extends FastCollection<E> implements CollectionService<E> {
+//public abstract class CollectionView<E> implements CollectionService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-
     private CollectionService<E> target;
 
     /**
@@ -42,9 +41,7 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
     }
 
     @Override
-    public boolean add(E element) {
-        return target.add(element);
-    }
+    public abstract boolean add(E element);
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
@@ -80,9 +77,7 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
     }
 
     @Override
-    public Equality<? super E> comparator() {
-        return target.comparator();
-    }
+    public abstract Equality<? super E> comparator();
 
     @Override
     @SuppressWarnings("unchecked")
@@ -163,17 +158,14 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return target.iterator();
-    }
+    public abstract Iterator<E> iterator();
 
     @Override
-    public void perform(Consumer<Collection<E>> action,
-            CollectionService<E> view) {
+    public void perform(Consumer<CollectionService<E>> action, CollectionService<E> view) {
         if (target == null) {
             action.accept(view);
         } else {
-            target.update(action, view);
+            target.perform(action, view);
         }
     }
 
@@ -190,7 +182,7 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
         }
         return false;
     }
-
+    
     @Override
     public boolean removeAll(Collection<?> c) {
         boolean changed = false;
@@ -230,14 +222,22 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
 
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionView<E>[] subViews(int n) {
-        CollectionService<E>[] tmp = target.subViews(n);
-        CollectionView<E>[] result = new CollectionView[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            result[i] = this.clone();
-            result[i].target = tmp[i];
+    public CollectionService<E>[] split(int n) {
+        if (target == null) return new CollectionService[] { this }; // No split.
+        CollectionService<E>[] subTargets = target.split(n);
+        CollectionService<E>[] result = new CollectionService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            CollectionView<E> copy = this.clone();
+            copy.target = subTargets[i];
+            result[i] = copy;
         }
         return result;
+    }
+
+    @Override
+    public CollectionService<E> threadSafe() {
+        // We use shared collection as default (they can split).
+        return new SharedCollectionImpl<E>(this); 
     }
 
     @Override
@@ -264,30 +264,20 @@ public class CollectionView<E> extends FastCollection<E> implements CollectionSe
     }
 
     @Override
-    public void update(Consumer<Collection<E>> action, CollectionService<E> view) {
+    public void update(Consumer<CollectionService<E>> action, CollectionService<E> view) {
         if (target == null) {
             action.accept(view);
         } else {
-            target.update(action, view);
+            target.perform(action, view);
         }
     }
-
+    
+    protected CollectionService<E> service() {
+        return this;
+    }
+    
     /** Returns the actual target */
     protected CollectionService<E> target() {
         return target;
-    }
-
-    /** Returns a clone copy of target. */
-    protected CollectionService<E> cloneTarget() {
-        try {
-            return target.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new Error("Cannot happen since target is Cloneable.");
-        }
-    }
-
-    @Override
-    protected CollectionService<E> service() {
-        return this;
     }
 }

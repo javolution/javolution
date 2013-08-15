@@ -8,22 +8,21 @@
  */
 package javolution.util.internal.map.sorted;
 
-import java.util.Comparator;
-import java.util.Map;
+import java.util.Iterator;
 
 import javolution.util.function.Equality;
-import javolution.util.internal.map.MapView;
-import javolution.util.service.SortedMapService;
-import javolution.util.service.SortedSetService;
+import javolution.util.internal.table.sorted.FastSortedTableImpl;
 
 /**
  * A map view over a sorted table of entries.
  */
-public class FastSortedMapImpl<K, V> extends MapView<K,V> implements SortedMapService<K,V> {
-
+public class FastSortedMapImpl<K, V> extends SortedMapView<K,V> {
+     
     private static final long serialVersionUID = 0x600L; // Version.
-    final Equality<? super K> keyComparator;
-    final Equality<? super V> valueComparator;
+    private final Equality<? super K> keyComparator;
+    private FastSortedTableImpl<Entry<K,V>> entries 
+        = new FastSortedTableImpl<Entry<K,V>>(new EntryComparator());
+    private final Equality<? super V> valueComparator;
 
     public FastSortedMapImpl(final Equality<? super K> keyComparator,
             final Equality<? super V> valueComparator) {
@@ -32,50 +31,69 @@ public class FastSortedMapImpl<K, V> extends MapView<K,V> implements SortedMapSe
         this.valueComparator = valueComparator;
      }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Comparator<? super K> comparator() {
-        // TODO Auto-generated method stub
-        return null;
+    public boolean containsKey(Object key) {
+        return entries.contains(new MapEntryImpl<K,V>((K)key, null));
     }
 
     @Override
     public K firstKey() {
-        // TODO Auto-generated method stub
-        return null;
+        return entries.getFirst().getKey();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public V get(Object key) {
+        int i = entries.indexOf(new MapEntryImpl<K,V>((K)key, null));
+        return (i >= 0) ? entries.get(i).getValue() : null;
+    }
+
+    @Override
+    public Iterator<Entry<K, V>> iterator() {
+        return entries.iterator();
+    }
+
+    @Override
+    public Equality<? super K> keyComparator() {
+        return keyComparator;
     }
 
     @Override
     public K lastKey() {
-        // TODO Auto-generated method stub
-        return null;
+        return entries.getLast().getKey();
     }
 
     @Override
-    public SortedMapService<K, V> headMap(K toKey) {
-        // TODO Auto-generated method stub
+    public V put(K key, V value) {
+        MapEntryImpl<K,V> entry = new MapEntryImpl<K,V>(key, value);
+        int i = entries.positionOf(entry);
+        if (i < size()) {
+            Entry<K,V> e = entries.get(i);
+            if (keyComparator().areEqual(key, e.getKey())) { // Entry exists.
+                V previous = e.getValue();
+                e.setValue(value);
+                return previous;
+            }
+        }    
+        entries.add(i, entry);
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public SortedMapService<K, V> subMap(K fromKey, K toKey) {
-        // TODO Auto-generated method stub
-        return null;
+    public V remove(Object key) {
+        int i = entries.indexOf(new MapEntryImpl<K,V>((K)key, null));
+        if (i < 0) return null;
+        Entry<K,V> e = entries.get(i);
+        V previous = e.getValue();
+        entries.remove(i);
+        return previous;
     }
 
     @Override
-    public SortedMapService<K, V> tailMap(K fromKey) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public SortedSetService<Map.Entry<K, V>> entrySet() {
-        return null;
-    }
-
-    @Override
-    public SortedSetService<K> keySet() {
-        return null;
+    public Equality<? super V> valueComparator() {
+        return valueComparator;
     }
 
 }

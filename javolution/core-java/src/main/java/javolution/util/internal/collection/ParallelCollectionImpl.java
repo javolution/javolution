@@ -8,10 +8,11 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import javolution.context.ConcurrentContext;
 import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
@@ -26,8 +27,18 @@ public class ParallelCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public boolean add(E e) {
+        return target().add(e);
+    }
+
+    @Override
     public void clear() {
         target().clear();
+    }
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
     }
 
     @Override
@@ -41,24 +52,27 @@ public class ParallelCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
-    public void perform(final Consumer<Collection<E>> action,
+    public Iterator<E> iterator() {
+        return target().iterator();
+    }
+
+    @Override
+    public void perform(final Consumer<CollectionService<E>> action,
             CollectionService<E> view) {
-        final ConcurrentContext ctx = ConcurrentContext.enter();
+        ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            CollectionService<E>[] subViews = view.subViews(concurrency + 1);
-            if (subViews.length == 1) { // No concurrency.
-                target().perform(action, subViews[0]);
-                return;
-            }
-            for (final CollectionService<E> subView : subViews) {
+            CollectionService<E>[] subViews = view.split(concurrency + 1);
+            for (int i = 1; i < subViews.length; i++) {
+                final CollectionService<E> subView = subViews[i];
                 ctx.execute(new Runnable() {
                     @Override
                     public void run() {
-                        target().perform(action, subView); // Non-recursive.
+                        target().perform(action, subView);
                     }
                 });
             }
+            target().perform(action, subViews[0]); // This thread works too !
         } finally {
             // Any exception raised during parallel iterations will be re-raised here.                       
             ctx.exit();
@@ -76,24 +90,23 @@ public class ParallelCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
-    public void update(final Consumer<Collection<E>> action,
+    public void update(final Consumer<CollectionService<E>> action,
             CollectionService<E> view) {
-        final ConcurrentContext ctx = ConcurrentContext.enter();
+        ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            CollectionService<E>[] subViews = view.subViews(concurrency + 1);
-            if (subViews.length == 1) { // No concurrency.
-                target().update(action, subViews[0]);
-                return;
-            }
-            for (final CollectionService<E> subView : subViews) {
+            CollectionService<E>[] subViews = view.threadSafe()
+                    .split(concurrency + 1);
+            for (int i = 1; i < subViews.length; i++) {
+                final CollectionService<E> subView = subViews[i];
                 ctx.execute(new Runnable() {
                     @Override
                     public void run() {
-                        target().update(action, subView); // Non-recursive.
+                        target().update(action, subView);
                     }
                 });
             }
+            target().perform(action, subViews[0]); // This thread works too !
         } finally {
             // Any exception raised during parallel iterations will be re-raised here.                       
             ctx.exit();

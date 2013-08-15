@@ -26,5 +26,8 @@ public interface SortedSetService<E> extends SetService<E>, SortedSet<E> {
 
     @Override
     SortedSetService<E> tailSet(E fromElement);
+    
+    @Override
+    SortedSetService<E> threadSafe(); 
 
 }

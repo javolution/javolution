@@ -10,6 +10,7 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
@@ -17,7 +18,9 @@ import javolution.util.service.CollectionService;
  */
 public class ReversedCollectionImpl<E> extends CollectionView<E> {
 
-    protected class IteratorImpl implements Iterator<E> {
+    /** Reversing Iterator. */
+    private class IteratorImpl implements Iterator<E> {
+
         @SuppressWarnings("unchecked")
         private final E[] elements = (E[]) new Object[size()];
         private int index = 0;
@@ -53,8 +56,18 @@ public class ReversedCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public boolean add(E e) {
+        return target().add(e);
+    }
+
+    @Override
     public void clear() {
         target().clear();
+    }
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
     }
 
     @Override

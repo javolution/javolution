@@ -21,8 +21,8 @@ import javolution.util.function.Equality;
  */
 public class FastTableImpl<E> extends TableView<E> {
 
-    /** Internal iterator faster than generic TableIteratorImpl */
-    private final class IteratorImpl implements Iterator<E> {
+    /** Internal iterator faster than generic TableIteratorImpl. */
+    private class IteratorImpl implements Iterator<E> {
         private int currentIndex = -1;
         private int nextIndex;
 
@@ -183,11 +183,6 @@ public class FastTableImpl<E> extends TableView<E> {
         return size;
     }
 
-    @Override
-    public SubTableImpl<E>[] subViews(int n) {
-        return SubTableImpl.splitOf(this, n);
-    }
-
     private void checkDownsize() {
         if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN)
                 && (size <= (capacity >> 2))) downsize();
@@ -205,12 +200,13 @@ public class FastTableImpl<E> extends TableView<E> {
     /** For serialization support */
     @SuppressWarnings("unchecked")
     private void readObject(java.io.ObjectInputStream s)
-        throws java.io.IOException, ClassNotFoundException {
+            throws java.io.IOException, ClassNotFoundException {
         s.defaultReadObject(); // Deserialize comparator.
         int n = s.readInt();
-        for (int i = 0; i < n; i++) addLast((E)s.readObject());
+        for (int i = 0; i < n; i++)
+            addLast((E) s.readObject());
     }
-   
+
     private void upsize() {
         fractal = (fractal == null) ? new FractalTableImpl() : fractal.upsize();
         capacity = fractal.capacity();
@@ -218,10 +214,11 @@ public class FastTableImpl<E> extends TableView<E> {
 
     /** For serialization support */
     private void writeObject(java.io.ObjectOutputStream s)
-        throws java.io.IOException{
+            throws java.io.IOException {
         s.defaultWriteObject(); // Serialize comparator.
         s.writeInt(size);
-        for (int i = 0; i < size; i++) s.writeObject(fractal.get(i));
+        for (int i = 0; i < size; i++)
+            s.writeObject(fractal.get(i));
     }
 
 }

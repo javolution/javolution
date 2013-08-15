@@ -21,7 +21,8 @@ import javolution.util.service.CollectionService;
  */
 public class SortedCollectionImpl<E> extends CollectionView<E>  {
 
-    protected class IteratorImpl implements Iterator<E> {
+    /** Sorting Iterator. */
+    private class IteratorImpl implements Iterator<E> {
         private final Iterator<E> iterator;
         private E next;
         
@@ -55,8 +56,7 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
 
     }
    
-    private static final long serialVersionUID = 0x600L; // Version.
-    
+    private static final long serialVersionUID = 0x600L; // Version.    
     protected final Equality<E> comparator;
 
     @SuppressWarnings("unchecked")
@@ -64,6 +64,11 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
         super(target);
         this.comparator = (comparator instanceof Equality) ?
                 (Equality<E>) comparator : new WrapperComparatorImpl<E>(comparator);
+    }
+
+    @Override
+    public boolean add(E e) {
+        return target().add(e);
     }
 
     @Override

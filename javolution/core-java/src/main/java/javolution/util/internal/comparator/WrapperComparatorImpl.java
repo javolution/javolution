@@ -33,7 +33,7 @@ public final class WrapperComparatorImpl<E> implements Equality<E>,
         throw new UnsupportedOperationException(
                 "Standard comparator (java.util.Comparator) cannot be used for "
                         + "hashcode calculations; please use a coherent equality comparator "
-                        + "instead (javolution.util.function.ComparatorService).");
+                        + "instead (e.g. javolution.util.function.Equality).");
     }
 
     @Override

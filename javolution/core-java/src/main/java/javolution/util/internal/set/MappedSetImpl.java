@@ -15,7 +15,8 @@ import javolution.util.service.SetService;
 /**
  * A mapped view over a set.
  */
-public class MappedSetImpl<E, R> extends MappedCollectionImpl<E, R> implements SetService<R> {
+public abstract class MappedSetImpl<E, R> extends MappedCollectionImpl<E, R>
+        implements SetService<R> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -24,5 +25,18 @@ public class MappedSetImpl<E, R> extends MappedCollectionImpl<E, R> implements S
         super(target, function);
     }
 
+    @Override
+    public abstract boolean add(R r);
+
+    @Override
+    public abstract boolean contains(Object r);
+
+    @Override
+    public abstract boolean remove(Object r);
+
+    @Override
+    public SetService<R> threadSafe() {
+        return new SharedSetImpl<R>(this);
+    }
 
 }

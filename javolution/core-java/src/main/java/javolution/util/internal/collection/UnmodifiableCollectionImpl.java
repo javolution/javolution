@@ -10,6 +10,7 @@ package javolution.util.internal.collection;
 
 import java.util.Iterator;
 
+import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
 /**
@@ -17,6 +18,26 @@ import javolution.util.service.CollectionService;
  */
 public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
 
+    /** Read-Only Iterator. */
+    private class IteratorImpl implements Iterator<E> {
+        private final Iterator<E> targetIterator = target().iterator();
+
+        @Override
+        public boolean hasNext() {
+            return targetIterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            return targetIterator.next();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("Read-Only Collection.");
+        }
+    }
+    
     private static final long serialVersionUID = 0x600L; // Version.
 
     public UnmodifiableCollectionImpl(CollectionService<E> target) {
@@ -34,6 +55,11 @@ public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
+    @Override
     public boolean contains(Object obj) {
         return target().contains(obj);
     }
@@ -45,25 +71,8 @@ public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return new Iterator<E>() {
-            Iterator<E> it = target().iterator();
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public E next() {
-                return it.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Read-Only Collection.");
-            }
-        };
-    }
+        return new IteratorImpl();
+   }
 
     @Override
     public boolean remove(Object o) {
@@ -74,5 +83,10 @@ public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
     public int size() {
         return target().size();
     }
-    
+
+    @Override
+    public CollectionService<E> threadSafe() {
+        return this;
+    }
+
 }

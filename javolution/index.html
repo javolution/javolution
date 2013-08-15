@@ -199,8 +199,9 @@
                                          improved for larger size (e.g. <A HREF="docs/api/javolution/util/FastTable.html">FastTable</A> 
                                          random insertion/deletion in <i>O(Log(n))</i>).</LI>
                                     <LI> Most <A HREF="docs/api/javolution/lang/Parallelizable.html">parallelizable</A> classes (including 
-                                         collections) are either mutex-free or using extremely short locking time in order not to impact 
-                                         the worst case execution time of high priority threads (works well only if the VM 
+                                         collections) are either mutex-free (<A HREF="docs/api/javolution/util/FastCollection.html#atomic()">atomic</A>) 
+                                         or using extremely short locking time (<A HREF="docs/api/javolution/util/FastCollection.html#atomic()">shared</A>) 
+                                         in order not to impact the worst case execution time of high priority threads (works well if the VM 
                                          supports priority inheritance).</LI>
                                     <LI> <A HREF="docs/api/javolution/context/package-summary.html#package_description">Context</A> programming
                                         in order to achieve true separation of concerns (logging, performance, etc).</LI>
@@ -339,7 +340,7 @@
                         <TR>
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - August 12th, 2013 (stable)</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.0.0-SNAPSHOT - August 15th, 2013 (stable)</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -739,7 +740,7 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
-                                    <LI CLASS="simplespacer_body"><B>August 12, 2013: Javolution 6.0.0-SNAPSHOT (stable)</B><BR>
+                                    <LI CLASS="simplespacer_body"><B>August 15, 2013: Javolution 6.0.0-SNAPSHOT (javolution.util completed)</B><BR>
                                         <P>Stable release, correction of the current issues backlog almost complete.</P>
                                         <P>Includes fractal classes, closures support, collections extended views, 
                                         immutability support, real-time/parellelizable 
@@ -814,7 +815,7 @@
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : August 12th, 2013<BR>
+                                Revision      : August 15th, 2013<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">

@@ -29,45 +29,50 @@ public final class TableIteratorImpl<E> implements ListIterator<E> {
         this.end = table.size();
     }
 
+    @Override
     public void add(E e) {
         table.add(nextIndex++, e);
         end++;
         currentIndex = -1;
     }
 
+    @Override
     public boolean hasNext() {
         return (nextIndex < end);
     }
 
+    @Override
     public boolean hasPrevious() {
         return nextIndex > 0;
     }
 
+    @Override
     public E next() {
-        if (nextIndex >= end)
-            throw new NoSuchElementException();
+        if (nextIndex >= end) throw new NoSuchElementException();
         currentIndex = nextIndex++;
         return table.get(currentIndex);
     }
 
+    @Override
     public int nextIndex() {
         return nextIndex;
     }
 
+    @Override
     public E previous() {
-        if (nextIndex <= 0)
-            throw new NoSuchElementException();
+        if (nextIndex <= 0) throw new NoSuchElementException();
         currentIndex = --nextIndex;
         return table.get(currentIndex);
     }
 
+    @Override
     public int previousIndex() {
         return nextIndex - 1;
     }
 
+    @Override
     public void remove() {
-        if (currentIndex < 0)
-            throw new IllegalStateException();
+        if (currentIndex < 0) throw new IllegalStateException();
         table.remove(currentIndex);
         end--;
         if (currentIndex < nextIndex) {
@@ -76,6 +81,7 @@ public final class TableIteratorImpl<E> implements ListIterator<E> {
         currentIndex = -1;
     }
 
+    @Override
     public void set(E e) {
         if (currentIndex >= 0) {
             table.set(currentIndex, e);

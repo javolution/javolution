@@ -8,9 +8,7 @@
  */
 package javolution.util.internal.table;
 
-import java.util.Iterator;
-import java.util.ListIterator;
-
+import javolution.util.function.Equality;
 import javolution.util.service.TableService;
 
 /**
@@ -40,64 +38,17 @@ public class UnmodifiableTableImpl<E> extends TableView<E> {
     }
 
     @Override
-    public ListIterator<E> listIterator(final int index) {
-        return new ListIterator<E>() {
-            ListIterator<E> it = target().listIterator(index);
+    public int indexOf(Object o) {
+        return target().indexOf(o);
+    }
 
-            @Override
-            public void add(E e) {
-                throw new UnsupportedOperationException("Read-Only Iterator");
-            }
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public boolean hasPrevious() {
-                return it.hasPrevious();
-            }
-
-            @Override
-            public E next() {
-                return it.next();
-            }
-
-            @Override
-            public int nextIndex() {
-                return it.nextIndex();
-            }
-
-            @Override
-            public E previous() {
-                return it.previous();
-            }
-
-            @Override
-            public int previousIndex() {
-                return it.previousIndex();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Read-Only Iterator");
-            }
-
-            @Override
-            public void set(E e) {
-                throw new UnsupportedOperationException("Read-Only Iterator");
-            }
-        };
+    @Override
+    public int lastIndexOf(Object o) {
+        return target().lastIndexOf(o);
     }
 
     @Override
     public E remove(int index) {
-        throw new UnsupportedOperationException("Read-Only Collection.");
-    }
-
-    @Override
-    public boolean remove(Object o) {
         throw new UnsupportedOperationException("Read-Only Collection.");
     }
 
@@ -107,8 +58,22 @@ public class UnmodifiableTableImpl<E> extends TableView<E> {
     }
 
     @Override
+    public TableService<E> threadSafe() {
+        return this;
+    }
+
+    @Override
+    public E get(int index) {
+        return target().get(index);
+    }
+
+    @Override
     public int size() {
         return target().size();
     }
-  
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
 }

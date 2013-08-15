@@ -1,13 +1,16 @@
 colapi/target
 javolution/.project
+javolution/.settings
 javolution/core-cpp/.classpath
 javolution/core-cpp/.project
+javolution/core-cpp/.settings
 javolution/core-cpp/target
 javolution/core-java/*.settings
 javolution/core-java/.classpath
 javolution/core-java/.project
 javolution/core-java/target
 javolution/target
+javolution/test-cpp/*.settings
 javolution/test-cpp/.classpath
 javolution/test-cpp/.project
 javolution/test-cpp/target

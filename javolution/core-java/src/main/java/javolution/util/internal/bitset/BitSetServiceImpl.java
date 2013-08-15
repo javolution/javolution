@@ -344,11 +344,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     }
 
     @Override
-    public BitSetServiceImpl[] subViews(int n) {
-        return new BitSetServiceImpl[] { this }; // No split.
-    }
-
-    @Override
     public void xor(BitSetService that) {
         long[] thatBits = (that instanceof BitSetServiceImpl) ? ((BitSetServiceImpl) that).bits
                 : that.toLongArray();

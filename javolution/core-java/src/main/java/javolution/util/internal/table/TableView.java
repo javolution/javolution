@@ -15,17 +15,14 @@ import java.util.NoSuchElementException;
 
 import javolution.util.function.Equality;
 import javolution.util.internal.collection.CollectionView;
+import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
  * Table view implementation; can be used as root class for implementations 
- * if target is {@code null}, then of course methods calling target have to be
- * overridden.
- * For efficiency sub-classes should forward to the actual target for the methods
- * clear and size rather than to use their default implementation.
+ * if target is {@code null}.
  */
-public class TableView<E> extends CollectionView<E>
-        implements TableService<E> {
+public abstract class TableView<E> extends CollectionView<E> implements TableService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -35,12 +32,10 @@ public class TableView<E> extends CollectionView<E>
     public TableView(TableService<E> target) {
         super(target);
     }
-    
+
     @Override
-    public void add(int index, E element) {
-        target().add(index, element);
-    }
-    
+    public abstract void add(int index, E element);
+
     @Override
     public boolean addAll(int index, Collection<? extends E> c) {
         return subList(index, index).addAll(c);
@@ -57,6 +52,14 @@ public class TableView<E> extends CollectionView<E>
     }
 
     @Override
+    public abstract void clear();
+
+    @Override
+    public final boolean contains(Object o) {
+        return indexOf(o) >= 0;
+    }
+
+    @Override
     public Iterator<E> descendingIterator() {
         return new ReversedTableImpl<E>(this).iterator();
     }
@@ -67,9 +70,7 @@ public class TableView<E> extends CollectionView<E>
     }
 
     @Override
-    public E get(int index) {
-        return target().get(index);
-    }
+    public abstract E get(int index);
 
     @Override
     public E getFirst() {
@@ -87,7 +88,7 @@ public class TableView<E> extends CollectionView<E>
     @Override
     public int indexOf(Object o) {
         Equality<Object> cmp = (Equality<Object>) this.comparator();
-        for (int i = 0, n=size(); i < n; i++) {
+        for (int i = 0, n = size(); i < n; i++) {
             if (cmp.areEqual(o, get(i))) return i;
         }
         return -1;
@@ -98,19 +99,19 @@ public class TableView<E> extends CollectionView<E>
         return size() == 0;
     }
 
+    @Override
+    public Iterator<E> iterator() {
+        return listIterator(0);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public int lastIndexOf(Object o) {
         Equality<Object> cmp = (Equality<Object>) this.comparator();
         for (int i = size() - 1; i >= 0; i--) {
-             if (cmp.areEqual(o, get(i))) return i;
+            if (cmp.areEqual(o, get(i))) return i;
         }
         return -1;
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return listIterator(0);
     }
 
     @Override
@@ -186,8 +187,14 @@ public class TableView<E> extends CollectionView<E>
     }
 
     @Override
-    public E remove(int index) {
-        return target().remove(index);
+    public abstract E remove(int index);
+
+    @Override
+    public final boolean remove(Object o) {
+        int i = indexOf(o);
+        if (i < 0) return false;
+        remove(i);
+        return true;
     }
 
     @Override
@@ -219,13 +226,24 @@ public class TableView<E> extends CollectionView<E>
     }
 
     @Override
-    public E set(int index, E element) {
-        return target().set(index, element);
+    public abstract E set(int index, E element);
+
+    @Override
+    public abstract int size();
+
+    @Override
+    public CollectionService<E>[] split(int n) {
+        return SubTableImpl.splitOf(this, n); // Sub-views over this.
     }
 
     @Override
     public TableService<E> subList(int fromIndex, int toIndex) {
         return new SubTableImpl<E>(this, fromIndex, toIndex);
+    }
+
+    @Override
+    public TableService<E> threadSafe() {
+        return new SharedTableImpl<E>(this);
     }
 
     /** Throws NoSuchElementException */
@@ -240,8 +258,8 @@ public class TableView<E> extends CollectionView<E>
     }
 
     /** Returns the actual target */
+    @Override
     protected TableService<E> target() {
         return (TableService<E>) super.target();
     }
-
 }

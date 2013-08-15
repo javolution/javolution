@@ -23,4 +23,8 @@ public class SharedSetImpl<E> extends SharedCollectionImpl<E> implements
         super(target);
     }
 
+    @Override
+    public SetService<E> threadSafe() {
+        return this;
+    }
 }

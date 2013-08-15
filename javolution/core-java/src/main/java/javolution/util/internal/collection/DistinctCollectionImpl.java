@@ -19,17 +19,13 @@ import javolution.util.service.CollectionService;
  */
 public class DistinctCollectionImpl<E> extends CollectionView<E> {
 
-    protected class IteratorImpl implements Iterator<E> {
+    /** Peeking ahead iterator. */
+    private class IteratorImpl implements Iterator<E> {
 
-        private boolean ahead; // Indicates if the iterator is ahead (on next element)
-        private final FastSet<E> iterated;
+        private boolean ahead; 
+        private final FastSet<E> iterated = new FastSet<E>(comparator());
         private E next;
-        private final Iterator<E> targetIterator;
-
-        public IteratorImpl(Equality<? super E> cmp) {
-            iterated = new FastSet<E>(cmp);
-            targetIterator = target().iterator();
-        }
+        private final Iterator<E> targetIterator = target().iterator();
 
         @Override
         public boolean hasNext() {
@@ -70,8 +66,28 @@ public class DistinctCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public void clear() {
+        target().clear();
+    }
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return target().contains(o);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return target().isEmpty();
+    }
+
+    @Override
     public Iterator<E> iterator() {
-        return new IteratorImpl(this.comparator());
+        return new IteratorImpl();
     }
 
     @Override

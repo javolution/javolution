@@ -14,7 +14,8 @@ import javolution.util.service.SetService;
 /**
  * An unmodifiable view over a set.
  */
-public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E> implements SetService<E> {
+public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E>
+        implements SetService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -22,4 +23,8 @@ public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E> implem
         super(target);
     }
 
+    @Override
+    public SetService<E> threadSafe() {
+        return this;
+    }
 }

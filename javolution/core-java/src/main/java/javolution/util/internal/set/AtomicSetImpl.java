@@ -8,19 +8,24 @@
  */
 package javolution.util.internal.set;
 
-import javolution.util.internal.collection.SharedCollectionImpl;
+import javolution.util.internal.collection.AtomicCollectionImpl;
 import javolution.util.service.SetService;
 
 /**
  * An atomic view over a set allowing concurrent access and sequential updates.
  */
-public class AtomicSetImpl<E> extends SharedCollectionImpl<E> implements
+public class AtomicSetImpl<E> extends AtomicCollectionImpl<E> implements
         SetService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
     public AtomicSetImpl(SetService<E> target) {
         super(target);
+    }
+
+    @Override
+    public SetService<E> threadSafe() {
+        return this;
     }
 
 }

@@ -6,24 +6,25 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util.internal.map;
+package javolution.util.internal.map.sorted;
 
 import java.io.Serializable;
 import java.util.Map;
 
 /**
- * The map entry implementation.
+ * The sorted map entry implementation (serializable).
  */
-final class FastMapEntryImpl<K, V> implements Map.Entry<K, V>, Serializable {
+public final class MapEntryImpl<K, V> implements Map.Entry<K, V>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-
-    int hash;
     K key;
-    FastMapEntryImpl<K, V> next;
-    FastMapEntryImpl<K, V> previous;
     V value;
-
+  
+    public MapEntryImpl(K key, V value) {
+        this.key = key;
+        this.value = value;
+    }
+    
     @Override
     public K getKey() {
         return key;

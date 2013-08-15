@@ -91,7 +91,6 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
         return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
     }
 
-
     /***************************************************************************
      * Set operations optimizations.
      */
