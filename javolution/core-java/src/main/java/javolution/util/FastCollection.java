@@ -50,17 +50,17 @@ import javolution.util.service.CollectionService;
  *     smooth capacity increase/decrease and minimal memory footprint. 
  *     Fast collections support multiple views which can be chained.
  * <ul>
- *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
+ *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
+ *    and collection updates (including {@link #addAll addAll}, {@link #removeIf removeIf}} are atomic.</li>
  *    <li>{@link #shared} - Thread-safe view using allowing concurrent reads based 
  *    on mutex (<a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
  *    readers-writer locks).</li>
- *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
- *    and collection updates (including {@link #addAll addAll}, {@link #removeIf removeIf}} are atomic.</li>
  *    <li>{@link #parallel} - A view allowing parallel processing including {@link #update updates}.</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
+ *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
  *    <li>{@link #filtered filtered(filter)} - View exposing only the elements matching the specified filter.</li>
  *    <li>{@link #mapped mapped(function)} - View exposing elements through the specified mapping function.</li>
- *    <li>{@link #sorted} - View exposing elements sorted according to their natural order 
+ *    <li>{@link #sorted sorted(comparator)} - View exposing elements sorted according to their natural order 
  *                          of using a specified comparator.</li>
  *    <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
@@ -301,7 +301,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Closure operations.
      */
 
-    @SuppressWarnings("unchecked")
     /** 
      * Executes the specified read-only action on this collection.
      * That logic may be performed concurrently on sub-collections 
@@ -314,6 +313,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      *         this collection (e.g. action on set and this is a list). 
      * @see #update(Consumer)
      */
+    @SuppressWarnings("unchecked")
     @Realtime(limit = LINEAR)
     public void perform(Consumer<? extends Collection<E>> action) {
         service().perform((Consumer<CollectionService<E>>) action, service());

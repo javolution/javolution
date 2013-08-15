@@ -21,7 +21,6 @@ public final class AttributesImpl implements Attributes {
         public String toString() {
             return qName + "=" + value;
         }
-
     }
 
     private static final CharArray CDATA = new CharArray("CDATA");
@@ -71,6 +70,7 @@ public final class AttributesImpl implements Attributes {
         attribute.prefix = prefix;
         attribute.qName = qName;
         attribute.value = value;
+        length++;
     }
 
     @Override
@@ -166,10 +166,5 @@ public final class AttributesImpl implements Attributes {
      */
     public void reset() {
         length = 0;
-    }
-
-    @Override
-    public String toString() {
-        return attributes.toString();
     }
 }

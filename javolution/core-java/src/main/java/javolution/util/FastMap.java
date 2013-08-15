@@ -37,12 +37,12 @@ import javolution.util.service.MapService;
  *     smooth capacity increase/decrease and minimal memory footprint. 
  *     Fast maps support multiple views which can be chained.
  * <ul>
- *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
- *    <li>{@link #shared} - View allowing concurrent modifications.</li>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
  *    and map updates (e.g. {@link #putAll putAll}) are atomic.</li>
+ *    <li>{@link #shared} - View allowing concurrent modifications.</li>
  *    <li>{@link #parallel} - A view allowing parallel processing including {@link #update updates}.</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
+ *    <li>{@link #unmodifiable} - View which does not allow any modifications.</li>
  *    <li>{@link #entrySet} - {@link FastSet} view over the map entries allowing 
  *                            entries to be added/removed.</li>
  *    <li>{@link #keySet} - {@link FastSet} view over the map keys allowing keys 
