@@ -294,7 +294,7 @@
     <modules>
         <module>core-java</module>
         <module>core-cpp</module>
-        <module>test-cpp</module>
+      <!-- <module>test-cpp</module> Problem with deploy. -->  
     </modules>
 
 </project>
