@@ -438,6 +438,542 @@ core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=uns
 core-java/src/main/java/javolution/xml/ws/package-info.java -text
 core-java/src/test/java/javolution/util/FastTableTest.java -text
 /index.html -text
+javolution/LICENSE.txt -text
+javolution/core-cpp/lib/windows/DbgHelp.Lib -text
+javolution/core-cpp/pom.xml -text
+javolution/core-cpp/src/include/c++/boost/assert.hpp -text
+javolution/core-cpp/src/include/c++/boost/config.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi/borland_prefix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi/borland_suffix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi/msvc_prefix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi/msvc_suffix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi_prefix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/abi_suffix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/auto_link.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/borland.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/codegear.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/comeau.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/common_edg.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/compaq_cxx.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/digitalmars.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/gcc.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/gcc_xml.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/greenhills.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/hp_acc.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/intel.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/kai.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/metrowerks.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/mpw.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/nvcc.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/pgi.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/sgi_mipspro.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/sunpro_cc.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/vacpp.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/compiler/visualc.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/no_tr1/cmath.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/no_tr1/complex.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/no_tr1/functional.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/no_tr1/memory.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/no_tr1/utility.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/aix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/amigaos.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/beos.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/bsd.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/cygwin.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/hpux.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/irix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/linux.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/macos.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/qnxnto.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/solaris.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/symbian.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/vxworks.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/platform/win32.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/posix_features.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/requires_threads.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/select_compiler_config.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/select_platform_config.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/select_stdlib_config.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/dinkumware.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/libcomo.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/libstdcpp3.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/modena.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/msl.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/roguewave.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/sgi.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/stlport.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/stdlib/vacpp.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/suffix.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/user.hpp -text
+javolution/core-cpp/src/include/c++/boost/config/warning_disable.hpp -text
+javolution/core-cpp/src/include/c++/boost/cstdint.hpp -text
+javolution/core-cpp/src/include/c++/boost/current_function.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/algorithm.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/allocator_utilities.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/atomic_count.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/binary_search.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/call_traits.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/catch_exceptions.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/compressed_pair.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/container_fwd.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/dynamic_bitset.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/endian.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/has_default_constructor.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/identifier.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/indirect_traits.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/interlocked.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/is_function_ref_tester.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/is_incrementable.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/is_xxx.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/iterator.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/lcast_precision.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/lightweight_mutex.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/lightweight_test.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/lightweight_thread.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/limits.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/named_template_params.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/no_exceptions_support.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/none_t.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/numeric_traits.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/ob_call_traits.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/ob_compressed_pair.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/quick_allocator.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/reference_content.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/scoped_enum_emulation.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/select_type.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/sp_typeinfo.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/templated_streams.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/utf8_codecvt_facet.hpp -text
+javolution/core-cpp/src/include/c++/boost/detail/workaround.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/all.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/current_exception_cast.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/attribute_noreturn.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/error_info_impl.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/exception_ptr.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/is_output_streamable.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/object_hex_dump.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/detail/type_info.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/diagnostic_information.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/enable_current_exception.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/enable_error_info.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_api_function.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_at_line.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_errno.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_file_handle.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_file_name.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_file_open_mode.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_nested_exception.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/errinfo_type_info_name.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/error_info.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/exception.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/get_error_info.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/info.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/info_tuple.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/to_string.hpp -text
+javolution/core-cpp/src/include/c++/boost/exception/to_string_stub.hpp -text
+javolution/core-cpp/src/include/c++/boost/limits.hpp -text
+javolution/core-cpp/src/include/c++/boost/memory_order.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_gcc.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_gcc_x86.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_pthreads.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_solaris.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_sync.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/atomic_count_win32.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/lightweight_mutex.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/lwm_nop.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/lwm_pthreads.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/lwm_win32_cs.hpp -text
+javolution/core-cpp/src/include/c++/boost/smart_ptr/detail/sp_has_sync.hpp -text
+javolution/core-cpp/src/include/c++/boost/throw_exception.hpp -text
+javolution/core-cpp/src/include/c++/booster/backtrace.cpp -text
+javolution/core-cpp/src/include/c++/booster/backtrace.hpp -text
+javolution/core-cpp/src/include/c++/booster/config.hpp -text
+javolution/core-cpp/src/main/c++/Javolution.cpp -text
+javolution/core-cpp/src/main/c++/Javolution.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/BundleContextImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/BundleImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/FilterImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/OSGiImpl.cpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/OSGiImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/ServiceReferenceImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/internal/osgi/ServiceRegistrationImpl.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/ArithmeticException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/ArrayIndexOutOfBoundsException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Boolean.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Boolean.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Character.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Character.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Class.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Class.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Double.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Enum.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Enum.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Error.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Exception.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Float.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Float32.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Float32.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Float64.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Float64.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/IllegalArgumentException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/IllegalStateException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/IndexOutOfBoundsException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Integer.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Integer32.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Integer32.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Integer64.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Integer64.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Long.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/NullPointerException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Number.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Object.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Object.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Runnable.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/RuntimeException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/String.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/String.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/StringBuilder.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/StringBuilder.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/System.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Thread.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Thread.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Throwable.cpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/Throwable.hpp -text
+javolution/core-cpp/src/main/c++/javolution/lang/UnsupportedOperationException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/log/Logging.cpp -text
+javolution/core-cpp/src/main/c++/javolution/log/Logging.hpp -text
+javolution/core-cpp/src/main/c++/javolution/osgi/JavolutionActivator.cpp -text
+javolution/core-cpp/src/main/c++/javolution/osgi/JavolutionActivator.hpp -text
+javolution/core-cpp/src/main/c++/javolution/osgi/OSGi.cpp -text
+javolution/core-cpp/src/main/c++/javolution/osgi/OSGi.hpp -text
+javolution/core-cpp/src/main/c++/javolution/time/TimeUTC.cpp -text
+javolution/core-cpp/src/main/c++/javolution/time/TimeUTC.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/AbstractCollection.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/AbstractList.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/AbstractSet.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/Collection.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/Dictionary.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/FastMap.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/FastSet.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/FastTable.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/Iterator.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/List.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/ListIterator.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/Map.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/NoSuchElementException.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/Set.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/Executor.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/ExecutorService.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/Executors.cpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/Executors.hpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/TimeUnit.cpp -text
+javolution/core-cpp/src/main/c++/javolution/util/concurrent/TimeUnit.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/Assert.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/AssertionFailedError.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/Test.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/TestCase.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/TestResult.cpp -text
+javolution/core-cpp/src/main/c++/junit/framework/TestResult.hpp -text
+javolution/core-cpp/src/main/c++/junit/framework/TestSuite.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/Bundle.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/BundleActivator.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/BundleContext.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/Constants.cpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/Constants.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/Filter.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/InvalidSyntaxException.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/ServiceEvent.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/ServiceListener.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/ServiceReference.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/framework/ServiceRegistration.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.cpp -text
+javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.hpp -text
+javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.hpp -text
+javolution/core-java/pom.xml -text
+javolution/core-java/src/main/java/javax/realtime/RealtimeThread.java -text
+javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/FormatContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/LocalContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/internal/ConcurrentContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/ConcurrentThreadImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/LocalContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/LogContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/SecurityContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/package-info.java -text
+javolution/core-java/src/main/java/javolution/doc-files/overview.html -text
+javolution/core-java/src/main/java/javolution/io/AppendableWriter.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/CharSequenceReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/Struct.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/UTF8ByteBufferReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/UTF8ByteBufferWriter.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/UTF8StreamReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/UTF8StreamWriter.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/io/package-info.java -text
+javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/package-info.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/ConfigurableListenerImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/JavolutionActivator.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/osgi/internal/LogServiceImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/ServiceTrackerImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/XMLInputFactoryProvider.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/XMLOutputFactoryProvider.java -text
+javolution/core-java/src/main/java/javolution/test/Perfometer.java -text
+javolution/core-java/src/main/java/javolution/test/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/Cursor.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/DefaultTextFormat.java -text
+javolution/core-java/src/main/java/javolution/text/Text.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/TextBuilder.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/TextContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/TextFormat.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
+javolution/core-java/src/main/java/javolution/text/package-info.java -text
+javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastSortedMap.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastSortedTable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/doc-files/FastTable-WCET.png -text
+javolution/core-java/src/main/java/javolution/util/doc-files/architecture.png -text
+javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Equalities.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Equality.java -text
+javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Iteration.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Reducer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Reducers.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Splittable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetServiceImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/collection/AtomicCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/CollectionView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/DistinctCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ParallelCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ReadWriteLockImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ReversedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SequentialCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/ArrayComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalCaseInsensitiveComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalFastComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/StandardComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/WrapperComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/AtomicMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FractalMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/MapEntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/MapView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/ParallelMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/SequentialMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/SharedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/UnmodifiableMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/AtomicSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/FastSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/MapEntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/SharedSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/SortedMapView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/SubSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/sorted/UnmodifiableSortedMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/AtomicSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/FilteredSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/MappedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/SetView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/SharedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/UnmodifiableSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/AtomicSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SharedSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SortedSetView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SubSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/set/sorted/UnmodifiableSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/FastTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/FractalTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/QuickSort.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/ReversedTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/SharedTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/SubTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/TableIteratorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/TableView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/UnmodifiableTableImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/AtomicSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/FastSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SharedSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SortedTableView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/UnmodifiableSortedTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/package-info.java -text
+javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
+javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/MapService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SetService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SortedMapService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SortedSetService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/SortedTableService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/TableService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/DefaultXMLFormat.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/QName.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLBinding.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLFormat.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLReferenceResolver.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/XMLSerializable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/doc-files/xmlDataBinding.png -text
+javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/AttributesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/EntitiesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/NamespacesImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLInputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLOutputFactoryImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLStreamReaderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/internal/stream/XMLStreamWriterImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/package-info.java -text
+javolution/core-java/src/main/java/javolution/xml/sax/Attributes.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/ContentHandler.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/DefaultHandler.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/SAX2ReaderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/XMLReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/XMLReaderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/sax/package-info.java -text
+javolution/core-java/src/main/java/javolution/xml/stream/Location.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/NamespaceContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLInputFactory.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLOutputFactory.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamConstants.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamException.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamReader.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
+javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
+javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
+javolution/index.html -text
+javolution/msvc/LICENSE.txt -text
+javolution/msvc/pom.xml -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/AbstractMSVC2005EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/AbstractMSVCEnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2003EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2003ToolkitEnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2005AMD64EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2005x86AMD64EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2005x86EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2008x86AMD64EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2008x86EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC2010x86EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVC6EnvFactory.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVCCompiler.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVCLinker.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVCManifest.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVCMessageCompiler.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/MSVCResourceCompiler.java -text
+javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/RegQuery.java -text
+javolution/msvc/src/main/resources/META-INF/plexus/components.xml -text
+javolution/msvc/src/test/java/org/codehaus/mojo/natives/msvc/MSVCCompilerTest.java -text
+javolution/msvc/src/test/java/org/codehaus/mojo/natives/msvc/MSVCLinkerTest.java -text
+javolution/msvc/src/test/java/org/codehaus/mojo/natives/msvc/RegQueryTest.java -text
+javolution/pom.xml -text
+javolution/src/site/css/img/a_ajavarevolution.jpg -text
+javolution/src/site/css/img/a_features.jpg -text
+javolution/src/site/css/img/a_history.jpg -text
+javolution/src/site/css/img/a_links.jpg -text
+javolution/src/site/css/img/a_tools.jpg -text
+javolution/src/site/css/img/a_topten.jpg -text
+javolution/src/site/css/img/a_usage.jpg -text
+javolution/src/site/css/img/bg.jpg -text
+javolution/src/site/css/img/bg_collumb.jpg -text
+javolution/src/site/css/img/bg_left.png -text
+javolution/src/site/css/img/bg_right.png -text
+javolution/src/site/css/img/browseapi.jpg -text
+javolution/src/site/css/img/detailler_bg.jpg -text
+javolution/src/site/css/img/detailler_leftcollumn.jpg -text
+javolution/src/site/css/img/detailler_rightcollumn.jpg -text
+javolution/src/site/css/img/getlibrary.jpg -text
+javolution/src/site/css/img/getproduct_bg.jpg -text
+javolution/src/site/css/img/getsource.jpg -text
+javolution/src/site/css/img/header_bg.jpg -text
+javolution/src/site/css/img/header_leftcollumn.jpg -text
+javolution/src/site/css/img/header_rightcollumn.jpg -text
+javolution/src/site/css/img/infobar_bg.jpg -text
+javolution/src/site/css/img/infobar_center.jpg -text
+javolution/src/site/css/img/infobar_left.jpg -text
+javolution/src/site/css/img/infobar_right.jpg -text
+javolution/src/site/css/img/infobar_sub_bottomleft.jpg -text
+javolution/src/site/css/img/infobar_sub_bottommiddle.jpg -text
+javolution/src/site/css/img/infobar_sub_bottomright.jpg -text
+javolution/src/site/css/img/infobar_sub_center.jpg -text
+javolution/src/site/css/img/infobar_sub_topleft.jpg -text
+javolution/src/site/css/img/infobar_sub_topright.jpg -text
+javolution/src/site/css/img/javalobby-88x31.gif -text
+javolution/src/site/css/img/javanet.gif -text
+javolution/src/site/css/img/javolution.png -text
+javolution/src/site/css/img/javolution_log.gif -text
+javolution/src/site/css/img/new.gif -text
+javolution/src/site/css/img/osi-certified-72x60.gif -text
+javolution/src/site/css/img/seperator.jpg -text
+javolution/src/site/css/img/thesolution.gif -text
+javolution/src/site/css/img/ventrobanner.jpg -text
+javolution/src/site/css/index.css -text svneol=unset#application/octet-stream
+javolution/src/site/css/javadoc.css -text svneol=unset#application/octet-stream
+javolution/src/site/doc/AIAA-2007-6184.pdf -text
+javolution/src/site/doc/Javolution-Collections.pdf -text
+javolution/src/site/doc/Javolution_Cpp_Overview.pdf -text
+javolution/src/site/doc/Javolution_Cpp_Overview.ppt -text
+javolution/src/site/doc/Man33955.pdf -text
+javolution/src/site/doc/benchmark_cpp.html -text
+javolution/src/site/doc/benchmark_java.html -text
+javolution/src/site/doc/coding_standard.txt -text
+javolution/test-cpp/pom.xml -text
+javolution/test-cpp/src/main/c++/Main.cpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/EnumTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/EnumTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/Integer32Test.cpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/Integer32Test.hpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/StringTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/StringTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/ThrowableTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/lang/ThrowableTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ActivatorA.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ActivatorB.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/OSGiTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ServiceA.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ServiceAImpl.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ServiceB.hpp -text
+javolution/test-cpp/src/main/c++/javolution/osgi/ServiceBImpl.hpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastMapTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastMapTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastSetTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastSetTest.hpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastTableTest.cpp -text
+javolution/test-cpp/src/main/c++/javolution/util/FastTableTest.hpp -text
 msvc/LICENSE.txt -text
 msvc/pom.xml -text
 msvc/src/main/java/org/codehaus/mojo/natives/msvc/AbstractMSVC2005EnvFactory.java -text
