@@ -18,7 +18,6 @@ import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
-import javolution.util.service.MapService;
 
 /**
  * Collection view implementation; can be used as root class for implementations 

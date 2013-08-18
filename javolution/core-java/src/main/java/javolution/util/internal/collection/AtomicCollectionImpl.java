@@ -26,7 +26,7 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
         private final Iterator<E> targetIterator;
 
         public IteratorImpl() {
-            targetIterator = immutable.iterator();
+            targetIterator = targetView().iterator();
         }
 
         @Override
@@ -93,32 +93,32 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
 
     @Override
     public boolean contains(Object o) {
-        return immutable.contains(o);
+        return targetView().contains(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return immutable.containsAll(c);
+        return targetView().containsAll(c);
     }
 
     @Override
     public boolean equals(Object o) {
-        return immutable.equals(o);
+        return targetView().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return immutable.hashCode();
+        return targetView().hashCode();
     }
 
     @Override
     public boolean isEmpty() {
-        return immutable.isEmpty();
+        return targetView().isEmpty();
     }
 
     @Override
     public Iterator<E> iterator() {
-        return updateInProgress() ? target().iterator() : new IteratorImpl();
+        return new IteratorImpl();
     }
 
     @Override
@@ -144,7 +144,7 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
 
     @Override
     public int size() {
-        return immutable.size();
+        return targetView().size();
     }
 
     @SuppressWarnings("unchecked")
@@ -160,12 +160,12 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
 
     @Override
     public Object[] toArray() {
-        return immutable.toArray();
+        return targetView().toArray();
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return immutable.toArray(a);
+        return targetView().toArray(a);
     }
 
     @Override
@@ -178,6 +178,13 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
             updatingThread = null;
             immutable = cloneTarget(); // One single copy !
         }
+    }
+
+    /** Returns either the immutable target or the actual target if updating 
+     *  thread. */
+    protected CollectionService<E> targetView() {
+        return ((updatingThread == null) || (updatingThread != Thread.currentThread()))
+                ? immutable : target();
     }
 
     /** Returns a clone copy of target. */

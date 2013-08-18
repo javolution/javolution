@@ -39,7 +39,7 @@ public class AtomicSortedMapImpl<K, V> extends AtomicMapImpl<K, V> implements So
     
     @Override
     public K firstKey() {
-        return immutable().firstKey();
+        return targetView().firstKey();
     }
 
 
@@ -55,7 +55,7 @@ public class AtomicSortedMapImpl<K, V> extends AtomicMapImpl<K, V> implements So
 
     @Override
     public K lastKey() {
-        return immutable().lastKey();
+        return targetView().lastKey();
     }
 
     @Override
@@ -73,9 +73,9 @@ public class AtomicSortedMapImpl<K, V> extends AtomicMapImpl<K, V> implements So
         return this;
     }
 
-    /** SortedMapService view over immutable */
-    protected SortedMapService<K,V> immutable() {
-        return (SortedMapService<K,V>) immutable;
+    @Override
+    protected SortedMapService<K,V> targetView() {
+        return (SortedMapService<K,V>) super.targetView();
     }
 
 }

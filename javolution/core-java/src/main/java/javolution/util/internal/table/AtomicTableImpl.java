@@ -65,22 +65,22 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
 
     @Override
     public E get(int index) {
-        return immutable().get(index);
+        return targetView().get(index);
     }
 
     @Override
     public E getFirst() {
-        return immutable().getFirst();
+        return targetView().getFirst();
     }
 
     @Override
     public E getLast() {
-        return immutable().getLast();
+        return targetView().getLast();
     }
 
     @Override
     public int indexOf(Object element) {
-        return immutable().indexOf(element);
+        return targetView().indexOf(element);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
 
     @Override
     public int lastIndexOf(Object element) {
-        return immutable().lastIndexOf(element);
+        return targetView().lastIndexOf(element);
     }
 
     @Override
@@ -129,12 +129,12 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
 
     @Override
     public E peekFirst() {
-        return immutable().peekFirst();
+        return targetView().peekFirst();
     }
 
     @Override
     public E peekLast() {
-        return immutable().peekLast();
+        return targetView().peekLast();
     }
 
     @Override
@@ -228,9 +228,9 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
         return this;
     }
 
-    /** TableService view over immutable */
-    protected TableService<E> immutable() {
-        return (TableService<E>) immutable;
+    @Override
+    protected TableService<E> targetView() {
+        return (TableService<E>) super.targetView();
     }
 
     /** Returns the actual target */

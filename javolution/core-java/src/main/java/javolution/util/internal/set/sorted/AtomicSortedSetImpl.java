@@ -25,7 +25,7 @@ public class AtomicSortedSetImpl<E> extends AtomicSetImpl<E> implements
 
     @Override
     public E first() {
-        return immutable().first();
+        return targetView().first();
     }
 
     @Override
@@ -35,7 +35,7 @@ public class AtomicSortedSetImpl<E> extends AtomicSetImpl<E> implements
 
     @Override
     public E last() {
-        return immutable().last();
+        return targetView().last();
     }
 
     @Override
@@ -53,9 +53,9 @@ public class AtomicSortedSetImpl<E> extends AtomicSetImpl<E> implements
         return this;
     }
 
-    /** SortedSetService view over immutable */
-    protected SortedSetService<E> immutable() {
-        return (SortedSetService<E>) immutable;
+    @Override
+    protected SortedSetService<E> targetView() {
+        return (SortedSetService<E>) super.targetView();
     }
 
 }

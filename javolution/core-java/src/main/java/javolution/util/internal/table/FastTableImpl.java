@@ -15,9 +15,8 @@ import javolution.util.function.Equality;
 
 /**
  * The default {@link javolution.util.FastTable FastTable} implementation 
- * based on {@link FractalTableImpl fractal tables}. 
- * This implementation ensures that no more than 3/4 of the table capacity is
- * ever wasted.
+ * based on {@link FractalTableImpl fractal tables}. The memory footprint 
+ * is minimal when the table is cleared.
  */
 public class FastTableImpl<E> extends TableView<E> {
 
@@ -100,7 +99,7 @@ public class FastTableImpl<E> extends TableView<E> {
     }
 
     @Override
-    public FastTableImpl<E> clone() { // Makes a copy.
+    public FastTableImpl<E> clone() { // Make a copy.
         FastTableImpl<E> copy = new FastTableImpl<E>(comparator());
         copy.addAll(this);
         return copy;
@@ -147,7 +146,6 @@ public class FastTableImpl<E> extends TableView<E> {
             fractal.offset++;
         }
         size--;
-        checkDownsize();
         return removed;
     }
 
@@ -158,7 +156,6 @@ public class FastTableImpl<E> extends TableView<E> {
         E first = (E) fractal.set(0, null);
         fractal.offset++;
         size--;
-        checkDownsize();
         return first;
     }
 
@@ -167,7 +164,6 @@ public class FastTableImpl<E> extends TableView<E> {
     public E removeLast() {
         if (size == 0) emptyError();
         E last = (E) fractal.set(--size, null);
-        checkDownsize();
         return last;
     }
 
@@ -183,18 +179,8 @@ public class FastTableImpl<E> extends TableView<E> {
         return size;
     }
 
-    private void checkDownsize() {
-        if ((capacity > FractalTableImpl.BASE_CAPACITY_MIN)
-                && (size <= (capacity >> 2))) downsize();
-    }
-
     private void checkUpsize() {
         if (size >= capacity) upsize();
-    }
-
-    private void downsize() {
-        fractal = fractal.downsize(size);
-        capacity = fractal.capacity();
     }
 
     /** For serialization support */

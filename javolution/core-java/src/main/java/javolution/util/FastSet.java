@@ -24,8 +24,7 @@ import javolution.util.internal.set.UnmodifiableSetImpl;
 import javolution.util.service.SetService;
 
 /**
- * <p> A high-performance set with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.</p>
+ * <p> A high-performance hash set with {@link Realtime real-time} behavior.</p>
  *     
  * <p> The iteration order over the set elements is deterministic 
  *     (unlike {@link java.util.HashSet}).It is either the insertion order (default) 
@@ -57,7 +56,8 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
      * specified comparator for key equality.
     */
     public FastSet(Equality<? super E> comparator) {
-        service = new FastMapImpl<E, Void>(comparator, Equalities.IDENTITY).keySet();
+        service = new FastMapImpl<E, Void>(comparator, Equalities.IDENTITY)
+                .keySet();
     }
 
     /**
@@ -67,9 +67,9 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
         this.service = service;
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     @Override
     public FastSet<E> atomic() {
@@ -91,9 +91,9 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
         return new FastSet<E>(new UnmodifiableSetImpl<E>(service()));
     }
 
-    /***************************************************************************
-     * Set operations optimizations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Set operations new annotations.
+    //
 
     @Override
     @Realtime(limit = CONSTANT)
@@ -125,9 +125,9 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
         return service.remove(obj);
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     @Override
     public FastSet<E> addAll(E... elements) {

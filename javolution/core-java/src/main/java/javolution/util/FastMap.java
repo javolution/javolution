@@ -33,9 +33,8 @@ import javolution.util.service.CollectionService;
 import javolution.util.service.MapService;
 
 /**
- * <p> A high-performance map with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint. 
- *     Fast maps support multiple views which can be chained.
+ * <p> A high-performance hash map with {@link Realtime real-time} behavior. 
+ *     Related to {@link FastCollection}, fast map supports various views.
  * <ul>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
  *    and map updates (e.g. {@link #putAll putAll}) are atomic.</li>
@@ -95,7 +94,8 @@ import javolution.util.service.MapService;
  * @version 6.0, July 21, 2013
  */
 @Realtime
-public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializable {
+public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
+        Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
@@ -123,7 +123,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * Creates an empty fast map using the specified comparators for keys 
      * equality and values equality.
      */
-    public FastMap(Equality<? super K> keyEquality, 
+    public FastMap(Equality<? super K> keyEquality,
             Equality<? super V> valueEquality) {
         service = new FastMapImpl<K, V>(keyEquality, valueEquality);
     }
@@ -135,9 +135,9 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
         this.service = service;
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     /**
      * Returns an atomic view over this map. All operations that write 
@@ -147,7 +147,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * (no {@link ConcurrentModificationException} possible).
      */
     @Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
-    public FastMap<K,V> atomic() {
+    public FastMap<K, V> atomic() {
         return new FastMap<K, V>(new AtomicMapImpl<K, V>(service));
     }
 
@@ -175,7 +175,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * @see #update(Consumer)
      * @see FastCollection#parallel()
      */
-    public FastMap<K,V> parallel() {
+    public FastMap<K, V> parallel() {
         return new FastMap<K, V>(new ParallelMapImpl<K, V>(service));
     }
 
@@ -183,8 +183,8 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * Returns a sequential view of this collection. Using this view, 
      * all closure-based iterations are performed sequentially.
      */
-    public FastMap<K,V> sequential() {
-        return new FastMap<K,V>(new SequentialMapImpl<K, V>(service));
+    public FastMap<K, V> sequential() {
+        return new FastMap<K, V>(new SequentialMapImpl<K, V>(service));
     }
 
     /**
@@ -237,9 +237,9 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
         return new FastSet<Entry<K, V>>(service.entrySet());
     }
 
-    /***************************************************************************
-     * Closure operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Closures operations.
+    //
 
     /** 
      * Executes the specified read-only action on this map.
@@ -255,7 +255,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      */
     @Realtime(limit = LINEAR)
     @SuppressWarnings("unchecked")
-    public void perform(Consumer<? extends Map<K,V>> action) {
+    public void perform(Consumer<? extends Map<K, V>> action) {
         service().perform((Consumer<MapService<K, V>>) action, service());
     }
 
@@ -273,105 +273,119 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      */
     @Realtime(limit = LINEAR)
     @SuppressWarnings("unchecked")
-    public void update(Consumer<? extends Map<K,V>> action) {
+    public void update(Consumer<? extends Map<K, V>> action) {
         service().update((Consumer<MapService<K, V>>) action, service());
     }
 
-    /***************************************************************************
-     * Map interface.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Map Interface.
+    //
 
+    /** Returns the number of entries/keys/values in this map. */
     @Override
     @Realtime(limit = CONSTANT)
     public int size() {
         return service.size();
     }
 
+    /** Indicates if this map is empty */
     @Override
     @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
         return service.isEmpty();
     }
 
+    /** Indicates if this map contains the specified key. */
     @Override
     @Realtime(limit = CONSTANT)
     public boolean containsKey(Object key) {
         return service.containsKey(key);
     }
 
+    /** Indicates if this map contains the specified value. */
     @Override
     @Realtime(limit = LINEAR)
     public boolean containsValue(Object value) {
         return service.containsValue(value);
     }
 
+    /** Returns the value for the specified key. */
     @Override
     @Realtime(limit = CONSTANT)
     public V get(Object key) {
         return service.get(key);
     }
 
+    /** Associates the specified value with the specified key. */
     @Override
     @Realtime(limit = CONSTANT)
     public V put(K key, V value) {
         return service.put(key, value);
     }
 
+    /** Adds the specified map entries to this map. */
     @Override
     @Realtime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> map) {
         service.putAll(map);
     }
 
+    /** Removes the entry for the specified key. */
     @Override
     @Realtime(limit = CONSTANT)
     public V remove(Object key) {
         return service.remove(key);
     }
 
+    /** Removes all this map's entries. */
     @Override
     @Realtime(limit = CONSTANT)
     public void clear() {
         service.clear();
     }
 
-    /***************************************************************************
-     * ConcurrentMap Interface.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // ConcurrentMap Interface.
+    //
 
+    /** Associates the specified value with the specified key only if the 
+     * specified key has no current mapping. */
     @Override
     @Realtime(limit = CONSTANT)
     public V putIfAbsent(K key, V value) {
         return service.putIfAbsent(key, value);
     }
 
+    /** Removes the entry for a key only if currently mapped to a given value. */
     @Override
     @Realtime(limit = CONSTANT)
     public boolean remove(Object key, Object value) {
         return service.remove(key, value);
     }
 
+    /** Replaces the entry for a key only if currently mapped to a given value. */
     @Override
     @Realtime(limit = CONSTANT)
     public boolean replace(K key, V oldValue, V newValue) {
         return service.replace(key, oldValue, newValue);
     }
 
+    /** Replaces the entry for a key only if currently mapped to some value. */
     @Override
     @Realtime(limit = CONSTANT)
     public V replace(K key, V value) {
         return service.replace(key, value);
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     /**
      * Returns this map with the specified map's entries added.
      */
-    public FastMap<K,V> putAll(FastMap<? extends K, ? extends V> that) {   
-        putAll((Map<? extends K, ? extends V>)that);
+    public FastMap<K, V> putAll(FastMap<? extends K, ? extends V> that) {
+        putAll((Map<? extends K, ? extends V>) that);
         return this;
     }
 
@@ -381,17 +395,19 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>, Serializab
      * for which the caller guarantees that no change will ever be made 
      * (e.g. there is no reference left to the original map).
      */
-    public <T extends Map<K,V>> Immutable<T> toImmutable() {
+    public <T extends Map<K, V>> Immutable<T> toImmutable() {
         return new Immutable<T>() {
             @SuppressWarnings("unchecked")
             final T value = (T) unmodifiable();
+
             @Override
             public T value() {
                 return value;
-            }            
+            }
         };
     }
-    
+
+    /** Returns the string representation of this map entries. */
     @Override
     @Realtime(limit = LINEAR)
     public String toString() {

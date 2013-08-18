@@ -23,8 +23,7 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
     /** Thread-Safe Iterator. */
     private class IteratorImpl implements Iterator<Entry<K, V>> {
         private Entry<K, V> current;
-        private final Iterator<Entry<K, V>> targetIterator = immutable
-                .iterator();
+        private final Iterator<Entry<K, V>> targetIterator = targetView().iterator();
 
         @Override
         public boolean hasNext() {
@@ -71,22 +70,22 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
 
     @Override
     public boolean containsKey(Object key) {
-        return immutable.containsKey(key);
+        return targetView().containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return immutable.containsValue(value);
+        return targetView().containsValue(value);
     }
 
     @Override
     public V get(Object key) {
-        return immutable.get(key);
+        return targetView().get(key);
     }
 
     @Override
     public boolean isEmpty() {
-        return immutable.isEmpty();
+        return targetView().isEmpty();
     }
 
     @Override
@@ -96,7 +95,7 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
 
     @Override
     public Equality<? super K> keyComparator() {
-        return immutable.keyComparator();
+        return targetView().keyComparator();
     }
 
     @Override
@@ -149,7 +148,7 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
 
     @Override
     public int size() {
-        return immutable.size();
+        return targetView().size();
     }
 
     @SuppressWarnings("unchecked")
@@ -177,7 +176,7 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
 
     @Override
     public Equality<? super V> valueComparator() {
-        return immutable.valueComparator();
+        return targetView().valueComparator();
     }
 
     /** Returns a clone copy of target. */
@@ -188,6 +187,14 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
             throw new Error("Cannot happen since target is Cloneable.");
         }
     }
+
+    /** Returns either the immutable target or the actual target if updating 
+     *  thread. */
+    protected MapService<K, V> targetView() {
+        return ((updatingThread == null) || (updatingThread != Thread.currentThread()))
+                ? immutable : target();
+    }
+
 
     /** Indicates if the current thread is doing an atomic update. */
     protected final boolean updateInProgress() {

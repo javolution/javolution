@@ -19,9 +19,8 @@ import javolution.util.internal.table.sorted.UnmodifiableSortedTableImpl;
 import javolution.util.service.SortedTableService;
 
 /**
- * <p> A high-performance sorted table with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.
- *     Fast sorted table have significantly faster {@link #contains}, 
+ * <p> A high-performance sorted table with {@link Realtime real-time} behavior.
+ *      Sorted table have significantly faster {@link #contains}, 
  *     {@link #indexOf} and {@link #remove} methods).</p>
  *     
  * <p>This class is comparable to {@link FastSortedSet} in performance, 
@@ -56,9 +55,9 @@ public class FastSortedTable<E> extends FastTable<E> {
         super(service);
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     @Override
     public FastSortedTable<E> atomic() {
@@ -72,12 +71,13 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     @Override
     public FastSortedTable<E> unmodifiable() {
-        return new FastSortedTable<E>(new UnmodifiableSortedTableImpl<E>(service()));
+        return new FastSortedTable<E>(new UnmodifiableSortedTableImpl<E>(
+                service()));
     }
 
-    /***************************************************************************
-     * Sorted table operations optimizations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Change in time limit behavior.
+    //
 
     @Realtime(limit = LOG_N)
     public boolean contains(Object obj) {
@@ -95,9 +95,9 @@ public class FastSortedTable<E> extends FastTable<E> {
         return service().indexOf(obj);
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     /** 
      * Adds the specified element only if not already present.
@@ -109,7 +109,7 @@ public class FastSortedTable<E> extends FastTable<E> {
     public boolean addIfAbsent(E element) {
         return service().addIfAbsent(element);
     }
-    
+
     /** 
      * Returns what would be the index of the specified element if it were
      * to be added or the index of the specified element if already present.

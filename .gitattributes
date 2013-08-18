@@ -295,6 +295,8 @@ javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -t
 javolution/core-java/src/main/java/javolution/osgi/internal/ServiceTrackerImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLInputFactoryProvider.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLOutputFactoryProvider.java -text
+javolution/core-java/src/main/java/javolution/test/Perfometer.java -text
+javolution/core-java/src/main/java/javolution/test/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/Cursor.java -text svneol=unset#text/plain
@@ -315,6 +317,7 @@ javolution/core-java/src/main/java/javolution/util/FastSortedSet.java -text svne
 javolution/core-java/src/main/java/javolution/util/FastSortedTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/Index.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/doc-files/FastTable-WCET.png -text
 javolution/core-java/src/main/java/javolution/util/doc-files/architecture.png -text
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Equalities.java -text svneol=unset#text/plain
@@ -439,7 +442,6 @@ javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
-javolution/core-java/src/test/java/javolution/util/Perfometer.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text

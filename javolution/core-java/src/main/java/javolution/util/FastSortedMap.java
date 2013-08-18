@@ -23,8 +23,7 @@ import javolution.util.internal.map.sorted.UnmodifiableSortedMapImpl;
 import javolution.util.service.SortedMapService;
 
 /**
-* <p> A high-performance sorted map with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.</p>
+ * <p> A high-performance sorted map with {@link Realtime real-time} behavior.</p>
  *     
  * <p> This map provides a total ordering based on the keys natural order or 
  *     using custom {@link #FastSortedMap(Equality) comparators}.</p>
@@ -49,16 +48,16 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
       * for order.
     */
     public FastSortedMap(Equality<? super K> keyComparator) {
-        this(keyComparator, Equalities.STANDARD); 
+        this(keyComparator, Equalities.STANDARD);
     }
 
     /**
       * Creates an empty sorted map ordered using the specified key comparator 
       * for order and value comparator for values equality.
     */
-    public FastSortedMap(Equality<? super K> keyComparator, 
+    public FastSortedMap(Equality<? super K> keyComparator,
             Equality<? super V> valueComparator) {
-        super(new FastSortedMapImpl<K,V>(keyComparator, valueComparator)); 
+        super(new FastSortedMapImpl<K, V>(keyComparator, valueComparator));
     }
 
     /**
@@ -68,53 +67,57 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
         super(service);
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     @Override
     public FastSortedMap<K, V> atomic() {
-        return new FastSortedMap<K, V>(new AtomicSortedMapImpl<K,V>(service()));
+        return new FastSortedMap<K, V>(new AtomicSortedMapImpl<K, V>(service()));
     }
 
     @Override
     public FastSortedMap<K, V> shared() {
-        return new FastSortedMap<K, V>(new SharedSortedMapImpl<K,V>(service()));
+        return new FastSortedMap<K, V>(new SharedSortedMapImpl<K, V>(service()));
     }
 
     @Override
     public FastSortedMap<K, V> unmodifiable() {
-        return new FastSortedMap<K, V>(new UnmodifiableSortedMapImpl<K,V>(service()));
+        return new FastSortedMap<K, V>(new UnmodifiableSortedMapImpl<K, V>(
+                service()));
     }
 
     @Override
-    public FastSortedSet<Entry<K,V>> entrySet() {
-        return new FastSortedSet<Entry<K,V>>(service().entrySet());
+    public FastSortedSet<Entry<K, V>> entrySet() {
+        return new FastSortedSet<Entry<K, V>>(service().entrySet());
     }
-    
+
     @Override
     public FastSortedSet<K> keySet() {
         return new FastSortedSet<K>(service().keySet());
     }
-    
+
+    /** Returns a view of the portion of this map whose keys range from fromKey, inclusive, to toKey, exclusive. */
     @Override
     public FastSortedMap<K, V> subMap(K fromKey, K toKey) {
         return new FastSortedMap<K, V>(service().subMap(fromKey, toKey));
     }
 
+    /** Returns a view of the portion of this map whose keys are strictly less than toKey. */
     @Override
     public FastSortedMap<K, V> headMap(K toKey) {
         return new FastSortedMap<K, V>(service().subMap(firstKey(), toKey));
     }
 
+    /** Returns a view of the portion of this map whose keys are greater than or equal to fromKey. */
     @Override
     public FastSortedMap<K, V> tailMap(K fromKey) {
         return new FastSortedMap<K, V>(service().subMap(fromKey, lastKey()));
     }
 
-    /***************************************************************************
-     * FastMap operations with different time limit behavior.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Change in time limit behavior.
+    //
 
     @Override
     @Realtime(limit = LOG_N)
@@ -164,31 +167,34 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
         return super.replace(key, value);
     }
 
-    /***************************************************************************
-     * SortedMap operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // SortedMap Interface.
+    //
 
+    /** Returns the first (lowest) key currently in this map. */
     @Override
     public K firstKey() {
         return service().firstKey();
     }
 
+    /** Returns the last (highest) key currently in this map. */
     @Override
     public K lastKey() {
         return service().lastKey();
     }
 
+    /** Returns the comparator used to order the keys in this map (never null). */
     @Override
     public Comparator<? super K> comparator() {
         return keySet().comparator();
     }
 
-    /***************************************************************************
-     * Misc.
-     */
-  
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
+
     @Override
-    public FastSortedMap<K,V> putAll(FastMap<? extends K, ? extends V> that) {        
+    public FastSortedMap<K, V> putAll(FastMap<? extends K, ? extends V> that) {
         return (FastSortedMap<K, V>) super.putAll(that);
     }
 

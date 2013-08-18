@@ -44,7 +44,7 @@ public final class Index extends Number implements Comparable<Index>,
         ValueType<Index> {
 
     /**
-     * Holds the default text format for indices (decimal value representation).
+     * Default text format for indices (decimal value representation).
      */
     public static class Decimal extends TextFormat<Index> {
 

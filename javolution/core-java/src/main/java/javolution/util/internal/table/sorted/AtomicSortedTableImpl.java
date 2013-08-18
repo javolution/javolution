@@ -33,7 +33,7 @@ public class AtomicSortedTableImpl<E> extends AtomicTableImpl<E> implements
 
     @Override
     public int positionOf(E element) {
-        return immutable().positionOf(element);
+        return targetView().positionOf(element);
     }
 
     @Override
@@ -41,10 +41,9 @@ public class AtomicSortedTableImpl<E> extends AtomicTableImpl<E> implements
         return this;
     }
 
-    /** TableService view over immutable */
     @Override
-    protected SortedTableService<E> immutable() {
-        return (SortedTableService<E>) immutable;
+    protected SortedTableService<E> targetView() {
+        return (SortedTableService<E>) super.targetView();
     }
 
     /** Returns the actual target */

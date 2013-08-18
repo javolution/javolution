@@ -20,7 +20,7 @@ final class FractalMapImpl {
     static final int EMPTINESS_LEVEL = 2; // Can be 1 (load factor 0.5), 2 (load factor 0.25) or any greater value.
     static final int INITIAL_BLOCK_CAPACITY = 2 << EMPTINESS_LEVEL;
     static final int SHIFT = 10; // Number of hashcode bits per depth. 
-    private static final int MAX_BLOCK_CAPACITY = 1 << SHIFT;
+    //private static final int MAX_BLOCK_CAPACITY = 1 << SHIFT;
     private int count; // Number of entries different from null in this block.
     private MapEntryImpl[] entries = new MapEntryImpl[INITIAL_BLOCK_CAPACITY]; // Entries value can be a sub-map.
     private final int shift; // Zero if base map.
@@ -35,6 +35,7 @@ final class FractalMapImpl {
 
     /** Adds the specified entry if not already present; returns 
      *  either the specified entry or an existing entry for the specified key. **/
+    @SuppressWarnings("unchecked")
     public MapEntryImpl addEntry(MapEntryImpl newEntry, Object key, int hash) {
         int i = indexOfKey(key, hash);
         MapEntryImpl entry = entries[i];

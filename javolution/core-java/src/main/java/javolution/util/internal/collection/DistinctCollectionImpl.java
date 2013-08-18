@@ -34,7 +34,7 @@ public class DistinctCollectionImpl<E> extends CollectionView<E> {
                 next = targetIterator.next();
                 if (!iterated.contains(next)) {
                     ahead = true;
-                    break;
+                    return true;
                 }
             }
             return false;

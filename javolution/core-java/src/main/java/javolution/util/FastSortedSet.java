@@ -22,8 +22,7 @@ import javolution.util.internal.set.sorted.UnmodifiableSortedSetImpl;
 import javolution.util.service.SortedSetService;
 
 /**
- * <p> A high-performance sorted set with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.</p>
+ * <p> A high-performance sorted set with {@link Realtime real-time} behavior.</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -43,7 +42,8 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     * Creates an empty sorted set ordered using the specified comparator.
     */
     public FastSortedSet(Equality<? super E> comparator) {
-        super(new FastSortedMapImpl<E, Void>(comparator, Equalities.IDENTITY).keySet());
+        super(new FastSortedMapImpl<E, Void>(comparator, Equalities.IDENTITY)
+                .keySet());
     }
 
     /**
@@ -53,9 +53,9 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
         super(service);
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     @Override
     public FastSortedSet<E> atomic() {
@@ -72,9 +72,9 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
         return new FastSortedSet<E>(new UnmodifiableSortedSetImpl<E>(service()));
     }
 
-    /***************************************************************************
-     * FastSet operations with different time limit behavior.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Change in time limit behavior.
+    //
 
     @Override
     @Realtime(limit = LOG_N)
@@ -94,41 +94,46 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
         return super.remove(obj);
     }
 
-    /***************************************************************************
-     * SortedSet operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // SortedSet Interface.
+    //
 
+    /** Returns a view of the portion of this set whose elements range from fromElement, inclusive, to toElement, exclusive. */
     @Override
     @Realtime(limit = LOG_N)
     public FastSortedSet<E> subSet(E fromElement, E toElement) {
         return new FastSortedSet<E>(service().subSet(fromElement, toElement));
     }
 
+    /** Returns a view of the portion of this set whose elements are strictly less than toElement. */
     @Override
     @Realtime(limit = LOG_N)
     public FastSortedSet<E> headSet(E toElement) {
         return subSet(first(), toElement);
     }
 
+    /** Returns a view of the portion of this set whose elements are greater than or equal to fromElement. */
     @Override
     @Realtime(limit = LOG_N)
     public FastSortedSet<E> tailSet(E fromElement) {
         return subSet(fromElement, last());
     }
 
+    /** Returns the first (lowest) element currently in this set. */
     @Override
     public E first() {
         return service().first();
     }
 
+    /** Returns the last (highest) element currently in this set. */
     @Override
     public E last() {
         return service().last();
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     @Override
     public FastSortedSet<E> addAll(E... elements) {
@@ -139,8 +144,8 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     public FastSortedSet<E> addAll(FastCollection<? extends E> that) {
         return (FastSortedSet<E>) super.addAll(that);
     }
-    
-   @Override
+
+    @Override
     protected SortedSetService<E> service() {
         return (SortedSetService<E>) super.service();
     }

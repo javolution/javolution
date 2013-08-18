@@ -155,12 +155,12 @@ public class Struct {
      * Configurable holding the maximum wordSize in bytes
      * (default <code>4</code>). Should be a value greater or equal to 1.
      */
-    public static final LocalContext.Parameter<Integer> MAXIMUM_ALIGNMENT 
-        = new LocalContext.Parameter<Integer>() {
-            @Override
-            protected Integer getDefault() {
-                return 4;
-            }};
+    public static final LocalContext.Parameter<Integer> MAXIMUM_ALIGNMENT = new LocalContext.Parameter<Integer>() {
+        @Override
+        protected Integer getDefault() {
+            return 4;
+        }
+    };
 
     /**
      * Holds the outer struct if any.
@@ -252,14 +252,12 @@ public class Struct {
      * @see #setByteBuffer
      */
     public final ByteBuffer getByteBuffer() {
-        if (_outer != null)
-            return _outer.getByteBuffer();
+        if (_outer != null) return _outer.getByteBuffer();
         return (_byteBuffer != null) ? _byteBuffer : newBuffer();
     }
 
     private synchronized ByteBuffer newBuffer() {
-        if (_byteBuffer != null)
-            return _byteBuffer; // Synchronized check.
+        if (_byteBuffer != null) return _byteBuffer; // Synchronized check.
         ByteBuffer bf = ByteBuffer.allocateDirect(size());
         bf.order(byteOrder());
         setByteBuffer(bf, 0);
@@ -283,13 +281,11 @@ public class Struct {
      * @see #byteOrder()
      */
     public final Struct setByteBuffer(ByteBuffer byteBuffer, int position) {
-        if (byteBuffer.order() != byteOrder())
-            throw new IllegalArgumentException(
-                    "The byte order of the specified byte buffer"
-                            + " is different from this struct byte order");
-        if (_outer != null)
-            throw new UnsupportedOperationException(
-                    "Inner struct byte buffer is inherited from outer");
+        if (byteBuffer.order() != byteOrder()) throw new IllegalArgumentException(
+                "The byte order of the specified byte buffer"
+                        + " is different from this struct byte order");
+        if (_outer != null) throw new UnsupportedOperationException(
+                "Inner struct byte buffer is inherited from outer");
         _byteBuffer = byteBuffer;
         _outerOffset = position;
         return this;
@@ -322,7 +318,12 @@ public class Struct {
      * Reads this struct from the specified input stream
      * (convenience method when using Stream I/O). For better performance,
      * use of Block I/O (e.g. <code>java.nio.channels.*</code>) is recommended.
-     *
+     *  This method behaves appropriately when not all of the data is available
+     *  from the input stream. Incomplete data is extremely common when the 
+     *  input stream is associated with something like a TCP connection. 
+     *  The typical usage pattern in those scenarios is to repeatedly call
+     *  read() until the entire message is received.
+     *  
      * @param in the input stream being read from.
      * @return the number of bytes read (typically the {@link #size() size}
      *         of this struct.
@@ -330,17 +331,25 @@ public class Struct {
      */
     public int read(InputStream in) throws IOException {
         ByteBuffer buffer = getByteBuffer();
+        int size = size();
+        int remaining = size - buffer.position();
+        if (remaining == 0) remaining = size;// at end so move to beginning
+        int alreadyRead = size - remaining; // typically 0
         if (buffer.hasArray()) {
             int offset = buffer.arrayOffset() + getByteBufferPosition();
-            return in.read(buffer.array(), offset, size());
+            int bytesRead = in
+                    .read(buffer.array(), offset + alreadyRead, remaining);
+            buffer.position(getByteBufferPosition() + alreadyRead + bytesRead
+                    - offset);
+            return bytesRead;
         } else {
             synchronized (buffer) {
                 if (_bytes == null) {
                     _bytes = new byte[size()];
                 }
-                int bytesRead = in.read(_bytes);
-                buffer.position(getByteBufferPosition());
-                buffer.put(_bytes);
+                int bytesRead = in.read(_bytes, 0, remaining);
+                buffer.position(getByteBufferPosition() + alreadyRead);
+                buffer.put(_bytes, 0, bytesRead);
                 return bytesRead;
             }
         }
@@ -382,17 +391,10 @@ public class Struct {
      * @see    Reference64
      */
     public final long address() {
+        ByteBuffer thisBuffer = this.getByteBuffer();
+        if (thisBuffer instanceof sun.nio.ch.DirectBuffer) 
+          return ((sun.nio.ch.DirectBuffer)thisBuffer).address();
         throw new UnsupportedOperationException();
-        /*
-         ByteBuffer thisBuffer = this.getByteBuffer();
-         if (ADDRESS_METHOD != null) {
-         Long start = (Long) ADDRESS_METHOD.invoke(thisBuffer);
-         return start.longValue() + getByteBufferPosition();
-         } else {
-         throw new UnsupportedOperationException(
-         "Operation not supported for " + thisBuffer.getClass());
-         }
-         */
     }
 
     /**
@@ -509,9 +511,8 @@ public class Struct {
      *         an inner struct.
      */
     protected <S extends Struct> S inner(S struct) {
-        if (struct._outer != null)
-            throw new IllegalArgumentException(
-                    "struct: Already an inner struct");
+        if (struct._outer != null) throw new IllegalArgumentException(
+                "struct: Already an inner struct");
         Member inner = new Member(struct.size() << 3, struct._alignment); // Update indexes.
         struct._outer = this;
         struct._outerOffset = inner.offset();
@@ -767,9 +768,8 @@ public class Struct {
      *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
      */
     public long readBits(int bitOffset, int bitSize) {
-        if ((bitOffset + bitSize - 1) >> 3 >= this.size())
-            throw new IllegalArgumentException(
-                    "Attempt to read outside the Struct");
+        if ((bitOffset + bitSize - 1) >> 3 >= this.size()) throw new IllegalArgumentException(
+                "Attempt to read outside the Struct");
         int offset = bitOffset >> 3;
         int bitStart = bitOffset - (offset << 3);
         bitStart = (byteOrder() == ByteOrder.BIG_ENDIAN) ? bitStart : 64
@@ -783,8 +783,7 @@ public class Struct {
 
     private long readByteBufferLong(int index) {
         ByteBuffer byteBuffer = getByteBuffer();
-        if (index + 8 < byteBuffer.limit())
-            return byteBuffer.getLong(index);
+        if (index + 8 < byteBuffer.limit()) return byteBuffer.getLong(index);
         // Else possible buffer overflow.
         if (byteBuffer.order() == ByteOrder.LITTLE_ENDIAN) {
             return (readByte(index, byteBuffer) & 0xff)
@@ -821,9 +820,8 @@ public class Struct {
      *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
      */
     public void writeBits(long value, int bitOffset, int bitSize) {
-        if ((bitOffset + bitSize - 1) >> 3 >= this.size())
-            throw new IllegalArgumentException(
-                    "Attempt to write outside the Struct");
+        if ((bitOffset + bitSize - 1) >> 3 >= this.size()) throw new IllegalArgumentException(
+                "Attempt to write outside the Struct");
         int offset = bitOffset >> 3;
         int bitStart = (byteOrder() == ByteOrder.BIG_ENDIAN) ? bitOffset
                 - (offset << 3) : 64 - bitSize - (bitOffset - (offset << 3));
@@ -831,10 +829,12 @@ public class Struct {
         mask <<= bitStart; // Clears preceding bits
         mask >>>= (64 - bitSize); // Unsigned shift.
         mask <<= 64 - bitSize - bitStart;
+        value <<= (64 - bitSize - bitStart);
+        value &= mask; // Protects against out of range values.
         int index = getByteBufferPosition() + offset;
         long oldValue = readByteBufferLong(index);
         long resetValue = oldValue & (~mask);
-        long newValue = resetValue | (value << (64 - bitSize - bitStart));
+        long newValue = resetValue | value;
         writeByteBufferLong(index, newValue);
     }
 
@@ -1603,11 +1603,10 @@ public class Struct {
 
         public void set(T e) {
             int value = e.ordinal();
-            if (_values[value] != e)
-                throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
+            if (_values[value] != e) throw new IllegalArgumentException(
+                    "enum: "
+                            + e
+                            + ", ordinal value does not reflect enum values position");
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().get(index);
             getByteBuffer().put(index, (byte) set(value, 1, word));
@@ -1643,11 +1642,10 @@ public class Struct {
 
         public void set(T e) {
             int value = e.ordinal();
-            if (_values[value] != e)
-                throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
+            if (_values[value] != e) throw new IllegalArgumentException(
+                    "enum: "
+                            + e
+                            + ", ordinal value does not reflect enum values position");
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().getShort(index);
             getByteBuffer().putShort(index, (short) set(value, 2, word));
@@ -1683,11 +1681,10 @@ public class Struct {
 
         public void set(T e) {
             int value = e.ordinal();
-            if (_values[value] != e)
-                throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
+            if (_values[value] != e) throw new IllegalArgumentException(
+                    "enum: "
+                            + e
+                            + ", ordinal value does not reflect enum values position");
             final int index = getByteBufferPosition() + offset();
             int word = getByteBuffer().getInt(index);
             getByteBuffer().putInt(index, set(value, 4, word));
@@ -1723,11 +1720,10 @@ public class Struct {
 
         public void set(T e) {
             long value = e.ordinal();
-            if (_values[(int) value] != e)
-                throw new IllegalArgumentException(
-                        "enum: "
-                                + e
-                                + ", ordinal value does not reflect enum values position");
+            if (_values[(int) value] != e) throw new IllegalArgumentException(
+                    "enum: "
+                            + e
+                            + ", ordinal value does not reflect enum values position");
             final int index = getByteBufferPosition() + offset();
             long word = getByteBuffer().getLong(index);
             getByteBuffer().putLong(index, set(value, 8, word));

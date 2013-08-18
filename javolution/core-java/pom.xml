@@ -94,7 +94,7 @@
                 <version>2.9</version>
                 <configuration>
                    <sourcepath>${project.build.directory}/colorized</sourcepath>
-                   <outputDirectory>${project.build.directory}/docs/api</outputDirectory>
+                   <outputDirectory>${project.build.directory}/apidocs</outputDirectory>
                    <excludePackageNames>javax.*,*.internal</excludePackageNames>
                    <overview>${project.build.directory}/colorized/javolution/doc-files/overview.html</overview>
                    <docfilessubdirs>true</docfilessubdirs>

@@ -8,6 +8,8 @@
  */
 package javolution.util.internal.table;
 
+import javolution.lang.MathLib;
+
 /**
  * A fractal-based table with fast insertion/deletion capabilities regardless 
  * of the collection size. It is based on a fractal structure with self-similar
@@ -17,9 +19,8 @@ package javolution.util.internal.table;
 final class FractalTableImpl {
 
     static final int BASE_CAPACITY_MIN = 16;
-    static final int SHIFT = 10;
+    static final int SHIFT = 8;
     private static final int BASE_CAPACITY_MAX = 1 << SHIFT;
-    private static final Object[] NULL = new Object[BASE_CAPACITY_MAX];
 
     /** Offset value, it is the index of the first element (modulo data.length). */
     int offset;
@@ -47,53 +48,10 @@ final class FractalTableImpl {
         this.offset = offset;
     }
 
-    public int capacity() {
-        return data.length << shift;
-    }
-
-    @Override
-    public FractalTableImpl clone() throws CloneNotSupportedException {
-        FractalTableImpl copy = (FractalTableImpl) super.clone();
-        Object[] copyData = copy.data;
-        for (int i = 0; i < copyData.length; i++) {
-            if (copyData[i] instanceof FractalTableImpl) {
-                copyData[i] = ((FractalTableImpl) copyData[i]).clone();
-            }
-        }
-        return copy;
-    }
-
-    public FractalTableImpl downsize(int minsize) {
-        if (data.length == 1) {
-            F(0).offset += offset;
-            return F(0).downsize(minsize);
-        }
-        int length = data.length >> 1; // New length.
-        int alignment = offset & ((1 << shift) - 1);
-        if (alignment != 0) { // Align subtables.
-            if (alignment <= (1 << (shift - 1))) { // Left shift.
-                for (int i = 0; i < alignment; i++) {
-                    this.shiftLeft(null, minsize - 1, minsize);
-                    offset--;
-                }
-            } else { // Right shift.
-                alignment = (1 << shift) - alignment;
-                for (int i = 0; i < alignment; i++) {
-                    this.shiftRight(null, 0, minsize);
-                    offset++;
-                }
-            }
-        }
-        Object[] tmp = new Object[length];
-        int i = (offset >> shift) & (data.length - 1);
-        if (i + length > data.length) { // Wrapping
-            System.arraycopy(data, 0, tmp, data.length - i, i - length);
-            length = data.length - i;
-        }
-        System.arraycopy(data, i, tmp, 0, length);
-        data = tmp;
-        offset = 0;
-        return this;
+    public int capacity() { 
+        // Reports lower capacity to ensure that there is no fractal holding 
+        // wrapping data (head and tail in the same fractal).
+        return (data.length - 1) << shift;
     }
 
     public Object get(int index) {
@@ -173,63 +131,37 @@ final class FractalTableImpl {
     }
 
     public FractalTableImpl upsize() {
-        offset &= (data.length << shift) - 1; // Makes it positive.
-        if (data.length >= BASE_CAPACITY_MAX) {
+        if (data.length >= BASE_CAPACITY_MAX) { // Creates outer fractal.
             FractalTableImpl table = new FractalTableImpl(shift + SHIFT);
-            table.offset = offset;
-            this.offset = 0;
-            table.data[0] = this;
-            table.data[1] = this.extract(0, table.offset);
+            copyTo(table.F(0));
             return table;
+        } else {
+           FractalTableImpl table = 
+                new FractalTableImpl(shift, new Object[data.length << 1], 0);
+           copyTo(table);
+           return table;
         }
-        Object[] tmp = new Object[data.length << 1];
-        int i = (offset >> shift);
-        System.arraycopy(data, i, tmp, i, data.length - i);
-        System.arraycopy(data, 0, tmp, data.length, i);
-        if (shift > 0) tmp[data.length + i] = F(i).extract(0, offset);
-        data = tmp;
-        return this;
     }
 
-    private FractalTableImpl allocate(int i) {
+    // Copy to the specified table. 
+    private void copyTo(FractalTableImpl that) {
+        int n = MathLib.min(this.data.length, that.data.length);
+        offset &= (data.length << shift) - 1; // Makes it positive.
+        int o = offset >> shift;
+        if ((o + n) > data.length) { // Wrapping.
+            int w = (o + n) - data.length;
+            n -= w;
+            System.arraycopy(data, 0, that.data, n, w);
+        }
+        System.arraycopy(data, o, that.data, 0, n);
+        that.offset = offset - (o << shift);
+    }
+
+   private FractalTableImpl allocate(int i) {
         FractalTableImpl fractal = new FractalTableImpl(shift - SHIFT,
                 new Object[1 << SHIFT], 0);
         data[i] = fractal;
         return fractal;
-    }
-
-    /** Extracts the specified elements if any.
-     Nothing extracted if length (modulo capacity) is zero.*/
-    private FractalTableImpl extract(int first, int length) {
-        FractalTableImpl result = new FractalTableImpl(shift,
-                new Object[data.length], offset);
-        int mask = (data.length << shift) - 1;
-        int head = (first + offset) & mask;
-        int tail = (first + offset + length) & mask;
-        int hh = head >> shift;
-        int tt = tail >> shift;
-        if (hh != tt) {
-            int n = tt - hh;
-            if (head > tail) { // Wrapping
-                System.arraycopy(data, 0, result.data, 0, tt);
-                System.arraycopy(NULL, 0, data, 0, tt); // Dereference for GC. 
-                n = data.length - hh;
-            }
-            System.arraycopy(data, hh, result.data, hh, n);
-            System.arraycopy(NULL, hh, data, hh, n); // Dereference for GC.
-            if (shift != 0) {
-                data[hh] = result.F(hh).extract(0, head);
-                result.data[tt] = F(tt).extract(0, tail);
-            }
-        } else { // Head and tail in the same inner table.
-            if (head > tail) { // Wrapping.
-                switchWith(result);
-                data[hh] = result.F(hh).extract(tail, head - tail);
-            } else if (shift != 0) {
-                result.data[hh] = F(hh).extract(head, tail - head);
-            }
-        }
-        return result;
     }
 
     private FractalTableImpl F(int i) {
@@ -237,9 +169,4 @@ final class FractalTableImpl {
         return (table != null) ? table : allocate(i);
     }
 
-    private void switchWith(FractalTableImpl that) {
-        Object[] tmp = this.data;
-        this.data = that.data;
-        that.data = tmp;
-    }
 }

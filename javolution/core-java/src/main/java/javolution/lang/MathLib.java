@@ -785,22 +785,16 @@ public final class MathLib {
      * @param y the y value.
      * @param x the x value.
      * @return the angle theta in radians.
+     * @see <a href="http://en.wikipedia.org/wiki/Atan2">Wikipedia: Atan2</a>
      **/
     public static double atan2(double y, double x) {
-        final double epsilon = 1E-128;
-        if (MathLib.abs(x) > epsilon) {
-            double temp = MathLib.atan(MathLib.abs(y) / MathLib.abs(x));
-            if (x < 0.0)
-                temp = PI - temp;
-            if (y < 0.0)
-                temp = TWO_PI - temp;
-            return temp;
-        } else if (y > epsilon)
-            return HALF_PI;
-        else if (y < -epsilon)
-            return 3 * HALF_PI;
-        else
-            return 0.0;
+        // From Wikipedia.
+        if (x > 0) return MathLib.atan(y / x);
+        if ((y >= 0) && (x < 0)) return MathLib.atan(y / x) + PI;
+        if ((y < 0) && (x < 0)) return MathLib.atan(y / x) - PI;
+        if ((y > 0) && (x == 0)) return PI / 2;
+        if ((y < 0) && (x == 0)) return -PI / 2;
+        return Double.NaN; // ((y == 0) && (x == 0)) 
     }
 
     /**/

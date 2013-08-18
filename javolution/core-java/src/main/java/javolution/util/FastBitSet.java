@@ -14,8 +14,7 @@ import javolution.util.internal.bitset.BitSetServiceImpl;
 import javolution.util.service.BitSetService;
 
 /**
- * <p> A high-performance bit set with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint.</p>
+ * <p> A high-performance bitset with {@link Realtime real-time} behavior.</p>
  * 
  * <p> This class is integrated with the collection framework as 
  *     a set of {@link Index indices} and obeys the collection semantic
@@ -48,9 +47,9 @@ public class FastBitSet extends FastSet<Index> {
         this.service = impl;
     }
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     @Override
     public FastBitSet unmodifiable() {
@@ -62,9 +61,9 @@ public class FastBitSet extends FastSet<Index> {
         throw new UnsupportedOperationException("NOT DONE YET"); // TODO
     }
 
-    /***************************************************************************
-     * Bit set operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // BitSet Operations.
+    //
 
     /**
      * Performs the logical AND operation on this bit set and the
@@ -309,8 +308,7 @@ public class FastBitSet extends FastSet<Index> {
      */
     @Realtime(limit = LINEAR)
     public void set(int fromIndex, int toIndex) {
-        if ((fromIndex < 0) || (toIndex < fromIndex))
-            throw new IndexOutOfBoundsException();
+        if ((fromIndex < 0) || (toIndex < fromIndex)) throw new IndexOutOfBoundsException();
         service.set(fromIndex, toIndex);
     }
 
@@ -341,9 +339,9 @@ public class FastBitSet extends FastSet<Index> {
         service.xor(that.service);
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     @Override
     public FastBitSet addAll(Index... elements) {

@@ -16,7 +16,6 @@ import javolution.context.SecurityContext.Permission;
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
-import javolution.text.TextFormat;
 
 /**
  * <p> An element which is configurable without presupposing how the

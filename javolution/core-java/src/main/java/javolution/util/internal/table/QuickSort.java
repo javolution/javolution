@@ -27,7 +27,8 @@ public class QuickSort<E> {
     }
 
     public void sort() {
-        sort(0, table.size());
+        int size = table.size();
+        if (size > 0) quicksort(0, table.size() - 1);
     }
 
     public void sort(int first, int last) {
@@ -35,6 +36,17 @@ public class QuickSort<E> {
             int pivIndex = partition(first, last);
             sort(first, (pivIndex - 1));
             sort((pivIndex + 1), last);
+        }
+    }
+
+    // From Wikipedia Quick Sort - http://en.wikipedia.org/wiki/Quicksort
+    //
+    void quicksort(int first, int last) {
+        int pivIndex = 0;
+        if (first < last) {
+            pivIndex = partition(first, last);
+            quicksort(first, (pivIndex - 1));
+            quicksort((pivIndex + 1), last);
         }
     }
 
@@ -60,5 +72,4 @@ public class QuickSort<E> {
         table.set(down, piv);
         return down;
     }
-
 }

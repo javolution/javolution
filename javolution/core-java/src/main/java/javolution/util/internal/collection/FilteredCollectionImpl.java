@@ -29,7 +29,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
 
         public IteratorImpl(Predicate<? super E> filter) {
             this.filter = filter;
-            targetIterator = target.iterator();
+            targetIterator = target().iterator();
         }
 
         @Override
@@ -39,7 +39,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
                 next = targetIterator.next();
                 if (filter.test(next)) {
                     ahead = true;
-                    break;
+                    return true;
                 }
             }
             return false;
@@ -59,9 +59,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
     }
 
     private static final long serialVersionUID = 0x600L; // Version.
-
     protected final Predicate<? super E> filter;
-    protected CollectionService<E> target;
 
     public FilteredCollectionImpl(CollectionService<E> target,
             Predicate<? super E> filter) {
@@ -72,7 +70,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
     @Override
     public boolean add(E element) {
         if (!filter.test(element)) return false;
-        return target.add(element);
+        return target().add(element);
     }
 
     @Override
@@ -84,7 +82,7 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
     @Override
     public boolean contains(Object o) {
         if (!filter.test((E) o)) return false;
-        return target.contains(o);
+        return target().contains(o);
     }
 
     @Override
@@ -96,6 +94,6 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
     @Override
     public boolean remove(Object o) {
         if (!filter.test((E) o)) return false;
-        return target.remove(o);
+        return target().remove(o);
     }
 }

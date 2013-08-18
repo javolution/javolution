@@ -46,9 +46,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 import javolution.util.service.CollectionService;
 
 /**
- * <p> A high-performance collection with {@link Realtime real-time} behavior; 
- *     smooth capacity increase/decrease and minimal memory footprint. 
- *     Fast collections support multiple views which can be chained.
+ * <p> A closure-based collection supporting numerous views which can be chained.
  * <ul>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
  *    and collection updates (including {@link #addAll addAll}, {@link #removeIf removeIf}} are atomic.</li>
@@ -64,13 +62,13 @@ import javolution.util.service.CollectionService;
  *                          of using a specified comparator.</li>
  *    <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
- * </ul>
+ * </ul></p>
  * 
  * <p> Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
  *     reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
  *     guarantees that the collection source will not be modified even by himself 
  *     (the value of the immutable reference being an {@link #unmodifiable unmodifiable} collection).
- * <p>[code]
+ * [code]
  * Immutable<List<String>> winners 
  *     = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil").toImmutable();
  *     // Immutability is guaranteed, no reference left on the collection source.
@@ -107,7 +105,7 @@ import javolution.util.service.CollectionService;
  *     since they already existed in the original java.util collection classes (e.g. List.subList(...),
  *     Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
  *     which addresses the concern of class proliferation.</p> 
- * <p>[code]
+ * [code]
  * FastTable<String> names = new FastTable<String>().addAll("Oscar Thon", "Eva Poret", "Paul Auchon");
  * boolean found = names.comparator(Equalities.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
@@ -122,8 +120,8 @@ import javolution.util.service.CollectionService;
  * });[/code]</p>
  *    
  * <p> Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
- *     Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.</p>
- * <p>[code]
+ *     Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.
+ * [code]
  * String anyLongName = names.filtered(isLong).any(String.class); // Returns any long name.
  * int nbrChars = names.mapped(toLength).reduce(Reducers.sum()); // Returns the total number of characters.
  * int maxLength = names.mapped(toLength).parallel().max(); // Finds the longest name in parallel.
@@ -145,8 +143,8 @@ import javolution.util.service.CollectionService;
  *           
  * <p> If a collection (or a map) is shared, derived views are also thread-safe.
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
- *     on derived views are performed concurrently.</p> 
- * <p>[code]
+ *     on derived views are performed concurrently.
+ * [code]
  * FastMap<String, Runnable> tasks = ...
  * ...
  * tasks.values().parallel().forEach(new Consumer<Runnable>() { // Executes task concurrently. 
@@ -154,8 +152,8 @@ import javolution.util.service.CollectionService;
  *         task.run();
  *     }
  * });[/code]</p>
- * <p> With Java 8, closures are greatly simplified using lambda expressions.</p>
- * <p>[code]
+ * <p> With Java 8, closures are greatly simplified using lambda expressions.
+ * [code]
  * tasks.values().parallel().forEach(task -> task.run()); // Same as above.
  * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
  * [/code]</p>
@@ -172,12 +170,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Default constructor.
      */
-    protected FastCollection() {
-    }
+    protected FastCollection() {}
 
-    /***************************************************************************
-     * Views.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Views.
+    //
 
     /**
      * Returns an atomic view over this collection. All operations that write 
@@ -297,9 +294,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return new DistinctCollectionImpl<E>(service());
     }
 
-    /***************************************************************************
-     * Closure operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Closure operations.
+    //
 
     /** 
      * Executes the specified read-only action on this collection.
@@ -332,10 +329,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      *         this collection (e.g. action on set and this is a list). 
      * @see #perform(Consumer)
      */
-     @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     @Realtime(limit = LINEAR)
     public void update(Consumer<? extends Collection<E>> action) {
-         service().update((Consumer<CollectionService<E>>) action, service());
+        service().update((Consumer<CollectionService<E>>) action, service());
     }
 
     /** 
@@ -401,99 +398,110 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return reducer.get();
     }
 
-    /***************************************************************************
-     * Collection operations.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Collection operations.
+    //
 
+    /** Adds the specified element to this collection */
     @Override
-    @Realtime(limit = LINEAR, comment="May have to search the whole collection (e.g. distinct view).")
+    @Realtime(limit = LINEAR, comment = "May have to search the whole collection (e.g. distinct view).")
     public boolean add(E element) {
         return service().add(element);
     }
 
+    /** Indicates if this collection is empty. */
     @Override
-    @Realtime(limit = LINEAR, comment="May actually iterates the whole collection (e.g. filtered view).")
-    public boolean isEmpty() { 
-        return iterator().hasNext(); 
-    }                                
-
-    @Override
-    @Realtime(limit = LINEAR, comment="Potentially counts the elements.")
-    public int size() { 
-        return service().size(); 
+    @Realtime(limit = LINEAR, comment = "May actually iterates the whole collection (e.g. filtered view).")
+    public boolean isEmpty() {
+        return iterator().hasNext();
     }
 
+    /** Returns the size of this collection. */
     @Override
-    @Realtime(limit = LINEAR, comment="Potentially removes elements one at a time.")
-    public void clear() { 
-        service().clear(); 
+    @Realtime(limit = LINEAR, comment = "Potentially counts the elements.")
+    public int size() {
+        return service().size();
     }
 
-    // Potentially searches the whole collection.
+    /** Removes all elements from this collection. */
     @Override
-    @Realtime(limit = LINEAR)
+    @Realtime(limit = LINEAR, comment = "Potentially removes elements one at a time.")
+    public void clear() {
+        service().clear();
+    }
+
+    /** Indicates if this collection contains the specified element. */
+    @Override
+    @Realtime(limit = LINEAR, comment = "Potentially searches the whole collection.")
     public boolean contains(Object searched) {
         return service().contains(searched);
     }
 
-    // Potentially searches the whole collection.
+    /** Removes the specified element from this collection. */
     @Override
-    @Realtime(limit = LINEAR)
+    @Realtime(limit = LINEAR, comment = "Potentially searches the whole collection.")
     public boolean remove(Object searched) {
         return service().remove(searched);
     }
 
     /**
      * Returns an iterator over this collection elements. For 
-     * shared/atomic/parallel collections the iterator is immune to 
+     * shared/atomic collections the iterator is immune to 
      * concurrent modifications. In other words the elements iterated over
      * may or may not reflect the current state of the collection.
      */
     @Override
-    @Realtime(limit = N_SQUARE, comment="Construction of the iterator may require sorting the elements (e.g. sorted view)")
+    @Realtime(limit = N_SQUARE, comment = "Construction of the iterator may require sorting the elements (e.g. sorted view)")
     public Iterator<E> iterator() {
         return service().iterator();
     }
 
+    /** Adds all the specified elements to this collection. */
     @Override
     @Realtime(limit = LINEAR)
     public boolean addAll(final Collection<? extends E> that) {
         return service().addAll(that);
     }
 
+    /** Indicates if this collection contains all the specified elements. */
     @Override
     @Realtime(limit = N_SQUARE)
     public boolean containsAll(Collection<?> that) {
         return service().containsAll(that);
     }
 
+    /** Removes all the specified element from this collection. */
     @Override
     @Realtime(limit = N_SQUARE)
     public boolean removeAll(final Collection<?> that) {
         return service().removeAll(that);
     }
 
+    /** Removes all the elements except those in the specified collection. */
     @Override
     @Realtime(limit = N_SQUARE)
     public boolean retainAll(final Collection<?> that) {
         return service().retainAll(that);
     }
 
+    /** Returns an array holding this collection elements. */
     @Override
     @Realtime(limit = LINEAR)
     public Object[] toArray() {
         return service().toArray();
     }
 
+    /** Returns the specified array holding this collection elements if 
+     *  enough capacity. */
     @Override
     @Realtime(limit = LINEAR)
     public <T> T[] toArray(final T[] array) {
         return service().toArray(array);
     }
 
-    /***************************************************************************
-     * Misc.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Misc.
+    //
 
     /**
      * Returns any non-null element of the specified type (convenience method).
@@ -506,8 +514,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Realtime(limit = LINEAR)
     public <T extends E> T any(Class<T> type) {
         return (T) reduce((Reducer<E>) Reducers.any(type));
-    }    
-    
+    }
+
     /**
      * Returns the smallest element of this collection using this 
      * collection {@link #comparator() comparator} (convenience method).
@@ -519,8 +527,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Realtime(limit = LINEAR)
     public E min() {
         return reduce(Reducers.min(comparator()));
-    }    
-    
+    }
+
     /**
      * Returns the largest element of this collection using this 
      * collection {@link #comparator() comparator} (convenience method). 
@@ -532,8 +540,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Realtime(limit = LINEAR)
     public E max() {
         return reduce(Reducers.max(comparator()));
-    }    
-    
+    }
+
     /**
      * Returns this collection with the specified element added. 
      * 
@@ -605,7 +613,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /**
-     * Returns the hash code of this fast collection.
+     * Returns the hash code of this collection.
      * This method follows the {@link Collection#hashCode()} specification 
      * if this collection {@link #comparator comparator} is 
      * {@link Equalities#STANDARD}.
@@ -618,6 +626,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return service().hashCode();
     }
 
+    /** Returns the string representation of this collection using its 
+     * default {@link TextFormat format}.
+     */
     @Override
     @Realtime(limit = LINEAR)
     public String toString() {
@@ -638,12 +649,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return collection.service();
     }
 
-    /***************************************************************************
-     * Textual format.
-     */
+    ////////////////////////////////////////////////////////////////////////////
+    // Textual format.
+    //
 
     /**
-     * The standard java collection format (parsing not supported). 
+     * Default text format for fast collections (parsing not supported). 
      * It is the format used when printing standard {@code java.util.Collection} 
      * instances except that the elements themselves are written using 
      * their {@link TextContext TextContext} format.
@@ -661,11 +672,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         public Appendable format(FastCollection<?> that, final Appendable dest)
                 throws IOException {
             dest.append('[');
-            Class<?> elementType = Void.class;
+            Class<?> elementType = null;
             TextFormat<Object> format = null;
             for (Object element : that) {
-                if (elementType != Void.class)
-                    dest.append(", "); // Not the first.
+                if (elementType == null) elementType = Void.class; 
+                else dest.append(", "); // Not the first.
                 if (element == null) {
                     dest.append("null");
                     continue;
