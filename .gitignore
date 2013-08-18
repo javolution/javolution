@@ -1,0 +1,15 @@
+/.project
+/.settings
+core-cpp/.classpath
+core-cpp/.project
+core-cpp/.settings
+core-cpp/target
+core-java/*.settings
+core-java/.classpath
+core-java/.project
+core-java/target
+/target
+test-cpp/*.settings
+test-cpp/.classpath
+test-cpp/.project
+test-cpp/target
