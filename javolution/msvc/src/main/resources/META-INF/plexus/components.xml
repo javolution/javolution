@@ -1,0 +1,40 @@
+<component-set>
+  <components>
+    
+    <!--
+     |  Generic MSVC compiler and linker, user must call MSVC setup up script 
+     -->
+    <component>
+      <role>org.codehaus.mojo.natives.compiler.Compiler</role>
+      <role-hint>msvc</role-hint>
+      <implementation>org.codehaus.mojo.natives.msvc.MSVCCompiler</implementation>
+    </component>
+
+    <component>
+      <role>org.codehaus.mojo.natives.linker.Linker</role>
+      <role-hint>msvc</role-hint>
+      <implementation>org.codehaus.mojo.natives.msvc.MSVCLinker</implementation>
+    </component>
+
+    <component>
+      <role>org.codehaus.mojo.natives.compiler.MessageCompiler</role>
+      <role-hint>msvc</role-hint>
+      <implementation>org.codehaus.mojo.natives.msvc.MSVCMessageCompiler</implementation>
+    </component>
+
+    <component>
+      <role>org.codehaus.mojo.natives.compiler.ResourceCompiler</role>
+      <role-hint>msvc</role-hint>
+      <implementation>org.codehaus.mojo.natives.msvc.MSVCResourceCompiler</implementation>
+    </component>
+    
+    <component>
+      <role>org.codehaus.mojo.natives.linker.Manifest</role>
+      <role-hint>msvc</role-hint>
+      <implementation>org.codehaus.mojo.natives.msvc.MSVCManifest</implementation>
+      <instantiation-strategy>per-lookup</instantiation-strategy>
+    </component>
+        
+    
+  </components>
+</component-set>

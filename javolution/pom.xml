@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- =======================================================================
+   The Javolution Project, http://javolution.org
+======================================================================= -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ============================== -->
+    <!--     java.net configuration     -->
+    <!-- ============================== -->
+    <parent>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>3</version>
+    </parent>
+    <scm>
+        <connection>scm:svn:http://svn.java.net/svn/javolution~svn/trunk/javolution</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/javolution~svn/trunk/javolution</developerConnection>
+        <url>http://java.net/projects/javolution/sources/svn/trunk/javolution/show</url>
+    </scm>
+    <issueManagement>
+        <system>JIRA</system>
+        <url>http://java.net/jira/browse/JAVOLUTION</url>
+    </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>Users</name>
+            <post>users@javolution.java.net</post>
+        </mailingList>
+    </mailingLists>
+
+    <!-- ==================================================== -->
+    <!--     Project description (including license)          -->
+    <!-- ==================================================== -->
+    <groupId>org.javolution</groupId>
+    <artifactId>javolution</artifactId>
+    <packaging>pom</packaging>
+    <version>6.0.1-SNAPSHOT</version> 
+    <name>Javolution</name>
+    <url>http://javolution.org</url>
+    <description>Javolution - Java Solution for Real-Time and Embedded Systems.
+        This project provides a Java library and a (mirror) C++ library.
+        Both libraries are maven-based and can be used to build multi-platform real-time applications 
+        or to port Java applications to C++. The C++ library contains already a port of OSGi and JUnit 
+        (demonstrated by the subproject test-cpp).            
+    </description>
+    <licenses>
+        <license>
+            <name>BSD License</name>
+            <url>http://javolution.org/LICENSE.txt</url>
+        </license>
+    </licenses>
+    <organization>
+        <name>Javolution</name>
+        <url>http://javolution.org</url>
+    </organization>
+    <inceptionYear>2005</inceptionYear>
+
+    <!-- =========================================================== -->
+    <!--     Developers and Contributors                             -->
+    <!-- =========================================================== -->
+    <developers>
+        <developer>
+            <name>Jean-Marie Dautelle</name>
+            <id>dautelle</id>
+            <email>jean-marie@dautelle.com</email>
+            <organization>Airbus</organization>
+            <organizationUrl>http://www.airbus.com</organizationUrl>
+            <timezone>+1</timezone>
+            <roles>
+                <role>Project Founder</role>
+                <role>Java Developer</role>
+                <role>Senior Architect</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <!-- ======================================================= -->
+    <!--     Properties setting                                  -->
+    <!-- ======================================================= -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <native.compilerConcurrency>1</native.compilerConcurrency>                
+    </properties>
+    
+    <!-- ======================================================= -->
+    <!--     Native compiler options (platform based)            -->
+    <!-- ======================================================= -->
+    <profiles>
+        <profile> 
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <native.classifier>win32</native.classifier>  
+                <native.dll>dll</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
+                
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>lib</compile.dependency.type>
+                <compile.dependency.classifier /> <!-- No classifier for .lib secondary artifact of dll -->
+                <runtime.dependency.type>dll</runtime.dependency.type>
+                <runtime.dependency.classifier>win32</runtime.dependency.classifier>
+          
+                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/eng/products/visual-studio-2010-express  -->                
+                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName>                 
+                <native.compilerProvider>msvc</native.compilerProvider>
+                <native.compilerExecutable />
+                <native.linkerProvider>msvc</native.linkerProvider>
+                <native.linkerExecutable />
+                <native.linkerSecondaryOutputExtensions>lib</native.linkerSecondaryOutputExtensions>     
+                <native.define>/D</native.define>
+            
+                <!-- On windows the stack trace is only available for code compiled with optimization disabled -->    
+                <native.dll.compilerOptions>/EHsc /TP /W4 /Od /Zi /Fd${project.artifactId} /MDd /DLL</native.dll.compilerOptions>
+                <native.exe.compilerOptions>/EHsc /TP /W4 /O2 /Zi /Fd${project.artifactId} /MDd</native.exe.compilerOptions>
+                <native.dll.linkerOptions>/DEBUG /DLL</native.dll.linkerOptions>                
+                <native.exe.linkerOptions>/DEBUG</native.exe.linkerOptions>
+                
+                <!-- On windows to build the javolution dll we link with DbgHelp.Lib to get backtrace working. -->
+                <native.javolution.linkerOptions>${project.basedir}\lib\windows\DbgHelp.Lib</native.javolution.linkerOptions>                
+            </properties>
+        </profile>
+        <profile> <!-- On linux we have to include libdl -->
+            <id>linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+             <native.classifier>linux</native.classifier>  
+                <native.dll>so</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
+                
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>so</compile.dependency.type>
+                <compile.dependency.classifier>linux</compile.dependency.classifier>
+                <runtime.dependency.type>so</runtime.dependency.type>
+                <runtime.dependency.classifier>linux</runtime.dependency.classifier>
+          
+                <native.envFactoryName />                 
+                <native.compilerProvider>generic</native.compilerProvider>
+                <native.compilerExecutable>g++</native.compilerExecutable>
+                <native.linkerProvider>generic</native.linkerProvider>
+                <native.linkerExecutable>g++</native.linkerExecutable>
+                <native.linkerSecondaryOutputExtensions />     
+                <native.define>-D</native.define>
+            
+                <native.dll.compilerOptions>-Wall -O2 -g -fPIC</native.dll.compilerOptions>
+                <native.exe.compilerOptions>-Wall -O2 -g</native.exe.compilerOptions>
+                <native.dll.linkerOptions>-pthread -rdynamic -shared</native.dll.linkerOptions> <!-- Option -rdynamic to obtains backtrace -->               
+                <native.exe.linkerOptions>-pthread -rdynamic</native.exe.linkerOptions>
+                
+                <!-- On linux to build javolution we link with the debug library to get backtrace working. -->
+                <native.javolution.linkerOptions>-ldl</native.javolution.linkerOptions>                      
+            </properties>
+        </profile>
+        <profile> <!-- On solaris we include libdl too -->
+            <id>solaris</id>
+            <activation>
+                <os>
+                    <name>SunOS</name>
+                    <arch>sparc</arch>
+                </os>
+            </activation>
+             <properties>
+             <native.classifier>solaris</native.classifier>  
+                <native.dll>so</native.dll> <!-- Default -->
+                <native.exe>exe</native.exe>                  
+                
+                <!-- Only maven dependencies to dynamic libraries are supported 
+                     since we build either a dynamic library (default) or an executable.  --> 
+                <compile.dependency.type>so</compile.dependency.type>
+                <compile.dependency.classifier>solaris</compile.dependency.classifier>
+                <runtime.dependency.type>so</runtime.dependency.type>
+                <runtime.dependency.classifier>solaris</runtime.dependency.classifier>
+          
+                <native.envFactoryName />                 
+                <native.compilerProvider>generic</native.compilerProvider>
+                <native.compilerExecutable>CC</native.compilerExecutable>
+                <native.linkerProvider>generic</native.linkerProvider>
+                <native.linkerExecutable>CC</native.linkerExecutable>
+                <native.linkerSecondaryOutputExtensions />     
+                <native.define>-D</native.define>
+            
+                <native.dll.compilerOptions>-xtarget=generic -mt -g -xO2 -xcode=pic32</native.dll.compilerOptions>
+                <native.exe.compilerOptions>-xtarget=generic -mt -g -xO2</native.exe.compilerOptions>
+                <native.dll.linkerOptions>-mt -lpthread -G</native.dll.linkerOptions>               
+                <native.exe.linkerOptions>&gt;-mt -lpthread</native.exe.linkerOptions>
+                
+                <!-- On solaris to build javolution we link with the debug library to get backtrace working. -->
+                <native.javolution.linkerOptions>-ldl -ldemangle -lrt</native.javolution.linkerOptions>                      
+            </properties>
+           </profile>
+    </profiles>
+
+    <build>
+        <!-- ================================== -->
+        <!--     Default plugin configuration   -->
+        <!-- ================================== -->
+        <plugins>
+            <!-- ======================================================= -->
+            <!--     Compilation                                         -->
+            <!-- ======================================================= -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>   
+                </configuration>
+            </plugin>
+
+            <!-- ======================================================= -->
+            <!--     Native Plugin Default Configuration (EXE)           -->
+            <!-- ======================================================= -->  
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>1.0-alpha-7</version>
+                <extensions>true</extensions>
+                <dependencies> 
+                    <!-- Add support for Visual Studio 2010 (expected Windows environment) 
+                    If an earlier version of Visual Studio is installed this dependencies is unnecessary
+                    but the property ${native.envFactoryName} must be set differently 
+                    (see http://mojo.codehaus.org/maven-native/native-maven-plugin/envfactory.html) -->
+                    <dependency>
+                        <groupId>org.javolution</groupId>
+                        <artifactId>javolution-msvc</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
+                </dependencies>       
+                <configuration> <!-- Default configuration for a dynamic library -->
+                    <classifier>${native.classifier}</classifier>
+                    <workingDirectory>${project.build.directory}/${native.classifier}</workingDirectory>
+                    <compilerOutputDirectory>${project.build.directory}/${native.classifier}/objs</compilerOutputDirectory>
+                    <linkerOutputDirectory>${project.build.directory}/${native.classifier}</linkerOutputDirectory>
+                    <externalLibDirectory>${project.build.directory}/${native.classifier}</externalLibDirectory> 
+                    <envFactoryName>${native.envFactoryName}</envFactoryName>
+                    <numberOfConcurrentCompilation>${native.compilerConcurrency}</numberOfConcurrentCompilation>        
+                    <compilerProvider>${native.compilerProvider}</compilerProvider>
+                    <compilerExecutable>${native.compilerExecutable}</compilerExecutable>
+                    <linkerProvider>${native.linkerProvider}</linkerProvider>
+                    <linkerExecutable>${native.linkerExecutable}</linkerExecutable>
+                    <compilerStartOptions>
+                        <compilerStartOption>${native.dll.compilerOptions}</compilerStartOption>
+                    </compilerStartOptions>
+                    <linkerStartOptions>
+                        <linkerStartOption>${native.dll.linkerOptions}</linkerStartOption>
+                    </linkerStartOptions>
+                    <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
+                </configuration>
+            </plugin>
+ 
+            <!-- ======================================================= -->
+            <!--     Deployement Configuration                           -->
+            <!-- ======================================================= -->                   
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <autoversionsubmodules>true</autoversionsubmodules>
+                </configuration>
+            </plugin>
+            
+        </plugins>
+    </build>
+
+
+    <!-- ============================== -->
+    <!--     Additional repositories    -->
+    <!-- ============================== -->
+    <repositories>
+        <repository> <!-- Gives access to javolution snapshots -->
+            <id>java.net-Public</id>
+            <name>Maven Java Net Snapshots</name>
+            <url>https://maven.java.net/content/repositories/snapshots/</url>
+        </repository>       
+    </repositories>
+        
+    <!-- ====================== -->
+    <!--     List of modules    -->
+    <!-- ====================== -->
+    <modules>
+        <module>core-java</module>
+        <module>core-cpp</module>
+      <!-- <module>test-cpp</module> Problem with deploy. -->  
+    </modules>
+
+</project>
