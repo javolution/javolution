@@ -9,7 +9,6 @@
 package javolution.util.internal.table;
 
 import javolution.util.function.Equality;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -21,11 +20,12 @@ public class SubTableImpl<E> extends TableView<E> {
 
     /** Splits the specified table.  */
     @SuppressWarnings("unchecked")
-    public static <E> CollectionService<E>[] splitOf(TableService<E> table,
-            int n) {
-        if (n <= 1) throw new IllegalArgumentException("Invalid argument n: "
+    public static <E> TableService<E>[] splitOf(TableService<E> table,
+            int n, boolean updateable) {
+        if (updateable) table = new SharedTableImpl<E>(table);
+        if (n < 1) throw new IllegalArgumentException("Invalid argument n: "
                 + n);
-        CollectionService<E>[] subTables = new CollectionService[n];
+        TableService<E>[] subTables = new TableService[n];
         int minSize = table.size() / n;
         int start = 0;
         for (int i = 0; i < n - 1; i++) {
@@ -36,8 +36,8 @@ public class SubTableImpl<E> extends TableView<E> {
         return subTables;
     }
 
-    private final int fromIndex;
-    private int toIndex;
+    protected final int fromIndex;
+    protected int toIndex;
 
     public SubTableImpl(TableService<E> target, int from, int to) {
         super(target);
@@ -70,6 +70,11 @@ public class SubTableImpl<E> extends TableView<E> {
     }
 
     @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
+    @Override
     public E get(int index) {
         if ((index < 0) && (index >= size())) indexError(index);
         return target().get(index + fromIndex);
@@ -91,11 +96,6 @@ public class SubTableImpl<E> extends TableView<E> {
     @Override
     public int size() {
         return toIndex - fromIndex;
-    }
-
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
     }
 
 }

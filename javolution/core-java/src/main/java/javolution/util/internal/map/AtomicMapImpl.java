@@ -151,17 +151,6 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
         return targetView().size();
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public MapService<K, V>[] split(int n) { // Split not supported.
-        return new MapService[] { this };
-    }
-
-    @Override
-    public MapService<K, V> threadSafe() {
-        return this;
-    }
-
     @Override
     public synchronized void update(Consumer<MapService<K, V>> action,
             MapService<K, V> view) {

@@ -32,10 +32,10 @@ public class UnmodifiableSortedTableImpl<E> extends UnmodifiableTableImpl<E>
     public int positionOf(E element) {
         return target().positionOf(element);
     }
-
+    
     @Override
-    public SortedTableService<E> threadSafe() {
-        return this;
+    public SortedTableService<E>[] split(int n, boolean updateable) {
+        return SubSortedTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
 
     /** Returns the actual target */

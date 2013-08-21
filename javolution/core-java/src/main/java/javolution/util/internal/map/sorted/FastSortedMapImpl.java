@@ -19,9 +19,9 @@ import javolution.util.internal.table.sorted.FastSortedTableImpl;
 public class FastSortedMapImpl<K, V> extends SortedMapView<K,V> {
      
     private static final long serialVersionUID = 0x600L; // Version.
-    private final Equality<? super K> keyComparator;
     private FastSortedTableImpl<Entry<K,V>> entries 
         = new FastSortedTableImpl<Entry<K,V>>(new EntryComparator());
+    private final Equality<? super K> keyComparator;
     private final Equality<? super V> valueComparator;
 
     public FastSortedMapImpl(final Equality<? super K> keyComparator,
@@ -30,6 +30,11 @@ public class FastSortedMapImpl<K, V> extends SortedMapView<K,V> {
         this.keyComparator = keyComparator;
         this.valueComparator = valueComparator;
      }
+
+    @Override
+    public void clear() {
+        entries.clear();
+    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -47,6 +52,11 @@ public class FastSortedMapImpl<K, V> extends SortedMapView<K,V> {
     public V get(Object key) {
         int i = entries.indexOf(new MapEntryImpl<K,V>((K)key, null));
         return (i >= 0) ? entries.get(i).getValue() : null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return entries.isEmpty();
     }
 
     @Override
@@ -92,8 +102,14 @@ public class FastSortedMapImpl<K, V> extends SortedMapView<K,V> {
     }
 
     @Override
+    public int size() {
+        return entries.size();
+    }
+
+    @Override
     public Equality<? super V> valueComparator() {
         return valueComparator;
     }
+
 
 }

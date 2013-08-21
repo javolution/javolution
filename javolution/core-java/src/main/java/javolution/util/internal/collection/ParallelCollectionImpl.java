@@ -62,7 +62,7 @@ public class ParallelCollectionImpl<E> extends CollectionView<E> {
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            CollectionService<E>[] subViews = view.split(concurrency + 1);
+            CollectionService<E>[] subViews = view.split(concurrency + 1, false);
             for (int i = 1; i < subViews.length; i++) {
                 final CollectionService<E> subView = subViews[i];
                 ctx.execute(new Runnable() {
@@ -90,13 +90,17 @@ public class ParallelCollectionImpl<E> extends CollectionView<E> {
     }
 
     @Override
+    public CollectionService<E>[] split(int n, boolean threadsafe) {
+        return target().split(n, threadsafe); // Forwards.
+    }
+
+    @Override
     public void update(final Consumer<CollectionService<E>> action,
             CollectionService<E> view) {
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            CollectionService<E>[] subViews = view.threadSafe()
-                    .split(concurrency + 1);
+            CollectionService<E>[] subViews = view.split(concurrency + 1, true);
             for (int i = 1; i < subViews.length; i++) {
                 final CollectionService<E> subView = subViews[i];
                 ctx.execute(new Runnable() {

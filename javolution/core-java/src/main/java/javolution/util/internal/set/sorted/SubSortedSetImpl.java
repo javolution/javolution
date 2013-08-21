@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.function.Equality;
+import javolution.util.service.CollectionService;
 import javolution.util.service.SortedSetService;
 
 /**
@@ -78,7 +79,7 @@ public class SubSortedSetImpl<E> extends SortedSetView<E> {
 
     @Override
     public Equality<? super E> comparator() {
-        return target().comparator();
+        return ((CollectionService<E>)target()).comparator();
     }
 
     @SuppressWarnings("unchecked")

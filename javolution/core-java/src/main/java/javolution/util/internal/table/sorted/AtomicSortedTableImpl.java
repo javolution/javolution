@@ -37,19 +37,19 @@ public class AtomicSortedTableImpl<E> extends AtomicTableImpl<E> implements
     }
 
     @Override
-    public SortedTableService<E> threadSafe() {
-        return this;
-    }
-
-    @Override
-    protected SortedTableService<E> targetView() {
-        return (SortedTableService<E>) super.targetView();
+    public SortedTableService<E>[] split(int n, boolean updateable) {
+        return SubSortedTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
 
     /** Returns the actual target */
     @Override
     protected SortedTableService<E> target() {
         return (SortedTableService<E>) super.target();
+    }
+
+    @Override
+    protected SortedTableService<E> targetView() {
+        return (SortedTableService<E>) super.targetView();
     }
 
 }

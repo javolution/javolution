@@ -22,6 +22,7 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
     private int initiatedCount; // Nbr of concurrent task initiated.
     private final ConcurrentContextImpl parent;
     private ConcurrentThreadImpl[] threads;
+    private int lastThreadInitiated; // Holds index of the last thread initiated. 
 
     /**
      * Default constructor (root).
@@ -55,14 +56,20 @@ public final class ConcurrentContextImpl extends ConcurrentContext {
 
     @Override
     public void execute(Runnable logic) {
-        // Find a thread not busy.
-        for (ConcurrentThreadImpl thread : threads) {
-            if (thread.execute(logic, this)) {
-                initiatedCount++;
-                return;
+        if (threads.length > 0) { 
+            int i = lastThreadInitiated;
+            while (true) { // Searches available thread. 
+                i++;
+                if (i >= threads.length) i = 0;
+                if (threads[i].execute(logic, this)) {
+                    initiatedCount++;
+                    lastThreadInitiated = i;
+                    return;
+                }
+                if (i == lastThreadInitiated) break; // Cycled through.    
             }
         }
-        // Executes by current thread.
+        // No concurrent thread to do the job, lets do it ourself.
         try {
             logic.run();
         } catch (Throwable e) {

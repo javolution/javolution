@@ -44,8 +44,8 @@ public class SharedSortedTableImpl<E> extends SharedTableImpl<E> implements
     }
 
     @Override
-    public SortedTableService<E> threadSafe() {
-        return this;
+    public SortedTableService<E>[] split(int n, boolean updateable) {
+        return SubSortedTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
 
     /** Returns the actual target */

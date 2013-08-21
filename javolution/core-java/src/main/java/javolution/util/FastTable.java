@@ -49,7 +49,7 @@ import javolution.util.service.TableService;
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance.
- *     Fast tables can be concurrently iterated / modified through their {@link #shared() shared}/{@link #atomic() atomic} 
+ *     Fast tables can be concurrently iterated / modified using their {@link #shared() shared}/{@link #atomic() atomic} 
  *     views. They inherit all the fast collection views and support the {@link #subTable subTable} view over a portion of the table.
  * [code]
  * FastTable<String> names = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil");

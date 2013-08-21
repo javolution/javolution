@@ -61,6 +61,11 @@ public class UnmodifiableMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
+    public boolean isEmpty() {
+        return target().isEmpty();
+    }
+
+    @Override
     public Iterator<Entry<K, V>> iterator() {
         return new IteratorImpl();
     }
@@ -81,13 +86,24 @@ public class UnmodifiableMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
-    public MapService<K, V> threadSafe() {
-        return this;
+    public int size() {
+        return target().size();
     }
 
     @Override
     public Equality<? super V> valueComparator() {
         return target().valueComparator();
     }
-
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public MapService<K,V>[] split(int n, boolean updateable) {
+        MapService<K,V>[] subTargets = target().split(n, updateable);
+        MapService<K,V>[] result = new MapService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new UnmodifiableMapImpl<K,V>(subTargets[i]);
+        }
+        return result;
+    }
+    
 }

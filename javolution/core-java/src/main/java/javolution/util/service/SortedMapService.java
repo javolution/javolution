@@ -36,6 +36,6 @@ public interface SortedMapService<K, V> extends MapService<K, V>,
     SortedMapService<K, V> tailMap(K fromKey);
     
     @Override
-    SortedMapService<K, V> threadSafe(); 
+    SortedMapService<K, V>[] split(int n, boolean updateable);
 
 }

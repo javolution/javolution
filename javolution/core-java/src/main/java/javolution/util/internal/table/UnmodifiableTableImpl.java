@@ -38,6 +38,16 @@ public class UnmodifiableTableImpl<E> extends TableView<E> {
     }
 
     @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
+    }
+
+    @Override
+    public E get(int index) {
+        return target().get(index);
+    }
+
+    @Override
     public int indexOf(Object o) {
         return target().indexOf(o);
     }
@@ -58,22 +68,17 @@ public class UnmodifiableTableImpl<E> extends TableView<E> {
     }
 
     @Override
-    public TableService<E> threadSafe() {
-        return this;
-    }
-
-    @Override
-    public E get(int index) {
-        return target().get(index);
-    }
-
-    @Override
     public int size() {
         return target().size();
     }
 
     @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
+    public TableService<E>[] split(int n, boolean updateable) {
+        return SubTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
-}
+    
+    @Override
+    protected TableService<E> target() {
+        return (TableService<E>) super.target();
+    }
+ }

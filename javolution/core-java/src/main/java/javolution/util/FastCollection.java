@@ -80,7 +80,7 @@ import javolution.util.service.CollectionService;
  *     (e.g. immutable parts don't need to be copied). Still, when multiple updates are performed,
  *     it is beneficial to group them into one single {@link #update update} operation.
  * [code]
- * FastTable<String> tokens = ...
+ * FastTable<String> tokens = new FastTable<String>().atomic();
  * ...
  * // Replace null with "" in tokens. If tokens is atomic the update is atomic.
  * // If tokens is parallel, the update is also performed concurrently !
@@ -145,16 +145,19 @@ import javolution.util.service.CollectionService;
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
  *     on derived views are performed concurrently.
  * [code]
- * FastMap<String, Runnable> tasks = ...
+ * FastTable<Person> persons = new FastTable<Person>().parallel();
  * ...
- * tasks.values().parallel().forEach(new Consumer<Runnable>() { // Executes task concurrently. 
- *     public void accept(Runnable task) {
- *         task.run();
+ * // Since persons is parallel, the search is done concurrently.
+ * Person john = persons.filtered(new Predicate<Person>() { 
+ *     public boolean test(Person person) {
+ *         return person.getName().equals("John");
  *     }
- * });[/code]</p>
+ * }).any(Person.class);[/code]</p>
+ * 
  * <p> With Java 8, closures are greatly simplified using lambda expressions.
  * [code]
- * tasks.values().parallel().forEach(task -> task.run()); // Same as above.
+ * Person john = persons.filtered(person -> person.getName().equals("John")).any(Person.class); // Same as above.
+ * tasks.parallel().forEach(task -> task.run());
  * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
  * [/code]</p>
  *     
@@ -203,15 +206,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /** 
-     * Returns a parallel collection. Parallel collections affect 
-     * only closure-based operations, all others operations behaving the
-     * same. Parallel actions are performed concurrently using Javolution
-     * {@link javolution.context.ConcurrentContext ConcurrentContext}.
-     * The number of parallel views is derived from the context
+     * Returns a parallel collection. Closure-based operations are 
+     * performed {@link javolution.context.ConcurrentContext in parallel} 
+     * on {@link CollectionService#split sub-views} of this collection.
+     * The number of parallel views is equals to  
      * {@link javolution.context.ConcurrentContext#getConcurrency() 
-     * concurrency} ({@code number of parallel views = concurrency + 1}).
-     * Parallel views do not require this collection to be thread-safe
-     * (internal synchronization).
+     * concurrency}{@code + 1}.
      * 
      * @see #perform(Consumer)
      * @see #update(Consumer)
@@ -299,13 +299,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     //
 
     /** 
-     * Executes the specified read-only action on this collection.
-     * That logic may be performed concurrently on sub-collections 
+     * Executes the specified read action on this collection.
+     * That logic may be performed concurrently (on parallel views) 
      * if this collection is {@link #parallel() parallel}.
+     * 
      *    
      * @param action the read-only action.
-     * @throws UnsupportedOperationException if the action tries to update 
-     *         this collection and this collection is thread-safe.
      * @throws ClassCastException if the action type is not compatible with 
      *         this collection (e.g. action on set and this is a list). 
      * @see #update(Consumer)
@@ -318,15 +317,16 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /** 
      * Executes the specified update action on this collection. 
-     * That logic may be performed concurrently on sub-collections
-     * if this collection is {@link #parallel() parallel}.
      * For {@link #atomic() atomic} collections the update is atomic 
      * (either concurrent readers see the full result of the action or
      * nothing).
+     * The update may be performed concurrently (through parallel views)
+     * if this collection is {@link #parallel() parallel}.
      *    
      * @param action the update action.
      * @throws ClassCastException if the action type is not compatible with 
-     *         this collection (e.g. action on set and this is a list). 
+     *         this collection (e.g. action on a {@link java.util.Set Set} 
+     *         and this is a {@link java.util.List List}). 
      * @see #perform(Consumer)
      */
     @SuppressWarnings("unchecked")
@@ -391,6 +391,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      *    
      * @param reducer the collection reducer.
      * @return the reduction result.
+     * @see #any(Class)
+     * @see #min()
+     * @see #max()
      */
     @Realtime(limit = LINEAR)
     public E reduce(Reducer<E> reducer) {
@@ -404,42 +407,42 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /** Adds the specified element to this collection */
     @Override
-    @Realtime(limit = LINEAR, comment = "May have to search the whole collection (e.g. distinct view).")
+    @Realtime(limit = LINEAR, comment = "Could iterate the whole collection (e.g. distinct view).")
     public boolean add(E element) {
         return service().add(element);
     }
 
     /** Indicates if this collection is empty. */
     @Override
-    @Realtime(limit = LINEAR, comment = "May actually iterates the whole collection (e.g. filtered view).")
+    @Realtime(limit = LINEAR, comment = "Could iterate the whole collection (e.g. filtered view).")
     public boolean isEmpty() {
         return iterator().hasNext();
     }
 
     /** Returns the size of this collection. */
     @Override
-    @Realtime(limit = LINEAR, comment = "Potentially counts the elements.")
+    @Realtime(limit = LINEAR, comment = "Could count the elements (e.g. filtered view).")
     public int size() {
         return service().size();
     }
 
     /** Removes all elements from this collection. */
     @Override
-    @Realtime(limit = LINEAR, comment = "Potentially removes elements one at a time.")
+    @Realtime(limit = LINEAR, comment = "Could remove the elements one at a time.")
     public void clear() {
         service().clear();
     }
 
     /** Indicates if this collection contains the specified element. */
     @Override
-    @Realtime(limit = LINEAR, comment = "Potentially searches the whole collection.")
+    @Realtime(limit = LINEAR, comment = "Could search the whole collection.")
     public boolean contains(Object searched) {
         return service().contains(searched);
     }
 
-    /** Removes the specified element from this collection. */
+    /**  Removes the specified element from this collection.*/
     @Override
-    @Realtime(limit = LINEAR, comment = "Potentially searches the whole collection.")
+    @Realtime(limit = LINEAR, comment = "Could search the whole collection.")
     public boolean remove(Object searched) {
         return service().remove(searched);
     }
@@ -451,7 +454,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * may or may not reflect the current state of the collection.
      */
     @Override
-    @Realtime(limit = N_SQUARE, comment = "Construction of the iterator may require sorting the elements (e.g. sorted view)")
+    @Realtime(limit = N_SQUARE, comment = "Sorted view iterator require sorting the elements.")
     public Iterator<E> iterator() {
         return service().iterator();
     }
@@ -491,8 +494,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return service().toArray();
     }
 
-    /** Returns the specified array holding this collection elements if 
-     *  enough capacity. */
+    /** 
+     * Returns the specified array holding this collection elements if 
+     * enough capacity. 
+     */
     @Override
     @Realtime(limit = LINEAR)
     public <T> T[] toArray(final T[] array) {
@@ -505,6 +510,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /**
      * Returns any non-null element of the specified type (convenience method).
+     * The search is performed concurrently if this collection is 
+     * {@link #parallel() parallel}.
      * 
      * @param type the element type searched for.
      * @return {@code reduce(Reducers.any(type))}
@@ -520,26 +527,30 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Returns the smallest element of this collection using this 
      * collection {@link #comparator() comparator} (convenience method).
      * Returns {@code null} if this collection is empty. 
+     * The search is performed concurrently if this collection is 
+     * {@link #parallel() parallel}.
      * 
      * @return {@code reduce(Reducers.min(comparator()))}
      * @see Reducers#min
      */
     @Realtime(limit = LINEAR)
     public E min() {
-        return reduce(Reducers.min(comparator()));
+        return reduce((Reducer<E>)Reducers.min(comparator())); // Cast only necessary on JDK 1.6 !
     }
 
     /**
      * Returns the largest element of this collection using this 
      * collection {@link #comparator() comparator} (convenience method). 
      * Returns {@code null} if this collection is empty. 
-     * 
+     * The search is performed concurrently if this collection is 
+     * {@link #parallel() parallel}.
+      * 
      * @return {@code reduce(Reducers.max(comparator()))}
      * @see Reducers#max
      */
     @Realtime(limit = LINEAR)
     public E max() {
-        return reduce(Reducers.max(comparator()));
+        return reduce((Reducer<E>)Reducers.max(comparator())); // Cast only necessary on JDK 1.6 !
     }
 
     /**
@@ -579,7 +590,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Returns an immutable reference over this collection. The immutable 
      * value is an {@link #unmodifiable() unmodifiable} view of this collection.
      * The caller must guarantees that the original collection is never going 
-     * to be updated (e.g. there is no reference left of the original collection).
+     * to be updated (e.g. there is no reference left on the original collection).
      */
     @Realtime(limit = CONSTANT)
     public <T extends Collection<E>> Immutable<T> toImmutable() {
@@ -591,7 +602,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
             public T value() {
                 return value;
             }
-
         };
     }
 
@@ -626,8 +636,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return service().hashCode();
     }
 
-    /** Returns the string representation of this collection using its 
+    /** 
+     * Returns the string representation of this collection using its 
      * default {@link TextFormat format}.
+     * 
+     * @see TextContext
      */
     @Override
     @Realtime(limit = LINEAR)
@@ -656,8 +669,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Default text format for fast collections (parsing not supported). 
      * It is the format used when printing standard {@code java.util.Collection} 
-     * instances except that the elements themselves are written using 
-     * their {@link TextContext TextContext} format.
+     * instances except that elements are written using 
+     * their current {@link TextContext TextContext} format.
      */
     @Parallelizable
     public static class Format extends TextFormat<FastCollection<?>> {

@@ -39,20 +39,21 @@ public class AtomicSortedSetImpl<E> extends AtomicSetImpl<E> implements
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public SortedSetService<E>[] split(int n, boolean updateable) { 
+        return new SortedSetService[] { this }; // Split not supported.
+    }
+
+    @Override
     public SortedSetService<E> subSet(E fromElement, E toElement) {
         return new SubSortedSetImpl<E>(this, fromElement, toElement);
     }
-
+    
     @Override
     public SortedSetService<E> tailSet(E fromElement) {
         return new SubSortedSetImpl<E>(this, fromElement, null);
     }
-
-    @Override
-    public SortedSetService<E> threadSafe() {
-        return this;
-    }
-
+ 
     @Override
     protected SortedSetService<E> targetView() {
         return (SortedSetService<E>) super.targetView();

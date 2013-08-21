@@ -153,7 +153,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
 
     @Override
     public boolean isEmpty() {
-        return iterator().hasNext();
+        return !iterator().hasNext();
     }
 
     @Override
@@ -221,22 +221,8 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
 
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E>[] split(int n) {
-        if (target == null) return new CollectionService[] { this }; // No split.
-        CollectionService<E>[] subTargets = target.split(n);
-        CollectionService<E>[] result = new CollectionService[subTargets.length];
-        for (int i = 0; i < subTargets.length; i++) {
-            CollectionView<E> copy = this.clone();
-            copy.target = subTargets[i];
-            result[i] = copy;
-        }
-        return result;
-    }
-
-    @Override
-    public CollectionService<E> threadSafe() {
-        // We use shared collection as default (they can split).
-        return new SharedCollectionImpl<E>(this); 
+    public CollectionService<E>[] split(int n, boolean updateable) { 
+        return new CollectionService[] { this }; // Split not supported.
     }
 
     @Override

@@ -71,7 +71,13 @@ public class SequentialCollectionImpl<E> extends CollectionView<E> {
    }
 
     @Override
+    public CollectionService<E>[] split(int n, boolean threadsafe) {
+        return target().split(n, threadsafe); // Forwards.
+    }
+
+    @Override
     public void update(Consumer<CollectionService<E>> action, CollectionService<E> view) {
         action.accept(view); // Executes immediately.
     }
+    
 }

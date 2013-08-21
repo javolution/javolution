@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util.internal.collection;
+package javolution.util.internal;
 
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;

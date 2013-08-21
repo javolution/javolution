@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.function.Equality;
-import javolution.util.service.MapService;
 
 /**
  * The default {@link javolution.util.FastMap FastMap} implementation 
@@ -187,12 +186,6 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @Override
     public int size() {
         return size;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public MapService<K, V>[] split(int n) {
-        return new MapService[] { this }; // No splitting supported yet.
     }
 
     @Override

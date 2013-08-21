@@ -54,32 +54,30 @@ import javolution.util.service.MapService;
  *     This class permits {@code null} keys.</p> 
  *     
  * <p> Fast maps can advantageously replace any of the standard <code>java.util</code> maps.</p> 
- * <p>[code]
- *  FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
- *  FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
- *  FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
- *  FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
- *  FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
- *  FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Equalities.IDENTITY);
- *  [/code]</p>
- *  <p> and adds more ... 
- * <p>[code]
- *  FastMap<Foo, Bar> atomicMap = new FastMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics (unlike ConcurrentHashMap).
- *  FastMap<Foo, Bar> atomicTree = new FastSortedMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
- *  FastMap<Foo, Bar> parallelMap = new FastMap<Foo, Bar>().parallel(); // Map actions (perform/update) performed concurrently.
- *  FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
- *  FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Equalities.LEXICAL);  // Allows for value retrieval using any CharSequence key.
- *  FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Equalities.LEXICAL_FAST);  // Same with faster hashcode calculations.
- *  ...
- *  [/code]</p>
+ * [code]
+ * FastMap<Foo, Bar> hashMap = new FastMap<Foo, Bar>(); 
+ * FastMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared(); // FastMap implements ConcurrentMap interface.
+ * FastMap<Foo, Bar> linkedHashMap = new FastMap<Foo, Bar>(); // Deterministic iteration order (insertion order).
+ * FastMap<Foo, Bar> treeMap = new FastSortedMap<Foo, Bar>(); 
+ * FastMap<Foo, Bar> concurrentSkipListMap = new FastSortedMap<Foo, Bar>().shared();
+ * FastMap<Foo, Bar> identityHashMap = new FastMap<Foo, Bar>(Equalities.IDENTITY);[/code]</p>
+ * <p> and adds more ... 
+ * [code]
+ * FastMap<Foo, Bar> atomicMap = new FastMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics (unlike ConcurrentHashMap).
+ * FastMap<Foo, Bar> atomicTree = new FastSortedMap<Foo, Bar>().atomic(); // Mutex-free access,  all updates (e.g. putAll) atomics.
+ * FastMap<Foo, Bar> parallelMap = new FastMap<Foo, Bar>().parallel(); // Map actions (perform/update) performed concurrently.
+ * FastMap<Foo, Bar> linkedConcurrentHashMap = new FastMap<Foo, Bar>().shared(); // No equivalent in java.util !
+ * FastMap<String, Bar> lexicalHashMap = new FastMap<String, Bar>(Equalities.LEXICAL);  // Allows for value retrieval using any CharSequence key.
+ * FastMap<String, Bar> fastStringHashMap = new FastMap<String, Bar>(Equalities.LEXICAL_FAST);  // Same with faster hashcode calculations.
+ * ...[/code]</p>
  *  
  *  <p> Of course all views (entry, key, values) over a fast map are fast collections 
  *      and allow parallel processing.
  * [code]
  * Consumer<Collection<String>> removeNull = new Consumer<Collection<String>>() {  
  *     public void accept(Collection<String> view) {
- *          Iterator<String> it = view.iterator();
- *          while (it.hasNext()) {
+ *         Iterator<String> it = view.iterator();
+ *         while (it.hasNext()) {
  *             if (it.next() == null) it.remove();
  *         }
  *     }

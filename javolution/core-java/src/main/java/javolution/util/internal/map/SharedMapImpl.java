@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javolution.util.function.Equality;
-import javolution.util.internal.collection.ReadWriteLockImpl;
+import javolution.util.internal.ReadWriteLockImpl;
 import javolution.util.service.MapService;
 
 /**
@@ -206,28 +206,6 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public MapService<K, V>[] split(int n) {
-        MapService<K, V>[] tmp;
-        lock.readLock.lock();
-        try {
-            tmp = target().split(n);
-        } finally {
-            lock.readLock.unlock();
-        }
-        MapService<K, V>[] result = new MapService[tmp.length];
-        for (int i = 0; i < tmp.length; i++) {
-            result[i] = new SharedMapImpl<K, V>(tmp[i], lock); // Same lock.
-        }
-        return result;
-    }
-
-    @Override
-    public MapService<K, V> threadSafe() {
-        return this;
-    }
-
     @Override
     public Equality<? super V> valueComparator() {
         return target().valueComparator();
@@ -240,6 +218,23 @@ public class SharedMapImpl<K, V> extends MapView<K, V> {
         } catch (CloneNotSupportedException e) {
             throw new Error("Cannot happen since target is Cloneable.");
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public MapService<K,V>[] split(int n, boolean updateable) {
+        MapService<K,V>[] tmp;
+        lock.readLock.lock();
+        try {
+            tmp = target().split(n, updateable); 
+        } finally {
+            lock.readLock.unlock();
+        }
+        MapService<K,V>[] result = new MapService[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            result[i] = new SharedMapImpl<K,V>(tmp[i], lock); // Shares the same locks.
+        }
+        return result;
     }
 
 }

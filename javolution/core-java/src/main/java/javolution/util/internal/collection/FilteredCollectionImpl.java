@@ -96,4 +96,16 @@ public class FilteredCollectionImpl<E> extends CollectionView<E> {
         if (!filter.test((E) o)) return false;
         return target().remove(o);
     }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public CollectionService<E>[] split(int n, boolean updateable) {
+        CollectionService<E>[] subTargets = target().split(n, updateable);
+        CollectionService<E>[] result = new CollectionService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new FilteredCollectionImpl<E>(subTargets[i], filter);
+        }
+        return result;
+    }
+    
 }

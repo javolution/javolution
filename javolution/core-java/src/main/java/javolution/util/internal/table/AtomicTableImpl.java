@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import javolution.util.internal.collection.AtomicCollectionImpl;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -212,10 +211,10 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
         if (!updateInProgress()) immutable = cloneTarget();
         return e;
     }
-
+ 
     @Override
-    public CollectionService<E>[] split(int n) {
-        return SubTableImpl.splitOf(this, n); // Sub-views over this.
+    public TableService<E>[] split(int n, boolean updateable) {
+        return SubTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
 
     @Override
@@ -223,20 +222,15 @@ public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
         return new SubTableImpl<E>(this, fromIndex, toIndex); // View on this.
     }
 
+    /** Returns the actual target */
     @Override
-    public TableService<E> threadSafe() {
-        return this;
+    protected TableService<E> target() {
+        return (TableService<E>) super.target();
     }
 
     @Override
     protected TableService<E> targetView() {
         return (TableService<E>) super.targetView();
-    }
-
-    /** Returns the actual target */
-    @Override
-    protected TableService<E> target() {
-        return (TableService<E>) super.target();
     }
 
 }

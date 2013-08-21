@@ -147,17 +147,6 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
         return targetView().size();
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public CollectionService<E>[] split(int n) { // Split not supported.
-        return new CollectionService[] { this };
-    }
-
-    @Override
-    public CollectionService<E> threadSafe() {
-        return this; 
-    }
-
     @Override
     public Object[] toArray() {
         return targetView().toArray();
@@ -180,13 +169,6 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
         }
     }
 
-    /** Returns either the immutable target or the actual target if updating 
-     *  thread. */
-    protected CollectionService<E> targetView() {
-        return ((updatingThread == null) || (updatingThread != Thread.currentThread()))
-                ? immutable : target();
-    }
-
     /** Returns a clone copy of target. */
     protected CollectionService<E> cloneTarget() {
         try {
@@ -194,6 +176,13 @@ public class AtomicCollectionImpl<E> extends CollectionView<E> {
         } catch (CloneNotSupportedException e) {
             throw new Error("Cannot happen since target is Cloneable.");
         }
+    }
+
+    /** Returns either the immutable target or the actual target if updating 
+     *  thread. */
+    protected CollectionService<E> targetView() {
+        return ((updatingThread == null) || (updatingThread != Thread.currentThread()))
+                ? immutable : target();
     }
 
     /** Indicates if the current thread is doing an atomic update. */

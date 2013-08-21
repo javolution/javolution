@@ -331,6 +331,7 @@ javolution/core-java/src/main/java/javolution/util/function/Reducers.java -text 
 javolution/core-java/src/main/java/javolution/util/function/Splittable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/ReadWriteLockImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIteratorImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/collection/AtomicCollectionImpl.java -text svneol=unset#text/plain
@@ -339,7 +340,6 @@ javolution/core-java/src/main/java/javolution/util/internal/collection/DistinctC
 javolution/core-java/src/main/java/javolution/util/internal/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/ParallelCollectionImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/collection/ReadWriteLockImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/ReversedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/SequentialCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
@@ -393,6 +393,7 @@ javolution/core-java/src/main/java/javolution/util/internal/table/sorted/AtomicS
 javolution/core-java/src/main/java/javolution/util/internal/table/sorted/FastSortedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SharedSortedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SortedTableView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/sorted/SubSortedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/sorted/UnmodifiableSortedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text

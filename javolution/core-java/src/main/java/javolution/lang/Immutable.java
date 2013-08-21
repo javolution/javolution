@@ -10,7 +10,7 @@ package javolution.lang;
 
 /**
  * <p> An object capable of returning a {@link #value value} not subject or 
- *     susceptible of change or variation. For example, {@code Immutable<List>>}
+ *     susceptible of change or variation. For example, {@code Immutable<List>}
  *     has a {@code List} value which is guaranteed to be constant (not modifiable 
  *     by anybody). Classes implementing this interface do not need themselves to
  *     be unmodifiable. If the value and the class are the same, the 

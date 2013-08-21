@@ -25,6 +25,8 @@ import javolution.util.service.SetService;
 /**
  * Map view implementation; can be used as root class for implementations 
  * if target is {@code null}.
+ * When possible sub-classes should forward to the actual target for the methods
+ * isEmpty, size and clear rather than using the default implementation.
  */
 public abstract class MapView<K, V> implements MapService<K, V> {
 
@@ -122,17 +124,6 @@ public abstract class MapView<K, V> implements MapService<K, V> {
         @Override
         public int size() {
             return MapView.this.size();
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public CollectionService<Entry<K, V>>[] split(int n) {
-            MapService<K, V>[] subMaps = MapView.this.split(n);
-            CollectionService<Entry<K, V>>[] result = new CollectionService[subMaps.length];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = subMaps[i].entrySet();
-            }
-            return result;
         }
 
         @Override
@@ -259,7 +250,7 @@ public abstract class MapView<K, V> implements MapService<K, V> {
 
     @Override
     public boolean isEmpty() {
-        return iterator().hasNext();
+        return !iterator().hasNext();
     }
 
     @Override
@@ -340,21 +331,8 @@ public abstract class MapView<K, V> implements MapService<K, V> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public MapService<K, V>[] split(int n) {
-        if (target == null) return new MapService[] { this }; // No split.
-        MapService<K, V>[] subTargets = target.split(n);
-        MapService<K, V>[] result = new MapService[subTargets.length];
-        for (int i = 0; i < subTargets.length; i++) {
-            MapView<K, V> copy = this.clone();
-            copy.target = subTargets[i];
-            result[i] = copy;
-        }
-        return result;
-    }
-
-    @Override
-    public MapService<K, V> threadSafe() {
-        return new SharedMapImpl<K, V>(this);
+    public MapService<K, V>[] split(int n, boolean threadsafe) {
+        return new MapService[] { this }; // Splits not supported.
     }
 
     @Override

@@ -11,7 +11,7 @@ package javolution.util.function;
 
 /**
  * An object which can be divided in distinct parts and on which the same 
- * action may be performed on its part rather than its whole. 
+ * action may be performed on the parts rather than the whole. 
  *  
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -34,10 +34,12 @@ public interface Splittable<T> {
      * (e.g. an array of size one if this object cannot split).
      *   
      * @param n the number of parts.
+     * @param threadsafe {@code true} if the returned parts can be updated 
+     *        concurrently;  {@code false} otherwise. 
      * @return the distinct parts (or views) for this object.
-     * @throws IllegalArgumentException if {@code n <= 1}
+     * @throws IllegalArgumentException if {@code n < 1}
      */
-    T[] split(int n);
+    T[] split(int n, boolean threadsafe);
 
     /** 
      * Executes an update action on the specified part of this object. 

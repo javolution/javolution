@@ -60,14 +60,8 @@ public interface MapService<K, V> extends
     SetService<K> keySet();
 
     /** 
-     * Returns a thread-safe version of this service (used during 
-     * parallel updates).
+     * Returns the value comparator used for value equality.
      */
-    MapService<K,V> threadSafe();
-
-    /** 
-    * Returns the value comparator used for value equality.
-    */
     Equality<? super V> valueComparator();
 
     /**

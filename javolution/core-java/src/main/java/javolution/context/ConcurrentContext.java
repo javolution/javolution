@@ -102,9 +102,9 @@ import javolution.osgi.internal.OSGiServices;
  *     execute(Runnable ...)} static method 
  *    (Karatsuba recursive multiplication for large integers).
  * [code]
- *  public LargeInteger multiply(LargeInteger that) {
+ *  public LargeInteger times(LargeInteger that) {
  *      if (that._size <= 1) {
- *          return multiply(that.longValue()); // Direct multiplication.
+ *          return times(that.longValue()); // Direct multiplication.
  *      } else { // Karatsuba multiplication in O(n^log2(3))
  *          int bitLength = this.bitLength();
  *          int n = (bitLength >> 1) + (bitLength & 1);

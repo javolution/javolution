@@ -24,9 +24,20 @@ public class FilteredSetImpl<E> extends FilteredCollectionImpl<E> implements
         super(target, filter);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public SetService<E> threadSafe() {
-        return new SharedSetImpl<E>(this);
-    }
+    public SetService<E>[] split(int n, boolean updateable) {
+        SetService<E>[] subTargets = target().split(n, updateable);
+        SetService<E>[] result = new SetService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new FilteredSetImpl<E>(subTargets[i], filter);
+        }
+        return result;
+    } 
 
+    /** Returns the actual target */
+    @Override
+    protected SetService<E> target() {
+        return (SetService<E>) super.target();
+    }
 }

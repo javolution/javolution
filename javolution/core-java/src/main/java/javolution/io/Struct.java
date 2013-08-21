@@ -44,83 +44,89 @@ import javolution.text.TextBuilder;
  *
  * <p> Because of its one-to-one mapping, it is relatively easy to convert C
  *     header files (e.g. OpenGL bindings) to Java {@link Struct}/{@link Union}
- *     using simple text macros. Here is an example of C struct:<code><pre>
- *     enum Gender{MALE, FEMALE};
- *     struct Date {
- *         unsigned short year;
- *         unsigned byte month;
- *         unsigned byte day;
- *     };
- *     struct Student {
- *         enum Gender gender;
- *         char        name[64];
- *         struct Date birth;
- *         float       grades[10];
- *         Student*    next;
- *     };</pre></code>
- *     and here is the Java equivalent using this class:[code]
- *     public enum Gender { MALE, FEMALE };
- *     public static class Date extends Struct {
- *         public final Unsigned16 year = new Unsigned16();
- *         public final Unsigned8 month = new Unsigned8();
- *         public final Unsigned8 day   = new Unsigned8();
- *     }
- *     public static class Student extends Struct {
- *         public final Enum32<Gender>       gender = new Enum32<Gender>(Gender.values());
- *         public final UTF8String           name   = new UTF8String(64);
- *         public final Date                 birth  = inner(new Date());
- *         public final Float32[]            grades = array(new Float32[10]);
- *         public final Reference32<Student> next   =  new Reference32<Student>();
- *     }[/code]
- *     Struct's members are directly accessible:[code]
- *     Student student = new Student();
- *     student.gender.set(Gender.MALE);
- *     student.name.set("John Doe"); // Null terminated (C compatible)
- *     int age = 2003 - student.birth.year.get();
- *     student.grades[2].set(12.5f);
- *     student = student.next.get();[/code]</p>
+ *     using simple text macros. Here is an example of C struct:
+ * [code]
+ * enum Gender{MALE, FEMALE};
+ * struct Date {
+ *     unsigned short year;
+ *     unsigned byte month;
+ *     unsigned byte day;
+ * };
+ * struct Student {
+ *     enum Gender gender;
+ *     char        name[64];
+ *     struct Date birth;
+ *     float       grades[10];
+ *     Student*    next;
+ * };[/code]</p>
+ * <p> and here is the Java equivalent using this class:
+ * [code]
+ * public enum Gender { MALE, FEMALE };
+ * public static class Date extends Struct {
+ *     public final Unsigned16 year = new Unsigned16();
+ *     public final Unsigned8 month = new Unsigned8();
+ *     public final Unsigned8 day   = new Unsigned8();
+ * }
+ * public static class Student extends Struct {
+ *     public final Enum32<Gender>       gender = new Enum32<Gender>(Gender.values());
+ *     public final UTF8String           name   = new UTF8String(64);
+ *     public final Date                 birth  = inner(new Date());
+ *     public final Float32[]            grades = array(new Float32[10]);
+ *     public final Reference32<Student> next   =  new Reference32<Student>();
+ * }[/code]</p>
+ * <p> Struct's members are directly accessible:
+ * [code]
+ * Student student = new Student();
+ * student.gender.set(Gender.MALE);
+ * student.name.set("John Doe"); // Null terminated (C compatible)
+ * int age = 2003 - student.birth.year.get();
+ * student.grades[2].set(12.5f);
+ * student = student.next.get();[/code]</p>
  *
  * <p> Applications can work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to
- *     decode/encode UDP messages directly:[code]
- *     class UDPMessage extends Struct {
- *          Unsigned16 xxx = new Unsigned16();
- *          ...
- *     }
- *     public void run() {
- *         byte[] bytes = new byte[1024];
- *         DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
- *         UDPMessage message = new UDPMessage();
- *         message.setByteBuffer(ByteBuffer.wrap(bytes), 0);
+ *     decode/encode UDP messages directly:
+ * [code]
+ * class UDPMessage extends Struct {
+ *      Unsigned16 xxx = new Unsigned16();
+ *      ...
+ * }
+ * public void run() {
+ *     byte[] bytes = new byte[1024];
+ *     DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
+ *     UDPMessage message = new UDPMessage();
+ *     message.setByteBuffer(ByteBuffer.wrap(bytes), 0);
  *         // packet and message are now two different views of the same data.
- *         while (isListening) {
- *             multicastSocket.receive(packet);
- *             int xxx = message.xxx.get();
- *             ... // Process message fields directly.
- *         }
- *     }[/code]</p>
+ *     while (isListening) {
+ *         multicastSocket.receive(packet);
+ *         int xxx = message.xxx.get();
+ *         ... // Process message fields directly.
+ *     }
+ * }[/code]</p>
  *
  * <p> It is relatively easy to map instances of this class to any physical
  *     address using
  *     <a href="http://java.sun.com/docs/books/tutorial/native1.1/index.html">
- *     JNI</a>. Here is an example:[code]
- *     import java.nio.ByteBuffer;
- *     class Clock extends Struct { // Hardware clock mapped to memory.
- *         Unsigned16 seconds  = new Unsigned16(5); // unsigned short seconds:5
- *         Unsigned16 minutes  = new Unsigned16(5); // unsigned short minutes:5
- *         Unsigned16 hours    = new Unsigned16(4); // unsigned short hours:4
- *         Clock() {
- *             setByteBuffer(Clock.nativeBuffer(), 0);
- *         }
- *         private static native ByteBuffer nativeBuffer();
- *     }[/code]
- *     Below is the <code>nativeBuffer()</code> implementation
- *     (<code>Clock.c</code>):[code]
- *     #include <jni.h>
- *     #include "Clock.h" // Generated using javah
- *     JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
- *         return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
- *     }[/code]</p>
+ *     JNI</a>. Here is an example:
+ * [code]
+ * import java.nio.ByteBuffer;
+ * class Clock extends Struct { // Hardware clock mapped to memory.
+ *     Unsigned16 seconds  = new Unsigned16(5); // unsigned short seconds:5
+ *     Unsigned16 minutes  = new Unsigned16(5); // unsigned short minutes:5
+ *     Unsigned16 hours    = new Unsigned16(4); // unsigned short hours:4
+ *     Clock() {
+ *         setByteBuffer(Clock.nativeBuffer(), 0);
+ *     }
+ *     private static native ByteBuffer nativeBuffer();
+ * }[/code]</p>
+ *  <p> Below is the <code>nativeBuffer()</code> implementation
+ *     (<code>Clock.c</code>):
+ *  [code]
+ *  #include <jni.h>
+ *  #include "Clock.h" // Generated using javah
+ *  JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
+ *      return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
+ *  }[/code]</p>
  *
  * <p> Bit-fields are supported (see <code>Clock</code> example above).
  *     Bit-fields allocation order is defined by the Struct {@link #byteOrder}
@@ -337,8 +343,8 @@ public class Struct {
         int alreadyRead = size - remaining; // typically 0
         if (buffer.hasArray()) {
             int offset = buffer.arrayOffset() + getByteBufferPosition();
-            int bytesRead = in
-                    .read(buffer.array(), offset + alreadyRead, remaining);
+            int bytesRead = in.read(buffer.array(), offset + alreadyRead,
+                    remaining);
             buffer.position(getByteBufferPosition() + alreadyRead + bytesRead
                     - offset);
             return bytesRead;
@@ -381,20 +387,27 @@ public class Struct {
     }
 
     /**
-     * Returns this struct address. This method allows for structs
-     * to be referenced (e.g. pointer) from other structs.
+     * Returns this struct address (if supported by the platform). 
+     * This method allows for structs to be referenced (e.g. pointer) 
+     * from other structs. 
      *
      * @return the struct memory address.
-     * @throws UnsupportedOperationException if the struct buffer is not
-     *         a direct buffer.
+     * @throws UnsupportedOperationException if not supported by the platform.
      * @see    Reference32
      * @see    Reference64
      */
     public final long address() {
-        ByteBuffer thisBuffer = this.getByteBuffer();
-        if (thisBuffer instanceof sun.nio.ch.DirectBuffer) 
-          return ((sun.nio.ch.DirectBuffer)thisBuffer).address();
-        throw new UnsupportedOperationException();
+        try {
+            Class<?> dbClass = Class.forName("sun.nio.ch.DirectBuffer");
+            java.lang.reflect.Method address = dbClass.getDeclaredMethod(
+                    "address", new Class[0]);
+            return ((Long) address.invoke(this.getByteBuffer(),
+                    (Object[]) null)).longValue();
+        } catch (Throwable error) {
+            error.printStackTrace();
+            throw new UnsupportedOperationException(
+                    "Method Struct.address() not supported on this platform.");
+        }
     }
 
     /**

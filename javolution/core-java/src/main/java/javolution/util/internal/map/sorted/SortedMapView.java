@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.Map;
 
 import javolution.util.internal.map.MapView;
-import javolution.util.internal.set.sorted.SharedSortedSetImpl;
 import javolution.util.internal.set.sorted.SubSortedSetImpl;
 import javolution.util.service.SortedMapService;
 import javolution.util.service.SortedSetService;
@@ -20,6 +19,8 @@ import javolution.util.service.SortedSetService;
 /**
  * Sorted map view implementation; can be used as root class for implementations 
  * if target is {@code null}.
+ * When possible sub-classes should forward to the actual target for the methods
+ * isEmpty, size and clear rather than using the default implementation.
  */
 public abstract class SortedMapView<K,V> extends MapView<K,V> implements SortedMapService<K,V> {
 
@@ -46,22 +47,24 @@ public abstract class SortedMapView<K,V> extends MapView<K,V> implements SortedM
             return new MapEntryImpl<K,V>(key, value);
         }
 
+        @SuppressWarnings("unchecked")
+        @Override
+        public SortedSetService<Entry<K, V>>[] split(int n, boolean updateable) { 
+            return new SortedSetService[] { this }; // Split not supported.
+        }
+
         @Override
         public SortedSetService<java.util.Map.Entry<K, V>> subSet(
                Entry<K, V> fromElement,
                Entry<K, V> toElement) {
             return new SubSortedSetImpl<Entry<K, V>>(this, fromElement, toElement);
-        }
-
+        }     
+     
         @Override
         public SortedSetService<Entry<K, V>> tailSet(Entry<K, V> fromElement) {
             return new SubSortedSetImpl<Entry<K, V>>(this, fromElement, null);
-        }     
-        
-        @Override
-        public SortedSetService<Entry<K, V>> threadSafe() {
-            return new SharedSortedSetImpl<Entry<K, V>>(this);
-        }    
+        }
+     
     }
   
     /** Entry Key View */
@@ -83,20 +86,21 @@ public abstract class SortedMapView<K,V> extends MapView<K,V> implements SortedM
             return SortedMapView.this.lastKey();
         }
 
+        @SuppressWarnings("unchecked")
+        @Override
+        public SortedSetService<K>[] split(int n, boolean updateable) { 
+            return new SortedSetService[] { this }; // Split not supported.
+        }
+
         @Override
         public SortedSetService<K> subSet(K fromElement, K toElement) {
             return new SubSortedSetImpl<K>(this, fromElement, toElement);
         }
-
+  
         @Override
         public SortedSetService<K> tailSet(K fromElement) {
             return new SubSortedSetImpl<K>(this, fromElement, null);
         }
-        
-        @Override
-        public SortedSetService<K> threadSafe() {
-            return new SharedSortedSetImpl<K>(this);
-        }    
     }
     
     private static final long serialVersionUID = 0x600L; // Version.
@@ -134,6 +138,12 @@ public abstract class SortedMapView<K,V> extends MapView<K,V> implements SortedM
     @Override
     public abstract K lastKey();
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public SortedMapService<K, V>[] split(int n, boolean updateable) { 
+        return new SortedMapService[] { this }; // Split not supported.
+    }
+
     @Override
     public SortedMapService<K, V> subMap(K fromKey, K toKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, toKey);
@@ -144,14 +154,10 @@ public abstract class SortedMapView<K,V> extends MapView<K,V> implements SortedM
         return new SubSortedMapImpl<K,V>(this, fromKey, lastKey());
     }
 
-    @Override
-    public SortedMapService<K,V> threadSafe() {
-        return new SharedSortedMapImpl<K,V>(this);
-    }
-
     /** Returns the actual target */
     @Override
     protected SortedMapService<K,V> target() {
         return (SortedMapService<K,V>) super.target();
     }
+
 }

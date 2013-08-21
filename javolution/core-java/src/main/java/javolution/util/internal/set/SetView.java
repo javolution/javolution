@@ -27,24 +27,23 @@ public abstract class SetView<E> extends CollectionView<E> implements SetService
     }
 
     @Override
-    public abstract int size();
-
-    @Override
     public abstract boolean contains(Object o);
 
     @Override
     public abstract boolean remove(Object o);
 
     @Override
-    public SetService<E> threadSafe() {
-        return new SharedSetImpl<E>(this);
-    }
+    public abstract int size();
 
-    /** Returns the actual target */
+    @SuppressWarnings("unchecked")
+    @Override
+    public SetService<E>[] split(int n, boolean updateable) { 
+        return new SetService[] { this }; // Split not supported.
+    }
+ 
     @Override
     protected SetService<E> target() {
         return (SetService<E>) super.target();
     }
-
     
 }

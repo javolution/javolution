@@ -12,8 +12,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import javolution.util.internal.ReadWriteLockImpl;
 import javolution.util.internal.collection.SharedCollectionImpl;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -26,6 +26,10 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
 
     public SharedTableImpl(TableService<E> target) {
         super(target);
+    }
+
+    public SharedTableImpl(TableService<E> target, ReadWriteLockImpl lock) {
+        super(target, lock);
     }
 
     @Override
@@ -292,20 +296,14 @@ public class SharedTableImpl<E> extends SharedCollectionImpl<E> implements
             lock.writeLock.unlock();
         }
     }
-
     @Override
-    public CollectionService<E>[] split(int n) {
-        return SubTableImpl.splitOf(this, n); // Sub-views over this.
+    public TableService<E>[] split(int n, boolean updateable) {
+        return SubTableImpl.splitOf(this, n, false); // Sub-views over this.
     }
 
     @Override
     public TableService<E> subList(int fromIndex, int toIndex) {
         return new SubTableImpl<E>(this, fromIndex, toIndex); // View on this.
-    }
-
-    @Override
-    public TableService<E> threadSafe() {
-        return this;
     }
 
     /** Returns the actual target */

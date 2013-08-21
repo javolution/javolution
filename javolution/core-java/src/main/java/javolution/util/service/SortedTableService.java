@@ -31,6 +31,6 @@ public interface SortedTableService<E> extends TableService<E> {
     int positionOf(E element);
     
     @Override
-    SortedTableService<E> threadSafe(); 
+    SortedTableService<E>[] split(int n, boolean updateable);
 
 }

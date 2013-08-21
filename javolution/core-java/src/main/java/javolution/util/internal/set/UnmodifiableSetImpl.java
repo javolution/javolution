@@ -23,8 +23,20 @@ public class UnmodifiableSetImpl<E> extends UnmodifiableCollectionImpl<E>
         super(target);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public SetService<E> threadSafe() {
-        return this;
+    public SetService<E>[] split(int n, boolean updateable) {
+        SetService<E>[] subTargets = target().split(n, updateable);
+        SetService<E>[] result = new SetService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new UnmodifiableSetImpl<E>(subTargets[i]);
+        }
+        return result;
     }
+    
+    @Override
+    protected SetService<E> target() {
+        return (SetService<E>) super.target();
+    }
+    
 }

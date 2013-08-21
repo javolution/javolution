@@ -20,15 +20,9 @@ public class LexicalCaseInsensitiveComparatorImpl implements
 
     private static final long serialVersionUID = -1046672327934410697L;
 
-    @Override
-    public int hashCodeOf(CharSequence csq) {
-        if (csq == null)
-            return 0;
-        int h = 0;
-        for (int i = 0, n = csq.length(); i < n;) {
-            h = 31 * h + up(csq.charAt(i++));
-        }
-        return h;
+    // Converts to upper case.
+    private static char up(char c) {
+        return Character.toUpperCase(c);
     }
 
     @Override
@@ -68,8 +62,14 @@ public class LexicalCaseInsensitiveComparatorImpl implements
         return left.length() - right.length();
     }
 
-    // Converts to upper case.
-    private static char up(char c) {
-        return Character.toUpperCase(c);
+    @Override
+    public int hashCodeOf(CharSequence csq) {
+        if (csq == null)
+            return 0;
+        int h = 0;
+        for (int i = 0, n = csq.length(); i < n;) {
+            h = 31 * h + up(csq.charAt(i++));
+        }
+        return h;
     }
 }

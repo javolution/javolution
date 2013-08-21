@@ -22,19 +22,6 @@ public class LexicalComparatorImpl implements Equality<CharSequence>,
     private static final long serialVersionUID = 7904852144917623728L;
 
     @Override
-    public int hashCodeOf(CharSequence csq) {
-        if (csq == null)
-            return 0;
-        if (csq instanceof String) // Optimization.
-            return csq.hashCode();
-        int h = 0;
-        for (int i = 0, n = csq.length(); i < n;) {
-            h = 31 * h + csq.charAt(i++);
-        }
-        return h;
-    }
-
-    @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
         if (csq1 == csq2)
             return true;
@@ -75,5 +62,18 @@ public class LexicalComparatorImpl implements Equality<CharSequence>,
                 return c1 - c2;
         }
         return left.length() - right.length();
+    }
+
+    @Override
+    public int hashCodeOf(CharSequence csq) {
+        if (csq == null)
+            return 0;
+        if (csq instanceof String) // Optimization.
+            return csq.hashCode();
+        int h = 0;
+        for (int i = 0, n = csq.length(); i < n;) {
+            h = 31 * h + csq.charAt(i++);
+        }
+        return h;
     }
 }

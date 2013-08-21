@@ -48,7 +48,7 @@ final class FractalTableImpl {
         this.offset = offset;
     }
 
-    public int capacity() { 
+    public int capacity() {
         // Reports lower capacity to ensure that there is no fractal holding 
         // wrapping data (head and tail in the same fractal).
         return (data.length - 1) << shift;
@@ -136,11 +136,18 @@ final class FractalTableImpl {
             copyTo(table.F(0));
             return table;
         } else {
-           FractalTableImpl table = 
-                new FractalTableImpl(shift, new Object[data.length << 1], 0);
-           copyTo(table);
-           return table;
+            FractalTableImpl table = new FractalTableImpl(shift,
+                    new Object[data.length << 1], 0);
+            copyTo(table);
+            return table;
         }
+    }
+
+    private FractalTableImpl allocate(int i) {
+        FractalTableImpl fractal = new FractalTableImpl(shift - SHIFT,
+                new Object[1 << SHIFT], 0);
+        data[i] = fractal;
+        return fractal;
     }
 
     // Copy to the specified table. 
@@ -155,13 +162,6 @@ final class FractalTableImpl {
         }
         System.arraycopy(data, o, that.data, 0, n);
         that.offset = offset - (o << shift);
-    }
-
-   private FractalTableImpl allocate(int i) {
-        FractalTableImpl fractal = new FractalTableImpl(shift - SHIFT,
-                new Object[1 << SHIFT], 0);
-        data[i] = fractal;
-        return fractal;
     }
 
     private FractalTableImpl F(int i) {

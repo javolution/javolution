@@ -18,31 +18,6 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
     private static final long serialVersionUID = 4134048629840904441L;
 
     @Override
-    public int hashCodeOf(Object array) {
-        if (array instanceof Object[])
-            return Arrays.deepHashCode((Object[]) array);
-        if (array instanceof byte[])
-            return Arrays.hashCode((byte[]) array);
-        if (array instanceof short[])
-            return Arrays.hashCode((short[]) array);
-        if (array instanceof int[])
-            return Arrays.hashCode((int[]) array);
-        if (array instanceof long[])
-            return Arrays.hashCode((long[]) array);
-        if (array instanceof char[])
-            return Arrays.hashCode((char[]) array);
-        if (array instanceof float[])
-            return Arrays.hashCode((float[]) array);
-        if (array instanceof double[])
-            return Arrays.hashCode((double[]) array);
-        if (array instanceof boolean[])
-            return Arrays.hashCode((boolean[]) array);
-        if (array != null)
-            return array.hashCode();
-        return 0;
-    }
-
-    @Override
     public boolean areEqual(Object array1, Object array2) {
         if (array1 == array2)
             return true;
@@ -67,6 +42,31 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
         if (array1 instanceof boolean[] && array2 instanceof boolean[])
             return Arrays.equals((boolean[]) array1, (boolean[]) array2);
         return array1.equals(array2);
+    }
+
+    @Override
+    public int hashCodeOf(Object array) {
+        if (array instanceof Object[])
+            return Arrays.deepHashCode((Object[]) array);
+        if (array instanceof byte[])
+            return Arrays.hashCode((byte[]) array);
+        if (array instanceof short[])
+            return Arrays.hashCode((short[]) array);
+        if (array instanceof int[])
+            return Arrays.hashCode((int[]) array);
+        if (array instanceof long[])
+            return Arrays.hashCode((long[]) array);
+        if (array instanceof char[])
+            return Arrays.hashCode((char[]) array);
+        if (array instanceof float[])
+            return Arrays.hashCode((float[]) array);
+        if (array instanceof double[])
+            return Arrays.hashCode((double[]) array);
+        if (array instanceof boolean[])
+            return Arrays.hashCode((boolean[]) array);
+        if (array != null)
+            return array.hashCode();
+        return 0;
     }
 
 }

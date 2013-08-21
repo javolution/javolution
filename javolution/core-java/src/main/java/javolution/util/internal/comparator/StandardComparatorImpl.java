@@ -21,11 +21,6 @@ public class StandardComparatorImpl<E> implements Equality<E>,
     private static final long serialVersionUID = -615690677813206151L;
 
     @Override
-    public int hashCodeOf(E e) {
-        return (e == null) ? 0 : e.hashCode();
-    }
-
-    @Override
     public boolean areEqual(E e1, E e2) {
         return (e1 == e2) || (e1 != null && e1.equals(e2));
     }
@@ -46,6 +41,11 @@ public class StandardComparatorImpl<E> implements Equality<E>,
         if (left.equals(right))
             return 0;
         return left.hashCode() < right.hashCode() ? -1 : 1;
+    }
+
+    @Override
+    public int hashCodeOf(E e) {
+        return (e == null) ? 0 : e.hashCode();
     }
 
 }

@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 
 import javolution.util.function.Equality;
 import javolution.util.internal.collection.CollectionView;
-import javolution.util.service.CollectionService;
 import javolution.util.service.TableService;
 
 /**
@@ -232,18 +231,13 @@ public abstract class TableView<E> extends CollectionView<E> implements TableSer
     public abstract int size();
 
     @Override
-    public CollectionService<E>[] split(int n) {
-        return SubTableImpl.splitOf(this, n); // Sub-views over this.
+    public TableService<E>[] split(int n, boolean updateable) {
+        return SubTableImpl.splitOf(this, n, updateable); // Sub-views over this.
     }
 
     @Override
     public TableService<E> subList(int fromIndex, int toIndex) {
         return new SubTableImpl<E>(this, fromIndex, toIndex);
-    }
-
-    @Override
-    public TableService<E> threadSafe() {
-        return new SharedTableImpl<E>(this);
     }
 
     /** Throws NoSuchElementException */

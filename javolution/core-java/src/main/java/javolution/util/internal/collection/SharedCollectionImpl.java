@@ -13,6 +13,7 @@ import java.util.Iterator;
 
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
+import javolution.util.internal.ReadWriteLockImpl;
 import javolution.util.service.CollectionService;
 
 /**
@@ -222,24 +223,19 @@ public class SharedCollectionImpl<E> extends CollectionView<E> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E>[] split(int n) { // Shares the same locks.
+    public CollectionService<E>[] split(int n, boolean updateable) {
         CollectionService<E>[] tmp;
         lock.readLock.lock();
         try {
-            tmp = target().split(n);
+            tmp = target().split(n, updateable); 
         } finally {
             lock.readLock.unlock();
         }
         CollectionService<E>[] result = new CollectionService[tmp.length];
         for (int i = 0; i < tmp.length; i++) {
-            result[i] = new SharedCollectionImpl<E>(tmp[i], lock);
+            result[i] = new SharedCollectionImpl<E>(tmp[i], lock); // Shares the same locks.
         }
         return result;
-    }
-
-    @Override
-    public CollectionService<E> threadSafe() {
-        return this;
     }
 
     @Override

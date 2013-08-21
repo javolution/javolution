@@ -72,8 +72,6 @@ public class Reducers {
     /**
      * Returns the greatest element of a collection according to the 
      * specified comparator (returns {@code null} if the collection is empty).
-     * 
-     * @param comparator the comparator to use for comparison.
      */
     @Parallelizable(mutexFree = true, comment = "Internal use of AtomicReference")
     @Realtime(limit = LINEAR)

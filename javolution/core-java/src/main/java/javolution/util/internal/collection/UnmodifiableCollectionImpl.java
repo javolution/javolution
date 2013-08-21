@@ -84,9 +84,15 @@ public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
         return target().size();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CollectionService<E> threadSafe() {
-        return this;
+    public CollectionService<E>[] split(int n, boolean updateable) {
+        CollectionService<E>[] subTargets = target().split(n, updateable);
+        CollectionService<E>[] result = new CollectionService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new UnmodifiableCollectionImpl<E>(subTargets[i]);
+        }
+        return result;
     }
-
+    
 }

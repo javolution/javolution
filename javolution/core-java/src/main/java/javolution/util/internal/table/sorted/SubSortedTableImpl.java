@@ -8,23 +8,37 @@
  */
 package javolution.util.internal.table.sorted;
 
-import javolution.util.internal.table.TableView;
+import javolution.util.internal.table.SubTableImpl;
 import javolution.util.service.SortedTableService;
+import javolution.util.service.TableService;
 
 /**
- * Sorted table view implementation; can be used as root class for implementations 
- * if target is {@code null}.
+ * A view over a portion of a sorted table. 
  */
-public abstract class SortedTableView<E> extends TableView<E> implements
-        SortedTableService<E> {
+public class SubSortedTableImpl<E> extends SubTableImpl<E> implements SortedTableService<E> {
 
     private static final long serialVersionUID = 0x600L; // Version.
 
-    /**
-     * The view constructor or root class constructor if target is {@code null}.
-     */
-    public SortedTableView(SortedTableService<E> target) {
-        super(target);
+    /** Splits the specified table.  */
+    @SuppressWarnings("unchecked")
+    public static <E> SortedTableService<E>[] splitOf(SortedTableService<E> table,
+            int n, boolean updateable) {
+        if (updateable) table = new SharedSortedTableImpl<E>(table);
+        if (n < 1) throw new IllegalArgumentException("Invalid argument n: "
+                + n);
+        SortedTableService<E>[] subTables = new SortedTableService[n];
+        int minSize = table.size() / n;
+        int start = 0;
+        for (int i = 0; i < n - 1; i++) {
+            subTables[i] = new SubSortedTableImpl<E>(table, start, start + minSize);
+            start += minSize;
+        }
+        subTables[n - 1] = new SubSortedTableImpl<E>(table, start, table.size());
+        return subTables;
+    }
+
+     public SubSortedTableImpl(TableService<E> target, int from, int to) {
+        super(target, from, to);
     }
 
     @Override
@@ -51,10 +65,15 @@ public abstract class SortedTableView<E> extends TableView<E> implements
         }
         return result;
     }
-
+    
     @Override
-    public abstract int positionOf(E element);
-
+    public int positionOf(E element) {
+        int i = target().positionOf(element);
+        if (i < fromIndex) return 0;
+        if (i >= toIndex) return size();
+        return i - fromIndex;
+    }
+    
     @Override
     public SortedTableService<E>[] split(int n, boolean updateable) {
         return SubSortedTableImpl.splitOf(this, n, updateable); // Sub-views over this.
@@ -64,5 +83,5 @@ public abstract class SortedTableView<E> extends TableView<E> implements
     protected SortedTableService<E> target() {
         return (SortedTableService<E>) super.target();
     }
-
+    
 }

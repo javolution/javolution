@@ -23,9 +23,9 @@ public class AtomicSetImpl<E> extends AtomicCollectionImpl<E> implements
         super(target);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public SetService<E> threadSafe() {
-        return this;
+    public SetService<E>[] split(int n, boolean updateable) { 
+        return new SetService[] { this }; // Split not supported.
     }
-
-}
+ }

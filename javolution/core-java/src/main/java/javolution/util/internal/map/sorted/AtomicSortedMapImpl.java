@@ -58,6 +58,12 @@ public class AtomicSortedMapImpl<K, V> extends AtomicMapImpl<K, V> implements So
         return targetView().lastKey();
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public SortedMapService<K, V>[] split(int n, boolean updateable) { 
+        return new SortedMapService[] { this }; // Split not supported.
+    }
+
     @Override
     public SortedMapService<K, V> subMap(K fromKey, K toKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, toKey);
@@ -66,11 +72,6 @@ public class AtomicSortedMapImpl<K, V> extends AtomicMapImpl<K, V> implements So
     @Override
     public SortedMapService<K, V> tailMap(K fromKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, null);
-    }
-
-    @Override
-    public SortedMapService<K, V> threadSafe() {
-        return this;
     }
 
     @Override

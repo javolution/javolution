@@ -11,6 +11,7 @@ package javolution.util.internal.map.sorted;
 import java.util.Comparator;
 import java.util.Map;
 
+import javolution.util.internal.ReadWriteLockImpl;
 import javolution.util.internal.map.SharedMapImpl;
 import javolution.util.service.SortedMapService;
 import javolution.util.service.SortedSetService;
@@ -26,6 +27,9 @@ public class SharedSortedMapImpl<K, V> extends SharedMapImpl<K, V> implements So
         super(target);        
     }
   
+    public SharedSortedMapImpl(SortedMapService<K, V> target, ReadWriteLockImpl lock) {
+        super(target, lock);
+    }
   
     @Override
     public Comparator<? super K> comparator() {
@@ -69,6 +73,23 @@ public class SharedSortedMapImpl<K, V> extends SharedMapImpl<K, V> implements So
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public SortedMapService<K,V>[] split(int n, boolean updateable) {
+        SortedMapService<K,V>[] tmp;
+        lock.readLock.lock();
+        try {
+            tmp = target().split(n, updateable); 
+        } finally {
+            lock.readLock.unlock();
+        }
+        SortedMapService<K,V>[] result = new SortedMapService[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            result[i] = new SharedSortedMapImpl<K,V>(tmp[i], lock); // Shares the same locks.
+        }
+        return result;
+    }
+
     @Override
     public SortedMapService<K, V> subMap(K fromKey, K toKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, toKey);
@@ -77,11 +98,6 @@ public class SharedSortedMapImpl<K, V> extends SharedMapImpl<K, V> implements So
     @Override
     public SortedMapService<K, V> tailMap(K fromKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, null);
-    }
-
-    @Override
-    public SortedMapService<K, V> threadSafe() {
-        return this;
     }
     
     @Override

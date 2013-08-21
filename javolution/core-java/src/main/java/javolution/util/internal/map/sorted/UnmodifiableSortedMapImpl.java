@@ -61,19 +61,25 @@ public class UnmodifiableSortedMapImpl<K, V> extends UnmodifiableMapImpl<K, V> i
         return new SubSortedMapImpl<K,V>(this, fromKey, toKey);
     }
 
+     
     @Override
     public SortedMapService<K, V> tailMap(K fromKey) {
         return new SubSortedMapImpl<K,V>(this, fromKey, null);
     }
-
-    @Override
-    public SortedMapService<K, V> threadSafe() {
-        return this;
-    }
-    
     
     @Override
     protected SortedMapService<K,V> target() {
         return (SortedMapService<K,V>) super.target();
     }
-}
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public SortedMapService<K,V>[] split(int n, boolean updateable) {
+        SortedMapService<K,V>[] subTargets = target().split(n, updateable);
+        SortedMapService<K,V>[] result = new SortedMapService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new UnmodifiableSortedMapImpl<K,V>(subTargets[i]);
+        }
+        return result;
+    }
+ }

@@ -8,6 +8,7 @@
  */
 package javolution.util.internal.set.sorted;
 
+import javolution.util.internal.ReadWriteLockImpl;
 import javolution.util.internal.set.SharedSetImpl;
 import javolution.util.service.SetService;
 import javolution.util.service.SortedSetService;
@@ -24,6 +25,10 @@ public class SharedSortedSetImpl<E> extends SharedSetImpl<E> implements
         super(target);
     }
 
+    public SharedSortedSetImpl(SortedSetService<E> target, ReadWriteLockImpl lock) {
+        super(target, lock);
+   }
+    
     @Override
     public E first() {
         lock.readLock.lock();
@@ -49,19 +54,31 @@ public class SharedSortedSetImpl<E> extends SharedSetImpl<E> implements
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public SortedSetService<E>[] split(int n, boolean updateable) {
+        SortedSetService<E>[] tmp;
+        lock.readLock.lock();
+        try {
+            tmp = target().split(n, updateable); 
+        } finally {
+            lock.readLock.unlock();
+        }
+        SortedSetService<E>[] result = new SortedSetService[tmp.length];
+        for (int i = 0; i < tmp.length; i++) {
+            result[i] = new SharedSortedSetImpl<E>(tmp[i], lock); // Shares the same locks.
+        }
+        return result;
+    }
+
     @Override
     public SortedSetService<E> subSet(E fromElement, E toElement) {
         return new SubSortedSetImpl<E>(this, fromElement, toElement);
     }
-
+ 
     @Override
     public SortedSetService<E> tailSet(E fromElement) {
         return new SubSortedSetImpl<E>(this, fromElement, null);
-    }
-
-    @Override
-    public SortedSetService<E> threadSafe() {
-        return this;
     }
     
     @Override

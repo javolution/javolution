@@ -23,8 +23,24 @@ public class ReversedTableImpl<E> extends TableView<E> {
     }
 
     @Override
+    public boolean add(E e) {
+        target().addFirst(e);
+        return true;
+    }
+
+    @Override
     public void add(int index, E element) {
         target().add(size() - index - 1, element);
+    }
+
+    @Override
+    public void clear() {
+        target().clear();
+    }
+
+    @Override
+    public Equality<? super E> comparator() {
+        return target().comparator();
     }
 
     @Override
@@ -53,24 +69,8 @@ public class ReversedTableImpl<E> extends TableView<E> {
     }
 
     @Override
-    public void clear() {
-        target().clear();
-    }
-
-    @Override
     public int size() {
         return target().size();
-    }
-
-    @Override
-    public boolean add(E e) {
-        target().addFirst(e);
-        return true;
-    }
-
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
     }
 
 }

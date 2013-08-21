@@ -29,14 +29,6 @@ public final class WrapperComparatorImpl<E> implements Equality<E>,
     }
 
     @Override
-    public int hashCodeOf(E obj) {
-        throw new UnsupportedOperationException(
-                "Standard comparator (java.util.Comparator) cannot be used for "
-                        + "hashcode calculations; please use a coherent equality comparator "
-                        + "instead (e.g. javolution.util.function.Equality).");
-    }
-
-    @Override
     public boolean areEqual(E e1, E e2) {
         return (e1 == e2) || (e1 != null && (comparator.compare(e1, e2) == 0));
     }
@@ -50,5 +42,13 @@ public final class WrapperComparatorImpl<E> implements Equality<E>,
         if (right == null)
             return 1;
         return comparator.compare(left, right);
+    }
+
+    @Override
+    public int hashCodeOf(E obj) {
+        throw new UnsupportedOperationException(
+                "Standard comparator (java.util.Comparator) cannot be used for "
+                        + "hashcode calculations; please use a coherent equality comparator "
+                        + "instead (e.g. javolution.util.function.Equality).");
     }
 }

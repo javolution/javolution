@@ -34,9 +34,10 @@ public abstract class MappedSetImpl<E, R> extends MappedCollectionImpl<E, R>
     @Override
     public abstract boolean remove(Object r);
 
-    @Override
-    public SetService<R> threadSafe() {
-        return new SharedSetImpl<R>(this);
-    }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public SetService<R>[] split(int n, boolean updateable) {
+        return new SetService[] { this }; // Split not supported.
+    }    
 }

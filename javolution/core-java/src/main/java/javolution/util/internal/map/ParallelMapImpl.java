@@ -27,6 +27,11 @@ public class ParallelMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
+    public void clear() {
+        target().clear();
+    }
+
+    @Override
     public boolean containsKey(Object key) {
         return target().containsKey(key);
     }
@@ -34,6 +39,11 @@ public class ParallelMapImpl<K, V> extends MapView<K, V> {
     @Override
     public V get(Object key) {
         return target().get(key);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return target().isEmpty();
     }
 
     @Override
@@ -52,7 +62,7 @@ public class ParallelMapImpl<K, V> extends MapView<K, V> {
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            MapService<K, V>[] subViews = view.split(concurrency + 1);
+            MapService<K, V>[] subViews = view.split(concurrency + 1, false);
             for (int i = 1; i < subViews.length; i++) {
                 final MapService<K, V> subView = subViews[i];
                 ctx.execute(new Runnable() {
@@ -80,13 +90,17 @@ public class ParallelMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
+    public int size() {
+        return target().size();
+    }
+
+    @Override
     public void update(final Consumer<MapService<K, V>> action,
             MapService<K, V> view) {
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
             int concurrency = ctx.getConcurrency();
-            MapService<K, V>[] subViews = view.threadSafe().split(
-                    concurrency + 1);
+            MapService<K, V>[] subViews = view.split(concurrency + 1, true);
             for (int i = 1; i < subViews.length; i++) {
                 final MapService<K, V> subView = subViews[i];
                 ctx.execute(new Runnable() {
@@ -106,6 +120,11 @@ public class ParallelMapImpl<K, V> extends MapView<K, V> {
     @Override
     public Equality<? super V> valueComparator() {
         return target().valueComparator();
+    }
+
+    @Override
+    public MapService<K, V>[] split(int n, boolean threadsafe) {
+        return target().split(n, threadsafe); // Forwards.
     }
 
 }

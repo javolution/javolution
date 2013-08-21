@@ -35,12 +35,5 @@ public interface CollectionService<E> extends Collection<E>,
      * collection is sorted.
      */
     Equality<? super E> comparator();
-
-    
-    /** 
-     * Returns a thread-safe version of this service (used during 
-     * parallel updates).
-     */
-    CollectionService<E> threadSafe(); 
     
 }

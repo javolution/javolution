@@ -87,4 +87,15 @@ public class MappedCollectionImpl<E, R> extends CollectionView<R> {
         return target().size();
     }
     
+    @SuppressWarnings("unchecked")
+    @Override
+    public CollectionService<R>[] split(int n, boolean updateable) {
+        CollectionService<E>[] subTargets = (CollectionService<E>[]) target().split(n, updateable);
+        CollectionService<R>[] result = new CollectionService[subTargets.length];
+        for (int i = 0; i < subTargets.length; i++) {
+            result[i] = new MappedCollectionImpl<E, R>(subTargets[i], function);
+        }
+        return result;
+    }
+        
 }

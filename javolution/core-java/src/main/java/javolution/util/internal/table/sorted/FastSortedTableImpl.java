@@ -29,7 +29,7 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
         add(positionOf(element), element);
         return true;
     }
-
+ 
     @Override
     public boolean addIfAbsent(E element) {
         int i = positionOf(element);
@@ -37,7 +37,7 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
         add(i, element);
         return true;
     }
-
+ 
     @SuppressWarnings("unchecked")
     @Override
     public int indexOf(Object element) {
@@ -52,8 +52,8 @@ public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
     }
 
     @Override
-    public SortedTableService<E> threadSafe() {
-        return new SharedSortedTableImpl<E>(this);
+    public SortedTableService<E>[] split(int n, boolean updateable) {
+        return SubSortedTableImpl.splitOf(this, n, updateable); // Sub-views over this.
     }
 
     private int positionOf(E element, int start, int length) {

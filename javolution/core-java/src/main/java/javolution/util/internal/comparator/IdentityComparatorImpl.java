@@ -21,11 +21,6 @@ public class IdentityComparatorImpl<E> implements Equality<E>,
     private static final long serialVersionUID = 6576306094743751922L;
 
     @Override
-    public int hashCodeOf(E obj) {
-        return System.identityHashCode(obj);
-    }
-
-    @Override
     public boolean areEqual(E e1, E e2) {
         return e1 == e2;
     }
@@ -41,5 +36,10 @@ public class IdentityComparatorImpl<E> implements Equality<E>,
 
         // Empirical comparison.
         return (hashCodeOf(left) < hashCodeOf(right)) ? -1 : 1;
+    }
+
+    @Override
+    public int hashCodeOf(E obj) {
+        return System.identityHashCode(obj);
     }
 }
