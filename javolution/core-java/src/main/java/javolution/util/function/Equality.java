@@ -8,8 +8,8 @@
  */
 package javolution.util.function;
 
+import java.io.Serializable;
 import java.util.Comparator;
-
 
 /**
  * <p> A comparator to be used for element equality as well as for 
@@ -36,7 +36,7 @@ import java.util.Comparator;
  * @version 6.0, July 21, 2013
  * @see Equalities
  */
-public interface Equality<T> extends Comparator<T> {
+public interface Equality<T> extends Comparator<T>, Serializable {
 
     /**
      * Returns the hash code for the specified object (consistent with 

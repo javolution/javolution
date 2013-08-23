@@ -8,15 +8,13 @@
  */
 package javolution.util.internal.comparator;
 
-import java.io.Serializable;
-
 import javolution.util.function.Equality;
 
 /**
  * The case insensitive lexical comparator implementation.
  */
 public class LexicalCaseInsensitiveComparatorImpl implements
-        Equality<CharSequence>, Serializable {
+        Equality<CharSequence> {
 
     private static final long serialVersionUID = -1046672327934410697L;
 

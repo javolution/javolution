@@ -140,18 +140,21 @@ public abstract class MapView<K, V> implements MapService<K, V> {
         }
     }
 
+    /** Entry to key mapping function */
+    class EntryToKey implements Function<Entry<K, V>, K>, Serializable {
+        private static final long serialVersionUID = MapView.serialVersionUID;
+        @Override
+        public K apply(java.util.Map.Entry<K, V> param) {
+            return param.getKey();
+        }        
+    }
+    
     /** Key Set View */
     protected class KeySet extends MappedSetImpl<Entry<K, V>, K> {
         private static final long serialVersionUID = MapView.serialVersionUID;
 
         public KeySet() {
-            super(entrySet(), new Function<Entry<K, V>, K>() {
-                @Override
-                public K apply(Map.Entry<K, V> e) {
-                    return e.getKey();
-                }
-            });
-
+            super(entrySet(), new EntryToKey());
         }
 
         @Override

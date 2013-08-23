@@ -54,9 +54,13 @@ void myMethod() {
       - To define locally  scoped environment settings.</li>
       <li>{@link javolution.context.SecurityContext SecurityContext} 
       - To address application-level security concerns.</li>
+      <li>{@link javolution.context.StorageContext StorageContext} 
+      - To store/retrieve your persistent data/dataset.</li>
       <li>{@link javolution.context.FormatContext FormatContext} 
       - For plugable objects parsing/formatting. Such as  {@link javolution.text.TextContext TextContext} for plain text, 
         or {@link javolution.xml.XMLContext XMLContext} for XML serialization/deserialization.</li>
+      <li>{@link javolution.context.StorageContext StorageContext} 
+      - To store/retrieve your persistent data/dataset.</li>
       <li>...add your own !</li>
       </ul>
   </p>

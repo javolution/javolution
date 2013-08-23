@@ -38,7 +38,7 @@ public final class BitSetIteratorImpl implements Iterator<Index> {
         if (nextIndex < 0)
             throw new NoSuchElementException();
         currentIndex = nextIndex;
-        nextIndex = that.nextSetBit(nextIndex);
+        nextIndex = that.nextSetBit(nextIndex + 1);
         return Index.valueOf(currentIndex);
     }
 

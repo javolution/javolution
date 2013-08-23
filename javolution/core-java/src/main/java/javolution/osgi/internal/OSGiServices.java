@@ -12,10 +12,12 @@ import javolution.context.ConcurrentContext;
 import javolution.context.LocalContext;
 import javolution.context.LogContext;
 import javolution.context.SecurityContext;
+import javolution.context.StorageContext;
 import javolution.context.internal.ConcurrentContextImpl;
 import javolution.context.internal.LocalContextImpl;
 import javolution.context.internal.LogContextImpl;
 import javolution.context.internal.SecurityContextImpl;
+import javolution.context.internal.StorageContextImpl;
 import javolution.io.Struct;
 import javolution.lang.Configurable;
 import javolution.lang.Initializer;
@@ -61,6 +63,8 @@ public class OSGiServices {
             LogService.class, LogServiceImpl.class);
     final static ServiceTrackerImpl<SecurityContext> SECURITY_CONTEXT_TRACKER = new ServiceTrackerImpl<SecurityContext>(
             SecurityContext.class, SecurityContextImpl.class);
+    final static ServiceTrackerImpl<StorageContext> STORAGE_CONTEXT_TRACKER = new ServiceTrackerImpl<StorageContext>(
+            StorageContext.class, StorageContextImpl.class);
     final static ServiceTrackerImpl<TextContext> TEXT_CONTEXT_TRACKER = new ServiceTrackerImpl<TextContext>(
             TextContext.class, TextContextImpl.class);
     final static ServiceTrackerImpl<XMLContext> XML_CONTEXT_TRACKER = new ServiceTrackerImpl<XMLContext>(
@@ -98,6 +102,11 @@ public class OSGiServices {
     /** Returns security context service. */
     public static SecurityContext getSecurityContext() {
         return (SecurityContext) SECURITY_CONTEXT_TRACKER.getServices()[0];
+    }
+
+    /** Returns storage context service. */
+    public static StorageContext getStorageContext() {
+        return (StorageContext) STORAGE_CONTEXT_TRACKER.getServices()[0];
     }
 
     /** Returns text context service. */

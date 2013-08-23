@@ -8,15 +8,12 @@
  */
 package javolution.util.internal.comparator;
 
-import java.io.Serializable;
-
 import javolution.util.function.Equality;
 
 /**
  * The identity comparator implementation.
  */
-public class IdentityComparatorImpl<E> implements Equality<E>,
-        Serializable {
+public class IdentityComparatorImpl<E> implements Equality<E> {
 
     private static final long serialVersionUID = 6576306094743751922L;
 

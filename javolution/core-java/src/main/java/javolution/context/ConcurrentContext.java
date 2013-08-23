@@ -152,7 +152,7 @@ public abstract class ConcurrentContext extends AbstractContext {
 
     /**
      * Holds the maximum concurrency  
-     * (default <code>Runtime.getRuntime().availableProcessors() - 1</code>).
+     * (default {@code Runtime.getRuntime().availableProcessors() - 1}).
      * The maximum concurrency is configurable. For example, the JVM option 
      * {@code -Djavolution.context.ConcurrentContext#CONCURRENCY=0}
      * disables concurrency. 

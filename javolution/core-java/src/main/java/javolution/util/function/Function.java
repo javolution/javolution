@@ -8,6 +8,7 @@
  */
 package javolution.util.function;
 
+
 /**
  * <p> A function that perform some operation and returns the result of 
  *     that operation.</p>

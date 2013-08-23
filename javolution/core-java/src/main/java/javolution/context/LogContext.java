@@ -48,6 +48,9 @@ import javolution.text.TextContext;
  * } finally {
  *     ctx.exit();
  * }[/code]</p>
+ * 
+ * <p> In general, the {@link Level#DEBUG} level provides information only 
+ *     relevant to developers and can be turned off after deployment.</p> 
  *  
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013

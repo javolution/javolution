@@ -8,7 +8,6 @@
  */
 package javolution.util.internal.comparator;
 
-import java.io.Serializable;
 import java.util.Comparator;
 
 import javolution.util.function.Equality;
@@ -18,8 +17,7 @@ import javolution.util.function.Equality;
  * consistency with hashcode cannot be maintained. The hashcode
  * calculation method throws UnsupportedOperationException. 
  */
-public final class WrapperComparatorImpl<E> implements Equality<E>,
-        Serializable {
+public final class WrapperComparatorImpl<E> implements Equality<E> {
 
     private static final long serialVersionUID = 8775282553794347279L;
     private final Comparator<? super E> comparator;

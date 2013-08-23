@@ -165,7 +165,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
     }
 
     /**
-     * Returns the <code>String<code> corresponding to this character
+     * Returns the <code>String</code> corresponding to this character
      * sequence. The <code>String</code> returned is always allocated on the
      * heap and can safely be referenced elsewhere.
      *

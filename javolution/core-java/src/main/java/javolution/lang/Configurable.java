@@ -46,7 +46,7 @@ import javolution.text.TextContext;
  * }[/code]</p>
  *  
  * <p> Not only the second example is cleaner, but the actual configuration
- *     data can come from anywhere, from system properties (if property defined), 
+ *     data can come from anywhere, from system properties (default), 
  *     OSGi Configuration Admin service, another bundle, etc. 
  *     Low level code does not need to know.</p>
  *      
@@ -132,7 +132,7 @@ public abstract class Configurable<T> {
 
     /**
      * Creates a new configurable. If a system property exist for this 
-     * configurable's {@link #getName() name}, the 
+     * configurable's {@link #getName() name}, then 
      * the {@link #parse parsed} value of the property supersedes the 
      * {@link #getDefault() default} value of this configurable. 
      * For example, running the JVM with
@@ -258,7 +258,7 @@ public abstract class Configurable<T> {
      * This method is used to initialize this configurable from 
      * system properties. The default implementation uses the 
      * {@link TextContext} to retrieve the text format 
-     * (based on {@link DefaultTextFormat} class annotation). 
+     * (based on the {@link DefaultTextFormat} class annotation). 
      */
     @SuppressWarnings("unchecked")
     protected T parse(String str) {

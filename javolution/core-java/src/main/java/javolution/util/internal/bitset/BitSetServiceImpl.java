@@ -28,10 +28,10 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     /** Holds the bits (64 bits per long), trimmed. */
     private long[] bits;
 
-    /** Creates a bit set  (all bits are cleared). */
+    /** Creates a bit set  (256 bits). */
     public BitSetServiceImpl() {
         super(null); // Root.
-        bits = new long[0];
+        bits = new long[4];
     }
 
     @Override
@@ -120,7 +120,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     @Override
     public void flip(int bitIndex) {
         int i = bitIndex >> 6;
-        setLength(i + 1);
+        ensureCapacity(i + 1);
         bits[i] ^= 1L << bitIndex;
         trim();
     }
@@ -131,7 +131,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
             throw new IndexOutOfBoundsException();
         int i = fromIndex >>> 6;
         int j = toIndex >>> 6;
-        setLength(j + 1);
+        ensureCapacity(j + 1);
         if (i == j) {
             bits[i] ^= (-1L << fromIndex) & ((1L << toIndex) - 1);
             return;
@@ -167,9 +167,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     @Override
     public boolean getAndSet(int bitIndex, boolean value) {
         int i = bitIndex >> 6;
-        if (i >= bits.length) {
-            setLength(i + 1);
-        }
+        ensureCapacity(i + 1);
         boolean previous = (bits[i] & (1L << bitIndex)) != 0;
         if (value) { 
             bits[i] |= 1L << bitIndex;
@@ -240,9 +238,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     public void or(BitSetService that) {
         long[] thatBits = (that instanceof BitSetServiceImpl) ? ((BitSetServiceImpl) that).bits
                 : that.toLongArray();
-        if (thatBits.length > this.bits.length) {
-            setLength(thatBits.length);
-        }
+        ensureCapacity(thatBits.length);
         for (int i = thatBits.length; --i >= 0;) {
             bits[i] |= thatBits[i];
         }
@@ -293,9 +289,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     @Override
     public void set(int bitIndex) {
         int i = bitIndex >> 6;
-        if (i >= bits.length) {
-            setLength(i + 1);
-        }
+        ensureCapacity(i + 1);
         bits[i] |= 1L << bitIndex;
     }
 
@@ -312,7 +306,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     public void set(int fromIndex, int toIndex) {
         int i = fromIndex >>> 6;
         int j = toIndex >>> 6;
-        setLength(j + 1);
+        ensureCapacity(j + 1);
         if (i == j) {
             bits[i] |= (-1L << fromIndex) & ((1L << toIndex) - 1);
             return;
@@ -347,25 +341,24 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     public void xor(BitSetService that) {
         long[] thatBits = (that instanceof BitSetServiceImpl) ? ((BitSetServiceImpl) that).bits
                 : that.toLongArray();
-        if (thatBits.length > this.bits.length) {
-            setLength(thatBits.length);
-        }
+        ensureCapacity(thatBits.length);
         for (int i = thatBits.length; --i >= 0;) {
             bits[i] ^= thatBits[i];
         }
         trim();
     }
 
-    /**
-     * Sets the new length of the bit set.
-     */
-    private void setLength(int newLength) {
+    // Checks capacity.
+    private void ensureCapacity(int capacity) {
+        if (bits.length < capacity) resize(capacity);
+    }
+    
+    // Resize.
+    private void resize(int min) {
+        int newLength = bits.length * 2;
+        while (newLength < min) newLength *= 2;
         long[] tmp = new long[newLength];
-        if (newLength >= bits.length) {
-            System.arraycopy(bits, 0, tmp, 0, bits.length);
-        } else { // Truncates.
-            System.arraycopy(bits, 0, tmp, 0, newLength);
-        }
+        System.arraycopy(bits, 0, tmp, 0, bits.length);
         bits = tmp;
     }
     
@@ -375,6 +368,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
     private void trim() {
         int n = bits.length;
         while ((--n >= 0) && (bits[n] == 0L)) {}
-        if (++n < bits.length) setLength(n);   
+        if (++n < bits.length) ensureCapacity(n);   
     }
 }

@@ -43,7 +43,7 @@ public class Reducers {
         return new AnyReducer<E>(type);
     }
 
-    private static class AnyReducer<E> implements Reducer<E> {
+    private static class AnyReducer<E> implements Reducer<E>  {
         private final Class<? extends E> type;
         private volatile E found;
         
