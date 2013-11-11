@@ -31,6 +31,7 @@ public class JavolutionActivator implements BundleActivator {
     public void start(BundleContext bc) throws Exception {
         
         // Activate services trackers.
+        OSGiServices.COMPUTE_CONTEXT_TRACKER.activate(bc);
         OSGiServices.CONCURRENT_CONTEXT_TRACKER.activate(bc);
         OSGiServices.CONFIGURABLE_LISTENER_TRACKER.activate(bc);
         OSGiServices.LOCAL_CONTEXT_TRACKER.activate(bc);
@@ -56,6 +57,7 @@ public class JavolutionActivator implements BundleActivator {
     }
 
     public void stop(BundleContext bc) throws Exception {
+        OSGiServices.COMPUTE_CONTEXT_TRACKER.deactivate(bc);
         OSGiServices.CONCURRENT_CONTEXT_TRACKER.deactivate(bc);
         OSGiServices.CONFIGURABLE_LISTENER_TRACKER.deactivate(bc);
         OSGiServices.LOCAL_CONTEXT_TRACKER.deactivate(bc);

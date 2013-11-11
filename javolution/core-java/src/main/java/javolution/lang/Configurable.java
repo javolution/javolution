@@ -30,7 +30,7 @@ import javolution.text.TextContext;
  * [code]
  * class Document {
  *     private static final Font FONT
- *         = Font.decode(System.getProperty("pkg.Document#FONT") != null ?
+ *         = Font.decode(System.getProperty("myPkg.Document#FONT") != null ?
  *             System.getProperty("FONT") : "Arial-BOLD-18");
  * }[/code]</p>
  * 
@@ -63,11 +63,11 @@ import javolution.text.TextContext;
  *         }
  *         @Override
  *         protected Integer initialized(Integer value) {
- *             return MathLib.min(value, 65536); // Hard-limiting
+ *             return MathLib.min(value, 65536); // Hard-limit.
  *         }
  *         @Override
  *         protected Integer reconfigured(Integer oldCount, Integer newCount) {
- *             throw new UnsupportedOperationException("Unicity reconfiguration not supported."); 
+ *             throw new UnsupportedOperationException("Dynamic reconfiguration not supported."); 
  *         }               
  *     }
  * }[/code]</p>
@@ -246,19 +246,18 @@ public abstract class Configurable<T> {
      * Developers may override this method to perform 
      * any initialization logic (e.g. input validation).
      * 
-     * @param value the requested value for this configurable.
+     * @param requestedValue the requested value for this configurable.
      * @return the actual value of this configurable. 
      */
-    protected T initialized(T value) {
-        return value;
+    protected T initialized(T requestedValue) {
+        return requestedValue;
     }
 
     /**
      * Parses the specified text to return the corresponding value. 
      * This method is used to initialize this configurable from 
      * system properties. The default implementation uses the 
-     * {@link TextContext} to retrieve the text format 
-     * (based on the {@link DefaultTextFormat} class annotation). 
+     * current {@link TextContext} to retrieve the value format. 
      */
     @SuppressWarnings("unchecked")
     protected T parse(String str) {
@@ -272,12 +271,12 @@ public abstract class Configurable<T> {
      * any reconfiguration logic (e.g. hard limiting values).
      * 
      * @param oldValue the old value.
-     * @param newValue the requested new value.
+     * @param requestedValue the requested new value.
      * @return the actual new value of this configurable. 
      * @throws UnsupportedOperationException if this configurable does not 
      *         support dynamic reconfiguration.
      */
-    protected T reconfigured(T oldValue, T newValue) {
-        return newValue;
+    protected T reconfigured(T oldValue, T requestedValue) {
+        return requestedValue;
     }
 }

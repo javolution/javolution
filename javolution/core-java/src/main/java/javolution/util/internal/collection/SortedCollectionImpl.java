@@ -8,12 +8,10 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Comparator;
 import java.util.Iterator;
 
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
-import javolution.util.internal.comparator.WrapperComparatorImpl;
 import javolution.util.service.CollectionService;
 
 /**
@@ -27,7 +25,7 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
         private E next;
         
         public IteratorImpl() {
-            FastTable<E> sorted = new FastTable<E>(comparator);
+            FastTable<E> sorted = new FastTable<E>(comparator());
             Iterator<E> it = target().iterator();            
             while (it.hasNext()) {
                 sorted.add(it.next());
@@ -57,13 +55,9 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
     }
    
     private static final long serialVersionUID = 0x600L; // Version.    
-    protected final Equality<E> comparator;
-
-    @SuppressWarnings("unchecked")
-    public SortedCollectionImpl(CollectionService<E> target, Comparator<? super E> comparator) {
+   
+    public SortedCollectionImpl(CollectionService<E> target) {
         super(target);
-        this.comparator = (comparator instanceof Equality) ?
-                (Equality<E>) comparator : new WrapperComparatorImpl<E>(comparator);
     }
 
     @Override
@@ -78,7 +72,7 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
 
     @Override
     public Equality<? super E> comparator() {
-        return comparator;
+        return target().comparator();
     }
 
     @Override
@@ -104,6 +98,5 @@ public class SortedCollectionImpl<E> extends CollectionView<E>  {
     @Override
     public int size() {
         return target().size();
-    }
-    
+    }   
 }

@@ -14,16 +14,23 @@ import javolution.osgi.internal.OSGiServices;
 import javolution.text.TextFormat;
 
 /**
- * <p> A context for xml serialization/deserialization. 
- *     The default xml format for any class is given by the 
- *     {@link javolution.text.DefaultTextFormat Format} inheritable annotation.</p>
- * 
- * <p> A default xml format exists for the following predefined types:
+ * <p> A context for XML parsing/formatting. This context provides 
+ *     the {@link javolution.xml.XMLFormat XMLFormat} to parse/format objects
+ *     of any class. If not superseded, the XML format for a class is specified
+ *     by the {@link javolution.xml.DefaultXMLFormat DefaultXMLFormat} 
+ *     annotation.</p>
+ * <p> A XML context always returns the most specialized format. If a class 
+ *     has no default format annotation (inherited or not), then the default 
+ *     {@link java.lang.Object} format (with "value" attribute is 
+ *     parsed/formatted using {@link javolution.text.TextContext current 
+ *     text format}) is returned. 
+ *     A predefined format exists for the following standard types:
  *     <code><ul>
- *       <li>java.lang.Object (value attribute parsed/formatted using {@link TextFormat})</li>
+ *       <li>java.lang.Object (attribute "value" parsed/formatted using {@link TextFormat})</li>
  *       <li>java.util.Collection</li>
  *       <li>java.util.Map</li>
- *    </ul></code></p>
+ *     </ul></code>
+ *     </p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012

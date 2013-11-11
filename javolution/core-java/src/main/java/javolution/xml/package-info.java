@@ -44,7 +44,6 @@ public abstract class Graphic implements XMLSerializable {
     private Transform transform; // null if none.
    
     // Default XML format with name associations (members identified by an unique name).
-    // See XMLFormat for examples of positional associations.
     public static class XML extends XMLFormat {
         public void write(Graphic g, OutputElement xml) throws XMLStreamException {
             xml.setAttribute("isVisible", g.isVisible); 

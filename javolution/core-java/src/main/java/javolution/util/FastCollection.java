@@ -34,6 +34,7 @@ import javolution.util.function.Predicate;
 import javolution.util.function.Reducer;
 import javolution.util.function.Reducers;
 import javolution.util.internal.collection.AtomicCollectionImpl;
+import javolution.util.internal.collection.ComparatorCollectionImpl;
 import javolution.util.internal.collection.DistinctCollectionImpl;
 import javolution.util.internal.collection.FilteredCollectionImpl;
 import javolution.util.internal.collection.MappedCollectionImpl;
@@ -58,8 +59,8 @@ import javolution.util.service.CollectionService;
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
  *    <li>{@link #filtered filtered(filter)} - View exposing only the elements matching the specified filter.</li>
  *    <li>{@link #mapped mapped(function)} - View exposing elements through the specified mapping function.</li>
- *    <li>{@link #sorted sorted(comparator)} - View exposing elements sorted according to their natural order 
- *                          of using a specified comparator.</li>
+ *    <li>{@link #comparator(Comparator) comparator(comparator)} - View using the specified comparator for element equality and order.</li>
+ *    <li>{@link #sorted sorted()} - View exposing elements sorted according to the collection comparator.</li>
  *    <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  * </ul></p>
@@ -261,19 +262,37 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /** 
-     * Returns a view exposing elements sorted according to the 
-     * collection {@link #comparator() order}. 
+     * Returns a view using the specified comparator for element equality 
+     * and sorting.
+     * 
+     * @see #contains(Object)
+     * @see #remove(Object)
+     * @see #sorted()
+     * @see #distinct() 
+     */
+    public FastCollection<E> comparator(Comparator<? super E> cmp) {
+        return new ComparatorCollectionImpl<E>(service(), comparator());
+    }
+
+    /** 
+     * Returns a view exposing elements sorted according to this 
+     * collection {@link #comparator()}.
+     * 
+     * @see #comparator()
+     * @see #comparator(Comparator)
      */
     public FastCollection<E> sorted() {
-        return new SortedCollectionImpl<E>(service(), comparator());
+        return new SortedCollectionImpl<E>(service());
     }
 
     /** 
      * Returns a view exposing elements sorted according to the specified 
-     * comparator.
+     * comparator (convenience method).
+     * 
+     * @return {@code comparator(cmp).sorted()}
      */
     public FastCollection<E> sorted(Comparator<? super E> cmp) {
-        return new SortedCollectionImpl<E>(service(), cmp);
+        return comparator(cmp).sorted();
     }
 
     /** 

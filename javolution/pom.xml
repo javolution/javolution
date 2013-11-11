@@ -42,7 +42,8 @@
         This project provides a Java library and a (mirror) C++ library.
         Both libraries are maven-based and can be used to build multi-platform real-time applications 
         or to port Java applications to C++. The C++ library contains already a port of OSGi and JUnit 
-        (demonstrated by the subproject test-cpp).            
+        (demonstrated by the subproject test-cpp). 
+        On Windows, the C++ module require Visual C++ to be installed (see link below).        
     </description>
     <licenses>
         <license>

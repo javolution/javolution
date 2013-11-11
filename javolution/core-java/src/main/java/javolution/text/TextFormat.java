@@ -18,7 +18,8 @@ import javolution.lang.Parallelizable;
  *     for greater flexibility.</p>
  * 
  * <p> Instances of this class are typically retrieved from the 
- *     current {@link TextContext} (OSGi service or not).
+ *     {@link DefaultTextFormat} inheritable annotation through the current 
+ *     current {@link TextContext}.
  * [code]
  * @DefaultTextFormat(Complex.Cartesian.class) 
  * public class Complex extends Number {

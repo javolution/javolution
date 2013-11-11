@@ -15,94 +15,70 @@ import javolution.xml.stream.XMLStreamWriter;
 
 /**
  * <p> This class represents the binding between Java classes and 
- *     their XML representation ({@link XMLFormat}).</p>
+ *     their XML representation.</p>
  *     
- * <p> Custom XML bindings can also be used to alias class names and 
+ * <p> Custom bindings are used to alias class names and 
  *     ensure that the XML representation is:<ul>
  *     <li> Impervious to obfuscation.</li>
  *     <li> Unaffected by any class refactoring.</li>
- *     <li> Can be mapped to multiple implementations. For example:[code]
+ *     <li> Can be mapped to multiple implementations. For example:
+ * [code]
+ * // Creates a binding to serialize Swing components into high-level XML
+ * // and deserialize the same XML into SWT components.
+ * XMLBinding swingBinding = new XMLBinding();
+ * swingBinding.setAlias(javax.swing.JButton.class, "Button");
+ * swingBinding.setAlias(javax.swing.JTable.class, "Table");
+ * ...
+ * XMLBinding swtBinding = new XMLBinding();
+ * swtBinding.setAlias(org.eclipse.swt.widgets.Button.class, "Button");
+ * swtBinding.setAlias(org.eclipse.swt.widgets.Table.class, "Table");
+ * ...
  *     
- *     // Creates a binding to serialize Swing components into high-level XML
- *     // and deserialize the same XML into SWT components.
- *     XMLBinding swingBinding = new XMLBinding();
- *     swingBinding.setAlias(javax.swing.JButton.class, "Button");
- *     swingBinding.setAlias(javax.swing.JTable.class, "Table");
- *     ...
- *     XMLBinding swtBinding = new XMLBinding();
- *     swtBinding.setAlias(org.eclipse.swt.widgets.Button.class, "Button");
- *     swtBinding.setAlias(org.eclipse.swt.widgets.Table.class, "Table");
- *     ...
- *     
- *     // Writes Swing Desktop to XML.
- *     XMLObjectWriter writer = new XMLObjectWriter().setBinding(swingBinding);
- *     writer.setOutput(new FileOutputStream("C:/desktop.xml"));
- *     writer.write(swingDesktop, "Desktop", SwingDesktop.class);
- *     writer.close();
+ * // Writes Swing desktop to XML.
+ * XMLObjectWriter writer = new XMLObjectWriter().setBinding(swingBinding);
+ * writer.setOutput(new FileOutputStream("C:/desktop.xml"));
+ * writer.write(swingDesktop, "Desktop", SwingDesktop.class);
+ * writer.close();
  *
- *     // Reads back high-level XML to a SWT implementation!    
- *     XMLObjectReader reader = new XMLObjectReader().setXMLBinding(swtBinding);
- *     reader.setInput(new FileInputStream("C:/desktop.xml"));
- *     SWTDesktop swtDesktop = reader.read("Desktop", SWTDesktop.class);
- *     reader.close();
- *     [/code]</li>
- *     </ul></p>        
+ * // Reads back desktop to a SWT implementation!    
+ * XMLObjectReader reader = new XMLObjectReader().setXMLBinding(swtBinding);
+ * reader.setInput(new FileInputStream("C:/desktop.xml"));
+ * SWTDesktop swtDesktop = reader.read("Desktop", SWTDesktop.class);
+ * reader.close();[/code]</li>
+ * </ul></p>        
  *     
- * <p> More advanced bindings can also be created through sub-classing.[code]
+ * <p> More advanced bindings can be created by sub-classing this class.
+ * [code]
+ * // XML binding using reflection.
+ * public ReflectionBinding extends XMLBinding {
+ *     protected XMLFormat getFormat(Class forClass) {
+ *         Field[] fields = forClass.getDeclaredFields();
+ *         return new XMLReflectionFormat(fields);
+ *     }
+ * }
  * 
- *     // XML binding using reflection.
- *     public ReflectionBinding extends XMLBinding {
- *         protected XMLFormat getFormat(Class forClass) {
- *             Field[] fields = forClass.getDeclaredFields();
- *             return new XMLReflectionFormat(fields);
- *         }
+ * // XML binding read from DTD input source.
+ * public DTDBinding extends XMLBinding {
+ *     public DTDBinding(InputStream dtd) {
+ *         ...
  *     }
+ * }
  *     
- *     // XML binding read from DTD input source.
- *     public DTDBinding extends XMLBinding {
- *         public DTDBinding(InputStream dtd) {
- *             ...
- *         }
- *     }
- *     
- *     // XML binding overriding default formats.
- *     public MyBinding extends XMLBinding {
- *         // Non-static formats use unmapped XMLFormat instances.
- *         XMLFormat<String> myStringFormat = new XMLFormat<String>(null) {...}
- *         XMLFormat<Collection> myCollectionFormat = new XMLFormat<Collection>(null) {...}
- *         protected XMLFormat getFormat(Class forClass) throws XMLStreamException {
- *             if (String.class.equals(forClass))
- *                  return myStringFormat;
- *             if (Collection.class.isAssignableFrom(forClass))
- *                  return myCollectionFormat;
- *             return super.getFormat(cls);
- *         }
- *     }
- *     [/code]
- *      
- * <p> The default XML binding implementation supports all static XML formats 
- *     (static members of the classes being mapped) as well as the 
- *     following types:<ul>
- *        <li><code>java.lang.Object</code> (empty element)</li>
- *        <li><code>java.lang.Class</code></li>
- *        <li><code>java.lang.String</code></li>
- *        <li><code>java.lang.Appendable</code></li>
- *        <li><code>java.util.Collection</code></li>
- *        <li><code>java.util.Map</code></li>
- *        <li><code>java.lang.Object[]</code></li>
- *        <li> all primitive types wrappers (e.g. 
- *            <code>Boolean, Integer ...</code>)</li>
- *        </ul></p>
+ * // Custom XML binding overriding XML formats (from XMLContext).
+ *  public MyBinding extends XMLBinding {
+ *      XMLFormat<String> myStringFormat = new XMLFormat<String>() {...}
+ *      XMLFormat<Collection> myCollectionFormat = new XMLFormat<Collection>() {...}
+ *      protected XMLFormat getFormat(Class forClass) throws XMLStreamException {
+ *          if (String.class.equals(forClass)) return myStringFormat;
+ *          if (Collection.class.isAssignableFrom(forClass)) return myCollectionFormat;
+ *          return super.getFormat(cls); // Returns XMLFormat from XMLContext
+ *      }
+ * }[/code]</p>
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
  */
 public class XMLBinding implements XMLSerializable {
-
-    /**
-     * Holds the default instance used by readers/writers (thread-safe).
-     */
-    static final XMLBinding DEFAULT = new XMLBinding();
 
     /**
      * Holds the class attribute.

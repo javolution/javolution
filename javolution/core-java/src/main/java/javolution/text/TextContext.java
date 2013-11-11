@@ -19,7 +19,7 @@ import javolution.osgi.internal.OSGiServices;
  *     by the {@link javolution.text.DefaultTextFormat DefaultTextFormat} 
  *     annotation.</p>
  * 
- * <p> A text context always returns the most specialized format. If the class 
+ * <p> A text context always returns the most specialized format. If a class 
  *     has no default format annotation (inherited or not), then the default 
  *     {@link java.lang.Object} format (which calls {@link Object#toString})
  *     is returned. A predefined format exists for the following standard types:
@@ -35,11 +35,6 @@ import javolution.osgi.internal.OSGiServices;
  *       <li>java.lang.Double</li>
  *       <li>java.lang.Class</li>
  *       <li>java.lang.String</li>
- *       <li>java.util.Date (ISO 8601)</li> 
- *       <li>java.math.BigInteger</li>
- *       <li>java.math.BigDecimal</li>
- *       <li>java.awt.Color (hexadecimal RGB value, e.g. {@code 0x112233})</li>
- *       <li>java.awt.Font</li>
  *     </ul></code>
  *     </p>
  *     

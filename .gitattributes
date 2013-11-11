@@ -259,12 +259,14 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.
 javolution/core-java/pom.xml -text
 javolution/core-java/src/main/java/javax/realtime/RealtimeThread.java -text
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/ComputeContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ConcurrentContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/FormatContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/LocalContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/LogContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/SecurityContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/StorageContext.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/context/internal/ComputeContextImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/internal/ConcurrentContextImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/ConcurrentThreadImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/LocalContextImpl.java -text
@@ -310,6 +312,8 @@ javolution/core-java/src/main/java/javolution/text/TextFormat.java -text svneol=
 javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
+javolution/core-java/src/main/java/javolution/tools/Perfometer.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/tools/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
@@ -338,6 +342,7 @@ javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIterato
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/collection/AtomicCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/CollectionView.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/ComparatorCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/DistinctCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
@@ -444,6 +449,7 @@ javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -t
 javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
+javolution/core-java/src/test/java/javolution/processing/OpenCLTest.java -text svneol=unset#text/plain
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text

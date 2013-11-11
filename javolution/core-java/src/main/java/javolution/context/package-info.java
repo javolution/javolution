@@ -52,6 +52,9 @@ void myMethod() {
       - To log events according to the runtime environment (e.g. {@link org.osgi.service.log.LogService} when running OSGi).</li>     
       <li>{@link javolution.context.LocalContext LocalContext} 
       - To define locally  scoped environment settings.</li>
+      <li>{@link javolution.context.ProcessingContext ProcessingContext} 
+      - To accelerate computations using GPUs (requires <a href="http://en.wikipedia.org/wiki/OpenCL">OpenCL</a>
+        drivers installed on the platform).</li>
       <li>{@link javolution.context.SecurityContext SecurityContext} 
       - To address application-level security concerns.</li>
       <li>{@link javolution.context.StorageContext StorageContext} 

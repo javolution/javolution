@@ -158,8 +158,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      */
     public final int indexOf(char c) {
         for (int i = _offset, end = _offset + _length; i < end; i++) {
-            if (_array[i] == c)
-                return i - _offset;
+            if (_array[i] == c) return i - _offset;
         }
         return -1;
     }
@@ -207,21 +206,24 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
         } else if (that instanceof CharArray) {
             return equals((CharArray) that);
         } else if (that instanceof java.lang.CharSequence) {
-            return equals((java.lang.CharSequence) that);
+            return contentEquals((java.lang.CharSequence) that);
         } else {
             return false;
         }
     }
 
-    // Do not make public or String instances may not use equals(String)
-    private boolean equals(java.lang.CharSequence chars) {
-        if (chars == null)
-            return false;
-        if (this._length != chars.length())
-            return false;
+    /**
+     * Compares this character array against the specified character sequence.
+     *
+     * @param  chars the character sequence to compare with.
+     * @return <code>true</code> if both objects represent the same sequence;
+     *         <code>false</code> otherwise.
+     */
+    public boolean contentEquals(CharSequence chars) {
+        if (chars == null) return false;
+        if (this._length != chars.length()) return false;
         for (int i = _length, j = _offset + _length; --i >= 0;) {
-            if (_array[--j] != chars.charAt(i))
-                return false;
+            if (_array[--j] != chars.charAt(i)) return false;
         }
         return true;
     }
@@ -234,16 +236,12 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      *         <code>false</code> otherwise.
      */
     public boolean equals(CharArray that) {
-        if (this == that)
-            return true;
-        if (that == null)
-            return false;
-        if (this._length != that._length)
-            return false;
+        if (this == that) return true;
+        if (that == null) return false;
+        if (this._length != that._length) return false;
         final char[] thatArray = that._array;
         for (int i = that._offset + _length, j = _offset + _length; --j >= _offset;) {
-            if (_array[j] != thatArray[--i])
-                return false;
+            if (_array[j] != thatArray[--i]) return false;
         }
         return true;
     }
@@ -258,13 +256,10 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      *         <code>false</code> otherwise.
      */
     public boolean equals(String str) {
-        if (str == null)
-            return false;
-        if (_length != str.length())
-            return false;
+        if (str == null) return false;
+        if (_length != str.length()) return false;
         for (int i = _length, j = _offset + _length; --i >= 0;) {
-            if (_array[--j] != str.charAt(i))
-                return false;
+            if (_array[--j] != str.charAt(i)) return false;
         }
         return true;
     }
@@ -367,15 +362,14 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
 
     // Implements CharSequence
     public char charAt(int index) {
-        if ((index < 0) || (index >= _length))
-            throw new IndexOutOfBoundsException("index: " + index);
+        if ((index < 0) || (index >= _length)) throw new IndexOutOfBoundsException(
+                "index: " + index);
         return _array[_offset + index];
     }
 
     // Implements CharSequence
     public java.lang.CharSequence subSequence(int start, int end) {
-        if ((start < 0) || (end < 0) || (start > end) || (end > this.length()))
-            throw new IndexOutOfBoundsException();
+        if ((start < 0) || (end < 0) || (start > end) || (end > this.length())) throw new IndexOutOfBoundsException();
         CharArray chars = new CharArray();
         chars._array = _array;
         chars._offset = _offset + start;
@@ -385,8 +379,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
 
     // Implements CharSequence
     public void getChars(int start, int end, char dest[], int destPos) {
-        if ((start < 0) || (end < 0) || (start > end) || (end > _length))
-            throw new IndexOutOfBoundsException();
+        if ((start < 0) || (end < 0) || (start > end) || (end > _length)) throw new IndexOutOfBoundsException();
         System.arraycopy(_array, start + _offset, dest, destPos, end - start);
     }
 

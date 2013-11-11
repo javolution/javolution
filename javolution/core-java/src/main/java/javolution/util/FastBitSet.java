@@ -9,15 +9,17 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LINEAR;
+
+import java.util.Arrays;
+
+import javolution.lang.Immutable;
 import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;
 import javolution.util.service.BitSetService;
 
 /**
- * <p> A high-performance bitset with {@link Realtime real-time} behavior.</p>
- * 
- * <p> This class is integrated with the collection framework as 
- *     a set of {@link Index indices} and obeys the collection semantic
+ * <p> A high-performance bitset integrated with the collection framework as 
+ *     a set of {@link Index indices} and obeying the collection semantic
  *     for methods such as {@link #size} (cardinality) or {@link #equals}
  *     (same set of indices).</p>
  *   
@@ -38,6 +40,18 @@ public class FastBitSet extends FastSet<Index> {
     */
     public FastBitSet() {
         service = new BitSetServiceImpl();
+    }
+
+
+    /**
+     * Creates a bit set holding the specified bits.
+     * 
+     * @param bits a long array containing a little-endian representation
+     *        of a sequence of bits to be used as the initial bits of the
+     *        new bit set.
+     */
+    public FastBitSet(Immutable<long[]> bits) {
+        service = new BitSetServiceImpl(bits.value());
     }
 
     /**

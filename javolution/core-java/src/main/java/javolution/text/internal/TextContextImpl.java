@@ -8,17 +8,7 @@
  */
 package javolution.text.internal;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import javolution.context.LogContext;
 import javolution.text.CharSet;
 import javolution.text.Cursor;
@@ -36,48 +26,31 @@ import javolution.util.FastMap;
  */
 public final class TextContextImpl extends TextContext {
 
-    private static final TextFormat<?> OBJECT_FORMAT = new TextFormat<Object>() {
-        ThreadLocal<Object> objToString = new ThreadLocal<Object>();
+    // Holds class->format mapping. 
+    private final FastMap<Class<?>, TextFormat<?>> classToFormat = new FastMap<Class<?>, TextFormat<?>>()
+            .shared();
 
-        public Appendable format(Object obj, Appendable dest)
-                throws IOException {
-            if (obj == null) return dest.append("null");
-            if (objToString.get() == obj) // Circularity in toString !
-            return TypeFormat.format(System.identityHashCode(obj),
-                    dest.append("Object#"));
-            objToString.set(obj);
-            try {
-                String str = obj.toString();
-                return dest.append(str);
-            } finally {
-                objToString.set(null);
-            }
-        }
-
-        public Object parse(CharSequence csq, Cursor cursor) {
-            throw new UnsupportedOperationException(
-                    "Generic object parsing not supported.");
-        }
-
-    };
-    // Holds class->format local mapping. 
-    private final FastMap<Class<?>, TextFormat<?>> localFormats;
-
-    // Caches class->format from class annotations. 
-    private final FastMap<Class<?>, TextFormat<?>> defaultFormats;
+    // Holds parent (null if root).
+    private final TextContextImpl parent;
 
     /** Default constructor for root */
     public TextContextImpl() {
-        localFormats = new FastMap<Class<?>, TextFormat<?>>(); // Updated only during configuration.
-        defaultFormats = new FastMap<Class<?>, TextFormat<?>>().shared(); // Can be updated concurrently.
-        storePrimitiveTypesFormats();
+        parent = null;
+        classToFormat.put(Boolean.class, BOOLEAN_FORMAT);
+        classToFormat.put(Byte.class, BYTE_FORMAT);
+        classToFormat.put(Character.class, CHARACTER_FORMAT);
+        classToFormat.put(Class.class, CLASS_FORMAT);
+        classToFormat.put(Double.class, DOUBLE_FORMAT);
+        classToFormat.put(Float.class, FLOAT_FORMAT);
+        classToFormat.put(Integer.class, INTEGER_FORMAT);
+        classToFormat.put(Long.class, LONG_FORMAT);
+        classToFormat.put(Short.class, SHORT_FORMAT);
+        classToFormat.put(String.class, STRING_FORMAT);
     }
 
     /** Inner constructor */
     public TextContextImpl(TextContextImpl parent) {
-        localFormats = new FastMap<Class<?>, TextFormat<?>>()
-                .putAll(parent.localFormats);
-        defaultFormats = parent.defaultFormats;
+        this.parent = parent;
     }
 
     @Override
@@ -88,258 +61,215 @@ public final class TextContextImpl extends TextContext {
     @SuppressWarnings("unchecked")
     @Override
     protected <T> TextFormat<T> searchFormat(Class<? extends T> type) {
-        Class<?> cls = type;
-        while (cls != null) {
-            TextFormat<?> format;
-            // Search local format first.
-            if (localFormats.size() > 0) {
-                format = localFormats.get(cls);
-                if (format != null) return (TextFormat<T>) format;
-            }
-            // Then search default format.
-            format = defaultFormats.get(cls);
-            if (format != null) return (TextFormat<T>) format;
-
-            // Search annotations.
-            DefaultTextFormat annotation = cls
-                    .getAnnotation(DefaultTextFormat.class);
-            if (annotation != null) { // Found it.
-                try {
-                    format = annotation.value().newInstance();
-                } catch (Throwable error) {
-                    LogContext.warning(error);
-                }
-                // Updates the default mapping.
-                Class<?> mappedClass = type;
-                while (true) {
-                    defaultFormats.put(mappedClass, format);
-                    if (mappedClass.equals(cls)) break;
-                    mappedClass = mappedClass.getSuperclass();
-                }
-                return (TextFormat<T>) format;
-            }
-
-            // Search superclass.
-            cls = cls.getSuperclass();
+        TextFormat<T> format = (TextFormat<T>) classToFormat.get(type);
+        if (format != null) return format;
+        if (parent != null) { // Searches parent.
+            format = parent.searchFormat(type);
+            classToFormat.put(type, format);
+            return format;
         }
-        throw new Error("Object default format not found !");
+        // Root context (search inheritable annotations).
+        DefaultTextFormat annotation = type
+                .getAnnotation(DefaultTextFormat.class);
+        if (annotation != null) { // Found it.
+            try {
+                format = (TextFormat<T>) annotation.value().newInstance();
+                classToFormat.put(type, format);
+                return format;
+            } catch (Throwable error) {
+                LogContext.warning(error);
+            }
+        }
+        classToFormat.put(type, OBJECT_FORMAT);
+        return (TextFormat<T>) OBJECT_FORMAT;
     }
 
     @Override
     public <T> void setFormat(Class<? extends T> type, TextFormat<T> format) {
-        localFormats.put(type, format);
+        classToFormat.put(type, format);
     }
 
     ////////////////////////
     // PREDEFINED FORMATS //
     ////////////////////////
 
-    private void storePrimitiveTypesFormats() {
-        defaultFormats.put(Object.class, OBJECT_FORMAT);
-        defaultFormats.put(Boolean.class, new TextFormat<Boolean>() {
+    private static final TextFormat<?> OBJECT_FORMAT = new TextFormat<Object>() {
+        ThreadLocal<Object> objToString = new ThreadLocal<Object>();
 
-            public Appendable format(Boolean obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.booleanValue(), dest);
+        @Override
+        public Appendable format(Object obj, Appendable dest)
+                throws IOException {
+            if (obj == null) return dest.append("null");
+            if (objToString.get() == obj) return TypeFormat.format(
+                    System.identityHashCode(obj), dest.append("Object#")); // Circularity in toString !
+            objToString.set(obj);
+            try {
+                String str = obj.toString();
+                return dest.append(str);
+            } finally {
+                objToString.set(null);
             }
+        }
 
-            public Boolean parse(CharSequence csq, Cursor cursor) {
-                return TypeFormat.parseBoolean(csq, cursor);
+        @Override
+        public Object parse(CharSequence csq, Cursor cursor) {
+            throw new UnsupportedOperationException(
+                    "Generic object parsing not supported.");
+        }
+
+    };
+
+    private static TextFormat<Boolean> BOOLEAN_FORMAT = new TextFormat<Boolean>() {
+
+        @Override
+        public Appendable format(Boolean obj, Appendable dest)
+                throws IOException {
+            return TypeFormat.format(obj.booleanValue(), dest);
+        }
+
+        @Override
+        public Boolean parse(CharSequence csq, Cursor cursor) {
+            return TypeFormat.parseBoolean(csq, cursor);
+        }
+    };
+
+    private static TextFormat<Character> CHARACTER_FORMAT = new TextFormat<Character>() {
+
+        @Override
+        public Appendable format(Character obj, Appendable dest)
+                throws IOException {
+            return dest.append(obj.charValue());
+        }
+
+        @Override
+        public Character parse(CharSequence csq, Cursor cursor) {
+            return Character.valueOf(cursor.nextChar(csq));
+        }
+
+    };
+
+    private static TextFormat<Byte> BYTE_FORMAT = new TextFormat<Byte>() {
+
+        @Override
+        public Appendable format(Byte obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.byteValue(), dest);
+        }
+
+        @Override
+        public Byte parse(CharSequence csq, Cursor cursor) {
+            return Byte.valueOf(TypeFormat.parseByte(csq, 10, cursor));
+        }
+
+    };
+
+    private static TextFormat<Short> SHORT_FORMAT = new TextFormat<Short>() {
+
+        @Override
+        public Appendable format(Short obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.shortValue(), dest);
+        }
+
+        @Override
+        public Short parse(CharSequence csq, Cursor cursor) {
+            return Short.valueOf(TypeFormat.parseShort(csq, 10, cursor));
+        }
+
+    };
+
+    private static TextFormat<Integer> INTEGER_FORMAT = new TextFormat<Integer>() {
+
+        @Override
+        public Appendable format(Integer obj, Appendable dest)
+                throws IOException {
+            return TypeFormat.format(obj.intValue(), dest);
+        }
+
+        @Override
+        public Integer parse(CharSequence csq, Cursor cursor) {
+            return Integer.valueOf(TypeFormat.parseInt(csq, 10, cursor));
+        }
+
+    };
+
+    private static TextFormat<Long> LONG_FORMAT = new TextFormat<Long>() {
+
+        @Override
+        public Appendable format(Long obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.longValue(), dest);
+        }
+
+        @Override
+        public Long parse(CharSequence csq, Cursor cursor) {
+            return Long.valueOf(TypeFormat.parseLong(csq, 10, cursor));
+        }
+
+    };
+
+    private static TextFormat<Float> FLOAT_FORMAT = new TextFormat<Float>() {
+
+        @Override
+        public Appendable format(Float obj, Appendable dest) throws IOException {
+            return TypeFormat.format(obj.floatValue(), dest);
+        }
+
+        @Override
+        public Float parse(CharSequence csq, Cursor cursor) {
+            return new Float(TypeFormat.parseFloat(csq, cursor));
+        }
+
+    };
+
+    private static TextFormat<Double> DOUBLE_FORMAT = new TextFormat<Double>() {
+
+        @Override
+        public Appendable format(Double obj, Appendable dest)
+                throws IOException {
+            return TypeFormat.format(obj.doubleValue(), dest);
+        }
+
+        @Override
+        public Double parse(CharSequence csq, Cursor cursor) {
+            return new Double(TypeFormat.parseDouble(csq, cursor));
+        }
+
+    };
+
+    private static TextFormat<String> STRING_FORMAT = new TextFormat<String>() {
+
+        @Override
+        public Appendable format(String obj, Appendable dest)
+                throws IOException {
+            return dest.append(obj);
+        }
+
+        @Override
+        public String parse(CharSequence csq, Cursor cursor) {
+            CharSequence tmp = csq.subSequence(cursor.getIndex(), csq.length());
+            cursor.setIndex(csq.length());
+            return tmp.toString();
+        }
+
+    };
+
+    private static TextFormat<Class<?>> CLASS_FORMAT = new TextFormat<Class<?>>() {
+
+        @Override
+        public Appendable format(Class<?> obj, Appendable dest)
+                throws IOException {
+            return dest.append(obj.getName());
+        }
+
+        @Override
+        public Class<?> parse(CharSequence csq, Cursor cursor) {
+            CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
+            try {
+                return Class.forName(name.toString());
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException("Class " + name
+                        + " Not Found");
             }
+        }
 
-        });
-        defaultFormats.put(Character.class, new TextFormat<Character>() {
-
-            public Appendable format(Character obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj.charValue());
-            }
-
-            public Character parse(CharSequence csq, Cursor cursor) {
-                return Character.valueOf(cursor.nextChar(csq));
-            }
-
-        });
-        defaultFormats.put(Byte.class, new TextFormat<Byte>() {
-
-            public Appendable format(Byte obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.byteValue(), dest);
-            }
-
-            public Byte parse(CharSequence csq, Cursor cursor) {
-                return Byte.valueOf(TypeFormat.parseByte(csq, 10, cursor));
-            }
-
-        });
-        defaultFormats.put(Short.class, new TextFormat<Short>() {
-
-            public Appendable format(Short obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.shortValue(), dest);
-            }
-
-            public Short parse(CharSequence csq, Cursor cursor) {
-                return Short.valueOf(TypeFormat.parseShort(csq, 10, cursor));
-            }
-
-        });
-        defaultFormats.put(Integer.class, new TextFormat<Integer>() {
-
-            public Appendable format(Integer obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.intValue(), dest);
-            }
-
-            public Integer parse(CharSequence csq, Cursor cursor) {
-                return Integer.valueOf(TypeFormat.parseInt(csq, 10, cursor));
-            }
-
-        });
-        defaultFormats.put(Long.class, new TextFormat<Long>() {
-
-            public Appendable format(Long obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.longValue(), dest);
-            }
-
-            public Long parse(CharSequence csq, Cursor cursor) {
-                return Long.valueOf(TypeFormat.parseLong(csq, 10, cursor));
-            }
-
-        });
-        defaultFormats.put(Float.class, new TextFormat<Float>() {
-
-            public Appendable format(Float obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.floatValue(), dest);
-            }
-
-            public Float parse(CharSequence csq, Cursor cursor) {
-                return new Float(TypeFormat.parseFloat(csq, cursor));
-            }
-
-        });
-        defaultFormats.put(Double.class, new TextFormat<Double>() {
-
-            public Appendable format(Double obj, Appendable dest)
-                    throws IOException {
-                return TypeFormat.format(obj.doubleValue(), dest);
-            }
-
-            public Double parse(CharSequence csq, Cursor cursor) {
-                return new Double(TypeFormat.parseDouble(csq, cursor));
-            }
-
-        });
-        defaultFormats.put(String.class, new TextFormat<String>() {
-
-            public Appendable format(String obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj);
-            }
-
-            public String parse(CharSequence csq, Cursor cursor) {
-                CharSequence tmp = csq.subSequence(cursor.getIndex(),
-                        csq.length());
-                cursor.setIndex(csq.length());
-                return tmp.toString();
-            }
-
-        });
-        defaultFormats.put(Class.class, new TextFormat<Class<?>>() {
-
-            public Appendable format(Class<?> obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj.getName());
-            }
-
-            public Class<?> parse(CharSequence csq, Cursor cursor) {
-                CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
-                try {
-                    return Class.forName(name.toString());
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Class " + name
-                            + " Not Found");
-                }
-            }
-
-        });
-        defaultFormats.put(Date.class, new TextFormat<Date>() {
-            TimeZone tz = TimeZone.getTimeZone("UTC");
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-            {
-                df.setTimeZone(tz);
-            }
-
-            public Appendable format(Date obj, Appendable dest)
-                    throws IOException {
-                return dest.append(df.format(obj));
-            }
-
-            public Date parse(CharSequence csq, Cursor cursor) {
-                CharSequence date = cursor.nextToken(csq, CharSet.WHITESPACES);
-                try {
-                    return df.parse(date.toString());
-                } catch (ParseException error) {
-                    throw new IllegalArgumentException(error);
-                }
-            }
-        });
-        defaultFormats.put(BigInteger.class, new TextFormat<BigInteger>() {
-
-            public Appendable format(BigInteger obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj.toString());
-            }
-
-            public BigInteger parse(CharSequence csq, Cursor cursor) {
-                CharSequence value = cursor.nextToken(csq, CharSet.WHITESPACES);
-                return new BigInteger(value.toString());
-            }
-
-        });
-        defaultFormats.put(BigDecimal.class, new TextFormat<BigDecimal>() {
-
-            public Appendable format(BigDecimal obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj.toString());
-            }
-
-            public BigDecimal parse(CharSequence csq, Cursor cursor) {
-                CharSequence value = cursor.nextToken(csq, CharSet.WHITESPACES);
-                return new BigDecimal(value.toString());
-            }
-
-        });
-        defaultFormats.put(Font.class, new TextFormat<Font>() {
-
-            public Appendable format(Font obj, Appendable dest)
-                    throws IOException {
-                return dest.append(obj.getName());
-            }
-
-            public Font parse(CharSequence csq, Cursor cursor) {
-                CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
-                return Font.decode(name.toString());
-            }
-
-        });
-        defaultFormats.put(Color.class, new TextFormat<Color>() {
-
-            public Appendable format(Color obj, Appendable dest)
-                    throws IOException {
-                return dest.append('#').append(
-                        Integer.toHexString(obj.getRGB()));
-            }
-
-            public Color parse(CharSequence csq, Cursor cursor) {
-                CharSequence name = cursor.nextToken(csq, CharSet.WHITESPACES);
-                return Color.decode(name.toString());
-            }
-
-        });
-
-    }
+    };
 
 }

@@ -9,6 +9,7 @@
 package javolution.util.internal.bitset;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javolution.lang.MathLib;
@@ -24,14 +25,22 @@ import javolution.util.service.BitSetService;
 public class BitSetServiceImpl extends SetView<Index> implements BitSetService, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
-
-    /** Holds the bits (64 bits per long), trimmed. */
+    private static final long[] ALL_CLEARED = new long[0];
+    
+    /** Holds the bits (64 bits per long). */
     private long[] bits;
+    
 
-    /** Creates a bit set  (256 bits). */
+    /** Creates a bit set (all bits cleared). */
     public BitSetServiceImpl() {
         super(null); // Root.
-        bits = new long[4];
+        bits = ALL_CLEARED;
+    }
+
+    /** Creates a bit set having the specified bits. */
+    public BitSetServiceImpl(long[] bits) {
+        super(null); // Root.
+        this.bits = bits;
     }
 
     @Override
@@ -49,7 +58,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int i = n; i < bits.length; i++) {
             this.bits[i] = 0L;
         }
-        trim();
     }
 
     @Override
@@ -59,7 +67,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int i = 0; i < n; i++) {
             this.bits[i] &= ~thatBits[i];
         }
-        trim();
     }
 
     @Override
@@ -73,7 +80,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
 
     @Override
     public void clear() {
-        bits = new long[0];
+        bits = ALL_CLEARED;
     }
 
     @Override
@@ -82,7 +89,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         if (longIndex >= bits.length)
             return;
         bits[longIndex] &= ~(1L << bitIndex);
-        trim();
     }
 
     @Override
@@ -104,7 +110,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int k = i + 1; (k < j) && (k < bits.length); k++) {
             bits[k] = 0;
         }
-        trim();
     }
 
     @Override
@@ -122,7 +127,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         int i = bitIndex >> 6;
         ensureCapacity(i + 1);
         bits[i] ^= 1L << bitIndex;
-        trim();
     }
 
     @Override
@@ -141,7 +145,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int k = i + 1; k < j; k++) {
             bits[k] ^= -1;
         }
-        trim();
     }
 
     @Override
@@ -174,7 +177,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         } else {
             bits[i] &= ~(1L << bitIndex);
         }
-        trim();
         return previous;
     }
 
@@ -195,6 +197,7 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
 
     @Override
     public int length() {
+        trim();
         if (bits.length == 0) return 0;
         return (bits.length << 6) - MathLib.numberOfLeadingZeros(bits[bits.length -1]);
     }
@@ -242,7 +245,6 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int i = thatBits.length; --i >= 0;) {
             bits[i] |= thatBits[i];
         }
-        trim();
     }
 
     @Override
@@ -334,9 +336,10 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
 
     @Override
     public long[] toLongArray() {
+        trim();
         return bits;
     }
-
+    
     @Override
     public void xor(BitSetService that) {
         long[] thatBits = (that instanceof BitSetServiceImpl) ? ((BitSetServiceImpl) that).bits
@@ -345,29 +348,22 @@ public class BitSetServiceImpl extends SetView<Index> implements BitSetService, 
         for (int i = thatBits.length; --i >= 0;) {
             bits[i] ^= thatBits[i];
         }
-        trim();
     }
 
     // Checks capacity.
     private void ensureCapacity(int capacity) {
-        if (bits.length < capacity) resize(capacity);
+        if (bits.length < capacity) {
+            bits = Arrays.copyOf(bits, MathLib.max(bits.length * 2, capacity));
+        }
     }
-    
-    // Resize.
-    private void resize(int min) {
-        int newLength = bits.length * 2;
-        while (newLength < min) newLength *= 2;
-        long[] tmp = new long[newLength];
-        System.arraycopy(bits, 0, tmp, 0, bits.length);
-        bits = tmp;
-    }
-    
-    /**
-     * Removes the tails words if cleared.
-     */
+
+    // Removes trailing zeros.
     private void trim() {
         int n = bits.length;
         while ((--n >= 0) && (bits[n] == 0L)) {}
-        if (++n < bits.length) ensureCapacity(n);   
+        if (++n != bits.length) { // Trim.
+            bits = Arrays.copyOf(bits, n);
+        }        
     }
+    
 }

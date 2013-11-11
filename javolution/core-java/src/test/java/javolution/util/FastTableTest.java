@@ -19,7 +19,7 @@ import java.util.Random;
 
 import javolution.context.LogContext;
 import javolution.osgi.internal.OSGiServices;
-import javolution.test.Perfometer;
+import javolution.tools.Perfometer;
 
 /**
  * Validation and performance tests of FastTable.

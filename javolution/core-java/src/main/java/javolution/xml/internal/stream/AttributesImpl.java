@@ -76,7 +76,7 @@ public final class AttributesImpl implements Attributes {
     @Override
     public int getIndex(CharSequence qName) {
         for (int i = 0; i < length; i++) {
-            if (qName.equals(attributes.get(i).qName))
+            if (attributes.get(i).qName.contentEquals(qName)) 
                 return i;
         }
         return -1;
@@ -86,12 +86,12 @@ public final class AttributesImpl implements Attributes {
     public int getIndex(CharSequence uri, CharSequence localName) {
         for (int i = 0; i < length; i++) {
             AttributeImpl attribute = attributes.get(i);
-            if (localName.equals(attribute.localName)) {
+            if (attribute.localName.contentEquals(localName)) { 
                 if (attribute.prefix == null) { // No namespace URI.
                     if (uri.length() == 0)
                         return i;
                 } else { // Check if matching namespace URI.
-                    if (uri.equals(namespaces.getNamespaceURI(attribute.prefix)))
+                    if (namespaces.getNamespaceURI(attribute.prefix).equals(uri))
                         return i;
                 }
             }

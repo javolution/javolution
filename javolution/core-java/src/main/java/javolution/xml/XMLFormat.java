@@ -20,95 +20,82 @@ import javolution.xml.stream.XMLStreamReader;
 import javolution.xml.stream.XMLStreamWriter;
 
 /**
- * <p> This class represents the format base class for XML serialization and
- *     deserialization.</p>
- *     
- * <p> Instances of this class are typically retrieved from the 
- *     {@link XMLContext} (OSGi service or not).
- *     [code]
- *     @Format(xml=GraphicXML.class) 
- *     public abstract class Graphic implements XMLSerializable {
- *         private boolean isVisible;
- *         private Paint paint; // null if none.
- *         private Stroke stroke; // null if none.
- *         private Transform transform; // null if none.
+ * <p> A format for XML serialization and deserialization. The default 
+ *     XML format for any given class can be defined using the 
+ *     {@link DefaultXMLFormat} inheritable annotation.
+ * [code]
+ * @DefaultXMLFormat(Graphic.XML.class) 
+ * public abstract class Graphic implements XMLSerializable {
+ *     private boolean isVisible;
+ *     private Paint paint; // null if none.
+ *     private Stroke stroke; // null if none.
+ *     private Transform transform; // null if none.
  *          
- *         // XML format with positional associations (members identified by their position),
- *         // see XML package description for examples of name associations.
- *         public static class GraphicXML extends XMLFormat<Graphic> {
- *              public void write(Graphic g, OutputElement xml) {
- *                  xml.setAttribute("isVisible", g.isVisible); 
- *                  xml.add(g.paint); // First.
- *                  xml.add(g.stroke); // Second.
- *                  xml.add(g.transform); // Third.
- *              }
- *              public void read(InputElement xml, Graphic g) {
- *                  g.isVisible = xml.getAttribute("isVisible", true);
- *                  g.paint = xml.getNext();
- *                  g.stroke = xml.getNext();
- *                  g.transform = xml.getNext();
- *                  return g;
- *             }
- *         };
- *    }
- *    [/code]
+ *     public static class XML extends XMLFormat {
+ *         public void write(Graphic g, OutputElement xml) throws XMLStreamException {
+ *             xml.setAttribute("isVisible", g.isVisible); 
+ *             xml.add(g.paint, "Paint");
+ *             xml.add(g.stroke, "Stroke");
+ *             xml.add(g.transform, "Transform");
+ *         }
+ *         public void read(InputElement xml, Graphic g) throws XMLStreamException {
+ *             g.isVisible = xml.getAttribute("isVisible", true);
+ *             g.paint = xml.get("Paint");
+ *             g.stroke = xml.get("Stroke");
+ *             g.transform = xml.get("Transform");
+ *         }
+ *     }
+ * }[/code]</p>
  *    
  * <p> Due to the sequential nature of XML serialization/deserialization, 
  *     formatting/parsing of XML attributes should always be performed before 
  *     formatting/parsing of the XML content.</p>
  * 
- * <p> The mapping between classes and XML formats can be overriden
- *     through {@link XMLBinding} instances.
- *     Here is an example of serialization/deserialization:
- *     [code]     
- *     // Creates a list holding diverse objects.
- *     List list = new ArrayList();
- *     list.add("John Doe");
- *     list.add(null);
- *     Map map = new FastMap();
- *     map.put("ONE", 1);
- *     map.put("TWO", 2);
- *     list.add(map);
+ * <p> The current XML format is retrieved from the {@link XMLContext}. 
+ *     A predefined format exists for {@link java.util.Collection} and 
+ *     {@link java.util.Map} maps.
+ * [code]     
+ * // Creates a list holding diverse objects.
+ * List list = new ArrayList();
+ * list.add("John Doe");
+ * list.add(null);
+ * Map map = new FastMap();
+ * map.put("ONE", 1);
+ * map.put("TWO", 2);
+ * list.add(map);
  *     
- *     // Use of custom binding.
- *     XMLBinding binding = new XMLBinding();
- *     binding.setAlias(FastMap.class, "Map");
- *     binding.setAlias(String.class, "String");
- *     binding.setAlias(Integer.class, "Integer");
+ * // Use of custom binding.
+ * XMLBinding binding = new XMLBinding();
+ * binding.setAlias(FastMap.class, "Map");
+ * binding.setAlias(String.class, "String");
+ * binding.setAlias(Integer.class, "Integer");
  *     
- *     // Formats the list to XML .
- *     OutputStream out = new FileOutputStream("C:/list.xml");
- *     XMLObjectWriter writer = new XMLObjectWriter().setOutput(out).setBinding(binding);
- *     writer.write(list, "MyList", ArrayList.class);
- *     writer.close();
- *     [/code]
- *     
- *     Here is the output <code>list.xml</code> document produced:[code]
- *     
- *     <MyList>
- *         <String value="John Doe"/>
- *         <Null/>
- *         <Map>
- *             <Key class="String" value="ONE"/>
- *             <Value class="Integer" value="1"/>
- *             <Key class="String" value="TWO"/>
- *             <Value class="Integer" value="2"/>
- *         </Map>
- *     </MyList>
- *     [/code]
- *     
- *     The list can be read back with the following code:
- *     [code]
- *     // Reads back to a FastTable instance.
- *     InputStream in = new FileInputStream("C:/list.xml");
- *     XMLObjectReader reader = new XMLObjectReader().setInput(in).setBinding(binding);
- *     FastTable table = reader.read("MyList", FastTable.class); 
- *     reader.close();
- *     [/code]
- *     </p>
- *     
- * <p> <i>Note:</i> Any type for which a {@link TextFormat text format} is 
- *     defined can be represented as a XML attribute.</p>
+ * // Formats the list to XML .
+ * OutputStream out = new FileOutputStream("C:/list.xml");
+ * XMLObjectWriter writer = new XMLObjectWriter().setOutput(out).setBinding(binding);
+ * writer.write(list, "MyList", ArrayList.class);
+ * writer.close();[/code]</p>
+ * 
+ * <p> Here is the output <code>list.xml</code> document produced:
+ * [code]
+ * <MyList>
+ *     <String value="John Doe"/>
+ *     <Null/>
+ *     <Map>
+ *         <Key class="String" value="ONE"/>
+ *         <Value class="Integer" value="1"/>
+ *         <Key class="String" value="TWO"/>
+ *         <Value class="Integer" value="2"/>
+ *     </Map>
+ * </MyList>[/code]</p>
+ * <p> The list can be read back with the following code:
+ * [code]
+ * // Reads back to a FastTable instance.
+ *  InputStream in = new FileInputStream("C:/list.xml");
+ *  XMLObjectReader reader = new XMLObjectReader().setInput(in).setBinding(binding);
+ *  FastTable table = reader.read("MyList", FastTable.class); 
+ *  reader.close();
+ *  [/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
@@ -608,7 +595,7 @@ public abstract class XMLFormat<T> {
 
         // Resets for reuse.
         void reset() {
-            _binding = XMLBinding.DEFAULT;
+            _binding = DEFAULT_BINDING;
             _isReaderAtNext = false;
             _reader.reset();
             _referenceResolver = null;
@@ -970,7 +957,7 @@ public abstract class XMLFormat<T> {
 
         // Resets for reuse.
         void reset() {
-            _binding = XMLBinding.DEFAULT;
+            _binding = DEFAULT_BINDING;
             _writer.reset();
             _writer.setRepairingNamespaces(true);
             _writer.setAutomaticEmptyElements(true);
@@ -978,52 +965,7 @@ public abstract class XMLFormat<T> {
         }
     }
 
-    /**
-     * Returns the default XML format for any object having a 
-     * {@link TextFormat plain text format}; this XML representation consists 
-     * of the plain text representation of the object as a "value" attribute.
-     */
-    public static class Default extends XMLFormat<Object> {
-
-        /**
-         * Default constructor.
-         */
-        public Default() {}
-
-        @Override
-        public boolean isReferenceable() {
-            return false; // Always by value (immutable).
-        }
-
-        @Override
-        public Object newInstance(Class<?> cls,
-                javolution.xml.XMLFormat.InputElement xml)
-                throws XMLStreamException {
-            TextFormat<?> format = TextContext.getFormat(cls);
-            if (format == null)
-                throw new XMLStreamException(
-                        "No TextFormat defined to parse instances of " + cls);
-            CharArray value = xml.getAttribute("value");
-            if (value == null)
-                throw new XMLStreamException(
-                        "Missing value attribute (to be able to parse the instance of "
-                                + cls + ")");
-            return format.parse(value);
-        }
-
-        public void read(XMLFormat.InputElement xml, Object obj)
-                throws XMLStreamException {
-            // Do nothing.
-        }
-
-        @SuppressWarnings("unchecked")
-        public void write(Object obj, XMLFormat.OutputElement xml)
-                throws XMLStreamException {
-            TextBuilder tmp = new TextBuilder();
-            TextFormat<?> tf = TextContext.getFormat(obj.getClass());
-            ((TextFormat<Object>) tf).format(obj, tmp);
-            xml.setAttribute("value", tmp);
-        }
-
-    };
+    /** Default binding */
+    private static final XMLBinding DEFAULT_BINDING = new XMLBinding();
+   
 }
