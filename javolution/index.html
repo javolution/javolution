@@ -190,6 +190,8 @@
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
                                 <UL>
+                                    <LI> <B>High-Performance -</B> Hardware accelerated computing (GPUs) with   
+                                         <A HREF="apidocs/javolution/context/ComputeContext.html">ComputeContext</A>.</LI>
                                     <LI> <B>Minimalistic -</B> <A HREF="apidocs/javolution/util/package-summary.html#package_description">Collection</A> classes, 
                                          supporting custom <A HREF="apidocs/javolution/util/FastCollection.html">views</A>,
                                          closure-based iterations, map-reduce paradigm, parallel computations, etc.</LI>
@@ -337,7 +339,7 @@
                             <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"><IMG SRC="src/site/css/img/new.gif" /> 
                                 <SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.0 - August 18th, 2013 (finally !)</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 6.1 - December 22nd, 2013</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -415,7 +417,7 @@
                                 <pre>      &lt;dependency&gt;
           &lt;groupId&gt;org.javolution&lt;/groupId&gt;
           &lt;artifactId&gt;javolution-core-java&lt;/artifactId&gt;
-          &lt;version&gt;6.0.0&lt;/version&gt;
+          &lt;version&gt;6.1.0&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
       The native dynamic library (.dll or .so) is generated from the sources using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
       <BR>
@@ -545,6 +547,7 @@
                                     Environment:</SPAN> <B>Any </B> (Android, J2SE, Native Windows/Linux/Solaris)<BR>
                                 <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including Visual C++, GCC, SOLARIS Studio)<BR>
                                 <SPAN CLASS="style13">Build tool: </SPAN><A HREF="http://maven.apache.org/">Maven<BR> </A>
+                                <SPAN CLASS="style13">OpenCL Binding: </SPAN><A HREF="https://code.google.com/p/javacl/">JavaCL<BR> </A>
                                 <SPAN CLASS="style13">Issues Tracking: </SPAN><A HREF="https://java.net/jira/browse/JAVOLUTION">JIRA (java.net)</A> <BR>
                                 <SPAN CLASS="style13">Style Guide:</SPAN>
                                 <A HREF="src/site/doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
@@ -730,10 +733,17 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
+                                    <LI CLASS="simplespacer_body"><B>December 22nd, 2013: Javolution 6.1</B><BR>
+                                        Support for GPU accelerated high precisions scientific computing algorithms/applications 
+                                        (<A HREF="apidocs/javolution/context/ComputeContext.html">ComputeContext</A>).
+                                        Implementation based on <a href="https://code.google.com/p/javacl/">JavaCL</a>
+                                        (if random crash on Linux, follow this 
+                                        <a href="https://code.google.com/p/javacl/wiki/TroubleShootingJavaCLOnLinux">link</a>).
+                                    </LI>
                                     <LI CLASS="simplespacer_body"><B>August 18, 2013: Javolution 6.0</B><BR>
-                                        <P>Includes fractal classes, Java 8 support (collections), real-time annotations, 
-                                        OSGi pluggable contexts, <A HREF="apidocs/javolution/test/Perfometer.html">perfometer</A>, mirror C++ library, etc.</P>
-                                        <P>Most backlog <a href="https://java.net/jira/browse/JAVOLUTION">issues</a> have been fixed !</P>
+                                        Includes fractal classes, Java 8 support (collections), real-time annotations, 
+                                        OSGi pluggable contexts, <A HREF="apidocs/javolution/test/Perfometer.html">perfometer</A>, mirror C++ library, etc.
+                                        Most backlog <a href="https://java.net/jira/browse/JAVOLUTION">issues</a> have been fixed !
                                     </LI>
                                     <LI CLASS="simplespacer_body"><B>May 6, 2007: Javolution 5.0</B><BR>
                                         Deprecated release.
@@ -762,7 +772,7 @@
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : August 18th, 2013<BR>
+                                Revision      : December 22nd, 2013<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
