@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>org.javolution</groupId>
 		<artifactId>javolution</artifactId>
-		<version>6.0.1-SNAPSHOT</version>
+		<version>6.1.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>javolution-core-java</artifactId>
 	<packaging>bundle</packaging>
@@ -29,15 +29,16 @@
 			<artifactId>org.osgi.compendium</artifactId>
 			<version>4.3.1</version>
 		</dependency>
-        <dependency> <!--  OpenGL Support -->
-            <groupId>org.jocl</groupId>
-            <artifactId>jocl</artifactId>
-            <version>0.1.9</version>
-        </dependency>
+		<dependency> <!-- OpenCL Binding -->
+			<groupId>com.nativelibs4java</groupId>
+			<artifactId>javacl</artifactId>
+			<version>1.0.0-RC3</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+
 			<!-- ======================================================= -->
 			<!-- OSGi Packaging -->
 			<!-- ======================================================= -->

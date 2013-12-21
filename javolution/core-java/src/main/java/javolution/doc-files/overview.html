@@ -37,23 +37,8 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
     <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">void</span> parse() <span style="color: #7F0055; font-weight: bold">throws</span> XMLStreamException {
         XMLInputFactory factory = tracker.getService();  
         factory.setProperty(XMLInputFactory.IS_COALESCING, true); <span style="color: #3F7F5F">// Configures.</span>
-
-        <span style="color: #3F7F5F">// Instantiates a new reader.</span>
-        String xml = <span style="color: #2a00ff">"&lt;test&gt;This is a test&lt;/test&gt;"</span>;
-        CharSequenceReader in = <span style="color: #7F0055; font-weight: bold">new</span> CharSequenceReader().setInput(xml);
-        XMLStreamReader reader = factory.createXMLStreamReader(in);
-       
-        <span style="color: #3F7F5F">// Parses XML.</span>
-       <span style="color: #7F0055; font-weight: bold">while</span> (reader.hasNext()) {
-          <span style="color: #7F0055; font-weight: bold">int</span> eventType = reader.next();
-          <span style="color: #7F0055; font-weight: bold">if</span> (eventType == XMLStreamConstants.CHARACTERS) {
-              System.out.println(reader.getText());
-          }
-       }
- 
-       <span style="color: #3F7F5F">// Closes the reader which may be recycled back to the factory.</span>
-      reader.close();
-   }          
+        ...
+    }          
 }
 </pre></div>
 
@@ -65,22 +50,7 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
     <span style="color: #7F0055; font-weight: bold">public</span> <span style="color: #7F0055; font-weight: bold">static</span> <span style="color: #7F0055; font-weight: bold">void</span> main(String[] args) <span style="color: #7F0055; font-weight: bold">throws</span> XMLStreamException {
         XMLInputFactory factory = OSGiServices.getXMLInputFactory();  
         factory.setProperty(XMLInputFactory.IS_COALESCING, true); <span style="color: #3F7F5F">// Configures.</span>
-        
-        <span style="color: #3F7F5F">// Instantiates a reader.</span>
-        String xml = <span style="color: #2a00ff">"&lt;test&gt;This is a test&lt;/test&gt;"</span>;
-        CharSequenceReader in = <span style="color: #7F0055; font-weight: bold">new</span> CharSequenceReader().setInput(xml);
-        XMLStreamReader reader = factory.createXMLStreamReader(in);
-        
-        <span style="color: #3F7F5F">// Parses XML.</span>
-        <span style="color: #7F0055; font-weight: bold">while</span> (reader.hasNext()) {
-           <span style="color: #7F0055; font-weight: bold">int</span> eventType = reader.next();
-           <span style="color: #7F0055; font-weight: bold">if</span> (eventType == XMLStreamConstants.CHARACTERS) {
-              System.out.println(reader.getText());
-           }
-        }
- 
-        <span style="color: #3F7F5F">// Closes the reader which may be recycled back to the factory.</span>
-        reader.close();
+        ...
     }
 }
 </pre></div>
@@ -129,7 +99,7 @@ from the Java<sup>TM</sup> core library and making the Java<sup>TM</sup> platfor
       <td style="vertical-align: top;">Service to support locally scoped settings.</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">{@link javolution.context.ProcessingContext}</td>
+      <td style="vertical-align: top;">{@link javolution.context.ComputeContext}</td>
       <td style="vertical-align: top;">Service for executing kernels functions on computing devices 
       (OpenCL compliant).</td>
     </tr>

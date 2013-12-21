@@ -9,9 +9,6 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LINEAR;
-
-import java.util.Arrays;
-
 import javolution.lang.Immutable;
 import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;

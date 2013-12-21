@@ -8,10 +8,10 @@
  */
 package javolution.osgi.internal;
 
+import javolution.context.ComputeContext;
 import javolution.context.ConcurrentContext;
 import javolution.context.LocalContext;
 import javolution.context.LogContext;
-import javolution.context.ComputeContext;
 import javolution.context.SecurityContext;
 import javolution.context.StorageContext;
 import javolution.context.internal.ConcurrentContextImpl;
@@ -139,7 +139,7 @@ public class OSGiServices {
     }
 
     /** Initializes all real-time classes.  */ 
-    public static boolean initializeRealtimeClasses() {
+    public static synchronized boolean initializeRealtimeClasses() {
         Initializer initializer = new Initializer(OSGiServices.class.getClassLoader());
         initializer.loadClass(MathLib.class);
         initializer.loadClass(Text.class);
@@ -154,6 +154,6 @@ public class OSGiServices {
         initializer.loadClass(Equalities.class);
         initializer.loadClass(XMLStreamReaderImpl.class); 
         initializer.loadClass(XMLStreamWriterImpl.class); 
-        return initializer.initializeLoadedClasses();                                              
+        return initializer.initializeLoadedClasses();
     }
 }

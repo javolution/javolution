@@ -14,7 +14,6 @@ import javolution.context.LogContext;
 import javolution.context.SecurityContext;
 import javolution.context.SecurityContext.Permission;
 import javolution.osgi.internal.OSGiServices;
-import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 
 /**

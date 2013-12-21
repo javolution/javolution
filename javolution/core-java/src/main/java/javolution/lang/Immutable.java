@@ -13,7 +13,7 @@ package javolution.lang;
  *     susceptible of change or variation. For example, {@code Immutable<List>}
  *     has a {@code List} value which is guaranteed to be constant (not modifiable 
  *     by anybody). Classes implementing this interface do not need themselves to
- *     be unmodifiable. If the value and the class are the same, the 
+ *     be unmodifiable. If the value and the class instance are the same, the 
  *     {@link ValueType} sub-interface can be implemented.  
  * [code]
  * class Polygon extends Shape implements ValueType<Shape> { // extends Immutable<Shape>

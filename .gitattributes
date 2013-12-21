@@ -296,11 +296,10 @@ javolution/core-java/src/main/java/javolution/osgi/internal/ConfigurableListener
 javolution/core-java/src/main/java/javolution/osgi/internal/JavolutionActivator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/internal/LogServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/ProgramTrackerImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/internal/ServiceTrackerImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLInputFactoryProvider.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLOutputFactoryProvider.java -text
-javolution/core-java/src/main/java/javolution/test/Perfometer.java -text
-javolution/core-java/src/main/java/javolution/test/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/CharSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/Cursor.java -text svneol=unset#text/plain
@@ -449,7 +448,7 @@ javolution/core-java/src/main/java/javolution/xml/stream/XMLStreamWriter.java -t
 javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
-javolution/core-java/src/test/java/javolution/processing/OpenCLTest.java -text svneol=unset#text/plain
+javolution/core-java/src/test/java/javolution/context/ComputeContextTest.java -text svneol=unset#text/plain
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text

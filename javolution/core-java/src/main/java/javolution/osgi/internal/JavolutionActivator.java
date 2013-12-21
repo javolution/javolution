@@ -27,6 +27,9 @@ public class JavolutionActivator implements BundleActivator {
     private ServiceRegistration<XMLInputFactory> xmlInputFactoryRegistration;
     private ServiceRegistration<XMLOutputFactory> xmlOutputFactoryRegistration;
 
+    // Javolution trackers.
+    private ProgramTrackerImpl programTracker;
+    
     @SuppressWarnings("unchecked")
     public void start(BundleContext bc) throws Exception {
         
@@ -44,6 +47,10 @@ public class JavolutionActivator implements BundleActivator {
         OSGiServices.XML_INPUT_FACTORY_TRACKER.activate(bc);
         OSGiServices.XML_OUTPUT_FACTORY_TRACKER.activate(bc);
         
+        // OpenCL Program Tracker (load/unload OpenCL programs).
+        programTracker = new ProgramTrackerImpl(bc);
+        programTracker.open();
+
         // Publish XMLInputFactory/XMLOutputFactory services.
         xmlInputFactoryRegistration = (ServiceRegistration<XMLInputFactory>) bc
                 .registerService(XMLInputFactory.class.getName(),
@@ -51,7 +58,7 @@ public class JavolutionActivator implements BundleActivator {
         xmlOutputFactoryRegistration = (ServiceRegistration<XMLOutputFactory>) bc
                 .registerService(XMLOutputFactory.class.getName(),
                         new XMLOutputFactoryProvider(), null);
-
+        
         // Ensures low latency for real-time classes.
         OSGiServices.initializeRealtimeClasses();
     }
@@ -70,6 +77,8 @@ public class JavolutionActivator implements BundleActivator {
         OSGiServices.XML_INPUT_FACTORY_TRACKER.deactivate(bc);
         OSGiServices.XML_OUTPUT_FACTORY_TRACKER.deactivate(bc);
 
+        programTracker.close();
+        
         xmlInputFactoryRegistration.unregister();
         xmlOutputFactoryRegistration.unregister();   
     }
