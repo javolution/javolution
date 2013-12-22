@@ -88,7 +88,9 @@ public class ComputeContextTest {
 		} finally {
 			ctx.exit();
 		}
-		LogContext.info("Result: ", sumXYZ);
+		GPUVector expected = new GPUVector(3.0, 6.0, 9.0);
+		assert sumXYZ.toString().equals(expected.toString()) : "\nFound: "
+				+ sumXYZ + "\nExpected: " + expected;
 	}
 
 }

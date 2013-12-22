@@ -396,7 +396,7 @@ public final class ComputeContextImpl extends ComputeContext {
 				DeviceFeature.MaxComputeUnits);
 		CLDevice[] devices = context.getDevices();
 		for (CLDevice device : devices) {
-			LogContext.debug("Best device with double precision support: ", device);
+			LogContext.info("ComputeContext selected device (having support for 64 bits float): ", device);
 		}
 		return context;
 	}

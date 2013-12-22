@@ -40,11 +40,11 @@ import javolution.osgi.internal.OSGiServices;
  *     productXYZ = x.times(y).times(z).export();  // are performed in parallel.
  *      
  * } finally { 
- *     ctx.exit(); // Release non-exported resources (e.g. buffers). 
+ *     ctx.exit(); // Release non-exported resources (e.g. device buffers). 
  * }
  * 
  * class VectorFloat64 implements Vector<Float64> { 
- *     private final Buffer buffer;
+ *     private final ComputeContext.Buffer buffer;
  *     public VectorFloat64(double... elements) { 
  *         buffer = ComputeContext.newBuffer(DoubleBuffer.wrap(elements));
  *     }
@@ -54,7 +54,7 @@ import javolution.osgi.internal.OSGiServices;
  *     VectorFloat64 plus(VectorFloat64 that) {
  *         if (this.length() != that.length()) throw new DimensionMismatch();
  *         VectorFloat34 result  = new VectorFloat64(this.length()); 
- *         Kernel sum = ComputeContext.newKernel(VectorMath64.class, "sum");   
+ *         ComputeContext.Kernel sum = ComputeContext.newKernel(VectorMath64.class, "sum");   
  *         sum.setArguments(this.buffer.readOnly(), that.buffer.readOnly(), result.buffer);
  *         sum.setGlobalWorkSize(length()); // Number of work-items.
  *         sum.execute(); // Executes in parallel with others kernels. 
@@ -265,8 +265,9 @@ public abstract class ComputeContext extends AbstractContext {
     protected abstract Buffer createBuffer(java.nio.Buffer init);
     
     /**
-     * Creates the kernel from the specified program having the specified name.
-     * If the program has not yet been loaded, a new instance is allocated 
+     * Creates the kernel from the specified program having the specified name
+     * in this context. If the specified program has not yet been loaded 
+     * in this context or a parent context, a new instance is allocated 
      * using the class default constructor and then loaded in this context.
      */
     protected abstract Kernel createKernel(Class<? extends Program> program, String kernelName);
