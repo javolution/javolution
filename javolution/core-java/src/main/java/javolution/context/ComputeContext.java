@@ -19,15 +19,13 @@ import java.nio.ShortBuffer;
 import javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context for executing and chaining calculations on a computing device 
- *     such as a GPU. Executing within the scope of a computational context is
- *     significantly faster for parallel algorithms, more time-predictable and
- *     more efficient with regards to garbage collection (temporary objects 
- *     are on the device memory rather than on the heap).<p>      
- *     
- * <p> Compute contexts will execute calculations in parallel whenever possible.
- *     Memory {@link Buffer buffers} are allocated on the device unless
- *     {@link Buffer#asByteBuffer read} or {@link Buffer#export exported}.
+ * <p> A context for executing and chaining calculations in parallel 
+ *     on computing devices such as CPUs/GPUs. ComputeContext keeps its 
+ *     {@link Buffer buffers} in device memory unless a buffer is 
+ *     {@link Buffer#export exported} (to the heap). Device operations 
+ *     are asynchronous and performed in parallel whenever possible.
+ *     Synchronization with the host (java) is performed only when buffers
+ *     are read/exported.
  * [code]
  * VectorFloat64 sumXYZ;
  * VectorFloat64 productXYZ;
@@ -42,7 +40,7 @@ import javolution.osgi.internal.OSGiServices;
  *     productXYZ = x.times(y).times(z).export();  // are performed in parallel.
  *      
  * } finally { 
- *     ctx.exit(); // Release non-exported resources (e.g. buffers, kernels). 
+ *     ctx.exit(); // Release non-exported resources (e.g. buffers). 
  * }
  * 
  * class VectorFloat64 implements Vector<Float64> { 
@@ -88,7 +86,7 @@ import javolution.osgi.internal.OSGiServices;
  *     (the reverse is fine though).</p>         
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
+ * @version 6.1, December 22, 2013
  * @see <a href="http://en.wikipedia.org/wiki/OpenCL">Wikipedia: OpenCL</a>
  */
 public abstract class ComputeContext extends AbstractContext {
