@@ -311,6 +311,9 @@ public final class ComputeContextImpl extends ComputeContext {
 
 		@Override
 		public DoubleBuffer asDoubleBuffer() {
+			if (!ComputeContext.DOUBLE_PRECISION_REQUIRED.get())
+				throw new UnsupportedOperationException(
+						"ComputeContext.DOUBLE_PRECISION_REQUIRED disabled");
 			return asByteBuffer().asDoubleBuffer();
 		}
 
@@ -377,6 +380,9 @@ public final class ComputeContextImpl extends ComputeContext {
 
 			@Override
 			public DoubleBuffer asDoubleBuffer() {
+				if (!ComputeContext.DOUBLE_PRECISION_REQUIRED.get())
+					throw new UnsupportedOperationException(
+							"ComputeContext.DOUBLE_PRECISION_REQUIRED disabled");
 				return asByteBuffer().asDoubleBuffer();
 			}
 
@@ -391,12 +397,16 @@ public final class ComputeContextImpl extends ComputeContext {
 	// //////////////
 
 	private static CLContext createContext() {
-		CLContext context = JavaCL.createBestContext(
-				DeviceFeature.DoubleSupport, DeviceFeature.GPU,
-				DeviceFeature.MaxComputeUnits);
+		CLContext context = ComputeContext.DOUBLE_PRECISION_REQUIRED.get() ? JavaCL
+				.createBestContext(DeviceFeature.DoubleSupport,
+						DeviceFeature.GPU, DeviceFeature.MaxComputeUnits)
+				: JavaCL.createBestContext(DeviceFeature.GPU,
+						DeviceFeature.MaxComputeUnits);
 		CLDevice[] devices = context.getDevices();
 		for (CLDevice device : devices) {
-			LogContext.info("ComputeContext device having support for 64 bits float: ", device);
+			LogContext.info(
+					"ComputeContext device having support for 64 bits float: ",
+					device);
 		}
 		return context;
 	}

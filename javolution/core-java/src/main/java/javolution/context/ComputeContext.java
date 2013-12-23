@@ -16,6 +16,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 
+import javolution.lang.Configurable;
 import javolution.osgi.internal.OSGiServices;
 
 /**
@@ -75,10 +76,10 @@ import javolution.osgi.internal.OSGiServices;
  * }
  * [/code]</p>
  * 
- * <p> By default the best devices with double precision float support are 
- *     selected. If your GPU does not have support for {@code double}, 
- *     then the CPU is automatically chosen. For complex data structures 
- *     shared between OpenCL and Java, the use of 
+ * <p> By {@link ComputeContext#DOUBLE_PRECISION_REQUIRED default}, the best 
+ *     GPU device with support for double precision floating-point is 
+ *     selected. If your GPU does not have such support, the CPU device 
+ *     is chosen. For complex data structures shared between OpenCL and Java, 
  *     {@link javolution.io.Struct} is recommended.</p>
  *     
  * <p> <b>Thread-Safety:</b> As for any {@link AbstractContext context}, 
@@ -94,6 +95,18 @@ import javolution.osgi.internal.OSGiServices;
  */
 public abstract class ComputeContext extends AbstractContext {
 
+	/**
+     * Indicates if support for double precision floating-point is required
+     * (default {@code true}).
+     */
+    public static final Configurable<Boolean> DOUBLE_PRECISION_REQUIRED 
+           = new Configurable<Boolean>() {
+        @Override
+        protected Boolean getDefault() {
+            return true;
+        }
+    };
+    
     /**
      * A program which can be loaded/compiled on a device. 
      * Any OSGi published instance of this class is automatically 
@@ -189,6 +202,10 @@ public abstract class ComputeContext extends AbstractContext {
     	
     	/**
     	 * Returns this buffer as a {@link DoubleBuffer}.
+    	 * 
+    	 * @throws UnsupportedOperationException if 
+    	 *         {@link ComputeContext#DOUBLE_PRECISION_REQUIRED} is 
+    	 *         configured to {@code false}
     	 */
     	DoubleBuffer asDoubleBuffer();     	
     }
@@ -219,7 +236,7 @@ public abstract class ComputeContext extends AbstractContext {
      * Explicitly unloads the specified program.
      */
     public static void unload(Program program) {
-    	currentComputeContext().release(program);
+    	currentComputeContext().unloadAndFree(program);
     }
     
     /**
