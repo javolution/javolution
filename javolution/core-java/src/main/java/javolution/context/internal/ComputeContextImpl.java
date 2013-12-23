@@ -405,7 +405,7 @@ public final class ComputeContextImpl extends ComputeContext {
 		CLDevice[] devices = context.getDevices();
 		for (CLDevice device : devices) {
 			LogContext.info(
-					"ComputeContext device having support for 64 bits float: ",
+					"ComputeContext device selected: ",
 					device);
 		}
 		return context;
