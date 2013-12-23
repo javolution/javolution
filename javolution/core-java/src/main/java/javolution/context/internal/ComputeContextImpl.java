@@ -85,7 +85,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	}
 
 	@Override
-	protected void createProgram(Program program) {
+	protected void loadAndBuild(Program program) {
 		if (searchProgram(program.getClass()) != null)
 			return; // Exist already.
 		ProgramImpl prg = new ProgramImpl(program.toOpenCL());
@@ -93,7 +93,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	}
 
 	@Override
-	protected void releaseProgram(Program program) {
+	protected void unloadAndFree(Program program) {
 		ProgramImpl prg = programs.remove(program.getClass());
 		if (prg != null) {
 			prg.release();
@@ -125,7 +125,7 @@ public final class ComputeContextImpl extends ComputeContext {
 			String kernelName) {
 		ProgramImpl program = searchProgram(programClass);
 		if (program == null) { // Program not found, instantiate the class.
-			createProgram(newInstance(programClass));
+			loadAndBuild(newInstance(programClass));
 			program = programs.get(programClass);
 		}
 		CLKernel clKernel = program.kernels.get(kernelName);
@@ -396,7 +396,7 @@ public final class ComputeContextImpl extends ComputeContext {
 				DeviceFeature.MaxComputeUnits);
 		CLDevice[] devices = context.getDevices();
 		for (CLDevice device : devices) {
-			LogContext.info("ComputeContext selected device (having support for 64 bits float): ", device);
+			LogContext.info("ComputeContext device having support for 64 bits float: ", device);
 		}
 		return context;
 	}

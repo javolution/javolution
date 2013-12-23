@@ -23,22 +23,22 @@ import javolution.osgi.internal.OSGiServices;
  *     on computing devices such as CPUs/GPUs. ComputeContext keeps its 
  *     {@link Buffer buffers} in device memory unless a buffer is 
  *     {@link Buffer#export exported} (to the heap). Device operations 
- *     are asynchronous and performed in parallel whenever possible.
- *     Synchronization with the host (java) is performed only when buffers
- *     are read/exported.
+ *     are asynchronous and performed in parallel whenever possible
+ *     (based on inputs parameters dependencies).
+ *     Synchronization with host (java) is performed when buffers
+ *     are read/exported (typically to retrieve the calculations results).
  * [code]
- * VectorFloat64 sumXYZ;
- * VectorFloat64 productXYZ;
- * 
+ * VectorFloat64 result;
  * ComputeContext ctx = ComputeContext.enter();
  * try {
  *     VectorFloat64 x = new VectorFloat64(1.0, 2.0, 3.0);
  *     VectorFloat64 y = new VectorFloat64(1.0, 2.0, 3.0);
  *     VectorFloat64 z = new VectorFloat64(1.0, 2.0, 3.0);
  *     
- *     sumXYZ = x.plus(y).plus(z).export();        // Both sum and product calculations   
- *     productXYZ = x.times(y).times(z).export();  // are performed in parallel.
- *      
+ *     VectorFloat64 sumXYZ = x.plus(y).plus(z);        // Both sum and product calculations   
+ *     VectorFloat64 productXYZ = x.times(y).times(z);  // are performed in parallel.
+ *     
+ *     result = sumXYZ.plus(productXYZ).export(); // Moves result to host (blocking).
  * } finally { 
  *     ctx.exit(); // Release non-exported resources (e.g. device buffers). 
  * }
@@ -75,8 +75,11 @@ import javolution.osgi.internal.OSGiServices;
  * }
  * [/code]</p>
  * 
- * <p> For complex data structures shared between OpenCL and Java, 
- *     the use of {@link javolution.io.Struct} is recommended.</p>
+ * <p> By default the best devices with double precision float support are 
+ *     selected. If your GPU does not have support for {@code double}, 
+ *     then the CPU is automatically chosen. For complex data structures 
+ *     shared between OpenCL and Java, the use of 
+ *     {@link javolution.io.Struct} is recommended.</p>
  *     
  * <p> <b>Thread-Safety:</b> As for any {@link AbstractContext context}, 
  *     compute contexts are inherently thread-safe (each thread entering 
@@ -197,8 +200,8 @@ public abstract class ComputeContext extends AbstractContext {
 
     /**
      * Enters the scope of a local computing context; all the resources 
-     * (programs, buffers) allocated while in this context scope are 
-     * released upon {@link AbstractContext#exit()}.
+     * (kernels, buffers) allocated while in this context scope are 
+     * released upon {@link AbstractContext#exit() exit}.
      */
     public static ComputeContext enter() {
         ComputeContext ctx = currentComputeContext();
@@ -209,14 +212,14 @@ public abstract class ComputeContext extends AbstractContext {
      * Explicitly loads the specified program.
      */
     public static void load(Program program) {
-    	currentComputeContext().createProgram(program);
+    	currentComputeContext().loadAndBuild(program);
     }
     
     /**
      * Explicitly unloads the specified program.
      */
     public static void unload(Program program) {
-    	currentComputeContext().releaseProgram(program);
+    	currentComputeContext().release(program);
     }
     
     /**
@@ -245,14 +248,14 @@ public abstract class ComputeContext extends AbstractContext {
     }
     
     /**
-     * Creates and builds the specified program (if not already done).
+     * Loads and builds the specified program.
      */
-    protected abstract void createProgram(Program program);
+    protected abstract void loadAndBuild(Program program);
     
     /**
-     * Releases resources associated to the specified program.
+     * Unloads and free the specified program.
      */
-    protected abstract void releaseProgram(Program program);
+    protected abstract void unloadAndFree(Program program);
     
     /**
      * Creates a memory buffer having the specified capacity in this context. 
