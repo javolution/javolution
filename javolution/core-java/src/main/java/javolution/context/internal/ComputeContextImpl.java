@@ -54,7 +54,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	// a single queue for all ComputeContext instances.
 	private static CLContext clContext = createContext();
 	private static CLQueue clQueue = clContext.createDefaultQueue();
-	// Each context entered has its own local programs and buffers.
+	// Each context instance has its own local programs and buffers.
 	private final ComputeContextImpl parent;
 	private final FastMap<Class<? extends Program>, ProgramImpl> programs = new FastMap<Class<? extends Program>, ProgramImpl>();
 	private final FastTable<BufferImpl> buffers = new FastTable<BufferImpl>();
@@ -103,8 +103,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	@Override
 	protected BufferImpl createBuffer(long byteCount) {
 		BufferImpl buffer = new BufferImpl(byteCount);
-		if (parent != null) { // Keep buffer only if it can be released upon
-								// exit.
+		if (parent != null) { // Keep buffer only if it can be released upon exit.
 			buffers.add(buffer);
 		}
 		return buffer;
@@ -113,8 +112,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	@Override
 	protected BufferImpl createBuffer(java.nio.Buffer init) {
 		BufferImpl buffer = new BufferImpl(init);
-		if (parent != null) { // Keep buffer only if it can be released upon
-								// exit.
+		if (parent != null) { // Keep buffer only if it can be released upon exit.
 			buffers.add(buffer);
 		}
 		return buffer;
@@ -313,7 +311,7 @@ public final class ComputeContextImpl extends ComputeContext {
 		public DoubleBuffer asDoubleBuffer() {
 			if (!ComputeContext.DOUBLE_PRECISION_REQUIRED.get())
 				throw new UnsupportedOperationException(
-						"ComputeContext.DOUBLE_PRECISION_REQUIRED disabled");
+						"ComputeContext#DOUBLE_PRECISION_REQUIRED disabled");
 			return asByteBuffer().asDoubleBuffer();
 		}
 
@@ -382,7 +380,7 @@ public final class ComputeContextImpl extends ComputeContext {
 			public DoubleBuffer asDoubleBuffer() {
 				if (!ComputeContext.DOUBLE_PRECISION_REQUIRED.get())
 					throw new UnsupportedOperationException(
-							"ComputeContext.DOUBLE_PRECISION_REQUIRED disabled");
+							"ComputeContext#DOUBLE_PRECISION_REQUIRED disabled");
 				return asByteBuffer().asDoubleBuffer();
 			}
 
@@ -397,16 +395,23 @@ public final class ComputeContextImpl extends ComputeContext {
 	// //////////////
 
 	private static CLContext createContext() {
-		CLContext context = ComputeContext.DOUBLE_PRECISION_REQUIRED.get() ? JavaCL
-				.createBestContext(DeviceFeature.DoubleSupport,
-						DeviceFeature.GPU, DeviceFeature.MaxComputeUnits)
-				: JavaCL.createBestContext(DeviceFeature.GPU,
-						DeviceFeature.MaxComputeUnits);
+		final boolean doublePrecisionRequired = ComputeContext.DOUBLE_PRECISION_REQUIRED
+				.get();
+		CLContext context = doublePrecisionRequired ? JavaCL.createBestContext(
+				DeviceFeature.DoubleSupport, DeviceFeature.GPU,
+				DeviceFeature.MaxComputeUnits) : JavaCL.createBestContext(
+				DeviceFeature.GPU, DeviceFeature.MaxComputeUnits);
 		CLDevice[] devices = context.getDevices();
 		for (CLDevice device : devices) {
-			LogContext.info(
-					"ComputeContext device selected: ",
-					device);
+			if (doublePrecisionRequired) {
+				LogContext
+						.info("ComputeContext device (double precision support required): ",
+								device);
+			} else {
+				LogContext
+						.info("ComputeContext device (double precision support not required): ",
+								device);
+			}
 		}
 		return context;
 	}
