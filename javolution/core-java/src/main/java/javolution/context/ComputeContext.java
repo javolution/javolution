@@ -97,7 +97,10 @@ public abstract class ComputeContext extends AbstractContext {
 
 	/**
      * Indicates if support for double precision floating-point is required
-     * (default {@code true}).
+     * (default {@code true}). Running with the option {@code 
+     * -Djavolution.context.ComputeContext#DOUBLE_PRECISION_REQUIRED=false}
+     * disables the requirement to select a device supporting 
+     * double precision.
      */
     public static final Configurable<Boolean> DOUBLE_PRECISION_REQUIRED 
            = new Configurable<Boolean>() {

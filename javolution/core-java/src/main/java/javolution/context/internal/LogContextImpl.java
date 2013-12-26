@@ -84,7 +84,7 @@ public final class LogContextImpl extends LogContext {
         }
     }
     private Level currentLevel() {
-        if (LEVEL == null) return Level.DEBUG; // Only during class initialization.
+        if (LEVEL == null) return Level.INFO; // Only during class initialization.
         if (level == null) return LEVEL.get();
         return level;
     }

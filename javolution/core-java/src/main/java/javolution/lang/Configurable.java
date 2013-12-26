@@ -148,8 +148,8 @@ public abstract class Configurable<T> {
                 String property = System.getProperty(name);
                 if (property != null) {
                     defaultValue = parse(property); // Supersedes.
-                    LogContext.debug(name, ", System Properties Value: ",
-                            defaultValue);
+                    LogContext.info(name, " superseded to ", defaultValue, 
+                    		" (system properties).");
                 }
             } catch (SecurityException securityError) {
                 // Ok, current runtime does not allow system properties access.
