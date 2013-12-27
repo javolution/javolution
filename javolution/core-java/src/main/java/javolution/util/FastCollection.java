@@ -638,7 +638,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Override
     @Realtime(limit = LINEAR)
     public boolean equals(Object obj) {
-        return service().equals(obj);
+    	if (obj instanceof FastCollection) { // Compare services.
+    		return service().equals(((FastCollection)obj).service());
+    	}
+        return service().equals(obj); // Default Collection equality.
     }
 
     /**
