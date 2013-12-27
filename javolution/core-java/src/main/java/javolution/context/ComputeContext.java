@@ -29,46 +29,46 @@ import javolution.osgi.internal.OSGiServices;
  *     Synchronization with host (java) is performed when buffers
  *     are read/exported (typically to retrieve the calculations results).
  * [code]
- * VectorFloat64 result;
+ * Float64Vector result;
  * ComputeContext ctx = ComputeContext.enter();
  * try {
- *     VectorFloat64 x = new VectorFloat64(1.0, 2.0, 3.0);
- *     VectorFloat64 y = new VectorFloat64(1.0, 2.0, 3.0);
- *     VectorFloat64 z = new VectorFloat64(1.0, 2.0, 3.0);
+ *     Float64Vector x = new Float64Vector(1.0, 2.0, 3.0);
+ *     Float64Vector y = new Float64Vector(1.0, 2.0, 3.0);
+ *     Float64Vector z = new Float64Vector(1.0, 2.0, 3.0);
  *     
- *     VectorFloat64 sumXYZ = x.plus(y).plus(z);        // Both sum and product calculations   
- *     VectorFloat64 productXYZ = x.times(y).times(z);  // are performed in parallel.
+ *     Float64Vector sumXYZ = x.plus(y).plus(z);        // Both sum and product calculations   
+ *     Float64Vector productXYZ = x.times(y).times(z);  // are performed in parallel.
  *     
  *     result = sumXYZ.plus(productXYZ).export(); // Moves result to host (blocking).
  * } finally { 
  *     ctx.exit(); // Release non-exported resources (e.g. device buffers). 
  * }
  * 
- * class VectorFloat64 implements Vector<Float64> { 
+ * class Float64Vector implements Vector<Float64> { 
  *     private final ComputeContext.Buffer buffer;
- *     public VectorFloat64(double... elements) { 
+ *     public Float64Vector(double... elements) { 
  *         buffer = ComputeContext.newBuffer(DoubleBuffer.wrap(elements));
  *     }
- *     private VectorFloat64(int length) {
+ *     private Float64Vector(int length) {
  *         buffer = ComputeContext.newBuffer(length * 8L); // Size in bytes.
  *     }
- *     VectorFloat64 plus(VectorFloat64 that) {
+ *     Float64Vector plus(Float64Vector that) {
  *         if (this.length() != that.length()) throw new DimensionMismatch();
- *         VectorFloat34 result  = new VectorFloat64(this.length()); 
- *         ComputeContext.Kernel sum = ComputeContext.newKernel(VectorMath64.class, "sum");   
+ *         VectorFloat34 result  = new Float64Vector(this.length()); 
+ *         ComputeContext.Kernel sum = ComputeContext.newKernel(VectorFP64.class, "sum");   
  *         sum.setArguments(this.buffer.readOnly(), that.buffer.readOnly(), result.buffer);
  *         sum.setGlobalWorkSize(length()); // Number of work-items.
  *         sum.execute(); // Executes in parallel with others kernels. 
  *         return result; 
  *     }
- *     public VectorFloat64 export() { 
+ *     public Float64Vector export() { 
  *         buffer.export();
  *         return this;
  *     }
  *     public int length() { return (int) buffer.getByteCount() / 8; }
  * }
- * class VectorMath64 implements Program { // All programs published as OSGi services are 
- *                                         // automatically loaded/compiled by Javolution.
+ * class VectorFP64 implements Program { // All programs published as OSGi services are 
+ *                                       // automatically loaded/compiled by Javolution.
  *     public String toOpenCL() {
  *         return  "__kernel void sum(__global const double *a, __global const double *b, __global double *c) {" +
  *                 "    int gid = get_global_id(0);" +
@@ -76,11 +76,11 @@ import javolution.osgi.internal.OSGiServices;
  * }
  * [/code]</p>
  * 
- * <p> By {@link ComputeContext#DOUBLE_PRECISION_REQUIRED default}, the best 
- *     GPU device with support for double precision floating-point is 
- *     selected. If your GPU does not have such support, the CPU device 
- *     is chosen. For complex data structures shared between OpenCL and Java, 
- *     {@link javolution.io.Struct} is recommended.</p>
+ * <p> By default, the best GPU device with support for {@link 
+ *     ComputeContext#DOUBLE_PRECISION_REQUIRED double precision 
+ *     floating-point} is selected. If your GPU does not have such support, 
+ *     the CPU device is chosen. For complex data structures shared between 
+ *     OpenCL and Java, {@link javolution.io.Struct} is recommended.</p>
  *     
  * <p> <b>Thread-Safety:</b> As for any {@link AbstractContext context}, 
  *     compute contexts are inherently thread-safe (each thread entering 
