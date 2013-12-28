@@ -635,7 +635,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * @return <code>true</code> if both collections are considered equals;
      *        <code>false</code> otherwise. 
      */
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     @Realtime(limit = LINEAR)
     public boolean equals(Object obj) {
     	if (obj instanceof FastCollection) { // Compare services.

@@ -23,25 +23,28 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
     transient MapEntryImpl<K, V> firstEntry = null;
-    transient FractalMapImpl fractal = new FractalMapImpl();
+    transient FractalMapImpl fractal;
     transient MapEntryImpl<K, V> freeEntry = new MapEntryImpl<K, V>();
     final Equality<? super K> keyComparator;
     transient MapEntryImpl<K, V> lastEntry = null;
     transient int size;
     final Equality<? super V> valueComparator;
 
-    public FastMapImpl(Equality<? super K> keyComparator,
+    @SuppressWarnings("unchecked")
+	public FastMapImpl(Equality<? super K> keyComparator,
             final Equality<? super V> valueComparator) {
         super(null); // Root.
         this.keyComparator = keyComparator;
         this.valueComparator = valueComparator;
+        fractal = new FractalMapImpl((Equality<Object>) keyComparator);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void clear() {
         firstEntry = null;
         lastEntry = null;
-        fractal = new FractalMapImpl();
+        fractal = new FractalMapImpl((Equality<Object>) keyComparator);
         size = 0;
     }
 
@@ -53,17 +56,15 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
         return copy;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean containsKey(Object key) {
-        return fractal.getEntry(key, keyComparator.hashCodeOf((K) key)) != null;
+        return fractal.getEntry(key) != null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public V get(Object key) {
-        MapEntryImpl<K, V> entry = fractal.getEntry(key,
-                keyComparator.hashCodeOf((K) key));
+        MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return null;
         return entry.value;
     }
@@ -106,8 +107,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public V put(K key, V value) {
-        int hash = keyComparator.hashCodeOf(key);
-        MapEntryImpl<K, V> tmp = fractal.addEntry(freeEntry, key, hash);
+        MapEntryImpl<K, V> tmp = fractal.addEntry(freeEntry, key);
         if (tmp == freeEntry) { // New entry.
             freeEntry = new MapEntryImpl<K, V>();
             attachEntry(tmp);
@@ -124,8 +124,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public V putIfAbsent(K key, V value) {
-        int hash = keyComparator.hashCodeOf(key);
-        MapEntryImpl<K, V> tmp = fractal.addEntry(freeEntry, key, hash);
+        MapEntryImpl<K, V> tmp = fractal.addEntry(freeEntry, key);
         if (tmp == freeEntry) { // New entry.
             freeEntry = new MapEntryImpl<K, V>();
             attachEntry(tmp);
@@ -151,11 +150,10 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object key, Object value) {
-        int hash = keyComparator.hashCodeOf((K) key);
-        MapEntryImpl<K, V> entry = fractal.getEntry(key, hash);
+        MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return false;
         if (!valueComparator.areEqual((V) entry.value, (V) value)) return false;
-        fractal.removeEntry(key, hash);
+        fractal.removeEntry(key, entry.hash);
         detachEntry(entry); // Entry is not referenced anymore and will be gc.
         size--;
         return true;
@@ -164,8 +162,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public V replace(K key, V value) {
-        MapEntryImpl<K, V> entry = fractal.getEntry(key,
-                keyComparator.hashCodeOf(key));
+        MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return null;
         V oldValue = entry.value;
         entry.value = value;
@@ -175,8 +172,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        MapEntryImpl<K, V> entry = fractal.getEntry(key,
-                keyComparator.hashCodeOf(key));
+        MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return false;
         if (!valueComparator.areEqual(entry.value, oldValue)) return false;
         entry.value = newValue;
@@ -225,8 +221,8 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @SuppressWarnings("unchecked")
     private void readObject(java.io.ObjectInputStream s)
             throws java.io.IOException, ClassNotFoundException {
-        s.defaultReadObject(); // Deserialize comparator.
-        fractal = new FractalMapImpl();
+        s.defaultReadObject(); // Deserialize comparators.
+        fractal = new FractalMapImpl((Equality<Object>) keyComparator);
         freeEntry = new MapEntryImpl<K, V>();
         int n = s.readInt();
         for (int i = 0; i < n; i++) {

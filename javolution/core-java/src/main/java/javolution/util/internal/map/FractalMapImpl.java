@@ -8,6 +8,8 @@
  */
 package javolution.util.internal.map;
 
+import javolution.util.function.Equality;
+
 /**
  * A fractal-based map with rehash performed only on limited size maps.
  * It is based on a fractal structure with self-similar patterns at any scale
@@ -24,19 +26,23 @@ final class FractalMapImpl {
     private int count; // Number of entries different from null in this block.
     private MapEntryImpl[] entries = new MapEntryImpl[INITIAL_BLOCK_CAPACITY]; // Entries value can be a sub-map.
     private final int shift; // Zero if base map.
-
-    public FractalMapImpl() {
+    final Equality<Object> keyComparator;
+    
+    public FractalMapImpl(Equality<Object> keyComparator) {
         this.shift = 0;
+        this.keyComparator = keyComparator;
     }
 
-    public FractalMapImpl(int shift) {
+    public FractalMapImpl(Equality<Object> keyComparator, int shift) {
         this.shift = shift;
+        this.keyComparator = keyComparator;
     }
 
     /** Adds the specified entry if not already present; returns 
      *  either the specified entry or an existing entry for the specified key. **/
     @SuppressWarnings("unchecked")
-    public MapEntryImpl addEntry(MapEntryImpl newEntry, Object key, int hash) {
+    public MapEntryImpl addEntry(MapEntryImpl newEntry, Object key) {
+    	int hash = keyComparator.hashCodeOf(key);
         int i = indexOfKey(key, hash);
         MapEntryImpl entry = entries[i];
         if (entry != null) return entry; // Entry exists
@@ -56,7 +62,8 @@ final class FractalMapImpl {
     }
 
     /** Returns null if no entry with specified key */
-    public MapEntryImpl getEntry(Object key, int hash) {
+    public MapEntryImpl getEntry(Object key) {
+      	int hash = keyComparator.hashCodeOf(key);
         return entries[indexOfKey(key, hash)];
     }
 
@@ -94,7 +101,7 @@ final class FractalMapImpl {
         while (true) {
             MapEntryImpl entry = entries[i];
             if (entry == null) return i;
-            if ((entry.hash == hash) && key.equals(entry.key)) return i;
+            if ((entry.hash == hash) && keyComparator.areEqual(key, entry.key)) return i;
             i = (i + 1) & mask;
         }
     }
