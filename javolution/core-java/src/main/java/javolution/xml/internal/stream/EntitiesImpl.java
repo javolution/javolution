@@ -68,8 +68,8 @@ public final class EntitiesImpl {
             for (; i < length - 1; i++) {
                 c = buffer[start + i];
                 charValue *= base;
-                charValue += (c <= '9') ? (c - '0') : (c <= 'Z') ? c - 'A'
-                        : c - 'a';
+                charValue += (c <= '9') ? (c - '0') : (c <= 'Z') ? c - 'A' + 10
+                        : c - 'a' + 10;
             }
             buffer[start] = (char) charValue;
             return 1;
