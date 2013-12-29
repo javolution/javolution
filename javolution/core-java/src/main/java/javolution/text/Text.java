@@ -522,32 +522,14 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @return the resulting text.
 	 */
 	public Text replace(CharSet charSet, java.lang.CharSequence replacement) {
-        // TODO - Stack overflow to investigate when using recursive code below.
-		// See https://java.net/jira/browse/JAVOLUTION-109
-		// int i = indexOfAny(charSet);
-		// return (i < 0) ? this : // No character to replace.
-		//		subtext(0, i).concat(Text.valueOf(replacement)).concat(
-		//				subtext(i + 1).replace(charSet, replacement));
-
-		final int len = this.length();
-		int i = this.indexOfAny(charSet, 0);
-		if (i == -1)
-			return this;
-		Text tt = this.subtext(0, i);
-		Text rt = Text.valueOf(replacement);
-		i++;
-		while (i < len) {
-			int j = this.indexOfAny(charSet, i);
-			if (j > i) {
-				tt = tt.concat(rt).concat(this.subtext(i, j));
-				i = j;
-			} else if (j == -1) {
-				tt = tt.concat(rt).concat(this.subtext(i, len));
-				break;
-			}
-			i++;
-		}
-		return tt;
+        if (_data != null) {
+    		int i = indexOfAny(charSet);
+    		return (i < 0) ? this : // No character to replace.
+    			subtext(0, i).concat(Text.valueOf(replacement)).concat(
+    					subtext(i + 1).replace(charSet, replacement));    		
+        } else { // Follows natural binary tree split (see JIRA JAVOLUTION#109)
+        	return _head.replace(charSet, replacement).concat(_tail.replace(charSet, replacement));        	
+        }
 	}
 
 	/**
