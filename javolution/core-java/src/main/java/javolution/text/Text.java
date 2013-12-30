@@ -513,7 +513,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 			int j = indexOf(target, i);
 			if (j < 0) return result.concat(subtext(i));
 			result = result.concat(subtext(i, j)).concat(rt);
-			i = j + rt.length();	
+			i = j + target.length();	
 		}
 	}
 
