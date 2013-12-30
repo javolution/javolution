@@ -366,7 +366,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @return <code>this.concat(Text.valueOf(obj))</code>
 	 */
 	public Text plus(String str) {
-
 		Text merge = this.append(str);
 		return merge != null ? merge : concat(Text.valueOf(str));
 	}
@@ -506,11 +505,16 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 */
 	public Text replace(java.lang.CharSequence target,
 			java.lang.CharSequence replacement) {
-		int i = indexOf(target);
-		return (i < 0) ? this : // No target sequence found.
-				subtext(0, i).concat(Text.valueOf(replacement)).concat(
-						subtext(i + target.length()).replace(target,
-								replacement));
+		 // Avoid asymmetric recursions (see JIRA JAVOLUTION#109)
+		Text rt = Text.valueOf(replacement);
+		Text result = Text.EMPTY;
+		int i = 0;
+		while (true) {
+			int j = indexOf(target, i);
+			if (j < 0) return result.concat(subtext(i));
+			result = result.concat(subtext(i, j)).concat(rt);
+			i = j + rt.length();	
+		}
 	}
 
 	/**
@@ -1313,8 +1317,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	//
 	////////////////////////////////////////////////////////////////////////////
 	/**
-	 * Returns a {@link javolution.context.AllocatorContext context allocated}
-	 * primitive text instance.
+	 * Returns a new primitive text instance.
 	 *
 	 * @param length the primitive length.
 	 */
@@ -1325,8 +1328,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	}
 
 	/**
-	 * Returns a {@link javolution.context.AllocatorContext context allocated}
-	 * composite text instance.
+	 * Returns a composite text instance.
 	 *
 	 * @param head the composite head.
 	 * @param tail the composite tail.
