@@ -40,8 +40,8 @@ import javolution.xml.XMLSerializable;
  * <p> {@link Text} literals should be explicitly {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
  *     interning is not implicit. For example:[code]
- *         final static Text TRUE = new Text("true").intern();
- *         final static Text FALSE = new Text("true").intern("false");
+ *         final static Text TRUE = Text.intern("true");
+ *         final static Text FALSE = Text.intern("false");
  *     [/code]</p>
  *     
  * <p><i> Implementation Note: To avoid expensive copy operations , 
@@ -76,13 +76,12 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	/**
 	 * Holds the texts interned in immortal memory.
 	 */
-	private static final FastMap<Text, Text> INTERN = new FastMap<Text, Text>()
-			.shared();
+	private static final FastMap<Text, Text> INTERN = new FastMap<Text, Text>(Equalities.LEXICAL);
 
 	/**
 	 * Holds an empty character sequence.
 	 */
-	public static final Text EMPTY = new Text("").intern();
+	public static final Text EMPTY = Text.intern("");
 
 	/**
 	 * Holds the raw data (primitive) or <code>null</code> (composite).
@@ -118,6 +117,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * </code>.
 	 * 
 	 * @param str the string holding the character content. 
+	 * @deprecated Use {@link #valueOf(String)} instead.
 	 */
 	public Text(String str) {
 		this(str.length() <= BLOCK_SIZE);
@@ -131,6 +131,18 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 		}
 	}
 
+	/**
+	 * Returns the text holding the specified characters.
+	 *
+	 * @param  csq the character sequence to return as text.
+	 * @return the corresponding text instance.
+	 */
+	public static Text valueOf(CharSequence csq) {
+		if (csq instanceof Text) return (Text) csq;
+		return Text.valueOf(csq.toString());
+	}
+
+	
 	/**
 	 * Returns the text representing the specified object.
 	 *
@@ -227,9 +239,9 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 		return b ? TRUE : FALSE;
 	}
 
-	private static final Text TRUE = new Text("true").intern();
+	private static final Text TRUE = Text.intern("true");
 
-	private static final Text FALSE = new Text("false").intern();
+	private static final Text FALSE = Text.intern("false");
 
 	/**
 	 * Returns the text instance corresponding to the specified character. 
@@ -721,10 +733,25 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * unique text instances.  
 	 * 
 	 * @return an unique text instance allocated in permanent memory.
+	 * @deprecated Use {@link Text#intern(CharSequence)} instead.
 	 */
 	public Text intern() {
 		Text txt = INTERN.putIfAbsent(this, this);
 		return txt == null ? this : txt;
+	}
+
+	/**
+	 * Returns the text corresponding to the specified character sequence
+	 * from a pool of unique text instances.  
+	 * 
+	 * @return an unique text instance allocated in permanent memory.
+	 */
+	public static Text intern(CharSequence csq) {
+		Text txt = INTERN.get(csq);
+		if (txt != null) return txt;
+		txt = Text.valueOf(csq);
+		Text previous = INTERN.putIfAbsent(txt, txt);
+		return previous == null ? txt : previous;
 	}
 
 	/**
