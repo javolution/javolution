@@ -147,6 +147,15 @@ public abstract class Perfometer<T> {
     }
 
     /**
+     * Measures the execution time with high precision (single iteration).
+     * 
+     * @param input the test input.
+     */
+    public Perfometer<T> measure(T input) {
+    	return measure(input, 1);
+    }
+    
+    /**
      * Measures the worst case execution time and average execution time.
      * 
      * @param input the test input.
