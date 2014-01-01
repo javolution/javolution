@@ -166,7 +166,7 @@ import javolution.util.service.CollectionService;
  * @version 6.0, July 21, 2013
  */
 @Realtime
-@DefaultTextFormat(FastCollection.Format.class)
+@DefaultTextFormat(FastCollection.Text.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     private static final long serialVersionUID = 0x600L; // Version.
@@ -696,7 +696,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * their current {@link TextContext TextContext} format.
      */
     @Parallelizable
-    public static class Format extends TextFormat<FastCollection<?>> {
+    public static class Text extends TextFormat<FastCollection<?>> {
 
         @Override
         public FastCollection<Object> parse(CharSequence csq, Cursor cursor)
