@@ -385,6 +385,7 @@ javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SharedSor
 javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SortedSetView.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SubSortedSetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/set/sorted/UnmodifiableSortedSetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/ArrayTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FastTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FractalTableImpl.java -text svneol=unset#text/plain

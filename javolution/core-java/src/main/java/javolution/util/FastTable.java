@@ -25,6 +25,7 @@ import javolution.lang.Realtime;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
+import javolution.util.internal.table.ArrayTableImpl;
 import javolution.util.internal.table.AtomicTableImpl;
 import javolution.util.internal.table.FastTableImpl;
 import javolution.util.internal.table.QuickSort;
@@ -60,9 +61,10 @@ import javolution.util.service.TableService;
  * [/code]</p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations can be 
- *     performed using closures.
+ *     performed using closures and fast tables can wrap any array.
  * [code]
- * FastTable<Person> persons = ...
+ * Person[] personArray = ...;
+ * FastTable<Person> persons = new FastTable<Person>(personArray); // Table view over array (fixed-size).
  * Person findWithName(final String name) { 
  *     return persons.filtered(new Predicate<Person>() { 
  *         public boolean test(Person person) {
@@ -111,11 +113,27 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
+     * Creates a fixed-size table backed up by the specified elements.
+     */
+    public FastTable(E... elements) {
+        this.service = new ArrayTableImpl<E>(Equalities.STANDARD, elements);
+    }
+    
+    /**
+     * Creates a fixed-size table using the specified comparator and 
+     * backed up by the specified elements.
+     */
+    public FastTable(Equality<? super E> comparator, E... elements) {
+        this.service = new ArrayTableImpl<E>(comparator, elements);
+    }
+    
+    /**
      * Creates a fast table backed up by the specified service implementation.
      */
     protected FastTable(TableService<E> service) {
         this.service = service;
     }
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Views.
