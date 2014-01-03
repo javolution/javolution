@@ -380,10 +380,11 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     //
 
     /**
-     * Returns this map with the specified map's entries added.
+     * Returns this map with the specified [key, value] entry added.
+     * This method allow for chaining.
      */
-    public FastMap<K, V> putAll(FastMap<? extends K, ? extends V> that) {
-        putAll((Map<? extends K, ? extends V>) that);
+    public FastMap<K, V> add(K key, V value) {
+    	put(key, value);
         return this;
     }
 
