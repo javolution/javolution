@@ -11,6 +11,7 @@ package javolution.util;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 
+
 import javolution.lang.Configurable;
 import javolution.lang.MathLib;
 import javolution.lang.Realtime;
@@ -23,10 +24,10 @@ import javolution.text.TypeFormat;
 
 /**
  * <p> A non-negative number representing a position in an arrangement.
- *     For example:
  * [code]
- * class SparseVector<F> {
- *     FastMap<Index, F> elements = new FastMap<Index, F>();
+ * interface Vector<F> {
+ *     Vector<F> getSubVector(List<Index> indices); 
+ *         // e.g. getSubVector(Index.rangeOf(0, n)) for the n first elements.
  *     ...
  * }[/code]</p>
 
@@ -98,6 +99,8 @@ public final class Index extends Number implements Comparable<Index>,
             INSTANCES[i] = new Index(i);
         }
     }
+    private static final FastTable<Index> INSTANCES_TABLE 
+        = new FastTable<Index>(INSTANCES);
 
     /**
      * Returns the index for the specified {@code int} non-negative
@@ -112,6 +115,41 @@ public final class Index extends Number implements Comparable<Index>,
         return (value < INSTANCES.length) ? INSTANCES[value] : new Index(value);
     }
 
+    /**
+     * Returns the indices having the specified {@code int} non-negative
+     * values (convenience method).
+     * 
+     * @param values the indices values.
+     * @return the corresponding table.
+     */
+    public static FastTable<Index> listOf(int... values) {
+    	Index[] indices = new Index[values.length];
+    	int j = 0;
+    	for (int i : values) {
+    		indices[j++] = Index.valueOf(i);
+    	}
+        return new FastTable<Index>(indices);
+    }
+    
+    /**
+     * Returns the indices having the specified range of {@code int} non-negative
+     * values (convenience method). A sub-table view over preallocated 
+     * instances is returned when possible. 
+     * 
+     * @param fromIndex low endpoint (inclusive) of the list to return.
+     * @param toIndex high endpoint (exclusive) of the list to return.
+     * @return the corresponding indices.
+     */
+    public static FastTable<Index> rangeOf(int fromIndex, int toIndex) {
+    	if (toIndex <= INSTANCES.length)
+    		return INSTANCES_TABLE.subTable(fromIndex, toIndex);
+    	Index[] indices = new Index[toIndex - fromIndex];
+    	for (int i = fromIndex, j = 0; i < toIndex; i++) {
+    		indices[j++] = Index.valueOf(i);
+    	}
+        return new FastTable<Index>(indices);
+    }
+    
     /**
      * Holds the index value.
      */
