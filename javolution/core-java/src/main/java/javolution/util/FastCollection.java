@@ -66,12 +66,12 @@ import javolution.util.service.CollectionService;
  * </ul></p>
  * 
  * <p> Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
- *     reference (or const reference) can only be {@link #toImmutable() obtained} when the originator  
+ *     reference (or const reference) can only be {@link #immutable() obtained} when the originator  
  *     guarantees that the collection source will not be modified even by himself 
  *     (the value of the immutable reference being an {@link #unmodifiable unmodifiable} collection).
  * [code]
  * Immutable<List<String>> winners 
- *     = new FastTable<String>().addAll("John Deuff", "Otto Graf", "Sim Kamil").toImmutable();
+ *     = new FastTable<String>("John Deuff", "Otto Graf", "Sim Kamil").immutable();
  *     // Immutability is guaranteed, no reference left on the collection source.
  * [/code]</p>
  * 
@@ -107,7 +107,7 @@ import javolution.util.service.CollectionService;
  *     Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
  *     which addresses the concern of class proliferation.</p> 
  * [code]
- * FastTable<String> names = new FastTable<String>().addAll("Oscar Thon", "Eva Poret", "Paul Auchon");
+ * FastTable<String> names = new FastTable<String>("Oscar Thon", "Eva Poret", "Paul Auchon");
  * boolean found = names.comparator(Equalities.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
  * names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
@@ -572,30 +572,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return reduce((Reducer<E>)Reducers.max(comparator())); // Cast only necessary on JDK 1.6 !
     }
 
-    /**
-     * Returns this collection with the specified element added. 
-     * 
-     * @param elements the elements to be added.
-     * @return {@code this}
-     */
-    @Realtime(limit = LINEAR)
-    public FastCollection<E> addAll(E... elements) {
-        for (E e : elements) {
-            add(e);
-        }
-        return this;
-    }
-
-    /**
-     * Returns this collection with the specified collection's elements added
-     * in sequence. 
-     */
-    @Realtime(limit = LINEAR)
-    public FastCollection<E> addAll(FastCollection<? extends E> that) {
-        addAll((Collection<? extends E>) that);
-        return this;
-    }
-
     /** 
      * Returns the comparator uses by this collection for equality and/or 
      * ordering if this collection is sorted.
@@ -612,7 +588,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * to be updated (e.g. there is no reference left on the original collection).
      */
     @Realtime(limit = CONSTANT)
-    public <T extends Collection<E>> Immutable<T> toImmutable() {
+    public <T extends Collection<E>> Immutable<T> immutable() {
         return new Immutable<T>() {
             @SuppressWarnings("unchecked")
             final T value = (T) unmodifiable();

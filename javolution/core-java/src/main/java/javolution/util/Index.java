@@ -57,7 +57,7 @@ public final class Index extends Number implements Comparable<Index>,
         @Override
         public Index parse(CharSequence csq, Cursor cursor)
                 throws IllegalArgumentException {
-            return Index.valueOf(TypeFormat.parseInt(csq, cursor));
+            return Index.of(TypeFormat.parseInt(csq, cursor));
         }
 
     }
@@ -111,7 +111,7 @@ public final class Index extends Number implements Comparable<Index>,
      * @return the corresponding index.
      * @throws IndexOutOfBoundsException if <code>value &lt; 0</code>
      */
-    public static Index valueOf(int value) {
+    public static Index of(int value) {
         return (value < INSTANCES.length) ? INSTANCES[value] : new Index(value);
     }
 
@@ -123,12 +123,11 @@ public final class Index extends Number implements Comparable<Index>,
      * @return the corresponding table.
      */
     public static FastTable<Index> listOf(int... values) {
-    	Index[] indices = new Index[values.length];
-    	int j = 0;
+    	FastTable<Index> indices = new FastTable<Index>();
     	for (int i : values) {
-    		indices[j++] = Index.valueOf(i);
+    		indices.add(Index.of(i));
     	}
-        return new FastTable<Index>(indices);
+        return indices;
     }
     
     /**
@@ -145,7 +144,7 @@ public final class Index extends Number implements Comparable<Index>,
     		return INSTANCES_TABLE.subTable(fromIndex, toIndex);
     	Index[] indices = new Index[toIndex - fromIndex];
     	for (int i = fromIndex, j = 0; i < toIndex; i++) {
-    		indices[j++] = Index.valueOf(i);
+    		indices[j++] = Index.of(i);
     	}
         return new FastTable<Index>(indices);
     }
@@ -264,7 +263,7 @@ public final class Index extends Number implements Comparable<Index>,
      * Returns the index after this one.
      */
     public Index next() {
-        return Index.valueOf(value + 1);
+        return Index.of(value + 1);
     }
 
     /**
@@ -273,14 +272,14 @@ public final class Index extends Number implements Comparable<Index>,
      * @throws IndexOutOfBoundsException if (this == Index.ZERO)
      */
     public Index previous() {
-        return Index.valueOf(value - 1);
+        return Index.of(value - 1);
     }
 
     /**
      * Ensures index unicity during deserialization.
      */
     protected final Object readResolve() throws ObjectStreamException {
-        return Index.valueOf(value);
+        return Index.of(value);
     }
 
     /**

@@ -394,7 +394,7 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
      * for which the caller guarantees that no change will ever be made 
      * (e.g. there is no reference left to the original map).
      */
-    public <T extends Map<K, V>> Immutable<T> toImmutable() {
+    public <T extends Map<K, V>> Immutable<T> immutable() {
         return new Immutable<T>() {
             @SuppressWarnings("unchecked")
             final T value = (T) unmodifiable();

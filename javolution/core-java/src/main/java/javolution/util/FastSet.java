@@ -61,6 +61,24 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     }
 
     /**
+     * Creates a set initially populated with the specified elements
+     * (convenience method).
+     */
+    public FastSet(E... elements) {
+        this();
+    	for (E e : elements) add(e);
+    }
+    
+    /**
+     * Creates a set initially populated with the specified elements and using
+     * the specified comparator for element equality (convenience method).
+     */
+    public FastSet(Equality<? super E> comparator, E... elements) {
+    	this(comparator);
+    	for (E e : elements) add(e);
+    }
+    
+    /**
       * Creates a fast set backed up by the specified service implementation.
       */
     protected FastSet(SetService<E> service) {
@@ -128,16 +146,6 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
-
-    @Override
-    public FastSet<E> addAll(E... elements) {
-        return (FastSet<E>) super.addAll(elements);
-    }
-
-    @Override
-    public FastSet<E> addAll(FastCollection<? extends E> that) {
-        return (FastSet<E>) super.addAll(that);
-    }
 
     @Override
     protected SetService<E> service() {

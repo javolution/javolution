@@ -131,7 +131,7 @@ public class XMLReferenceResolver {
             throws XMLStreamException {
         Index id = (Index) _objectToId.get(obj);
         if (id == null) { // New identifier.
-            id = Index.valueOf(_counter++);
+            id = Index.of(_counter++);
             _objectToId.put(obj, id);
             _tmp.clear().append(id.intValue());
             if (_idURI == null) {

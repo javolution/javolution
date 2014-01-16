@@ -26,7 +26,7 @@ package javolution.lang;
  * <p> {@link javolution.util.FastCollection FastCollection/FastMap} have 
  *     direct support for immutable.
  * [code]
- * Polygon triangle = new Polygon(new FastTable<Point2D>().addAll(p1, p2, p3).toImmutable());[/code]</p>
+ * Polygon triangle = new Polygon(new FastTable<Point2D>(p1, p2, p3).immutable());[/code]</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013

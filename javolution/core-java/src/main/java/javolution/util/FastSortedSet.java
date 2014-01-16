@@ -47,6 +47,24 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     }
 
     /**
+     * Creates a sorted set initially populated with the specified elements
+     * (convenience method).
+     */
+    public FastSortedSet(E... elements) {
+        this();
+    	for (E e : elements) add(e);
+    }
+    
+    /**
+     * Creates a sorted set initially populated with the specified elements and 
+     * using the specified comparator for element equality (convenience method).
+     */
+    public FastSortedSet(Equality<? super E> comparator, E... elements) {
+    	this(comparator);
+    	for (E e : elements) add(e);
+    }
+    
+    /**
      * Creates a sorted set backed up by the specified service implementation.
      */
     protected FastSortedSet(SortedSetService<E> service) {
@@ -134,16 +152,6 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
-
-    @Override
-    public FastSortedSet<E> addAll(E... elements) {
-        return (FastSortedSet<E>) super.addAll(elements);
-    }
-
-    @Override
-    public FastSortedSet<E> addAll(FastCollection<? extends E> that) {
-        return (FastSortedSet<E>) super.addAll(that);
-    }
 
     @Override
     protected SortedSetService<E> service() {

@@ -39,7 +39,7 @@ public final class BitSetIteratorImpl implements Iterator<Index> {
             throw new NoSuchElementException();
         currentIndex = nextIndex;
         nextIndex = that.nextSetBit(nextIndex + 1);
-        return Index.valueOf(currentIndex);
+        return Index.of(currentIndex);
     }
 
     public void remove() {

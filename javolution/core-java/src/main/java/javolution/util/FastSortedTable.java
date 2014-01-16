@@ -49,6 +49,24 @@ public class FastSortedTable<E> extends FastTable<E> {
     }
 
     /**
+     * Creates a sorted table initially populated with the specified elements
+     * (convenience method).
+     */
+    public FastSortedTable(E... elements) {
+    	this();
+    	for (E e : elements) add(e);
+    }
+    
+   /**
+     * Creates a sorted table initially populated with the specified elements 
+     * and using the specified comparator for sorting (convenience method).
+     */
+    public FastSortedTable(Equality<? super E> comparator, E... elements) {
+    	this(comparator);
+    	for (E e : elements) add(e);
+    }
+    
+   /**
      * Creates a sorted table backed up by the specified service implementation.
      */
     protected FastSortedTable(SortedTableService<E> service) {
@@ -117,16 +135,6 @@ public class FastSortedTable<E> extends FastTable<E> {
     @Realtime(limit = LOG_N)
     public int positionOf(E element) {
         return service().positionOf(element);
-    }
-
-    @Override
-    public FastSortedTable<E> addAll(E... elements) {
-        return (FastSortedTable<E>) super.addAll(elements);
-    }
-
-    @Override
-    public FastSortedTable<E> addAll(FastCollection<? extends E> that) {
-        return (FastSortedTable<E>) super.addAll(that);
     }
 
     @Override

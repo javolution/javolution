@@ -355,16 +355,6 @@ public class FastBitSet extends FastSet<Index> {
     //
 
     @Override
-    public FastBitSet addAll(Index... elements) {
-        return (FastBitSet) super.addAll(elements);
-    }
-
-    @Override
-    public FastBitSet addAll(FastCollection<? extends Index> elements) {
-        return (FastBitSet) super.addAll(elements);
-    }
-
-    @Override
     protected BitSetService service() {
         return service;
     }
