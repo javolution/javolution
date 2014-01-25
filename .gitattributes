@@ -328,6 +328,7 @@ javolution/core-java/src/main/java/javolution/util/doc-files/architecture.png -t
 javolution/core-java/src/main/java/javolution/util/function/Consumer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Equalities.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Equality.java -text
+javolution/core-java/src/main/java/javolution/util/function/EqualityComparer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Function.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/Iteration.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/MultiVariable.java -text svneol=unset#text/plain
