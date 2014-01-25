@@ -263,18 +263,6 @@
             
         </plugins>
     </build>
-
-
-    <!-- ============================== -->
-    <!--     Additional repositories    -->
-    <!-- ============================== -->
-    <repositories>
-        <repository> <!-- Gives access to javolution snapshots -->
-            <id>java.net-Public</id>
-            <name>Maven Java Net Snapshots</name>
-            <url>https://maven.java.net/content/repositories/snapshots/</url>
-        </repository>       
-    </repositories>
         
     <!-- ====================== -->
     <!--     List of modules    -->
