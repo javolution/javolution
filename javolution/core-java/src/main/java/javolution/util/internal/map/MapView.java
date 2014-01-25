@@ -41,7 +41,7 @@ public abstract class MapView<K, V> implements MapService<K, V> {
 		@Override
 		public boolean add(Entry<K, V> entry) {
 			V oldValue = put(entry.getKey(), entry.getValue());
-			return !valueComparator().areEqual(entry.getValue(), oldValue);
+			return !valueComparator().equal(entry.getValue(), oldValue);
 		}
 
 		@Override
@@ -56,7 +56,7 @@ public abstract class MapView<K, V> implements MapService<K, V> {
 			if (obj instanceof Entry) {
 				Entry<K, V> e = (Entry<K, V>) obj;
 				V value = get(e.getKey());
-				return valueComparator().areEqual(e.getValue(), value);
+				return valueComparator().equal(e.getValue(), value);
 			}
 			return false;
 		}

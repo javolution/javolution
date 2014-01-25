@@ -31,9 +31,9 @@ public final class EntryComparatorImpl<K, V> implements
 	}
 
 	@Override
-	public boolean areEqual(Map.Entry<K, V> left, Map.Entry<K, V> right) {
-		return keyComparator.areEqual(left.getKey(), right.getKey())
-				&& valueComparator.areEqual(left.getValue(), right.getValue());
+	public boolean equal(Map.Entry<K, V> left, Map.Entry<K, V> right) {
+		return keyComparator.equal(left.getKey(), right.getKey())
+				&& valueComparator.equal(left.getValue(), right.getValue());
 	}
 
 	@Override

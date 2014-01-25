@@ -36,7 +36,7 @@ import java.util.Comparator;
  * @version 6.0, July 21, 2013
  * @see Equalities
  */
-public interface Equality<T> extends EqualityComparer<T>, Comparator<T>, Serializable {
+public interface Equality<T> extends Comparator<T>, Serializable {
 
     /**
      * Returns the hash code for the specified object (consistent with 

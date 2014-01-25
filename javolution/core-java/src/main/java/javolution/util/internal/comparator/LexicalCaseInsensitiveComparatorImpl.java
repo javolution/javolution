@@ -24,7 +24,7 @@ public class LexicalCaseInsensitiveComparatorImpl implements
     }
 
     @Override
-    public boolean areEqual(CharSequence csq1, CharSequence csq2) {
+    public boolean equal(CharSequence csq1, CharSequence csq2) {
         if (csq1 == csq2)
             return true;
         if ((csq1 == null) || (csq2 == null))

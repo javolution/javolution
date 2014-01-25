@@ -17,7 +17,7 @@ public class IdentityComparatorImpl<E> extends StandardComparatorImpl<E> {
     private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
-    public boolean areEqual(E e1, E e2) {
+    public boolean equal(E e1, E e2) {
         return e1 == e2;
     }
 

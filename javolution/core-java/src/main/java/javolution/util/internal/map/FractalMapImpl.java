@@ -101,7 +101,7 @@ final class FractalMapImpl {
         while (true) {
             MapEntryImpl entry = entries[i];
             if (entry == null) return i;
-            if ((entry.hash == hash) && keyComparator.areEqual(key, entry.key)) return i;
+            if ((entry.hash == hash) && keyComparator.equal(key, entry.key)) return i;
             i = (i + 1) & mask;
         }
     }

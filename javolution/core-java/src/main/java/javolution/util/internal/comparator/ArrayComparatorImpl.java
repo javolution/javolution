@@ -18,7 +18,7 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
     private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
-    public boolean areEqual(Object array1, Object array2) {
+    public boolean equal(Object array1, Object array2) {
         if (array1 == array2)
             return true;
         if ((array1 == null) || (array2 == null))

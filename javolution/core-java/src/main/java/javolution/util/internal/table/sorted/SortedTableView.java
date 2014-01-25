@@ -54,7 +54,7 @@ public abstract class SortedTableView<E> extends TableView<E> implements
     public int lastIndexOf(Object o) {
         int i = positionOf((E) o);
         if (i < 0) return -1;
-        while ((++i < size()) && comparator().areEqual((E) o, get(i))) {
+        while ((++i < size()) && comparator().equal((E) o, get(i))) {
         }
         return --i;
     }

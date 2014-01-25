@@ -152,7 +152,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     public boolean remove(Object key, Object value) {
         MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return false;
-        if (!valueComparator.areEqual((V) entry.value, (V) value)) return false;
+        if (!valueComparator.equal((V) entry.value, (V) value)) return false;
         fractal.removeEntry(key, entry.hash);
         detachEntry(entry); // Entry is not referenced anymore and will be gc.
         size--;
@@ -174,7 +174,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     public boolean replace(K key, V oldValue, V newValue) {
         MapEntryImpl<K, V> entry = fractal.getEntry(key);
         if (entry == null) return false;
-        if (!valueComparator.areEqual(entry.value, oldValue)) return false;
+        if (!valueComparator.equal(entry.value, oldValue)) return false;
         entry.value = newValue;
         return true;
     }

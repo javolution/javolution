@@ -88,7 +88,7 @@ public abstract class TableView<E> extends CollectionView<E> implements TableSer
     public int indexOf(Object o) {
         Equality<Object> cmp = (Equality<Object>) this.comparator();
         for (int i = 0, n = size(); i < n; i++) {
-            if (cmp.areEqual(o, get(i))) return i;
+            if (cmp.equal(o, get(i))) return i;
         }
         return -1;
     }
@@ -108,7 +108,7 @@ public abstract class TableView<E> extends CollectionView<E> implements TableSer
     public int lastIndexOf(Object o) {
         Equality<Object> cmp = (Equality<Object>) this.comparator();
         for (int i = size() - 1; i >= 0; i--) {
-            if (cmp.areEqual(o, get(i))) return i;
+            if (cmp.equal(o, get(i))) return i;
         }
         return -1;
     }

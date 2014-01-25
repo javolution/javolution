@@ -83,7 +83,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
         Iterator<? extends E> it = iterator();
         Equality<Object> cmp = (Equality<Object>) comparator();
         while (it.hasNext()) {
-            if (cmp.areEqual(obj, it.next())) return true;
+            if (cmp.equal(obj, it.next())) return true;
         }
         return false;
     }
@@ -113,7 +113,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
             Iterator<E> it2 = list.iterator();
             while (it1.hasNext()) {
                 if (!it2.hasNext()) return false;
-                if (!cmp.areEqual(it1.next(), it2.next())) return false;
+                if (!cmp.equal(it1.next(), it2.next())) return false;
             }
             if (it2.hasNext()) return false;
             return true;
@@ -164,7 +164,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
         Iterator<? extends E> it = iterator();
         Equality<Object> cmp = (Equality<Object>) comparator();
         while (it.hasNext()) {
-            if (cmp.areEqual(obj, it.next())) {
+            if (cmp.equal(obj, it.next())) {
                 it.remove();
                 return true;
             }
