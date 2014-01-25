@@ -19,7 +19,7 @@ import javolution.util.function.Equality;
  */
 public final class WrapperComparatorImpl<E> implements Equality<E> {
 
-    private static final long serialVersionUID = 8775282553794347279L;
+    private static final long serialVersionUID = 0x600L; // Version.
     private final Comparator<? super E> comparator;
 
     public WrapperComparatorImpl(Comparator<? super E> comparator) {
@@ -48,5 +48,19 @@ public final class WrapperComparatorImpl<E> implements Equality<E> {
                 "Standard comparator (java.util.Comparator) cannot be used for "
                         + "hashcode calculations; please use a coherent equality comparator "
                         + "instead (e.g. javolution.util.function.Equality).");
+    }   
+    
+   @SuppressWarnings("rawtypes")
+   @Override
+    public boolean equals(Object obj) {
+    	if (!(obj instanceof WrapperComparatorImpl)) return false;
+    	WrapperComparatorImpl that = (WrapperComparatorImpl)obj;
+    	return this.comparator.equals(that.comparator);    	
     }
+   
+    @Override
+    public int hashCode() {
+    	return comparator.hashCode();
+    }
+
 }

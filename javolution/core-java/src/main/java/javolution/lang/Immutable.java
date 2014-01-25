@@ -33,7 +33,6 @@ package javolution.lang;
  * @param <T> The type of the immutable constant value.
  * @see <a href="http://en.wikipedia.org/wiki/Immutable_object">
  *      Wikipedia: Immutable Object<a>    
- * @see javolution.util.FastCollection#toImmutable
  */
 public interface Immutable<T> {
     

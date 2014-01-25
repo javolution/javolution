@@ -11,15 +11,20 @@ package javolution.util;
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
+import javolution.text.Cursor;
+import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
+import javolution.text.TextFormat;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
@@ -92,6 +97,7 @@ import javolution.util.service.MapService;
  * @version 6.0, July 21, 2013
  */
 @Realtime
+@DefaultTextFormat(FastMap.Text.class)
 public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         Serializable {
 
@@ -388,6 +394,29 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         return this;
     }
 
+    /**
+     * Compares the specified object with this map for equality.
+     * This method follows the {@link Map#equals(Object)} specification 
+     * when the map {@link #keyComparator key} and {@link #valueComparator value}
+     * comparators are {@link Equalities#STANDARD} (default). 
+     * Equality symmetry is only guaranteed when comparing maps having the 
+     * the same comparators. 
+     * 
+     * @param obj the object to be compared for equality with this map
+     * @return <code>true</code> if this map is considered equals to the
+     *         one specified; <code>false</code> otherwise. 
+     */
+	@Override
+    @Realtime(limit = LINEAR)   
+	public boolean equals(Object obj) {
+    	return service.equals(obj);
+    }
+
+    @Override
+	public int hashCode() {
+    	return service.hashCode();
+    }
+
     /** 
      * Returns an immutable reference over this map. The immutable 
      * value is an {@link #unmodifiable() unmodifiable} view of this map
@@ -406,11 +435,14 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
         };
     }
 
-    /** Returns the string representation of this map entries. */
+    /** 
+     * Returns the string representation of this map using its 
+     * {@link TextContext contextual format}.
+     */
     @Override
     @Realtime(limit = LINEAR)
     public String toString() {
-        return TextContext.getFormat(FastCollection.class).format(entrySet());
+        return TextContext.getFormat(FastMap.class).format(this);
     }
 
     /**
@@ -418,6 +450,37 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
       */
     protected MapService<K, V> service() {
         return service;
+    }
+    
+    /**
+     * Default text format for fast maps (parsing not supported).
+     */
+    @Parallelizable
+    public static class Text extends TextFormat<FastMap<?, ?>> {
+
+        @Override
+        public FastMap<Object, Object> parse(CharSequence csq, Cursor cursor)
+                throws IllegalArgumentException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Appendable format(FastMap<?, ?> that, final Appendable dest)
+                throws IOException {
+        	Iterator<?> i = that.entrySet().iterator();
+        	dest.append('{');
+        	while (i.hasNext()) {
+        	     Map.Entry<?,?> entry = (Map.Entry<?, ?>) i.next();
+        	     TextContext.format(entry.getKey(), dest);
+        	     dest.append('=');
+        	     TextContext.format(entry.getValue(), dest);
+           	     if (i.hasNext()) {
+        	        dest.append(',').append(' ');
+        	    }
+        	}
+        	return dest.append('}');
+        }
+
     }
 
 }

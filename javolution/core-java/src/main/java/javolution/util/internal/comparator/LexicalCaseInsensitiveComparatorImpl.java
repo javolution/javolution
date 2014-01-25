@@ -16,7 +16,7 @@ import javolution.util.function.Equality;
 public class LexicalCaseInsensitiveComparatorImpl implements
         Equality<CharSequence> {
 
-    private static final long serialVersionUID = -1046672327934410697L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     // Converts to upper case.
     private static char up(char c) {
@@ -70,4 +70,15 @@ public class LexicalCaseInsensitiveComparatorImpl implements
         }
         return h;
     }
+        
+    @Override
+    public boolean equals(Object obj) {
+    	return obj instanceof LexicalCaseInsensitiveComparatorImpl;
+    }
+   
+    @Override
+    public int hashCode() {
+    	return LexicalCaseInsensitiveComparatorImpl.class.hashCode();
+    }
+    
 }

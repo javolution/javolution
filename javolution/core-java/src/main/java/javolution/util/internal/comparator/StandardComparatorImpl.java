@@ -15,7 +15,7 @@ import javolution.util.function.Equality;
  */
 public class StandardComparatorImpl<E> implements Equality<E> {
 
-    private static final long serialVersionUID = -615690677813206151L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
     public boolean areEqual(E e1, E e2) {
@@ -45,4 +45,13 @@ public class StandardComparatorImpl<E> implements Equality<E> {
         return (e == null) ? 0 : e.hashCode();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+    	return obj.getClass().equals(this.getClass());
+    }
+   
+    @Override
+    public int hashCode() {
+    	return this.getClass().hashCode();
+    }
 }

@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * The hash map entry implementation (not serializable).
  */
-public final class MapEntryImpl<K, V> implements Map.Entry<K, V> {
+final class MapEntryImpl<K, V> implements Map.Entry<K, V> {
 
     int hash;
     K key;
@@ -37,10 +37,24 @@ public final class MapEntryImpl<K, V> implements Map.Entry<K, V> {
         this.value = value;
         return oldValue;
     }
+    
+    @SuppressWarnings("rawtypes")
+	@Override
+    public boolean equals(Object obj) {
+		// As per Map.Entry contract.
+    	if (!(obj instanceof Map.Entry)) return false;
+    	Map.Entry that = (Map.Entry) obj;
+    	return (this.getKey()==null ?
+    		      that.getKey()==null : this.getKey().equals(that.getKey()))  &&
+    		      (this.getValue()==null ?
+    		       that.getValue()==null : this.getValue().equals(that.getValue()));
+    }
 
-    @Override
-    public String toString() {
-        return key + "=" + value;
+	@Override
+    public int hashCode() {
+		// As per Map.Entry contract.
+    	return  (getKey()==null   ? 0 : getKey().hashCode()) ^
+    		     (getValue()==null ? 0 : getValue().hashCode());
     }
 
 }

@@ -603,22 +603,19 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Compares the specified object with this collection for equality.
      * This method follows the {@link Collection#equals(Object)} specification 
-     * if this collection {@link #comparator comparator} is 
-     * {@link Equalities#STANDARD} (default). Otherwise, only collections
-     * using the same comparator can be considered equals.  
+     * when the collection {@link #comparator comparator} is 
+     * {@link Equalities#STANDARD} (default). 
+     * Equality symmetry is only guaranteed when comparing collections having 
+     * the the same comparators. 
      * 
      * @param obj the object to be compared for equality with this collection
-     * @return <code>true</code> if both collections are considered equals;
-     *        <code>false</code> otherwise. 
+     * @return <code>true</code> if this collection is considered equals to the
+     *         one specified; <code>false</code> otherwise. 
      */
-    @SuppressWarnings("rawtypes")
 	@Override
     @Realtime(limit = LINEAR)
     public boolean equals(Object obj) {
-    	if (obj instanceof FastCollection) { // Compare services.
-    		return service().equals(((FastCollection)obj).service());
-    	}
-        return service().equals(obj); // Default Collection equality.
+        return service().equals(obj); 
     }
 
     /**
@@ -661,15 +658,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         return collection.service();
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Textual format.
-    //
-
     /**
      * Default text format for fast collections (parsing not supported). 
-     * It is the format used when printing standard {@code java.util.Collection} 
-     * instances except that elements are written using 
-     * their current {@link TextContext TextContext} format.
      */
     @Parallelizable
     public static class Text extends TextFormat<FastCollection<?>> {
@@ -683,28 +673,16 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
         @Override
         public Appendable format(FastCollection<?> that, final Appendable dest)
                 throws IOException {
-            dest.append('[');
-            Class<?> elementType = null;
-            TextFormat<Object> format = null;
-            for (Object element : that) {
-                if (elementType == null) elementType = Void.class; 
-                else dest.append(", "); // Not the first.
-                if (element == null) {
-                    dest.append("null");
-                    continue;
-                }
-                Class<?> cls = element.getClass();
-                if (elementType.equals(cls)) {
-                    format.format(element, dest);
-                    continue;
-                }
-                elementType = cls;
-                format = TextContext.getFormat(cls);
-                format.format(element, dest);
-            }
+          	Iterator<?> i = that.iterator();
+        	dest.append('[');
+        	while (i.hasNext()) {
+        	     TextContext.format(i.next(), dest);
+           	     if (i.hasNext()) {
+        	        dest.append(',').append(' ');
+        	    }
+        	}
             return dest.append(']');
         }
 
     }
-
 }

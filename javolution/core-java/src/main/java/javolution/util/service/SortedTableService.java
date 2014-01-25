@@ -25,8 +25,10 @@ public interface SortedTableService<E> extends TableService<E> {
     boolean addIfAbsent(E element);
 
     /** 
-     * Returns what would be the index of the specified element if it were
-     * to be added or the index of the specified element if already present.
+    * Returns the index of the specified element if present; or a negative 
+     * number equals to {@code -n} with {@code n} being the index next to 
+     * the "would be" index of the specified element if the specified element 
+     * was to be added.
      */
     int positionOf(E element);
     

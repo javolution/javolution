@@ -15,7 +15,7 @@ import java.util.Arrays;
  */
 public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
 
-    private static final long serialVersionUID = 4134048629840904441L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
     public boolean areEqual(Object array1, Object array2) {

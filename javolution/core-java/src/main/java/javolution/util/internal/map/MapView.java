@@ -30,334 +30,334 @@ import javolution.util.service.SetService;
  */
 public abstract class MapView<K, V> implements MapService<K, V> {
 
-    /**
-     * Entry comparator. Entries are considered equals if they have the same 
-     * keys regardless of their associated values.
-     */
-    protected class EntryComparator implements Equality<Entry<K,V>>, Serializable {
-        private static final long serialVersionUID = MapView.serialVersionUID;
+	/** Entry Set View */
+	protected class EntrySet extends SetView<Entry<K, V>> {
+		private static final long serialVersionUID = MapView.serialVersionUID;
 
-        public EntryComparator() {
-        }
+		public EntrySet() {
+			super(null); // Actual target is the outer map. 
+		}
 
-        @Override
-        public boolean areEqual(Entry<K, V> left, Entry<K, V> right) {
-            return keyComparator().areEqual(left.getKey(),
-                    right.getKey());
-        }
+		@Override
+		public boolean add(Entry<K, V> entry) {
+			V oldValue = put(entry.getKey(), entry.getValue());
+			return !valueComparator().areEqual(entry.getValue(), oldValue);
+		}
 
-        @Override
-        public int compare(Entry<K, V> left, Entry<K, V> right) {
-            return keyComparator().compare(left.getKey(),
-                    right.getKey());
-        }
+		@Override
+		public Equality<? super Entry<K, V>> comparator() {
+			return new EntryComparatorImpl<K, V>(keyComparator(),
+					valueComparator());
+		}
 
-        @Override
-        public int hashCodeOf(Entry<K, V> e) {
-            return keyComparator().hashCodeOf(e.getKey());
-        }     
-    }
-    
-    /** Entry Set View */
-    protected class EntrySet extends SetView<Entry<K, V>> {
-        private static final long serialVersionUID = MapView.serialVersionUID;
-        public EntrySet() {
-            super(null); // Actual target is the outer map. 
-        }
+		@SuppressWarnings("unchecked")
+		@Override
+		public boolean contains(Object obj) { // Optimization.
+			if (obj instanceof Entry) {
+				Entry<K, V> e = (Entry<K, V>) obj;
+				V value = get(e.getKey());
+				return valueComparator().areEqual(e.getValue(), value);
+			}
+			return false;
+		}
 
-        @Override
-        public boolean add(Entry<K, V> entry) {
-            put(entry.getKey(), entry.getValue());
-            return true;
-        }
+		@Override
+		public boolean isEmpty() {
+			return MapView.this.isEmpty();
+		}
 
-        @Override
-        public Equality<? super Entry<K, V>> comparator() {
-            return new EntryComparator();
-        }
+		@Override
+		public Iterator<Entry<K, V>> iterator() {
+			return MapView.this.iterator();
+		}
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean contains(Object obj) {
-            if (obj instanceof Entry) {
-                Entry<K, V> e = (Entry<K, V>) obj;
-                return contains(e.getKey());
-            }
-            return false;
-        }
+		@Override
+		public void perform(
+				final Consumer<CollectionService<Entry<K, V>>> action,
+				final CollectionService<Entry<K, V>> view) {
+			Consumer<MapService<K, V>> mapAction = new Consumer<MapService<K, V>>() {
+				@Override
+				public void accept(MapService<K, V> param) {
+					action.accept(view);
+				}
+			};
+			MapView.this.perform(mapAction, MapView.this);
+		}
 
-        @Override
-        public boolean isEmpty() {
-            return MapView.this.isEmpty();
-        }
+		@Override
+		@SuppressWarnings("unchecked")
+		public boolean remove(Object obj) { // Optimization.
+			if (!contains(obj))
+				return false;
+			if (obj instanceof Entry) {
+				Entry<K, V> e = (Entry<K, V>) obj;
+				MapView.this.remove(e.getKey());
+				return true;
+			}
+			return false;
+		}
 
-        @Override
-        public Iterator<Entry<K, V>> iterator() {
-            return MapView.this.iterator();
-        }
+		@Override
+		public int size() {
+			return MapView.this.size();
+		}
 
-        @Override
-        public void perform(
-                final Consumer<CollectionService<Entry<K, V>>> action,
-                final CollectionService<Entry<K, V>> view) {
-            Consumer<MapService<K, V>> mapAction = new Consumer<MapService<K, V>>() {
-                @Override
-                public void accept(MapService<K, V> param) {
-                    action.accept(view);
-                }
-            };
-            MapView.this.perform(mapAction, MapView.this);
-        }
+		@Override
+		public void update(
+				final Consumer<CollectionService<Entry<K, V>>> action,
+				final CollectionService<Entry<K, V>> view) {
+			Consumer<MapService<K, V>> mapAction = new Consumer<MapService<K, V>>() {
+				@Override
+				public void accept(MapService<K, V> param) {
+					action.accept(view);
+				}
+			};
+			MapView.this.update(mapAction, MapView.this);
+		}
+	}
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public boolean remove(Object obj) {
-            if (obj instanceof Entry) {
-                Entry<K, V> e = (Entry<K, V>) obj;
-                if (!contains(e.getKey())) return false;
-                MapView.this.remove(e.getKey());
-                return true;
-            }
-            return false;
-        }
+	/** Entry to key mapping function */
+	class EntryToKey implements Function<Entry<K, V>, K>, Serializable {
+		private static final long serialVersionUID = MapView.serialVersionUID;
 
-        @Override
-        public int size() {
-            return MapView.this.size();
-        }
+		@Override
+		public K apply(java.util.Map.Entry<K, V> param) {
+			return param.getKey();
+		}
+	}
 
-        @Override
-        public void update(
-                final Consumer<CollectionService<Entry<K, V>>> action,
-                final CollectionService<Entry<K, V>> view) {
-            Consumer<MapService<K, V>> mapAction = new Consumer<MapService<K, V>>() {
-                @Override
-                public void accept(MapService<K, V> param) {
-                    action.accept(view);
-                }
-            };
-            MapView.this.update(mapAction, MapView.this);
-        }
-    }
+	/** Key Set View */
+	protected class KeySet extends MappedSetImpl<Entry<K, V>, K> {
+		private static final long serialVersionUID = MapView.serialVersionUID;
 
-    /** Entry to key mapping function */
-    class EntryToKey implements Function<Entry<K, V>, K>, Serializable {
-        private static final long serialVersionUID = MapView.serialVersionUID;
-        @Override
-        public K apply(java.util.Map.Entry<K, V> param) {
-            return param.getKey();
-        }        
-    }
-    
-    /** Key Set View */
-    protected class KeySet extends MappedSetImpl<Entry<K, V>, K> {
-        private static final long serialVersionUID = MapView.serialVersionUID;
+		public KeySet() {
+			super(entrySet(), new EntryToKey());
+		}
 
-        public KeySet() {
-            super(entrySet(), new EntryToKey());
-        }
+		@Override
+		public boolean add(K key) { // Supports adding new key with null value.
+			if (containsKey(key))
+				return false;
+			put(key, null);
+			return true;
+		}
 
-        @Override
-        public boolean add(K key) { // Supports adding new key with null value.
-            if (containsKey(key)) return false;
-            put(key, null);
-            return true;
-        }
+		@Override
+		public Equality<? super K> comparator() {
+			return keyComparator();
+		}
 
-        @Override
-        public Equality<? super K> comparator() {
-            return keyComparator();
-        }
+		@SuppressWarnings("unchecked")
+		@Override
+		public boolean contains(Object obj) {
+			return containsKey((K) obj);
+		}
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean contains(Object obj) {
-            return containsKey((K) obj);
-        }
+		@SuppressWarnings("unchecked")
+		@Override
+		public boolean remove(Object obj) {
+			if (!containsKey((K) obj))
+				return false;
+			MapView.this.remove((K) obj);
+			return true;
+		}
+	}
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean remove(Object obj) {
-            if (!containsKey((K) obj)) return false;
-            MapView.this.remove((K) obj);
-            return true;
-        }
-    }
+	/** Values View */
+	protected class Values extends MappedCollectionImpl<Entry<K, V>, V> {
+		private static final long serialVersionUID = MapView.serialVersionUID;
 
-    /** Values View */
-    protected class Values extends MappedCollectionImpl<Entry<K, V>, V> {
-        private static final long serialVersionUID = MapView.serialVersionUID;
+		public Values() {
+			super(entrySet(), new Function<Entry<K, V>, V>() {
+				@Override
+				public V apply(Map.Entry<K, V> e) {
+					return e.getValue();
+				}
+			});
+		}
 
-        public Values() {
-            super(entrySet(), new Function<Entry<K, V>, V>() {
-                @Override
-                public V apply(Map.Entry<K, V> e) {
-                    return e.getValue();
-                }
-            });
-        }
+		@Override
+		public Equality<? super V> comparator() {
+			return valueComparator();
+		}
+	}
 
-        @Override
-        public Equality<? super V> comparator() {
-            return valueComparator();
-        }
-    }
+	private static final long serialVersionUID = 0x600L; // Version.
+	private MapService<K, V> target;
 
-    private static final long serialVersionUID = 0x600L; // Version.
-    private MapService<K, V> target;
+	/**
+	 * The view constructor or root class constructor if target is {@code null}.
+	 */
+	public MapView(MapService<K, V> target) {
+		this.target = target;
+	}
 
-    /**
-     * The view constructor or root class constructor if target is {@code null}.
-     */
-    public MapView(MapService<K, V> target) {
-        this.target = target;
-    }
+	@Override
+	public void clear() {
+		Iterator<Entry<K, V>> it = iterator();
+		while (it.hasNext()) {
+			it.remove();
+		}
+	}
 
-    @Override
-    public void clear() {
-        Iterator<Entry<K, V>> it = iterator();
-        while (it.hasNext()) {
-            it.remove();
-        }
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public MapView<K, V> clone() {
+		try {
+			MapView<K, V> copy = (MapView<K, V>) super.clone();
+			if (target != null) { // Not a root class.
+				copy.target = target.clone();
+			}
+			return copy;
+		} catch (CloneNotSupportedException e) {
+			throw new Error("Should not happen since target is cloneable");
+		}
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public MapView<K, V> clone() {
-        try {
-            MapView<K, V> copy = (MapView<K, V>) super.clone();
-            if (target != null) { // Not a root class.
-                copy.target = target.clone();
-            }
-            return copy;
-        } catch (CloneNotSupportedException e) {
-            throw new Error("Should not happen since target is cloneable");
-        }
-    }
+	@Override
+	public abstract boolean containsKey(Object key);
 
-    @Override
-    public abstract boolean containsKey(Object key);
+	@Override
+	public boolean containsValue(Object value) {
+		return values().contains(value);
+	}
 
-    @Override
-    public boolean containsValue(Object value) {
-        return values().contains(value);
-    }
+	@Override
+	public SetService<Entry<K, V>> entrySet() {
+		return new EntrySet();
+	}
 
-    @Override
-    public SetService<Entry<K, V>> entrySet() {
-        return new EntrySet();
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof Map))
+			return false;
+		Map<K, V> that = (Map<K, V>) obj;
+		return this.entrySet().equals(that.entrySet());
+	}
 
-    @Override
-    public abstract V get(Object key);
+	@Override
+	public abstract V get(Object key);
 
-    @Override
-    public boolean isEmpty() {
-        return !iterator().hasNext();
-    }
+	@Override
+	public int hashCode() {
+		return entrySet().hashCode();
+	}
 
-    @Override
-    public abstract Iterator<Entry<K, V>> iterator();
+	@Override
+	public boolean isEmpty() {
+		return !iterator().hasNext();
+	}
 
-    @Override
-    public abstract Equality<? super K> keyComparator();
+	@Override
+	public abstract Iterator<Entry<K, V>> iterator();
 
-    @Override
-    public SetService<K> keySet() {
-        return new KeySet();
-    }
+	@Override
+	public abstract Equality<? super K> keyComparator();
 
-    @Override
-    public void perform(Consumer<MapService<K, V>> action, MapService<K, V> view) {
-        if (target == null) {
-            action.accept(view);
-        } else {
-            target.perform(action, view);
-        }
-    }
+	@Override
+	public SetService<K> keySet() {
+		return new KeySet();
+	}
 
-    @Override
-    public abstract V put(K key, V value);
+	@Override
+	public void perform(Consumer<MapService<K, V>> action, MapService<K, V> view) {
+		if (target == null) {
+			action.accept(view);
+		} else {
+			target.perform(action, view);
+		}
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-        Iterator<?> it = m.entrySet().iterator();
-        while (it.hasNext()) {
-            Entry<K, V> e = (Entry<K, V>) it.next();
-            put(e.getKey(), e.getValue());
-        }
-    }
+	@Override
+	public abstract V put(K key, V value);
 
-    @Override
-    public V putIfAbsent(K key, V value) {
-        if (!containsKey(key)) return put(key, value);
-        else return get(key);
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public void putAll(Map<? extends K, ? extends V> m) {
+		Iterator<?> it = m.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<K, V> e = (Entry<K, V>) it.next();
+			put(e.getKey(), e.getValue());
+		}
+	}
 
-    @Override
-    public abstract V remove(Object key);
+	@Override
+	public V putIfAbsent(K key, V value) {
+		if (!containsKey(key))
+			return put(key, value);
+		else
+			return get(key);
+	}
 
-    @Override
-    public boolean remove(Object key, Object value) {
-        if (containsKey(key) && get(key).equals(value)) {
-            remove(key);
-            return true;
-        } else return false;
-    }
+	@Override
+	public abstract V remove(Object key);
 
-    @Override
-    public V replace(K key, V value) {
-        if (containsKey(key)) {
-            return put(key, value);
-        } else return null;
-    }
+	@Override
+	public boolean remove(Object key, Object value) {
+		if (containsKey(key) && get(key).equals(value)) {
+			remove(key);
+			return true;
+		} else
+			return false;
+	}
 
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        if (containsKey(key) && get(key).equals(oldValue)) {
-            put(key, newValue);
-            return true;
-        } else return false;
-    }
+	@Override
+	public V replace(K key, V value) {
+		if (containsKey(key)) {
+			return put(key, value);
+		} else
+			return null;
+	}
 
-    @Override
-    public int size() {
-        int count = 0;
-        Iterator<Entry<K, V>> it = iterator();
-        while (it.hasNext()) {
-            count++;
-            it.next();
-        }
-        return count;
-    }
+	@Override
+	public boolean replace(K key, V oldValue, V newValue) {
+		if (containsKey(key) && get(key).equals(oldValue)) {
+			put(key, newValue);
+			return true;
+		} else
+			return false;
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public MapService<K, V>[] split(int n, boolean threadsafe) {
-        return new MapService[] { this }; // Splits not supported.
-    }
+	@Override
+	public int size() {
+		int count = 0;
+		Iterator<Entry<K, V>> it = iterator();
+		while (it.hasNext()) {
+			count++;
+			it.next();
+		}
+		return count;
+	}
 
-    @Override
-    public void update(Consumer<MapService<K, V>> action, MapService<K, V> view) {
-        if (target == null) {
-            action.accept(view);
-        } else {
-            target.update(action, view);
-        }
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public MapService<K, V>[] split(int n, boolean threadsafe) {
+		return new MapService[] { this }; // Splits not supported.
+	}
 
-    @Override
-    public abstract Equality<? super V> valueComparator();
+	/** Returns the actual target */
+	protected MapService<K, V> target() {
+		return target;
+	}
 
-    @Override
-    public CollectionService<V> values() {
-        return new Values();
-    }
+	@Override
+	public void update(Consumer<MapService<K, V>> action, MapService<K, V> view) {
+		if (target == null) {
+			action.accept(view);
+		} else {
+			target.update(action, view);
+		}
+	}
 
-    /** Returns the actual target */
-    protected MapService<K, V> target() {
-        return target;
-    }
+	@Override
+	public abstract Equality<? super V> valueComparator();
+
+	@Override
+	public CollectionService<V> values() {
+		return new Values();
+	}
 
 }

@@ -8,6 +8,8 @@
  */
 package javolution.text;
 
+import java.io.IOException;
+
 import javolution.context.AbstractContext;
 import javolution.context.FormatContext;
 import javolution.osgi.internal.OSGiServices;
@@ -70,6 +72,15 @@ public abstract class TextContext extends FormatContext {
      */
     public abstract <T> void setFormat(Class<? extends T> type,
             TextFormat<T> newFormat);
+
+    /**
+     * Formats the specified object using its current {@link #getFormat(Class) 
+     * format} (convenience method).
+     */
+    public static Appendable format(Object obj, Appendable dest) throws IOException {
+    	if (obj == null) return dest.append("null");
+    	return TextContext.getFormat(obj.getClass()).format(obj, dest);    	
+    }
 
     /**
      * Searches the most specialized format for the specified type.

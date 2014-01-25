@@ -15,7 +15,6 @@ import java.util.Set;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
-import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
@@ -100,15 +99,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
     @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object o) {
-        // Follow Collection.equals specification if this comparator is standard.        
         if (this == o) return true;
-        // Check comparators consistency.
-        if (o instanceof CollectionService) {
-            if (!comparator().equals(((CollectionService<E>) o).comparator())) return false; // Different comparators.
-        } else {
-            if (!comparator().equals(Equalities.STANDARD)) return false;
-        }
-        // Collection.equals contract.
         if (this instanceof Set) {
             if (!(o instanceof Set)) return false;
             Set<E> set = (Set<E>) o;
@@ -133,7 +124,6 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
 
     @Override
     public int hashCode() {
-        // Follow Collection.equals specification if this comparator is standard.        
         Equality<? super E> cmp = comparator();
         Iterator<E> it = this.iterator();
         int hash = 0;

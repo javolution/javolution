@@ -32,7 +32,6 @@ public interface MapService<K, V> extends
      */
     MapService<K, V> clone() throws CloneNotSupportedException;
 
-
     /**
      * Returns a set view over the entries of this map. The set 
      * support adding/removing entries. Two entries are considered 

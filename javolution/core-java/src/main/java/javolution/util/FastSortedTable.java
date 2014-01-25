@@ -9,9 +9,11 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LOG_N;
+
+import java.util.Comparator;
+
 import javolution.lang.Realtime;
 import javolution.util.function.Equalities;
-import javolution.util.function.Equality;
 import javolution.util.internal.table.sorted.AtomicSortedTableImpl;
 import javolution.util.internal.table.sorted.FastSortedTableImpl;
 import javolution.util.internal.table.sorted.SharedSortedTableImpl;
@@ -44,7 +46,7 @@ public class FastSortedTable<E> extends FastTable<E> {
     /**
      * Creates an empty table sorted using the specified element comparator.
      */
-    public FastSortedTable(Equality<? super E> comparator) {
+    public FastSortedTable(Comparator<? super E> comparator) {
         super(new FastSortedTableImpl<E>(comparator));
     }
 
@@ -61,7 +63,7 @@ public class FastSortedTable<E> extends FastTable<E> {
      * Creates a sorted table initially populated with the specified elements 
      * and using the specified comparator for sorting (convenience method).
      */
-    public FastSortedTable(Equality<? super E> comparator, E... elements) {
+    public FastSortedTable(Comparator<? super E> comparator, E... elements) {
     	this(comparator);
     	for (E e : elements) add(e);
     }
@@ -129,8 +131,10 @@ public class FastSortedTable<E> extends FastTable<E> {
     }
 
     /** 
-     * Returns what would be the index of the specified element if it were
-     * to be added or the index of the specified element if already present.
+     * Returns the index of the specified element if present; or a negative 
+     * number equals to {@code -n} with {@code n} being the index next to 
+     * the "would be" index of the specified element if the specified element 
+     * was to be added.
      */
     @Realtime(limit = LOG_N)
     public int positionOf(E element) {

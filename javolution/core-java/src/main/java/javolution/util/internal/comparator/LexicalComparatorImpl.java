@@ -9,14 +9,13 @@
 package javolution.util.internal.comparator;
 
 import javolution.lang.MathLib;
-import javolution.util.function.Equality;
 
 /**
  * The lexical comparator implementation (optimized for String).
  */
-public class LexicalComparatorImpl implements Equality<CharSequence> {
+public class LexicalComparatorImpl extends StandardComparatorImpl<CharSequence> {
 
-    private static final long serialVersionUID = 7904852144917623728L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
     public boolean areEqual(CharSequence csq1, CharSequence csq2) {
@@ -73,4 +72,5 @@ public class LexicalComparatorImpl implements Equality<CharSequence> {
         }
         return h;
     }
+
 }

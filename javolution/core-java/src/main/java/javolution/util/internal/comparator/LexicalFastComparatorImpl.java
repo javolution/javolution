@@ -13,7 +13,7 @@ package javolution.util.internal.comparator;
  */
 public class LexicalFastComparatorImpl extends LexicalComparatorImpl {
 
-    private static final long serialVersionUID = -1449702752185594025L;
+    private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
     public int hashCodeOf(CharSequence csq) {
@@ -27,4 +27,5 @@ public class LexicalFastComparatorImpl extends LexicalComparatorImpl {
                 * 1009 + csq.charAt(n >> 2) * 27583
                 + csq.charAt(n - 1 - (n >> 2)) * 73408859;
     }
+        
 }

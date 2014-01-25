@@ -8,60 +8,76 @@
  */
 package javolution.util.internal.table.sorted;
 
+import java.util.Comparator;
+
+import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
+import javolution.util.internal.comparator.WrapperComparatorImpl;
 import javolution.util.internal.table.FastTableImpl;
-import javolution.util.service.SortedTableService;
 
 /**
  * The default {@link javolution.util.FastSortedTable FastSortedTable} implementation.
  */
-public class FastSortedTableImpl<E> extends FastTableImpl<E> implements
-        SortedTableService<E> {
+public class FastSortedTableImpl<E> extends SortedTableView<E>  {
 
     private static final long serialVersionUID = 0x600L; // Version.
+    private final FastTableImpl<E> table = new FastTableImpl<E>(Equalities.STANDARD);
+    private final Comparator<? super E> comparator;
 
-    public FastSortedTableImpl(Equality<? super E> comparator) {
-        super(comparator);
-    }
-
-    @Override
-    public boolean add(E element) {
-        add(positionOf(element), element);
-        return true;
-    }
- 
-    @Override
-    public boolean addIfAbsent(E element) {
-        int i = positionOf(element);
-        if ((i < size()) && comparator().areEqual(element, get(i))) return false; // Already there.
-        add(i, element);
-        return true;
-    }
- 
-    @SuppressWarnings("unchecked")
-    @Override
-    public int indexOf(Object element) {
-        int i = positionOf((E) element);
-        if (i >= size() || !comparator().areEqual(get(i), (E) element)) return -1;
-        return i;
+	public FastSortedTableImpl(Comparator<? super E> comparator) {
+    	super(null);
+    	this.comparator = comparator;    	
     }
 
     @Override
+	public void add(int index, E element) {
+		table.add(index, element);
+	}
+
+    @Override
+	public void clear() {
+		table.clear();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Equality<? super E> comparator() {
+		return (Equality<? super E>) ((comparator instanceof Equality) ? comparator : 
+        	new  WrapperComparatorImpl<E>(comparator));
+	}
+
+	@Override
+	public E get(int index) {
+		return table.get(index);
+	}
+
+	@Override
     public int positionOf(E element) {
         return positionOf(element, 0, size());
     }
 
-    @Override
-    public SortedTableService<E>[] split(int n, boolean updateable) {
-        return SubSortedTableImpl.splitOf(this, n, updateable); // Sub-views over this.
+	private int positionOf(E element, int start, int length) {
+        if (length == 0) return -start - 1;
+        int half = length >> 1;
+        int cmp = comparator.compare(element, get(start + half));
+        if (cmp == 0) return start + half; // Found.
+        if (cmp < 0) return positionOf(element, start, half);
+        return positionOf(element, start + half + 1, length - half - 1);
     }
 
-    private int positionOf(E element, int start, int length) {
-        if (length == 0) return start;
-        int half = length >> 1;
-        return (comparator().compare(element, get(start + half)) <= 0) ? positionOf(
-                element, start, half) : positionOf(element, start + half + 1,
-                length - half - 1);
+	@Override
+	public E remove(int index) {
+		return table.remove(index);
+	}
+
+	@Override
+	public E set(int index, E element) {
+		return table.set(index, element);
     }
+
+	@Override
+	public int size() {
+		return table.size();
+	}
 
 }

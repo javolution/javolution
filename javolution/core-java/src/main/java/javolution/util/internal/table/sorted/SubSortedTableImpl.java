@@ -41,37 +41,51 @@ public class SubSortedTableImpl<E> extends SubTableImpl<E> implements SortedTabl
         super(target, from, to);
     }
 
-    @Override
+     @Override
+     public boolean add(E element) {
+         int i = positionOf(element);
+         add((i < 0) ? -i-1 : i, element);
+         return true;
+     }
+     
+     @Override
     public boolean addIfAbsent(E element) {
-        if (!contains(element)) return add(element);
-        return false;
+        int i = positionOf(element);
+        if (i >= 0) return false;
+        add(-i-1, element);
+        return true;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int indexOf(Object o) {
-        int i = positionOf((E) o);
-        if ((i >= size()) || !comparator().areEqual((E) o, get(i))) return -1;
-        return i;
+        int i = positionOf((E)o);
+        return (i >= 0) ? i : -1;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int lastIndexOf(Object o) {
         int i = positionOf((E) o);
-        int result = -1;
-        while ((i < size()) && comparator().areEqual((E) o, get(i))) {
-            result = i++;
+        if (i < 0) return -1;
+        while ((++i < size()) && comparator().areEqual((E) o, get(i))) {
         }
-        return result;
+        return --i;
     }
     
     @Override
     public int positionOf(E element) {
         int i = target().positionOf(element);
-        if (i < fromIndex) return 0;
-        if (i >= toIndex) return size();
-        return i - fromIndex;
+        if (i >= 0) { // Actual index.
+            if (i < fromIndex) return -1;
+            if (i >= toIndex) return -size()-1;
+            return i - fromIndex;	
+        } else { // Would be index.
+        	i = -i - 1;
+            if (i < fromIndex) return -1;
+            if (i >= toIndex) return -size()-1;
+        	return -(i - fromIndex) - 1;
+        }
     }
     
     @Override
