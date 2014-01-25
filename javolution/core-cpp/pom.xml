@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.javolution</groupId>
         <artifactId>javolution</artifactId>
-        <version>6.0.0</version> <!--  Stable (Maven Central) -->
+        <version>6.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>libjavolution-core-cpp</artifactId>
     <version>6.1.0-SNAPSHOT</version>
@@ -25,8 +25,10 @@
                 <artifactId>native-maven-plugin</artifactId>
                 <configuration>
                     <sources>
-                        <source><directory>${project.basedir}/src/include/c++</directory><includes><include>**/*.cpp</include></includes><deployable>true</deployable></source>
-                        <source><directory>${project.basedir}/src/main/c++</directory><includes><include>**/*.cpp</include></includes><deployable>true</deployable></source>
+                        <source><directory>${project.basedir}/src/include/c++</directory><includes><include>**/*.cpp</include></includes></source>
+                        <source><directory>${project.basedir}/src/main/c++</directory><includes><include>**/*.cpp</include></includes></source>
+                        <source><directory>${project.basedir}/src/include/c++</directory><deployable>true</deployable></source>
+                        <source><directory>${project.basedir}/src/main/c++</directory><deployable>true</deployable></source>
                     </sources>
                     <compilerStartOptions>
                         <compilerStartOption>${native.dll.compilerOptions}</compilerStartOption>
@@ -36,7 +38,7 @@
                    <linkerEndOptions>
                         <linkerEndOption>${native.javolution.linkerOptions}</linkerEndOption>
                    </linkerEndOptions>
-
+                   <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
                </configuration>
             </plugin>
         </plugins>

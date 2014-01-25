@@ -109,15 +109,15 @@ public:
     }
 
     Handle(Handle const& that) : ptr(that.ptr) {
-        if (ptr != 0) handle_add_ref(ptr);
+        if (ptr != 0) Type::handle_add_ref(ptr);
     }
 
     Handle(T* that) : ptr(that) {
-        if (ptr != 0) handle_add_ref(ptr);
+        if (ptr != 0) Type::handle_add_ref(ptr);
     }
 
     template<class U> Handle(Handle<U> const& that) : ptr(that.get()) {
-        if (ptr != 0) handle_add_ref(ptr);
+        if (ptr != 0) Type::handle_add_ref(ptr);
     }
 
     Handle& operator=(Handle const& that) {
@@ -131,7 +131,7 @@ public:
     }
 
     Handle& operator=(NullHandle const&) {
-        if (ptr != 0) handle_release(ptr);
+        if (ptr != 0) Type::handle_release(ptr);
         ptr = 0;
         return *this;
     }
@@ -142,7 +142,7 @@ public:
     }
 
     ~Handle() {
-        if (ptr != 0) handle_release(ptr);
+        if (ptr != 0) Type::handle_release(ptr);
     }
 
     T* get() const {

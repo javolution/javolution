@@ -39,7 +39,7 @@ public:
         trackerServiceB->open();
     }
 
-    void stop(org::osgi::framework::BundleContext const& ctx) {
+    void stop(org::osgi::framework::BundleContext const&) {
         trackerServiceB->close();
         trackerServiceB = Type::Null;
     }

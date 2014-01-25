@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.javolution</groupId>
         <artifactId>javolution</artifactId>
-        <version>6.0.0</version>
+        <version>6.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>javolution-test-cpp</artifactId>
     <version>6.1.0-SNAPSHOT</version>
@@ -60,7 +60,6 @@
                             <includes>
                                 <include>**/*.cpp</include>
                             </includes>
-                            <deployable>false</deployable>
                         </source>
                     </sources>
                     <compilerStartOptions>
@@ -69,7 +68,6 @@
                     <linkerStartOptions>
                         <linkerStartOption>${native.exe.linkerOptions}</linkerStartOption>
                     </linkerStartOptions>
-                    <linkerSecondaryOutputExtensions></linkerSecondaryOutputExtensions>   
                 </configuration>
             </plugin>
             

@@ -237,14 +237,14 @@ public:
     /**
      * Implements ServiceTrackerCustomizer.
      */
-    virtual void modifiedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const& service) {
+    virtual void modifiedService(org::osgi::framework::ServiceReference const&, javolution::lang::Object const&) {
         // Do nothing.
     }
 
     /**
      * Implements ServiceTrackerCustomizer.
      */
-    virtual void removedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const& service) {
+    virtual void removedService(org::osgi::framework::ServiceReference const& serviceReference, javolution::lang::Object const&) {
         _context->ungetService(serviceReference);
     }
 

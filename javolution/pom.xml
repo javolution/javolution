@@ -81,7 +81,7 @@
     <!-- ======================================================= -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <native.compilerConcurrency>1</native.compilerConcurrency>                
+        <native.compilerConcurrency>16</native.compilerConcurrency>                
     </properties>
     
     <!-- ======================================================= -->
@@ -221,24 +221,13 @@
             </plugin>
 
             <!-- ======================================================= -->
-            <!--     Native Plugin Default Configuration (EXE)           -->
+            <!--     Native Plugin Default Configuration (DLL)           -->
             <!-- ======================================================= -->  
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>native-maven-plugin</artifactId>
-                <version>1.0-alpha-7</version>
+                <version>1.0-alpha-8</version>
                 <extensions>true</extensions>
-                <dependencies> 
-                    <!-- Add support for Visual Studio 2010 (expected Windows environment) 
-                    If an earlier version of Visual Studio is installed this dependencies is unnecessary
-                    but the property ${native.envFactoryName} must be set differently 
-                    (see http://mojo.codehaus.org/maven-native/native-maven-plugin/envfactory.html) -->
-                    <dependency>
-                        <groupId>org.javolution</groupId>
-                        <artifactId>javolution-msvc</artifactId>
-                        <version>1.0.0</version>
-                    </dependency>
-                </dependencies>       
                 <configuration> <!-- Default configuration for a dynamic library -->
                     <classifier>${native.classifier}</classifier>
                     <workingDirectory>${project.build.directory}/${native.classifier}</workingDirectory>
@@ -257,7 +246,6 @@
                     <linkerStartOptions>
                         <linkerStartOption>${native.dll.linkerOptions}</linkerStartOption>
                     </linkerStartOptions>
-                    <linkerSecondaryOutputExtensions>${native.linkerSecondaryOutputExtensions}</linkerSecondaryOutputExtensions>
                 </configuration>
             </plugin>
  
@@ -294,7 +282,7 @@
     <modules>
         <module>core-java</module>
         <module>core-cpp</module>
-      <!-- <module>test-cpp</module> Problem with deploy. -->  
+        <module>test-cpp</module>  
     </modules>
 
 </project>

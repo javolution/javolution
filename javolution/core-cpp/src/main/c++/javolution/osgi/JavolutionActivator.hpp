@@ -10,7 +10,7 @@
 #include "org/osgi/framework/BundleContext.hpp"
 
 // Should be updated when the major version of the library changes (the tests will check it).
-#define JAVOLUTION_MAJOR_VERSION "6.0"
+#define JAVOLUTION_MAJOR_VERSION "6.1"
 
 namespace javolution {
     namespace osgi {
