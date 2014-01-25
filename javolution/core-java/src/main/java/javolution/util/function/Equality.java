@@ -36,7 +36,7 @@ import java.util.Comparator;
  * @version 6.0, July 21, 2013
  * @see Equalities
  */
-public interface Equality<T> extends Comparator<T>, Serializable {
+public interface Equality<T> extends EqualityComparer<T>, Comparator<T>, Serializable {
 
     /**
      * Returns the hash code for the specified object (consistent with 
@@ -59,7 +59,7 @@ public interface Equality<T> extends Comparator<T>, Serializable {
      * @return <code>true</code> if both objects are considered equal;
      *         <code>false</code> otherwise. 
      */
-    boolean areEqual(T left, T right);
+    boolean equal(T left, T right);
 
     /**
      * Compares the specified objects for order. Returns a negative integer, 
