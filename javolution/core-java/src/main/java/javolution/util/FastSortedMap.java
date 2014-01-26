@@ -11,6 +11,7 @@ package javolution.util;
 import static javolution.lang.Realtime.Limit.LOG_N;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.SortedMap;
 
 import javolution.lang.Realtime;
@@ -35,7 +36,17 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
         SortedMap<K, V> {
 
     private static final long serialVersionUID = 0x600L; // Version.
-
+    
+    /**
+     * Returns a new sorted map holding the same entries as the specified 
+     * map (convenience method).
+     */
+    public static <K,V> FastSortedMap<K,V> of(Map<? extends K, ? extends V> that) {
+    	FastSortedMap<K,V> map = new FastSortedMap<K,V>();
+    	map.putAll(that);
+        return map;
+    }
+    
     /**
      * Creates an empty sorted map ordered on keys natural order.
      */

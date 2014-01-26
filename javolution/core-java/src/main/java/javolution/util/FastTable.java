@@ -52,7 +52,7 @@ import javolution.util.service.TableService;
  *     Fast tables can be concurrently iterated / modified using their {@link #shared() shared}/{@link #atomic() atomic} 
  *     views. They inherit all the fast collection views and support the {@link #subTable subTable} view over a portion of the table.
  * [code]
- * FastTable<String> names = new FastTable<String>("John Deuff", "Otto Graf", "Sim Kamil");
+ * FastTable<String> names = FastTable.of("John Deuff", "Otto Graf", "Sim Kamil");
  * names.sort(Equalities.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
  * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
@@ -60,10 +60,9 @@ import javolution.util.service.TableService;
  * [/code]</p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations can be 
- *     performed using closures and fast tables can wrap any array.
+ *     performed using closures.
  * [code]
- * Person[] personArray = ...;
- * FastTable<Person> persons = new FastTable<Person>(personArray); // Table view over array (fixed-size).
+ * FastTable<Person> persons = ...;
  * Person findWithName(final String name) { 
  *     return persons.filtered(new Predicate<Person>() { 
  *         public boolean test(Person person) {
@@ -96,6 +95,26 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     private final TableService<E> service;
 
     /**
+     * Returns a new table holding the specified elements
+     * (convenience method).
+     */
+    public static <E> FastTable<E> of(E... elements) {
+    	FastTable<E> table = new FastTable<E>();
+    	for (E e : elements) table.add(e);
+        return table;
+    }
+    
+    /**
+     * Returns a new table holding the same elements as the specified 
+     * collection (convenience method).
+     */
+    public static <E> FastTable<E> of(Collection<? extends E> that) {
+    	FastTable<E> table = new FastTable<E>();
+    	table.addAll(that);
+        return table;
+    }
+    
+     /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
      */
@@ -112,30 +131,11 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
-     * Creates a table initially populated with the specified elements
-     * (convenience method).
-     */
-    public FastTable(E... elements) {
-    	this();
-    	for (E e : elements) add(e);
-    }
-    
-    /**
-     * Creates a table initially populated with the specified elements and using
-     * the specified comparator for element equality (convenience method).
-     */
-    public FastTable(Equality<? super E> comparator, E... elements) {
-    	this(comparator);
-    	for (E e : elements) add(e);
-    }
-    
-    /**
      * Creates a fast table backed up by the specified service implementation.
      */
     protected FastTable(TableService<E> service) {
         this.service = service;
     }
-
 
     ////////////////////////////////////////////////////////////////////////////
     // Views.

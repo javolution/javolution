@@ -9,9 +9,13 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LINEAR;
+
+import java.util.Collection;
+
 import javolution.lang.Immutable;
 import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;
+import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 import javolution.util.service.BitSetService;
 
 /**
@@ -31,14 +35,33 @@ public class FastBitSet extends FastSet<Index> {
     * Holds the bit set implementation.
     */
     private final BitSetService service;
-
+    
+    /**
+     * Returns a new bit set holding the specified indices
+     * (convenience method).
+     */
+    public static FastBitSet of(Index... indices) {
+    	FastBitSet set = new FastBitSet();
+    	for (Index i : indices) set.add(i);
+        return set;
+    }
+    
+    /**
+     * Returns a new bit set holding the same indices as the specified 
+     * collection (convenience method).
+     */
+    public static FastBitSet of(Collection<Index> that) {
+    	FastBitSet set = new FastBitSet();
+    	set.addAll(that);
+        return set;
+    }
+    
     /**
     * Creates an empty bit set.
     */
     public FastBitSet() {
         service = new BitSetServiceImpl();
     }
-
 
     /**
      * Creates a bit set holding the specified bits.
@@ -64,12 +87,7 @@ public class FastBitSet extends FastSet<Index> {
 
     @Override
     public FastBitSet unmodifiable() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
-    }
-
-    @Override
-    public FastBitSet shared() {
-        throw new UnsupportedOperationException("NOT DONE YET"); // TODO
+        return new FastBitSet(new UnmodifiableBitSetImpl(service())); 
     }
 
     ////////////////////////////////////////////////////////////////////////////

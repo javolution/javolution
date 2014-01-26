@@ -12,17 +12,19 @@
     <li><b>Does <b>J</b>avolution provide immutable collections similar to 
      the ones provided by Scala or .NET ?</b>
     <p> Using <b>J</b>avolution you may return an {@link javolution.lang.Immutable Immutable} 
-        reference (const reference) over any object which cannot be modified including collections or maps.
+        view (const reference) over any object which cannot be modified including collections or maps.
 [code]
 public class UnitSystem {
-    Set<Unit> units;
-    public UnitSystem(Immutable<Set<Unit>> units) {
-       this.units = units.value(); // Defensive copy unnecessary (immutable)
+    final FastSet<Unit> units;
+    public UnitSystem(Unit... units) {
+       this.units = FastSet.of(units);
+    }
+    Immutable<Set<Unit>> getUnits() { // Immutable view.
+        return units.immutable();
     }
 }
 ...
-Immutable<Set<Unit>> unitsMKSA = new FastSet<Unit>().addAll(M, K, S, A).toImmutable();
-UnitSystem MKSA = new UnitSystem(unitsMKSA);
+UnitSystem MKSA = new UnitSystem(M, K, S, A);
 [/code]</p>
     </li>
 </ol>    

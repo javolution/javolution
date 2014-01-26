@@ -99,8 +99,7 @@ public final class Index extends Number implements Comparable<Index>,
             INSTANCES[i] = new Index(i);
         }
     }
-    private static final FastTable<Index> INSTANCES_TABLE 
-        = new FastTable<Index>(INSTANCES);
+    private static final FastTable<Index> INSTANCES_TABLE = FastTable.of(INSTANCES);
 
     /**
      * Returns the index for the specified {@code int} non-negative
@@ -146,7 +145,7 @@ public final class Index extends Number implements Comparable<Index>,
     	for (int i = fromIndex, j = 0; i < toIndex; i++) {
     		indices[j++] = Index.of(i);
     	}
-        return new FastTable<Index>(indices);
+        return FastTable.of(indices);
     }
     
     /**

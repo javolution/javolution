@@ -10,6 +10,7 @@ package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LOG_N;
 
+import java.util.Collection;
 import java.util.Comparator;
 
 import javolution.lang.Realtime;
@@ -37,6 +38,26 @@ public class FastSortedTable<E> extends FastTable<E> {
     private static final long serialVersionUID = 0x600L; // Version.
 
     /**
+     * Returns a new sorted table holding the specified elements
+     * (convenience method).
+     */
+    public static <E> FastSortedTable<E> of(E... elements) {
+    	FastSortedTable<E> table = new FastSortedTable<E>();
+    	for (E e : elements) table.add(e);
+        return table;
+    }
+    
+    /**
+     * Returns a new sorted table holding the same elements as the specified 
+     * collection (convenience method).
+     */
+    public static <E> FastSortedTable<E> of(Collection<? extends E> that) {
+    	FastSortedTable<E> table = new FastSortedTable<E>();
+    	table.addAll(that);
+        return table;
+    }
+    
+    /**
       * Creates an empty table sorted using its elements natural order.     
      */
     public FastSortedTable() {
@@ -51,24 +72,6 @@ public class FastSortedTable<E> extends FastTable<E> {
     }
 
     /**
-     * Creates a sorted table initially populated with the specified elements
-     * (convenience method).
-     */
-    public FastSortedTable(E... elements) {
-    	this();
-    	for (E e : elements) add(e);
-    }
-    
-   /**
-     * Creates a sorted table initially populated with the specified elements 
-     * and using the specified comparator for sorting (convenience method).
-     */
-    public FastSortedTable(Comparator<? super E> comparator, E... elements) {
-    	this(comparator);
-    	for (E e : elements) add(e);
-    }
-    
-   /**
      * Creates a sorted table backed up by the specified service implementation.
      */
     protected FastSortedTable(SortedTableService<E> service) {

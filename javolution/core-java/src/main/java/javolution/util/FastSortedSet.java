@@ -10,6 +10,7 @@ package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LOG_N;
 
+import java.util.Collection;
 import java.util.SortedSet;
 
 import javolution.lang.Realtime;
@@ -32,6 +33,26 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     private static final long serialVersionUID = 0x600L; // Version.
 
     /**
+     * Returns a new sorted set holding the specified elements
+     * (convenience method).
+     */
+    public static <E> FastSortedSet<E> of(E... elements) {
+    	FastSortedSet<E> set = new FastSortedSet<E>();
+    	for (E e : elements) set.add(e);
+        return set;
+    }
+    
+    /**
+     * Returns a new sorted set holding the same elements as the specified 
+     * collection (convenience method).
+     */
+    public static <E> FastSortedSet<E> of(Collection<? extends E> that) {
+    	FastSortedSet<E> set = new FastSortedSet<E>();
+    	set.addAll(that);
+        return set;
+    }
+    
+    /**
      * Creates an empty sorted set ordered on elements natural order.
      */
     public FastSortedSet() {
@@ -44,24 +65,6 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     public FastSortedSet(Equality<? super E> comparator) {
         super(new FastSortedMapImpl<E, Void>(comparator, Equalities.IDENTITY)
                 .keySet());
-    }
-
-    /**
-     * Creates a sorted set initially populated with the specified elements
-     * (convenience method).
-     */
-    public FastSortedSet(E... elements) {
-        this();
-    	for (E e : elements) add(e);
-    }
-    
-    /**
-     * Creates a sorted set initially populated with the specified elements and 
-     * using the specified comparator for element equality (convenience method).
-     */
-    public FastSortedSet(Equality<? super E> comparator, E... elements) {
-    	this(comparator);
-    	for (E e : elements) add(e);
     }
     
     /**

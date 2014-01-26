@@ -341,6 +341,7 @@ javolution/core-java/src/main/java/javolution/util/function/package-info.java -t
 javolution/core-java/src/main/java/javolution/util/internal/ReadWriteLockImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIteratorImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetServiceImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/bitset/UnmodifiableBitSetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/AtomicCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/CollectionView.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/ComparatorCollectionImpl.java -text svneol=unset#text/plain

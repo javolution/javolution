@@ -109,6 +109,16 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     private final MapService<K, V> service;
 
     /**
+     * Returns a new map holding the same entries as the specified 
+     * map (convenience method).
+     */
+    public static <K,V> FastMap<K,V> of(Map<? extends K, ? extends V> that) {
+    	FastMap<K,V> map = new FastMap<K,V>();
+    	map.putAll(that);
+        return map;
+    }
+    
+    /**
      * Creates an empty fast map.
      */
     public FastMap() {
@@ -330,8 +340,8 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     /** Adds the specified map entries to this map. */
     @Override
     @Realtime(limit = LINEAR)
-    public void putAll(Map<? extends K, ? extends V> map) {
-        service.putAll(map);
+    public void putAll(Map<? extends K, ? extends V> that) {
+        service.putAll(that);
     }
 
     /** Removes the entry for the specified key. */

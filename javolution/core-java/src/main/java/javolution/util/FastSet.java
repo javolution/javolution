@@ -10,6 +10,7 @@ package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
 
+import java.util.Collection;
 import java.util.Set;
 
 import javolution.lang.Realtime;
@@ -44,6 +45,26 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     private final SetService<E> service;
 
     /**
+     * Returns a new set holding the specified elements
+     * (convenience method).
+     */
+    public static <E> FastSet<E> of(E... elements) {
+    	FastSet<E> set = new FastSet<E>();
+    	for (E e : elements) set.add(e);
+        return set;
+    }
+    
+    /**
+     * Returns a new set holding the same elements as the specified 
+     * collection (convenience method).
+     */
+    public static <E> FastSet<E> of(Collection<? extends E> that) {
+    	FastSet<E> set = new FastSet<E>();
+    	set.addAll(that);
+        return set;
+    }
+    
+    /**
      * Creates an empty set backed up by a {@link FastMap} and having  
      * the same real-time characteristics.
      */
@@ -60,24 +81,6 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
                 .keySet();
     }
 
-    /**
-     * Creates a set initially populated with the specified elements
-     * (convenience method).
-     */
-    public FastSet(E... elements) {
-        this();
-    	for (E e : elements) add(e);
-    }
-    
-    /**
-     * Creates a set initially populated with the specified elements and using
-     * the specified comparator for element equality (convenience method).
-     */
-    public FastSet(Equality<? super E> comparator, E... elements) {
-    	this(comparator);
-    	for (E e : elements) add(e);
-    }
-    
     /**
       * Creates a fast set backed up by the specified service implementation.
       */
