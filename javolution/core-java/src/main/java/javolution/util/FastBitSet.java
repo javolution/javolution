@@ -47,16 +47,6 @@ public class FastBitSet extends FastSet<Index> {
     }
     
     /**
-     * Returns a new bit set holding the same indices as the specified 
-     * collection (convenience method).
-     */
-    public static FastBitSet of(Collection<Index> that) {
-    	FastBitSet set = new FastBitSet();
-    	set.addAll(that);
-        return set;
-    }
-    
-    /**
     * Creates an empty bit set.
     */
     public FastBitSet() {
