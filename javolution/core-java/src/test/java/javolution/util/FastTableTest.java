@@ -18,15 +18,27 @@ import java.util.ListIterator;
 import java.util.Random;
 
 import javolution.context.LogContext;
+import javolution.io.AppendableWriter;
+import javolution.io.CharSequenceReader;
 import javolution.osgi.internal.OSGiServices;
+import javolution.text.TextBuilder;
 import javolution.tools.Perfometer;
+import javolution.xml.XMLObjectReader;
+import javolution.xml.XMLObjectWriter;
+import javolution.xml.stream.XMLStreamException;
 
 /**
  * Validation and performance tests of FastTable.
  */
 public class FastTableTest {
     
-    static final boolean INITIALIZE_REALTIME_CLASSES = OSGiServices
+
+	public static void main(String... args) throws Throwable {
+		FastTableTest ftt = new FastTableTest();
+		ftt.testXML();
+	}
+
+	static final boolean INITIALIZE_REALTIME_CLASSES = OSGiServices
             .initializeRealtimeClasses();
 
     @SuppressWarnings("rawtypes")
@@ -154,6 +166,23 @@ public class FastTableTest {
         removePerf.measure(ArrayList.class, N).print();
         removePerf.measure(LinkedList.class, N).print(); 
         removePerf.measure(FastTable.class, N).print();
+    }
+
+    public void testXML() throws XMLStreamException {
+    	ConstantTable<String> table = ConstantTable.of("hello", "world");
+    	TextBuilder xml = new TextBuilder();
+    	XMLObjectWriter writer = XMLObjectWriter.newInstance(new AppendableWriter(xml));
+    	writer.write(table, "Test");
+    	writer.close();
+        LogContext.info(xml);
+
+    	// Reads the table back.
+    	XMLObjectReader reader = XMLObjectReader.newInstance(new CharSequenceReader(xml));
+    	Object obj = reader.read("Test");
+    	reader.close();
+    	
+    	assert table.equals(obj);
+        LogContext.info("FastTable - XML Operations Validated!");
     }
 
     private Throwable anyDequeOperation(long seed, Deque<Integer> deque) {

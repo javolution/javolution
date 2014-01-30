@@ -41,7 +41,7 @@ public class StandardComparatorImpl<E> implements Equality<E> {
     }
 
     @Override
-    public int hashCodeOf(E e) {
+    public int hashOf(E e) {
         return (e == null) ? 0 : e.hashCode();
     }
 

@@ -16,16 +16,17 @@ import java.util.Comparator;
  *     ordering. Implementing classes should ensure that:
  *     <ul>
  *        <li> The {@link #compare compare} function is consistent with 
- *             {@link #areEqual equals}. If two objects {@link #compare compare}
- *             to {@code 0} then they are {@link #areEqual equals} and the 
- *             the reciprocal is true (this ensures that sorted collections/maps
+ *             {@link #equal(Object, Object) equal}. If two objects 
+ *             {@link #compare compare} to {@code 0} then they are 
+ *             {@link #equal(Object, Object) equal} and the 
+ *             reciprocal is true (this ensures that sorted collections/maps
  *             do not break the general contract of their parent class based on
  *             object equal).</li>
- *        <li> The {@link #hashCodeOf hashcode} function is consistent with
- *             {@link #areEqual equals}: If two objects are equals, they have 
- *             the same hashcode (the reciprocal is not true).</li>
+ *        <li> The {@link #hashOf hash} function is consistent with
+ *             {@link #equal(Object, Object) equal}: If two objects are equal, 
+ *             they have the same hashcode (the reciprocal is not true).</li>
  *        <li> The {@code null} value is supported (even for 
- *             {@link #compare comparisons}) and the {@link #hashCodeOf(Object)
+ *             {@link #compare comparisons}) and the {@link #hashOf(Object)
  *             hashcode} value of {@code null} is {@code 0}.</li>
  *     </ul>
  * </p>
@@ -40,14 +41,14 @@ public interface Equality<T> extends EqualityComparer<T>, Comparator<T>, Seriali
 
     /**
      * Returns the hash code for the specified object (consistent with 
-     * {@link #areEqual}). Two objects considered {@link #areEqual equal} have 
-     * the same hash code. The hash code of <code>null</code> is always 
-     * <code>0</code>.
+     * {@link #equal(Object, Object)}). 
+     * Two objects considered equal have the same hash code. 
+     * The hash code of <code>null</code> is always <code>0</code>.
      * 
      * @param  object the object to return the hashcode for.
      * @return the hashcode for the specified object.
      */
-    int hashCodeOf(T object);
+    int hashOf(T object);
 
     /**
      * Indicates if the specified objects can be considered equal.

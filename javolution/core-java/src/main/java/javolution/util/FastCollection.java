@@ -27,7 +27,6 @@ import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.function.Consumer;
-import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.function.Function;
 import javolution.util.function.Predicate;
@@ -573,8 +572,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /** 
-     * Returns the comparator uses by this collection for equality and/or 
-     * ordering if this collection is sorted.
+     * Returns the comparator used by this collection for element equality 
+     * and/or ordering if this collection is sorted. The comparator is 
+     * used by methods such as {@link #contains(Object)} or 
+     * {@link #remove(Object)} but it is ignored when comparing collections
+     * for {@link #equals(Object) equality}.  
      */
     @Realtime(limit = CONSTANT)
     public Equality<? super E> comparator() {
@@ -603,11 +605,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /**
      * Compares the specified object with this collection for equality.
      * This method follows the {@link Collection#equals(Object)} specification 
-     * when the collection {@link #comparator comparator} is 
-     * {@link Equalities#STANDARD} (default). 
-     * Equality symmetry is only guaranteed when comparing collections having 
-     * the the same comparators. 
-     * 
+     * regardless of the collection's {@link #comparator comparator}.
+     * For example, two sorted sets using distinct comparators are considered 
+     * equals as long as they both hold the same elements.
+     *      
      * @param obj the object to be compared for equality with this collection
      * @return <code>true</code> if this collection is considered equals to the
      *         one specified; <code>false</code> otherwise. 
@@ -619,10 +620,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     }
 
     /**
-     * Returns the hash code of this collection.
-     * This method follows the {@link Collection#hashCode()} specification 
-     * if this collection {@link #comparator comparator} is 
-     * {@link Equalities#STANDARD}.
+     * Returns the hash code of this collection. This method always follows 
+     * the {@link Collection#hashCode()} specification regardless of the 
+     * collection's comparator.
      *    
      * @return this collection hash code. 
      */

@@ -45,10 +45,10 @@ public final class EntryComparatorImpl<K, V> implements
 	}
 
 	@Override
-	public int hashCodeOf(Map.Entry<K, V> e) {
+	public int hashOf(Map.Entry<K, V> e) {
 		// Consistent with Map.Entry hashcode if the comparators are standard.
-		return keyComparator.hashCodeOf(e.getKey())
-				^ valueComparator.hashCodeOf(e.getValue());
+		return keyComparator.hashOf(e.getKey())
+				^ valueComparator.hashOf(e.getValue());
 	}
 
 }

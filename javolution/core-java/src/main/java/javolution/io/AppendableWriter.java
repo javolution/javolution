@@ -24,7 +24,7 @@ public final class AppendableWriter extends Writer {
     /**
      * Holds the current appendable output or <code>null</code> if closed.
      */
-    private Appendable _output;
+    private Appendable output;
 
     /**
      * Creates a new appendable writer for which the appendable output 
@@ -35,21 +35,30 @@ public final class AppendableWriter extends Writer {
     public AppendableWriter() {}
 
     /**
+     * Creates a new appendable writer for which the output is set.
+      */
+    public AppendableWriter(Appendable output) {
+    	this.output = output;    	
+    }
+
+    /**
      * Sets the appendable output being written to.
-     * For example:[code]
-     *     Writer writer = new AppendableWriter().setOutput(new TextBuilder());
-     * [/code]
      *
      * @param  output the appendable written to.
-     * @return this writer.
      * @throws IllegalStateException if this writer is being reused and 
      *         it has not been {@link #close closed} or {@link #reset reset}.
      */
-    public AppendableWriter setOutput(Appendable output) {
-        if (_output != null)
+    public void setOutput(Appendable output) {
+        if (output != null)
             throw new IllegalStateException("Writer not closed or reset");
-        _output = output;
-        return this;
+        this.output = output;
+    }
+
+    /**
+     * Returns the output of this writer.
+     */
+    public Appendable getOutput() {
+        return output;
     }
 
     /**
@@ -59,9 +68,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char c) throws IOException {
-        if (_output == null)
+        if (output == null)
             throw new IOException("Writer closed");
-        _output.append(c);
+        output.append(c);
     }
 
     /**
@@ -72,9 +81,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(int c) throws IOException {
-        if (_output == null)
+        if (output == null)
             throw new IOException("Writer closed");
-        _output.append((char) c);
+        output.append((char) c);
     }
 
     /**
@@ -86,10 +95,10 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char cbuf[], int off, int len) throws IOException {
-        if (_output == null)
+        if (output == null)
             throw new IOException("Writer closed");
         _tmpBuffer = cbuf;
-        _output.append(_tmpBufferAsCharSequence, off, off + len);
+        output.append(_tmpBufferAsCharSequence, off, off + len);
         _tmpBuffer = null; // Removes temporary references.
     }
 
@@ -118,13 +127,13 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
-        if (_output == null)
+        if (output == null)
             throw new IOException("Writer closed");
         Object obj = str;
         if (obj instanceof CharSequence) {
-            _output.append((CharSequence) obj);
+            output.append((CharSequence) obj);
         } else {
-            _output.append(Text.valueOf(str));
+            output.append(Text.valueOf(str));
         }
     }
 
@@ -135,9 +144,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(CharSequence csq) throws IOException {
-        if (_output == null)
+        if (output == null)
             throw new IOException("Writer closed");
-        _output.append(csq);
+        output.append(csq);
     }
 
     /**
@@ -151,13 +160,13 @@ public final class AppendableWriter extends Writer {
      * Closes and {@link #reset resets} this writer for reuse.
      */
     public void close() {
-        if (_output != null) {
+        if (output != null) {
             reset();
         }
     }
 
     public void reset() {
-        _output = null;
+        output = null;
         _tmpBuffer = null;
     }
 }

@@ -406,11 +406,9 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
 
     /**
      * Compares the specified object with this map for equality.
-     * This method follows the {@link Map#equals(Object)} specification when the
-     * map key and value comparators are {@link Equalities#STANDARD} (default). 
-     * Equality symmetry is only guaranteed when comparing maps having the 
-     * the same comparators. 
-     * 
+     * This method follows the {@link Map#equals(Object)} specification 
+     * regardless of the map's comparators.
+     *      
      * @param obj the object to be compared for equality with this map
      * @return <code>true</code> if this map is considered equals to the
      *         one specified; <code>false</code> otherwise. 

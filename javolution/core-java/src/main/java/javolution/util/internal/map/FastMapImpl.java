@@ -140,7 +140,7 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     @Override
     public V remove(Object key) {
         MapEntryImpl<K, V> entry = fractal.removeEntry(key,
-                keyComparator.hashCodeOf((K) key));
+                keyComparator.hashOf((K) key));
         if (entry == null) return null;
         detachEntry(entry); // Entry is not referenced anymore and will be gc.
         size--;

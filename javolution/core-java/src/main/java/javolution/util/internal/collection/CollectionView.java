@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javolution.util.FastCollection;
 import javolution.util.function.Consumer;
+import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 import javolution.util.service.CollectionService;
 
@@ -108,7 +109,7 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
             if (!(o instanceof List)) return false;
             List<E> list = (List<E>) o;
             if (size() != list.size()) return false; // Short-cut.
-            Equality<? super E> cmp = comparator();
+            Equality<? super E> cmp = Equalities.STANDARD;
             Iterator<E> it1 = this.iterator();
             Iterator<E> it2 = list.iterator();
             while (it1.hasNext()) {
@@ -124,16 +125,16 @@ public abstract class CollectionView<E> extends FastCollection<E> implements Col
 
     @Override
     public int hashCode() {
-        Equality<? super E> cmp = comparator();
+        Equality<? super E> cmp = Equalities.STANDARD;
         Iterator<E> it = this.iterator();
         int hash = 0;
         if (this instanceof Set) {
             while (it.hasNext()) {
-                hash += cmp.hashCodeOf(it.next());
+                hash += cmp.hashOf(it.next());
             }
         } else if (this instanceof List) {
             while (it.hasNext()) {
-                hash += 31 * hash + cmp.hashCodeOf(it.next());
+                hash += 31 * hash + cmp.hashOf(it.next());
             }
         } else {
             hash = super.hashCode();

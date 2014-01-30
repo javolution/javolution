@@ -45,7 +45,7 @@ public class ArrayComparatorImpl extends StandardComparatorImpl<Object> {
     }
 
     @Override
-    public int hashCodeOf(Object array) {
+    public int hashOf(Object array) {
         if (array instanceof Object[])
             return Arrays.deepHashCode((Object[]) array);
         if (array instanceof byte[])

@@ -61,7 +61,7 @@ public class LexicalCaseInsensitiveComparatorImpl implements
     }
 
     @Override
-    public int hashCodeOf(CharSequence csq) {
+    public int hashOf(CharSequence csq) {
         if (csq == null)
             return 0;
         int h = 0;

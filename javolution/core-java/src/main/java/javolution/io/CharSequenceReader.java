@@ -27,12 +27,12 @@ public final class CharSequenceReader extends Reader {
     /**
      * Holds the character sequence input.
      */
-    private CharSequence _input;
+    private CharSequence input;
 
     /**
      * Holds the current index into the character sequence.
      */
-    private int _index;
+    private int index;
 
     /**
      * Creates a new character sequence reader for which the character 
@@ -43,20 +43,33 @@ public final class CharSequenceReader extends Reader {
     public CharSequenceReader() {}
 
     /**
-     * Sets the character sequence to use for reading.
-     *
-     * @param  charSequence the character sequence to be read.
-     * @return this reader.
-     * @throws IllegalStateException if this reader is being reused and 
-     *         it has not been {@link #close closed} or {@link #reset reset}.
-     */
-    public CharSequenceReader setInput(CharSequence charSequence) {
-        if (_input != null)
-            throw new IllegalStateException("Reader not closed or reset");
-        _input = charSequence;
-        return this;
+     * Creates a new character sequence reader for which the character 
+     * sequence input is set.
+       */
+    public CharSequenceReader(CharSequence input) {
+    	this.input = input;
     }
 
+    /**
+     * Sets the character sequence to use for reading.
+     *
+     * @param input the character sequence to be read.
+    * @throws IllegalStateException if this reader is being reused and 
+     *         it has not been {@link #close closed} or {@link #reset reset}.
+     */
+    public void setInput(CharSequence input) {
+        if (input != null)
+            throw new IllegalStateException("Reader not closed or reset");
+        this.input = input;
+    }
+
+    /**
+     * Returns  the character sequence to use for reading.
+     */
+    public CharSequence getInput() {
+        return input;
+    }
+    
     /**
      * Indicates if this stream is ready to be read.
      *
@@ -65,7 +78,7 @@ public final class CharSequenceReader extends Reader {
      * @throws  IOException if an I/O error occurs.
      */
     public boolean ready() throws IOException {
-        if (_input == null)
+        if (input == null)
             throw new IOException("Reader closed");
         return true;
     }
@@ -74,7 +87,7 @@ public final class CharSequenceReader extends Reader {
      * Closes and {@link #reset resets} this reader for reuse.
      */
     public void close() {
-        if (_input != null) {
+        if (input != null) {
             reset();
         }
     }
@@ -89,9 +102,9 @@ public final class CharSequenceReader extends Reader {
      *         character sequence being read).
      */
     public int read() throws IOException {
-        if (_input == null)
+        if (input == null)
             throw new IOException("Reader closed");
-        return (_index < _input.length()) ? _input.charAt(_index++) : -1;
+        return (index < input.length()) ? input.charAt(index++) : -1;
     }
 
     /**
@@ -106,31 +119,31 @@ public final class CharSequenceReader extends Reader {
      * @throws IOException if an I/O error occurs.
      */
     public int read(char cbuf[], int off, int len) throws IOException {
-        if (_input == null)
+        if (input == null)
             throw new IOException("Reader closed");
-        final int inputLength = _input.length();
-        if (_index >= inputLength)
+        final int inputLength = input.length();
+        if (index >= inputLength)
             return -1;
-        final int count = MathLib.min(inputLength - _index, len);
-        final Object csq = _input;
+        final int count = MathLib.min(inputLength - index, len);
+        final Object csq = input;
         if (csq instanceof String) {
             String str = (String) csq;
-            str.getChars(_index, _index + count, cbuf, off);
+            str.getChars(index, index + count, cbuf, off);
         } else if (csq instanceof Text) {
             Text txt = (Text) csq;
-            txt.getChars(_index, _index + count, cbuf, off);
+            txt.getChars(index, index + count, cbuf, off);
         } else if (csq instanceof TextBuilder) {
             TextBuilder tb = (TextBuilder) csq;
-            tb.getChars(_index, _index + count, cbuf, off);
+            tb.getChars(index, index + count, cbuf, off);
         } else if (csq instanceof CharArray) {
             CharArray ca = (CharArray) csq;
-            System.arraycopy(ca.array(), _index + ca.offset(), cbuf, off, count);
+            System.arraycopy(ca.array(), index + ca.offset(), cbuf, off, count);
         } else { // Generic CharSequence.
-            for (int i = off, n = off + count, j = _index; i < n;) {
-                cbuf[i++] = _input.charAt(j++);
+            for (int i = off, n = off + count, j = index; i < n;) {
+                cbuf[i++] = input.charAt(j++);
             }
         }
-        _index += count;
+        index += count;
         return count;
     }
 
@@ -142,15 +155,15 @@ public final class CharSequenceReader extends Reader {
      * @throws IOException if an I/O error occurs.
      */
     public void read(Appendable dest) throws IOException {
-        if (_input == null)
+        if (input == null)
             throw new IOException("Reader closed");
-        dest.append(_input);
+        dest.append(input);
     }
 
     @Override
     public void reset() {
-        _index = 0;
-        _input = null;
+        index = 0;
+        input = null;
     }
 
 }

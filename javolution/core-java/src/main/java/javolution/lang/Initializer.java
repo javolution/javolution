@@ -122,8 +122,7 @@ public class Initializer {
         while (true) {
             Class<?>[] classes = loadedClasses();
             if (classes == null) {
-                LogContext
-                        .debug("Automatic class initialization not supported.");
+                LogContext.debug("Automatic class initialization not supported.");
                 return false;
             }
             if (nbrClassesInitialized >= classes.length)
@@ -134,9 +133,9 @@ public class Initializer {
                     if (SHOW_INITIALIZED.get())
                         LogContext.debug("Initialize ", cls.getName());
                     Class.forName(cls.getName(), true, classLoader);
-                } catch (ClassNotFoundException ex) {
+                } catch (Throwable error) {
                     isInitializationSuccessful = false;
-                    LogContext.error(ex); // Should never happen.
+                    LogContext.warning("Class ", cls.getName(), " cannot be initialized.");
                 }
             }
             nbrClassesInitialized = classes.length;

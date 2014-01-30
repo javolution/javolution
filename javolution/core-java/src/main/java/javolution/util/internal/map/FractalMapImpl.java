@@ -42,7 +42,7 @@ final class FractalMapImpl {
      *  either the specified entry or an existing entry for the specified key. **/
     @SuppressWarnings("unchecked")
     public MapEntryImpl addEntry(MapEntryImpl newEntry, Object key) {
-    	int hash = keyComparator.hashCodeOf(key);
+    	int hash = keyComparator.hashOf(key);
         int i = indexOfKey(key, hash);
         MapEntryImpl entry = entries[i];
         if (entry != null) return entry; // Entry exists
@@ -63,7 +63,7 @@ final class FractalMapImpl {
 
     /** Returns null if no entry with specified key */
     public MapEntryImpl getEntry(Object key) {
-      	int hash = keyComparator.hashCodeOf(key);
+      	int hash = keyComparator.hashOf(key);
         return entries[indexOfKey(key, hash)];
     }
 

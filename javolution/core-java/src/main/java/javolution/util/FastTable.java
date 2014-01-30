@@ -95,8 +95,8 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     private final TableService<E> service;
 
     /**
-     * Returns a new table holding the specified elements
-     * (convenience method).
+     * Returns a new table holding the same elements as the specified 
+     * array (convenience method).
      */
     public static <E> FastTable<E> of(E... elements) {
     	FastTable<E> table = new FastTable<E>();

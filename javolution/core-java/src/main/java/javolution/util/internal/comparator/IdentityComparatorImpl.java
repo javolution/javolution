@@ -22,7 +22,7 @@ public class IdentityComparatorImpl<E> extends StandardComparatorImpl<E> {
     }
 
     @Override
-    public int hashCodeOf(E obj) {
+    public int hashOf(E obj) {
         return System.identityHashCode(obj);
     }
     

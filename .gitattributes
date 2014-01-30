@@ -314,6 +314,7 @@ javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/tools/Perfometer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/tools/package-info.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/ConstantTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
@@ -390,6 +391,7 @@ javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SortedSet
 javolution/core-java/src/main/java/javolution/util/internal/set/sorted/SubSortedSetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/set/sorted/UnmodifiableSortedSetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/ConstantTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FastTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FractalTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/QuickSort.java -text svneol=unset#text/plain

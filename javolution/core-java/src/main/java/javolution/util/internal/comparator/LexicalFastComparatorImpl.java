@@ -16,7 +16,7 @@ public class LexicalFastComparatorImpl extends LexicalComparatorImpl {
     private static final long serialVersionUID = 0x600L; // Version.
 
     @Override
-    public int hashCodeOf(CharSequence csq) {
+    public int hashOf(CharSequence csq) {
         if (csq == null)
             return 0;
         int n = csq.length();
