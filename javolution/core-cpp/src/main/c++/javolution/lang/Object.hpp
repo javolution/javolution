@@ -16,12 +16,9 @@ namespace javolution {
         class Class_ANY_API; // Forward reference.
         typedef Type::Handle<Class_ANY_API> Class_ANY;
         class String;
+        void handle_add_ref(Object_API* that);
+        void handle_release(Object_API* that);
     }
-}
-// Methods required by Type::Handle.
-namespace Type {
-    void handle_add_ref(javolution::lang::Object_API* that);
-    void handle_release(javolution::lang::Object_API* that);
 }
 
 /**
@@ -230,14 +227,14 @@ public:
 
 private:
 
-    friend void Type::handle_add_ref(Object_API* that);
-    friend void Type::handle_release(Object_API* that);
+    friend void handle_add_ref(Object_API* that);
+    friend void handle_release(Object_API* that);
 };
 
-inline void Type::handle_add_ref(javolution::lang::Object_API* that) {
+inline void javolution::lang::handle_add_ref(Object_API* that) {
 	 ++(that->_refCount);
 }
-inline void Type::handle_release(javolution::lang::Object_API* that) {
+inline void javolution::lang::handle_release(Object_API* that) {
   	 if (--(that->_refCount) == 0) delete that;
 }
 
