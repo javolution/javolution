@@ -25,8 +25,10 @@ import javolution.lang.Realtime;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
+import javolution.util.function.Function;
 import javolution.util.internal.table.AtomicTableImpl;
 import javolution.util.internal.table.FastTableImpl;
+import javolution.util.internal.table.MappedTableImpl;
 import javolution.util.internal.table.QuickSort;
 import javolution.util.internal.table.ReversedTableImpl;
 import javolution.util.internal.table.SharedTableImpl;
@@ -161,6 +163,12 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
         return new FastTable<E>(new UnmodifiableTableImpl<E>(service));
     }
 
+    @Override
+    public <R> FastTable<R> mapped(
+            Function<? super E, ? extends R> function) {
+        return new FastTable<R>(new MappedTableImpl<E, R>(service(), function));
+    }
+    
     /**
      * Returns a view over a portion of the table (equivalent to 
      * {@link java.util.List#subList(int, int)}).

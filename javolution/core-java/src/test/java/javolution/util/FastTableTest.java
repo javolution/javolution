@@ -172,13 +172,12 @@ public class FastTableTest {
     	ConstantTable<String> table = ConstantTable.of("hello", "world");
     	TextBuilder xml = new TextBuilder();
     	XMLObjectWriter writer = XMLObjectWriter.newInstance(new AppendableWriter(xml));
-    	writer.write(table, "Test");
+    	writer.write(table);
     	writer.close();
-        LogContext.info(xml);
 
     	// Reads the table back.
     	XMLObjectReader reader = XMLObjectReader.newInstance(new CharSequenceReader(xml));
-    	Object obj = reader.read("Test");
+    	Object obj = reader.read();
     	reader.close();
     	
     	assert table.equals(obj);

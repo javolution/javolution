@@ -394,6 +394,7 @@ javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImp
 javolution/core-java/src/main/java/javolution/util/internal/table/ConstantTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FastTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/FractalTableImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/table/MappedTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/QuickSort.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/ReversedTableImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/table/SharedTableImpl.java -text
