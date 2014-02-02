@@ -19,7 +19,6 @@ import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
-import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
 import javolution.text.Cursor;
@@ -64,13 +63,11 @@ import javolution.util.service.CollectionService;
  *    <li>{@link #distinct} - View exposing each element only once.</li>
  * </ul></p>
  * 
- * <p> Unmodifiable collections are not always immutable. An {@link javolution.lang.Immutable immutable}. 
- *     reference (or const reference) can only be {@link #immutable() obtained} when the originator  
- *     guarantees that the collection source will not be modified even by himself 
- *     (the value of the immutable reference being an {@link #unmodifiable unmodifiable} collection).
+ * <p> Unmodifiable collections are not always  {@link javolution.lang.Constant constant}. 
+ *     Constant/immutable collections can be obtained from collection specializations.
  * [code]
- * Immutable<List<String>> winners = FastTable.of("John Deuff", "Otto Graf", "Sim Kamil").immutable();
- *     // Immutability is guaranteed, no reference left on the collection source.
+ * ConstantTable<String>> winners = ConstantTable.of("John Deuff", "Otto Graf", "Sim Kamil");
+ *     // Immutability is guaranteed by construction (no reference left on the array source).
  * [/code]</p>
  * 
  * <p> Atomic collections use <a href="http://en.wikipedia.org/wiki/Copy-on-write">Copy-On-Write</a> 
@@ -581,25 +578,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     @Realtime(limit = CONSTANT)
     public Equality<? super E> comparator() {
         return service().comparator();
-    }
-
-    /** 
-     * Returns an immutable reference over this collection. The immutable 
-     * value is an {@link #unmodifiable() unmodifiable} view of this collection.
-     * The caller must guarantees that the original collection is never going 
-     * to be updated (e.g. there is no reference left on the original collection).
-     */
-    @Realtime(limit = CONSTANT)
-    public <T extends Collection<E>> Immutable<T> immutable() {
-        return new Immutable<T>() {
-            @SuppressWarnings("unchecked")
-            final T value = (T) unmodifiable();
-
-            @Override
-            public T value() {
-                return value;
-            }
-        };
     }
 
     /**

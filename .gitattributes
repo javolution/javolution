@@ -285,7 +285,7 @@ javolution/core-java/src/main/java/javolution/io/UTF8StreamWriter.java -text svn
 javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/package-info.java -text
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Immutable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Constant.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain

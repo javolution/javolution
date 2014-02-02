@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-import javolution.lang.Immutable;
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
 import javolution.text.Cursor;
@@ -422,24 +421,6 @@ public class FastMap<K, V> implements Map<K, V>, ConcurrentMap<K, V>,
     @Override
 	public int hashCode() {
     	return service.hashCode();
-    }
-
-    /** 
-     * Returns an immutable reference over this map. The immutable 
-     * value is an {@link #unmodifiable() unmodifiable} view of this map
-     * for which the caller guarantees that no change will ever be made 
-     * (e.g. there is no reference left to the original map).
-     */
-    public <T extends Map<K, V>> Immutable<T> immutable() {
-        return new Immutable<T>() {
-            @SuppressWarnings("unchecked")
-            final T value = (T) unmodifiable();
-
-            @Override
-            public T value() {
-                return value;
-            }
-        };
     }
 
     /** 

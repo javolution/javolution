@@ -9,7 +9,7 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LINEAR;
-import javolution.lang.Immutable;
+import javolution.lang.Constant;
 import javolution.lang.Realtime;
 import javolution.util.internal.bitset.BitSetServiceImpl;
 import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
@@ -57,8 +57,8 @@ public class FastBitSet extends FastSet<Index> {
      *        of a sequence of bits to be used as the initial bits of the
      *        new bit set.
      */
-    public FastBitSet(Immutable<long[]> bits) {
-        service = new BitSetServiceImpl(bits.value());
+    public FastBitSet(@Constant long[] bits) {
+        service = new BitSetServiceImpl(bits);
     }
 
     /**

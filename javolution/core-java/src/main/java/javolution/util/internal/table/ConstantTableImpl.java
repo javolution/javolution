@@ -11,6 +11,7 @@ package javolution.util.internal.table;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import javolution.lang.Constant;
 import javolution.util.function.Equalities;
 import javolution.util.function.Equality;
 
@@ -18,6 +19,7 @@ import javolution.util.function.Equality;
  * The default {@link javolution.util.ConstantTable ConstantTable} 
  * implementation.
  */
+@Constant
 public final class ConstantTableImpl<E> extends TableView<E> {
 
 	/** Internal iterator faster than generic TableIteratorImpl. */

@@ -8,8 +8,8 @@
  */
 package javolution.text;
 
-import javolution.lang.Immutable;
 import javolution.lang.MathLib;
+import javolution.lang.ValueType;
 
 /**
  * <p> A set of characters (typically used for parsing purpose where it is 
@@ -32,7 +32,7 @@ import javolution.lang.MathLib;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
  */
-public final class CharSet implements Immutable<CharSet> {
+public final class CharSet implements ValueType {
 
     /**
      * Represents an empty character set.
@@ -320,8 +320,4 @@ public final class CharSet implements Immutable<CharSet> {
         return charSet;
     }
 
-    @Override
-    public CharSet value() {
-        return this;
-    }
 }

@@ -10,8 +10,7 @@ package javolution.util;
 
 import java.util.Collection;
 
-import javolution.lang.Immutable;
-import javolution.lang.ValueType;
+import javolution.lang.Constant;
 import javolution.util.internal.table.ConstantTableImpl;
 import javolution.util.internal.table.ReversedTableImpl;
 import javolution.util.internal.table.SubTableImpl;
@@ -21,15 +20,14 @@ import javolution.xml.XMLFormat;
 import javolution.xml.stream.XMLStreamException;
 
 /**
- * <p> A table for which {@link Immutable immutability} is guaranteed by 
- *     construction.</p>
+ * <p> A table for which immutability is guaranteed by construction.</p>
  *
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.1, July 29, 2014
+ * @version 6.1, February 2, 2014
  */
+@Constant(comment = "Immutable")
 @DefaultXMLFormat(ConstantTable.XML.class)
-public final class ConstantTable<E> extends FastTable<E> implements
-		ValueType<ConstantTable<E>> {
+public class ConstantTable<E> extends FastTable<E> {
 
 	/**
 	 * The default XML representation for constant tables 
@@ -46,8 +44,13 @@ public final class ConstantTable<E> extends FastTable<E> implements
 			for (int i = 0; i < size; i++) {
 				elements[i] = xml.getNext();
 			}
-			return new ConstantTable<Object>(
-					new ConstantTableImpl<Object>(elements));
+			return ConstantTable.of(elements);
+		}
+
+		@Override
+		public void read(javolution.xml.XMLFormat.InputElement xml,
+				ConstantTable<?> that) throws XMLStreamException {
+			// Do nothing (read during instantiation).			
 		}
 
 		@Override
@@ -61,80 +64,73 @@ public final class ConstantTable<E> extends FastTable<E> implements
 			}
 		}
 
-		@Override
-		public void read(javolution.xml.XMLFormat.InputElement xml,
-				ConstantTable<?> that) throws XMLStreamException {
-			// Do nothing (read during instantiation).			
-		}
-
 	};
 
 	private static final long serialVersionUID = 0x600L; // Version.
 
 	/**
-	 * Package private constructor.
+	 * Returns a new constant table holding the specified {@link Constant 
+	 * constant} elements.
 	 */
-	ConstantTable(TableService<E> service) {
-		super(service);
-	}
-
-	/**
-	 * Returns a new constant table holding the same elements as the ones 
-	 * specified.
-	 */
-	public static <E> ConstantTable<E> of(E... elements) {
-		ConstantTableImpl<E> service = new ConstantTableImpl<E>(
-				elements.clone());
-		return new ConstantTable<E>(service);
+	public static <E> ConstantTable<E> of(@Constant E... elements) {
+		return new ConstantTable<E>(new ConstantTableImpl<E>(elements));
 	}
 
 	/**
 	 * Returns a new constant table holding the same elements as the specified 
-	 * collection.
+	 * collection (convenience method).
 	 */
-	public static <E> ConstantTable<E> of(Collection<? extends E> that) {	
-		@SuppressWarnings("unchecked")
-		E[] elements = (E[]) new Object[that.size()];
-		int i = 0;
-		for (E e : that)
-			elements[i++] = e;
-		ConstantTableImpl<E> service = new ConstantTableImpl<E>(elements);
-		return new ConstantTable<E>(service);
+	@SuppressWarnings("unchecked")
+	public static <E> ConstantTable<E> of(Collection<? extends E> that) {
+		return ConstantTable.of((E[]) that.toArray(new Object[that.size()]));
+	}
+
+	/**
+	 * Creates a constant table backed up by the specified{@link Constant 
+	 * constant} service implementation.
+	 */
+	protected ConstantTable(@Constant TableService<E> service) {
+		super(service);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
 	// Views.
 	//
 
+	@Constant
 	@Override
 	public ConstantTable<E> atomic() {
 		return this; // Thread-Safe (unmodifiable)
 	}
 
+	@Constant
 	@Override
 	public ConstantTable<E> reversed() {
 		return new ConstantTable<E>(new ReversedTableImpl<E>(service()));
 	}
 
+	@Constant
 	@Override
 	public ConstantTable<E> shared() {
 		return this; // Thread-Safe (unmodifiable)
 	}
 
-	@Override
-	public ConstantTable<E> unmodifiable() {
-		return this;
-	}
-
+	@Constant
 	@Override
 	public ConstantTable<E> subTable(int fromIndex, int toIndex) {
 		return new ConstantTable<E>(new SubTableImpl<E>(service(), fromIndex,
 				toIndex));
 	}
 
+	@Constant
 	@Override
-	public ConstantTable<E> value() {
-		return this; // As per ValueType contract.
+	public ConstantTable<E> unmodifiable() {
+		return this;
 	}
 
+	@Constant
+	@Override
+	protected TableService<E> service() {
+		return super.service();
+	}
 }

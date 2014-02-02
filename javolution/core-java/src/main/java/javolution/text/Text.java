@@ -59,7 +59,7 @@ import javolution.xml.XMLSerializable;
  */
 @Realtime
 public final class Text implements CharSequence, Comparable<CharSequence>,
-		XMLSerializable, ValueType<Text> {
+		XMLSerializable, ValueType {
 
 	private static final long serialVersionUID = 0x600L; // Version.
 
@@ -1366,11 +1366,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 		text._head = head;
 		text._tail = tail;
 		return text;
-	}
-
-	@Override
-	public Text value() {
-		return this;
 	}
 
 }

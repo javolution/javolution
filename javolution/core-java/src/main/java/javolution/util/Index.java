@@ -42,7 +42,7 @@ import javolution.util.internal.table.ConstantTableImpl;
 @Realtime
 @DefaultTextFormat(Index.Decimal.class)
 public final class Index extends Number implements Comparable<Index>,
-		ValueType<Index> {
+		ValueType {
 
 	/**
 	 * Default text format for indices (decimal value representation).
@@ -292,8 +292,4 @@ public final class Index extends Number implements Comparable<Index>,
 		return TextContext.getFormat(Index.class).format(this);
 	}
 
-	@Override
-	public Index value() {
-		return this;
-	}
 }
