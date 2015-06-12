@@ -211,6 +211,16 @@ public class FastBitSet extends FastSet<Index> {
     }
 
     /**
+     * Returns {@code true} if no bits in this set are set to 1 (cardinality == 0)
+     *
+     * @return {@code true} if all bits are 0, {@code false} otherwise.
+     */
+    @Override
+    public boolean isEmpty() {
+        return service.cardinality() == 0;
+    }
+    
+    /**
      * Returns the logical number of bits actually used by this bit
      * set.  It returns the index of the highest set bit plus one.
      * 
