@@ -133,7 +133,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
      * Holds the encoding  (<code>null</code> if N/A).
      */
     private String _encoding;
-
+    
     /**
      * Holds the default writer for output streams.
      */
@@ -547,7 +547,11 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
     }
 
     // Implements XMLStreamWriter interface.
-    public void writeStartDocument(CharSequence encoding, CharSequence version)
+    public void writeStartDocument(CharSequence encoding, CharSequence version) throws XMLStreamException{
+    	writeStartDocument(encoding, version, null);
+    }
+    
+    public void writeStartDocument(CharSequence encoding, CharSequence version, Boolean standAlone)
             throws XMLStreamException {
         if (_nesting > 0)
             throw new XMLStreamException("Not in document root");
@@ -567,7 +571,11 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
             writeNoEscape(_encoding);
             write('"');
         }
-        writeNoEscape(" ?>");
+        
+        if(standAlone != null && standAlone){
+        	writeNoEscape(" standalone=\"yes\"");
+        }
+        writeNoEscape("?>");
     }
 
     // Implements XMLStreamWriter interface.
