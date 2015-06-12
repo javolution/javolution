@@ -990,6 +990,20 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 
 	/**
 	 * Returns the index within this text of the first occurrence of the
+	 * specified character, searching backward
+	 *
+	 * @param c the character to search for.
+	 * @param fromIndex the index to start the search backward from.
+	 * @return the index of the first occurrence of the character in this text
+	 *         that is less than or equal to <code>fromIndex</code>, 
+	 *         or <code>-1</code> if the character does not occur.
+	 */
+	public int lastIndexOf(char c) {
+		return lastIndexOf(c, _count);
+	}
+	
+	/**
+	 * Returns the index within this text of the first occurrence of the
 	 * specified character, searching backward and starting at the specified
 	 * index.
 	 *
@@ -1154,8 +1168,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 *@param length the number of characters to inspect.
 	 */
 	public boolean isBlank(int start, int length) {
-		for (; start < length; start++) {
-			if (charAt(start) > ' ')
+		for (int i = start; i < start + length; i++) {
+			if (charAt(i) > ' ')
 				return false;
 		}
 		return true;
