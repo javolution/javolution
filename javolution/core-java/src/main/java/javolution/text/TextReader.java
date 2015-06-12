@@ -105,11 +105,14 @@ public class TextReader extends Reader {
 	/**
 	 * Tells whether this stream is ready to be read.
 	 *
-	 * @return True if the next read() is guaranteed not to block for input
+	 * @return <code>true</code> if the next read() is guaranteed not to block for input
 	 *
 	 * @exception  IOException  If the stream is closed
 	 */
 	public boolean ready() throws IOException {
+		if(text==null)
+			throw new IOException("TextReader is Closed");
+		
 		return true;
 	}
 
