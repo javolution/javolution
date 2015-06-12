@@ -70,6 +70,11 @@ public class FastMapImpl<K, V> extends MapView<K, V> {
     }
 
     @Override
+    public boolean isEmpty(){
+    	return size == 0;
+    }
+    
+    @Override
     public Iterator<Entry<K, V>> iterator() {
         return new Iterator<Entry<K, V>>() {
             MapEntryImpl<K, V> current;
