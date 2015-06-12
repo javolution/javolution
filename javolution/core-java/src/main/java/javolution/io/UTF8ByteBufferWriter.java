@@ -47,6 +47,19 @@ public final class UTF8ByteBufferWriter extends Writer {
     public UTF8ByteBufferWriter() {}
 
     /**
+	 * Constructor to Provide a Byte Buffer on Initialization
+	 *
+	 * @param byteBuffer Byte Buffer to use for Writing
+	 */
+	public UTF8ByteBufferWriter(final ByteBuffer byteBuffer) {
+		_byteBuffer = byteBuffer;
+	}
+	
+	protected ByteBuffer getOutput(){
+		return _byteBuffer;
+	}
+	
+    /**
      * Sets the byte buffer to use for writing until this writer is closed.
      *
      * @param  byteBuffer the destination byte buffer.
@@ -70,6 +83,8 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char c) throws IOException {
+    	if(_byteBuffer == null)
+    		throw new IOException("Writer closed");
         if ((c < 0xd800) || (c > 0xdfff)) {
             write((int) c);
         } else if (c < 0xdc00) { // High surrogate.
@@ -90,6 +105,8 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(int code) throws IOException {
+    	if(_byteBuffer == null)
+    		throw new IOException("Writer closed");
         if ((code & 0xffffff80) == 0) {
             _byteBuffer.put((byte) code);
         } else { // Writes more than one byte.
@@ -138,6 +155,8 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char cbuf[], int off, int len) throws IOException {
+    	if(_byteBuffer == null)
+    		throw new IOException("Writer closed");
         final int off_plus_len = off + len;
         for (int i = off; i < off_plus_len;) {
             char c = cbuf[i++];
@@ -158,6 +177,8 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
+    	if(_byteBuffer == null)
+    		throw new IOException("Writer closed");
         final int off_plus_len = off + len;
         for (int i = off; i < off_plus_len;) {
             char c = str.charAt(i++);
@@ -176,6 +197,8 @@ public final class UTF8ByteBufferWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(CharSequence csq) throws IOException {
+    	if(_byteBuffer == null)
+    		throw new IOException("Writer closed");
         final int length = csq.length();
         for (int i = 0; i < length;) {
             char c = csq.charAt(i++);
