@@ -253,9 +253,17 @@ public final class TypeFormat {
         int i = start;
         for (; i < end; i++) {
             char c = csq.charAt(i);
+                        
             int digit = (c <= '9') ? c - '0'
                     : ((c <= 'Z') && (c >= 'A')) ? c - 'A' + 10
                             : ((c <= 'z') && (c >= 'a')) ? c - 'a' + 10 : -1;
+            
+            if(digit >= radix || digit < 0 && (c != '-' && c != '+' )){
+            	throw new NumberFormatException(
+                        "Invalid integer representation for "
+                                + csq.subSequence(start, end));
+            }
+            
             if ((digit >= 0) && (digit < radix)) {
                 int newResult = result * radix - digit;
                 if (newResult > result)
@@ -269,6 +277,7 @@ public final class TypeFormat {
             } else
                 break;
         }
+        
         // Requires one valid digit character and checks for opposite overflow.
         if ((result == 0) && ((end == 0) || (csq.charAt(i - 1) != '0')))
             throw new NumberFormatException(
@@ -348,9 +357,17 @@ public final class TypeFormat {
         int i = start;
         for (; i < end; i++) {
             char c = csq.charAt(i);
+            
             int digit = (c <= '9') ? c - '0'
                     : ((c <= 'Z') && (c >= 'A')) ? c - 'A' + 10
                             : ((c <= 'z') && (c >= 'a')) ? c - 'a' + 10 : -1;
+            
+            if(digit >= radix || digit < 0 && (c != '-' && c != '+' )){
+            	throw new NumberFormatException(
+                        "Invalid integer representation for "
+                                + csq.subSequence(start, end));
+            }
+            
             if ((digit >= 0) && (digit < radix)) {
                 long newResult = result * radix - digit;
                 if (newResult > result)
@@ -568,7 +585,7 @@ public final class TypeFormat {
 
     static boolean match(String str, CharSequence csq, int start, int length) {
         for (int i = 0; i < str.length(); i++) {
-            if ((start + i >= length) || csq.charAt(start + i) != str.charAt(i))
+            if ((start + i >= start + length) || csq.charAt(start + i) != str.charAt(i))
                 return false;
         }
         return true;
@@ -576,7 +593,7 @@ public final class TypeFormat {
 
     static boolean match(String str, String csq, int start, int length) {
         for (int i = 0; i < str.length(); i++) {
-            if ((start + i >= length) || csq.charAt(start + i) != str.charAt(i))
+            if ((start + i >= start + length) || csq.charAt(start + i) != str.charAt(i))
                 return false;
         }
         return true;
@@ -593,8 +610,11 @@ public final class TypeFormat {
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>StringBuffer</code> object.
      * @throws IOException if an I/O exception occurs.
+     * @throws IllegalArgumentException if a null Appendable is passed in
      */
     public static Appendable format(boolean b, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         return b ? a.append("true") : a.append("false");
     }
 
@@ -607,8 +627,11 @@ public final class TypeFormat {
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
      * @throws IOException if an I/O exception occurs.
+     * @throws IllegalArgumentException if a null Appendable is passed in
      */
     public static Appendable format(int i, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(i);
         TextBuilder tb = new TextBuilder();
@@ -624,11 +647,14 @@ public final class TypeFormat {
      * @param  radix the radix.
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if radix is not in [2 .. 36] range.
+     * @throws IllegalArgumentException if radix is not in [2 .. 36] range
+     *         or the Appendable passed in is null.
      * @throws IOException if an I/O exception occurs.
      */
     public static Appendable format(int i, int radix, Appendable a)
             throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(i, radix);
         TextBuilder tb = new TextBuilder();
@@ -644,9 +670,12 @@ public final class TypeFormat {
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
      * @throws IOException if an I/O exception occurs.
+     * @throws IllegalArgumentException if a null Appendable is passed in
      * @see    #parseLong
      */
     public static Appendable format(long l, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(l);
         TextBuilder tb = new TextBuilder();
@@ -662,12 +691,15 @@ public final class TypeFormat {
      * @param  radix the radix.
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
-     * @throws  IllegalArgumentException if radix is not in [2 .. 36] range.
+     * @throws IllegalArgumentException if radix is not in [2 .. 36] range,
+     *         or the Appendable passed in is null
      * @throws IOException if an I/O exception occurs.
      * @see    #parseLong(CharSequence, int)
      */
     public static Appendable format(long l, int radix, Appendable a)
             throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(l, radix);
         TextBuilder tb = new TextBuilder();
@@ -682,8 +714,11 @@ public final class TypeFormat {
      * @param  a the <code>Appendable</code> to append.
      * @return <code>TypeFormat.format(f, 10, (MathLib.abs(f) >= 1E7) || (MathLib.abs(f) < 0.001), false, a)</code>
      * @throws IOException if an I/O exception occurs.
+     * @throws IllegalArgumentException if a null Appendable is passed in
      */
     public static Appendable format(float f, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         return TypeFormat.format(f, 10,
                 (MathLib.abs(f) >= 1E7) || (MathLib.abs(f) < 0.001), false, a);
     }
@@ -695,9 +730,12 @@ public final class TypeFormat {
      * @param  a the <code>Appendable</code> to append.
      * @return <code>TypeFormat.format(d, -1, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false, a)</code>
      * @throws IOException if an I/O exception occurs.
+     * @throws IllegalArgumentException if a null Appendable is passed in
      * @see    TextBuilder#append(double)
      */
     public static Appendable format(double d, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         return TypeFormat.format(d, -1,
                 (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false, a);
     }
@@ -716,12 +754,15 @@ public final class TypeFormat {
      *         represented; <code>false</code> otherwise.
      * @param  a the <code>Appendable</code> to append.
      * @return the specified <code>Appendable</code> object.
-     * @throws IllegalArgumentException if <code>(digits &gt; 19)</code>)
+     * @throws IllegalArgumentException if <code>(digits &gt; 19)</code>) or a
+     *         null Appendable is provided.
      * @throws IOException if an I/O exception occurs.
      * @see    TextBuilder#append(double, int, boolean, boolean)
      */
     public static Appendable format(double d, int digits, boolean scientific,
             boolean showZero, Appendable a) throws IOException {
+    	if(a == null)
+    		throw new IllegalArgumentException("Appendable Cannot Be Null");
         if (a instanceof TextBuilder)
             return ((TextBuilder) a).append(d, digits, scientific, showZero);
         TextBuilder tb = new TextBuilder();
