@@ -10,7 +10,6 @@ package javolution.io;
 
 import java.io.IOException;
 import java.io.Writer;
-import javolution.text.Text;
 
 /**
  * <p> This class allows any <code>Appendable</code> to be used as 
@@ -24,7 +23,7 @@ public final class AppendableWriter extends Writer {
     /**
      * Holds the current appendable output or <code>null</code> if closed.
      */
-    private Appendable output;
+    private Appendable _output;
 
     /**
      * Creates a new appendable writer for which the appendable output 
@@ -36,9 +35,11 @@ public final class AppendableWriter extends Writer {
 
     /**
      * Creates a new appendable writer for which the output is set.
+     * 
+     * @param output the appendable written to. 
       */
     public AppendableWriter(Appendable output) {
-    	this.output = output;    	
+    	_output = output;    	
     }
 
     /**
@@ -49,16 +50,16 @@ public final class AppendableWriter extends Writer {
      *         it has not been {@link #close closed} or {@link #reset reset}.
      */
     public void setOutput(Appendable output) {
-        if (output != null)
+        if (_output != null)
             throw new IllegalStateException("Writer not closed or reset");
-        this.output = output;
+        this._output = output;
     }
 
     /**
      * Returns the output of this writer.
      */
     public Appendable getOutput() {
-        return output;
+        return _output;
     }
 
     /**
@@ -68,9 +69,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char c) throws IOException {
-        if (output == null)
+        if (_output == null)
             throw new IOException("Writer closed");
-        output.append(c);
+        _output.append(c);
     }
 
     /**
@@ -81,9 +82,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(int c) throws IOException {
-        if (output == null)
+        if (_output == null)
             throw new IOException("Writer closed");
-        output.append((char) c);
+        _output.append((char) c);
     }
 
     /**
@@ -95,10 +96,10 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char cbuf[], int off, int len) throws IOException {
-        if (output == null)
+        if (_output == null)
             throw new IOException("Writer closed");
         _tmpBuffer = cbuf;
-        output.append(_tmpBufferAsCharSequence, off, off + len);
+        _output.append(_tmpBufferAsCharSequence, off, off + len);
         _tmpBuffer = null; // Removes temporary references.
     }
 
@@ -127,14 +128,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
-        if (output == null)
+        if (_output == null)
             throw new IOException("Writer closed");
-        Object obj = str;
-        if (obj instanceof CharSequence) {
-            output.append((CharSequence) obj);
-        } else {
-            output.append(Text.valueOf(str));
-        }
+        _output.append(str, off, off + len);
     }
 
     /**
@@ -144,9 +140,9 @@ public final class AppendableWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(CharSequence csq) throws IOException {
-        if (output == null)
+        if (_output == null)
             throw new IOException("Writer closed");
-        output.append(csq);
+        _output.append(csq);
     }
 
     /**
@@ -160,13 +156,13 @@ public final class AppendableWriter extends Writer {
      * Closes and {@link #reset resets} this writer for reuse.
      */
     public void close() {
-        if (output != null) {
+        if (_output != null) {
             reset();
         }
     }
 
     public void reset() {
-        output = null;
+        _output = null;
         _tmpBuffer = null;
     }
 }
