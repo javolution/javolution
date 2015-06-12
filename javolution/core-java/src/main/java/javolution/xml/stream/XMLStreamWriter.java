@@ -300,6 +300,19 @@ public interface XMLStreamWriter {
      */
     void writeStartDocument(CharSequence encoding, CharSequence version)
             throws XMLStreamException;
+    
+    /**
+     * Writes the XML Declaration. Note that the encoding parameter does not set
+     * the actual encoding of the underlying output. That must be set when the
+     * instance when the instance is created using {@link XMLOutputFactory}.
+     * 
+     * @param encoding the encoding of the xml declaration or <code>null</code>.
+     * @param version the version of the xml document or <code>null</code>.
+     * @param standAlone <code>true</code> if the document is standalone
+     * @throws XMLStreamException
+     */
+    void writeStartDocument(CharSequence encoding, CharSequence version, Boolean standAlone)
+            throws XMLStreamException;
 
     /**
      * Writes text to the output.
