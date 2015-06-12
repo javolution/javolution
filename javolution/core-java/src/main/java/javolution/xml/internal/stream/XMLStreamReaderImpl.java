@@ -243,7 +243,12 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     public void setInput(InputStream in, String encoding)
             throws XMLStreamException {
         _encoding = encoding;
-        if (isUTF8(encoding)) { // Use our fast UTF-8 Reader.
+        
+        if(_encoding==null) {
+        	_encoding = detectEncoding(in);
+        }
+        
+        if (isUTF8(_encoding)) { // Use our fast UTF-8 Reader.
             setInput(_utf8StreamReader.setInput(in));
         } else {
             try {
