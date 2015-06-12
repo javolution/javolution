@@ -52,6 +52,18 @@ public class Cursor {
      * Default constructor.
      */
     public Cursor() {}
+    
+    /**
+     * Constructor to initialize a Cursor with the specified index
+     * 
+     * @param startingIndex Index to initially point at;
+     * @throws IllegalArgumentException if the startingIndex provided is negative
+     */
+    public Cursor(int startingIndex) {
+    	if(startingIndex < 0)
+    		throw new IllegalArgumentException("Cannot Point Cursor to a Negative Position");
+    	index = startingIndex;
+    }
 
     /**
      * Returns this cursor index.
@@ -66,8 +78,11 @@ public class Cursor {
      * Sets the cursor current index.
      *
      * @param i the index of the next character to parse.
+     * @throws IllegalArgumentException if the index provided is negative
      */
     public final void setIndex(int i) {
+    	if(i < 0)
+    		throw new IllegalArgumentException("Cannot Point Cursor to a Negative Position");
         index = i;
     }
 
