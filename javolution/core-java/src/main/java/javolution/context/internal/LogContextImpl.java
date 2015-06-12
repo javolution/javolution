@@ -17,7 +17,7 @@ import org.osgi.service.log.LogService;
 /**
  * The default implementation of LogContext.
  */
-public final class LogContextImpl extends LogContext {
+public class LogContextImpl extends LogContext {
 
     private static final Object[] NONE = new Object[0];
     private static final int[] TO_OSGI_LEVEL = { LogService.LOG_DEBUG,
@@ -83,7 +83,8 @@ public final class LogContextImpl extends LogContext {
             ((LogService)logService).log(osgiLevel, msg, exception);
         }
     }
-    private Level currentLevel() {
+    
+    protected Level currentLevel() {
         if (LEVEL == null) return Level.INFO; // Only during class initialization.
         if (level == null) return LEVEL.get();
         return level;

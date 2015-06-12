@@ -271,6 +271,7 @@ javolution/core-java/src/main/java/javolution/context/internal/ConcurrentContext
 javolution/core-java/src/main/java/javolution/context/internal/ConcurrentThreadImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/LocalContextImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/LogContextImpl.java -text
+javolution/core-java/src/main/java/javolution/context/internal/SLF4jLogContextImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/SecurityContextImpl.java -text
 javolution/core-java/src/main/java/javolution/context/internal/StorageContextImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/package-info.java -text
@@ -297,6 +298,7 @@ javolution/core-java/src/main/java/javolution/osgi/internal/JavolutionActivator.
 javolution/core-java/src/main/java/javolution/osgi/internal/LogServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/ProgramTrackerImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/osgi/internal/SLF4jLogServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/ServiceTrackerImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLInputFactoryProvider.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/XMLOutputFactoryProvider.java -text
