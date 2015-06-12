@@ -58,6 +58,17 @@ public final class UTF8StreamWriter extends Writer {
     }
 
     /**
+     * Creates a UTF-8 writer having a byte buffer of moderate capacity (2048),
+     * initialized to use the provided Output Stream.
+     * 
+     * @param outputStream The OutputStream to Write With
+     */
+    public UTF8StreamWriter(OutputStream outputStream) {
+        _bytes = new byte[2048];
+        _outputStream = outputStream;
+    }
+    
+    /**
      * Creates a UTF-8 writer having a byte buffer of specified capacity.
      * 
      * @param capacity the capacity of the byte buffer.
@@ -65,7 +76,23 @@ public final class UTF8StreamWriter extends Writer {
     public UTF8StreamWriter(int capacity) {
         _bytes = new byte[capacity];
     }
+    
+    /**
+     * Creates a UTF-8 writer having a byte buffer of specified capacity,
+     * initialized to use the provided Output Stream.
+     * 
+     * @param outputStream The OutputStream to Write With
+     * @param capacity the capacity of the byte buffer.
+     */
+    public UTF8StreamWriter(OutputStream outputStream, int capacity) {
+        _bytes = new byte[capacity];
+        _outputStream = outputStream;
+    }
 
+    protected OutputStream getOutput(){
+		return _outputStream;
+	}
+    
     /**
      * Sets the output stream to use for writing until this writer is closed.
      * For example:[code]
@@ -95,6 +122,8 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char c) throws IOException {
+    	if(_outputStream == null)
+    		throw new IOException("Writer closed");
         if ((c < 0xd800) || (c > 0xdfff)) {
             write((int) c);
         } else if (c < 0xdc00) { // High surrogate.
@@ -115,6 +144,8 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(int code) throws IOException {
+    	if(_outputStream == null)
+    		throw new IOException("Writer closed");
         if ((code & 0xffffff80) == 0) {
             _bytes[_index] = (byte) code;
             if (++_index >= _bytes.length) {
@@ -226,6 +257,8 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs.
      */
     public void write(char cbuf[], int off, int len) throws IOException {
+    	if(_outputStream == null)
+    		throw new IOException("Writer closed");
         final int off_plus_len = off + len;
         for (int i = off; i < off_plus_len;) {
             char c = cbuf[i++];
@@ -249,6 +282,8 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
+    	if(_outputStream == null)
+    		throw new IOException("Writer closed");
         final int off_plus_len = off + len;
         for (int i = off; i < off_plus_len;) {
             char c = str.charAt(i++);
@@ -270,6 +305,8 @@ public final class UTF8StreamWriter extends Writer {
      * @throws IOException if an I/O error occurs
      */
     public void write(CharSequence csq) throws IOException {
+    	if(_outputStream == null)
+    		throw new IOException("Writer closed");
         final int length = csq.length();
         for (int i = 0; i < length;) {
             char c = csq.charAt(i++);
