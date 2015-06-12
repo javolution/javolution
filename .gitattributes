@@ -456,7 +456,28 @@ javolution/core-java/src/main/java/javolution/xml/stream/package-info.java -text
 javolution/core-java/src/main/java/javolution/xml/ws/WebServiceClient.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/ws/package-info.java -text
 javolution/core-java/src/test/java/javolution/context/ComputeContextTest.java -text svneol=unset#text/plain
+javolution/core-java/src/test/java/javolution/io/AppendableWriterTest.java -text
+javolution/core-java/src/test/java/javolution/io/CharSequenceReaderTest.java -text
+javolution/core-java/src/test/java/javolution/io/UTF8ByteBufferReaderTest.java -text
+javolution/core-java/src/test/java/javolution/io/UTF8ByteBufferWriterTest.java -text
+javolution/core-java/src/test/java/javolution/io/UTF8StreamReaderTest.java -text
+javolution/core-java/src/test/java/javolution/io/UTF8StreamWriterTest.java -text
+javolution/core-java/src/test/java/javolution/lang/MathLibTest.java -text
+javolution/core-java/src/test/java/javolution/text/CharArrayTest.java -text
+javolution/core-java/src/test/java/javolution/text/CursorTest.java -text
+javolution/core-java/src/test/java/javolution/text/TextBuilderTest.java -text
+javolution/core-java/src/test/java/javolution/text/TextReaderTest.java -text
+javolution/core-java/src/test/java/javolution/text/TextTest.java -text
+javolution/core-java/src/test/java/javolution/text/TypeFormatTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastBitSetTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastMapTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastSetTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastSortedMapTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastSortedSetTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastSortedTableTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
+javolution/core-java/src/test/java/javolution/util/IndexTest.java -text
+javolution/core-java/src/test/java/javolution/util/function/MultiVariableTest.java -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text
