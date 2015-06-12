@@ -122,7 +122,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
 
     /**
      * Returns the index within this character sequence of the first occurrence
-     * of the specified characters sequence searching forward.
+     * of the specified characters sequence searching forward..
      *
      * @param  csq a character sequence searched for.
      * @return the index of the specified character sequence in the range
@@ -130,9 +130,28 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      *         or <code>-1</code> if the character sequence is not found.
      */
     public final int indexOf(java.lang.CharSequence csq) {
+        return indexOf(csq, 0);
+    }
+    
+    /**
+     * Returns the index within this character sequence of the first occurrence
+     * of the specified characters sequence searching forward, starting from the
+     * specified index
+     *
+     * @param  csq a character sequence searched for.
+     * @param fromIndex the index to start searching from
+     * @return the index of the specified character sequence in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character sequence is not found.
+     * @throws IndexOutOfBoundsException Thrown if from index is out of bounds of the view of the backing array
+     */
+    public final int indexOf(java.lang.CharSequence csq, int fromIndex) {
+        if((_offset + fromIndex + csq.length() - 1) >= (_offset + _length))
+            throw new IndexOutOfBoundsException(String.format("From Index %d Is Out of Bounds", fromIndex));
+        
         final char c = csq.charAt(0);
         final int csqLength = csq.length();
-        for (int i = _offset, end = _offset + _length - csqLength + 1; i < end; i++) {
+        for (int i = _offset + fromIndex, end = _offset + _length - csqLength + 1; i < end; i++) {
             if (_array[i] == c) { // Potential match.
                 boolean match = true;
                 for (int j = 1; j < csqLength; j++) {
@@ -157,12 +176,114 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      *         or <code>-1</code> if the character is not found.
      */
     public final int indexOf(char c) {
-        for (int i = _offset, end = _offset + _length; i < end; i++) {
+        return indexOf(c, 0);
+    }
+
+    /**
+     * Returns the index within this character sequence of the first occurrence
+     * of the specified character searching forward, starting from the specified
+     * index.
+     *
+     * @param  c the character to search for.
+     * @param fromIndex the index to start searching from
+     * @return the indext of the specified character in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character is not found.
+     * @throws IndexOutOfBoundsException Thrown if from index is out of bounds of the view of the backing array
+     */
+    public final int indexOf(char c, int fromIndex) {
+        if((_offset + fromIndex) >= (_offset + _length))
+            throw new IndexOutOfBoundsException(String.format("From Index %d Is Out of Bounds", fromIndex));
+        
+        for (int i = _offset + fromIndex, end = _offset + _length; i < end; i++) {
             if (_array[i] == c) return i - _offset;
         }
+        
         return -1;
     }
 
+    /**
+     * Returns the index within this character sequence of the last occurrence
+     * of the specified characters sequence searching backwards.
+     *
+     * @param  csq a character sequence searched for.
+     * @return the index of the specified character sequence in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character sequence is not found.
+     */
+    public final int lastIndexOf(java.lang.CharSequence csq) {
+        return lastIndexOf(csq, 0);
+    }
+    
+    /**
+     * Returns the index within this character sequence of the last occurrence
+     * of the specified characters sequence searching backward, starting from the
+     * specified index
+     *
+     * @param  csq a character sequence searched for.
+     * @param fromIndex the index to start searching from
+     * @return the index of the specified character sequence in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character sequence is not found.
+     * @throws IndexOutOfBoundsException Thrown if from index is out of bounds of the view of the backing array
+     */
+    public final int lastIndexOf(java.lang.CharSequence csq, int fromIndex) {
+    	if((_offset + fromIndex + csq.length() - 1) >= (_offset + _length))
+            throw new IndexOutOfBoundsException(String.format("From Index %d Is Out of Bounds", fromIndex));
+        
+        final char c = csq.charAt(0);
+        final int csqLength = csq.length();
+        for (int i = _length + _offset - csqLength - fromIndex, end = _offset; i >= end; i--) {
+            if (_array[i] == c) { // Potential match.
+                boolean match = true;
+                for (int j = 1; j < csqLength; j++) {
+                    if (_array[i + j] != csq.charAt(j)) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) { return i - _offset; }
+            }
+        }
+        return -1;
+    }
+    
+    /**
+     * Returns the index within this character sequence of the last occurrence
+     * of the specified character searching backwards.
+     *
+     * @param  c the character to search for.
+     * @return the indext of the specified character in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character is not found.
+     */
+    public final int lastIndexOf(char c) {
+        return lastIndexOf(c, _length - 1);
+    }
+
+    /**
+     * Returns the index within this character sequence of the last occurrence
+     * of the specified character searching backwards, starting from the specified
+     * index.
+     *
+     * @param  c the character to search for
+     * @param fromIndex the index to start searching from.
+     * @return the indext of the specified character in the range
+     *         <code>[0, length()[</code>
+     *         or <code>-1</code> if the character is not found.
+     * @throws IndexOutOfBoundsException Thrown if from index is out of bounds of the view of the backing array
+     */
+    public final int lastIndexOf(char c, int fromIndex) {
+        if((_offset + fromIndex) >= (_offset + _length))
+            throw new IndexOutOfBoundsException(String.format("From Index %d Is Out of Bounds", fromIndex));
+        
+        for (int i = _offset + fromIndex, end = _offset; i >= end; i--) {
+            if (_array[i] == c) return i - _offset;
+        }
+        
+        return -1;
+    }
+    
     /**
      * Returns the <code>String</code> corresponding to this character
      * sequence. The <code>String</code> returned is always allocated on the
