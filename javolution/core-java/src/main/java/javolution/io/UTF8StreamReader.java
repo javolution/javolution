@@ -69,6 +69,17 @@ public final class UTF8StreamReader extends Reader {
     public UTF8StreamReader() {
         _bytes = new byte[2048];
     }
+    
+    /**
+     * Creates a UTF-8 reader having a byte buffer of moderate capacity (2048),
+     * initialized to read with the specified InputStream
+     * 
+     * @param inputStream InputStream to Read From
+     */
+    public UTF8StreamReader(InputStream inputStream) {
+        _bytes = new byte[2048];
+        _inputStream = inputStream;
+    }
 
     /**
      * Creates a UTF-8 reader having a byte buffer of specified capacity.
@@ -77,6 +88,17 @@ public final class UTF8StreamReader extends Reader {
      */
     public UTF8StreamReader(int capacity) {
         _bytes = new byte[capacity];
+    }
+    
+    /**
+     * Creates a UTF-8 reader having a byte buffer of specified capacity,
+     * initialized to read with the specified InputStream
+     * 
+     * @param capacity the capacity of the byte buffer.
+     */
+    public UTF8StreamReader(InputStream inputStream, int capacity) {
+        _bytes = new byte[capacity];
+        _inputStream = inputStream;
     }
 
     /**
