@@ -47,6 +47,15 @@ public final class UTF8ByteBufferReader extends Reader {
      * Default constructor.
      */
     public UTF8ByteBufferReader() {}
+    
+    /**
+     * Constructor for Initializing to Read from the Specified Byte Buffer
+     * 
+     * @param byteBuffer ByteBuffer to Read From
+     */
+    public UTF8ByteBufferReader(ByteBuffer byteBuffer) {
+    	_byteBuffer = byteBuffer;
+    }
 
     /**
      * Sets the <code>ByteBuffer</code> to use for reading available bytes
