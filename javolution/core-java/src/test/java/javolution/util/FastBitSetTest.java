@@ -87,6 +87,16 @@ public class FastBitSetTest {
 	}
 	
 	@Test
+	public void testLength(){
+		_fastBitSetNone.set(2);
+		assertEquals(3, _fastBitSetNone.length());
+		_fastBitSetNone.set(5);
+		assertEquals(6, _fastBitSetNone.length());
+		_fastBitSetNone.clear(5);
+		assertEquals(3, _fastBitSetNone.length());
+	}
+	
+	@Test
 	public void testNextClearBit(){
 		assertEquals("Next Clear Bit Is 0", 0, _fastBitSetNone.nextClearBit(0));
 		assertEquals("Next Clear Bit = 9, From 1", 9, _fastBitSetAll.nextClearBit(1));
