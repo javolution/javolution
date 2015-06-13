@@ -55,7 +55,7 @@ public class AtomicMapImpl<K, V> extends MapView<K, V> {
 
     @Override
     public synchronized void clear() {
-        clear();
+    	target().clear();
         if (!updateInProgress()) {
             immutable = cloneTarget();
         }

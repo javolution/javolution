@@ -56,6 +56,17 @@ public class FastMapTest {
 	}
 	
 	@Test
+	public void testClearWithAtomicView(){
+		_fastMap = _fastMap.atomic();
+		_fastMap.put("TestKey1", "TestValue1");
+		_fastMap.put("TestKey2", "TestValue2");
+		_fastMap.put("TestKey3", "TestValue3");		
+		_fastMap.clear();
+		assertEquals("Size Is 0 After Clear", 0, _fastMap.size());
+		assertTrue("Map Is Empty After Clear", _fastMap.isEmpty());
+	}
+	
+	@Test
 	public void testContainsKey(){
 		_fastMap.put("TestKey", "TestValue");
 		assertTrue("FastMap Contains Key TestKey", _fastMap.containsKey("TestKey"));		
