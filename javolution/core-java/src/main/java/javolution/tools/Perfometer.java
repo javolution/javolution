@@ -8,9 +8,10 @@
  */
 package javolution.tools;
 
+import java.math.BigDecimal;
+
 import javolution.context.LogContext;
 import javolution.lang.Configurable;
-import javolution.lang.MathLib;
 import javolution.text.TextBuilder;
 import javolution.util.FastTable;
 
@@ -52,6 +53,8 @@ import javolution.util.FastTable;
  */
 public abstract class Perfometer<T> {
 
+	private final BigDecimal _1e9 = new BigDecimal(1e9);
+	
     /**
      * Hold the measurement duration in milliseconds (default 1000 ms).
      */
@@ -65,7 +68,7 @@ public abstract class Perfometer<T> {
 
         @Override
         protected Integer getDefault() {
-            return 1000;
+            return 1000000000;
         }
 
     };
@@ -104,13 +107,17 @@ public abstract class Perfometer<T> {
     /**
      * Returns the average execution time in seconds.
      */
-    public double getAvgTimeInSeconds() {
-        if (times == null) return Double.NaN;
+    public BigDecimal getAvgTimeInSeconds() {
+        if (times == null) return BigDecimal.ZERO;
         long sum = 0;
         for (long time : times) {
             sum += time;
         }
-        return sum / 1e9 / times.length;
+        
+        BigDecimal timeSum = new BigDecimal(sum);
+        BigDecimal length = new BigDecimal(times.length);
+        
+        return timeSum.divide(_1e9).divide(length);
     }
 
     /**
@@ -137,11 +144,12 @@ public abstract class Perfometer<T> {
     /**
      * Returns the execution times in seconds.
      */
-    public double[] getTimesInSeconds() {
-        if (times == null) return new double[0];
-        double[] timesSec = new double[times.length];
+    public BigDecimal[] getTimesInSeconds() {
+        if (times == null) return new BigDecimal[0];
+        BigDecimal[] timesSec = new BigDecimal[times.length];
         for (int i=0; i < times.length; i++) {
-            timesSec[i] = times[i] / 1e9;
+        	BigDecimal time = new BigDecimal(times[i]);
+            timesSec[i] = time.divide(_1e9);
         }
         return timesSec;
     }
@@ -166,31 +174,22 @@ public abstract class Perfometer<T> {
         if (SKIP.get()) return this; // Skip.
         this.input = input;
         this.times = new long[nbrOfIterations];
-        long[] calibrations = longArray(nbrOfIterations, Long.MAX_VALUE);
         long[] measures = longArray(nbrOfIterations, Long.MAX_VALUE);
         try {
-            long exitTime = System.currentTimeMillis() + DURATION_MS.get();
-            do {
-                // Calibration.
+                // Warm Up
                 initialize();
                 for (int i = 0; i < nbrOfIterations; i++) {
-                    long start = System.nanoTime();
-                    run(false);
-                    long time = System.nanoTime() - start;
-                    calibrations[i] = MathLib.min(calibrations[i], time);
+                    run(true);
                 }
+                
                 // Measurement.
                 initialize();
                 for (int i = 0; i < nbrOfIterations; i++) {
                     long start = System.nanoTime();
                     run(true);
                     long time = System.nanoTime() - start;
-                    measures[i] = MathLib.min(measures[i], time);
+                    times[i] = time;
                 }
-            } while (System.currentTimeMillis() < exitTime);
-            for (int i = 0; i < nbrOfIterations; i++) {
-                times[i] = measures[i] - calibrations[i];
-            }
             return this;
         } catch (Exception error) {
             throw new RuntimeException("Perfometer Exception", error);
@@ -207,9 +206,9 @@ public abstract class Perfometer<T> {
                 .append(") for ").append(input).append(": ");
         while (txt.length() < 80)
             txt.append(' ');
-        txt.append(getAvgTimeInSeconds() * 1E9, 8, false, true); // Nano-Seconds.
+        txt.append(getAvgTimeInSeconds().multiply(_1e9).toPlainString()); // Nano-Seconds.
         txt.append(" ns (avg), ");
-        txt.append(getWCETinSeconds() * 1E9, 8, false, true); // Nano-Seconds.
+        txt.append(getWCETinSeconds().multiply(_1e9).toPlainString()); // Nano-Seconds.
         txt.append(" ns (wcet#").append(getWorstCaseNumber()).append(")");
         LogContext.info(txt);
     }
@@ -228,13 +227,13 @@ public abstract class Perfometer<T> {
     /**
      * Returns the worst case execution time in seconds.
      */
-    public double getWCETinSeconds() {
-        if (times == null) return Double.NaN;
+    public BigDecimal getWCETinSeconds() {
+        if (times == null) return null;
         long wcet = 0;
         for (long time : times) {
             if (time > wcet) wcet = time;
         }
-        return wcet / 1e9;
+        return new BigDecimal(wcet).divide(_1e9);
     }
 
     /**
