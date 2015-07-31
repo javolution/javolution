@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:javolution="http://javolution.org/xml/schema/javolution"
+	xmlns:javolution-common="http://javolution.org/xml/schema/javolution-common"
+	targetNamespace="http://javolution.org/xml/schema/javolution">
+
+	<xs:import namespace="http://javolution.org/xml/schema/javolution-common"
+		schemaLocation="test-jaxb-common-schema.xsd" />
+
+	<xs:element name="testRoot">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="testElement" type="javolution:testElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testValidationElement" type="javolution:testValidationElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testAttributeElement" type="javolution:testAttributeElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testUnboundedWrapperElement" type="javolution:testUnboundedWrapperElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testBoundedWrapperElement" type="javolution:testBoundedWrapperElement"
+					minOccurs="0" maxOccurs="1" />
+				<xs:element name="testCommonElement" type="javolution-common:testCommonElement"
+					minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" />
+			<xs:attribute name="type2" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="testElement">
+		<xs:sequence>
+			<xs:element name="testIntElement" type="xs:int" minOccurs="0" />
+			<xs:element name="testLongElement" type="xs:long"
+				minOccurs="0" />
+			<xs:element name="testBooleanElement" type="xs:boolean"
+				minOccurs="0" />
+			<xs:element name="testStringElement" type="xs:string"
+				minOccurs="0" />
+			<xs:element name="testFloatElement" type="xs:float"
+				minOccurs="0" />
+			<xs:element name="testDoubleElement" type="xs:double"
+				minOccurs="0" />
+			<xs:element name="testDateElement" type="xs:date"
+				minOccurs="0" />
+			<xs:element name="testShortElement" type="xs:short"
+				minOccurs="0" />
+			<xs:element name="testByteElement" type="xs:byte"
+				minOccurs="0" />
+			<xs:element name="testDecimalElement" type="xs:decimal"
+				minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="testAttributeElement">
+		<xs:attribute name="stringAttribute" type="xs:string"
+			use="required" />
+		<xs:attribute name="intAttribute" type="xs:int" />
+		<xs:attribute name="longAttribute" type="xs:long" />
+		<xs:attribute name="booleanAttribute" type="xs:boolean" />
+		<xs:attribute name="floatAttribute" type="xs:float" />
+		<xs:attribute name="doubleAttribute" type="xs:double" />
+		<xs:attribute name="dateAttribute" type="xs:date" />
+		<xs:attribute name="shortAttribute" type="xs:short" />
+		<xs:attribute name="byteAttribute" type="xs:byte" />
+		<xs:attribute name="decimalAttribute" type="xs:decimal" />
+	</xs:complexType>
+
+	<xs:complexType name="testBoundedWrapperElement">
+		<xs:sequence>
+			<xs:element name="testElement" type="javolution:testElement"
+				minOccurs="0" maxOccurs="1" />
+			<xs:element name="testValidationElement" type="javolution:testValidationElement"
+				minOccurs="0" maxOccurs="1" />
+			<xs:element name="testAttributeElement" type="javolution:testAttributeElement"
+				minOccurs="0" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="testUnboundedWrapperElement">
+		<xs:sequence>
+			<xs:element name="testElement" type="javolution:testElement"
+				minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="testValidationElement" type="javolution:testValidationElement"
+				minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="testAttributeElement" type="javolution:testAttributeElement"
+				minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="testValidationElement">
+		<xs:sequence>
+			<xs:element name="testUnboundedEnumElement" type="javolution:testEnumElement"
+				minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="testRequiredLongElement" type="xs:long"
+				minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attribute name="testRequiredAttribute" type="xs:string"
+			use="required" />
+	</xs:complexType>
+
+	<xs:simpleType name="testEnumElement">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="TEST_ENUM_ONE" />
+			<xs:enumeration value="TEST_ENUM_TWO" />
+			<xs:enumeration value="TEST_ENUM_THREE" />
+		</xs:restriction>
+	</xs:simpleType>
+
+</xs:schema>

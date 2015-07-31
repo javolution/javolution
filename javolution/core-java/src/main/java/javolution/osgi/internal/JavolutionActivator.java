@@ -43,6 +43,7 @@ public class JavolutionActivator implements BundleActivator {
         OSGiServices.SECURITY_CONTEXT_TRACKER.activate(bc);
         OSGiServices.STORAGE_CONTEXT_TRACKER.activate(bc);
         OSGiServices.TEXT_CONTEXT_TRACKER.activate(bc);
+        OSGiServices.JAXB_ANNOTATION_FACTORY_TRACKER.activate(bc);
         OSGiServices.XML_CONTEXT_TRACKER.activate(bc);
         OSGiServices.XML_INPUT_FACTORY_TRACKER.activate(bc);
         OSGiServices.XML_OUTPUT_FACTORY_TRACKER.activate(bc);
@@ -73,6 +74,7 @@ public class JavolutionActivator implements BundleActivator {
         OSGiServices.SECURITY_CONTEXT_TRACKER.deactivate(bc);
         OSGiServices.STORAGE_CONTEXT_TRACKER.deactivate(bc);
         OSGiServices.TEXT_CONTEXT_TRACKER.deactivate(bc);
+        OSGiServices.JAXB_ANNOTATION_FACTORY_TRACKER.deactivate(bc);
         OSGiServices.XML_CONTEXT_TRACKER.deactivate(bc);
         OSGiServices.XML_INPUT_FACTORY_TRACKER.deactivate(bc);
         OSGiServices.XML_OUTPUT_FACTORY_TRACKER.deactivate(bc);

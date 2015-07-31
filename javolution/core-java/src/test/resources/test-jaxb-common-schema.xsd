@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:javolution-common="http://javolution.org/xml/schema/javolution-common"
+	targetNamespace="http://javolution.org/xml/schema/javolution-common">
+
+	<xs:element name="testCommonRoot">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="testCommonElement" type="javolution-common:testCommonElement"
+					minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="testCommonElement">
+		<xs:sequence>
+			<xs:element name="testCommonStringElement" type="xs:string"
+				minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+
+</xs:schema>

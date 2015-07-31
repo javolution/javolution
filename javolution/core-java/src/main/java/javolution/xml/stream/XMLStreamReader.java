@@ -68,8 +68,8 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * 
      * <p>
      * Given the following XML:<br>
-     * &lt;foo>&lt;!--description-->content
-     * text&lt;![CDATA[&lt;greeting>Hello&lt;/greeting>]]>other content&lt;/foo><br>
+     * &lt;foo&lt; content
+     * text&lt;![CDATA[&lt;greeting&gt;Hello&lt;/greeting&gt;]]&gt;other content&lt;/foo&gt;<br>
      * The behavior of calling next() when being on foo will be:<br>
      * 1- the comment (COMMENT)<br>
      * 2- then the characters section (CHARACTERS)<br>
@@ -78,9 +78,9 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * 5- then the END_ELEMENT<br>
      * 
      * <p>
-     * <b>NOTE:</b> empty element (such as &lt;tag/>) will be reported with two
+     * <b>NOTE:</b> empty element (such as &lt;tag/%gt;) will be reported with two
      * separate events: START_ELEMENT, END_ELEMENT - This preserves parsing
-     * equivalency of empty element to &lt;tag>&lt;/tag>.
+     * equivalency of empty element to &lt;tag&lt;&lt;/tag&gt;.
      * 
      * This method will throw an IllegalStateException if it is called after
      * hasNext() returns false.
@@ -111,11 +111,11 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * Reads the content of a text-only element, an exception is thrown if this
      * is not a text-only element. Regardless of the value of
      * javax.xml.stream.isCoalescing this method always returns coalesced
-     * content. <br />
-     * Precondition: the current event is START_ELEMENT. <br />
+     * content. <br>
+     * Precondition: the current event is START_ELEMENT. <br>
      * Postcondition: the current event is the corresponding END_ELEMENT.
      * 
-     * <br />
+     * <br>
      * The method does the following (implementations are free to optimized but
      * must do equivalent processing):
      * 
@@ -154,6 +154,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * 
      * @throws XMLStreamException if the current event is not a START_ELEMENT 
      *         or if a non text element is encountered.
+     * @return element text
      */
     CharArray getElementText() throws XMLStreamException;
 
@@ -165,12 +166,12 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * method should be used when processing element-only content seperated by
      * white space.
      * 
-     * <br />
-     * Precondition: none <br />
+     * <br>
+     * Precondition: none <br>
      * Postcondition: the current event is START_ELEMENT or END_ELEMENT and
      * cursor may have moved over any whitespace event.
      * 
-     * <br />
+     * <br>
      * Essentially it does the following (implementations are free to optimized
      * but must do equivalent processing):
      * 
@@ -436,7 +437,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * more text. Otherwise, subsequent calls need to be made until all text has
      * been retrieved. For example:
      * 
-     * <code>
+     * {@code
      * int length = 1024;
      * char[] myBuffer = new char[ length ];
      * 
@@ -447,7 +448,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
      *   if (nCopied < length)
      *       break;
      * }
-     * </code> XMLStreamException may be thrown
+     * } XMLStreamException may be thrown
      * if there are any XML errors in the underlying source. The "targetStart"
      * argument must be greater than or equal to 0 and less than the length of
      * "target", Length must be greater than 0 and "targetStart + length" must
@@ -461,9 +462,9 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * @return the number of characters actually copied
      * @throws XMLStreamException if the XML source is not well-formed.
      * @throws IndexOutOfBoundsException
-     *             if targetStart < 0 or > than the length of target
+     *             {@code if targetStart < 0 or > than the length of target}
      * @throws IndexOutOfBoundsException
-     *             if length < 0 or targetStart + length > length of target
+     *             {@code if length < 0 or targetStart + length > length of target}
      * @throws UnsupportedOperationException if this method is not supported.
      */
     int getTextCharacters(int sourceStart, char[] target,
@@ -474,6 +475,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * character (of this text event) is stored.
      * 
      * @throws IllegalStateException if this state is not a valid text state.
+     * @return text start offset
      */
     int getTextStart();
 
@@ -482,6 +484,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
      * within the text character array.
      * 
      * @throws IllegalStateException if this state is not a valid text state.
+     * @return text length
      */
     int getTextLength();
 

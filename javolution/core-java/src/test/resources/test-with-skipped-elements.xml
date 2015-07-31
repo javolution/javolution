@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot type="Test1" xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testElement>
+		<testIntElement>1</testIntElement>
+		<testStringElement>ABC</testStringElement>
+	</testElement>
+</ns2:testRoot>

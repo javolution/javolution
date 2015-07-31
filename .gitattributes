@@ -257,6 +257,8 @@ javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.cpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTracker.hpp -text
 javolution/core-cpp/src/main/c++/org/osgi/util/tracker/ServiceTrackerCustomizer.hpp -text
 javolution/core-java/pom.xml -text
+javolution/core-java/src/it/java/javolution/xml/annotation/JAXBAnnotatedObjectReaderITCase.java -text
+javolution/core-java/src/it/java/javolution/xml/annotation/JAXBAnnotatedObjectWriterITCase.java -text
 javolution/core-java/src/main/java/javax/realtime/RealtimeThread.java -text
 javolution/core-java/src/main/java/javolution/context/AbstractContext.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/context/ComputeContext.java -text svneol=unset#text/plain
@@ -294,6 +296,7 @@ javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=un
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/ConfigurableListenerImpl.java -text
+javolution/core-java/src/main/java/javolution/osgi/internal/JAXBAnnotationFactoryProvider.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/JavolutionActivator.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/osgi/internal/LogServiceImpl.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/OSGiServices.java -text
@@ -431,8 +434,17 @@ javolution/core-java/src/main/java/javolution/xml/XMLObjectReader.java -text svn
 javolution/core-java/src/main/java/javolution/xml/XMLObjectWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLReferenceResolver.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/XMLSerializable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotatedObjectReader.java -text
+javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotatedObjectWriter.java -text
+javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotationFactory.java -text
 javolution/core-java/src/main/java/javolution/xml/doc-files/xmlDataBinding.png -text
 javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/AbstractJAXBAnnotationReflectionSupport.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/AnnotationStackData.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/AnnotationStackType.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectReaderImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectWriterImpl.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotationFactoryImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/stream/AttributesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/internal/stream/EntitiesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/xml/internal/stream/NamespacesImpl.java -text svneol=unset#text/plain
@@ -482,6 +494,43 @@ javolution/core-java/src/test/java/javolution/util/FastSortedTableTest.java -tex
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/core-java/src/test/java/javolution/util/IndexTest.java -text
 javolution/core-java/src/test/java/javolution/util/function/MultiVariableTest.java -text
+javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectReaderTest.java -text
+javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectWriterTest.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/ObjectFactory.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestAttributeElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestBoundedWrapperElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestCommonElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestCommonRoot.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestEnumElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestRoot.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestUnboundedWrapperElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestValidationElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/package-info.java -text
+javolution/core-java/src/test/java/javolution/xml/sax/SAX2ReaderImplTest.java -text
+javolution/core-java/src/test/java/javolution/xml/sax/XMLReaderImplTest.java -text
+javolution/core-java/src/test/java/javolution/xml/stream/XMLStreamReaderImplTest.java -text
+javolution/core-java/src/test/java/javolution/xml/stream/XMLStreamWriterImplTest.java -text
+javolution/core-java/src/test/resources/test-bounded-element-with-mixed-bounded-nesting.xml -text
+javolution/core-java/src/test/resources/test-bounded-element-with-nested-attribute-only.xml -text
+javolution/core-java/src/test/resources/test-bounded-unbounded-nesting.xml -text
+javolution/core-java/src/test/resources/test-common-element.xml -text
+javolution/core-java/src/test/resources/test-jaxb-common-schema.xsd -text
+javolution/core-java/src/test/resources/test-jaxb-schema.xsd -text
+javolution/core-java/src/test/resources/test-jaxb.xml -text
+javolution/core-java/src/test/resources/test-large-nested-mixed-object.xml -text
+javolution/core-java/src/test/resources/test-large-valid-nested-mixed-object.xml -text
+javolution/core-java/src/test/resources/test-more-than-one-of-same-element-with-mixed-data.xml -text
+javolution/core-java/src/test/resources/test-small.xml -text
+javolution/core-java/src/test/resources/test-stax.xml -text
+javolution/core-java/src/test/resources/test-with-basic-datatypes.xml -text
+javolution/core-java/src/test/resources/test-with-enum-and-date.xml -text
+javolution/core-java/src/test/resources/test-with-missing-required-attribute.xml -text
+javolution/core-java/src/test/resources/test-with-missing-required-element.xml -text
+javolution/core-java/src/test/resources/test-with-out-of-order-element.xml -text
+javolution/core-java/src/test/resources/test-with-skipped-elements.xml -text
+javolution/core-java/src/test/resources/test-with-unmapped-attribute.xml -text
+javolution/core-java/src/test/resources/test-with-unmapped-element.xml -text
 javolution/index.html -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text

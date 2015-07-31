@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testBoundedWrapperElement>
+		<testValidationElement>
+			<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>
+		</testValidationElement>
+	</testBoundedWrapperElement>
+</ns2:testRoot>

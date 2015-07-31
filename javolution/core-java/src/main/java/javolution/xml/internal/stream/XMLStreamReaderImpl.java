@@ -1057,7 +1057,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
         //       numerous elements at the same nesting level are separated by 
         //       spaces or indentation.
         char[] tmp = new char[_data.length * 2];
-        javolution.context.LogContext.info(new CharArray(
+        javolution.context.LogContext.debug(new CharArray(
                 "XMLStreamReaderImpl: Data buffer increased to " + tmp.length));
         System.arraycopy(_data, 0, tmp, 0, _data.length);
         _data = tmp;
@@ -1066,7 +1066,7 @@ public final class XMLStreamReaderImpl implements XMLStreamReader {
     // Increases statck.
     private void increaseStack() {
         CharArray[] tmp = new CharArray[_elemStack.length * 2];
-        javolution.context.LogContext.info(new CharArray(
+        javolution.context.LogContext.debug(new CharArray(
                 "XMLStreamReaderImpl: CharArray stack increased to "
                         + tmp.length));
         System.arraycopy(_elemStack, 0, tmp, 0, _elemStack.length);

@@ -24,7 +24,7 @@ import java.lang.CharSequence;
  *     {@link javolution.text.TextBuilder TextBuilder}  
  *     (or <code>StringBuilder</code>) instance to avoid adverse effects 
  *     on memory footprint (heap), garbage collection and performance.
- * [code]
+ * {@code
  * // Creates a new writer (potentially recycled).
  * XMLOutputFactory factory = OSGiServices.getXMLOutputFactory();
  * XMLStreamWriter writer = factory.createXMLStreamWriter(outputStream);
@@ -39,7 +39,7 @@ import java.lang.CharSequence;
  * writer.writeStartDocument();
  *     
  * writer.close(); // Closes the writer (does not close underlying output stream).
- * [/code]</p>
+ * }</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -52,7 +52,7 @@ public interface XMLStreamWriter {
      * EndElement causes the scope to be closed.
      * 
      * @param localName local name of the tag.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeStartElement(CharSequence localName)
             throws XMLStreamException;
@@ -111,7 +111,7 @@ public interface XMLStreamWriter {
      * Writes an empty element tag to the output.
      * 
      * @param localName local name of the tag.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeEmptyElement(CharSequence localName)
             throws XMLStreamException;
@@ -120,14 +120,14 @@ public interface XMLStreamWriter {
      * Writes an end tag to the output relying on the internal state of the
      * writer to determine the prefix and local name of the event.
      * 
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeEndElement() throws XMLStreamException;
 
     /**
      * Closes any start tags and writes corresponding end tags.
      * 
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeEndDocument() throws XMLStreamException;
 
@@ -135,14 +135,14 @@ public interface XMLStreamWriter {
      * Close this writer and free any resources associated with the writer. This
      * must not close the underlying output stream.
      * 
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void close() throws XMLStreamException;
 
     /**
      * Write any cached data to the underlying output mechanism.
      * 
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void flush() throws XMLStreamException;
 
@@ -153,7 +153,7 @@ public interface XMLStreamWriter {
      * @param value the value of the attribute.
      * @throws IllegalStateException if the current state does not allow
      *         attribute writing.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeAttribute(CharSequence localName, CharSequence value)
             throws XMLStreamException;
@@ -201,7 +201,7 @@ public interface XMLStreamWriter {
      * @param namespaceURI the uri to bind the prefix.
      * @throws IllegalStateException if the current state does not allow 
      *         namespace writing.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeNamespace(CharSequence prefix, CharSequence namespaceURI)
             throws XMLStreamException;
@@ -213,7 +213,7 @@ public interface XMLStreamWriter {
      *        <code>null</code> (to map the prefix to <code>""</code> URI)
      * @throws IllegalStateException if the current state does not allow 
      *         namespace writing.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeDefaultNamespace(CharSequence namespaceURI)
             throws XMLStreamException;
@@ -222,7 +222,7 @@ public interface XMLStreamWriter {
      * Writes an xml comment with the data enclosed.
      * 
      * @param data the data contained in the comment or <code>null</code>
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeComment(CharSequence data) throws XMLStreamException;
 
@@ -230,7 +230,7 @@ public interface XMLStreamWriter {
      * Writes a processing instruction.
      * 
      * @param target the target of the processing instruction.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeProcessingInstruction(CharSequence target)
             throws XMLStreamException;
@@ -240,7 +240,7 @@ public interface XMLStreamWriter {
      * 
      * @param target the target of the processing instruction.
      * @param data the data contained in the processing instruction.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeProcessingInstruction(CharSequence target,
             CharSequence data) throws XMLStreamException;
@@ -249,7 +249,7 @@ public interface XMLStreamWriter {
      * Writes a CData section.
      * 
      * @param data the data contained in the CData Section.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeCData(CharSequence data) throws XMLStreamException;
 
@@ -258,7 +258,7 @@ public interface XMLStreamWriter {
      * production from the XML 1.0 specification).
      * 
      * @param dtd the DTD to be written.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeDTD(CharSequence dtd) throws XMLStreamException;
 
@@ -266,7 +266,7 @@ public interface XMLStreamWriter {
      * Writes an entity reference
      * 
      * @param name the name of the entity.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeEntityRef(CharSequence name) throws XMLStreamException;
 
@@ -275,7 +275,7 @@ public interface XMLStreamWriter {
      * encoding (if any) to the one specified when the instance is created 
      * using {@link XMLOutputFactory}.
      * 
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeStartDocument() throws XMLStreamException;
 
@@ -284,7 +284,7 @@ public interface XMLStreamWriter {
          * specified when the instance is created using {@link XMLOutputFactory}.
      * 
      * @param version the version of the xml document or <code>null</code>.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeStartDocument(CharSequence version)
             throws XMLStreamException;
@@ -296,7 +296,7 @@ public interface XMLStreamWriter {
      * 
      * @param encoding the encoding of the xml declaration or <code>null</code>.
      * @param version the version of the xml document or <code>null</code>.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeStartDocument(CharSequence encoding, CharSequence version)
             throws XMLStreamException;
@@ -309,7 +309,7 @@ public interface XMLStreamWriter {
      * @param encoding the encoding of the xml declaration or <code>null</code>.
      * @param version the version of the xml document or <code>null</code>.
      * @param standAlone <code>true</code> if the document is standalone
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeStartDocument(CharSequence encoding, CharSequence version, Boolean standAlone)
             throws XMLStreamException;
@@ -318,7 +318,7 @@ public interface XMLStreamWriter {
      * Writes text to the output.
      * 
      * @param text the value to write or <code>null</code>.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeCharacters(CharSequence text) throws XMLStreamException;
 
@@ -328,7 +328,7 @@ public interface XMLStreamWriter {
      * @param text the value to write
      * @param start the starting position in the array.
      * @param length the number of characters to write.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void writeCharacters(char[] text, int start, int length)
             throws XMLStreamException;
@@ -338,7 +338,7 @@ public interface XMLStreamWriter {
      * 
          * @param uri namespace URI
      * @return the prefix for the URI or <code>null</code>
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     CharSequence getPrefix(CharSequence uri) throws XMLStreamException;
 
@@ -350,7 +350,7 @@ public interface XMLStreamWriter {
      * 
      * @param prefix the prefix to bind to the uri.
      * @param uri the uri to bind to the prefix or <code>null</code>
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void setPrefix(CharSequence prefix, CharSequence uri)
             throws XMLStreamException;
@@ -362,7 +362,7 @@ public interface XMLStreamWriter {
      * scope.
      * 
      * @param uri the uri to bind to the default namespace or <code>null</code>.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs while writing.
      */
     void setDefaultNamespace(CharSequence uri) throws XMLStreamException;
 

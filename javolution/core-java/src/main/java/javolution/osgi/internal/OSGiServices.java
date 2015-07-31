@@ -37,7 +37,11 @@ import javolution.util.Index;
 import javolution.util.function.Equalities;
 import javolution.util.function.Reducers;
 import javolution.xml.XMLContext;
+import javolution.xml.annotation.JAXBAnnotationFactory;
 import javolution.xml.internal.XMLContextImpl;
+import javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl;
+import javolution.xml.internal.annotation.JAXBAnnotatedObjectWriterImpl;
+import javolution.xml.internal.annotation.JAXBAnnotationFactoryImpl;
 import javolution.xml.internal.stream.XMLInputFactoryImpl;
 import javolution.xml.internal.stream.XMLOutputFactoryImpl;
 import javolution.xml.internal.stream.XMLStreamReaderImpl;
@@ -72,6 +76,8 @@ public class OSGiServices {
 			TextContext.class, TextContextImpl.class);
 	final static ServiceTrackerImpl<XMLContext> XML_CONTEXT_TRACKER = new ServiceTrackerImpl<XMLContext>(
 			XMLContext.class, XMLContextImpl.class);
+	final static ServiceTrackerImpl<JAXBAnnotationFactory> JAXB_ANNOTATION_FACTORY_TRACKER = new ServiceTrackerImpl<JAXBAnnotationFactory>(
+			JAXBAnnotationFactory.class, JAXBAnnotationFactoryImpl.class);
 	final static ServiceTrackerImpl<XMLInputFactory> XML_INPUT_FACTORY_TRACKER = new ServiceTrackerImpl<XMLInputFactory>(
 			XMLInputFactory.class, XMLInputFactoryImpl.class);
 	final static ServiceTrackerImpl<XMLOutputFactory> XML_OUTPUT_FACTORY_TRACKER = new ServiceTrackerImpl<XMLOutputFactory>(
@@ -162,6 +168,11 @@ public class OSGiServices {
 	public static XMLOutputFactory getXMLOutputFactory() {
 		return (XMLOutputFactory)XML_OUTPUT_FACTORY_TRACKER.getServices()[0];
 	}
+	
+	/** Returns JAXB Annotation Factory Service */
+	public static JAXBAnnotationFactory getJAXBAnnotationFactory() {
+		return (JAXBAnnotationFactory)JAXB_ANNOTATION_FACTORY_TRACKER.getServices()[0];
+	}
 
 	/** Initializes all real-time classes.  */
 	public static synchronized boolean initializeRealtimeClasses() {
@@ -177,6 +188,8 @@ public class OSGiServices {
 		initializer.loadClass(Index.class); // Preallocates.
 		initializer.loadClass(Reducers.class);
 		initializer.loadClass(Equalities.class);
+		initializer.loadClass(JAXBAnnotatedObjectReaderImpl.class);
+		initializer.loadClass(JAXBAnnotatedObjectWriterImpl.class);
 		initializer.loadClass(XMLStreamReaderImpl.class);
 		initializer.loadClass(XMLStreamWriterImpl.class);
 		return initializer.initializeLoadedClasses();

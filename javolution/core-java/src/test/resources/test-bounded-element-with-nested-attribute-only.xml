@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot type="Test6" type2="Test9" xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testBoundedWrapperElement>
+		<testAttributeElement stringAttribute="string3"
+			intAttribute="3" longAttribute="3" booleanAttribute="true"
+			floatAttribute="3.0" doubleAttribute="3.0" byteAttribute="3"
+			shortAttribute="3" dateAttribute="1999-01-01" />
+	</testBoundedWrapperElement>
+</ns2:testRoot>
