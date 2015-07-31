@@ -21,7 +21,7 @@ import javolution.osgi.internal.OSGiServices;
  * <p> How the data is going to be stored (database, files) is implementation
  *     dependent. But how the resources are structured (hierarchical, semantics)
  *     is defined by the client implementing the {@link Resource} class. 
- * [code]
+ * {@code
  * class SemanticResource<T> extends SemanticEntity implements Resource<T> { ... }
  * ...
  * StorageContext ctx = StorageContext.enter(); // Enters the current storage service.
@@ -35,7 +35,7 @@ import javolution.osgi.internal.OSGiServices;
  *     Image logoImg = ctx.read(logoId); // May raise SecurityException. 
  *  } finally {
  *     ctx.exit(); 
- *  }[/code]</p>
+ *  }}</p>
  *  
  * <p> Permission to read/write resource values may or not be granted at all 
  *     or only for particular resources. Sensitive data should always be 
@@ -72,7 +72,7 @@ public abstract class StorageContext extends AbstractContext {
     public interface Resource<T> {
 
         /**
-         * Returns an unique identifier for this resource.
+         * @return an unique identifier for this resource.
          */
         public String uniqueID();
 
@@ -85,6 +85,7 @@ public abstract class StorageContext extends AbstractContext {
 
     /**
      * Enters and returns a storage context instance.
+     * @return Reference to the entered StorageContext
      */
     public static StorageContext enter() {
         return (StorageContext) currentStorageContext().enterInner();
@@ -93,6 +94,7 @@ public abstract class StorageContext extends AbstractContext {
     /**
      * Reads the persistent value of the specified resource value. 
      * 
+     * @param <V> type of persistent value
      * @param resource the entity whose persistent value is returned.
      * @return the resource value or <code>null</code> if none.
      * @throws SecurityException if the permission to read the resource 
@@ -105,6 +107,7 @@ public abstract class StorageContext extends AbstractContext {
     /**
      * Writes the persistent value of the specified resource.
      * 
+     * @param <V> type of persistent value
      * @param resource the entity whose persistent value is stored.
      * @param value the persistent value.
      * @throws SecurityException if the permission to write the resource 

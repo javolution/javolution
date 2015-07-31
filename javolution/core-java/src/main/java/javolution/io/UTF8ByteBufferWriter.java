@@ -239,6 +239,8 @@ public final class UTF8ByteBufferWriter extends Writer {
 
     /**
      * @deprecated Replaced by {@link #setOutput(ByteBuffer)}
+     * @param byteBuffer ByteBuffer to write to
+     * @return Reference to this UTF8ByteBufferWriter
      */
     public UTF8ByteBufferWriter setByteBuffer(ByteBuffer byteBuffer) {
         return this.setOutput(byteBuffer);

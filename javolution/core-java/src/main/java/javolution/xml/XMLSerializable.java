@@ -17,7 +17,7 @@ import java.io.Serializable;
  *     
  * <p> Typically, classes implementing this interface have a protected static
  *     {@link XMLFormat} holding their default XML representation. 
- *     For example:[code]
+ *     For example:{@code
  *     public final class Complex implements XMLSerializable {
  *       
  *         // Use the cartesien form for the default XML representation.        
@@ -35,7 +35,7 @@ import java.io.Serializable;
 *              }
  *         };
  *         ...
- *     }[/code]</p>      
+ *     }}</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, April 15, 2007

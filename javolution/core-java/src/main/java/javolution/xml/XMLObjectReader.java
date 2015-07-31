@@ -25,13 +25,13 @@ import javolution.xml.stream.XMLStreamReader;
  *     of the class as identified by the {@link XMLBinding}.</p>
  *     
  * <p> Multiple objects can be read from the same XML input.
- *     For example:[code]
+ *     For example:{@code
  *     XMLObjectReader reader = XMLObjectReader.newInstance(inputStream);
  *     while (reader.hasNext()) {
  *         Message message = reader.read("Message", Message.class);
  *     }
  *     reader.close(); // The underlying stream is closed.
- *     [/code]</p>
+ *     }</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
@@ -58,6 +58,8 @@ public class XMLObjectReader {
      * input stream as input.
      * 
      * @param in the input stream.
+     * @return Instance of an XMLObjectReader for this InputStream
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      */
     public static XMLObjectReader newInstance(InputStream in)
             throws XMLStreamException {
@@ -72,6 +74,8 @@ public class XMLObjectReader {
      * 
      * @param in the input stream.
      * @param encoding the input stream encoding
+     * @return Instance of an XMLObjectReader for this InputStream with the given encoding
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      */
     public static XMLObjectReader newInstance(InputStream in, String encoding)
             throws XMLStreamException {
@@ -85,6 +89,8 @@ public class XMLObjectReader {
      * reader as input.
      * 
      * @param in the reader source.
+     * @return Instance of an XMLObjectReader for this Reader
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      */
     public static XMLObjectReader newInstance(Reader in)
             throws XMLStreamException {
@@ -114,6 +120,7 @@ public class XMLObjectReader {
      * 
      * @param  in the source input stream.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      * @see    XMLStreamReaderImpl#setInput(InputStream)
      */
     public XMLObjectReader setInput(InputStream in) throws XMLStreamException {
@@ -130,6 +137,7 @@ public class XMLObjectReader {
      * @param in the input source.
      * @param encoding the associated encoding.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      * @see    XMLStreamReaderImpl#setInput(InputStream, String)
      */
     public XMLObjectReader setInput(InputStream in, String encoding)
@@ -146,6 +154,7 @@ public class XMLObjectReader {
      * 
      * @param  in the source reader.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs setting the input stream
      * @see    XMLStreamReaderImpl#setInput(Reader)
      */
     public XMLObjectReader setInput(Reader in) throws XMLStreamException {
@@ -187,6 +196,7 @@ public class XMLObjectReader {
      *
      * @return <code>true</code> if more element/data to be read; 
      *         <code>false</code> otherwise.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs reading the input
      * @see    XMLFormat.InputElement#hasNext()
      */
     public boolean hasNext() throws XMLStreamException {
@@ -196,6 +206,7 @@ public class XMLObjectReader {
     /**
      * Returns the object corresponding to the next element/data.
      *
+     * @param <T> type of the object to read
      * @return the next nested object (can be <code>null</code>)
      * @throws XMLStreamException if <code>hasNext() == false</code>
      * @see    XMLFormat.InputElement#getNext()
@@ -209,9 +220,11 @@ public class XMLObjectReader {
      * Returns the object corresponding to the next nested element only 
      * if it has the specified local name. 
      *
+     *@param <T> type of the object to read
      * @param name the local name of the next element.
      * @return the next content object or <code>null</code> if the 
      *         local name does not match.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs while reading the input stream
      * @see    XMLFormat.InputElement#get(String)
      */
     @SuppressWarnings("unchecked")
@@ -223,10 +236,12 @@ public class XMLObjectReader {
      * Returns the object corresponding to the next nested element only 
      * if it has the specified local name and namespace URI.
      *
+     * @param <T> type of the object to read
      * @param localName the local name.
      * @param uri the namespace URI.
      * @return the next content object or <code>null</code> if the 
      *         name/uri does not match.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs while reading the input stream
      * @see    XMLFormat.InputElement#get(String, String)
      */
     @SuppressWarnings("unchecked")
@@ -238,10 +253,12 @@ public class XMLObjectReader {
      * Returns the object corresponding to the next nested element only 
      * if it has the specified local name; the actual object type is identified 
      * by the specified class parameter. 
-     *      
+     * 
+     * @param <T> type of the object to read
      * @param name the name of the element to match.
      * @param cls the non-abstract class identifying the object to return.
      * @return <code>read(name, null, cls)</code>
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs while reading the input stream
      */
     public <T> T read(String name, Class<T> cls) throws XMLStreamException {
         return _xml.get(name, cls);
@@ -251,11 +268,13 @@ public class XMLObjectReader {
      * Returns the object corresponding to the next nested element only 
      * if it has the specified local name and namespace URI; the 
      * actual object type is identified by the specified class parameter. 
-     *      
+     * 
+     * @param <T> type of the object to read
      * @param localName the local name.
      * @param uri the namespace URI.
      * @param cls the non-abstract class identifying the object to return.
      * @return the next content object or <code>null</code> if no match.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs while reading the input stream
      */
     public <T> T read(String localName, String uri, Class<T> cls)
             throws XMLStreamException {
@@ -265,6 +284,7 @@ public class XMLObjectReader {
     /**
      * Closes this reader and its underlying input then {@link #reset reset}
      * this reader for potential reuse.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs closing the input stream
      */
     public void close() throws XMLStreamException {
         try {

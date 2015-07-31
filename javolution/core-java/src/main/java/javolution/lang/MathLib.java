@@ -520,7 +520,7 @@ public final class MathLib {
      *
      * @param d the <code>double</code> number.
      * @return <code>floor(Log2(abs(d)))</code>
-     * @throws ArithmeticException if <code>d &lt;= 0<code> or <code>d</code>
+     * @throws ArithmeticException if <code>d &lt;= 0</code> or <code>d</code>
      *         is <code>NaN</code> or <code>Infinity</code>.
      **/
     public static int floorLog2(double d) {
@@ -543,7 +543,7 @@ public final class MathLib {
      *
      * @param d the <code>double</code> number.
      * @return <code>floor(Log10(abs(d)))</code>
-     * @throws ArithmeticException if <code>d &lt;= 0<code> or <code>d</code>
+     * @throws ArithmeticException if <code>d &lt;= 0</code> or <code>d</code>
      *         is <code>NaN</code> or <code>Infinity</code>.
      **/
     public static int floorLog10(double d) {
@@ -780,7 +780,7 @@ public final class MathLib {
 
     /**
      * Returns the angle theta such that
-     * <code>(x == cos(theta)) && (y == sin(theta))</code>. 
+     * {@code (x == cos(theta)) && (y == sin(theta))}. 
      *
      * @param y the y value.
      * @param x the x value.

@@ -36,6 +36,8 @@ public class FastBitSet extends FastSet<Index> {
     /**
      * Returns a new bit set holding the specified indices
      * (convenience method).
+     * @param indices Indices to create a FastBitSet of
+     * @return FastBitSet containing the specified indices
      */
     public static FastBitSet of(Index... indices) {
     	FastBitSet set = new FastBitSet();
@@ -63,6 +65,7 @@ public class FastBitSet extends FastSet<Index> {
 
     /**
      * Creates a fast bit set based on the specified implementation.
+     * @param impl BitSetService to back the FastBitSet
      */
     protected FastBitSet(BitSetService impl) {
         this.service = impl;

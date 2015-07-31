@@ -21,7 +21,7 @@ import javolution.osgi.internal.OSGiServices;
  *     The logic is then executed by a concurrent thread or by the current 
  *     thread itself if there is no concurrent thread immediately available 
  *     (the number of concurrent threads is limited, see {@link #CONCURRENCY}).
- * [code]
+ * {@code
  * ConcurrentContext ctx = ConcurrentContext.enter(); 
  * try { 
  *     ctx.execute(new Runnable() {...}); 
@@ -29,11 +29,11 @@ import javolution.osgi.internal.OSGiServices;
  * } finally {
  *     ctx.exit(); // Waits for all concurrent executions to complete.
  *                 // Re-exports any exception raised during concurrent executions. 
- * }[/code]</p>
+ * }}</p>
  * 
  * <p> or equivalent shorter notation:
- * [code]
- * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});[/code]</p>
+ * {@code
+ * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});}</p>
  *     
  * <p> Only after all concurrent executions are completed, is the current 
  *     thread allowed to exit the scope of the concurrent context 
@@ -51,7 +51,7 @@ import javolution.osgi.internal.OSGiServices;
  *     load-balancing between processors with almost no overhead. 
  *     Here is a concurrent/recursive quick/merge sort using anonymous inner 
  *     classes.
- * [code]
+ * {@code
  * static void concurrentSort(final FastTable<? extends Comparable> table) {
  *     final int size = table.size();
  *     if (size < 100) { 
@@ -96,12 +96,12 @@ import javolution.osgi.internal.OSGiServices;
  *             }
  *         }
  *     }
- * }[/code]</p>
+ * }}</p>
  *     
  * <p> Here is another example using {@link #execute(java.lang.Runnable[]) 
  *     execute(Runnable ...)} static method 
  *    (Karatsuba recursive multiplication for large integers).
- * [code]
+ * {@code
  *  public LargeInteger times(LargeInteger that) {
  *      if (that._size <= 1) {
  *          return times(that.longValue()); // Direct multiplication.
@@ -132,18 +132,18 @@ import javolution.osgi.internal.OSGiServices;
  *      public void run() {
  *         result = left.times(right); // Recursive.
  *      }
- *  }[/code]</p>
+ *  }}</p>
  *          
  * <p> Concurrency can be adjusted or disabled. The default concurrency 
  *     is defined by the {@link #CONCURRENCY} configurable. 
- * [code]
+ * {@code
  * ConcurrentContext ctx = ConcurrentContext.enter(); 
  * try { 
  *    ctx.setConcurrency(0); // Disables concurrency
  *    runAnalysis();         // Performs analysis sequentially.
  * } finally {
  *    ctx.exit(); // Back to previous concurrency settings.  
- * }[/code]</p>
+ * }}</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -182,6 +182,7 @@ public abstract class ConcurrentContext extends AbstractContext {
 
     /**
      * Enters and returns a new concurrent context instance.
+     * @return Reference to the entered ConcurrentContext
      */
     public static ConcurrentContext enter() {
         ConcurrentContext ctx = current(ConcurrentContext.class);
@@ -231,6 +232,7 @@ public abstract class ConcurrentContext extends AbstractContext {
      * Sets the maximum concurrency. Setting a value greater than the 
      * {@link #getConcurrency() current concurrency} has no effect 
      * (concurrency can only be reduced).
+     * @param concurrency number of concurrent threads authorized
      */
     public abstract void setConcurrency(int concurrency);
 
@@ -238,6 +240,7 @@ public abstract class ConcurrentContext extends AbstractContext {
      * Returns the current concurrency which is basically the number of 
      * concurrent threads authorized to do concurrent work (on top of all
      * others threads of course).
+     * @return number of concurrent threads authorized
      */
     public abstract int getConcurrency();
 

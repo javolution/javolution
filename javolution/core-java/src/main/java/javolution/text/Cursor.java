@@ -11,19 +11,19 @@ package javolution.text;
 /**
  * <p> A parsing cursor over the characters read. Cursor
  *     allows for token iterations over any {@link CharSequence}.
- *     [code]
+ *     {@code
  *     String str = "this is a test";
  *     Cursor cursor = new Cursor();
  *     for (CharSequence token; (token=cursor.nextToken(str, ' '))!= null;)
  *            System.out.println(token); 
- *     [/code]
- *     Prints the following output:<pre>
+ *     }
+ *     Prints the following output:
  *        this
  *        is
  *        a
- *        test</pre>
+ *        test
  *     Cursors are typically used with {@link TextFormat} instances.
- *     [code]
+ *     {@code
  *     // Parses decimal number (e.g. "xxx.xxxxxExx" or "NaN")
  *     public Decimal parse(CharSequence csq, Cursor cursor) throws IllegalArgumentException {
  *         TextFormat<LargeInteger> largeIntegerFormat = TextContext.getFormat(LargeInteger.class);
@@ -35,7 +35,7 @@ package javolution.text;
  *         int fractionDigits = fraction.digitLength();
  *         return Decimal.valueOf(significand.E(fractionDigits).plus(fraction), exponent - fractionDigits);
  *     }
- *     [/code]
+ *     }
  * </p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -339,6 +339,7 @@ public class Cursor {
      * Returns the head of the specified character sequence until   
      * this cursor position.
      *
+     * @param csq Character Sequence
      * @return the corresponding sub-sequence.
      */
     public final CharSequence head(CharSequence csq) {
@@ -349,6 +350,7 @@ public class Cursor {
      * Returns the tail of the specified character sequence starting at 
      * this cursor position.
      *
+     * @param csq Character Sequence
      * @return the corresponding sub-sequence.
      */
     public final CharSequence tail(CharSequence csq) {

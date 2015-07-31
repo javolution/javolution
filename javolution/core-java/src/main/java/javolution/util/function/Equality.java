@@ -13,23 +13,22 @@ import java.util.Comparator;
 
 /**
  * <p> A comparator to be used for element equality as well as for 
- *     ordering. Implementing classes should ensure that:
- *     <ul>
- *        <li> The {@link #compare compare} function is consistent with 
- *             {@link #equal(Object, Object) equal}. If two objects 
- *             {@link #compare compare} to {@code 0} then they are 
- *             {@link #equal(Object, Object) equal} and the 
- *             reciprocal is true (this ensures that sorted collections/maps
- *             do not break the general contract of their parent class based on
- *             object equal).</li>
- *        <li> The {@link #hashOf hash} function is consistent with
- *             {@link #equal(Object, Object) equal}: If two objects are equal, 
- *             they have the same hashcode (the reciprocal is not true).</li>
- *        <li> The {@code null} value is supported (even for 
- *             {@link #compare comparisons}) and the {@link #hashOf(Object)
- *             hashcode} value of {@code null} is {@code 0}.</li>
- *     </ul>
- * </p>
+ *     ordering. Implementing classes should ensure that:</p>
+ *  <ul>
+ *     <li> The {@link #compare compare} function is consistent with 
+ *          {@link #equal(Object, Object) equal}. If two objects 
+ *          {@link #compare compare} to {@code 0} then they are 
+ *          {@link #equal(Object, Object) equal} and the 
+ *          reciprocal is true (this ensures that sorted collections/maps
+ *          do not break the general contract of their parent class based on
+ *          object equal).</li>
+ *     <li> The {@link #hashOf hash} function is consistent with
+ *          {@link #equal(Object, Object) equal}: If two objects are equal, 
+ *          they have the same hashcode (the reciprocal is not true).</li>
+ *     <li> The {@code null} value is supported (even for 
+ *          {@link #compare comparisons}) and the {@link #hashOf(Object)
+ *          hashcode} value of {@code null} is {@code 0}.</li>
+ *  </ul>
  * 
  * @param <T> the type of objects that may be compared for equality or order.
  * 

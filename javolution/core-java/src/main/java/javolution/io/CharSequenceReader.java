@@ -67,6 +67,7 @@ public final class CharSequenceReader extends Reader {
 
     /**
      * Returns  the character sequence to use for reading.
+     * @return Input of this CharSequenceReader in the form of a CharSequence
      */
     public CharSequence getInput() {
         return _input;

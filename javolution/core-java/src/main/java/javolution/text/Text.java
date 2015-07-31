@@ -26,7 +26,8 @@ import javolution.xml.XMLSerializable;
  *     <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/String.html">
  *     Java String</a> and 
  *     <a href="http://msdn2.microsoft.com/en-us/library/system.string.aspx">
- *     .NET String</a> with the following benefits:<ul>
+ *     .NET String</a> with the following benefits:</p>
+ *     <ul>
  *     <li> No need for an intermediate 
  *          {@link StringBuffer}/{@link StringBuilder} in order to manipulate 
  *          textual documents (insertion, deletion or concatenation).</li>
@@ -36,13 +37,15 @@ import javolution.xml.XMLSerializable;
  *          larger string from being garbage collected).</li>
  *     <li> More flexible as they allows for search and comparison with any 
  *          <code>java.lang.String</code> or <code>CharSequence</code>.</li>
- *     </ul></p>
+ *     </ul>
  * <p> {@link Text} literals should be explicitly {@link #intern interned}. 
  *     Unlike strings literals and strings-value constant expressions,
- *     interning is not implicit. For example:[code]
+ *     interning is not implicit. For example:
+ *     {@code
  *         final static Text TRUE = Text.intern("true");
  *         final static Text FALSE = Text.intern("false");
- *     [/code]</p>
+ *     }
+ * </p>
  *     
  * <p><i> Implementation Note: To avoid expensive copy operations , 
  *        {@link Text} instances are broken down into smaller immutable 
@@ -189,8 +192,9 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param offset the index of the first character in the data soure.
 	 * @param length the length of the text returned.
 	 * @return the corresponding instance.
-	 * @throws IndexOutOfBoundsException if <code>(offset < 0) || 
-	 *         (length < 0) || ((offset + length) > chars.length)</code>
+	 * @throws IndexOutOfBoundsException If offset or length is less than 
+	 *         zero or offset + length is greater than the length of the 
+	 *         chars array.  
 	 */
 	public static Text valueOf(char[] chars, int offset, int length) {
 		if ((offset < 0) || (length < 0) || ((offset + length) > chars.length))
@@ -471,8 +475,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * 
 	 * @param  start the index of the first character inclusive.
 	 * @return the sub-text starting at the specified position.
-	 * @throws IndexOutOfBoundsException if <code>(start < 0) || 
-	 *          (start > this.length())</code>
+	 * @throws IndexOutOfBoundsException If start is less than 0 or greater than the length of this text.
 	 */
 	public Text subtext(int start) {
 		return subtext(start, length());
@@ -485,8 +488,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param index the insertion position.
 	 * @param txt the text being inserted.
 	 * @return <code>subtext(0, index).concat(txt).concat(subtext(index))</code>
-	 * @throws IndexOutOfBoundsException if <code>(index < 0) ||
-	 *            (index > this.length())</code>
+	 * @throws IndexOutOfBoundsException If index is less than 0 or greater than the length of this text.
 	 */
 	public Text insert(int index, Text txt) {
 		return subtext(0, index).concat(txt).concat(subtext(index));
@@ -498,8 +500,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param start the beginning index, inclusive.
 	 * @param end the ending index, exclusive.
 	 * @return <code>subtext(0, start).concat(subtext(end))</code>
-	 * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-	 *         (start > end) || (end > this.length()</code>
+	 * @throws IndexOutOfBoundsException if start or end is less than 0, 
+	 *         start is greater than end, or end is greater than length.
 	 */
 	public Text delete(int start, int end) {
 		if (start > end)
@@ -554,8 +556,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param  start the index of the first character inclusive.
 	 * @param  end the index of the last character exclusive.
 	 * @return <code>this.subtext(start, end)</code>
-	 * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-	 *         (start > end) || (end > this.length())</code>
+	 * @throws IndexOutOfBoundsException If start or end is less 
+	 *         than 0, start is greater than end, or end is greater than length
 	 */
 	public java.lang.CharSequence subSequence(int start, int end) {
 		return subtext(start, end);
@@ -744,6 +746,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * Returns the text corresponding to the specified character sequence
 	 * from a pool of unique text instances.  
 	 * 
+	 * @param csq Character Sequence
 	 * @return an unique text instance allocated in permanent memory.
 	 */
 	public static Text intern(CharSequence csq) {
@@ -936,8 +939,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 *
 	 * @param  index the index of the character.
 	 * @return the character at the specified index.
-	 * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-	 *         (index >= this.length())</code>
+	 * @throws IndexOutOfBoundsException If index is less than 0 or 
+	 *         greater than or equal to length
 	 */
 	public char charAt(int index) {
 		if (index >= _count)
@@ -993,7 +996,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * specified character, searching backward
 	 *
 	 * @param c the character to search for.
-	 * @param fromIndex the index to start the search backward from.
 	 * @return the index of the first occurrence of the character in this text
 	 *         that is less than or equal to <code>fromIndex</code>, 
 	 *         or <code>-1</code> if the character does not occur.
@@ -1038,8 +1040,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param  end the index of the last character exclusive.
 	 * @return the sub-text starting at the specified start position and 
 	 *         ending just before the specified end position.
-	 * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-	 *         (start > end) || (end > this.length())</code>
+	 * @throws IndexOutOfBoundsException if start or end is less than 0, 
+	 *         start is greather than end, or end is greater than length.
 	 */
 	public Text subtext(int start, int end) {
 		if (_data != null) { // Primitive.
@@ -1075,8 +1077,8 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param end the index after the last character to copy.
 	 * @param dest the destination array.
 	 * @param destPos the start offset in the destination array.
-	 * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-	 *         (start > end) || (end > this.length())</code>
+	 * @throws IndexOutOfBoundsException if start or end is less than 0, 
+	 *         start is greater than end, or end is greater than length
 	 */
 	public void getChars(int start, int end, char dest[], int destPos) {
 		if (_data != null) { // Primitive.
@@ -1132,7 +1134,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param c the character to fill this text with.
 	 * @param length the length of the text returned.
 	 * @return the corresponding instance.
-	 * @throws IndexOutOfBoundsException if <code>(length < 0)</code>
+	 * @throws IndexOutOfBoundsException if length is less than 0
 	 */
 	public static Text valueOf(char c, int length) {
 		if (length < 0)
@@ -1166,6 +1168,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 *
 	 *@param start the start index.
 	 *@param length the number of characters to inspect.
+	 *@return true if all characters in this range are whitespace
 	 */
 	public boolean isBlank(int start, int length) {
 		for (int i = start; i < start + length; i++) {
@@ -1214,7 +1217,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 *
 	 * @param len the total number of characters to make this text equal to.
 	 * @return a new text or the same text if no padding required.
-	 * @throws an IllegalArgumentException if the <code>(len<0)</code>.
 	 */
 	public Text padLeft(int len) {
 		return padLeft(len, ' ');
@@ -1230,7 +1232,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param len the total number of characters to make this text equal to.
 	 * @param c the character to pad using.
 	 * @return a new text or the same text if no padding required.
-	 * @throws an IllegalArgumentException if the <code>(len<0)</code>.
 	 */
 	public Text padLeft(int len, char c) {
 		final int padSize = (len <= length()) ? 0 : len - length();
@@ -1245,7 +1246,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 *
 	 * @param len the total number of characters to make this text equal to.
 	 * @return a new text or the same text if no padding required.
-	 * @throws an IllegalArgumentException if the <code>(len<0)</code>.
 	 */
 	public Text padRight(int len) {
 		return padRight(len, ' ');
@@ -1261,7 +1261,6 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * @param len the total number of characters to make this text equal to.
 	 * @param c the character to pad using.
 	 * @return a new text or the same text if no padding required.
-	 * @throws an IllegalArgumentException if the <code>(len<0)</code>.
 	 */
 	public Text padRight(int len, char c) {
 		final int padSize = (len <= length()) ? 0 : len - length();

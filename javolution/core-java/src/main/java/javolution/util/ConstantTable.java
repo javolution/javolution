@@ -71,6 +71,9 @@ public class ConstantTable<E> extends FastTable<E> {
 	/**
 	 * Returns a new constant table holding the specified {@link Constant 
 	 * constant} elements.
+	 * @param <E> Type of the ConstantTable
+	 * @param elements Elements to place in the a ConstantTable
+	 * @return ConstantTable containing the specified elements
 	 */
 	public static <E> ConstantTable<E> of(@Constant E... elements) {
 		return new ConstantTable<E>(new ConstantTableImpl<E>(elements));
@@ -79,6 +82,9 @@ public class ConstantTable<E> extends FastTable<E> {
 	/**
 	 * Returns a new constant table holding the same elements as the specified 
 	 * collection (convenience method).
+	 * @param <E> Type of the ConstantTable
+	 * @param that Collection to convert to a ConstantTable
+	 * @return A ConstantTable containing the elements specified in the collection
 	 */
 	@SuppressWarnings("unchecked")
 	public static <E> ConstantTable<E> of(Collection<? extends E> that) {
@@ -88,6 +94,7 @@ public class ConstantTable<E> extends FastTable<E> {
 	/**
 	 * Creates a constant table backed up by the specified{@link Constant 
 	 * constant} service implementation.
+	 * @param service A TableService to back the ConstantTable
 	 */
 	protected ConstantTable(@Constant TableService<E> service) {
 		super(service);

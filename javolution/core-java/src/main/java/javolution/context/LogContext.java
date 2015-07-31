@@ -22,7 +22,7 @@ import javolution.text.TextContext;
  *     
  * <p> Logging contexts support automatic prefixing/suffixing of any information 
  *     relevant to the user/developer (thread info, user id, and so on). 
- * [code]
+ * {@code
  * void run() {
  *     LogContext ctx = LogContext.enter(); 
  *     try {
@@ -32,12 +32,12 @@ import javolution.text.TextContext;
  *      } finally {
  *         ctx.exit();
  *      }
- *  }[/code]</p>
+ *  }}</p>
  *  
  *  <p> Applications should separate messages elements by commas and not 
  *      use {@link String} concatenations when calling log methods otherwise 
  *      the concatenation is performed even when log events are filtered out.
- * [code]
+ * {@code
  * LogContext ctx = LogContext.enter();
  * try {
  *     ctx.setLevel(Level.INFO); // Does not log debug messages. 
@@ -47,7 +47,7 @@ import javolution.text.TextContext;
  *     ...
  * } finally {
  *     ctx.exit();
- * }[/code]</p>
+ * }}</p>
  * 
  * <p> In general, the {@link Level#DEBUG} level provides information only 
  *     relevant to developers and can be turned off after deployment.</p> 
@@ -85,7 +85,8 @@ public abstract class LogContext extends AbstractContext {
     };
 
     /**
-     * Logs the specified debug message. 
+     * Logs the specified debug message.
+     * @param message Message to log 
      */
     public static void debug(Object... message) {
         currentLogContext().log(Level.DEBUG, message);
@@ -93,6 +94,7 @@ public abstract class LogContext extends AbstractContext {
 
     /**
      * Enters and returns a new log context instance.
+     * @return Reference to the entered LogContext
      */
     public static LogContext enter() {
         return (LogContext) currentLogContext().enterInner();
@@ -101,20 +103,23 @@ public abstract class LogContext extends AbstractContext {
     /**
      * Logs the specified error message (which may include any {@link Throwable}
      * instance).
+     * @param message Message to log
      */
     public static void error(Object... message) {
         currentLogContext().log(Level.ERROR, message);
     }
 
     /**
-     * Logs the specified info message. 
+     * Logs the specified info message.
+     * @param message Message to log 
      */
     public static void info(Object... message) {
         currentLogContext().log(Level.INFO, message);
     }
 
     /**
-     * Logs the specified warning message. 
+     * Logs the specified warning message.
+     * @param message Message to log 
      */
     public static void warning(Object... message) {
         currentLogContext().log(Level.WARNING, message);
@@ -135,22 +140,27 @@ public abstract class LogContext extends AbstractContext {
     /**
      * Prefixes all messages being logged by the specified prefixes 
      * (prefixing existing prefixes if any).
+     * @param prefixes Message Prefixes
      */
     public abstract void prefix(Object... prefixes);
 
     /**
      * Set the logging level, messages below that level are not logged.
+     * @param level Logging Level
      */
     public abstract void setLevel(Level level);
 
     /**
      * Suffixes all messages being logged by the specified suffixes
      * (suffixing existing suffixes if any).
+     * @param suffixes Message Suffixes
      */
     public abstract void suffix(Object... suffixes);
 
     /**
      * Logs the specified message at the specified level.
+     * @param level Level to Log At
+     * @param message Message to Log
      */
     protected abstract void log(Level level, Object... message);
 

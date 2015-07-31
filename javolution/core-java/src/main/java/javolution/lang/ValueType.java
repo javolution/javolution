@@ -13,17 +13,17 @@ package javolution.lang;
  * <p> A {@link Constant constant} object which can be manipulated by value
  *     rather than by reference; a JVM implementation may allocate instances 
  *     of this class on the stack. 
- * [code]
+ * {@code
  * public class Complex implements ValueType { // Complex numbers can be manipulated by value.
  *     ...
  *     
- *     @Override
+ *     {@literal@}Override
  *     public boolean equals(Object obj) { ... } // Must compare values.
  * 
- *     @Override
+ *     {@literal@}Override
  *     public int hashCode() { ... } // Must return value hash code.    
  * }
- * [/code]</p>
+ * }</p>
  *      
  * <p> <b>Note:</b> "Stack" allocation is not the only optimization that a VM 
  *     can do on {@link ValueType}. The VM might decide not to perform any 

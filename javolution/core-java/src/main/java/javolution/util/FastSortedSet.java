@@ -35,6 +35,9 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     /**
      * Returns a new sorted set holding the specified elements
      * (convenience method).
+     * @param <E> Type of the FastSortedSet's Elements
+     * @param elements Elements to put in the FastSortedSet
+     * @return FastSortedSet containing the specified elements
      */
     public static <E> FastSortedSet<E> of(E... elements) {
     	FastSortedSet<E> set = new FastSortedSet<E>();
@@ -45,6 +48,9 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     /**
      * Returns a new sorted set holding the same elements as the specified 
      * collection (convenience method).
+     * @param <E> Type of the FastSortedSet's Elements
+     * @param that Collection to convert to a FastSortedSet
+     * @return FastSortedSet containing the specified collection's elements
      */
     public static <E> FastSortedSet<E> of(Collection<? extends E> that) {
     	FastSortedSet<E> set = new FastSortedSet<E>();
@@ -61,6 +67,7 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
 
     /**
     * Creates an empty sorted set ordered using the specified comparator.
+    * @param comparator Equalities comparator to use in the FastSortedSet
     */
     public FastSortedSet(Equality<? super E> comparator) {
         super(new FastSortedMapImpl<E, Void>(comparator, Equalities.IDENTITY)
@@ -69,6 +76,7 @@ public class FastSortedSet<E> extends FastSet<E> implements SortedSet<E> {
     
     /**
      * Creates a sorted set backed up by the specified service implementation.
+     * @param service The SortedSetService to back the FastSortedSet with
      */
     protected FastSortedSet(SortedSetService<E> service) {
         super(service);

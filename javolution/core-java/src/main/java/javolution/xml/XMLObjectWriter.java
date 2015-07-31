@@ -25,14 +25,14 @@ import javolution.xml.stream.XMLStreamWriter;
  *     write its XML representation.</p>
  *     
  * <p> Multiple objects can be written to the same XML output.
- *     For example:[code]
+ *     For example:{@code
  *     XMLObjectWriter writer = XMLObjectWriter.newInstance(outputStream);
  *     while (true)) {
  *         Message message = ...
  *         writer.write(message, "Message", Message.class);
  *     }
  *     writer.close(); // The underlying stream is closed.
- *     [/code]</p>
+ *     }</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.0, September 4, 2006
@@ -64,6 +64,8 @@ public class XMLObjectWriter {
      * output stream as output.
      * 
      * @param out the output stream.
+     * @return XMLObjectWriter instance for this OutputStream
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      */
     public static XMLObjectWriter newInstance(OutputStream out)
             throws XMLStreamException {
@@ -78,6 +80,8 @@ public class XMLObjectWriter {
      * 
      * @param out the output stream.
      * @param encoding the output stream encoding.
+     * @return XMLObjectWriter instance for this OutputStream and Encoding
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      */
     public static XMLObjectWriter newInstance(OutputStream out, String encoding)
             throws XMLStreamException {
@@ -91,6 +95,8 @@ public class XMLObjectWriter {
      * writer as output.
      * 
      * @param out the writer output.
+     * @return XMLObjectWriter instance for this Writer
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      */
     public static XMLObjectWriter newInstance(Writer out)
             throws XMLStreamException {
@@ -117,6 +123,7 @@ public class XMLObjectWriter {
      * 
      * @param  out the output stream destination.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      * @see    XMLStreamWriterImpl#setOutput(OutputStream)
      */
     public XMLObjectWriter setOutput(OutputStream out)
@@ -135,6 +142,7 @@ public class XMLObjectWriter {
      * @param  out the output stream destination.
      * @param  encoding the stream encoding.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      * @see    XMLStreamWriterImpl#setOutput(OutputStream, String)
      */
     public XMLObjectWriter setOutput(OutputStream out, String encoding)
@@ -152,6 +160,7 @@ public class XMLObjectWriter {
      * 
      * @param  out the writer destination.
      * @return <code>this</code>
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while setting the output stream
      * @see    XMLStreamWriterImpl#setOutput(Writer)
      */
     public XMLObjectWriter setOutput(Writer out) throws XMLStreamException {
@@ -205,6 +214,7 @@ public class XMLObjectWriter {
      * identified by the element name.
      *
      * @param obj the object written as nested element or <code>null</code>.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the output
      * @see   XMLFormat.OutputElement#add(Object)
      */
     public void write(Object obj) throws XMLStreamException {
@@ -218,6 +228,7 @@ public class XMLObjectWriter {
      *
      * @param obj the object added as nested element or <code>null</code>.
      * @param name the name of the nested element.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the output
      * @see   XMLFormat.OutputElement#add(Object, String)
      */
     public void write(Object obj, String name) throws XMLStreamException {
@@ -233,6 +244,7 @@ public class XMLObjectWriter {
      * @param obj the object added as nested element or <code>null</code>.
      * @param localName the local name of the nested element.
      * @param uri the namespace URI of the nested element.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the output
      * @see   XMLFormat.OutputElement#add(Object, String, String)
      */
     public void write(Object obj, String localName, String uri)
@@ -244,9 +256,11 @@ public class XMLObjectWriter {
      * Writes the specified object as a named nested element of actual type
      * known (<code>null</code> objects are ignored). 
      *
+     * @param <T> the type of the object being written
      * @param obj the object added as nested element or <code>null</code>.
      * @param name the name of the nested element.
      * @param cls the non-abstract class identifying the XML format to use.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the output
      * @see   XMLFormat.OutputElement#add(Object, String, Class)
      */
     public <T> void write(T obj, String name, Class<T> cls)
@@ -258,10 +272,12 @@ public class XMLObjectWriter {
      * Writes the specified object as a fully qualified nested element of
      *  actual type known (<code>null</code> objects are ignored). 
      *
+     * @param <T> the type of the object being written
      * @param obj the object added as nested element or <code>null</code>.
      * @param localName the local name of the nested element.
      * @param uri the namespace URI of the nested element.
      * @param cls the class identifying the XML format to use.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the output
      * @see   XMLFormat.OutputElement#add(Object, String, String, Class)
      */
     public <T> void write(T obj, String localName, String uri, Class<T> cls)
@@ -272,6 +288,7 @@ public class XMLObjectWriter {
     /**
      * Flushes the output stream of this writer (automatically done 
      * when {@link #close() closing}).
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while flushing the output stream
      */
     public void flush() throws XMLStreamException {
         _xml._writer.flush();
@@ -280,6 +297,7 @@ public class XMLObjectWriter {
     /**
      * Ends document writting, closes this writer and its underlying 
      * output then {@link #reset reset} this Writer for potential reuse.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while closing the output stream
      */
     public void close() throws XMLStreamException {
         try {

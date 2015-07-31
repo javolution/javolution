@@ -306,11 +306,9 @@ public interface XMLReader {
      *
      * @param input The input source for the top-level of the
      *        XML document.
+     * @throws java.io.IOException if an error occurs opening the input source
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
      *            wrapping another exception.
-     * @exception j2me.io.IOException An IO exception from the parser,
-     *            possibly from a byte stream or character stream
-     *            supplied by the application.
      * @see org.xml.sax.InputSource
      * @see #setEntityResolver
      * @see #setDTDHandler
@@ -334,11 +332,9 @@ public interface XMLReader {
      * by the application before it is passed to the parser.</p>
      *
      * @param systemId The system identifier (URI).
+     * @throws java.io.IOException if an I/O error occurs parsing
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
-     *            wrapping another exception.
-     * @exception j2me.io.IOException An IO exception from the parser,
-     *            possibly from a byte stream or character stream
-     *            supplied by the application.
+     *            wrapping another exception..
      * @see #parse(org.xml.sax.InputSource)
      */
     public void parse(String systemId) throws IOException, SAXException;

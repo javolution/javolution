@@ -18,7 +18,7 @@ import javolution.lang.Parallelizable;
  *     For each bundle, a distinct factory instance is returned and can be 
  *     individually configured (if not enough the factory can be 
  *     {@link #clone cloned}). 
- * [code]
+ * {@code
  * import javolution.xml.stream.*;
  * public class Activator implements BundleActivator { 
  *     public void start(BundleContext bc) throws Exception {
@@ -45,7 +45,7 @@ import javolution.lang.Parallelizable;
  *         // Closes the reader which may be recycled back to the factory.
  *         reader.close();
  *     }
- * }[/code]</p>
+ * }}</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -83,7 +83,8 @@ public interface XMLInputFactory extends Cloneable {
      * Returns a XML stream reader for the specified I/O reader.
      * 
      * @param reader the XML data to read from.
-     * @throws XMLStreamException
+     * @return a xml stream reader possibly recycled.
+     * @throws XMLStreamException if an error occurs creating the stream reader
      */
     XMLStreamReader createXMLStreamReader(Reader reader)
             throws XMLStreamException;
@@ -94,7 +95,7 @@ public interface XMLInputFactory extends Cloneable {
      * 
      * @param stream the input stream to read from.
      * @return a xml stream reader possibly recycled.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs creating the stream reader
      */
     XMLStreamReader createXMLStreamReader(InputStream stream)
             throws XMLStreamException;
@@ -106,7 +107,7 @@ public interface XMLInputFactory extends Cloneable {
      * @param stream the input stream to read from.
      * @param encoding the character encoding of the stream.
      * @return a xml stream reader possibly recycled.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an error occurs creating the stream reader
      */
     XMLStreamReader createXMLStreamReader(InputStream stream,
             String encoding) throws XMLStreamException;
@@ -143,7 +144,7 @@ public interface XMLInputFactory extends Cloneable {
     boolean isPropertySupported(String name);
     
     /**
-     * Returns a clone of this factory which can be independently configured.
+     * @return a clone of this factory which can be independently configured.
      */
     XMLInputFactory clone();
  

@@ -23,7 +23,7 @@ import javolution.lang.Realtime;
  *     specified. The default setting for <code>double</code> is 17 digits 
  *     or even 16 digits when the conversion is lossless back and forth
  *     (mimic the standard library formatting).</p>
- * <p>[code]
+ * <p>{@code
  * TypeFormat.format(0.2, a) = "0.2" // 17 or 16 digits (as long as lossless conversion), remove trailing zeros.
  * TypeFormat.format(0.2, 17, false, false, a) = "0.20000000000000001" // Closest 17 digits number.
  * TypeFormat.format(0.2, 19, false, false, a) = "0.2000000000000000111" // Closest 19 digits.
@@ -31,7 +31,7 @@ import javolution.lang.Realtime;
  * TypeFormat.format(0.2, 4, false, true, a) = "0.2000" // Fixed-point notation, fixed number of digits.
  * TypeFormat.format(0.2, 4, true, false, a) = "2.0E-1" // Scientific notation, remove trailing zeros.  
  * TypeFormat.format(0.2, 4, true, true, a) = "2.000E-1" // Scientific notation, fixed number of digits.
- * [/code]</p>        
+ * }</p>        
  *
  * <p> For non-primitive objects, formatting is typically performed using 
  *     specialized {@link TextFormat} instances.</p>
@@ -447,7 +447,7 @@ public final class TypeFormat {
      *
      * @param  csq the character sequence to parse.
      * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     *        <code>null</code> to parse the whole character sequence.
      * @return the float number represented by the specified character sequence.
      */
     public static float parseFloat(CharSequence csq, Cursor cursor) {
@@ -473,7 +473,7 @@ public final class TypeFormat {
      *
      * @param  csq the character sequence to parse.
      * @param cursor the cursor position (being maintained) or
-     *        <code>null></code> to parse the whole character sequence.
+     *        <code>null</code> to parse the whole character sequence.
      * @return the double number represented by this character sequence.
      * @throws NumberFormatException if the character sequence does not contain
      *         a parsable <code>double</code>.
@@ -712,7 +712,7 @@ public final class TypeFormat {
      *
      * @param  f the <code>float</code> value.
      * @param  a the <code>Appendable</code> to append.
-     * @return <code>TypeFormat.format(f, 10, (MathLib.abs(f) >= 1E7) || (MathLib.abs(f) < 0.001), false, a)</code>
+     * @return {@code TypeFormat.format(f, 10, (MathLib.abs(f) >= 1E7) || (MathLib.abs(f) < 0.001), false, a)}
      * @throws IOException if an I/O exception occurs.
      * @throws IllegalArgumentException if a null Appendable is passed in
      */
@@ -728,7 +728,7 @@ public final class TypeFormat {
      *
      * @param  d the <code>double</code> value.
      * @param  a the <code>Appendable</code> to append.
-     * @return <code>TypeFormat.format(d, -1, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false, a)</code>
+     * @return {@code TypeFormat.format(d, -1, (MathLib.abs(d) >= 1E7) || (MathLib.abs(d) < 0.001), false, a)}
      * @throws IOException if an I/O exception occurs.
      * @throws IllegalArgumentException if a null Appendable is passed in
      * @see    TextBuilder#append(double)

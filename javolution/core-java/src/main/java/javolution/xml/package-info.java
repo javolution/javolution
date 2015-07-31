@@ -13,7 +13,8 @@ Webhostinghub.com/support/edu</a>.</i></p>
 
 <IMG alt="XML Data Binding" src="doc-files/xmlDataBinding.png">
 
-<p> Key Advantages:<ul>
+<p> Key Advantages:</p>
+<ul>
     <li> Real-time characteristics with no adverse effect on memory footprint or 
  garbage collection (e.g. it can be used for time critical communications).
  {@link javolution.xml.XMLFormat XMLFormat} is basically a "smart" 
@@ -30,13 +31,13 @@ Webhostinghub.com/support/edu</a>.</i></p>
     <li> The XML mapping can be defined for a top class (or interface) and is automatically 
  inherited by all sub-classes (or all implementing classes).</li>
     <li> Supports object references (to avoid expanding objects already serialized).</li>
-    </ul>
-</p>
+</ul>
+
 
 <p> The default XML format for a class is typically defined using 
     the {@link javolution.xml.DefaultXMLFormat} annotation tag. 
-[code]
-@DefaultXMLFormat(Graphic.XML.class)     
+{@code
+{@literal@}DefaultXMLFormat(Graphic.XML.class)     
 public abstract class Graphic implements XMLSerializable {
     private boolean isVisible;
     private Paint paint; // null if none.
@@ -58,10 +59,10 @@ public abstract class Graphic implements XMLSerializable {
             g.transform = xml.get("Transform");
         }
     };
-}[/code]
+}}
     Sub-classes may override the inherited XML format:
-[code]
-@DefaultXMLFormat(Area.XML.class)     
+{@code
+{@literal@}DefaultXMLFormat(Area.XML.class)     
 public class Area extends Graphic {
     private Shape geometry;  
 
@@ -77,11 +78,11 @@ public class Area extends Graphic {
             area.geometry = xml.get("Geometry");
         }
     };
-}[/code]
+}}
     
 The following writes a graphic area to a file, then reads it:
 
-[code]    
+{@code    
 // Creates some useful aliases for class names.
 XMLBinding binding = new XMLBinding();
 binding.setAlias(Color.class, "Color");
@@ -100,11 +101,11 @@ XMLObjectReader reader = XMLObjectReader.newInstance(new FileInputStream("C:/are
 reader.setBinding(binding);
 Area a = reader.read("Area", Area.class);
 reader.close();
-[/code]
+}
  
      Here is an example of valid XML representation for an area:
 
-[code]
+{@code
 <Area isVisible="true">
     <Paint type="Color" rgb="#F3EBC6" />
     <Geometry type="Polygon">
@@ -112,13 +113,13 @@ reader.close();
         <Vertex x="-43" y="-34" />
         <Vertex x="-12" y="123" />
     </Geometry>
-</Area>[/code]
+</Area>}
    
 </p>
 <p> The following table illustrates the variety of XML representations supported 
     (Foo class with a single String member named text):
     <center>
-      <table cellpadding="2" cellspacing="2" border="1" style="text-align: left"><tbody>
+      <table summary="" cellpadding="2" cellspacing="2" border="1" style="text-align: left"><tbody>
       <tr>
         <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML FORMAT</span></td>
         <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">XML DATA</span></td>
@@ -196,7 +197,7 @@ XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
 
       <tr>
 <td><pre>
-[code]
+{@code
 XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void write(Foo foo, OutputElement xml) throws XMLStreamException {
         xml.add(foo.text, "Text", String.class); 
@@ -204,7 +205,7 @@ XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
     public void read(InputElement xml, Foo foo) throws XMLStreamException {
         foo.text = xml.get("Text", String.class);
     }
-};[/code]</td>
+};}</pre></td>
 <td><pre>
  <b>&lt;!-- Member as named element of actual type known --&gt;</b>
  &lt;Foo&gt;
@@ -214,15 +215,14 @@ XMLFormat<Foo> XML = new XMLFormat<Foo>(Foo.class) {
       </tr>
       </tbody></table>
     </center>
-</p>
 
 <p> XML format do not have to use the classes
     public no-arg constructors, instances can be created using factory methods, 
     private constructors (with constructor parameters set from the XML element)
     or even retrieved from a collection 
     (if the object is shared or unique). For example:
-[code]
-@DefaultXMLFormat(Point.XML.class)     
+{@code
+{@literal@}DefaultXMLFormat(Point.XML.class)     
 public final class Point implements XMLSerializable { 
     private int x;
     private int y;
@@ -243,13 +243,13 @@ public final class Point implements XMLSerializable {
             // Do nothing immutable.
         }
     };
-}[/code]
+}}
 </p>
 
 <p> Document cross-references are supported, including circular references. 
     Let's take for example:
-[code]
-@DefaultXMLFormat(xml=Polygon.XML.class)     
+{@code
+{@literal@}DefaultXMLFormat(xml=Polygon.XML.class)     
 public class Polygon implements Shape, XMLSerializable { 
     private Point[] vertices;
     public static class XML extends XMLFormat<Polygon> {
@@ -277,9 +277,9 @@ writer.setXMLReferenceResolver(new XMLReferenceResolver()); // Enables cross-ref
 writer.write(polygons, "Polygons", Polygon[].class); 
 writer.close();
 System.out.println(xml);
-[/code]
+}
     Prints the following (noticed that the first polygon and last one are being shared).
-[code]
+{@code
 <Polygons length="3">
    <Polygon id="0" count="3">
       <Vertex x="123" y="-34" />  
@@ -292,7 +292,7 @@ System.out.println(xml);
       <Vertex x="-12" y="123" />
    </Polygon>
    <Polygon ref="0"/>
-      </Polygons>[/code] 
+      </Polygons>} 
 </p>
 
 <B>ALGORITHMS:</B>
@@ -301,7 +301,7 @@ System.out.println(xml);
     are in fact simple wrappers around our <b>J</b>avolution high-performance StAX-like
     {@link javolution.xml.stream.XMLStreamReader XMLStreamReader} and 
     {@link javolution.xml.stream.XMLStreamWriter XMLStreamWriter} classes. 
-    The logic of these wrappers is described below:
+    The logic of these wrappers is described below:</p>
 <pre>
 
 OutputElement.add(object, name, uri, class):
@@ -339,7 +339,7 @@ InputElement.get(name, uri, class):
 8. getStreamReader().nextTag()
 
 9. end
-</pre></p>
+</pre>
  */
 package javolution.xml;
 

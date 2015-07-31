@@ -13,10 +13,10 @@ package javolution.util.function;
  *     {@link Function multi-parameters functions}.</p>
  * 
  * <p> Multi-variables may represent an unbounded number of variables.
- *     [code]
+ *     {@code
  *     MultiVariable<Double, MultiVariable<Integer, Boolean>> tertiaryVariable
  *         = new MultiVariable(2.3, new MultiVariable(57, true));
- *     [/code].</p>
+ *     }.</p>
  * 
  * @param <L> the type of the variable on the left.
  * @param <R> the type of the variable on the right.
@@ -31,7 +31,9 @@ public class MultiVariable<L, R> {
 
     /**
      * Returns a multi-variable holding the specified objects (possibly 
-     * multi-variables themselves). 
+     * multi-variables themselves).
+     * @param left Left Variable
+     * @param right Right Variable 
      */
     public MultiVariable(L left, R right) {
         this.left = left;
@@ -39,14 +41,14 @@ public class MultiVariable<L, R> {
     }
 
     /**
-     * Returns the variable on the left.
+     * @return the variable on the left.
      */
     public L getLeft() {
         return left;
     }
 
     /**
-     * Returns the variable on the right.
+     * @return the variable on the right.
      */
     public R getRight() {
         return right;

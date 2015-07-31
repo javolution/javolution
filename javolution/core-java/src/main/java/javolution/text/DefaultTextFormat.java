@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
 public @interface DefaultTextFormat {
 
     /**
-     * Returns the default text format of the annotated class.
+     * @return the default text format of the annotated class.
      */
     Class<? extends TextFormat<?>> value();
 

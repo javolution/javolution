@@ -16,7 +16,7 @@ import javolution.osgi.internal.OSGiServices;
  * <p> When granting/revoking permission the order is important. 
  *     For example, the following code revokes all configurable permissions 
  *     except for setting the concurrency level.
- * [code]
+ * {@code
  * SecurityContext ctx = SecurityContext.enter(); 
  * try {
  *     ctx.revoke(Configurable.RECONFIGURE_PERMISSION);
@@ -26,7 +26,7 @@ import javolution.osgi.internal.OSGiServices;
  *     ...
  *  } finally {
  *     ctx.exit(); // Back to previous security settings. 
- *  }[/code]</p>
+ *  }}</p>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -61,6 +61,7 @@ public abstract class SecurityContext extends AbstractContext {
 
         /**
          * Creates a security permission for all actions of the specified category.
+         * @param category Category to create a Permission for
          */
         public Permission(Class<? super T> category) {
             this(category, null, null);
@@ -69,6 +70,8 @@ public abstract class SecurityContext extends AbstractContext {
         /**
          * Creates a security permission for the specified action of the 
          * specified category.
+         * @param category Category to create a Permission for
+         * @param action Action to create a Permission for
          */
         public Permission(Class<? super T> category, String action) {
             this(category, action, null);
@@ -77,6 +80,9 @@ public abstract class SecurityContext extends AbstractContext {
         /**
          * Creates a security permission for the specified instance and the 
          * specified action of the specified category.
+         * @param category Category to create a Permission for
+         * @param action Action to create a Permission for
+         * @param instance Instance to create a permission for
          */
         public Permission(Class<? super T> category, String action, T instance) {
             this.category = category;
@@ -85,21 +91,21 @@ public abstract class SecurityContext extends AbstractContext {
         }
 
         /**
-         * Returns the permission category or <code>null</code> for all categories.
+         * @return the permission category or <code>null</code> for all categories.
          */
         public Class<? super T> getCategory() {
             return category;
         }
 
         /**
-         * Returns the permission action or <code>null</code> for all actions.
+         * @return the permission action or <code>null</code> for all actions.
          */
         public String getAction() {
             return action;
         }
 
         /**
-         * Returns the permission instance or <code>null</code> for all instances.
+         * @return the permission instance or <code>null</code> for all instances.
          */
         public T getInstance() {
             return instance;
@@ -201,6 +207,7 @@ public abstract class SecurityContext extends AbstractContext {
      * Indicates if the specified permission is granted.
      *
      * @param permission the permission to check.
+     * @return true if permission is granted
      */
     public abstract boolean isGranted(Permission<?> permission);
 
@@ -245,7 +252,7 @@ public abstract class SecurityContext extends AbstractContext {
     }
 
     /**
-     * Returns the current security context. 
+     * @return the current security context. 
      */
     private static SecurityContext currentSecurityContext() {
         SecurityContext ctx = current(SecurityContext.class);

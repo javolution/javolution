@@ -45,7 +45,7 @@ import javolution.util.service.TableService;
  *     For comparison {@code ArrayList.add} is in <i><b>O(size)</b></i> due to resize. </p>
  *     
  *     <a href="doc-files/FastTable-WCET.png">
- *     <img src="doc-files/FastTable-WCET.png" alt="Worst Case Execution Time" height="210" width="306" />
+ *     <img src="doc-files/FastTable-WCET.png" alt="Worst Case Execution Time" height="210" width="306">
  *     </a>
  *     
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
@@ -53,17 +53,17 @@ import javolution.util.service.TableService;
  *     in terms of adaptability, space or performance.
  *     Fast tables can be concurrently iterated / modified using their {@link #shared() shared}/{@link #atomic() atomic} 
  *     views. They inherit all the fast collection views and support the {@link #subTable subTable} view over a portion of the table.
- * [code]
+ * {@code
  * FastTable<String> names = FastTable.of("John Deuff", "Otto Graf", "Sim Kamil");
  * names.sort(Equalities.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
  * names.filtered(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
  * names.filtered(str -> str.startsWith("A")).parallel().clear(); // Same as above but performed concurrently.
- * [/code]</p>
+ * }</p>
  *
  * <p> As for any {@link FastCollection fast collection}, iterations can be 
  *     performed using closures.
- * [code]
+ * {@code
  * FastTable<Person> persons = ...;
  * Person findWithName(final String name) { 
  *     return persons.filtered(new Predicate<Person>() { 
@@ -71,13 +71,13 @@ import javolution.util.service.TableService;
  *             return (person.getName().equals(name));
  *         }
  *     }).any(Person.class);
- * }[/code]</p>
+ * }}</p>
  * 
  * <p>  The notation is shorter with Java 8.
- * [code]
+ * {@code
  * Person findWithName(String name) {
  *     return persons.filtered(person -> person.getName().equals(name)).any(Person.class);
- * }[/code]</p>
+ * }}</p>
  * 
  *  <p> FastTable iteration order is the {@link #add insertion} order; specialization may 
  *      have a different order, for example the iteration order of {@link FastSortedTable} 
@@ -99,6 +99,9 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Returns a new table holding the same elements as the specified 
      * array (convenience method).
+     * @param <E> Type of the FastTable
+     * @param elements Elements to place in a FastTable
+     * @return FastTable containing the specified elements
      */
     public static <E> FastTable<E> of(E... elements) {
     	FastTable<E> table = new FastTable<E>();
@@ -109,6 +112,9 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Returns a new table holding the same elements as the specified 
      * collection (convenience method).
+     * @param <E> Type of the FastTable
+     * @param that Collection to convert to a FastTable
+     * @return FastTable containing the elements specified in the collection
      */
     public static <E> FastTable<E> of(Collection<? extends E> that) {
     	FastTable<E> table = new FastTable<E>();
@@ -127,6 +133,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Creates an empty table using the specified comparator for element 
      * equality.
+     * @param comparator Equalities comparator to use in the FastTable
     */
     public FastTable(Equality<? super E> comparator) {
         service = new FastTableImpl<E>(comparator);
@@ -134,6 +141,7 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
 
     /**
      * Creates a fast table backed up by the specified service implementation.
+     * @param service TableService to back the FastTable with
      */
     protected FastTable(TableService<E> service) {
         this.service = service;
@@ -172,6 +180,9 @@ public class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Returns a view over a portion of the table (equivalent to 
      * {@link java.util.List#subList(int, int)}).
+     * @param fromIndex Starting index for a subtable
+     * @param toIndex Ending index for a subtable
+     * @return Subtable representing the specified range of the parent FastTable
      */
     public FastTable<E> subTable(int fromIndex, int toIndex) {
         return new FastTable<E>(

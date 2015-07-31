@@ -40,6 +40,10 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
     /**
      * Returns a new sorted map holding the same entries as the specified 
      * map (convenience method).
+     * @param <K> Type of the Keys of the FastSortedMap
+     * @param <V> Type of the Values of the FastSortedMap
+     * @param that Map to convert to a FastSortedMap
+     * @return FastSortedMap containing the specified Map's key/value pairs
      */
     public static <K,V> FastSortedMap<K,V> of(Map<? extends K, ? extends V> that) {
     	FastSortedMap<K,V> map = new FastSortedMap<K,V>();
@@ -57,6 +61,7 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
     /**
       * Creates an empty sorted map ordered using the specified comparator 
       * for order.
+      * @param keyComparator Key Comparator to use in the FastSortedMap
     */
     public FastSortedMap(Equality<? super K> keyComparator) {
         this(keyComparator, Equalities.STANDARD);
@@ -65,6 +70,8 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
     /**
       * Creates an empty sorted map ordered using the specified key comparator 
       * for order and value comparator for values equality.
+      * @param keyComparator Key Comparator to use in the FastSortedMap
+      * @param valueComparator Value Comparator to use in the FastSortedMap
     */
     public FastSortedMap(Equality<? super K> keyComparator,
             Equality<? super V> valueComparator) {
@@ -73,6 +80,7 @@ public class FastSortedMap<K, V> extends FastMap<K, V> implements
 
     /**
      * Creates a sorted map backed up by the specified service implementation.
+     * @param service SortedMapService to back the FastSortedMap with
      */
     protected FastSortedMap(SortedMapService<K, V> service) {
         super(service);

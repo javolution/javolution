@@ -2,13 +2,15 @@ package javolution.util.function;
 
 import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
+import javolution.text.CharArray;
 import javolution.util.internal.comparator.ArrayComparatorImpl;
+import javolution.util.internal.comparator.CharArrayComparatorImpl;
+import javolution.util.internal.comparator.CharArrayFastComparatorImpl;
 import javolution.util.internal.comparator.IdentityComparatorImpl;
 import javolution.util.internal.comparator.LexicalCaseInsensitiveComparatorImpl;
 import javolution.util.internal.comparator.LexicalComparatorImpl;
 import javolution.util.internal.comparator.LexicalFastComparatorImpl;
 import javolution.util.internal.comparator.StandardComparatorImpl;
-
 import static javolution.lang.Realtime.Limit.*;
 
 /**
@@ -71,6 +73,23 @@ public class Equalities {
     @Parallelizable
     @Realtime(limit = LINEAR)
     public static final Equality<CharSequence> LEXICAL_FAST = new LexicalFastComparatorImpl();
+
+    
+    /**
+     * A CharArray optimized comparator.
+     */
+    @Parallelizable
+    @Realtime(limit = LINEAR)
+    public static final Equality<CharArray> CHAR_ARRAY = new CharArrayComparatorImpl();
+
+    /**
+     * An optimized CharArray comparator, taking 
+     * a sample of few characters instead of the whole character sequence to 
+     * calculate the hash code (still equality comparison checks all characters).
+     */
+    @Parallelizable
+    @Realtime(limit = LINEAR)
+    public static final Equality<CharArray> CHAR_ARRAY_FAST = new CharArrayFastComparatorImpl();
 
     /**
      * Utility class (private constructor).

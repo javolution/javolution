@@ -45,13 +45,13 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 import javolution.util.service.CollectionService;
 
 /**
- * <p> A closure-based collection supporting numerous views which can be chained.
+ * <p> A closure-based collection supporting numerous views which can be chained. </p>
  * <ul>
  *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free 
  *    and collection updates (including {@link #addAll addAll}, {@link #removeIf removeIf}} are atomic.</li>
  *    <li>{@link #shared} - Thread-safe view using allowing concurrent reads based 
  *    on mutex (<a href="http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
- *    readers-writer locks).</li>
+ *    readers-writer locks</a>).</li>
  *    <li>{@link #parallel} - A view allowing parallel processing including {@link #update updates}.</li>
  *    <li>{@link #sequential} - View disallowing parallel processing.</li>
  *    <li>{@link #unmodifiable} - View which does not allow any modification.</li>
@@ -61,21 +61,21 @@ import javolution.util.service.CollectionService;
  *    <li>{@link #sorted sorted()} - View exposing elements sorted according to the collection comparator.</li>
  *    <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
  *    <li>{@link #distinct} - View exposing each element only once.</li>
- * </ul></p>
+ * </ul>
  * 
  * <p> Unmodifiable collections are not always  {@link javolution.lang.Constant constant}. 
  *     Constant/immutable collections can be obtained from collection specializations.
- * [code]
+ * {@code
  * ConstantTable<String>> winners = ConstantTable.of("John Deuff", "Otto Graf", "Sim Kamil");
  *     // Immutability is guaranteed by construction (no reference left on the array source).
- * [/code]</p>
+ * }</p>
  * 
  * <p> Atomic collections use <a href="http://en.wikipedia.org/wiki/Copy-on-write">Copy-On-Write</a> 
  *     optimizations in order to provide mutex-free read access. Only writes operations are mutually 
  *     exclusive. Collections can be optimized to not require the full copy during write operations
  *     (e.g. immutable parts don't need to be copied). Still, when multiple updates are performed,
  *     it is beneficial to group them into one single {@link #update update} operation.
- * [code]
+ * {@code
  * FastTable<String> tokens = new FastTable<String>().atomic();
  * ...
  * // Replace null with "" in tokens. If tokens is atomic the update is atomic.
@@ -86,14 +86,14 @@ import javolution.util.service.CollectionService;
  *             if (view.get(i) == null) view.set(i, "");
  *         }
  *     }
- * });[/code]</p>
+ * });}</p>
  * <p> The same code using closure (Java 8).
- * [code]
+ * {@code
  *  tokens.update((List<String> view) -> {
  *      for (int i = 0, n = view.size(); i < n; i++) {
  *          if (view.get(i) == null) view.set(i, "");
  *      }
- *  });[/code]</p>
+ *  });}</p>
  * 
  * <p> Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
  *     Java 8 streams</a> except that views are themselves collections (virtual collections)
@@ -101,7 +101,7 @@ import javolution.util.service.CollectionService;
  *     since they already existed in the original java.util collection classes (e.g. List.subList(...),
  *     Map.keySet(), Map.values()). Javolution extends to this concept and allows views to be chained 
  *     which addresses the concern of class proliferation.</p> 
- * [code]
+ * {@code
  * FastTable<String> names = FastTable.of("Oscar Thon", "Eva Poret", "Paul Auchon");
  * boolean found = names.comparator(Equalities.LEXICAL_CASE_INSENSITIVE).contains("LUC SURIEUX"); 
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
@@ -113,11 +113,11 @@ import javolution.util.service.CollectionService;
  *     public boolean test(CharSequence csq) {
  *         return csq.length() > 16; 
  *     }
- * });[/code]</p>
+ * });}
  *    
  * <p> Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
  *     Parallelism support, excellent memory characteristics (no caching and cost nothing to create), etc.
- * [code]
+ * {@code
  * String anyLongName = names.filtered(isLong).any(String.class); // Returns any long name.
  * int nbrChars = names.mapped(toLength).reduce(Reducers.sum()); // Returns the total number of characters.
  * int maxLength = names.mapped(toLength).parallel().max(); // Finds the longest name in parallel.
@@ -135,12 +135,12 @@ import javolution.util.service.CollectionService;
  *     .filtered(m -> Equalities.STANDARD.areEqual(m.getReturnType(), returnType))
  *     .any(Method.class);
  * if (matching == null) throw new InternalError("Enclosing method not found");
- * return matching;[/code]</p>
+ * return matching;}</p>
  *           
  * <p> If a collection (or a map) is shared, derived views are also thread-safe.
  *     Similarly, if a collection is {@link #parallel parallel}, closure-based iterations 
  *     on derived views are performed concurrently.
- * [code]
+ * {@code
  * FastTable<Person> persons = new FastTable<Person>().parallel();
  * ...
  * // Since persons is parallel, the search is done concurrently.
@@ -148,14 +148,14 @@ import javolution.util.service.CollectionService;
  *     public boolean test(Person person) {
  *         return person.getName().equals("John");
  *     }
- * }).any(Person.class);[/code]</p>
+ * }).any(Person.class);}</p>
  * 
  * <p> With Java 8, closures are greatly simplified using lambda expressions.
- * [code]
+ * {@code
  * Person john = persons.filtered(person -> person.getName().equals("John")).any(Person.class); // Same as above.
  * tasks.parallel().forEach(task -> task.run());
  * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order. 
- * [/code]</p>
+ * }</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -182,6 +182,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * retainAll()) are atomic. 
      * Iterators on atomic collections are <b>thread-safe</b> 
      * (no {@link ConcurrentModificationException} possible).
+     * @return An Atomic view over the FastCollection
      */
     @Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
     public FastCollection<E> atomic() {
@@ -196,6 +197,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * readers-writers locks</a> giving priority to writers. 
      * Iterators on shared collections are <b>thread-safe</b> 
      * (no {@link ConcurrentModificationException} possible).
+     * @return A shared thread-safe view over the FastCollection
      */
     @Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
     public FastCollection<E> shared() {
@@ -209,6 +211,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * The number of parallel views is equals to  
      * {@link javolution.context.ConcurrentContext#getConcurrency() 
      * concurrency}{@code + 1}.
+     * @return A parallel view over the FastCollection 
      * 
      * @see #perform(Consumer)
      * @see #update(Consumer)
@@ -223,6 +226,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /** 
      * Returns a sequential view of this collection. Using this view, 
      * all closure-based iterations are performed sequentially.
+     * @return A sequential view over the FastCollection
      */
     public FastCollection<E> sequential() {
         return new SequentialCollectionImpl<E>(service());
@@ -232,6 +236,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * Returns an unmodifiable view over this collection. Any attempt to 
      * modify the collection through this view will result into 
      * a {@link java.lang.UnsupportedOperationException} being raised.
+     * @return An unmodifiable view over the FastCollection
      */
     public FastCollection<E> unmodifiable() {
         return new UnmodifiableCollectionImpl<E>(service());
@@ -243,6 +248,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * no effect. If this collection is initially empty, using a filtered
      * view to add new elements ensure that this collection has only elements
      * satisfying the filter predicate.
+     * @param filter Predicate to filter the collection with
+     * @return A filtered view over the FastCollection filtered by the given predicate
      */
     public FastCollection<E> filtered(Predicate<? super E> filter) {
         return new FilteredCollectionImpl<E>(service(), filter);
@@ -251,6 +258,9 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /** 
      * Returns a view exposing elements through the specified mapping function.
      * The returned view does not allow new elements to be added.
+     * @param <R> Type of the FastCollection
+     * @param function Function to map the FastCollection with
+     * @return A mapped view over the FastCollection mapped with the given function
      */
     public <R> FastCollection<R> mapped(
             Function<? super E, ? extends R> function) {
@@ -260,7 +270,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /** 
      * Returns a view using the specified comparator for element equality 
      * and sorting.
-     * 
+     * @param cmp Comparator to perform comparison operations with
+     * @return FastCollection with the specified comparator 
      * @see #contains(Object)
      * @see #remove(Object)
      * @see #sorted()
@@ -273,6 +284,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /** 
      * Returns a view exposing elements sorted according to this 
      * collection {@link #comparator()}.
+     * @return A sorted view of the FastCollection
      * 
      * @see #comparator()
      * @see #comparator(Comparator)
@@ -284,8 +296,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
     /** 
      * Returns a view exposing elements sorted according to the specified 
      * comparator (convenience method).
-     * 
-     * @return {@code comparator(cmp).sorted()}
+     * @param cmp A comparator to sort the FastCollection with
+     * @return A sorted view of the FastCollection that is sorted with the specified comparator
      */
     public FastCollection<E> sorted(Comparator<? super E> cmp) {
         return comparator(cmp).sorted();
@@ -293,6 +305,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /** 
      * Returns a view exposing elements in reverse iterative order.
+     * @return A reversed view fo the FastCollection
      */
     public FastCollection<E> reversed() {
         return new ReversedCollectionImpl<E>(service());
@@ -303,7 +316,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * over the {@link #comparator() same} elements). Adding elements already 
      * in the collection through this view has no effect. If this collection is 
      * initially empty, using a distinct view to add new elements ensures that
-     * this collection has no duplicate.  
+     * this collection has no duplicate. 
+     * @return A distinct view of the FastCollection 
      */
     public FastCollection<E> distinct() {
         return new DistinctCollectionImpl<E>(service());
@@ -528,6 +542,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * The search is performed concurrently if this collection is 
      * {@link #parallel() parallel}.
      * 
+     * @param <T> Type of element to fetch
      * @param type the element type searched for.
      * @return {@code reduce(Reducers.any(type))}
      * @see Reducers#any
@@ -573,7 +588,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
      * and/or ordering if this collection is sorted. The comparator is 
      * used by methods such as {@link #contains(Object)} or 
      * {@link #remove(Object)} but it is ignored when comparing collections
-     * for {@link #equals(Object) equality}.  
+     * for {@link #equals(Object) equality}.
+     * @return A reference to the comparator used by this FastCollection  
      */
     @Realtime(limit = CONSTANT)
     public Equality<? super E> comparator() {
@@ -624,12 +640,16 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable {
 
     /**
      * Returns the service implementation of this collection (for sub-classes).
+     * @return A reference to the service backing this FastCollection
      */
     protected abstract CollectionService<E> service();
 
     /**
      * Returns the service implementation of any fast collection 
      * (for sub-classes).
+     * @param <E> The type of the FastCollection
+     * @param collection The FastCollection to get the service of
+     * @return A reference to the service backing the specified FastCollection 
      */
     protected static <E> CollectionService<E> serviceOf(
             FastCollection<E> collection) {

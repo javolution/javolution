@@ -26,6 +26,7 @@ public interface Iteration<E>  {
        
      /** 
      * Runs the iteration using the specified iterator.
+     * @param it Iterator to run
      */
     void run(Iterator<E> it);
   

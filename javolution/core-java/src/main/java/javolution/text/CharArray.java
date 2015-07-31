@@ -16,7 +16,8 @@ import javolution.util.function.Equalities;
  *     typically used/reused to provide <code>CharSequence</code> views 
  *     over existing character buffers.</p>
  *     
- * <p> Instances of this classes have the following properties:<ul>
+ * <p> Instances of this classes have the following properties:</p>
+ * <ul>
  * 
  *     <li> They support equality or lexical comparison with any
  *          <code>CharSequence</code> (e.g. <code>String</code>).</li>
@@ -28,7 +29,7 @@ import javolution.util.function.Equalities;
  *     <li> They support fast conversions to primitive types 
  *          (e.g. {@link #toBoolean() Boolean}, {@link #toInt int}).</li>
  *          
- *     </ul></p>
+ *     </ul>
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.3, January 10, 2007

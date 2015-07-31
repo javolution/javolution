@@ -27,12 +27,15 @@ public interface CollectionService<E> extends Collection<E>,
     /** 
      * Returns a copy of this collection; updates of the copy should not 
      * impact the original.
+     * @throws java.lang.CloneNotSupportedException if the clone operation is not supported by the implementation.
+     * @return a clone of the CollectionService
      */
     CollectionService<E> clone() throws CloneNotSupportedException;
 
     /** 
      * Returns the comparator used for element equality or order if the 
      * collection is sorted.
+     * @return the comparator used by the CollectionService
      */
     Equality<? super E> comparator();
     

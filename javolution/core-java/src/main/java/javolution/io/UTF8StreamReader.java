@@ -94,6 +94,7 @@ public final class UTF8StreamReader extends Reader {
      * Creates a UTF-8 reader having a byte buffer of specified capacity,
      * initialized to read with the specified InputStream
      * 
+     * @param inputStream InputStream to read
      * @param capacity the capacity of the byte buffer.
      */
     public UTF8StreamReader(InputStream inputStream, int capacity) {
@@ -331,6 +332,8 @@ public final class UTF8StreamReader extends Reader {
 
     /**
      * @deprecated Replaced by {@link #setInput(InputStream)}
+     * @param inStream InputStream to read
+     * @return Reference to this UTF8StreamReader
      */
     public UTF8StreamReader setInputStream(InputStream inStream) {
         return this.setInput(inStream);

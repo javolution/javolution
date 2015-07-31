@@ -268,6 +268,8 @@ public final class UTF8ByteBufferReader extends Reader {
 
     /**
      * @deprecated Replaced by {@link #setInput(ByteBuffer)}
+     * @param byteBuffer ByteBuffer to use as input
+     * @return Reference to this UTF8ByteBufferReader
      */
     public UTF8ByteBufferReader setByteBuffer(ByteBuffer byteBuffer) {
         return this.setInput(byteBuffer);

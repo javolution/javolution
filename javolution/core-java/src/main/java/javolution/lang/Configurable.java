@@ -26,23 +26,22 @@ import javolution.text.TextContext;
  * <p> The response is obviously NO !</p>
  *
  * <p> Let's compare the following examples:
- * [code]
+ * {@code
  * class Document {
- *     private static final Font FONT
- *         = Font.decode(System.getProperty("myPkg.Document#FONT") != null ?
+ *     private static final Font FONT = Font.decode(System.getProperty("myPkg.Document#FONT") != null ?
  *             System.getProperty("FONT") : "Arial-BOLD-18");
- * }[/code]</p>
+ * }}</p>
  * 
  * <p>With the following:
- * [code]
+ * {@code
  * class Document {
  *     public static final Configurable<Font> FONT = new Configurable<Font>() {
- *         @Override
+ *         {@literal@}Override
  *         protected Font getDefault() { 
  *             new Font("Arial", Font.BOLD, 18);
  *         }
  *     };
- * }[/code]</p>
+ * }}</p>
  *  
  * <p> Not only the second example is cleaner, but the actual configuration
  *     data can come from anywhere, from system properties (default), 
@@ -52,24 +51,24 @@ import javolution.text.TextContext;
  * <p> Configurables may perform any logic upon initialization or 
  *     update. Users are notified of configuration events through 
  *     the OSGi {@link Configurable.Listener} service.
- * [code]
+ * {@code
  * class Index {
  *     // Holds the number of unique preallocated instances (default {@code 1024}).  
  *     public static final Configurable<Integer> UNIQUE = new Configurable<Integer>() {
- *         @Override
+ *         {@literal@}Override
  *         protected Integer getDefault() { 
  *             return 1024;
  *         }
- *         @Override
+ *         {@literal@}Override
  *         protected Integer initialized(Integer value) {
  *             return MathLib.min(value, 65536); // Hard-limit.
  *         }
- *         @Override
+ *         {@literal@}Override
  *         protected Integer reconfigured(Integer oldCount, Integer newCount) {
  *             throw new UnsupportedOperationException("Dynamic reconfiguration not supported."); 
  *         }               
  *     }
- * }[/code]</p>
+ * }}</p>
  *        
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -85,6 +84,7 @@ public abstract class Configurable<T> {
         /**
          * Receives notification that a configurable has been initialized..
          * 
+         * @param <T> type of the configurable value
          * @param configurable the configurable instance being initialized.
          * @param value the initial value.
          */
@@ -93,6 +93,7 @@ public abstract class Configurable<T> {
         /**
          * Receives notification that a configurable has been updated.
          * 
+         * @param <T> type of the configurable value
          * @param configurable the configurable instance being updated.
          * @param oldValue the previous value.
          * @param newValue the updated value.
@@ -164,7 +165,7 @@ public abstract class Configurable<T> {
     }
 
     /**
-     * Returns this configurable value.
+     * @return this configurable value.
      */
     public T get() {
         return value;
@@ -178,6 +179,7 @@ public abstract class Configurable<T> {
      * impervious to obfuscation or if the enclosing class defines multiple 
      * configurable fields.
      * 
+     * @return the name of this configurable value
      * @throws UnsupportedOperationException if the enclosing class has
      *         multiple configurable static fields.
      */
@@ -201,7 +203,7 @@ public abstract class Configurable<T> {
     }
 
     /**
-     * Returns the permission to configure this instance.
+     * @return the permission to configure this instance.
      */
     public Permission<Configurable<T>> getReconfigurePermission() {
         return reconfigurePermission;
@@ -235,7 +237,7 @@ public abstract class Configurable<T> {
     }
 
     /**
-     * Returns this configurable default value (always different from 
+     * @return this configurable default value (always different from 
      * {@code null}).
      */
     protected abstract T getDefault();
@@ -256,7 +258,9 @@ public abstract class Configurable<T> {
      * Parses the specified text to return the corresponding value. 
      * This method is used to initialize this configurable from 
      * system properties. The default implementation uses the 
-     * current {@link TextContext} to retrieve the value format. 
+     * current {@link TextContext} to retrieve the value format.
+     * @param str String to parse for a value
+     * @return parsed value 
      */
     @SuppressWarnings("unchecked")
     protected T parse(String str) {

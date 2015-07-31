@@ -20,29 +20,28 @@ import java.lang.annotation.Target;
  *     threads concurrently and whether or not it is 
  *     {@link Parallelizable#mutexFree() mutex-free} (not blocking).</p>
  * 
- * [code]
+ * <pre>
  * public class Operators {
- *    @Parallelizable
- *    public static final Reducer<Object> ANY = new Reducer<Object>() { ... }
+ *    &#64;Parallelizable
+ *    public static final Reducer&lt;Object&gt; ANY = new Reducer&lt;Object&gt;() { ... }
  *    
- *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final Reducer<Object> MAX = new Reducer<Object>() { ... }
+ *    &#64;Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final Reducer&lt;Object&gt; MAX = new Reducer&lt;Object&gt;() { ... }
  *    
- *    @Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final Reducer<Object> MIN = new Reducer<Object>() { ... }
+ *    &#64;Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final Reducer&lt;Object&gt; MIN = new Reducer&lt;Object&gt;() { ... }
  *    
- *    @Parallelizable
- *    public static final Reducer<Boolean> AND = new Reducer<Boolean>() { ... }
+ *    &#64;Parallelizable
+ *    public static final Reducer&lt;Boolean&gt; AND = new Reducer&lt;Boolean&gt;() { ... }
  *    
- *    @Parallelizable
- *    public static final Reducer<Boolean> OR = new Reducer<Boolean>() { ... }
+ *    &#64;Parallelizable
+ *    public static final Reducer&lt;Boolean&gt; OR = new Reducer&lt;Boolean&gt;() { ... }
  *    
- *    @Parallelizable(comment="Internal use of AtomicInteger")
- *    public static final Reducer<Integer> SUM = new Reducer<Integer>() { ... }
- * }[/code]
+ *    &#64;Parallelizable(comment="Internal use of AtomicInteger")
+ *    public static final Reducer&lt;Integer&gt; SUM = new Reducer&lt;Integer&gt;() { ... }
+ * </pre>
  *  
- * <p> Classes with no internal fields or {@link javolution.lang.Immutable 
- *     Immutable} are usually parallelizable and mutex-free.</p>
+ * <p> Classes with no internal fields or Immutable are usually parallelizable and mutex-free.</p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
@@ -57,6 +56,7 @@ public @interface Parallelizable {
     /**
      * Indicates if this element can safely be used concurrently 
      * (default {@code true}).
+     * @return true if the element can safely be used concurrently, false otherwise
      */
     boolean value() default true;
 
@@ -67,11 +67,13 @@ public @interface Parallelizable {
      * priority inversion</a> and possibly unbounded response times,
      * a real-time VM (with priority inheritance) is recommended
      * when using {@link Realtime real-time} elements which are not mutex-free.
+     * @return true if mutex free, false otherwise
      */
     boolean mutexFree() default true;
 
     /**
      * Provides additional information (default {@code ""}).
+     * @return comment providing additional information
      */
     String comment() default "";
 

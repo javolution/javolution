@@ -18,11 +18,12 @@ import javolution.xml.stream.XMLStreamWriter;
  *     their XML representation.</p>
  *     
  * <p> Custom bindings are used to alias class names and 
- *     ensure that the XML representation is:<ul>
+ *     ensure that the XML representation is:</p>
+ * <ul>
  *     <li> Impervious to obfuscation.</li>
  *     <li> Unaffected by any class refactoring.</li>
  *     <li> Can be mapped to multiple implementations. For example:
- * [code]
+ * {@code
  * // Creates a binding to serialize Swing components into high-level XML
  * // and deserialize the same XML into SWT components.
  * XMLBinding swingBinding = new XMLBinding();
@@ -44,11 +45,11 @@ import javolution.xml.stream.XMLStreamWriter;
  * XMLObjectReader reader = new XMLObjectReader().setXMLBinding(swtBinding);
  * reader.setInput(new FileInputStream("C:/desktop.xml"));
  * SWTDesktop swtDesktop = reader.read("Desktop", SWTDesktop.class);
- * reader.close();[/code]</li>
- * </ul></p>        
+ * reader.close();}</li>
+ * </ul>
  *     
  * <p> More advanced bindings can be created by sub-classing this class.
- * [code]
+ * {@code
  * // XML binding using reflection.
  * public ReflectionBinding extends XMLBinding {
  *     protected XMLFormat getFormat(Class forClass) {
@@ -73,7 +74,7 @@ import javolution.xml.stream.XMLStreamWriter;
  *          if (Collection.class.isAssignableFrom(forClass)) return myCollectionFormat;
  *          return super.getFormat(cls); // Returns XMLFormat from XMLContext
  *      }
- * }[/code]</p>
+ * }}</p>
  *          
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.4, December 1, 2009
@@ -128,7 +129,7 @@ public class XMLBinding implements XMLSerializable {
      * attribute is never read/written (which may prevent unmarshalling).
      * 
      * @param classAttribute the qualified name of the class attribute or 
-     *        <code>null<code>.
+     *        <code>null</code>.
      */
     public void setClassAttribute(QName classAttribute) {
         _classAttribute = classAttribute;
@@ -138,7 +139,7 @@ public class XMLBinding implements XMLSerializable {
      * Convenience method equivalent to {@link #setClassAttribute(QName)
      * setClassAttribute(QName.valueOf(name))}.
      * 
-     * @param name the name of the class attribute or <code>null<code>.
+     * @param name the name of the class attribute or <code>null</code>.
      */
     public final void setClassAttribute(String name) {
         setClassAttribute(name == null ? null : QName.valueOf(name));
@@ -150,6 +151,7 @@ public class XMLBinding implements XMLSerializable {
      * for the specified class.
      * 
      * @param forClass the class for which the XML format is returned.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while formatting
      * @return the XML format for the specified class (never <code>null</code>).
      */
     protected XMLFormat<?> getFormat(Class<?> forClass)
@@ -174,7 +176,7 @@ public class XMLBinding implements XMLSerializable {
      *        used to identify the class (e.g. when the element name is 
      *        specified by the user then attributes have to be used).
      * @return the corresponding class.
-     * @throws XMLStreamException 
+     * @throws XMLStreamException if an exception occurs while reading the class
      */
     protected Class<?> readClass(XMLStreamReader reader, boolean useAttributes)
             throws XMLStreamException {
@@ -235,7 +237,7 @@ public class XMLBinding implements XMLSerializable {
      * @param useAttributes indicates if the element's attributes should be 
      *        used to identify the class (e.g. when the element name is 
      *        specified by the user then attributes have to be used).
-     * @throws XMLStreamException 
+     * @throws XMLStreamException if an exception occurs while writing the class
      */
     protected void writeClass(Class<?> cls, XMLStreamWriter writer,
             boolean useAttributes) throws XMLStreamException {

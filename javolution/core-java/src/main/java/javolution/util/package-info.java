@@ -5,15 +5,15 @@
     the standard library; Javolution approach is quite the opposite. It aims to
     provide only the quintessential classes from which all others can be derived.
     </p>
-    <img src="doc-files/architecture.png" /> 
+    <img alt="architecture image" src="doc-files/architecture.png"> 
 
 <h2><a name="FAQ">FAQ:</a></h2>
 <ol>
-    <li><b>Does <b>J</b>avolution provide immutable collections similar to 
+    <li><b>Does Javolution provide immutable collections similar to 
      the ones provided by Scala or .NET ?</b>
-    <p> Using <b>J</b>avolution you may return an {@link javolution.lang.Immutable Immutable} 
+    <p> Using <b>J</b>avolution you may return an immutable 
         view (const reference) over any object which cannot be modified including collections or maps.
-[code]
+{@code
 public class UnitSystem {
     final FastSet<Unit> units;
     public UnitSystem(Unit... units) {
@@ -25,7 +25,7 @@ public class UnitSystem {
 }
 ...
 UnitSystem MKSA = new UnitSystem(M, K, S, A);
-[/code]</p>
+}</p>
     </li>
 </ol>    
     

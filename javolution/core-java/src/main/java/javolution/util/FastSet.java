@@ -47,6 +47,9 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     /**
      * Returns a new set holding the specified elements
      * (convenience method).
+     * @param <E> Type of the FastSet
+     * @param elements Elements to create a FastSet of
+     * @return FastSet containing the specified elements
      */
     public static <E> FastSet<E> of(E... elements) {
     	FastSet<E> set = new FastSet<E>();
@@ -57,6 +60,9 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     /**
      * Returns a new set holding the same elements as the specified 
      * collection (convenience method).
+     * @param <E> Type of the FastSet
+     * @param that Collection to convert into a FastSet
+     * @return FastSet containing the elements in the specified collection
      */
     public static <E> FastSet<E> of(Collection<? extends E> that) {
     	FastSet<E> set = new FastSet<E>();
@@ -75,6 +81,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
     /**
      * Creates an empty set backed up by a {@link FastMap} and using the 
      * specified comparator for key equality.
+     * @param comparator Comparator to apply to the FastSet
     */
     public FastSet(Equality<? super E> comparator) {
         service = new FastMapImpl<E, Void>(comparator, Equalities.IDENTITY)
@@ -83,6 +90,7 @@ public class FastSet<E> extends FastCollection<E> implements Set<E> {
 
     /**
       * Creates a fast set backed up by the specified service implementation.
+      * @param service SetService to back the FastSet with
       */
     protected FastSet(SetService<E> service) {
         this.service = service;

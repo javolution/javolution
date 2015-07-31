@@ -32,7 +32,7 @@ import javolution.text.TextBuilder;
  *     {@link Struct}'s {@link Member members} and follows the same wordSize
  *      rules as <code>C/C++ structs</code>.</p>
  *
- * <p> This class (as well as the {@link Union} sub-class) facilitates:
+ * <p> This class (as well as the {@link Union} sub-class) facilitates:</p>
  *     <ul>
  *     <li> Memory sharing between Java applications and native libraries.</li>
  *     <li> Direct encoding/decoding of streams for which the structure
@@ -40,11 +40,11 @@ import javolution.text.TextBuilder;
  *     <li> Serialization/deserialization of Java objects (complete control,
  *          e.g. no class header)</li>
  *     <li> Mapping of Java objects to physical addresses (with JNI).</li>
- *     </ul></p>
+ *     </ul>
  *
  * <p> Because of its one-to-one mapping, it is relatively easy to convert C
  *     header files (e.g. OpenGL bindings) to Java {@link Struct}/{@link Union}
- *     using simple text macros. Here is an example of C struct:
+ *     using simple text macros. Here is an example of C struct:</p>
  * [code]
  * enum Gender{MALE, FEMALE};
  * struct Date {
@@ -58,8 +58,8 @@ import javolution.text.TextBuilder;
  *     struct Date birth;
  *     float       grades[10];
  *     Student*    next;
- * };[/code]</p>
- * <p> and here is the Java equivalent using this class:
+ * };[/code]
+ * <p> and here is the Java equivalent using this class:</p>
  * [code]
  * public enum Gender { MALE, FEMALE };
  * public static class Date extends Struct {
@@ -73,20 +73,20 @@ import javolution.text.TextBuilder;
  *     public final Date                 birth  = inner(new Date());
  *     public final Float32[]            grades = array(new Float32[10]);
  *     public final Reference32<Student> next   =  new Reference32<Student>();
- * }[/code]</p>
+ * }[/code]
  * <p> Struct's members are directly accessible:
- * [code]
+ * {@code
  * Student student = new Student();
  * student.gender.set(Gender.MALE);
  * student.name.set("John Doe"); // Null terminated (C compatible)
  * int age = 2003 - student.birth.year.get();
  * student.grades[2].set(12.5f);
- * student = student.next.get();[/code]</p>
+ * student = student.next.get();}</p>
  *
  * <p> Applications can work with the raw {@link #getByteBuffer() bytes}
  *     directly. The following illustrate how {@link Struct} can be used to
  *     decode/encode UDP messages directly:
- * [code]
+ * {@code
  * class UDPMessage extends Struct {
  *      Unsigned16 xxx = new Unsigned16();
  *      ...
@@ -102,13 +102,13 @@ import javolution.text.TextBuilder;
  *         int xxx = message.xxx.get();
  *         ... // Process message fields directly.
  *     }
- * }[/code]</p>
+ * }}</p>
  *
  * <p> It is relatively easy to map instances of this class to any physical
  *     address using
  *     <a href="http://java.sun.com/docs/books/tutorial/native1.1/index.html">
  *     JNI</a>. Here is an example:
- * [code]
+ * {@code
  * import java.nio.ByteBuffer;
  * class Clock extends Struct { // Hardware clock mapped to memory.
  *     Unsigned16 seconds  = new Unsigned16(5); // unsigned short seconds:5
@@ -118,15 +118,15 @@ import javolution.text.TextBuilder;
  *         setByteBuffer(Clock.nativeBuffer(), 0);
  *     }
  *     private static native ByteBuffer nativeBuffer();
- * }[/code]</p>
+ * }}</p>
  *  <p> Below is the <code>nativeBuffer()</code> implementation
  *     (<code>Clock.c</code>):
- *  [code]
+ *  {@code
  *  #include <jni.h>
  *  #include "Clock.h" // Generated using javah
  *  JNIEXPORT jobject JNICALL Java_Clock_nativeBuffer (JNIEnv *env, jclass) {
  *      return (*env)->NewDirectByteBuffer(env, clock_address, buffer_size)
- *  }[/code]</p>
+ *  }}</p>
  *
  * <p> Bit-fields are supported (see <code>Clock</code> example above).
  *     Bit-fields allocation order is defined by the Struct {@link #byteOrder}
@@ -485,7 +485,7 @@ public class Struct {
      *         // TopStruct and its inner structs use hardware byte order.
      *         return ByteOrder.nativeOrder();
      *    }
-     * }}[/code]</p></p>
+     * }}[/code]
      *
      * @return the byte order when reading/writing multibyte values
      *         (default: network byte order, <code>BIG_ENDIAN</code>).
@@ -518,6 +518,7 @@ public class Struct {
     /**
      * Defines the specified struct as inner of this struct.
      *
+     * @param <S> Type of the Inner Struct
      * @param struct the inner struct.
      * @return the specified struct.
      * @throws IllegalArgumentException if the specified struct is already
@@ -537,6 +538,7 @@ public class Struct {
      * The array is populated if necessary using the struct component
      * default constructor (which must be public).
      *
+     * @param <S> Type of the Struct Array
      * @param structs the struct array.
      * @return the specified struct array.
      * @throws IllegalArgumentException if the specified array contains
@@ -577,6 +579,7 @@ public class Struct {
      * structs. The array is populated if necessary using the struct component
      * default constructor (which must be public).
      *
+     * @param <S> Type of the Struct array
      * @param structs the two dimensional struct array.
      * @return the specified struct array.
      * @throws IllegalArgumentException if the specified array contains
@@ -600,6 +603,7 @@ public class Struct {
      * structs. The array is populated if necessary using the struct component
      * default constructor (which must be public).
      *
+     * @param <S> Type of the Struct Array
      * @param structs the three dimensional struct array.
      * @return the specified struct array.
      * @throws IllegalArgumentException if the specified array contains
@@ -623,6 +627,7 @@ public class Struct {
      * the array is populated when empty; custom members should use
      * literal (populated) arrays.
      *
+     * @param <M> Type of the Array Member
      * @param  arrayMember the array member.
      * @return the specified array member.
      * @throws UnsupportedOperationException if the specified array
@@ -708,6 +713,7 @@ public class Struct {
      * members, the array is populated when empty; custom members should use
      * literal (populated) arrays.
      *
+     * @param <M> Type of the Array Member
      * @param  arrayMember the two-dimensional array member.
      * @return the specified array member.
      * @throws UnsupportedOperationException if the specified array
@@ -730,7 +736,8 @@ public class Struct {
      * Defines the specified three-dimensional array member. For predefined
      * members, the array is populated when empty; custom members should use
      * literal (populated) arrays.
-     *
+     * 
+     * @param <M> Type of the Array Member
      * @param  arrayMember the three-dimensional array member.
      * @return the specified array member.
      * @throws UnsupportedOperationException if the specified array
@@ -778,7 +785,7 @@ public class Struct {
      * @param  bitSize the number of bits.
      * @return the specified bits read as a signed long.
      * @throws IllegalArgumentException if
-     *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
+     *         {@code(bitOffset + bitSize - 1) / 8 >= this.size()}
      */
     public long readBits(int bitOffset, int bitSize) {
         if ((bitOffset + bitSize - 1) >> 3 >= this.size()) throw new IllegalArgumentException(
@@ -830,7 +837,7 @@ public class Struct {
      * @param  bitOffset the bit start position in the Struct.
      * @param  bitSize the number of bits.
      * @throws IllegalArgumentException if
-     *         <code>(bitOffset + bitSize - 1) / 8 >= this.size()</code>
+     *         {@code(bitOffset + bitSize - 1) / 8 >= this.size()}
      */
     public void writeBits(long value, int bitOffset, int bitSize) {
         if ((bitOffset + bitSize - 1) >> 3 >= this.size()) throw new IllegalArgumentException(
@@ -1007,6 +1014,8 @@ public class Struct {
          * Holds the bit offset of this member (if any).
          * The actual position of the bits data depends upon the endianess and
          * the word size.
+         * 
+         * @return Integer representing the bit index
          */
         public final int bitIndex() {
             return _bitIndex;

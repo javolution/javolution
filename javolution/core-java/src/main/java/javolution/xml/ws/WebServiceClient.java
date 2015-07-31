@@ -24,7 +24,7 @@ import javolution.xml.stream.XMLStreamWriter;
  *     Javolution XML marshalling/unmarshalling.</p>
  *     
  * <p> Sub-classes may work from WSDL files, {@link javolution.xml.XMLFormat
- *     XMLFormat} or directly with the XML streams (StAX). For example:[code]
+ *     XMLFormat} or directly with the XML streams (StAX). For example:{@code
  *     private static class HelloWorld extends WebServiceClient  {
  *         protected void writeRequest(XMLObjectWriter out) throws XMLStreamException {
  *             XMLStreamWriter xml = out.getStreamWriter();
@@ -42,7 +42,7 @@ import javolution.xml.stream.XMLStreamWriter;
  *     ws.invoke();
  *     
  *      > Hello World!
- *     [/code]</p>
+ *     }</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 5.2, September 16, 2007
@@ -72,7 +72,8 @@ public abstract class WebServiceClient {
     /**
      * Sets the address of this web service.
      * 
-     * @param address the service full address. 
+     * @param address the service full address.
+     * @return Reference to this WebServiceClient 
      */
     public WebServiceClient setAddress(String address) {
         try {
@@ -85,6 +86,8 @@ public abstract class WebServiceClient {
 
     /**
      * Invokes the web service.
+     * @throws java.io.IOException if an error occurs opening the connection
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs writing the payload
      */
     public void invoke() throws IOException, XMLStreamException {
         try {
@@ -158,6 +161,7 @@ public abstract class WebServiceClient {
      * Writes the web service request (SOAP body).
      * 
      * @param out the XML object writer.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs writing the payload
      */
     protected abstract void writeRequest(XMLObjectWriter out)
             throws XMLStreamException;
@@ -167,6 +171,7 @@ public abstract class WebServiceClient {
      * writes the body XML events to <code>System.out</code>.
      * 
      * @param in the XML object reader.
+     * @throws javolution.xml.stream.XMLStreamException if an error occurs reading the payload
      */
     protected void readResponse(XMLObjectReader in) throws XMLStreamException {
         final XMLStreamReader xml = in.getStreamReader();

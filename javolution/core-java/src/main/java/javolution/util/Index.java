@@ -24,12 +24,12 @@ import javolution.util.internal.table.ConstantTableImpl;
 
 /**
  * <p> A non-negative number representing a position in an arrangement.
- * [code]
+ * {@code
  * interface Vector<F> {
  *     Vector<F> getSubVector(List<Index> indices); 
  *         // e.g. getSubVector(Index.rangeOf(0, n)) for the n first elements.
  *     ...
- * }[/code]</p>
+ * }}</p>
 
  * <p> Index performance is on-par with the primitive {@code int} type
  *     for small values and similar to {@link Integer} instances for large
@@ -190,6 +190,7 @@ public final class Index extends Number implements Comparable<Index>,
 	/**
 	 * Returns a copy of this index or <code>this</code> if the indexes 
 	 * is small (in permanent memory) in order to maintain unicity.
+	 * @return Copy of this Index
 	 */
 	public Index copy() {
 		return value < INSTANCES.length ? this : new Index(value);
@@ -261,6 +262,7 @@ public final class Index extends Number implements Comparable<Index>,
 
 	/**
 	 * Returns the index after this one.
+	 * @return Next Index
 	 */
 	public Index next() {
 		return Index.of(value + 1);
@@ -270,6 +272,7 @@ public final class Index extends Number implements Comparable<Index>,
 	 * Returns the index before this one.
 	 * 
 	 * @throws IndexOutOfBoundsException if (this == Index.ZERO)
+	 * @return Previous Index
 	 */
 	public Index previous() {
 		return Index.of(value - 1);
@@ -277,8 +280,9 @@ public final class Index extends Number implements Comparable<Index>,
 
 	/**
 	 * Ensures index unicity during deserialization.
+	 * @return Returns an Index checked for Unicity
 	 */
-	protected final Object readResolve() throws ObjectStreamException {
+	protected final Object readResolve() {
 		return Index.of(value);
 	}
 

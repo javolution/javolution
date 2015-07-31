@@ -1,8 +1,8 @@
 /**
 <p> Text handling package.</p>
 <h2><a name="FAQ">FAQ:</a></h2>
+<a name="FAQ-1"></a>
 <ol>
-    <a name="FAQ-1"></a>
     <li><b> Is parsing/formatting of floating-points numbers (e.g. <code>double</code>)
             equivalent to standard String/Double methods?</b>
     <p> With Javolution 4.1, <code>double</code> formatting/parsing is lossless 
@@ -17,7 +17,6 @@
         effect on GC. Better, it does not force the user to create intermediate <code>String</code>
         objects, any <code>CharSequence/Appendable</code> can be used! Serial parsing is also supported 
         (cursor parameter).</p>
-    <p></p>
     <a name="FAQ-2"></a>
     <li><b> I'm accumulating a large string, and all I want to do is 
 append to the end of the current string, which is the better class to use, 
@@ -27,7 +26,7 @@ to conserve memory.</b>
          document being appended has almost no impact in both cases).</p>
     <p> If the text being appended is large (or arbitrarily large) then using 
         {@link javolution.text.Text Text} is preferable.
-[code]
+{@code
 class FastCollection<T> {
      public final Text toText() {
          // We don't know the length of the text representation for
@@ -41,8 +40,7 @@ class FastCollection<T> {
          }
          return text.plus("}");
      }
-}[/code]</p>
-    <p></p>
+}}</p>
     <a name="FAQ-3"></a>
     <li><b> In our project's use of strings, there are a lot of
            instances of directory path names, such as
@@ -51,16 +49,15 @@ class FastCollection<T> {
 Can the 'Text' class save us memory when strings
 have common prefixes?</b>
     <p> It depends how you build your text. For example in following code:
-[code]
+{@code
 Text directoryName = Text.valueOf("/proj/lodecase/src/com/lodecase/util/");
 Text fooFileName = directoryName.plus("foo.java");
-Text barFileName = directoryName.plus("bar.java");[/code]
+Text barFileName = directoryName.plus("bar.java");}
         The prefix (directoryName)is shared between <code>fooFileName</code> and <code>barFileName</code>.</p>
     <p> Text is a binary tree of blocks of characters. In the example,
         above, <code>fooFileName</code> is a node with <code>directoryName</code> for 
         head and "foo.java" for tail. The tree is maintained balanced automatically 
         through <a href="http://en.wikipedia.org/wiki/Tree_rotation">tree rotations</a>.</p>
-    <p></p>
 </ol>
  */
 package javolution.text;

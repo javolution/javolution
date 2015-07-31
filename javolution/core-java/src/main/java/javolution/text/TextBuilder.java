@@ -98,7 +98,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  index the index of the character.
      * @return the character at the specified index.
      * @throws IndexOutOfBoundsException if 
-     *         <code>(index < 0) || (index >= this.length())</code>.
+     *         {@code(index < 0) || (index >= this.length())}
      */
     public final char charAt(int index) {
         if (index >= _length)
@@ -114,9 +114,9 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param srcEnd this text end index (not included).
      * @param dst the destination array to copy the data into.
      * @param dstBegin the offset into the destination array. 
-     * @throws IndexOutOfBoundsException if <code>(srcBegin < 0) ||
+     * @throws IndexOutOfBoundsException if {@code(srcBegin < 0) ||
      *  (dstBegin < 0) || (srcBegin > srcEnd) || (srcEnd > this.length())
-     *  || ((dstBegin + srcEnd - srcBegin) >  dst.length)</code>
+     *  || ((dstBegin + srcEnd - srcBegin) >  dst.length)}
      */
     public final void getChars(int srcBegin, int srcEnd, char[] dst,
             int dstBegin) {
@@ -137,8 +137,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      *
      * @param index the index of the character to modify.
      * @param c the new character. 
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *          (index >= this.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(index < 0) || 
+     *          (index >= this.length())}
      */
     public final void setCharAt(int index, char c) {
         if ((index < 0) || (index >= _length))
@@ -151,7 +151,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      *  setLength(newLength, '\u0000')}.
      *
      * @param newLength the new length of this builder.
-     * @throws IndexOutOfBoundsException if <code>(newLength < 0)</code>
+     * @throws IndexOutOfBoundsException if {@code(newLength < 0)}
      */
     public final void setLength(int newLength) {
         setLength(newLength, '\u0000');
@@ -164,7 +164,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      *
      * @param newLength the new length of this builder.
      * @param fillChar the character to be appended if required.
-     * @throws IndexOutOfBoundsException if <code>(newLength < 0)</code>
+     * @throws IndexOutOfBoundsException if {@code(newLength < 0)}
      */
     public final void setLength(int newLength, char fillChar) {
         if (newLength < 0)
@@ -184,8 +184,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  start the index of the first character inclusive.
      * @param  end the index of the last character exclusive.
      * @return a character sequence.
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-     *         (start > end) || (end > this.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(start < 0) || (end < 0) ||
+     *         (start > end) || (end > this.length())}
      */
     public final java.lang.CharSequence subSequence(int start, int end) {
         if ((start < 0) || (end < 0) || (start > end) || (end > _length))
@@ -211,6 +211,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * Appends the textual representation of the specified object. 
      * This method is equivalent to 
      * {@code TextContext.getFormat(obj.getClass()).format(obj, this)}
+     * @param obj Object to append
+     * @return Reference to this TextBuilder
      */
     public final TextBuilder append(Object obj) {
         if (obj == null) return append("null");
@@ -240,8 +242,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  start the index of the first character to append.
      * @param  end the index after the last character to append.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > csq.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(start < 0) || (end < 0) 
+     *         || (start > end) || (end > csq.length())}
      */
     public final TextBuilder append(CharSequence csq, int start,
             int end) {
@@ -276,8 +278,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  start the index of the first character to append.
      * @param  end the index after the last character to append.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > str.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(start < 0) || (end < 0) 
+     *         || (start > end) || (end > str.length())}
      */
     public final TextBuilder append(String str, int start, int end) {
         if (str == null)
@@ -321,8 +323,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  start the index of the first character to append.
      * @param  end the index after the last character to append.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > txt.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(start < 0) || (end < 0) 
+     *         || (start > end) || (end > txt.length())}
      */
     public final TextBuilder append(Text txt, int start, int end) {
         if (txt == null)
@@ -362,8 +364,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param  offset the index of the first character to append.
      * @param  length the number of character to append.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(offset < 0) || 
-     *         (length < 0) || ((offset + length) > chars.length)</code>
+     * @throws IndexOutOfBoundsException if {@code(offset < 0) || 
+     *         (length < 0) || ((offset + length) > chars.length)}
      */
     public final TextBuilder append(char chars[], int offset, int length) {
         final int end = offset + length;
@@ -566,8 +568,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * library formatting).
      * 
      * @param  d the <code>double</code> to format.
-     * @return <code>append(d, -1, (MathLib.abs(d) >= 1E7) ||
-     *        (MathLib.abs(d) < 0.001), false)</code>
+     * @return {@code append(d, -1, (MathLib.abs(d) >= 1E7) ||
+     *        (MathLib.abs(d) < 0.001), false)}
      */
     public final TextBuilder append(double d) {
         return append(d, -1, (MathLib.abs(d) >= 1E7)
@@ -695,8 +697,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param index the insertion position.
      * @param csq the character sequence being inserted.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(index < 0) || 
-     *         (index > this.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(index < 0) || 
+     *         (index > this.length())}
      */
     public final TextBuilder insert(int index, java.lang.CharSequence csq) {
         if ((index < 0) || (index > _length))
@@ -733,8 +735,8 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
      * @param start the beginning index, inclusive.
      * @param end the ending index, exclusive.
      * @return <code>this</code>
-     * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) 
-     *         || (start > end) || (end > this.length())</code>
+     * @throws IndexOutOfBoundsException if {@code(start < 0) || (end < 0) 
+     *         || (start > end) || (end > this.length())}
      */
     public final TextBuilder delete(int start, int end) {
         if ((start < 0) || (end < 0) || (start > end) || (end > this.length()))

@@ -105,7 +105,7 @@ public abstract class Perfometer<T> {
     }
 
     /**
-     * Returns the average execution time in seconds.
+     * @return the average execution time in seconds.
      */
     public BigDecimal getAvgTimeInSeconds() {
         if (times == null) return BigDecimal.ZERO;
@@ -121,28 +121,28 @@ public abstract class Perfometer<T> {
     }
 
     /**
-     * Returns this perfometer description.
+     * @return this perfometer description.
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Returns this perfometer current inputs.
+     * @return this perfometer current inputs.
      */
     public T getInput() {
         return input;
     }
 
     /**
-     * Returns this perfometer current number of iterations performed.
+     * @return this perfometer current number of iterations performed.
      */
     public int getNbrOfIterations() {
         return (times != null) ? times.length : 0;
     }
 
     /**
-     * Returns the execution times in seconds.
+     * @return the execution times in seconds.
      */
     public BigDecimal[] getTimesInSeconds() {
         if (times == null) return new BigDecimal[0];
@@ -158,6 +158,7 @@ public abstract class Perfometer<T> {
      * Measures the execution time with high precision (single iteration).
      * 
      * @param input the test input.
+     * @return Reference to this Performeter
      */
     public Perfometer<T> measure(T input) {
     	return measure(input, 1);
@@ -169,6 +170,7 @@ public abstract class Perfometer<T> {
      * @param input the test input.
      * @param nbrOfIterations the number of iterations performed on which 
      *        the average will be calculated.
+     * @return Reference to this Performeter
      */
     public Perfometer<T> measure(T input, int nbrOfIterations) {
         if (SKIP.get()) return this; // Skip.
@@ -225,7 +227,7 @@ public abstract class Perfometer<T> {
     }
 
     /**
-     * Returns the worst case execution time in seconds.
+     * @return the worst case execution time in seconds.
      */
     public BigDecimal getWCETinSeconds() {
         if (times == null) return null;
@@ -237,7 +239,7 @@ public abstract class Perfometer<T> {
     }
 
     /**
-     * Returns the iteration number having the slowest execution time.
+     * @return the iteration number having the slowest execution time.
      */
     public int getWorstCaseNumber() {
         if (times == null) return -1;
@@ -254,6 +256,7 @@ public abstract class Perfometer<T> {
 
     /**
      * Performs the initialization.
+     * @throws java.lang.Exception if an exception occurs during initialization.
      */
     protected abstract void initialize() throws Exception;
 
@@ -261,7 +264,8 @@ public abstract class Perfometer<T> {
      * Runs the code being benchmarked.
      * 
      * @param measure {@code false} when calibration is performed;
-     *        {@code true} otherwise. 
+     *        {@code true} otherwise.
+     * @throws java.lang.Exception if an exception occurs during execution 
      */
     protected abstract void run(boolean measure) throws Exception;
 

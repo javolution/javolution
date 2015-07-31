@@ -18,7 +18,7 @@ public interface SortedTableService<E> extends TableService<E> {
 
     /** 
      * Adds the specified element only if not already present.
-     *  
+     * @param element Element to add if it is not already present
      * @return {@code true} if the element has been added; 
      *         {@code false} otherwise.
      */
@@ -29,6 +29,8 @@ public interface SortedTableService<E> extends TableService<E> {
      * number equals to {@code -n} with {@code n} being the index next to 
      * the "would be" index of the specified element if the specified element 
      * was to be added.
+     * @param element Element to obtain the position of
+     * @return index of the element, or a negative version of what the index would be
      */
     int positionOf(E element);
     

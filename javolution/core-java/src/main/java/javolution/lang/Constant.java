@@ -19,18 +19,18 @@ import java.lang.annotation.Target;
  * <p> Indicates that the state of a class instance, a static field or a 
  *     method return value / parameter will not change ever. For parameters 
  *     tagged {@code Constant}, defensive copy is unnecessary. 
- * [code]
- * @Constant(comment="Immutable")
+ * {@code
+ * {@literal@}Constant(comment="Immutable")
  * class Polygon extends Shape  { 
  *     private Point2D[] vertices;
- *     public Polygon(@Constant Point2D... vertices) { 
+ *     public Polygon({@literal@}Constant Point2D... vertices) { 
  *         this.vertices = vertices; // No defensive copying required.
  *     }
- *     @Constant(comment="Unmodifiable View") 
+ *     {@literal@}Constant(comment="Unmodifiable View") 
  *     List<Point2D> getVertices() { 
  *         return ConstantTable.of(vertices); // Unmodifiable array wrapper. 
  *     }
- * }[/code]</p>
+ * }}</p>
  * 
  * <p> The constant annotation is primarily for API documentation purpose but 
  *     static analyzers could also be used to detect constant rules violations. 
@@ -53,11 +53,13 @@ public @interface Constant  {
 
     /**
      * Indicates if this element is constant (default {@code true}).
+     * @return true if constant
      */
     boolean value() default true;
 
     /**
      * Provides additional information (default {@code ""}).
+     * @return comment
      */
     String comment() default "";
 

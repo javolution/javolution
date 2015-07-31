@@ -17,7 +17,7 @@ import javolution.osgi.internal.OSGiServices;
  * <p> For example, when performing modulo arithmetics the actual modulo 
  *     being used is usually the same for most operations and does not need 
  *     to be specified for each operation.
- * [code]
+ * {@code
  * import javolution.context.LocalContext.Parameter;
  * public class ModuloInteger extends Number {
  *     public static final Parameter<Integer> MODULO = new Parameter<Integer>() {
@@ -32,7 +32,7 @@ import javolution.osgi.internal.OSGiServices;
  *     ...
  * } finally {
  *     ctx.exit(); // Reverts to previous modulo setting. 
- * }[/code]</p>
+ * }}</p>
  *     
  * <p> As for any context, local context settings are inherited during 
  *     {@link ConcurrentContext} executions.</p> 
@@ -44,7 +44,7 @@ public abstract class LocalContext extends AbstractContext {
 
     /**
      * A {@link Configurable configurable} parameter whose value can 
-     * be locally superseded within the scope of {@link LocalContext}.</p>
+     * be locally superseded within the scope of {@link LocalContext}.
      */
     public static abstract class Parameter<T> extends Configurable<T> {
 
@@ -69,7 +69,7 @@ public abstract class LocalContext extends AbstractContext {
         }
 
         /**
-         * Returns the permission to locally supersede the current value 
+         * @return the permission to locally supersede the current value 
          * of this instance.
          */
         public Permission<Parameter<T>> getSupersedePermission() {
@@ -93,6 +93,7 @@ public abstract class LocalContext extends AbstractContext {
 
     /**
      * Enters and returns a new local context instance.
+     * @return Reference to the entered LocalContext
      */
     public static LocalContext enter() {
         LocalContext ctx = current(LocalContext.class);
@@ -105,6 +106,7 @@ public abstract class LocalContext extends AbstractContext {
     /**
      * Supersedes the value of the specified parameter. 
      * 
+     * @param  <T> the type of the parameter
      * @param  param the local parameter whose local value is overridden.
      * @param  localValue the new local value.
      * @throws SecurityException if the permission to override the specified 
@@ -117,8 +119,10 @@ public abstract class LocalContext extends AbstractContext {
      * Returns the local value of the specified parameter or the specified 
      * default value if not {@link LocalContext#supersede superseded}. 
      * 
+     * @param  <T> the type of the parameter
      * @param param the local parameter whose local value is returned.
      * @param defaultValue the parameter value if not superseded.
+     * @return value of the parameter
      */
     protected abstract <T> T getValue(Parameter<T> param, T defaultValue);
     

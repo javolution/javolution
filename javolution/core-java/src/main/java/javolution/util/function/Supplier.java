@@ -23,7 +23,7 @@ package javolution.util.function;
 public interface Supplier<T> {
 
     /**
-     * Returns an object.
+     * @return an object.
      */
     T get();
 

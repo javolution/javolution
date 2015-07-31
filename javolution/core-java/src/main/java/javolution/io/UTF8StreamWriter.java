@@ -368,6 +368,8 @@ public final class UTF8StreamWriter extends Writer {
 
     /**
      * @deprecated Replaced by {@link #setOutput(OutputStream)}
+     * @param out OutpuStream to use with this writer
+     * @return Reference to this UTF8StreamWriter
      */
     public UTF8StreamWriter setOutputStream(OutputStream out) {
         return this.setOutput(out);

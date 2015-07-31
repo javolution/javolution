@@ -57,6 +57,7 @@ public final class AppendableWriter extends Writer {
 
     /**
      * Returns the output of this writer.
+     * @return Output of this AppendableWriter in the form of an Appendable
      */
     public Appendable getOutput() {
         return _output;

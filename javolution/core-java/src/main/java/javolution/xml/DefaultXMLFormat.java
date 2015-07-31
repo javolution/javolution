@@ -52,7 +52,7 @@ import java.lang.annotation.Target;
 public @interface DefaultXMLFormat {
 
     /**
-     * Returns the default xml format of the annotated class.
+     * @return the default xml format of the annotated class.
      */
     Class<? extends XMLFormat<?>> value();
 

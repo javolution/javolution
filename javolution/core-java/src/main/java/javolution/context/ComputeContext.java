@@ -28,7 +28,7 @@ import javolution.osgi.internal.OSGiServices;
  *     (based on inputs parameters dependencies).
  *     Synchronization with host (java) is performed when buffers
  *     are read/exported (typically to retrieve the calculations results).
- * [code]
+ * {@code
  * FloatVector result;
  * ComputeContext ctx = ComputeContext.enter();
  * try {
@@ -62,7 +62,7 @@ import javolution.osgi.internal.OSGiServices;
  *         sum.execute(); // Executes in parallel with others kernels. 
  *         return result; 
  *     }
- *     @Override
+ *     {@literal@}Override
  *     public void export() { // Moves to global memory. 
  *         buffer.export();
  *     }
@@ -75,7 +75,7 @@ import javolution.osgi.internal.OSGiServices;
  *                 "    int gid = get_global_id(0);" +
  *                 "    c[gid] = a[gid] + b[gid];" + "}";
  * }
- * [/code]</p>
+ * }}</p>
  * 
  * <p> By default, the best GPU device with support for {@link 
  *     ComputeContext#DOUBLE_PRECISION_REQUIRED double precision 
@@ -102,18 +102,17 @@ public abstract class ComputeContext extends AbstractContext {
 	public interface Buffer extends Local {
 
 		/**
-		 * Returns this buffer as a {@link ByteBuffer}.
+		 * @return this buffer as a {@link ByteBuffer}.
 		 */
 		ByteBuffer asByteBuffer();
 
 		/**
-		 * Returns this buffer as a {@link CharBuffer}.
+		 * @return this buffer as a {@link CharBuffer}.
 		 */
 		CharBuffer asCharBuffer();
 
 		/**
-		 * Returns this buffer as a {@link DoubleBuffer}.
-		 * 
+		 * @return this buffer as a {@link DoubleBuffer}.
 		 * @throws UnsupportedOperationException if 
 		 *         {@link ComputeContext#DOUBLE_PRECISION_REQUIRED} is 
 		 *         configured to {@code false}
@@ -121,32 +120,32 @@ public abstract class ComputeContext extends AbstractContext {
 		DoubleBuffer asDoubleBuffer();
 
 		/**
-		 * Returns this buffer as a {@link FloatBuffer}.
+		 * @return this buffer as a {@link FloatBuffer}.
 		 */
 		FloatBuffer asFloatBuffer();
 
 		/**
-		 * Returns this buffer as a {@link IntBuffer}.
+		 * @return this buffer as a {@link IntBuffer}.
 		 */
 		IntBuffer asIntBuffer();
 
 		/**
-		 * Returns this buffer as a {@link LongBuffer}.
+		 * @return this buffer as a {@link LongBuffer}.
 		 */
 		LongBuffer asLongBuffer();
 
 		/**
-		 * Returns this buffer as a {@link ShortBuffer}.
+		 * @return this buffer as a {@link ShortBuffer}.
 		 */
 		ShortBuffer asShortBuffer();
 
 		/**
-		 * Returns the size in bytes of this buffer.
+		 * @return the size in bytes of this buffer.
 		 */
 		long getByteCount();
 
 		/**
-		 * Returns an unmodifiable view over this buffer.
+		 * @return an unmodifiable view over this buffer.
 		 */
 		Buffer readOnly();
 	}
@@ -165,16 +164,17 @@ public abstract class ComputeContext extends AbstractContext {
 
 		/**
 		 * Sets the arguments of this kernel. 
+		 * @param args List of kernel arguments
 		 */
 		void setArguments(Object... args);
 
 		/**
-		 * Sets the number of global work-items for each dimension. 
+		 * @param gws Sets the number of global work-items for each dimension.  
 		 */
 		void setGlobalWorkSize(int... gws);
 
 		/**
-		 * Sets the number of work-items which makes up a work-group for 
+		 * @param lws Sets the number of work-items which makes up a work-group for 
 		 * each dimension. 
 		 */
 		void setLocalWorkSize(int... lws);
@@ -203,7 +203,7 @@ public abstract class ComputeContext extends AbstractContext {
 	public interface Program {
 
 		/**
-		 * Returns the OpenCL image of this program.
+		 * @return the OpenCL image of this program.
 		 */
 		String toOpenCL();
 
@@ -237,6 +237,7 @@ public abstract class ComputeContext extends AbstractContext {
 	 * Enters the scope of a local computing context; all the resources 
 	 * (kernels, buffers) allocated while in this context scope are 
 	 * released upon {@link AbstractContext#exit() exit}.
+	 * @return Reference to the entered ComputeContext
 	 */
 	public static ComputeContext enter() {
 		ComputeContext ctx = currentComputeContext();
@@ -245,6 +246,7 @@ public abstract class ComputeContext extends AbstractContext {
 
 	/**
 	 * Explicitly loads the specified program.
+	 * @param program to load
 	 */
 	public static void load(Program program) {
 		currentComputeContext().loadAndBuild(program);
@@ -254,6 +256,8 @@ public abstract class ComputeContext extends AbstractContext {
 	 * Returns a memory buffer having the specified initial data.
 	 * Once created the buffer returned as no further link to the specified
 	 * NIO buffer.
+	 * @param init data buffer
+	 * @return Buffer with the specified initial state
 	 */
 	public static Buffer newBuffer(java.nio.Buffer init) {
 		return currentComputeContext().createBuffer(init);
@@ -261,6 +265,8 @@ public abstract class ComputeContext extends AbstractContext {
 
 	/**
 	 * Returns a memory buffer having the specified capacity.
+	 * @param byteCount count
+	 * @return New buffer
 	 */
 	public static Buffer newBuffer(long byteCount) {
 		return currentComputeContext().createBuffer(byteCount);
@@ -270,6 +276,9 @@ public abstract class ComputeContext extends AbstractContext {
 	 * Returns a kernel from the current context having the specified name.
 	 * If the program has not yet been loaded, a new instance is allocated
 	 * using the class default constructor and then loaded.
+	 * @param program to create a kernel of
+	 * @param kernelName name of the kernel
+	 * @return Kernel created from the specified program
 	 */
 	public static Kernel newKernel(Class<? extends Program> program,
 			String kernelName) {
@@ -278,6 +287,7 @@ public abstract class ComputeContext extends AbstractContext {
 
 	/**
 	 * Explicitly unloads the specified program.
+	 * @param program to unload
 	 */
 	public static void unload(Program program) {
 		currentComputeContext().unloadAndFree(program);
@@ -290,12 +300,16 @@ public abstract class ComputeContext extends AbstractContext {
 	}
 
 	/**
-	 * Creates a buffer having the specified initial data in this context. 
+	 * Creates a buffer having the specified initial data in this context.
+	 * @param init Initial Data
+	 * @return Buffer with the specified initial data 
 	 */
 	protected abstract Buffer createBuffer(java.nio.Buffer init);
 
 	/**
-	 * Creates a memory buffer having the specified capacity in this context. 
+	 * Creates a memory buffer having the specified capacity in this context.
+	 * @param byteCount count
+	 * @return Buffer with the specified capacity 
 	 */
 	protected abstract Buffer createBuffer(long byteCount);
 
@@ -304,17 +318,22 @@ public abstract class ComputeContext extends AbstractContext {
 	 * in this context. If the specified program has not yet been loaded 
 	 * in this context or a parent context, a new instance is allocated 
 	 * using the class default constructor and then loaded in this context.
+	 * @param program Program to make a kernel of
+	 * @param kernelName Name of the kernel
+	 * @return Kernel created from the specified program
 	 */
 	protected abstract Kernel createKernel(Class<? extends Program> program,
 			String kernelName);
 
 	/**
 	 * Loads and builds the specified program.
+	 * @param program to load and build
 	 */
 	protected abstract void loadAndBuild(Program program);
 
 	/**
 	 * Unloads and free the specified program.
+	 * @param program to unload and free
 	 */
 	protected abstract void unloadAndFree(Program program);
 

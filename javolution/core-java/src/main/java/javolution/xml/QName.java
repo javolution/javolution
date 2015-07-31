@@ -76,6 +76,7 @@ public final class QName implements XMLSerializable, ValueType, CharSequence {
      * sequence representation (may include the "{namespaceURI}" prefix).
      * 
      * @param name the qualified name lexical representation.
+     * @return qualified name
      * @see #toString()
      */
     public static QName valueOf(CharSequence name) {
@@ -103,6 +104,7 @@ public final class QName implements XMLSerializable, ValueType, CharSequence {
      * Equivalent to {@link #valueOf(CharSequence)} (for J2ME compatibility).
      * 
      * @param name the qualified name lexical representation.
+     * @return qualified name
      * @see #toString()
      */
     public static QName valueOf(String name) {
@@ -116,6 +118,7 @@ public final class QName implements XMLSerializable, ValueType, CharSequence {
      * 
      * @param namespaceURI the URI reference or <code>null</code> if none.
      * @param localName the local name.
+     * @return qualified name
      * @see #toString()
      */
     public static QName valueOf(CharSequence namespaceURI,
@@ -185,8 +188,8 @@ public final class QName implements XMLSerializable, ValueType, CharSequence {
      *
      * @param  index the index of the character starting at <code>0</code>.
      * @return the character at the specified index of this character sequence.
-     * @throws IndexOutOfBoundsException  if <code>((index < 0) || 
-     *         (index >= length))</code>
+     * @throws IndexOutOfBoundsException  {@code if ((index < 0) || 
+     *         (index >= length))}
      */
     public char charAt(int index) {
         return _toString.charAt(index);

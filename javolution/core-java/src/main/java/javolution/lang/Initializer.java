@@ -29,7 +29,7 @@ import javolution.context.LogContext;
  *     load time. Javolution bundle activator ensure that <b>all</b> its classes
  *     are initialized at start up.
  *     The following code illustrates how this can be done for any bundle.
- * [code]
+ * {@code
  * public class MyActivator implements BundleActivator {
  *     public void start(BundleContext bc) throws Exception {
  *         Initializer initializer = new Initializer(MyActivator.class.getClassLoader());
@@ -39,7 +39,7 @@ import javolution.context.LogContext;
  *         initializer.initializeLoadedClasses(); // Recursive loading/initialization.
  *         ... // Continue activation
  *     }
- * }[/code]</p>
+ * }}</p>
  * 
  * <p> This utility use reflection to find the classes loaded and may not be
  *     supported on all platforms.</p>
@@ -65,6 +65,7 @@ public class Initializer {
 
     /** 
      * Creates an initializer for the specified class loader.
+     * @param classLoader used for initialization
      */
     public Initializer(ClassLoader classLoader) {
         this.classLoader = classLoader;
@@ -73,6 +74,7 @@ public class Initializer {
     /**
      * Returns the classes loaded by the class loader of this initializer or 
      * <code>null</code> if not supported by the platform.
+     * @return Classes that were loaded
      */
     @SuppressWarnings("unchecked")
     public Class<?>[] loadedClasses() {
@@ -99,6 +101,7 @@ public class Initializer {
     /**
      * Loads the specified class (does not perform any initialization).
      * This method is typically used to load unreferenced classes.
+     * @param cls Class to load
      */
     public void loadClass(Class<?> cls) {
         try {

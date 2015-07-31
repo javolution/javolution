@@ -36,6 +36,9 @@ public class Reducers {
      * Returns any non-null element of the specified type. 
      * This reducer stops iterating as soon as an element with the matching 
      * type is found.
+     * @param <E> type of the reducer
+     * @param type to reduce with
+     * @return Reducer with the given type
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
@@ -72,6 +75,9 @@ public class Reducers {
     /**
      * Returns the greatest element of a collection according to the 
      * specified comparator (returns {@code null} if the collection is empty).
+     * @param <E> the type of the reducer
+     * @param comparator to use to determine the greatest element to reduce
+     * @return max reducer with the specified comparator applied.
      */
     @Parallelizable(mutexFree = true, comment = "Internal use of AtomicReference")
     @Realtime(limit = LINEAR)
@@ -109,6 +115,9 @@ public class Reducers {
     /**
      * Returns the smallest element of a collection according to the collection
      * comparator (returns {@code null} if the collection is empty).
+     * @param <E> type of the Reducer
+     * @param comparator to use to reduce
+     * @return Min Reducer with the specified comparator applied
      */
     @Parallelizable(mutexFree = true, comment = "Internal use of AtomicReference")
     @Realtime(limit = LINEAR)
@@ -147,6 +156,7 @@ public class Reducers {
     * Conditional 'and' operator (returns {@code true} if the collection is 
     * empty). This operator stops iterating as soon as a {@code false} value
     * is found.
+    * @return AndReducer
     */
     @Parallelizable
     @Realtime(limit = LINEAR)
@@ -175,6 +185,7 @@ public class Reducers {
     * Conditional 'or' operator (returns {@code false} if the collection is 
     * empty). This operator stops iterating as soon as a {@code true} value
     * is found.
+    * @return OrReducer
      */
     @Parallelizable
     @Realtime(limit = LINEAR)
@@ -202,6 +213,7 @@ public class Reducers {
     /**
      * Returns the sum of the specified integers value (returns {@code 0} 
      * if the collection is empty).
+     * @return SumReducer
      */
     @Parallelizable(comment = "Internal use of AtomicInteger")
     @Realtime(limit = LINEAR)

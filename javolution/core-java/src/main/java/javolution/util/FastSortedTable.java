@@ -40,6 +40,9 @@ public class FastSortedTable<E> extends FastTable<E> {
     /**
      * Returns a new sorted table holding the specified elements
      * (convenience method).
+     * @param <E> The type of the FastSortedTable's elements
+     * @param elements The elements to place in a FastTable
+     * @return FastTable containing the specified elements
      */
     public static <E> FastSortedTable<E> of(E... elements) {
     	FastSortedTable<E> table = new FastSortedTable<E>();
@@ -50,6 +53,9 @@ public class FastSortedTable<E> extends FastTable<E> {
     /**
      * Returns a new sorted table holding the same elements as the specified 
      * collection (convenience method).
+     * @param <E> The type of the FastSortedTable's elements
+     * @param that Collection to convert to a FastTable
+     * @return FastSortedTable containing the elements in the specified collection.
      */
     public static <E> FastSortedTable<E> of(Collection<? extends E> that) {
     	FastSortedTable<E> table = new FastSortedTable<E>();
@@ -66,6 +72,7 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     /**
      * Creates an empty table sorted using the specified element comparator.
+     * @param comparator Comparator to use in the FastSortedTable
      */
     public FastSortedTable(Comparator<? super E> comparator) {
         super(new FastSortedTableImpl<E>(comparator));
@@ -73,6 +80,7 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     /**
      * Creates a sorted table backed up by the specified service implementation.
+     * @param service SortedTableService to back this FastSortedTable
      */
     protected FastSortedTable(SortedTableService<E> service) {
         super(service);
@@ -124,7 +132,7 @@ public class FastSortedTable<E> extends FastTable<E> {
 
     /** 
      * Adds the specified element only if not already present.
-     *  
+     * @param element Element to add if its not already present
      * @return {@code true} if the element has been added; 
      *         {@code false} otherwise.
      */
@@ -138,6 +146,9 @@ public class FastSortedTable<E> extends FastTable<E> {
      * number equals to {@code -n} with {@code n} being the index next to 
      * the "would be" index of the specified element if the specified element 
      * was to be added.
+     * @param element Element to obtain the position of
+     * @return Position of the specified element, or a negative number representing 
+     * what the index would be if added.
      */
     @Realtime(limit = LOG_N)
     public int positionOf(E element) {

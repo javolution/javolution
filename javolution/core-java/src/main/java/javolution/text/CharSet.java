@@ -15,7 +15,7 @@ import javolution.lang.ValueType;
  * <p> A set of characters (typically used for parsing purpose where it is 
  *     significantly faster than regular expressions for simple patterns).
  *     For example:
- * [code]
+ * {@code
  * // Integration with Text.
  * Text number;
  * int exponentIndex = num.indexOfAny(CharSet.valueOf('e', 'E'));
@@ -27,7 +27,7 @@ import javolution.lang.ValueType;
  *         numbers.add(TypeFormat.parseInt(csq, cursor));
  *     }
  *     return numbers;
- * } [/code]</p>   
+ * } }</p>   
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
@@ -111,7 +111,7 @@ public final class CharSet implements ValueType {
      * @param first the first character.
      * @param last the last character.
      * @return the corresponding character set.
-     * @throws IllegalArgumentException if <code>first > last</code>
+     * @throws IllegalArgumentException if {@code first > last}
      */
     public static CharSet rangeOf(char first, char last) {
         if (first > last)
@@ -170,6 +170,7 @@ public final class CharSet implements ValueType {
     /**
      * Equivalent to {@link #indexIn(char[], int)  indexIn(chars, 0)}
      *
+     * @param chars Character Sequence
      * @return the index in the specified character sequence or
      *         <code>-1</code> if none found.
      */
@@ -228,6 +229,7 @@ public final class CharSet implements ValueType {
      * Equivalent to {@link #lastIndexIn(char[], int)
      * lastIndexIn(chars, chars.length-1)}
      *
+     * @param chars Character Sequence
      * @return the index in the specified character sequence or
      *         <code>-1</code> if none found.
      */

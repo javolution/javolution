@@ -30,12 +30,12 @@
       (the one who knows what to do, when running OSGi it is typically a separate bundle).
        Then, your code looks a lot cleaner and is way more flexible as you don't have
        to worry about logging, security, performance etc. in your low level methods. 
-[code]
+{@code
 void myMethod() {
     ...
     LogContext.info("Don't know where this is going to be logged to");
     ...
-}[/code]</p>
+}}</p>
        
    <p> Used properly <i><b>J</b>avolution</i>'s {@link javolution.context.AbstractContext contexts}
        greatly facilitate the separation of concerns. Contexts are fully 
@@ -45,7 +45,8 @@ void myMethod() {
        might only be known at runtime.</p>
      
  <h2><a name="PREDEFINED">Predefined Contexts:</a></h2>
-  <p> <i><b>J</b>avolution</i> provides several useful runtime contexts:<ul>
+  <p> <i><b>J</b>avolution</i> provides several useful runtime contexts:</p>
+  <ul>
       <li>{@link javolution.context.ComputeContext ComputeContext} 
       - To take advantage of computing devices (GPUs) and to reduce heap allocations.</li>
       <li>{@link javolution.context.ConcurrentContext ConcurrentContext} 
@@ -66,21 +67,22 @@ void myMethod() {
       <li>{@link javolution.context.StorageContext StorageContext} 
       - To store/retrieve your persistent data/dataset.</li>
       <li>...add your own !</li>
-      </ul>
-  </p>
+  </ul>
+  
 
 <h2><a name="FAQ">FAQ:</a></h2>
 
 <ol>
+    <li>
     <a name="FAQ-1"></a>
-    <li><b>Thanks for providing GPUs accelerated 
+    <b>Thanks for providing GPUs accelerated 
            {@link javolution.context.ComputeContext ComputeContext} but why 
            is it recommended to enter/exit a context scope in order to use it ?</b>
     <p> ComputeContext allocates buffers in the device memory (CPU/GPU), these buffers 
         are released either through garbage collection or immediately when exiting 
         the context scope. Freeing the resources immediately ensures a more 
         predictable time-behavior and less of a chance to run out of device memory.</p>
-[code]
+{@code
 public static void main(String... args) {
     while (true) {
          ComputeContext ctx = ComputeContext.enter();
@@ -92,17 +94,17 @@ public static void main(String... args) {
              ctx.exit(); // All temporary buffers are released.
          }    
     }
-}[/code]
-<p></p>
+}}
     </li>
     
+    <li>
     <a name="FAQ-2"></a>
-    <li><b>In my application I create new threads on-the-fly and I would like them to inherit 
-           the current context environment. How can I do that?</b>
+    <b>In my application I create new threads on-the-fly and I would like them to inherit 
+       the current context environment. How can I do that?</b>
     <p> Context is automatically inherited when performing concurrent executions using 
         {@link javolution.context.ConcurrentContext ConcurrentContext}. If you create
         new threads yourself you can easily setup their context as shown below.</p>
-[code]
+{@code
 //Spawns a new thread inheriting the context of the current thread.
 MyThread myThread = new MyThread();
 myThread.inherited = AbstractContext.current(); 
@@ -114,16 +116,14 @@ class MyThread extends Thread {
         AbstractContext.inherit(inherited); // Sets current context. 
         ...
     }
-}[/code]
-<p></p>
+}}
     </li>
-    
+    <li>
     <a name="FAQ-3"></a>
-    <li><b>Is it possible to configure the context of all running threads (global configuration) ?</b>
+    <b>Is it possible to configure the context of all running threads (global configuration) ?</b>
     <p> Yes by publishing an OSGi implementation of the customized context
         (published context services are the default contexts of all running threads).
         Otherwise, you can only configure a context that you have entered (for obvious safety reasons).</p>
-<p></p>
     </li> 
  </ol>
 

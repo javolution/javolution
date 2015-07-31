@@ -124,6 +124,7 @@ public class XMLReferenceResolver {
      * 
      * @param  obj the object for which the reference is written.
      * @param  xml the output XML element.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while writing the reference
      * @return <code>true</code> if a reference is written;
      *         <code>false</code> if a new identifier is written.
      */
@@ -158,6 +159,7 @@ public class XMLReferenceResolver {
      * the object. 
      * 
      * @param  xml the input XML element.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while reading the reference
      * @return the referenced object or <code>null</code> if the specified 
      *         XML input does not have a reference attribute.
      */
@@ -180,6 +182,7 @@ public class XMLReferenceResolver {
      * 
      * @param  obj the object being referenced.
      * @param  xml the input XML element holding the reference identifier.
+     * @throws javolution.xml.stream.XMLStreamException if an exception occurs while creating the reference
      */
     public void createReference(Object obj, XMLFormat.InputElement xml)
             throws XMLStreamException {

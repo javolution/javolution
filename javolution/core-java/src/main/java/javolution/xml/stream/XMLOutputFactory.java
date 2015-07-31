@@ -18,7 +18,7 @@ import javolution.lang.Parallelizable;
  *     For each bundle, a distinct factory instance is returned and can be 
  *     individually configured  (if not enough the factory can be 
  *     {@link #clone cloned}).
- * [code]
+ * {@code
  * import javolution.xml.stream.*;
  * public class Activator implements BundleActivator { 
  *     public void start(BundleContext bc) throws Exception {
@@ -48,7 +48,7 @@ import javolution.lang.Parallelizable;
  *         // Displays the formatted output.
  *         System.out.println(xml);
  *     }
- *  [/code]</p>
+ *  }}</p>
  *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
@@ -106,7 +106,7 @@ public interface XMLOutputFactory extends Cloneable {
      * 
      * @param writer the writer to write to.
      * @return a xml stream writer possibly recycled.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an exception occurs creating the stream writer.
      */
     XMLStreamWriter createXMLStreamWriter(Writer writer)
             throws XMLStreamException;
@@ -117,7 +117,7 @@ public interface XMLOutputFactory extends Cloneable {
      * 
      * @param stream the stream to write to.
      * @return a xml stream writer possibly recycled.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an exception occurs creating the stream writer.
      */
     XMLStreamWriter createXMLStreamWriter(OutputStream stream)
             throws XMLStreamException;
@@ -129,7 +129,7 @@ public interface XMLOutputFactory extends Cloneable {
      * @param stream the stream to write to.
      * @param encoding the encoding to use.
      * @return a xml stream writer possibly recycled.
-     * @throws XMLStreamException
+     * @throws XMLStreamException if an exception occurs creating the stream writer.
      */
     XMLStreamWriter createXMLStreamWriter(OutputStream stream, String encoding)
             throws XMLStreamException;
@@ -163,7 +163,7 @@ public interface XMLOutputFactory extends Cloneable {
     boolean isPropertySupported(String name);
     
     /**
-     * Returns a clone of this factory which can be independently configured.
+     * @return a clone of this factory which can be independently configured.
      */
     XMLOutputFactory clone();
 }

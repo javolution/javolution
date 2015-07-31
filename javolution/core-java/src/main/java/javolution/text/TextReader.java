@@ -133,7 +133,7 @@ public class TextReader extends Reader {
 	 *                         is no actual limit, so this argument must not
 	 *                         be negative, but is otherwise ignored.
 	 *
-	 * @exception  IllegalArgumentException  If readAheadLimit is < 0
+	 * @exception  IllegalArgumentException  If readAheadLimit is less than 0
 	 * @exception  IOException  If an I/O error occurs
 	 */
 	public void mark(int readAheadLimit) throws IOException {

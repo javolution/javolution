@@ -61,17 +61,20 @@ public @interface Realtime {
     /**
      * Indicates if this element has a bounded worst-case execution time
      * (default {@code true}).
+     * @return true if the worst case excution time is bounded
      */
     boolean value() default true;
 
     /**
      * Returns the limit behavior for the worst-case execution time
      * (default {@link Limit#CONSTANT}).
+     * @return limit for the worst cas eexcetion time
      */
     Limit limit() default Limit.CONSTANT;
 
     /**
      * Provides additional information (default {@code ""}).
+     * @return comment providing additional information
      */
     String comment() default "";
 

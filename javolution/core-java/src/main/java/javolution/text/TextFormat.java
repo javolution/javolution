@@ -20,8 +20,8 @@ import javolution.lang.Parallelizable;
  * <p> Instances of this class are typically retrieved from the 
  *     {@link DefaultTextFormat} inheritable annotation through the current 
  *     current {@link TextContext}.
- * [code]
- * @DefaultTextFormat(Complex.Cartesian.class) 
+ * {@code
+ * {@literal@}DefaultTextFormat(Complex.Cartesian.class) 
  * public class Complex extends Number {
  *     public static Complex valueOf(CharSequence csq) {
  *         return TextContext.getFormat(Complex.class).parse(csq);
@@ -31,17 +31,17 @@ import javolution.lang.Parallelizable;
  *     }
  *     public static class Cartesian extends javolution.text.TextFormat<Complex> { ... }
  *     public static class Polar extends javolution.text.TextFormat<Complex> { ... }
- * }[/code]</p>
+ * }}</p>
  * 
  * <p> Text formats can be locally overridden.
- * [code]
+ * {@code
  * TextContext ctx = TextContext.enter();
  * try {
  *      ctx.setFormat(Complex.class, Complex.Polar.class); // No impact on others threads.
  *      System.out.println(complexMatrix); // Displays complex numbers in polar coordinates.
  * } finally {
  *      ctx.exit(); // Reverts to previous cartesian format for complex numbers.
- * }[/code]</p>
+ * }}</p>
  *
  * <p> For parsing/formatting of primitive types, the {@link TypeFormat}
  *     utility class is recommended.</p>
@@ -72,6 +72,7 @@ public abstract class TextFormat<T> {
      * 
      * @param obj the object to format.
      * @param dest the appendable destination.
+     * @throws java.io.IOException if an error occurs during formatting
      * @return the specified <code>Appendable</code>.
      */
     public abstract Appendable format(T obj, Appendable dest)
@@ -86,6 +87,7 @@ public abstract class TextFormat<T> {
      * @throws IllegalArgumentException if the syntax of the specified 
      *         character sequence is incorrect or if there are extraneous
      *         characters at the end not parsed.
+     * @return the object parsed.
      */
     public T parse(CharSequence csq) throws IllegalArgumentException {
         Cursor cursor = new Cursor();
