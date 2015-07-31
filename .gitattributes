@@ -358,6 +358,8 @@ javolution/core-java/src/main/java/javolution/util/internal/collection/SharedCol
 javolution/core-java/src/main/java/javolution/util/internal/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/comparator/ArrayComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/comparator/CharArrayComparatorImpl.java -text
+javolution/core-java/src/main/java/javolution/util/internal/comparator/CharArrayFastComparatorImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/comparator/IdentityComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalCaseInsensitiveComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/comparator/LexicalComparatorImpl.java -text svneol=unset#text/plain
