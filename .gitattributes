@@ -524,6 +524,7 @@ javolution/core-java/src/test/resources/test-more-than-one-of-same-element-with-
 javolution/core-java/src/test/resources/test-small.xml -text
 javolution/core-java/src/test/resources/test-stax.xml -text
 javolution/core-java/src/test/resources/test-with-basic-datatypes.xml -text
+javolution/core-java/src/test/resources/test-with-cdata-string.xml -text
 javolution/core-java/src/test/resources/test-with-enum-and-date.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-attribute.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-element.xml -text

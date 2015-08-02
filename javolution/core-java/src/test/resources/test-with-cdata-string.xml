@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot type="Test1" xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testElement>
+		<testStringElement>ABC</testStringElement>
+	</testElement>
+	<testElement>
+		<testStringElement><![CDATA[<ABC&DEF>]]></testStringElement>
+	</testElement>
+	<testElement>
+		<testStringElement>DEF</testStringElement>
+	</testElement>	
+</ns2:testRoot>

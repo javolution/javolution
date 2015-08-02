@@ -1013,4 +1013,18 @@ public class JAXBAnnotatedObjectReaderTest {
 		final TestCommonElement element = testRoot.getTestCommonElement().get(0);
 		assertEquals("TestCommonElement - TestCommonStringElement = common", "common", element.getTestCommonStringElement());
 	}
+	
+	@Test
+	public void testReadJaxbObjectWithCDataString() throws JAXBException {
+		final TestRoot testRoot = _jaxbObjectReader.read(this.getClass().getResourceAsStream("/test-with-cdata-string.xml"));
+		assertNotNull("TestRoot Is Not Null!", testRoot);
+		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
+		assertEquals("TestRoot - 3 Elements", 3, testRoot.getTestElement().size());
+		TestElement element = testRoot.getTestElement().get(0);
+		assertEquals("TestElement - TestStringElement = ABC", "ABC", element.getTestStringElement());
+		element = testRoot.getTestElement().get(1);
+		assertEquals("TestElement - TestStringElement = <ABC&DEF>", "<ABC&DEF>", element.getTestStringElement());
+		element = testRoot.getTestElement().get(2);
+		assertEquals("TestElement - TestStringElement = DEF", "DEF", element.getTestStringElement());
+	}	
 }
