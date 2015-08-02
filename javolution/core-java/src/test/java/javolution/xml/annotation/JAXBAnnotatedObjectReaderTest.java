@@ -13,11 +13,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.ValidationException;
+import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
 
 import javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl;
 import javolution.xml.jaxb.test.schema.TestAttributeElement;
@@ -32,6 +37,7 @@ import javolution.xml.stream.XMLStreamException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.xml.sax.InputSource;
 
 public class JAXBAnnotatedObjectReaderTest {
 
@@ -45,6 +51,63 @@ public class JAXBAnnotatedObjectReaderTest {
 	@Test
 	public void testReadJaxbObjectBasic() throws JAXBException {
 		final TestRoot testRoot = _jaxbObjectReader.read(this.getClass().getResourceAsStream("/test-small.xml"));
+		assertNotNull("TestRoot Is Not Null!", testRoot);
+		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
+		assertEquals("TestRoot - 1 Element", 1, testRoot.getTestElement().size());
+		final TestElement element = testRoot.getTestElement().get(0);
+		assertEquals("TestElement - TestIntElement = 1", Integer.valueOf(1), element.getTestIntElement());
+		assertEquals("TestElement - TestLongElement = 2", Long.valueOf(2L), element.getTestLongElement());
+	}
+	
+	@Test
+	public void testReadJaxbObjectBasicWithInputSource() throws JAXBException {
+		final InputStream inputStream = this.getClass().getResourceAsStream("/test-small.xml");
+		final InputSource inputSource = new InputSource(inputStream);
+		final TestRoot testRoot = _jaxbObjectReader.read(inputSource);
+		assertNotNull("TestRoot Is Not Null!", testRoot);
+		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
+		assertEquals("TestRoot - 1 Element", 1, testRoot.getTestElement().size());
+		final TestElement element = testRoot.getTestElement().get(0);
+		assertEquals("TestElement - TestIntElement = 1", Integer.valueOf(1), element.getTestIntElement());
+		assertEquals("TestElement - TestLongElement = 2", Long.valueOf(2L), element.getTestLongElement());
+	}
+	
+	@Test
+	public void testReadJaxbObjectBasicWithReader() throws JAXBException {
+		final InputStream inputStream = this.getClass().getResourceAsStream("/test-small.xml");
+		final InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+		final TestRoot testRoot = _jaxbObjectReader.read(inputStreamReader);
+		assertNotNull("TestRoot Is Not Null!", testRoot);
+		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
+		assertEquals("TestRoot - 1 Element", 1, testRoot.getTestElement().size());
+		final TestElement element = testRoot.getTestElement().get(0);
+		assertEquals("TestElement - TestIntElement = 1", Integer.valueOf(1), element.getTestIntElement());
+		assertEquals("TestElement - TestLongElement = 2", Long.valueOf(2L), element.getTestLongElement());
+	}
+	
+	@Test
+	public void testReadJaxbObjectBasicWithSource() throws JAXBException {
+		final InputStream inputStream = this.getClass().getResourceAsStream("/test-small.xml");
+		final Source streamSource = new StreamSource(inputStream);
+		final TestRoot testRoot = _jaxbObjectReader.read(streamSource);
+		assertNotNull("TestRoot Is Not Null!", testRoot);
+		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
+		assertEquals("TestRoot - 1 Element", 1, testRoot.getTestElement().size());
+		final TestElement element = testRoot.getTestElement().get(0);
+		assertEquals("TestElement - TestIntElement = 1", Integer.valueOf(1), element.getTestIntElement());
+		assertEquals("TestElement - TestLongElement = 2", Long.valueOf(2L), element.getTestLongElement());
+	}
+	
+	@Test(expected=UnsupportedOperationException.class)
+	public void testReadJaxbObjectBasicWithUnsupportedSource() throws JAXBException {
+		_jaxbObjectReader.read(new DOMSource());
+	}
+	
+	@Test
+	public void testReadJaxbObjectBasicWithStreamSource() throws JAXBException {
+		final InputStream inputStream = this.getClass().getResourceAsStream("/test-small.xml");
+		final StreamSource streamSource = new StreamSource(inputStream);
+		final TestRoot testRoot = _jaxbObjectReader.read(streamSource);
 		assertNotNull("TestRoot Is Not Null!", testRoot);
 		assertEquals("TestRoot - Type Is Test1", "Test1", testRoot.getType());
 		assertEquals("TestRoot - 1 Element", 1, testRoot.getTestElement().size());

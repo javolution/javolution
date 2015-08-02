@@ -35,6 +35,10 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+
+import org.xml.sax.InputSource;
 
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
@@ -108,13 +112,38 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
+	public <T> T read(final InputSource inputSource) throws JAXBException {
+		if(inputSource == null){
+			throw new JAXBException("Input Source Cannot Be Null!");
+		}
+		
+		T object = null;
+		
+		final Reader reader = inputSource.getCharacterStream();
+		
+		if(reader == null){
+			object = read(inputSource.getByteStream(), inputSource.getEncoding());
+		}
+		else {
+			object = read(reader);
+		}
+		
+		return object;
+	}
+	
+	@Override
 	public <T> T read(final InputStream inputStream) throws JAXBException {
+		return read(inputStream, null);
+	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T read(final InputStream inputStream, final String encoding) throws JAXBException {
 		XMLStreamReader reader = null;;
 		T object;
 
 		try {
-			reader = (XMLStreamReader) _XMLFactory.createXMLStreamReader(inputStream);
+			reader = (XMLStreamReader) _XMLFactory.createXMLStreamReader(inputStream, encoding);
 			object = (T) readObject(_inputClass, reader);
 		}
 		catch (final SecurityException e){
@@ -162,6 +191,37 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			}
 		}
 
+		return object;
+	}
+	
+	@Override
+	public <T> T read(Source source) throws JAXBException {
+		// For Compatibility Reasons for those who use StreamSources but declare w/ interface type
+		if(source instanceof StreamSource){
+			return read((StreamSource)source);
+		}
+		else {
+			throw new UnsupportedOperationException("Source Type is Not Supported!");
+		}
+	}
+	
+	@Override
+	public <T> T read(final StreamSource streamSource) throws JAXBException {
+		if(streamSource == null){
+			throw new JAXBException("Stream Source Cannot Be Null!");
+		}
+		
+		T object = null;
+		
+		final Reader reader = streamSource.getReader();
+		
+		if(reader == null){
+			object = read(streamSource.getInputStream());
+		}
+		else {
+			object = read(reader);
+		}
+		
 		return object;
 	}
 

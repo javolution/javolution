@@ -12,6 +12,10 @@ import java.io.InputStream;
 import java.io.Reader;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+
+import org.xml.sax.InputSource;
 
 /**
  * <p> This interface provides basic support for reading XML and parsing it into
@@ -57,7 +61,11 @@ import javax.xml.bind.JAXBException;
  * @version 6.2 July 30th, 2015
  */
 public interface JAXBAnnotatedObjectReader {
+	<T> T read(final InputSource inputSource) throws JAXBException;
 	<T> T read(final InputStream inputStream) throws JAXBException;
+	<T> T read(final InputStream inputStream, final String encoding) throws JAXBException;
 	<T> T read(final Reader reader) throws JAXBException;
+	<T> T read(final Source source) throws JAXBException;
+	<T> T read(final StreamSource streamSource) throws JAXBException;
 	void setValidating(final boolean validating);
 }
