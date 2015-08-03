@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonRoot xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testChoiceElement>
+		<testChoiceElementA>
+			<testChoice>Common A</testChoice>
+			<testChoiceA>Choice A</testChoiceA>
+		</testChoiceElementA>
+		<testChoiceElementB>
+			<testChoice>Common B</testChoice>
+			<testChoiceB>Choice B</testChoiceB>
+		</testChoiceElementB>
+	</testChoiceElement>
+</ns2:testCommonRoot>

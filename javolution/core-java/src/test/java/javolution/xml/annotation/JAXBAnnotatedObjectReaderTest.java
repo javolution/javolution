@@ -25,9 +25,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 
 import javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl;
+import javolution.xml.jaxb.common.test.schema.TestChoiceElement;
+import javolution.xml.jaxb.common.test.schema.TestChoiceElementA;
+import javolution.xml.jaxb.common.test.schema.TestChoiceElementB;
+import javolution.xml.jaxb.common.test.schema.TestCommonElement;
+import javolution.xml.jaxb.common.test.schema.TestCommonRoot;
 import javolution.xml.jaxb.test.schema.TestAttributeElement;
 import javolution.xml.jaxb.test.schema.TestBoundedWrapperElement;
-import javolution.xml.jaxb.test.schema.TestCommonElement;
 import javolution.xml.jaxb.test.schema.TestElement;
 import javolution.xml.jaxb.test.schema.TestEnumElement;
 import javolution.xml.jaxb.test.schema.TestRoot;
@@ -1026,5 +1030,29 @@ public class JAXBAnnotatedObjectReaderTest {
 		assertEquals("TestElement - TestStringElement = <ABC&DEF>", "<ABC&DEF>", element.getTestStringElement());
 		element = testRoot.getTestElement().get(2);
 		assertEquals("TestElement - TestStringElement = DEF", "DEF", element.getTestStringElement());
-	}	
+	}
+	
+	@Test
+	public void testReadJaxbObjectWithChoiceElement() throws JAXBException {
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(this.getClass().getResourceAsStream("/test-with-choice-element.xml"));
+		
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(this.getClass().getResourceAsStream("/test-with-choice-element.xml"));
+		
+		assertNotNull("TestCommonRoot Is Not Null!", testCommonRoot);
+		assertEquals("TestCommonRoot - 1 TestChoiceElement", 1, testCommonRoot.getTestChoiceElement().size());
+		
+		TestChoiceElement testChoiceElement = testCommonRoot.getTestChoiceElement().get(0);
+		assertEquals("TestChoiceElement - 2 TestChoiceElementAOrTestChoiceElementB", 2, testChoiceElement.getTestChoiceElementAOrTestChoiceElementB().size());
+		
+		TestChoiceElementA testChoiceElementA = (TestChoiceElementA) testChoiceElement.getTestChoiceElementAOrTestChoiceElementB().get(0);
+		assertEquals("TestChoiceElementA - TestChoice = Common A", "Common A", testChoiceElementA.getTestChoice());
+		assertEquals("TestChoiceElementA - TestChoiceA = Choice A", "Choice A", testChoiceElementA.getTestChoiceA());
+		
+		TestChoiceElementB testChoiceElementB = (TestChoiceElementB) testChoiceElement.getTestChoiceElementAOrTestChoiceElementB().get(1);
+		assertEquals("TestChoiceElementB - TestChoice = Common B", "Common B", testChoiceElementB.getTestChoice());
+		assertEquals("TestChoiceElementB - TestChoiceB = Choice B", "Choice B", testChoiceElementB.getTestChoiceB());		
+	}
 }

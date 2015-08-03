@@ -21,6 +21,7 @@ import javax.xml.bind.Unmarshaller;
 import javolution.context.LogContext;
 import javolution.tools.Perfometer;
 import javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl;
+import javolution.xml.jaxb.common.test.schema.TestCommonRoot;
 import javolution.xml.jaxb.test.schema.TestRoot;
 
 import org.junit.Before;
@@ -29,12 +30,16 @@ import org.xml.sax.SAXException;
 
 public class JAXBAnnotatedObjectReaderITCase {
 
+	private static final boolean USE_COMMON_SCHEMA;
 	private static final String XML_STRING;
-
+	
 	private Perfometer<Unmarshaller> jdkPerf;
 	private Perfometer<JAXBAnnotatedObjectReader> javolutionPerf;
 
 	static {
+		USE_COMMON_SCHEMA = false;
+		
+		// USE_COMMON_SCHEMA = false
 		//final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-small.xml");
 		final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-more-than-one-of-same-element-with-mixed-data.xml");
 		//final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-with-enum-and-date.xml");
@@ -43,6 +48,10 @@ public class JAXBAnnotatedObjectReaderITCase {
 		//final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-large-nested-mixed-object.xml");
 		//final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-large-valid-nested-mixed-object.xml");
 		//final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-with-unmapped-element.xml");
+		
+		// USE_COMMON_SCHEMA = true
+		// final URL xmlUrl = JAXBAnnotatedObjectReaderTest.class.getResource("/test-with-choice-element.xml");
+		
 		File xmlFile;
 
 		try {
@@ -73,8 +82,14 @@ public class JAXBAnnotatedObjectReaderITCase {
 			protected void run(final boolean measure) throws Exception {
 				if (measure) {
 					for(int i = 0; i < getNbrOfIterations(); i++) {
-						final TestRoot testRoot = (TestRoot) unmarshaller.unmarshal(new StringReader(XML_STRING));
-						assert testRoot != null;
+						if(USE_COMMON_SCHEMA){
+							final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(new StringReader(XML_STRING));
+							assert testCommonRoot != null;	
+						}
+						else {
+							final TestRoot testRoot = (TestRoot) unmarshaller.unmarshal(new StringReader(XML_STRING));
+							assert testRoot != null;
+						}
 					}
 				}
 			}
@@ -96,8 +111,14 @@ public class JAXBAnnotatedObjectReaderITCase {
 			protected void run(final boolean measure) throws Exception {
 				if (measure) {
 					for(int i = 0; i < getNbrOfIterations(); i++) {
-						final TestRoot testRoot = (TestRoot)getInput().read(new StringReader(XML_STRING));
-						assert testRoot != null;
+						if(USE_COMMON_SCHEMA){
+							final TestCommonRoot testCommonRoot = (TestCommonRoot)getInput().read(new StringReader(XML_STRING));
+							assert testCommonRoot != null;
+						}
+						else {
+							final TestRoot testRoot = (TestRoot)getInput().read(new StringReader(XML_STRING));
+							assert testRoot != null;
+						}
 					}
 				}
 			}
@@ -111,20 +132,29 @@ public class JAXBAnnotatedObjectReaderITCase {
 		//benchmark(1);
 		//benchmark(10);
 		//benchmark(25);
-		//benchmark(50);
+		benchmark(50);
 		//benchmark(100);
-		benchmark(250);
+		//benchmark(250);
 		//benchmark(1000);
 	}
 
 	private void benchmark(final int iterations) throws JAXBException, SAXException{
 		LogContext.info("Benchmarking... JAXB Annotation Deserialize");
 
-		final JAXBContext context = JAXBContext.newInstance(TestRoot.class);
+		final JAXBContext context; 
+		final JAXBAnnotatedObjectReader jaxbReader;
+		
+		if(USE_COMMON_SCHEMA){
+			context = JAXBContext.newInstance(TestCommonRoot.class);
+			jaxbReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		}
+		else {
+			context = JAXBContext.newInstance(TestRoot.class);
+			jaxbReader = new JAXBAnnotatedObjectReaderImpl(TestRoot.class);
+		}
+		
 		final Unmarshaller unmarshaller = context.createUnmarshaller();
-		
-		final JAXBAnnotatedObjectReader jaxbReader = new JAXBAnnotatedObjectReaderImpl(TestRoot.class);
-		
+
 		// To bench with validation...
 		// jaxbReader.setValidating(true);
 		// SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);

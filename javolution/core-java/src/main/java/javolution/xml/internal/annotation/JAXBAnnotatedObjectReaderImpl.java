@@ -30,6 +30,7 @@ import javax.xml.bind.ValidationException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -64,7 +65,7 @@ import javolution.xml.stream.XMLStreamReader;
  * 
  * Note: Logging is left commented out, as it's too slow to leave on in a
  * release build - even at a non-visible level such as debug. To enable,
- * find/replace //LogContext -> //LogContext
+ * find/replace //LogContext -> LogContext
  * 
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
  * @version 6.2, July 30th, 2015
@@ -81,6 +82,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 	private final FastMap<CharArray,Class<?>> _elementClassCache;
 	private final FastMap<Class<?>,FastMap<CharArray,Field>> _classElementFieldCache;
 	private final FastMap<CharArray,Enum<?>> _enumValueCache;
+	private final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
 	private final FastMap<Field,Method> _methodCache;
 
 	public <T> JAXBAnnotatedObjectReaderImpl(final Class<T> inputClass) throws JAXBException {
@@ -97,6 +99,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		_classElementFieldCache = new FastMap<Class<?>,FastMap<CharArray,Field>>(Equalities.IDENTITY);
 		_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST);
 		_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST);
+		_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST);
 		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY);
 		
 		// This flag turns on/off annotation validation. There is no support yet for full schema validation
@@ -314,9 +317,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 					
 					//LogContext.info("END ELEMENT SPECIAL HANDLING - LOCAL NAME = "+localName);
 
+					// Detect if this element is mapped to multiple things (xs:choice support)
+					boolean mappedElement = _mappedElementsCache.containsKey(localXmlElementName);
+					FastSet<CharArray> mappedElements = _mappedElementsCache.get(localXmlElementName);
+					
 					// If the current element is unbounded and the current element does not match this list's element, then
-					// we are done with this list and need to pop it off of the stack.
-					if(stackData._annotationStackType == UNBOUNDED && localXmlElementName != stackData._xmlElementName){
+					// we are done with this list and need to pop it off of the stack. In the case of xs:choice elements
+					// we have to compare against the alternate element choices as well
+					if(stackData._annotationStackType == UNBOUNDED && ((!mappedElement && localXmlElementName != stackData._xmlElementName) || (mappedElement &&
+							!mappedElements.contains(stackData._xmlElementName)))){
 						outputStack.pop();
 						
 						//LogContext.info("<STACK POP> [DND] - Old Head: (List) "+stackData._xmlElementName);
@@ -327,7 +336,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 						// If the local name matches that parent's element name, we need to pop again. This case
 						// can happen when a unbounded element is the last element inside of another unbounded element.
-						if(localXmlElementName == stackData._xmlElementName){
+						if(localXmlElementName == stackData._xmlElementName || (mappedElement && mappedElements.contains(stackData._xmlElementName))){
 							outputStack.pop();
 							
 							//LogContext.info("<STACK POP> [DBE] - Old Head: "+stackData._xmlElementName);
@@ -339,7 +348,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 					}
 
 					// If at this point, the element name matches the now-current stack data, then we're going to continue on with that element.
-					if(localXmlElementName == stackData._xmlElementName){
+					// In the case of xs:choice elements, we have to check mapped elements for the other choices as well
+					if(localXmlElementName == stackData._xmlElementName || (mappedElement && mappedElements.contains(stackData._xmlElementName))){
 						final Class<?> elementClass = _elementClassCache.get(localXmlElementName);
 						final Class<?> currentType = stackData._type;
 
@@ -364,7 +374,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 						// onto the stack.
 						else {
 							// Start by getting the new instance of the complex type
-							final Object newObject = reflectNewInstance(currentType);
+							final Object newObject;
+							
+							// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
+							if(_mappedElementsCache.containsKey(localXmlElementName)){
+								newObject = reflectNewInstance(_elementClassCache.get(localXmlElementName));
+							}
+							else {
+								newObject = reflectNewInstance(currentType);
+							}
 
 							// If we're validating, we're going to need to look up required fields (which should always be
 							// cached already at this point (see code below the special handling block for more details).
@@ -437,7 +455,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				FastMap<CharArray, Field> cachedAttributeFields = _attributeFieldsCache.get(currentObjClass);
 				FastSet<CharArray> requiredFieldsSet = null;
 				FastMap<CharArray, Field> attributeFieldsMap = null;
-				Field[] fields = null;
+				FastSet<Field> fields = null;
 
 				// If we're continuing the same element, we can skip here because the element is already done and we only
 				// need to parse attributes.
@@ -467,7 +485,11 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 								continue field;
 
 							// Get a copy of the Xml Element Name
-							final CharArray xmlElementName = getXmlElementName(field);
+							CharArray xmlElementName = getXmlElementName(elementFieldCache, localXmlElementName, field);
+							
+							if(xmlElementName == null){
+								xmlElementName = new CharArray(field.getName());
+							}
 
 							// If we're validating, capture required data.
 							if(_isValidating){
@@ -625,7 +647,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 							XmlElement xmlElement = field.getAnnotation(XmlElement.class);
 
 							if(xmlElement != null && xmlElement.required()){
-								CharArray xmlElementName = getXmlElementName(field);
+								CharArray xmlElementName = getXmlElementName(elementFieldCache, localXmlElementName, field);
 								requiredFieldsSet.add(xmlElementName);
 							}
 						}
@@ -741,17 +763,52 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return setterBuilder.toString();
 	}
 
-	private static CharArray getXmlElementName(final Field field){
+	private CharArray getXmlElementName(final Map<CharArray,Field> elementFieldCache, final CharArray localXmlElementName, final Field field){
 		CharArray xmlElementName = null;
 
-		if(field.isAnnotationPresent(XmlElement.class)){
-			final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-			xmlElementName = new CharArray(xmlElement.name());
+		// First We Probe for @XmlElement
+		XmlElement xmlElement = field.getAnnotation(XmlElement.class);
+		
+		// If we don't find it, try @XmlElements (xs:choice support)
+		if(xmlElement == null){
+			XmlElements xmlElements = field.getAnnotation(XmlElements.class);
+			
+			if(xmlElements != null){
+				XmlElement[] elements = xmlElements.value();
+				
+				FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
+				
+				for(final XmlElement element : elements){
+					final CharArray nameKey = new CharArray(element.name());
+					CharArray name = _xmlElementNameCache.get(nameKey);
+					
+					// We need to pre-cache everything about the elements
+					if(name == null){
+						name = _xmlElementNameCache.put(nameKey, nameKey);
+						name = nameKey;
+					}
+					
+					_elementClassCache.putIfAbsent(name, element.type());
+					elementFieldCache.putIfAbsent(name, field);
+					
+					//LogContext.info("<XML-ELEMENTS SCAN> Field: "+field.getName()+" | Element Name: "+name+" | Element Type: "+element.type());
+					
+					if(name == localXmlElementName){
+						xmlElementName = name;
+						//LogContext.info("<XML-ELEMENTS SCAN> Match Found, Element Name: "+name);
+					}
+					
+					// Mapped elements will be used later to switch detection
+					mappedElementsSet.add(name);
+					_mappedElementsCache.put(name, mappedElementsSet);
+				}
+			}
 		}
 		else {
-			xmlElementName = new CharArray(field.getName());
+			xmlElementName = new CharArray(xmlElement.name());
+			_xmlElementNameCache.putIfAbsent(xmlElementName, xmlElementName);
 		}
-
+		
 		return xmlElementName;
 	}
 
@@ -811,7 +868,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 					//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
 				}
 				else {
-					final Object genericInstance = genericType.newInstance();
+					final Object genericInstance; 
+					
+					// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
+					if(_mappedElementsCache.containsKey(xmlElementName)){
+						genericInstance = reflectNewInstance(_elementClassCache.get(xmlElementName));
+					}
+					else {
+						genericInstance = genericType.newInstance();
+					}
 					
 					if(_isValidating){
 						propOrderIterator = getXmlPropOrder(genericType);
@@ -833,7 +898,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
 			}
 			else {
-				final Object newInstance = fieldType.newInstance();
+				final Object newInstance; 
+					
+				// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
+				if(_mappedElementsCache.containsKey(xmlElementName)){
+					newInstance = reflectNewInstance(_elementClassCache.get(xmlElementName));
+				}
+				else {
+					newInstance = fieldType.newInstance();
+				}
 				
 				if(_isValidating){
 					propOrderIterator = getXmlPropOrder(fieldType);
@@ -1036,7 +1109,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			}
 
 			method.invoke(currentObj, element);
-			//LogContext.info("<SET VALUE> - [setValue]: "+element.getClass());
+			//LogContext.info("<DIRECT SET VALUE> - [setValue]: "+element.getClass());
 		}
 		catch (final Exception e){
 			throw new UnmarshalException("Error Getting JAXB Setter!", e);
@@ -1046,6 +1119,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 	private void setValue(final Object currentObj, final CharArray localXmlElementName, final CharArray characters) throws UnmarshalException{
 		try {
 			final Class<?> currentObjClass = currentObj.getClass();
+			//LogContext.info("<SET VALUE> - [setValue]: "+currentObj.getClass());
+			
 			final Map<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
 			Field field = elementFieldCache.get(localXmlElementName);
 			Class<?> fieldType = null;;
@@ -1069,7 +1144,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			}
 
 			invokeMethod(method, fieldType, currentObj, characters);
-			//LogContext.info("<SET VALUE> - [setValue]: "+currentObj.getClass());
 		}
 		catch (final Exception e){
 			throw new UnmarshalException("Error Getting JAXB Setter!", e);

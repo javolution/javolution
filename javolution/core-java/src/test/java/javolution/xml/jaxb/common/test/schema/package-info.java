@@ -5,5 +5,5 @@
 // Generated on: 2015.08.02 at 09:04:17 PM EDT 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://javolution.org/xml/schema/javolution")
-package javolution.xml.jaxb.test.schema;
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://javolution.org/xml/schema/javolution-common")
+package javolution.xml.jaxb.common.test.schema;

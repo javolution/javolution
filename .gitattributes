@@ -496,11 +496,17 @@ javolution/core-java/src/test/java/javolution/util/IndexTest.java -text
 javolution/core-java/src/test/java/javolution/util/function/MultiVariableTest.java -text
 javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectReaderTest.java -text
 javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectWriterTest.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/ObjectFactory.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestChoiceElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestChoiceElementA.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestChoiceElementB.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestCommonBase.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestCommonElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/TestCommonRoot.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/package-info.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/ObjectFactory.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestAttributeElement.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestBoundedWrapperElement.java -text
-javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestCommonElement.java -text
-javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestCommonRoot.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestElement.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestEnumElement.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestRoot.java -text
@@ -516,6 +522,7 @@ javolution/core-java/src/test/resources/test-bounded-element-with-nested-attribu
 javolution/core-java/src/test/resources/test-bounded-unbounded-nesting.xml -text
 javolution/core-java/src/test/resources/test-common-element.xml -text
 javolution/core-java/src/test/resources/test-jaxb-common-schema.xsd -text
+javolution/core-java/src/test/resources/test-jaxb-schema-xjc-bindings.xjb -text
 javolution/core-java/src/test/resources/test-jaxb-schema.xsd -text
 javolution/core-java/src/test/resources/test-jaxb.xml -text
 javolution/core-java/src/test/resources/test-large-nested-mixed-object.xml -text
@@ -525,6 +532,7 @@ javolution/core-java/src/test/resources/test-small.xml -text
 javolution/core-java/src/test/resources/test-stax.xml -text
 javolution/core-java/src/test/resources/test-with-basic-datatypes.xml -text
 javolution/core-java/src/test/resources/test-with-cdata-string.xml -text
+javolution/core-java/src/test/resources/test-with-choice-element.xml -text
 javolution/core-java/src/test/resources/test-with-enum-and-date.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-attribute.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-element.xml -text

@@ -1,0 +1,17 @@
+<jaxb:bindings xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" jaxb:version="2.1">
+
+	<jaxb:bindings schemaLocation="test-jaxb-schema.xsd">
+		<jaxb:schemaBindings>
+			<jaxb:package name="javolution.xml.jaxb.test.schema" />
+		</jaxb:schemaBindings>
+	</jaxb:bindings>
+
+	<jaxb:bindings schemaLocation="test-jaxb-common-schema.xsd">
+		<jaxb:schemaBindings>
+			<jaxb:package name="javolution.xml.jaxb.common.test.schema" />
+		</jaxb:schemaBindings>
+	</jaxb:bindings>
+
+</jaxb:bindings>

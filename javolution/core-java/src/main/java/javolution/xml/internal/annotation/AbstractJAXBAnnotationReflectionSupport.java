@@ -28,7 +28,7 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 	protected final FastMap<Field,Class<?>> _genericTypeCache;
 	protected final FastMap<Class<?>,XmlAccessType> _xmlAccessTypeCache;
 	protected final FastMap<Class<?>,Boolean> _basicInstanceCache;
-	protected final FastMap<Class<?>,Field[]> _declaredFieldsCache;
+	protected final FastMap<Class<?>,FastSet<Field>> _declaredFieldsCache;
 	protected final FastMap<Class<?>, FastSet<CharArray>> _propOrderCache;
 	protected final FastMap<Class<?>, FastSet<CharArray>> _requiredCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
@@ -38,7 +38,7 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 		_genericTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY);
 		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY);
 		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY);
-		_declaredFieldsCache = new FastMap<Class<?>,Field[]>(Equalities.IDENTITY);
+		_declaredFieldsCache = new FastMap<Class<?>,FastSet<Field>>(Equalities.IDENTITY);
 		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST);
 		_propOrderCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY);
 		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY);
@@ -91,11 +91,22 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 		return genericType;
 	}
 	
-	protected Field[] getDeclaredFields(final Class<?> classObject){
-		Field[] declaredFields = _declaredFieldsCache.get(classObject);
+	protected FastSet<Field> getDeclaredFields(final Class<?> classObject){
+		FastSet<Field> declaredFields = _declaredFieldsCache.get(classObject);
 		
 		if(declaredFields == null){
-			declaredFields = classObject.getDeclaredFields();
+			Class<?> thisClassObject = classObject;
+			declaredFields = new FastSet<Field>(Equalities.IDENTITY);
+			
+			do {
+				Field[] fields = thisClassObject.getDeclaredFields();
+				
+				for(final Field field : fields){
+					declaredFields.add(field);
+				}
+			}
+			while((thisClassObject = thisClassObject.getSuperclass()) != null);
+			
 			_declaredFieldsCache.put(classObject, declaredFields);
 		}
 		

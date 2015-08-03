@@ -6,7 +6,7 @@
 //
 
 
-package javolution.xml.jaxb.test.schema;
+package javolution.xml.jaxb.common.test.schema;
 
 import javax.xml.bind.annotation.XmlRegistry;
 
@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.XmlRegistry;
 /**
  * This object contains factory methods for each 
  * Java content interface and Java element interface 
- * generated in the javolution.xml.jaxb.test.schema package. 
+ * generated in the javolution.xml.jaxb.common.test.schema package. 
  * <p>An ObjectFactory allows you to programatically 
  * construct new instances of the Java representation 
  * for XML content. The Java representation of XML 
@@ -30,58 +30,58 @@ public class ObjectFactory {
 
 
     /**
-     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: javolution.xml.jaxb.test.schema
+     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: javolution.xml.jaxb.common.test.schema
      * 
      */
     public ObjectFactory() {
     }
 
     /**
-     * Create an instance of {@link TestRoot }
+     * Create an instance of {@link TestCommonElement }
      * 
      */
-    public TestRoot createTestRoot() {
-        return new TestRoot();
+    public TestCommonElement createTestCommonElement() {
+        return new TestCommonElement();
     }
 
     /**
-     * Create an instance of {@link TestElement }
+     * Create an instance of {@link TestCommonRoot }
      * 
      */
-    public TestElement createTestElement() {
-        return new TestElement();
+    public TestCommonRoot createTestCommonRoot() {
+        return new TestCommonRoot();
     }
 
     /**
-     * Create an instance of {@link TestValidationElement }
+     * Create an instance of {@link TestChoiceElement }
      * 
      */
-    public TestValidationElement createTestValidationElement() {
-        return new TestValidationElement();
+    public TestChoiceElement createTestChoiceElement() {
+        return new TestChoiceElement();
     }
 
     /**
-     * Create an instance of {@link TestAttributeElement }
+     * Create an instance of {@link TestChoiceElementB }
      * 
      */
-    public TestAttributeElement createTestAttributeElement() {
-        return new TestAttributeElement();
+    public TestChoiceElementB createTestChoiceElementB() {
+        return new TestChoiceElementB();
     }
 
     /**
-     * Create an instance of {@link TestUnboundedWrapperElement }
+     * Create an instance of {@link TestChoiceElementA }
      * 
      */
-    public TestUnboundedWrapperElement createTestUnboundedWrapperElement() {
-        return new TestUnboundedWrapperElement();
+    public TestChoiceElementA createTestChoiceElementA() {
+        return new TestChoiceElementA();
     }
 
     /**
-     * Create an instance of {@link TestBoundedWrapperElement }
+     * Create an instance of {@link TestCommonBase }
      * 
      */
-    public TestBoundedWrapperElement createTestBoundedWrapperElement() {
-        return new TestBoundedWrapperElement();
+    public TestCommonBase createTestCommonBase() {
+        return new TestCommonBase();
     }
 
 }

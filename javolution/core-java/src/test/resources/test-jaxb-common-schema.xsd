@@ -8,6 +8,8 @@
 			<xs:sequence>
 				<xs:element name="testCommonElement" type="javolution-common:testCommonElement"
 					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testChoiceElement" type="javolution-common:testChoiceElement"
+					minOccurs="0" maxOccurs="unbounded" />
 			</xs:sequence>
 			<xs:attribute name="type" type="xs:string" />
 		</xs:complexType>
@@ -19,5 +21,38 @@
 				minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
+	
+	<xs:complexType name="testCommonBase">
+		<xs:sequence>
+			<xs:element name="testChoice" type="xs:string" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="testChoiceElementA" >
+		<xs:complexContent>
+			<xs:extension base="javolution-common:testCommonBase">
+				<xs:sequence>
+					<xs:element name="testChoiceA" type="xs:string" minOccurs="0" maxOccurs="1"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="testChoiceElementB" >
+		<xs:complexContent>
+			<xs:extension base="javolution-common:testCommonBase">
+				<xs:sequence>
+					<xs:element name="testChoiceB" type="xs:string" minOccurs="0" maxOccurs="1"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 
+	<xs:complexType name="testChoiceElement">
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="testChoiceElementA" type="javolution-common:testChoiceElementA"/>
+			<xs:element name="testChoiceElementB" type="javolution-common:testChoiceElementB"/>
+		</xs:choice>
+	</xs:complexType>
+		
 </xs:schema>
