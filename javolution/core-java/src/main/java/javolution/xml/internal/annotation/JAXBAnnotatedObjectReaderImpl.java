@@ -445,7 +445,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				// avoid eating the overhead on reflection for any data that we have already obtained.
 				// If this element has already been hit before, we'll have it's Field cached.
 				// By using this, we can avoid a lot of reflection overhead
-				final Map<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
+				final FastMap<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
 
 				Field cachedField = null;
 
@@ -763,7 +763,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return setterBuilder.toString();
 	}
 
-	private CharArray getXmlElementName(final Map<CharArray,Field> elementFieldCache, final CharArray localXmlElementName, final Field field){
+	private CharArray getXmlElementName(final FastMap<CharArray,Field> elementFieldCache, final CharArray localXmlElementName, final Field field){
 		CharArray xmlElementName = null;
 
 		// First We Probe for @XmlElement
@@ -1172,7 +1172,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		//LogContext.info("<ADD-LIST> - [addToList]: "+element.getClass());
 	}
 
-	private Map<CharArray,Field> getClassElementFieldCache(final Class<?> classObject){
+	private FastMap<CharArray,Field> getClassElementFieldCache(final Class<?> classObject){
 		FastMap<CharArray,Field> elementFieldCache = _classElementFieldCache.get(classObject);
 
 		if(elementFieldCache == null){
