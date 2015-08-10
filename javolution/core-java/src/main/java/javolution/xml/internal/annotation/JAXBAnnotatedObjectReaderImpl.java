@@ -291,7 +291,16 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		}
 
 		final String namespace = _classNameSpaceCache.get(targetClass);
-		return new JAXBElement<T>(new QName(namespace), targetClass, object);
+		JAXBElement<T> jaxbElement;
+
+		if(namespace == null || "##default".equals(namespace)) {
+			jaxbElement = new JAXBElement<T>(new QName(targetClass.getSimpleName()), targetClass, object);
+		}
+		else{
+			jaxbElement = new JAXBElement<T>(new QName(namespace, targetClass.getSimpleName()), targetClass, object);
+		}
+
+		return jaxbElement;
 	}
 
 	/**
@@ -364,7 +373,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		_classNameSpaceCache.put(scanClass, namespace);
 
 		// Detect Object Factory
-		if(!skipFactory && !_namespaceObjectFactoryCache.containsKey(namespace)){
+		if(!skipFactory && !"##default".equals(namespace) && !_namespaceObjectFactoryCache.containsKey(namespace)){
 			final TextBuilder objectFactoryBuilder = new TextBuilder(scanClass.getPackage().getName());
 			objectFactoryBuilder.append(".ObjectFactory");
 
@@ -466,17 +475,19 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 			if(customFactory){
 				try {
-					final Object customObject = method.invoke(objectFactory, (Object[])null);
-					final Class<?> customClass = customObject.getClass();
+					if(method.getName().contains("create")) {
+						final Object customObject = method.invoke(objectFactory, (Object[])null);
+						final Class<?> customClass = customObject.getClass();
 
-					if(!_registeredClassesCache.contains(customClass)){
-						final FastSet<Field> fields = getDeclaredFields(customClass);
-						scanClass(customClass, fields, true);
+						if(!_registeredClassesCache.contains(customClass)){
+							final FastSet<Field> fields = getDeclaredFields(customClass);
+							scanClass(customClass, fields, true);
+						}
 					}
 				}
 				catch (final Exception e){
 					LogContext.error(String.format("Error Scanning Custom Object Factory <%s>!",
-							objectFactory.getClass()));
+							objectFactory.getClass()), e);
 				}
 
 			}
@@ -730,18 +741,33 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 				// If we're continuing the same element, we can skip here because the element is already done and we only
 				// need to parse attributes.
-				if(!continuingSameElement && targetField != null) {
-					// This method will push the incoming element onto the stack, and return the corresponding stack data
-					stackData = handleFieldStartElement(stackData, localXmlElementName, currentObj, targetField,
-							outputStack, requiredFieldsSet);
+				if(!continuingSameElement) {
+					if (targetField != null) {
+						// This method will push the incoming element onto the stack, and return the corresponding stack data
+						stackData = handleFieldStartElement(stackData, localXmlElementName, currentObj, targetField,
+								outputStack, requiredFieldsSet);
 
-					// Optimization: Classes (Primitive or Enums) won't have attributes to scrape
-					if(stackData._annotationStackType == AnnotationStackType.BASIC){
-						lastEvent = event;
+						// Optimization: Classes (Primitive or Enums) won't have attributes to scrape
+						if(stackData._annotationStackType == AnnotationStackType.BASIC){
+							lastEvent = event;
+							break event;
+						}
+
+						pushedElement = true;
+					}
+					else if(outputStack.size() > 1) {
+						// If we're validating, then we have to raise an exception
+						if(_isValidating){
+							throw new ValidationException("Unmapped Element");
+						}
+						// If we're not, we need to trigger the ignore flag.
+						else {
+							unmappedElement = localXmlElementName;
+							skipUnmappedMode = true;
+						}
+
 						break event;
 					}
-
-					pushedElement = true;
 				}
 
 				// We keep a reference to the old class before we probe again, because if it didn't change
