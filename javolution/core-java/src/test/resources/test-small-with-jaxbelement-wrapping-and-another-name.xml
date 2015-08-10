@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testAnotherElement xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testIntElement>1</testIntElement>
+	<testLongElement>2</testLongElement>
+</ns2:testAnotherElement>

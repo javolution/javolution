@@ -440,8 +440,6 @@ javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotationFacto
 javolution/core-java/src/main/java/javolution/xml/doc-files/xmlDataBinding.png -text
 javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/AbstractJAXBAnnotationReflectionSupport.java -text
-javolution/core-java/src/main/java/javolution/xml/internal/annotation/AnnotationStackData.java -text
-javolution/core-java/src/main/java/javolution/xml/internal/annotation/AnnotationStackType.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectReaderImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectWriterImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotationFactoryImpl.java -text
@@ -512,6 +510,8 @@ javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestEnumEleme
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestRoot.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestUnboundedWrapperElement.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/TestValidationElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/custom/TestEnhancedElement.java -text
+javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/custom/TestSchemaCustomObjectFactory.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/test/schema/package-info.java -text
 javolution/core-java/src/test/java/javolution/xml/sax/SAX2ReaderImplTest.java -text
 javolution/core-java/src/test/java/javolution/xml/sax/XMLReaderImplTest.java -text
@@ -528,6 +528,8 @@ javolution/core-java/src/test/resources/test-jaxb.xml -text
 javolution/core-java/src/test/resources/test-large-nested-mixed-object.xml -text
 javolution/core-java/src/test/resources/test-large-valid-nested-mixed-object.xml -text
 javolution/core-java/src/test/resources/test-more-than-one-of-same-element-with-mixed-data.xml -text
+javolution/core-java/src/test/resources/test-small-with-jaxbelement-wrapping-and-another-name.xml -text
+javolution/core-java/src/test/resources/test-small-with-jaxbelement-wrapping.xml -text
 javolution/core-java/src/test/resources/test-small.xml -text
 javolution/core-java/src/test/resources/test-stax.xml -text
 javolution/core-java/src/test/resources/test-with-basic-datatypes.xml -text
@@ -537,6 +539,7 @@ javolution/core-java/src/test/resources/test-with-enum-and-date.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-attribute.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-element.xml -text
 javolution/core-java/src/test/resources/test-with-out-of-order-element.xml -text
+javolution/core-java/src/test/resources/test-with-root-context-and-jaxbelement-from-common-schema.xml -text
 javolution/core-java/src/test/resources/test-with-skipped-elements.xml -text
 javolution/core-java/src/test/resources/test-with-unmapped-attribute.xml -text
 javolution/core-java/src/test/resources/test-with-unmapped-element.xml -text

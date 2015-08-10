@@ -9,6 +9,7 @@
 package javolution.xml.internal.annotation;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Iterator;
 
@@ -24,7 +25,7 @@ import javolution.util.FastSet;
 import javolution.util.function.Equalities;
 
 public abstract class AbstractJAXBAnnotationReflectionSupport {
-		
+
 	protected final FastMap<Field,Class<?>> _genericTypeCache;
 	protected final FastMap<Class<?>,XmlAccessType> _xmlAccessTypeCache;
 	protected final FastMap<Class<?>,Boolean> _basicInstanceCache;
@@ -33,24 +34,23 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 	protected final FastMap<Class<?>, FastSet<CharArray>> _requiredCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
 	protected final FastMap<Field,CharArray> _fieldAttributeNameCache;
-	
-	public AbstractJAXBAnnotationReflectionSupport(){		
-		_genericTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY);
-		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY);
-		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY);
-		_declaredFieldsCache = new FastMap<Class<?>,FastSet<Field>>(Equalities.IDENTITY);
-		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST);
-		_propOrderCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY);
-		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY);
-		_fieldAttributeNameCache = new FastMap<Field,CharArray>(Equalities.IDENTITY);
+
+	public AbstractJAXBAnnotationReflectionSupport(){
+		_genericTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_declaredFieldsCache = new FastMap<Class<?>,FastSet<Field>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
+		_propOrderCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_fieldAttributeNameCache = new FastMap<Field,CharArray>(Equalities.IDENTITY, Equalities.IDENTITY);
 	}
 
 	protected boolean isInstanceOfBasicType(final Class<?> objClass){
 		Boolean basicInstance = _basicInstanceCache.get(objClass);
-		
+
 		if(basicInstance == null){
 			basicInstance = (objClass.isAssignableFrom(Long.class) ||
-					objClass.isAssignableFrom(Long.class) ||
 					objClass.isAssignableFrom(Integer.class) ||
 					objClass.isAssignableFrom(String.class) ||
 					objClass.isAssignableFrom(XMLGregorianCalendar.class) ||
@@ -62,11 +62,11 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 					objClass.isAssignableFrom(Short.class));
 			_basicInstanceCache.put(objClass, basicInstance);
 		}
-		
+
 		return basicInstance;
 	}
 
-	protected XmlAccessType getXmlAccessType(final Class<?> objectClass){		
+	protected XmlAccessType getXmlAccessType(final Class<?> objectClass){
 		XmlAccessType xmlAccessType = _xmlAccessTypeCache.get(objectClass);
 
 		if(xmlAccessType == null && !_xmlAccessTypeCache.containsKey(objectClass)){
@@ -90,60 +90,80 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 
 		return genericType;
 	}
-	
+
 	protected FastSet<Field> getDeclaredFields(final Class<?> classObject){
 		FastSet<Field> declaredFields = _declaredFieldsCache.get(classObject);
-		
+
 		if(declaredFields == null){
 			Class<?> thisClassObject = classObject;
 			declaredFields = new FastSet<Field>(Equalities.IDENTITY);
-			
+
 			do {
-				Field[] fields = thisClassObject.getDeclaredFields();
-				
+				final Field[] fields = thisClassObject.getDeclaredFields();
+
 				for(final Field field : fields){
+					field.setAccessible(true);
 					declaredFields.add(field);
 				}
 			}
 			while((thisClassObject = thisClassObject.getSuperclass()) != null);
-			
+
 			_declaredFieldsCache.put(classObject, declaredFields);
 		}
-		
+
 		return declaredFields;
+	}
+
+	protected FastSet<Method> getDeclaredMethods(final Class<?> classObject){
+		Class<?> thisClassObject = classObject;
+		final FastSet<Method> declaredMethods = new FastSet<Method>(Equalities.IDENTITY);
+
+		do {
+			final Method[] methods = thisClassObject.getDeclaredMethods();
+
+			for(final Method method : methods){
+				method.setAccessible(true);
+				declaredMethods.add(method);
+			}
+		}
+		while((thisClassObject = thisClassObject.getSuperclass()) != null);
+
+		return declaredMethods;
 	}
 
 	protected Iterator<CharArray> getXmlPropOrder(final Class<?> classObject){
 		FastSet<CharArray> propOrderSet = _propOrderCache.get(classObject);
-		
+
 		if(propOrderSet == null && classObject.isAnnotationPresent(XmlType.class)){
 			final XmlType xmlType = classObject.getAnnotation(XmlType.class);
-			
+
 			propOrderSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-			
+
 			for(final String prop : xmlType.propOrder()){
 				propOrderSet.add(getXmlElementName(prop));
 			}
-			
+
 			_propOrderCache.put(classObject, propOrderSet);
 		}
-		
+
 		return propOrderSet == null ? null : propOrderSet.iterator();
 	}
 
 	protected CharArray getXmlElementName(final String nameString){
-		CharArray name = new CharArray(nameString);
+		final CharArray name = new CharArray(nameString);
 		CharArray xmlElementName = _xmlElementNameCache.get(name);
 
 		if(xmlElementName == null){
 			//LogContext.info("<NEW INSTANCE XML ELEMENT NAME>");
-			_xmlElementNameCache.put(name, name);
-			return name;
+			synchronized(_xmlElementNameCache){
+				xmlElementName = _xmlElementNameCache.putIfAbsent(name, name);
+				if(xmlElementName == null) return name;
+			}
 		}
 
 		return xmlElementName;
 	}
-	
+
 	protected CharArray getXmlElementName(final CharArray localName){
 		CharArray xmlElementName = _xmlElementNameCache.get(localName);
 
@@ -155,15 +175,15 @@ public abstract class AbstractJAXBAnnotationReflectionSupport {
 
 		return xmlElementName;
 	}
-	
+
 	private static CharArray copyCharArrayViewport(final CharArray charArray){
 		final CharArray outputArray = new CharArray();
 		final char[] array = new char[charArray.length()];
-		charArray.getChars(0, charArray.length(), array, 0);
+		System.arraycopy(charArray.array(), charArray.offset(), array, 0, array.length);
 		outputArray.setArray(array, 0, array.length);
 		return outputArray;
 	}
-	
+
 	protected CharArray getXmlAttributeName(final Field field){
 		CharArray xmlAttributeName = _fieldAttributeNameCache.get(field);
 

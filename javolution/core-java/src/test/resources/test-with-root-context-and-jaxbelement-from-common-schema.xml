@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonElement xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testCommonStringElement>TEST_COMMON_STRING</testCommonStringElement>
+</ns2:testCommonElement>

@@ -8,22 +8,18 @@
  */
 package javolution.xml.internal.annotation;
 
-import static javolution.xml.internal.annotation.AnnotationStackType.BASIC;
-import static javolution.xml.internal.annotation.AnnotationStackType.BOUNDED;
-import static javolution.xml.internal.annotation.AnnotationStackType.ROOT;
-import static javolution.xml.internal.annotation.AnnotationStackType.UNBOUNDED;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
-import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.ValidationException;
@@ -31,18 +27,22 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
-import org.xml.sax.InputSource;
-
+import javolution.context.LogContext;
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
+import javolution.text.TextBuilder;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
 import javolution.util.FastTable;
@@ -53,57 +53,66 @@ import javolution.xml.stream.XMLStreamConstants;
 import javolution.xml.stream.XMLStreamException;
 import javolution.xml.stream.XMLStreamReader;
 
+import org.xml.sax.InputSource;
+
 /**
  * Class to provide basic support for deserializing JAXB Annotated XML Objects
- * 
- * This class is implemented as a generic Javolution StAX handler that uses 
+ *
+ * This class is implemented as a generic Javolution StAX handler that uses
  * reflection to parse the annotation data.
- * 
+ *
  * This initial version is aimed at schema objects that are generated using XJC
- * using the default settings, and it should be sufficient to support those. 
- * It does not support every JAXB annotation yet.
- * 
+ * It does not support every possible JAXB annotation yet.
+ *
  * Note: Logging is left commented out, as it's too slow to leave on in a
  * release build - even at a non-visible level such as debug. To enable,
  * find/replace //LogContext -> LogContext
- * 
+ *
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
- * @version 6.2, July 30th, 2015
- * 
+ * @version 6.2, August 9th, 2015
  */
 public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflectionSupport implements JAXBAnnotatedObjectReader {
 
 	private boolean _isValidating;
-	private final Class<?> _inputClass;
+	private final Class<?> _rootClass;
 	private final DatatypeFactory _dataTypeFactory;
 	private final XMLInputFactory _XMLFactory;
-	private final FastMap<Class<?>,FastMap<CharArray,Field>> _attributeFieldsCache;
-	private final FastMap<CharArray,Method> _directSetValueCache;
+	private final FastMap<Class<?>, CacheData> _classCacheData;
+	private final FastMap<Class<?>,String> _classNameSpaceCache;
+	private final FastMap<Class<?>,Object> _classObjectFactoryCache;
 	private final FastMap<CharArray,Class<?>> _elementClassCache;
-	private final FastMap<Class<?>,FastMap<CharArray,Field>> _classElementFieldCache;
-	private final FastMap<CharArray,Enum<?>> _enumValueCache;
-	private final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
 	private final FastMap<Field,Method> _methodCache;
+	private final FastMap<String,Object> _namespaceObjectFactoryCache;
+	private final FastMap<Class<?>, Method> _objectFactoryCache;
+	private final FastSet<Class<?>> _registeredClassesCache;
 
 	public <T> JAXBAnnotatedObjectReaderImpl(final Class<T> inputClass) throws JAXBException {
 		super();
-		if(!inputClass.isAnnotationPresent(XmlRootElement.class))
-			throw new UnmarshalException("Input Class Must Be A JAXB Annotated Root Element!");
+		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
+			throw new UnmarshalException("Input Class Must Be A JAXB Element!");
 
-		_inputClass = inputClass;
+		// Store a Handle to the Root
+		_rootClass = inputClass;
+
+		// StAX Factory
 		_XMLFactory = OSGiServices.getXMLInputFactory();
 
 		// Identity Equality is Safely Used Wherever Possible. See usage of these for details
-		_attributeFieldsCache = new FastMap<Class<?>,FastMap<CharArray,Field>>(Equalities.IDENTITY);
-		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST);
-		_classElementFieldCache = new FastMap<Class<?>,FastMap<CharArray,Field>>(Equalities.IDENTITY);
-		_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST);
-		_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST);
-		_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST);
-		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY);
-		
+		_classCacheData = new FastMap<Class<?>, CacheData>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_classNameSpaceCache = new FastMap<Class<?>, String>(Equalities.IDENTITY, Equalities.LEXICAL);
+		_classObjectFactoryCache = new FastMap<Class<?>, Object>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_namespaceObjectFactoryCache = new FastMap<String,Object>(Equalities.LEXICAL,Equalities.IDENTITY);
+		_objectFactoryCache = new FastMap<Class<?>,Method>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_registeredClassesCache = new FastSet<Class<?>>(Equalities.IDENTITY);
+		_registeredClassesCache.add(_rootClass);
+
 		// This flag turns on/off annotation validation. There is no support yet for full schema validation
 		_isValidating = false;
+
+		// Register Context Classes
+		registerContextClasses(inputClass);
 
 		// The Data Type factory is used only for interpreting XMLGregorianCalendars, until a better/faster solution is made.
 		try {
@@ -119,26 +128,26 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		if(inputSource == null){
 			throw new JAXBException("Input Source Cannot Be Null!");
 		}
-		
+
 		T object = null;
-		
+
 		final Reader reader = inputSource.getCharacterStream();
-		
+
 		if(reader == null){
 			object = read(inputSource.getByteStream(), inputSource.getEncoding());
 		}
 		else {
 			object = read(reader);
 		}
-		
+
 		return object;
 	}
-	
+
 	@Override
 	public <T> T read(final InputStream inputStream) throws JAXBException {
 		return read(inputStream, null);
 	}
-	
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T read(final InputStream inputStream, final String encoding) throws JAXBException {
@@ -146,8 +155,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		T object;
 
 		try {
-			reader = (XMLStreamReader) _XMLFactory.createXMLStreamReader(inputStream, encoding);
-			object = (T) readObject(_inputClass, reader);
+			reader = _XMLFactory.createXMLStreamReader(inputStream, encoding);
+			object = (T) readObject(_rootClass, reader);
 		}
 		catch (final SecurityException e){
 			throw new UnmarshalException("An Error Occurred During Unmarshalling!", e);
@@ -168,15 +177,16 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return object;
 	}
 
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T read(final Reader reader) throws JAXBException {
-		XMLStreamReader xmlReader = null;;
+		XMLStreamReader xmlReader = null;
 		T object;
 
 		try {
-			xmlReader = (XMLStreamReader) _XMLFactory.createXMLStreamReader(reader);
-			object = (T) readObject(_inputClass, xmlReader);
+			xmlReader = _XMLFactory.createXMLStreamReader(reader);
+			object = (T) readObject(_rootClass, xmlReader);
 		}
 		catch (final SecurityException e){
 			throw new UnmarshalException("An Error Occurred During Unmarshalling!", e);
@@ -196,9 +206,9 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 		return object;
 	}
-	
+
 	@Override
-	public <T> T read(Source source) throws JAXBException {
+	public <T> T read(final Source source) throws JAXBException {
 		// For Compatibility Reasons for those who use StreamSources but declare w/ interface type
 		if(source instanceof StreamSource){
 			return read((StreamSource)source);
@@ -207,46 +217,298 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			throw new UnsupportedOperationException("Source Type is Not Supported!");
 		}
 	}
-	
+
+	@Override
+	public <T> JAXBElement<T> read(final Source source, final Class<T> targetClass) throws JAXBException {
+		if(!_registeredClassesCache.contains(targetClass)){
+			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!"));
+		}
+
+		// For Compatibility Reasons for those who use StreamSources but declare w/ interface type
+		if(source instanceof StreamSource){
+			return read((StreamSource)source, targetClass);
+		}
+		else {
+			throw new UnsupportedOperationException("Source Type is Not Supported!");
+		}
+	}
+
 	@Override
 	public <T> T read(final StreamSource streamSource) throws JAXBException {
 		if(streamSource == null){
 			throw new JAXBException("Stream Source Cannot Be Null!");
 		}
-		
+
 		T object = null;
-		
+
 		final Reader reader = streamSource.getReader();
-		
+
 		if(reader == null){
 			object = read(streamSource.getInputStream());
 		}
 		else {
 			object = read(reader);
 		}
-		
+
 		return object;
 	}
 
+	@Override
+	public <T> JAXBElement<T> read(final StreamSource streamSource, final Class<T> targetClass) throws JAXBException {
+		if(!_registeredClassesCache.contains(targetClass)){
+			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!"));
+		}
+
+		T object = null;
+		XMLStreamReader xmlReader = null;
+
+		final Reader reader = streamSource.getReader();
+
+		try{
+			if(reader == null){
+				xmlReader = _XMLFactory.createXMLStreamReader(streamSource.getInputStream());
+			}
+			else {
+				xmlReader = _XMLFactory.createXMLStreamReader(reader);
+			}
+
+			object = readObject(targetClass, xmlReader);
+		}
+		catch (final SecurityException e){
+			throw new UnmarshalException("An Error Occurred During Unmarshalling!", e);
+		}
+		catch (final XMLStreamException e) {
+			throw new UnmarshalException("An Error Occurred During Unmarshalling!", e);
+		}
+		finally {
+			try {
+				if(xmlReader!=null){
+					xmlReader.close();
+				}
+			}
+			catch(final XMLStreamException e){
+			}
+		}
+
+		final String namespace = _classNameSpaceCache.get(targetClass);
+		return new JAXBElement<T>(new QName(namespace), targetClass, object);
+	}
+
+	/**
+	 * This method will scan the input class and all subclasses and
+	 * register any JAXB objects as part of this reader
+	 */
+	private void registerContextClasses(final Class<?> inputClass){
+		final FastSet<Field> fields = getDeclaredFields(inputClass);
+
+		// Iterate the fields of this class to scan for sub-objects
+		for(final Field field : fields){
+			final Class<?> type = field.getType();
+			final Class<?> scanClass;
+
+			// If it's a list we need to grab the generic to scan
+			if(type.isAssignableFrom(List.class)){
+				scanClass = getGenericType(field);
+			}
+			else {
+				scanClass = type;
+			}
+
+			// Only register classes that are JAXB objects and that we haven't seen yet
+			if(!_registeredClassesCache.contains(scanClass) && (scanClass.isAnnotationPresent(XmlRootElement.class) ||
+					scanClass.isAnnotationPresent(XmlType.class))){
+				_registeredClassesCache.add(scanClass);
+				registerContextClasses(scanClass);
+			}
+		}
+
+		// Scan the class and cache all fields, attributes, etc.
+		scanClass(inputClass, fields, false);
+	}
+
+	/**
+	 * This method scans a given JAXB class and builds up the caches for it
+	 * @param scanClass Class to Scan
+	 * @param fields Fields for the Class
+	 * @param skipFactory TRUE to skip factory scanning, FALSE otherwise
+	 */
+	private void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory){
+		// Get or Start a Cache for the Class
+		CacheData cacheData = _classCacheData.get(scanClass);
+
+		if(cacheData == null){
+			cacheData = new CacheData();
+			_classCacheData.put(scanClass, cacheData);
+		}
+
+		// Cache NameSpace Data
+		final XmlType xmlType = scanClass.getAnnotation(XmlType.class);
+		String namespace = "##default";
+		;
+		if(xmlType == null || "##default".equals(namespace)){
+			final XmlRootElement xmlRootElement = scanClass.getAnnotation(XmlRootElement.class);
+			if(xmlRootElement == null || "##default".equals(namespace)){
+				final XmlSchema xmlSchema = scanClass.getPackage().getAnnotation(XmlSchema.class);
+				if(xmlSchema != null){
+					namespace = xmlSchema.namespace();
+				}
+			}
+			else {
+				namespace = xmlRootElement.namespace();
+			}
+		}
+		else {
+			namespace = xmlType.namespace();
+		}
+
+		_classNameSpaceCache.put(scanClass, namespace);
+
+		// Detect Object Factory
+		if(!skipFactory && !_namespaceObjectFactoryCache.containsKey(namespace)){
+			final TextBuilder objectFactoryBuilder = new TextBuilder(scanClass.getPackage().getName());
+			objectFactoryBuilder.append(".ObjectFactory");
+
+			try {
+				final Class<?> objectFactoryClass = Class.forName(objectFactoryBuilder.toString());
+				final Object objectFactory = objectFactoryClass.newInstance();
+
+				scanObjectFactory(objectFactory, false);
+
+				_namespaceObjectFactoryCache.put(namespace, objectFactory);
+			}
+			catch (final Exception e) {
+				LogContext.warning(String.format("Failed to Locate Object Factory for Namespace = %s",namespace));
+			}
+		}
+
+		// Prepare Data Structures
+		final FastMap<CharArray, Field> cachedAttributeFields = cacheData._attributeFieldsCache;;
+		final FastSet<CharArray> requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
+
+		field : for(final Field field : fields){
+
+			// XmlAccessType is required to know how to treat fields that do not have an explicit
+			// JAXB annotation attached to them. The most common type is Field, which XJC generated objects use.
+			// Field is currently the only implemented type, but you can explicitly use annotations however you want.
+			final XmlAccessType xmlAccessType = getXmlAccessType(scanClass);
+
+			// Optimization: Use access type and other annotations to determine skip.
+			if(isElementSkippableBasedOnFieldAnnotations(field, xmlAccessType))
+				continue field;
+
+			// Caching Attribute Data
+			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
+
+			if(xmlAttribute != null){
+				// Cache Attribute Data
+				final CharArray xmlAttributeName = getXmlAttributeName(field);
+				cachedAttributeFields.put(xmlAttributeName, field);
+
+				if(xmlAttribute.required()){
+					requiredFieldsSet.add(xmlAttributeName);
+				}
+
+				continue field;
+			}
+
+			// Caching Element Data
+			CharArray xmlElementName;
+			final XmlElements xmlElements = field.getAnnotation(XmlElements.class);
+
+			// Standalone Elements
+			if(xmlElements == null){
+				xmlElementName = getXmlElementName(field);
+				cacheData._elementFieldCache.put(xmlElementName, field);
+			}
+			// Mapped Elements
+			else {
+				xmlElementName = getXmlElementNameWithMappedElements(xmlElements,
+						cacheData._mappedElementsCache, cacheData._elementFieldCache, field);
+			}
+
+			// Cache Element -> Class Mapping
+			final Class<?> type = field.getType();
+			final Class<?> typeClass;
+
+			if(type.isAssignableFrom(List.class)){
+				typeClass = getGenericType(field);
+			}
+			else {
+				typeClass = type;
+			}
+
+			_elementClassCache.put(xmlElementName, typeClass);
+
+			// For validation, capture required data.
+			final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
+
+			if(xmlElement != null && xmlElement.required()){
+				requiredFieldsSet.add(xmlElementName);
+			}
+		}
+
+		_requiredCache.put(scanClass, requiredFieldsSet);
+	}
+
+	/**
+	 * This method scans an ObjectFactory and builds the caches for it
+	 * @param objectFactory Object Factory to Scan
+	 * @param customFactory TRUE if this is a custom factory set in by the user. If so
+	 * then it must be scanned here. If FALSE, its a default factory and is being scanned
+	 * as part of the scan class call.
+	 */
+	private void scanObjectFactory(final Object objectFactory, final boolean customFactory){
+		final FastSet<Method> objectFactoryMethods = getDeclaredMethods(objectFactory.getClass());
+
+		for(final Method method : objectFactoryMethods){
+			final Class<?> objectClass = method.getReturnType();
+			_classObjectFactoryCache.put(objectClass, objectFactory);
+
+			if(customFactory){
+				try {
+					final Object customObject = method.invoke(objectFactory, (Object[])null);
+					final Class<?> customClass = customObject.getClass();
+
+					if(!_registeredClassesCache.contains(customClass)){
+						final FastSet<Field> fields = getDeclaredFields(customClass);
+						scanClass(customClass, fields, true);
+					}
+				}
+				catch (final Exception e){
+					LogContext.error(String.format("Error Scanning Custom Object Factory <%s>!",
+							objectFactory.getClass()));
+				}
+
+			}
+			_objectFactoryCache.put(objectClass, method);
+		}
+	}
+
+	/**
+	 * Main processing for Reading a JAXB Object
+	 * @param inputClass Class to Read
+	 * @param reader Reader to Read With
+	 */
 	private <T> T readObject(final Class<T> inputClass, final XMLStreamReader reader) throws JAXBException, SecurityException, XMLStreamException {
 		T outputObject = null;
 
 		// Start by instantiating our final output object
 		outputObject = reflectNewInstance(inputClass);
 
-		// The processing in this implementation is stack based. We will make use of FastTable's implementation of the Deque interface 
-		final FastTable<AnnotationStackData> outputStack = new FastTable<AnnotationStackData>(Equalities.IDENTITY);
+		// The processing in this implementation is stack based. We will make use of FastTable's implementation of the Deque interface
+		final FastTable<AnnotationStackData> outputStack = new FastTable<AnnotationStackData>(Equalities.STANDARD);
 
 		// We'll push the output object onto the stack as an initial entry. All stack entries get wrapped in an AnnotationStackData class.
 		// The fields in this class are package-private to provide as cheap of access as possible since they are used frequently.
 		AnnotationStackData stackData;
 		if(_isValidating){
-			stackData = new AnnotationStackData(ROOT, null, outputObject, null, _inputClass, null, 
-					new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST), getXmlPropOrder(_inputClass));
+			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null,
+					new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST), getXmlPropOrder(inputClass));
 		}
 		else {
-			stackData = new AnnotationStackData(ROOT, null, outputObject, null, _inputClass, null, null, null);
+			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null, null, null);
 		}
+
 		outputStack.push(stackData);
 
 		// The last event state is used in future calculations as a factor in determining whether we are switching elements or not.
@@ -263,17 +525,21 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		// Storage for the last read characters across events.
 		CharArray characters = null;
 
+		// This version of local name is the one read from the StAX Reader. It is a viewport over a large CharArray that
+		// Javolution moves as we process the XML
+		CharArray localName = null;
+
+		// This version is a persisted cache of an individual element name. It is a viewport copy of the localName. The
+		// reason we create and store this is so that when we push the element name as part of the stack data, we can
+		// use identity comparison on anything in the stack data, cutting out a lot of repetitive CharSequence comparison
+		CharArray localXmlElementName = null;
+
+		// This will reference cache data for the current stack data
+		CacheData cacheData = null;
+		CacheData parentCacheData = null;
+
 		// Main Processing Loop
 		while(reader.hasNext()){
-			// This version of local name is the one read from the StAX Reader. It is a viewport over a large CharArray that
-			// Javolution moves as we process the XML
-			CharArray localName = null;
-
-			// This version is a persisted cache of an individual element name. It is a viewport copy of the localName. The
-			// reason we create and store this is so that when we push the element name as part of the stack data, we can
-			// use identity comparison on anything in the stack data, cutting out a lot of repetitive CharSequence comparison
-			CharArray localXmlElementName = null;
-
 			// This flag will let us know later whether we are continuing with a new instance of the same element, or switching.
 			boolean continuingSameElement = false;
 
@@ -291,7 +557,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 			case XMLStreamConstants.START_ELEMENT:
 
-				// If we're in skip mode from an unmapped element, we'll break here. The code will keep skipping until the 
+				// If we're in skip mode from an unmapped element, we'll break here. The code will keep skipping until the
 				// end of that element triggers an END_ELEMENT event.
 				if(skipUnmappedMode){
 					break event;
@@ -301,6 +567,11 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				localName = reader.getLocalName();
 				// Fetch or make the persistent copy for identity comparison
 				localXmlElementName = getXmlElementName(localName);
+
+				// If this element doesn't have text we need to null out characters to prevent it from being stale
+				if(!reader.hasText()) {
+					characters = null;
+				}
 
 				// This flag will record whether we push an element on the stack for further processing or not.
 				// It is used to determine whether we've hit an unmapped element or not, if we're validating data.
@@ -314,36 +585,56 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				// If our last event was an End Element, we have to trigger special handling before proceeding to determine
 				// if we are continuing with a new instance of the same element, or switching to a new element.
 				if(lastEvent == XMLStreamConstants.END_ELEMENT){
-					
 					//LogContext.info("END ELEMENT SPECIAL HANDLING - LOCAL NAME = "+localName);
 
 					// Detect if this element is mapped to multiple things (xs:choice support)
-					boolean mappedElement = _mappedElementsCache.containsKey(localXmlElementName);
-					FastSet<CharArray> mappedElements = _mappedElementsCache.get(localXmlElementName);
-					
+					FastSet<CharArray> mappedElements = null;
+					boolean mappedElement = false;
+
+					// Detect Mapped Elements for use with xs:choice
+					if(stackData._annotationStackType != AnnotationStackType.ROOT) {
+						parentCacheData = _classCacheData.get(stackData._parent._type);
+						//LogContext.info("Mapped Elements: Lookup Class = "+stackData._parent._type);
+						mappedElements = parentCacheData._mappedElementsCache.get(localXmlElementName);
+						mappedElement = (mappedElements != null && mappedElements.contains(localXmlElementName));
+						//LogContext.info("Mapped Element: "+mappedElement+", Class Key: "+stackData._type+" Mapped Classes: "+((mappedElements)==null ? "None" : mappedElements.toString()));
+					}
+
 					// If the current element is unbounded and the current element does not match this list's element, then
 					// we are done with this list and need to pop it off of the stack. In the case of xs:choice elements
 					// we have to compare against the alternate element choices as well
-					if(stackData._annotationStackType == UNBOUNDED && ((!mappedElement && localXmlElementName != stackData._xmlElementName) || (mappedElement &&
+					if(stackData._annotationStackType == AnnotationStackType.UNBOUNDED && ((!mappedElement && localXmlElementName != stackData._xmlElementName) || (mappedElement &&
 							!mappedElements.contains(stackData._xmlElementName)))){
 						outputStack.pop();
-						
+
 						//LogContext.info("<STACK POP> [DND] - Old Head: (List) "+stackData._xmlElementName);
-						
+
 						stackData = outputStack.peek();
-						
+
 						//LogContext.info("<STACK PEEK> [DND] - Current Head: "+stackData._xmlElementName);
 
 						// If the local name matches that parent's element name, we need to pop again. This case
 						// can happen when a unbounded element is the last element inside of another unbounded element.
 						if(localXmlElementName == stackData._xmlElementName || (mappedElement && mappedElements.contains(stackData._xmlElementName))){
 							outputStack.pop();
-							
+
 							//LogContext.info("<STACK POP> [DBE] - Old Head: "+stackData._xmlElementName);
-							
+
 							stackData = outputStack.peek();
-							
+
 							//LogContext.info("<STACK PEEK> [DBE] - Current Head: "+(stackData._list==null ? "" : "(List) ")+stackData._xmlElementName);
+						}
+
+						// Refresh Cache Data
+						cacheData = _classCacheData.get(stackData._type);
+
+						// Refresh mapped elements since we popped the stack (for xs:choice support)
+						if(stackData._annotationStackType != AnnotationStackType.ROOT) {
+							parentCacheData = _classCacheData.get(stackData._parent._type);
+							//LogContext.info("Mapped Elements: Lookup Class = "+stackData._parent._type);
+							mappedElements = parentCacheData._mappedElementsCache.get(localXmlElementName);
+							mappedElement = (mappedElements != null && mappedElements.contains(localXmlElementName));
+							//LogContext.info("Mapped Element: "+mappedElement+", Class Key: "+stackData._type+" Mapped Classes: "+((mappedElements)==null ? "None" : mappedElements.toString()));
 						}
 					}
 
@@ -359,10 +650,10 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 						// record the value until after we read the characters event, so we'll push the class alone onto the stack,
 						// and then commit later during the end element event.
 						if(isInstanceOfBasicType(elementClass)){
-							elementStackData = new AnnotationStackData(BASIC, stackData, elementClass, null, elementClass, null, null, null);	
+							elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, stackData, elementClass, null, elementClass, null, null, null);
 							outputStack.push(elementStackData);
 
-							//LogContext.info("<STACK PUSH> [CTE-BASIC]- New Head: "+elementStackData._type);
+							//LogContext.info("<STACK PUSH> [CTE-AnnotationStackType.BASIC]- New Head: "+elementStackData._type);
 
 							pushedElement = true;
 							lastEvent = event;
@@ -374,15 +665,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 						// onto the stack.
 						else {
 							// Start by getting the new instance of the complex type
-							final Object newObject;
-							
-							// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
-							if(_mappedElementsCache.containsKey(localXmlElementName)){
-								newObject = reflectNewInstance(_elementClassCache.get(localXmlElementName));
-							}
-							else {
-								newObject = reflectNewInstance(currentType);
-							}
+							final Object newObject = reflectNewInstance(currentType, parentCacheData, localXmlElementName);
 
 							// If we're validating, we're going to need to look up required fields (which should always be
 							// cached already at this point (see code below the special handling block for more details).
@@ -397,16 +680,16 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 							}
 
 							// Bundle up the new stack data
-							elementStackData = new AnnotationStackData(BOUNDED, stackData, newObject, null, elementClass, 
+							elementStackData = new AnnotationStackData(AnnotationStackType.BOUNDED, stackData, newObject, null, elementClass,
 									localXmlElementName, requiredFieldsSet, propOrderIterator);
 
 							// If our parent is a list, we add to the list now
-							if(stackData._annotationStackType == UNBOUNDED){
+							if(stackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 								addToList(stackData._list, newObject, null);
 							}
 							// If it's not, then we set it into it's field now
 							else {
-								setValue(stackData._object, newObject, localXmlElementName);
+								setValue(cacheData, stackData._object, newObject, localXmlElementName);
 							}
 
 							// Then, we push the data onto the stack.
@@ -421,7 +704,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 						}
 					}
 					// If we didn't match, and we're a unbounded list - then we're done with the list and we pop it here before proceeding
-					else if(stackData._annotationStackType == UNBOUNDED){
+					else if(stackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 						outputStack.pop();
 
 						//LogContext.info("<STACK POP> [ND] - Old Head: (List) "+stackData._xmlElementName);
@@ -435,169 +718,30 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				// Capture state about the current object.
 				Object currentObj = stackData._object;
 				Class<?> currentObjClass = currentObj.getClass();
+				cacheData = _classCacheData.get(currentObjClass);
 
-				// XmlAccessType is required to know how to treat fields that do not have an explicit
-				// JAXB annotation attached to them. The most common type is Field, which XJC generated objects use.
-				// Field is currently the only implemented type, but you can explicitly use annotations however you want.
-				final XmlAccessType xmlAccessType = getXmlAccessType(currentObjClass);
+				// Get the Cached Field
+				final Field targetField = cacheData._elementFieldCache.get(localXmlElementName);
+				final Class<?> elementClass = _elementClassCache.get(localXmlElementName);
 
-				// We're going to start probing cache data so that we can go down an optimized code path, and
-				// avoid eating the overhead on reflection for any data that we have already obtained.
-				// If this element has already been hit before, we'll have it's Field cached.
-				// By using this, we can avoid a lot of reflection overhead
-				final FastMap<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
-
-				Field cachedField = null;
-
-				//LogContext.info("Field Cache - Class: "+currentObjClass.getName()+" Map: "+System.identityHashCode(elementFieldCache)+" Object: "+System.identityHashCode(localXmlElementName)+" Continung: "+continuingSameElement);
-
-				// Next we are determining if we've already cached which fields are XML Attributes				
-				FastMap<CharArray, Field> cachedAttributeFields = _attributeFieldsCache.get(currentObjClass);
-				FastSet<CharArray> requiredFieldsSet = null;
-				FastMap<CharArray, Field> attributeFieldsMap = null;
-				FastSet<Field> fields = null;
+				// Next we are determining if we've already cached which fields are XML Attributes
+				FastMap<CharArray, Field> cachedAttributeFields = cacheData._attributeFieldsCache;
+				FastSet<CharArray> requiredFieldsSet = _requiredCache.get(elementClass);
 
 				// If we're continuing the same element, we can skip here because the element is already done and we only
 				// need to parse attributes.
-				if(continuingSameElement) {
-					requiredFieldsSet = _requiredCache.get(currentObjClass);
-				}
-				else {
-					cachedField = elementFieldCache.get(localXmlElementName);
+				if(!continuingSameElement && targetField != null) {
+					// This method will push the incoming element onto the stack, and return the corresponding stack data
+					stackData = handleFieldStartElement(stackData, localXmlElementName, currentObj, targetField,
+							outputStack, requiredFieldsSet);
 
-					// If we don't have a cached field, we'll gather data here.
-					if(cachedField == null){
-						
-						// If we're validating, we need to structure to store required field data for use later.
-						if(_isValidating){
-							requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-						}
-
-						// For uncached data, we're going to have to reflect the fields list and traverse it.
-						fields = getDeclaredFields(currentObjClass);
-
-						//LogContext.info("Field Cache Miss - Local Name: "+localName.toString());
-						
-						field : for(final Field field : fields){
-							
-							// Optimization: Use access type and other annotations to determine skip.
-							if(isElementSkippableBasedOnFieldAnnotations(field, xmlAccessType))
-								continue field;
-
-							// Get a copy of the Xml Element Name
-							CharArray xmlElementName = getXmlElementName(elementFieldCache, localXmlElementName, field);
-							
-							if(xmlElementName == null){
-								xmlElementName = new CharArray(field.getName());
-							}
-
-							// If we're validating, capture required data.
-							if(_isValidating){
-								XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-
-								if(xmlElement != null && xmlElement.required()){
-									requiredFieldsSet.add(xmlElementName);
-								}
-							}
-
-							// Before we can cache the field, we need to make sure we got the right one. By validating this here,
-							// we ensure we have the right element. In addition, since we're comparing against the persistent copy,
-							// we can use identity comparison on it later when we hit the special end processing above.
-							if(xmlElementName.equals(localXmlElementName)) {
-								// We have to make sure our copy of the field is accessible. For lists, there are no setters in JAXB.
-								field.setAccessible(true);
-								
-								// Cache the element, versus the persistent copy
-								elementFieldCache.put(localXmlElementName, field);
-
-								// Optimization: to avoid wasting type just gathering the cache, we also process
-								// the element here since we have all the data.
-								stackData = handleFieldStartElement(stackData, localXmlElementName, currentObj, field, outputStack, requiredFieldsSet);
-								
-								// Mark that we pushed an element
-								pushedElement = true;
-							}
-							// Even if this isn't the field we're looking for, we might as well cache with while we're here.
-							else {
-								// Cache the element field for later use.
-								field.setAccessible(true);
-								elementFieldCache.put(xmlElementName, field);
-								
-								// This might look funny, but the key and value are intentionally the same. This will become
-								// the persistent reference. It is equal to localName with a charsequence comparison, but we
-								// want the persistent version as a key so we can use identity comparison on lookup wherever 
-								// possible.
-								_xmlElementNameCache.put(xmlElementName, xmlElementName);
-							}
-						}
-
-						// If we're validating, we need to cache the required fields data we gathered.
-						if(_isValidating){
-							_requiredCache.put(currentObjClass, requiredFieldsSet);
-						}
-
-						// Optimization: Classes (Primitive or Enums) won't have attributes to scrape)
-						if(stackData._annotationStackType == BASIC){
-							lastEvent = event;
-							break event;
-						}
+					// Optimization: Classes (Primitive or Enums) won't have attributes to scrape
+					if(stackData._annotationStackType == AnnotationStackType.BASIC){
+						lastEvent = event;
+						break event;
 					}
-					// Optimization: Directly process the field if we had it cached - no need to reflect it
-					else {
-						//LogContext.info("Field Cache Hit - Local Name: "+localName.toString());
-						
-						// This method will push the incoming element onto the stack, and return the corresponding stack data
-						stackData = handleFieldStartElement(stackData, localXmlElementName, currentObj, cachedField,
-								outputStack, requiredFieldsSet);					
 
-						// Optimization: Classes (Primitive or Enums) won't have attributes to scrape
-						if(stackData._annotationStackType == BASIC){
-							lastEvent = event;
-							break event;
-						}
-
-						pushedElement = true;
-
-						// Re-probe object data as it has changed.
-						currentObj = stackData._object;
-						currentObjClass = currentObj.getClass();
-
-						cachedAttributeFields = _attributeFieldsCache.get(currentObjClass);
-						
-						// If we haven't cached attribute's, we'll prepare a data structure to gather data to cache with.
-						if(cachedAttributeFields == null){
-							attributeFieldsMap = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST);
-							
-							if(_isValidating){
-								requiredFieldsSet = _requiredCache.get(currentObjClass);
-							
-								if(requiredFieldsSet == null){
-									requiredFieldsSet = new FastSet<CharArray>();
-									_requiredCache.put(currentObjClass, requiredFieldsSet);
-								}
-							
-								stackData._requiredSet = requiredFieldsSet;
-								stackData._processedSet = new FastSet<CharArray>();
-							}
-						}
-						// Optimization: If we already had the attribute fields cached, we can process them here.
-						else {
-							int attributeCount = reader.getAttributeCount();
-							
-							if(_isValidating){
-								stackData._requiredSet = _requiredCache.get(currentObjClass);
-								stackData._processedSet = new FastSet<CharArray>();
-							}
-							
-							for(int i = 0; i < attributeCount; i++){
-								final Field field = cachedAttributeFields.get(reader.getAttributeLocalName(i));
-								parseAttribute(reader, field, currentObj, stackData._processedSet);
-							}
-							
-							// Optimization Since we've done fields and attributes now, we're done.
-							break event;
-						}
-					}
+					pushedElement = true;
 				}
 
 				// We keep a reference to the old class before we probe again, because if it didn't change
@@ -610,68 +754,26 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 
 				// If the data did change, we need to re-probe our attribute and required data.
 				if(originalObjClass != currentObjClass){
-					cachedAttributeFields = _attributeFieldsCache.get(currentObjClass);
+					cacheData = _classCacheData.get(currentObjClass);
+					cachedAttributeFields = cacheData._attributeFieldsCache;
 					requiredFieldsSet = _requiredCache.get(currentObjClass);
-
-					// If we don't have any required data yet, we need a data structure to start gathering it.
-					if(_isValidating && requiredFieldsSet == null){
-						requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-					}
 				}
 
-				// We don't have attribute data cached so we need to scan for it.
-				if(cachedAttributeFields == null){
-					attributeFieldsMap = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST);
-
-					// Only fetch declared fields if we don't already ahve them or the class changed
-					if(fields == null || originalObjClass != currentObjClass){
-						fields = getDeclaredFields(currentObjClass);
-					}
-
-					for(final Field field : fields){
-						if(field.isAnnotationPresent(XmlAttribute.class)){
-							// Cache Attribute Data
-							CharArray xmlAttributeName = getXmlAttributeName(field);
-							attributeFieldsMap.put(xmlAttributeName, field);
-
-							// If we're validating, also add required info
-							if(_isValidating){
-								XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
-
-								if(xmlAttribute.required()){
-									requiredFieldsSet.add(xmlAttributeName);
-								}
-							}
-						}
-						else if(_isValidating){
-							XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-
-							if(xmlElement != null && xmlElement.required()){
-								CharArray xmlElementName = getXmlElementName(elementFieldCache, localXmlElementName, field);
-								requiredFieldsSet.add(xmlElementName);
-							}
-						}
-					}
-
-					// Cache the full set of attributes for later use
-					_attributeFieldsCache.put(currentObjClass, attributeFieldsMap);
-					cachedAttributeFields = attributeFieldsMap;
-				}
-
-				// Actually parse the attributes
+				// Parse the attributes
 				for(int i = 0; i < reader.getAttributeCount(); i++){
-					Field field = cachedAttributeFields.get(reader.getAttributeLocalName(i));
-					parseAttribute(reader, field, currentObj, stackData._processedSet);
+					final Field field = cachedAttributeFields.get(reader.getAttributeLocalName(i));
+					//LogContext.info("Parse Attribute Field: "+field.getName());
+					parseAttribute(cacheData._enumValueCache, reader, field, currentObj, stackData._processedSet);
 				}
 
 				// If we haven't pushed an element yet, then it's an unmapped one.
-				if(!pushedElement && currentObjClass!=_inputClass){
+				if(!pushedElement && currentObjClass!=inputClass){
 					// If we're validating, then we have to raise an exception
 					if(_isValidating){
 						throw new ValidationException("Unmapped Element");
 					}
 					// If we're not, we need to trigger the ignore flag.
-					else {						
+					else {
 						unmappedElement = localXmlElementName;
 						skipUnmappedMode = true;
 					}
@@ -696,22 +798,24 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				//LogContext.info("<STACK POP> [EE] - Old Head: "+((stackData._xmlElementName == null) ? stackData._type : stackData._xmlElementName));
 
 				// Optimization: If we're back down to the starting element, we can break here.
-				if(stackData._annotationStackType == ROOT)
+				if(stackData._annotationStackType == AnnotationStackType.ROOT)
 					break event;
 
 				final AnnotationStackData parentStackData = stackData._parent;
 
 				// For elements that come through with a list directly below them, we add the value to that list here.
-				if(stackData._annotationStackType == BASIC){
-					if(parentStackData._annotationStackType == UNBOUNDED){
+				if(stackData._annotationStackType == AnnotationStackType.BASIC){
+					parentCacheData = _classCacheData.get(parentStackData._type);
+
+					if(parentStackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 						addToList(parentStackData._list, stackData._object, characters);
 					}
 					else {
 						localXmlElementName = getXmlElementName(localName);
-						setValue(parentStackData._object, localXmlElementName, characters);
+						setValue(parentCacheData, parentStackData._object, localXmlElementName, characters);
 					}
 				}
-				else if(stackData._annotationStackType == UNBOUNDED){
+				else if(stackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 					if(lastEvent == XMLStreamConstants.END_ELEMENT){
 						//LogContext.info("<STACK POP> [EEDP] - Old Head: "+((stackData._xmlElementName == null) ? stackData._type : stackData._xmlElementName));
 						stackData = outputStack.pop();
@@ -726,8 +830,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 					}
 				}
 
-				if(_isValidating && stackData._annotationStackType != BASIC && !stackData._processedSet.containsAll(stackData._requiredSet)){
-					throw new ValidationException(String.format("Missing Required Elements: Has %s, Requires %s", 
+				if(_isValidating && stackData._annotationStackType != AnnotationStackType.BASIC && !stackData._processedSet.containsAll(stackData._requiredSet)){
+					throw new ValidationException(String.format("Missing Required Elements: Has %s, Requires %s",
 							stackData._processedSet, stackData._requiredSet));
 				}
 
@@ -756,105 +860,106 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		attribute.getChars(0, attribute.length(), array, 0);
 		array[0] = Character.toUpperCase(array[0]);
 
-		final StringBuilder setterBuilder = new StringBuilder(3+array.length);
+		final TextBuilder setterBuilder = new TextBuilder(3+array.length);
 		setterBuilder.append("set");
 		setterBuilder.append(array);
 
 		return setterBuilder.toString();
 	}
 
-	private CharArray getXmlElementName(final FastMap<CharArray,Field> elementFieldCache, final CharArray localXmlElementName, final Field field){
-		CharArray xmlElementName = null;
+	private CharArray getXmlElementName(final Field field){
+		CharArray xmlElementName;
 
-		// First We Probe for @XmlElement
-		XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-		
-		// If we don't find it, try @XmlElements (xs:choice support)
+		final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
+
 		if(xmlElement == null){
-			XmlElements xmlElements = field.getAnnotation(XmlElements.class);
-			
-			if(xmlElements != null){
-				XmlElement[] elements = xmlElements.value();
-				
-				FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-				
-				for(final XmlElement element : elements){
-					final CharArray nameKey = new CharArray(element.name());
-					CharArray name = _xmlElementNameCache.get(nameKey);
-					
-					// We need to pre-cache everything about the elements
-					if(name == null){
-						name = _xmlElementNameCache.put(nameKey, nameKey);
-						name = nameKey;
-					}
-					
-					_elementClassCache.putIfAbsent(name, element.type());
-					elementFieldCache.putIfAbsent(name, field);
-					
-					//LogContext.info("<XML-ELEMENTS SCAN> Field: "+field.getName()+" | Element Name: "+name+" | Element Type: "+element.type());
-					
-					if(name == localXmlElementName){
-						xmlElementName = name;
-						//LogContext.info("<XML-ELEMENTS SCAN> Match Found, Element Name: "+name);
-					}
-					
-					// Mapped elements will be used later to switch detection
-					mappedElementsSet.add(name);
-					_mappedElementsCache.put(name, mappedElementsSet);
-				}
-			}
+			xmlElementName = new CharArray(field.getName());
 		}
 		else {
 			xmlElementName = new CharArray(xmlElement.name());
-			_xmlElementNameCache.putIfAbsent(xmlElementName, xmlElementName);
 		}
-		
+
+		_xmlElementNameCache.put(xmlElementName, xmlElementName);
+
 		return xmlElementName;
 	}
 
-	private AnnotationStackData handleFieldStartElement(final AnnotationStackData parentStackData, final CharArray xmlElementName, final Object currentObj, final Field field,
-			final Deque<AnnotationStackData> outputStack, final FastSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
-		final AnnotationStackData elementStackData;
+	private CharArray getXmlElementNameWithMappedElements(final XmlElements xmlElements,
+			final FastMap<CharArray,FastSet<CharArray>> mappedElementsCache,
+			final FastMap<CharArray,Field> elementFieldCache, final Field field){
+		final CharArray thisXmlElementName = getXmlElementName(field);
+		final FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
+		final XmlElement[] elements = xmlElements.value();
 
+		for(final XmlElement element : elements){
+			final CharArray nameKey = new CharArray(element.name());
+			CharArray name = _xmlElementNameCache.get(nameKey);
+
+			if(name == null){
+				_xmlElementNameCache.put(nameKey, nameKey);
+				name = nameKey;
+			}
+
+			final Class<?> elementType = element.type();
+			_elementClassCache.put(name, elementType);
+			elementFieldCache.put(name, field);
+
+			// Scan Choice Classes
+			registerContextClasses(elementType);
+
+			//LogContext.info("<XML-ELEMENTS SCAN> Field: "+field.getName()+" | Element Name: "+name+" | Element Type: "+element.type());
+
+			// Mapped elements will be used later to switch detection
+			mappedElementsSet.add(name);
+			mappedElementsCache.put(name, mappedElementsSet);
+			//LogContext.info("Store Mapped Elements: Element Key = "+name+", Mapped Elements: "+mappedElementsSet);
+		}
+
+		return thisXmlElementName;
+	}
+
+	private AnnotationStackData handleFieldStartElement(final AnnotationStackData parentStackData, final CharArray xmlElementName, final Object currentObj, final Field field,
+			final FastTable<AnnotationStackData> outputStack, final FastSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
+		final AnnotationStackData elementStackData;
+		final CacheData parentCacheData = _classCacheData.get(parentStackData._type);
 		final Class<?> fieldType = field.getType();
 
 		Iterator<CharArray> propOrderIterator = null;
-		
+
 		if(_isValidating){
 			parentStackData._processedSet.add(xmlElementName);
-			
+
 			final Iterator<CharArray> parentPropOrderIterator = parentStackData._propOrderIterator;
-			
+
 			boolean propOrderMatch = false;
-			
+
 			while(parentPropOrderIterator.hasNext()){
 				final CharArray propOrder = parentPropOrderIterator.next();
-				
+
 				// TODO: Try to guarantee identity
 				if(propOrder == xmlElementName || propOrder.equals(xmlElementName)){
 					propOrderMatch = true;
 					break;
 				}
 			}
-			
+
 			if(!propOrderMatch){
 				throw new ValidationException("Out of Order Element Detected: "+xmlElementName);
 			}
 		}
-		
+
 		try {
 			if(fieldType.isAssignableFrom(List.class)){
 				final Class<?> genericType = getGenericType(field);
-
 				final AnnotationStackData listStackData;
 
-				if(parentStackData._annotationStackType == UNBOUNDED){
+				if(parentStackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 					listStackData = parentStackData;
 					//LogContext.info("<STACK NOOP> - [KEEP CURRENT LIST]: (List) "+listStackData._xmlElementName);
 				}
 				else {
 					final FastTable<Object> list = new FastTable<Object>(Equalities.STANDARD);
-					listStackData = new AnnotationStackData(UNBOUNDED, parentStackData, null,
+					listStackData = new AnnotationStackData(AnnotationStackType.UNBOUNDED, parentStackData, null,
 							list, genericType, xmlElementName, null, null);
 					setList(listStackData);
 
@@ -863,68 +968,48 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				}
 
 				if(isInstanceOfBasicType(genericType)){
-					elementStackData = new AnnotationStackData(BASIC, listStackData, genericType, null, genericType, null, null, null);
+					elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, listStackData, genericType, null, genericType, null, null, null);
 					outputStack.push(elementStackData);
-					//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
+					//LogContext.info("<STACK PUSH> - [START-AnnotationStackType.BASIC] New Head: "+elementStackData._type);
 				}
 				else {
-					final Object genericInstance; 
-					
-					// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
-					if(_mappedElementsCache.containsKey(xmlElementName)){
-						genericInstance = reflectNewInstance(_elementClassCache.get(xmlElementName));
-					}
-					else {
-						genericInstance = genericType.newInstance();
-					}
-					
+					final Object genericInstance = reflectNewInstance(genericType, parentCacheData, xmlElementName);
+
 					if(_isValidating){
 						propOrderIterator = getXmlPropOrder(genericType);
 					}
-					
-					elementStackData = new AnnotationStackData(BOUNDED, listStackData,
-							genericInstance, null, genericType, xmlElementName, requiredFieldsSet, propOrderIterator);
+
+					elementStackData = new AnnotationStackData(AnnotationStackType.BOUNDED, listStackData,
+							genericInstance, null, genericInstance.getClass(), xmlElementName, requiredFieldsSet, propOrderIterator);
 					addToList(listStackData._list, genericInstance, null);
 					outputStack.push(elementStackData);
 					//LogContext.info("<STACK PUSH> - [START-COMPLEX] New Head: "+elementStackData._xmlElementName);
 				}
-
-				_elementClassCache.put(xmlElementName, genericType);
 			}
 			else if(isInstanceOfBasicType(fieldType)){
-				elementStackData = new AnnotationStackData(BASIC, parentStackData, fieldType, null, fieldType, null, null, null);
+				elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, parentStackData, fieldType, null, fieldType, null, null, null);
 				outputStack.push(elementStackData);
-				_elementClassCache.put(xmlElementName, fieldType);
-				//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
+				//LogContext.info("<STACK PUSH> - [START-AnnotationStackType.BASIC] New Head: "+elementStackData._type);
 			}
 			else {
-				final Object newInstance; 
-					
-				// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
-				if(_mappedElementsCache.containsKey(xmlElementName)){
-					newInstance = reflectNewInstance(_elementClassCache.get(xmlElementName));
-				}
-				else {
-					newInstance = fieldType.newInstance();
-				}
-				
+				final Object newInstance = reflectNewInstance(fieldType, parentCacheData, xmlElementName);
+
 				if(_isValidating){
 					propOrderIterator = getXmlPropOrder(fieldType);
 				}
-				
-				elementStackData = new AnnotationStackData(BOUNDED, parentStackData,
-						newInstance, null, fieldType, xmlElementName, requiredFieldsSet, propOrderIterator);
 
-				if(parentStackData._annotationStackType == UNBOUNDED){
+				elementStackData = new AnnotationStackData(AnnotationStackType.BOUNDED, parentStackData,
+						newInstance, null, newInstance.getClass(), xmlElementName, requiredFieldsSet, propOrderIterator);
+
+				if(parentStackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 					addToList(parentStackData._list, newInstance, null);
 				}
 				else {
-					setValue(parentStackData._object, newInstance, xmlElementName);
+					setValue(parentCacheData, parentStackData._object, newInstance, xmlElementName);
 				}
 
 				outputStack.push(elementStackData);
 				//LogContext.info("<STACK PUSH> - [START-COMPLEX] New Head: "+elementStackData._xmlElementName);
-				_elementClassCache.put(xmlElementName, fieldType);
 			}
 		}
 		catch (final Exception e){
@@ -934,76 +1019,85 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return elementStackData;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void invokeMethod(final Method method, final Class<?> type, final Object object, final CharArray value) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
-		if (type==String.class){
-			method.invoke(object, value.toString());
+	private void invokeMethod(final Method method, final Class<?> type, final Object object, final CharArray value, final Enum<?> enumValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
+		if(value == null) {
+			return;
 		}
-		else if (type==Long.class){
-			method.invoke(object, value.toLong());
-		}
-		else if (type == XMLGregorianCalendar.class){
-			final XMLGregorianCalendar calendar = _dataTypeFactory.newXMLGregorianCalendar(value.toString());
-			method.invoke(object, calendar);
-		}
-		else if (type==Integer.class){
-			method.invoke(object, value.toInt());
-		}
-		else if (type==Boolean.class){
-			method.invoke(object, value.toBoolean());
-		}
-		else if (type==Double.class){
-			method.invoke(object, value.toDouble());
-		}
-		else if (type==Byte.class){
-			method.invoke(object, (byte)value.toInt());
-		}
-		else if (type==Float.class){
-			method.invoke(object, value.toFloat());
-		}
-		else if (type==Short.class){
-			method.invoke(object, (short)value.toInt());
-		}
-		else if(type.isEnum()){
-			Enum<?> enumValue = _enumValueCache.get(value);
 
-			if(enumValue==null){
-				enumValue = Enum.valueOf((Class<Enum>)type, value.toString());
-				_enumValueCache.put(value, enumValue);
-			}
+		InvocationClassType invocationClassType;
 
-			method.invoke(object, enumValue);
-		}
-		else if(type.isPrimitive()){
-			if (type==long.class){
-				method.invoke(object, value.toLong());
-			}			
-			else if (type==int.class){
-				method.invoke(object, value.toInt());
-			}
-			else if (type==boolean.class){
-				method.invoke(object, value.toBoolean());
-			}
-			else if (type==double.class){
-				method.invoke(object, value.toDouble());
-			}
-			else if (type==byte.class){
-				method.invoke(object, (byte)value.toInt());
-			}
-			else if (type==float.class){
-				method.invoke(object, value.toFloat());
-			}
-			else if (type==short.class){
-				method.invoke(object, (short)value.toInt());
+		if(enumValue == null){
+			invocationClassType = InvocationClassType.valueOf(type);
+
+			if(invocationClassType == null){
+				invocationClassType = InvocationClassType.OBJECT;
 			}
 		}
 		else {
+			invocationClassType = InvocationClassType.ENUM;
+		}
+
+		switch(invocationClassType){
+
+		case STRING:
+			method.invoke(object, value.toString());
+			break;
+
+		case LONG:
+		case PRIMITIVE_LONG:
+			method.invoke(object, value.toLong());
+			break;
+
+		case XML_GREGORIAN_CALENDAR:
+			final XMLGregorianCalendar calendar = _dataTypeFactory.newXMLGregorianCalendar(value.toString());
+			method.invoke(object, calendar);
+			break;
+
+		case INTEGER:
+		case PRIMITIVE_INTEGER:
+			method.invoke(object, value.toInt());
+			break;
+
+		case BOOLEAN:
+		case PRIMITIVE_BOOLEAN:
+			method.invoke(object, value.toBoolean());
+			break;
+
+		case DOUBLE:
+		case PRIMITIVE_DOUBLE:
+			method.invoke(object, value.toDouble());
+			break;
+
+		case BYTE:
+		case PRIMITIVE_BYTE:
+			method.invoke(object, (byte)value.toInt());
+			break;
+
+		case FLOAT:
+		case PRIMITIVE_FLOAT:
+			method.invoke(object, value.toFloat());
+			break;
+
+		case SHORT:
+		case PRIMITIVE_SHORT:
+			method.invoke(object, (short)value.toInt());
+			break;
+
+		case ENUM:
+			method.invoke(object, enumValue);
+			break;
+
+		case OBJECT:
 			try {
 				method.invoke(object, type.newInstance());
 			}
 			catch (final InstantiationException e) {
 				throw new UnmarshalException("Error Excecuting Setter - UnMapped Type!", e);
 			}
+			break;
+
+		default:
+			throw new UnmarshalException("Error Executing Method Invocation - Unhandled Type! Type = "+type);
 		}
 	}
 
@@ -1013,14 +1107,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				return true;
 			}
 		}
-		else if(!field.isAnnotationPresent(XmlElement.class)){
+		else if(!field.isAnnotationPresent(XmlElement.class) && !field.isAnnotationPresent(XmlAttribute.class)){
 			return true;
 		}
 
 		return false;
 	}
 
-	private void parseAttribute(final XMLStreamReader reader, final Field field, final Object currentObj, final FastSet<CharArray> processedSet) throws UnmarshalException, ValidationException{
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void parseAttribute(final FastMap<CharArray,Enum<?>> enumValueCache, final XMLStreamReader reader, final Field field, final Object currentObj, final FastSet<CharArray> processedSet) throws UnmarshalException, ValidationException{
 
 		if(_isValidating && field == null){
 			throw new ValidationException("Unmapped Attribute Encountered");
@@ -1029,7 +1124,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			return;
 		}
 
-		CharArray xmlAttributeName = getXmlAttributeName(field);
+		final CharArray xmlAttributeName = getXmlAttributeName(field);
 
 		try {
 			final CharArray attributeValue = reader.getAttributeValue(null, xmlAttributeName);
@@ -1037,7 +1132,21 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			if(attributeValue != null){
 				final Class<?> fieldType = field.getType();
 				final Method method = getSetterMethod(currentObj, field, fieldType, xmlAttributeName);
-				invokeMethod(method, fieldType, currentObj, attributeValue);
+
+				Enum<?> enumValue = null;
+
+				if(enumValueCache.containsKey(attributeValue)){
+					enumValue = enumValueCache.get(attributeValue);
+					invokeMethod(method, fieldType, currentObj, null, enumValue);
+				}
+				else if(fieldType.isEnum()){
+					enumValue = Enum.valueOf((Class<Enum>)fieldType, attributeValue.toString());
+					enumValueCache.put(attributeValue, enumValue);
+					invokeMethod(method, fieldType, currentObj, null, enumValue);
+				}
+				else {
+					invokeMethod(method, fieldType, currentObj, attributeValue, null);
+				}
 
 				if(_isValidating){
 					processedSet.add(xmlAttributeName);
@@ -1062,6 +1171,35 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return outputObject;
 	}
 
+	private Object reflectNewInstance(final Class<?> instanceClass, final CacheData cacheData, final CharArray localXmlElementName) throws UnmarshalException {
+		final Object instance;
+
+		// In xs:choice the list will have the interface type so we need to ensure we have the implementation type
+		try {
+			final Class<?> targetClass;
+			if(cacheData._mappedElementsCache.containsKey(localXmlElementName)){
+				targetClass = _elementClassCache.get(localXmlElementName);
+			}
+			else {
+				targetClass = instanceClass;
+			}
+
+			final Method targetFactoryMethod = _objectFactoryCache.get(targetClass);
+
+			if(targetFactoryMethod == null) {
+				instance = targetClass.newInstance();
+			}
+			else {
+				instance = targetFactoryMethod.invoke(_classObjectFactoryCache.get(targetClass), (Object[])null);
+			}
+		}
+		catch (final Exception e) {
+			throw new UnmarshalException("Error Instantating the JAXB Class!", e);
+		}
+
+		return instance;
+	}
+
 	private void setList(final AnnotationStackData listStackData) throws UnmarshalException{
 		final AnnotationStackData parentStackData = listStackData._parent;
 		final Object parentObj = parentStackData._object;
@@ -1069,15 +1207,9 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		final CharArray xmlElementName = listStackData._xmlElementName;
 
 		try {
-			final Map<CharArray,Field> elementFieldCache = getClassElementFieldCache(parentType);
-			Field field = elementFieldCache.get(xmlElementName);
-
-			if(field == null){
-				field = parentType.getDeclaredField(xmlElementName.toString());
-				field.setAccessible(true);
-				elementFieldCache.put(xmlElementName, field);
-			}
-
+			final CacheData parentCacheData = _classCacheData.get(parentType);
+			final FastMap<CharArray,Field> elementFieldCache = parentCacheData._elementFieldCache;
+			final Field field = elementFieldCache.get(xmlElementName);
 			field.set(parentObj, listStackData._list);
 
 			//LogContext.info("<SAVE-LIST> - [setList]: "+listStackData._xmlElementName);
@@ -1087,25 +1219,17 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		}
 	}
 
-	private void setValue(final Object currentObj, final Object element, final CharArray xmlElementName) throws UnmarshalException{
+	private void setValue(final CacheData cacheData, final Object currentObj, final Object element, final CharArray xmlElementName) throws UnmarshalException{
 		try {
-			Method method = _directSetValueCache.get(xmlElementName);
+			Method method = cacheData._directSetValueCache.get(xmlElementName);
 
 			if(method == null){
-				final Class<?> currentObjClass = currentObj.getClass();
-				final Map<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
-				Field field = elementFieldCache.get(xmlElementName);
-
-				if(field == null){
-					field = currentObj.getClass().getDeclaredField(xmlElementName.toString());
-					field.setAccessible(true);
-					elementFieldCache.put(xmlElementName, field);
-				}
-
+				final FastMap<CharArray,Field> elementFieldCache = cacheData._elementFieldCache;
+				final Field field = elementFieldCache.get(xmlElementName);
 				final Class<?> fieldType = field.getType();
 
 				method = getSetterMethod(currentObj, field, fieldType, xmlElementName);
-				_directSetValueCache.put(xmlElementName, method);
+				cacheData._directSetValueCache.put(xmlElementName, method);
 			}
 
 			method.invoke(currentObj, element);
@@ -1116,26 +1240,13 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		}
 	}
 
-	private void setValue(final Object currentObj, final CharArray localXmlElementName, final CharArray characters) throws UnmarshalException{
+	private void setValue(final CacheData cacheData, final Object currentObj, final CharArray localXmlElementName, final CharArray characters) throws UnmarshalException{
 		try {
-			final Class<?> currentObjClass = currentObj.getClass();
-			//LogContext.info("<SET VALUE> - [setValue]: "+currentObj.getClass());
-			
-			final Map<CharArray,Field> elementFieldCache = getClassElementFieldCache(currentObjClass);
-			Field field = elementFieldCache.get(localXmlElementName);
-			Class<?> fieldType = null;;
+			final FastMap<CharArray,Field> elementFieldCache = cacheData._elementFieldCache;
+			final Field field = elementFieldCache.get(localXmlElementName);
+			Class<?> fieldType = null;
 
-			Method method = null;
-
-			if(field == null){
-				field = currentObjClass.getDeclaredField(localXmlElementName.toString());
-				field.setAccessible(true);
-				elementFieldCache.put(localXmlElementName, field);
-			}
-			else {
-				method = _methodCache.get(field);
-			}
-
+			Method method = _methodCache.get(field);
 			fieldType = field.getType();
 
 			if(method==null){
@@ -1143,7 +1254,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 				_methodCache.put(field, method);
 			}
 
-			invokeMethod(method, fieldType, currentObj, characters);
+			invokeMethod(method, fieldType, currentObj, characters, null);
 		}
 		catch (final Exception e){
 			throw new UnmarshalException("Error Getting JAXB Setter!", e);
@@ -1151,7 +1262,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void addToList(final List<Object> listObj, Object element, final CharArray characters){
+	private void addToList(final FastTable<Object> listObj, Object element, final CharArray characters){
 		// If a class came in, it's a sign that special handling is needed.
 		if(element instanceof Class){
 			final Class<?> elementClass = (Class<?>)element;
@@ -1159,11 +1270,12 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			// Special Handling for Enums: We have the value now so we need to convert it
 			// to the enum value before adding it to the list.
 			if(elementClass.isEnum()){
-				element = _enumValueCache.get(characters);
+				final CacheData cacheData = _classCacheData.get(elementClass);
+				element = cacheData._enumValueCache.get(characters);
 
 				if(element == null){
 					element = Enum.valueOf((Class<Enum>)elementClass, characters.toString());
-					_enumValueCache.put(characters, (Enum<?>)element);
+					cacheData._enumValueCache.put(characters, (Enum<?>)element);
 				}
 			}
 		}
@@ -1172,19 +1284,136 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		//LogContext.info("<ADD-LIST> - [addToList]: "+element.getClass());
 	}
 
-	private FastMap<CharArray,Field> getClassElementFieldCache(final Class<?> classObject){
-		FastMap<CharArray,Field> elementFieldCache = _classElementFieldCache.get(classObject);
+	@Override
+	public void setObjectFactories(final Object... objectFactories) throws JAXBException {
+		for(final Object objectFactory : objectFactories){
+			final Class<?> objectFactoryClass = objectFactory.getClass();
 
-		if(elementFieldCache == null){
-			elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST);
-			_classElementFieldCache.put(classObject, elementFieldCache);
+			if(_registeredClassesCache.contains(objectFactoryClass)) {
+				continue;
+			}
+
+			if(!objectFactoryClass.isAnnotationPresent(XmlRegistry.class) &&
+					(objectFactoryClass.getSuperclass()!=null &&
+					!objectFactoryClass.getSuperclass().isAnnotationPresent(XmlRegistry.class))){
+				throw new JAXBException(
+						String.format("Object Factory <%s> Is Not Annotated With @XmlRegistry",
+								objectFactoryClass));
+			}
+
+			final XmlSchema xmlSchema = objectFactoryClass.getSuperclass().getPackage().getAnnotation(XmlSchema.class);
+
+			if(xmlSchema == null){
+				throw new JAXBException(
+						String.format("Failed to Detect Schema Namespace for Object Factory <%s>",
+								objectFactoryClass));
+			}
+
+			scanObjectFactory(objectFactory, true);
+			_registeredClassesCache.add(objectFactoryClass);
 		}
-
-		return elementFieldCache;
 	}
 
+	@Override
 	public void setValidating(final boolean isValidating){
 		_isValidating = isValidating;
 	}
 
+	private enum AnnotationStackType {
+		BASIC, BOUNDED, ROOT, UNBOUNDED;
+	}
+
+	private enum InvocationClassType {
+
+		STRING(String.class),
+		LONG(Long.class),
+		XML_GREGORIAN_CALENDAR(XMLGregorianCalendar.class),
+		INTEGER(Integer.class),
+		BOOLEAN(Boolean.class),
+		DOUBLE(Double.class),
+		BYTE(Byte.class),
+		FLOAT(Float.class),
+		SHORT(Short.class),
+		PRIMITIVE_LONG(long.class),
+		PRIMITIVE_INTEGER(int.class),
+		PRIMITIVE_BOOLEAN(boolean.class),
+		PRIMITIVE_DOUBLE(double.class),
+		PRIMITIVE_BYTE(byte.class),
+		PRIMITIVE_FLOAT(float.class),
+		PRIMITIVE_SHORT(short.class),
+		ENUM(Enum.class),
+		OBJECT(Object.class);
+
+		private static final HashMap<Class<?>,InvocationClassType> types;
+
+		static {
+			types = new HashMap<Class<?>,InvocationClassType>(17);
+
+			for(final InvocationClassType type : EnumSet.allOf(InvocationClassType.class)){
+				types.put(type.type, type);
+			}
+		}
+
+		private final Class<?> type;
+
+		private InvocationClassType(final Class<?> type){
+			this.type = type;
+		}
+
+		public static InvocationClassType valueOf(final Class<?> type){
+			return types.get(type);
+		}
+
+	}
+	private class AnnotationStackData {
+
+		final AnnotationStackType _annotationStackType;
+		final FastTable<Object> _list;
+		final Object _object;
+		final AnnotationStackData _parent;
+		final Class<?> _type;
+		final CharArray _xmlElementName;
+		final Iterator<CharArray> _propOrderIterator;
+
+		FastSet<CharArray> _processedSet;
+		FastSet<CharArray> _requiredSet;
+
+		public AnnotationStackData(final AnnotationStackType annotationStackType,
+				final AnnotationStackData parent, final Object object, final FastTable<Object> list,
+				final Class<?> type, final CharArray xmlElementName, final FastSet<CharArray> requiredSet,
+				final Iterator<CharArray> propOrderIterator){
+			_annotationStackType = annotationStackType;
+			_object = object;
+			_parent = parent;
+			_type = type;
+			_xmlElementName = xmlElementName;
+			_list = list;
+			_requiredSet = requiredSet;
+			_propOrderIterator = propOrderIterator;
+
+			if(requiredSet == null){
+				_processedSet = null;
+			}
+			else {
+				_processedSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
+			}
+		}
+
+	}
+
+	private class CacheData {
+		final FastMap<CharArray,Field> _attributeFieldsCache;
+		final FastMap<CharArray,Field> _elementFieldCache;
+		final FastMap<CharArray,Method> _directSetValueCache;
+		final FastMap<CharArray,Enum<?>> _enumValueCache;
+		final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
+
+		public CacheData() {
+			_attributeFieldsCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+		}
+	}
 }
