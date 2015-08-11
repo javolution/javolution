@@ -142,7 +142,7 @@ public interface JAXBAnnotatedObjectReader {
 	 * @param source Source to Read
 	 * @param targetClass Class to Read
 	 * @param <T> Type of JAXB Object
-	 * @return
+	 * @return JAXB Object Representing the XML
 	 * @throws JAXBException if an error occurs while reading the object
 	 */
 	<T> JAXBElement<T> read(final Source source, final Class<T> targetClass) throws JAXBException;

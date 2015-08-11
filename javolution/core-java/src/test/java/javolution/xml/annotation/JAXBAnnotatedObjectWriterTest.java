@@ -12,9 +12,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.namespace.QName;
 
 import javolution.xml.internal.annotation.JAXBAnnotatedObjectWriterImpl;
 import javolution.xml.jaxb.test.schema.TestAttributeElement;
@@ -43,13 +45,45 @@ public class JAXBAnnotatedObjectWriterTest {
 	@Test
 	public void testWithLargeNestedMixedObject() throws JAXBException{
 		final JAXBAnnotatedObjectWriter jaxbWriter = new JAXBAnnotatedObjectWriterImpl(TestRoot.class);
+		//jaxbWriter.setUseCDATA(true);
 		//jaxbWriter.setValidating(true);
 
 		//final JAXBContext contextA = JAXBContext.newInstance(TestRoot.class);
 		//final Marshaller marshaller = contextA.createMarshaller();
 
+		final TestRoot testRoot = createLargeNestedMixedObject();
 		final StringWriter writer = new StringWriter();
+		jaxbWriter.write(testRoot, writer);
+		//marshaller.marshal(testRoot, writer);
 
+		//System.out.println(writer.toString());
+
+		assertEquals("Case 1 XML", EXPECTED_LARGE_NESTED_MIXED, writer.toString());
+	}
+
+	@Test
+	public void testWithLargeNestedMixedObjectWithJAXBElementWrapping() throws JAXBException{
+		final JAXBAnnotatedObjectWriter jaxbWriter = new JAXBAnnotatedObjectWriterImpl(TestRoot.class);
+		//jaxbWriter.setUseCDATA(true);
+		//jaxbWriter.setValidating(true);
+
+		//final JAXBContext contextA = JAXBContext.newInstance(TestRoot.class);
+		//final Marshaller marshaller = contextA.createMarshaller();
+
+		final TestRoot testRoot = createLargeNestedMixedObject();
+		final StringWriter writer = new StringWriter();
+		final JAXBElement<TestRoot> jaxbElement = new JAXBElement<TestRoot>(
+				new QName("http://javolution.org/xml/schema/javolution","TestRoot"),
+				TestRoot.class, testRoot);
+		jaxbWriter.write(jaxbElement, writer);
+		//marshaller.marshal(testRoot, writer);
+
+		//System.out.println(writer.toString());
+
+		assertEquals("Case 1 XML", EXPECTED_LARGE_NESTED_MIXED, writer.toString());
+	}
+
+	private TestRoot createLargeNestedMixedObject() {
 		final TestRoot testRoot = new TestRoot();
 		testRoot.setType("Test6");
 		testRoot.setType2("Test9");
@@ -237,12 +271,7 @@ public class JAXBAnnotatedObjectWriterTest {
 		testRoot.getTestUnboundedWrapperElement().add(testUnboundedWrapperElement);
 		testRoot.getTestUnboundedWrapperElement().add(testUnboundedWrapperElement2);
 
-		jaxbWriter.write(testRoot, writer);
-		//marshaller.marshal(testRoot, writer);
-
-		//System.out.println(writer.toString());
-
-		assertEquals("Case 1 XML", EXPECTED_LARGE_NESTED_MIXED, writer.toString());
+		return testRoot;
 	}
 
 }

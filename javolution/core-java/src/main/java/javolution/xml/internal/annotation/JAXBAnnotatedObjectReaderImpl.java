@@ -23,14 +23,9 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.ValidationException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchema;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -39,7 +34,6 @@ import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
-import javolution.context.LogContext;
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
@@ -71,25 +65,18 @@ import org.xml.sax.InputSource;
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
  * @version 6.2, August 9th, 2015
  */
-public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflectionSupport implements JAXBAnnotatedObjectReader {
+public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectParser implements JAXBAnnotatedObjectReader {
 
 	private boolean _isValidating;
 	private final Class<?> _rootClass;
 	private final DatatypeFactory _dataTypeFactory;
 	private final XMLInputFactory _XMLFactory;
-	private final FastMap<Class<?>, CacheData> _classCacheData;
-	private final FastMap<Class<?>,String> _classNameSpaceCache;
-	private final FastMap<Class<?>,Object> _classObjectFactoryCache;
-	private final FastMap<CharArray,Class<?>> _elementClassCache;
 	private final FastMap<Field,Method> _methodCache;
-	private final FastMap<String,Object> _namespaceObjectFactoryCache;
-	private final FastMap<Class<?>, Method> _objectFactoryCache;
-	private final FastSet<Class<?>> _registeredClassesCache;
 
 	public <T> JAXBAnnotatedObjectReaderImpl(final Class<T> inputClass) throws JAXBException {
-		super();
+		super(true);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
-			throw new UnmarshalException("Input Class Must Be A JAXB Element!");
+			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
 		// Store a Handle to the Root
 		_rootClass = inputClass;
@@ -98,20 +85,13 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		_XMLFactory = OSGiServices.getXMLInputFactory();
 
 		// Identity Equality is Safely Used Wherever Possible. See usage of these for details
-		_classCacheData = new FastMap<Class<?>, CacheData>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_classNameSpaceCache = new FastMap<Class<?>, String>(Equalities.IDENTITY, Equalities.LEXICAL);
-		_classObjectFactoryCache = new FastMap<Class<?>, Object>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_namespaceObjectFactoryCache = new FastMap<String,Object>(Equalities.LEXICAL,Equalities.IDENTITY);
-		_objectFactoryCache = new FastMap<Class<?>,Method>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_registeredClassesCache = new FastSet<Class<?>>(Equalities.IDENTITY);
-		_registeredClassesCache.add(_rootClass);
 
 		// This flag turns on/off annotation validation. There is no support yet for full schema validation
 		_isValidating = false;
 
 		// Register Context Classes
+		_registeredClassesCache.add(_rootClass);
 		registerContextClasses(inputClass);
 
 		// The Data Type factory is used only for interpreting XMLGregorianCalendars, until a better/faster solution is made.
@@ -301,198 +281,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		}
 
 		return jaxbElement;
-	}
-
-	/**
-	 * This method will scan the input class and all subclasses and
-	 * register any JAXB objects as part of this reader
-	 */
-	private void registerContextClasses(final Class<?> inputClass){
-		final FastSet<Field> fields = getDeclaredFields(inputClass);
-
-		// Iterate the fields of this class to scan for sub-objects
-		for(final Field field : fields){
-			final Class<?> type = field.getType();
-			final Class<?> scanClass;
-
-			// If it's a list we need to grab the generic to scan
-			if(type.isAssignableFrom(List.class)){
-				scanClass = getGenericType(field);
-			}
-			else {
-				scanClass = type;
-			}
-
-			// Only register classes that are JAXB objects and that we haven't seen yet
-			if(!_registeredClassesCache.contains(scanClass) && (scanClass.isAnnotationPresent(XmlRootElement.class) ||
-					scanClass.isAnnotationPresent(XmlType.class))){
-				_registeredClassesCache.add(scanClass);
-				registerContextClasses(scanClass);
-			}
-		}
-
-		// Scan the class and cache all fields, attributes, etc.
-		scanClass(inputClass, fields, false);
-	}
-
-	/**
-	 * This method scans a given JAXB class and builds up the caches for it
-	 * @param scanClass Class to Scan
-	 * @param fields Fields for the Class
-	 * @param skipFactory TRUE to skip factory scanning, FALSE otherwise
-	 */
-	private void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory){
-		// Get or Start a Cache for the Class
-		CacheData cacheData = _classCacheData.get(scanClass);
-
-		if(cacheData == null){
-			cacheData = new CacheData();
-			_classCacheData.put(scanClass, cacheData);
-		}
-
-		// Cache NameSpace Data
-		final XmlType xmlType = scanClass.getAnnotation(XmlType.class);
-		String namespace = "##default";
-		;
-		if(xmlType == null || "##default".equals(namespace)){
-			final XmlRootElement xmlRootElement = scanClass.getAnnotation(XmlRootElement.class);
-			if(xmlRootElement == null || "##default".equals(namespace)){
-				final XmlSchema xmlSchema = scanClass.getPackage().getAnnotation(XmlSchema.class);
-				if(xmlSchema != null){
-					namespace = xmlSchema.namespace();
-				}
-			}
-			else {
-				namespace = xmlRootElement.namespace();
-			}
-		}
-		else {
-			namespace = xmlType.namespace();
-		}
-
-		_classNameSpaceCache.put(scanClass, namespace);
-
-		// Detect Object Factory
-		if(!skipFactory && !"##default".equals(namespace) && !_namespaceObjectFactoryCache.containsKey(namespace)){
-			final TextBuilder objectFactoryBuilder = new TextBuilder(scanClass.getPackage().getName());
-			objectFactoryBuilder.append(".ObjectFactory");
-
-			try {
-				final Class<?> objectFactoryClass = Class.forName(objectFactoryBuilder.toString());
-				final Object objectFactory = objectFactoryClass.newInstance();
-
-				scanObjectFactory(objectFactory, false);
-
-				_namespaceObjectFactoryCache.put(namespace, objectFactory);
-			}
-			catch (final Exception e) {
-				LogContext.warning(String.format("Failed to Locate Object Factory for Namespace = %s",namespace));
-			}
-		}
-
-		// Prepare Data Structures
-		final FastMap<CharArray, Field> cachedAttributeFields = cacheData._attributeFieldsCache;;
-		final FastSet<CharArray> requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-
-		field : for(final Field field : fields){
-
-			// XmlAccessType is required to know how to treat fields that do not have an explicit
-			// JAXB annotation attached to them. The most common type is Field, which XJC generated objects use.
-			// Field is currently the only implemented type, but you can explicitly use annotations however you want.
-			final XmlAccessType xmlAccessType = getXmlAccessType(scanClass);
-
-			// Optimization: Use access type and other annotations to determine skip.
-			if(isElementSkippableBasedOnFieldAnnotations(field, xmlAccessType))
-				continue field;
-
-			// Caching Attribute Data
-			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
-
-			if(xmlAttribute != null){
-				// Cache Attribute Data
-				final CharArray xmlAttributeName = getXmlAttributeName(field);
-				cachedAttributeFields.put(xmlAttributeName, field);
-
-				if(xmlAttribute.required()){
-					requiredFieldsSet.add(xmlAttributeName);
-				}
-
-				continue field;
-			}
-
-			// Caching Element Data
-			CharArray xmlElementName;
-			final XmlElements xmlElements = field.getAnnotation(XmlElements.class);
-
-			// Standalone Elements
-			if(xmlElements == null){
-				xmlElementName = getXmlElementName(field);
-				cacheData._elementFieldCache.put(xmlElementName, field);
-			}
-			// Mapped Elements
-			else {
-				xmlElementName = getXmlElementNameWithMappedElements(xmlElements,
-						cacheData._mappedElementsCache, cacheData._elementFieldCache, field);
-			}
-
-			// Cache Element -> Class Mapping
-			final Class<?> type = field.getType();
-			final Class<?> typeClass;
-
-			if(type.isAssignableFrom(List.class)){
-				typeClass = getGenericType(field);
-			}
-			else {
-				typeClass = type;
-			}
-
-			_elementClassCache.put(xmlElementName, typeClass);
-
-			// For validation, capture required data.
-			final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-
-			if(xmlElement != null && xmlElement.required()){
-				requiredFieldsSet.add(xmlElementName);
-			}
-		}
-
-		_requiredCache.put(scanClass, requiredFieldsSet);
-	}
-
-	/**
-	 * This method scans an ObjectFactory and builds the caches for it
-	 * @param objectFactory Object Factory to Scan
-	 * @param customFactory TRUE if this is a custom factory set in by the user. If so
-	 * then it must be scanned here. If FALSE, its a default factory and is being scanned
-	 * as part of the scan class call.
-	 */
-	private void scanObjectFactory(final Object objectFactory, final boolean customFactory){
-		final FastSet<Method> objectFactoryMethods = getDeclaredMethods(objectFactory.getClass());
-
-		for(final Method method : objectFactoryMethods){
-			final Class<?> objectClass = method.getReturnType();
-			_classObjectFactoryCache.put(objectClass, objectFactory);
-
-			if(customFactory){
-				try {
-					if(method.getName().contains("create")) {
-						final Object customObject = method.invoke(objectFactory, (Object[])null);
-						final Class<?> customClass = customObject.getClass();
-
-						if(!_registeredClassesCache.contains(customClass)){
-							final FastSet<Field> fields = getDeclaredFields(customClass);
-							scanClass(customClass, fields, true);
-						}
-					}
-				}
-				catch (final Exception e){
-					LogContext.error(String.format("Error Scanning Custom Object Factory <%s>!",
-							objectFactory.getClass()), e);
-				}
-
-			}
-			_objectFactoryCache.put(objectClass, method);
-		}
 	}
 
 	/**
@@ -893,57 +681,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		return setterBuilder.toString();
 	}
 
-	private CharArray getXmlElementName(final Field field){
-		CharArray xmlElementName;
-
-		final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
-
-		if(xmlElement == null){
-			xmlElementName = new CharArray(field.getName());
-		}
-		else {
-			xmlElementName = new CharArray(xmlElement.name());
-		}
-
-		_xmlElementNameCache.put(xmlElementName, xmlElementName);
-
-		return xmlElementName;
-	}
-
-	private CharArray getXmlElementNameWithMappedElements(final XmlElements xmlElements,
-			final FastMap<CharArray,FastSet<CharArray>> mappedElementsCache,
-			final FastMap<CharArray,Field> elementFieldCache, final Field field){
-		final CharArray thisXmlElementName = getXmlElementName(field);
-		final FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
-		final XmlElement[] elements = xmlElements.value();
-
-		for(final XmlElement element : elements){
-			final CharArray nameKey = new CharArray(element.name());
-			CharArray name = _xmlElementNameCache.get(nameKey);
-
-			if(name == null){
-				_xmlElementNameCache.put(nameKey, nameKey);
-				name = nameKey;
-			}
-
-			final Class<?> elementType = element.type();
-			_elementClassCache.put(name, elementType);
-			elementFieldCache.put(name, field);
-
-			// Scan Choice Classes
-			registerContextClasses(elementType);
-
-			//LogContext.info("<XML-ELEMENTS SCAN> Field: "+field.getName()+" | Element Name: "+name+" | Element Type: "+element.type());
-
-			// Mapped elements will be used later to switch detection
-			mappedElementsSet.add(name);
-			mappedElementsCache.put(name, mappedElementsSet);
-			//LogContext.info("Store Mapped Elements: Element Key = "+name+", Mapped Elements: "+mappedElementsSet);
-		}
-
-		return thisXmlElementName;
-	}
-
 	private AnnotationStackData handleFieldStartElement(final AnnotationStackData parentStackData, final CharArray xmlElementName, final Object currentObj, final Field field,
 			final FastTable<AnnotationStackData> outputStack, final FastSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
 		final AnnotationStackData elementStackData;
@@ -1125,19 +862,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 		default:
 			throw new UnmarshalException("Error Executing Method Invocation - Unhandled Type! Type = "+type);
 		}
-	}
-
-	private static boolean isElementSkippableBasedOnFieldAnnotations(final Field field, final XmlAccessType type){
-		if(type == XmlAccessType.FIELD){
-			if(field.isAnnotationPresent(XmlTransient.class)){
-				return true;
-			}
-		}
-		else if(!field.isAnnotationPresent(XmlElement.class) && !field.isAnnotationPresent(XmlAttribute.class)){
-			return true;
-		}
-
-		return false;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -1425,21 +1149,5 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotationReflect
 			}
 		}
 
-	}
-
-	private class CacheData {
-		final FastMap<CharArray,Field> _attributeFieldsCache;
-		final FastMap<CharArray,Field> _elementFieldCache;
-		final FastMap<CharArray,Method> _directSetValueCache;
-		final FastMap<CharArray,Enum<?>> _enumValueCache;
-		final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
-
-		public CacheData() {
-			_attributeFieldsCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-		}
 	}
 }

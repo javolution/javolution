@@ -439,7 +439,7 @@ javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotatedObject
 javolution/core-java/src/main/java/javolution/xml/annotation/JAXBAnnotationFactory.java -text
 javolution/core-java/src/main/java/javolution/xml/doc-files/xmlDataBinding.png -text
 javolution/core-java/src/main/java/javolution/xml/internal/XMLContextImpl.java -text
-javolution/core-java/src/main/java/javolution/xml/internal/annotation/AbstractJAXBAnnotationReflectionSupport.java -text
+javolution/core-java/src/main/java/javolution/xml/internal/annotation/AbstractJAXBAnnotatedObjectParser.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectReaderImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotatedObjectWriterImpl.java -text
 javolution/core-java/src/main/java/javolution/xml/internal/annotation/JAXBAnnotationFactoryImpl.java -text
