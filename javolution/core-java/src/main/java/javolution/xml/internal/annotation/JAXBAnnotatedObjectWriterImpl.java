@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
 import javolution.util.FastCollection;
+import javolution.util.FastSet;
 import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
 import javolution.xml.internal.stream.XMLStreamWriterImpl;
 import javolution.xml.stream.XMLOutputFactory;
@@ -199,6 +200,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		writeElement(object, rootElementName, writer);
 
 		writer.writeEndDocument();
+		writer.flush();
 	}
 
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws MarshalException, IllegalArgumentException, IllegalAccessException, XMLStreamException {
@@ -235,8 +237,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 				//LogContext.info("writeElement: "+elementName);
 
-				writer.writeStartElement(elementName);
-
+				// Empty Element Detection
 				if(!xmlProperties.hasNext()){
 					//LogContext.info("No Properties");
 					writer.writeEmptyElement(elementName);
@@ -245,10 +246,37 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 					return;
 				}
 
-				writeAttributes(element, writer);
-
 				final CacheData cacheData = _classCacheData.get(elementClass);
-				final FastCollection<Field> cachedFieldsSet = cacheData._elementFieldCache.values();
+				final Field xmlValueField = cacheData._xmlValueField;
+
+				// Normal Element Processing
+				if(xmlValueField == null) {
+					writer.writeStartElement(elementName);
+					writeAttributes(element, writer);
+				}
+				// Complex Types W/ Simple Values - @XmlValue detection
+				else {
+					final Object fieldValue = xmlValueField.get(element);
+
+					if(fieldValue == null) {
+						writer.writeEmptyElement(elementName);
+						writeAttributes(element, writer);
+					}
+					else {
+						//LogContext.info("writeElementXmlValue: "+fieldElementName);
+
+						writer.writeStartElement(elementName);
+						writeAttributes(element, writer);
+						writeDirectElementValue(elementName, fieldValue, writer);
+					}
+
+					//LogContext.info("writeEndElement: "+elementName);
+					writer.writeEndElement();
+
+					return;
+				}
+
+				final FastCollection<Field> cachedFieldsSet = FastSet.of(cacheData._elementFieldCache.values());
 
 				for(final Field field : cachedFieldsSet){
 					final Object fieldValue = field.get(element);
@@ -263,12 +291,9 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 					}
 
 					final Class<?> fieldClass = field.getType();
-					final String fieldElementName = _fieldElementNameCache.get(field);
+					String fieldElementName = _fieldElementNameCache.get(field);
 
-					if(isInstanceOfBasicType(fieldClass)) {
-						writeBasicElementValue(fieldElementName, fieldValue, writer);
-					}
-					else if(fieldClass.isEnum()) {
+					if(isInstanceOfBasicType(fieldClass) || fieldClass.isEnum()) {
 						writeBasicElementValue(fieldElementName, fieldValue, writer);
 					}
 					else if(fieldClass.isAssignableFrom(List.class)){
@@ -277,10 +302,25 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 						//LogContext.info("writeElementList: "+fieldElementName);
 
 						for(final Object listElement : list){
-							if(isInstanceOfBasicType(genericClass) || genericClass.isEnum()) {
+							final Class<?> listElementClass;
+
+							// If the list has mapped elements, it's generic type will
+							// be Object. In that case we need to probe the real type of
+							// each object in the list.
+							if(genericClass == Object.class) {
+								listElementClass = listElement.getClass();
+								fieldElementName = _classElementNameCache.get(listElementClass);
+							}
+							else {
+								listElementClass = genericClass;
+							}
+
+							if(isInstanceOfBasicType(listElementClass) || listElementClass.isEnum()) {
+								//LogContext.info("writeElementListBasicOrEnum: "+fieldElementName);
 								writeBasicElementValue(fieldElementName, listElement, writer);
 							}
 							else {
+								//LogContext.info("writeElementListComplex: "+fieldElementName);
 								writeElement(listElement, fieldElementName, writer);
 							}
 						}
@@ -292,7 +332,6 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 				}
 
 				//LogContext.info("writeEndElement: "+elementName);
-
 				writer.writeEndElement();
 			}
 		}
@@ -305,6 +344,8 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		//LogContext.info("writeBasicOrEnum: "+fieldName);
 
 		final String stringValue = String.valueOf(fieldValue);
+
+		//LogContext.info("WriteBasicOrEnumValue: "+fieldValue);
 
 		if(stringValue == null || stringValue.isEmpty()) {
 			writer.writeEmptyElement(fieldName);
@@ -319,6 +360,21 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 
 		writer.writeEndElement();
+	}
+
+	private void writeDirectElementValue(final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException {
+		//LogContext.info("writeDirect: "+fieldName);
+
+		final String stringValue = String.valueOf(fieldValue);
+
+		//LogContext.info("WriteDirectElementValue: "+fieldValue);
+
+		if(_isUsingCDATA && CDATA_CHARACTERS.matcher(stringValue).find()){
+			writer.writeCData(stringValue);
+		}
+		else {
+			writer.writeCharacters(stringValue);
+		}
 	}
 
 	@Override

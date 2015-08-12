@@ -93,6 +93,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	 * register any JAXB objects as part of this reader
 	 */
 	protected void registerContextClasses(final Class<?> inputClass){
+		_registeredClassesCache.add(inputClass);
+
 		final FastSet<Field> fields = getDeclaredFields(inputClass);
 
 		// Iterate the fields of this class to scan for sub-objects
