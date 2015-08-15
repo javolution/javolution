@@ -14,8 +14,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -60,7 +58,7 @@ import org.xml.sax.InputSource;
  *
  * Note: Logging is left commented out, as it's too slow to leave on in a
  * release build - even at a non-visible level such as debug. To enable,
- * find/replace //LogContext -> LogContext
+ * find/replace //LogContext -> //LogContext
  *
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
  * @version 6.2, August 9th, 2015
@@ -576,7 +574,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				// Parse the attributes
 				for(int i = 0; i < reader.getAttributeCount(); i++){
 					final Field field = cachedAttributeFields.get(reader.getAttributeLocalName(i));
-					//LogContext.info("Parse Attribute Field: "+field.getName());
 					parseAttribute(cacheData._enumValueCache, reader, field, currentObj, stackData._processedSet);
 				}
 
@@ -733,7 +730,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				if(isInstanceOfBasicType(genericType)){
 					elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, listStackData, genericType, null, genericType, null, null, null);
 					outputStack.push(elementStackData);
-					//LogContext.info("<STACK PUSH> - [START-AnnotationStackType.BASIC] New Head: "+elementStackData._type);
+					//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
 				}
 				else {
 					final Object genericInstance = reflectNewInstance(genericType, parentCacheData, xmlElementName);
@@ -873,6 +870,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		else if(field == null){
 			return;
 		}
+
+		//LogContext.info("Parse Attribute Field: "+field.getName());
 
 		final CharArray xmlAttributeName = getXmlAttributeName(field);
 
@@ -1073,48 +1072,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		BASIC, BOUNDED, ROOT, UNBOUNDED;
 	}
 
-	private enum InvocationClassType {
-
-		STRING(String.class),
-		LONG(Long.class),
-		XML_GREGORIAN_CALENDAR(XMLGregorianCalendar.class),
-		INTEGER(Integer.class),
-		BOOLEAN(Boolean.class),
-		DOUBLE(Double.class),
-		BYTE(Byte.class),
-		FLOAT(Float.class),
-		SHORT(Short.class),
-		PRIMITIVE_LONG(long.class),
-		PRIMITIVE_INTEGER(int.class),
-		PRIMITIVE_BOOLEAN(boolean.class),
-		PRIMITIVE_DOUBLE(double.class),
-		PRIMITIVE_BYTE(byte.class),
-		PRIMITIVE_FLOAT(float.class),
-		PRIMITIVE_SHORT(short.class),
-		ENUM(Enum.class),
-		OBJECT(Object.class);
-
-		private static final HashMap<Class<?>,InvocationClassType> types;
-
-		static {
-			types = new HashMap<Class<?>,InvocationClassType>(17);
-
-			for(final InvocationClassType type : EnumSet.allOf(InvocationClassType.class)){
-				types.put(type.type, type);
-			}
-		}
-
-		private final Class<?> type;
-
-		private InvocationClassType(final Class<?> type){
-			this.type = type;
-		}
-
-		public static InvocationClassType valueOf(final Class<?> type){
-			return types.get(type);
-		}
-
-	}
 	private class AnnotationStackData {
 
 		final AnnotationStackType _annotationStackType;

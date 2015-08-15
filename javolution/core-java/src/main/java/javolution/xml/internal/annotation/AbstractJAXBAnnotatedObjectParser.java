@@ -11,6 +11,8 @@ package javolution.xml.internal.annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,6 +23,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchema;
+import javax.xml.bind.annotation.XmlSchemaType;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
@@ -54,6 +58,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	protected final FastMap<Class<?>, FastSet<CharArray>> _requiredCache;
 	protected final FastSet<Class<?>> _registeredClassesCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
+	protected final FastMap<Field,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
+	protected final FastSet<Class<?>> _xmlSeeAlsoCache;
 	protected final FastMap<Class<?>,Field> _xmlValueFieldCache;
 
 	public AbstractJAXBAnnotatedObjectParser(final boolean useObjectFactories){
@@ -70,6 +76,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
+		_xmlSchemaTypeCache = new FastMap<Field,XmlSchemaTypeEnum>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlSeeAlsoCache = new FastSet<Class<?>>(Equalities.IDENTITY);
 		_xmlValueFieldCache = new FastMap<Class<?>,Field>(Equalities.IDENTITY, Equalities.IDENTITY);
 
 		if (useObjectFactories) {
@@ -224,6 +232,18 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				continue field;
 			}
 
+			// Check Schema Type Data
+			final XmlSchemaType xmlSchemaType = field.getAnnotation(XmlSchemaType.class);
+
+			if(xmlSchemaType != null){
+				// We only care about types we have enumerated (for special handling later)
+				final XmlSchemaTypeEnum xmlSchemaTypeEnum = XmlSchemaTypeEnum.fromString(xmlSchemaType.name());
+
+				if(xmlSchemaTypeEnum != null){
+					_xmlSchemaTypeCache.put(field, xmlSchemaTypeEnum);
+				}
+			}
+
 			// Caching Attribute Data
 			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
 
@@ -253,6 +273,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			else {
 				xmlElementName = getXmlElementNameWithMappedElements(xmlElements,
 						cacheData._mappedElementsCache, cacheData._elementFieldCache, field);
+				cacheData._elementFieldCache.put(xmlElementName, field);
 			}
 
 			// Cache Element -> Class Mapping
@@ -277,6 +298,20 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 
 		_requiredCache.put(scanClass, requiredFieldsSet);
+
+		// Check @XmlSeeAlso
+		final XmlSeeAlso xmlSeeAlso = scanClass.getAnnotation(XmlSeeAlso.class);
+
+		if(xmlSeeAlso != null){
+			final Class<?>[] seeAlso = xmlSeeAlso.value();
+			_xmlSeeAlsoCache.add(scanClass);
+
+			for(final Class<?> seeAlsoClass : seeAlso){
+				if(!_registeredClassesCache.contains(seeAlsoClass)){
+					registerContextClasses(seeAlsoClass);
+				}
+			}
+		}
 	}
 
 	/**
@@ -457,13 +492,27 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		FastSet<CharArray> propOrderSet = _propOrderCache.get(classObject);
 
 		if(propOrderSet == null && classObject.isAnnotationPresent(XmlType.class)){
-			final XmlType xmlType = classObject.getAnnotation(XmlType.class);
+			Class<?> thisClass = classObject;
 
+			// Note: The reversed view logic makes sure super class prop orders appear first
+			// in the final set, and are in order going all the way down to the final implementation
+			// class.
 			propOrderSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 
-			for(final String prop : xmlType.propOrder()){
-				propOrderSet.add(getXmlElementName(prop));
+			do {
+				final XmlType xmlType = thisClass.getAnnotation(XmlType.class);
+
+				final FastSet<CharArray> localPropOrderSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
+
+				for(final String prop : xmlType.propOrder()){
+					localPropOrderSet.add(getXmlElementName(prop));
+				}
+
+				propOrderSet.addAll(localPropOrderSet.reversed());
 			}
+			while((thisClass = thisClass.getSuperclass()) != null && thisClass != Object.class);
+
+			propOrderSet = FastSet.of(propOrderSet.reversed());
 
 			_propOrderCache.put(classObject, propOrderSet);
 		}
@@ -516,6 +565,77 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 
 		return xmlAttributeName;
+	}
+
+	protected enum InvocationClassType {
+
+		STRING(String.class),
+		LONG(Long.class),
+		XML_GREGORIAN_CALENDAR(XMLGregorianCalendar.class),
+		INTEGER(Integer.class),
+		BOOLEAN(Boolean.class),
+		DOUBLE(Double.class),
+		BYTE(Byte.class),
+		FLOAT(Float.class),
+		SHORT(Short.class),
+		PRIMITIVE_LONG(long.class),
+		PRIMITIVE_INTEGER(int.class),
+		PRIMITIVE_BOOLEAN(boolean.class),
+		PRIMITIVE_DOUBLE(double.class),
+		PRIMITIVE_BYTE(byte.class),
+		PRIMITIVE_FLOAT(float.class),
+		PRIMITIVE_SHORT(short.class),
+		ENUM(Enum.class),
+		OBJECT(Object.class);
+
+		private static final HashMap<Class<?>,InvocationClassType> types;
+
+		static {
+			types = new HashMap<Class<?>,InvocationClassType>(17);
+
+			for(final InvocationClassType type : EnumSet.allOf(InvocationClassType.class)){
+				types.put(type.type, type);
+			}
+		}
+
+		private final Class<?> type;
+
+		private InvocationClassType(final Class<?> type){
+			this.type = type;
+		}
+
+		public static InvocationClassType valueOf(final Class<?> type){
+			return types.get(type);
+		}
+
+	}
+
+	protected enum XmlSchemaTypeEnum {
+
+		DATE("date"),
+		TIME("time"),
+		DATE_TIME("dateTime");
+
+		private static final HashMap<String,XmlSchemaTypeEnum> types;
+
+		static {
+			types = new HashMap<String,XmlSchemaTypeEnum>(3);
+
+			for(final XmlSchemaTypeEnum type : EnumSet.allOf(XmlSchemaTypeEnum.class)){
+				types.put(type.type, type);
+			}
+		}
+
+		private final String type;
+
+		private XmlSchemaTypeEnum(final String type){
+			this.type = type;
+		}
+
+		public static XmlSchemaTypeEnum fromString(final String type){
+			return types.get(type);
+		}
+
 	}
 
 	protected class CacheData {
