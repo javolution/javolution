@@ -276,6 +276,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				cacheData._elementFieldCache.put(xmlElementName, field);
 			}
 
+			cacheData._propOrderFieldCache.put(new CharArray(field.getName()), field);
+
 			// Cache Element -> Class Mapping
 			final Class<?> type = field.getType();
 			final Class<?> typeClass;
@@ -640,18 +642,21 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 	protected class CacheData {
 		final FastMap<CharArray,Field> _attributeFieldsCache;
-		final FastMap<CharArray,Field> _elementFieldCache;
 		final FastMap<CharArray,Method> _directSetValueCache;
+		final FastMap<CharArray,Field> _elementFieldCache;
 		final FastMap<CharArray,Enum<?>> _enumValueCache;
+		final FastMap<CharArray,Field> _propOrderFieldCache;
+
 		final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
 		Field _xmlValueField;
 
 		public CacheData() {
 			_attributeFieldsCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_propOrderFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_xmlValueField = null;
 		}
 	}

@@ -53,7 +53,7 @@ import javolution.xml.stream.XMLStreamWriter;
  *
  * Note: Logging is left commented out, as it's too slow to leave on in a
  * release build - even at a non-visible level such as debug. To enable,
- * find/replace //LogContext -> //LogContext
+ * find/replace //LogContext -> LogContext
  *
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
  * @version 6.2, August 11th, 2015
@@ -237,6 +237,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 				final CacheData cacheData = _classCacheData.get(elementClass);
 				final FastMap<CharArray, Field> elementFieldCache = cacheData._elementFieldCache;
+				final FastMap<CharArray, Field> propOrderFieldCache = cacheData._propOrderFieldCache;
 				final Field xmlValueField = cacheData._xmlValueField;
 
 				// Normal Element Processing
@@ -305,7 +306,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 				while(propOrder.hasNext()){
 					final CharArray prop = propOrder.next();
-					final Field field = elementFieldCache.get(prop);
+					final Field field = propOrderFieldCache.get(prop);
 					final Object fieldValue = field.get(element);
 
 					if(fieldValue == null) {
