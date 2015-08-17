@@ -17,6 +17,7 @@ import java.text.ParseException;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
@@ -25,8 +26,10 @@ import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
@@ -72,7 +75,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 	private final FastMap<Field,Method> _methodCache;
 
 	public <T> JAXBAnnotatedObjectReaderImpl(final Class<T> inputClass) throws JAXBException {
-		super(true);
+		super(inputClass, true);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
 			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
@@ -89,7 +92,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		_isValidating = false;
 
 		// Register Context Classes
-		_registeredClassesCache.add(_rootClass);
 		registerContextClasses(inputClass);
 
 		// The Data Type factory is used only for interpreting XMLGregorianCalendars, until a better/faster solution is made.
@@ -346,10 +348,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			event : switch(event){
 
 			case XMLStreamConstants.CHARACTERS:
-				// Small Optimization: Only grab the character data if we've just stared an element, otherwise we don't care.
-				if(lastEvent == XMLStreamConstants.START_ELEMENT){
-					characters = reader.getText();
-				}
+				characters = reader.getText();
 				break;
 
 			case XMLStreamConstants.START_ELEMENT:
@@ -364,11 +363,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				localName = reader.getLocalName();
 				// Fetch or make the persistent copy for identity comparison
 				localXmlElementName = getXmlElementName(localName);
-
-				// If this element doesn't have text we need to null out characters to prevent it from being stale
-				if(!reader.hasText()) {
-					characters = null;
-				}
 
 				// This flag will record whether we push an element on the stack for further processing or not.
 				// It is used to determine whether we've hit an unmapped element or not, if we're validating data.
@@ -640,6 +634,20 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 						outputStack.push(stackData);
 					}
 				}
+				// Handle @XmlValue Elements
+				else {
+					final Field xmlValueField = cacheData._xmlValueField;
+
+					if(xmlValueField != null && characters != null){
+						try {
+							xmlValueField.set(stackData._object, characters.toString().trim());
+						}
+						catch (final Exception e){
+							throw new UnmarshalException("Error Setting @XmlValue - Field = "+
+									xmlValueField.getName(), e);
+						}
+					}
+				}
 
 				if(_isValidating && stackData._annotationStackType != AnnotationStackType.BASIC && !stackData._processedSet.containsAll(stackData._requiredSet)){
 					throw new ValidationException(String.format("Missing Required Elements: Has %s, Requires %s",
@@ -709,7 +717,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 
 		try {
-			if(fieldType.isAssignableFrom(List.class)){
+			if(fieldType.isAssignableFrom(List.class) && fieldType != Object.class){
 				final Class<?> genericType = getGenericType(field);
 				final AnnotationStackData listStackData;
 
@@ -779,7 +787,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		return elementStackData;
 	}
 
-	private void invokeMethod(final Method method, final Class<?> type, final Object object, final CharArray value, final Enum<?> enumValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
+	@SuppressWarnings("unchecked")
+	private void invokeMethod(final Field field, final Method method, final Class<?> type, final Object object, final CharArray value, final Enum<?> enumValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
 		if(value == null) {
 			return;
 		}
@@ -813,6 +822,31 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			method.invoke(object, calendar);
 			break;
 
+		case DURATION:
+			final Duration duration = _dataTypeFactory.newDuration(value.toString());
+			method.invoke(object, duration);
+			break;
+
+		case QNAME:
+			final String valueString = value.toString();
+			CharArray namespaceClass;
+			final String[] tokens = valueString.split(":");
+
+			if(tokens.length == 2){
+				namespaceClass = new CharArray(tokens[1]);
+			}
+			else {
+				throw new UnmarshalException("Invalid QName Element Encountered: "+value.toString());
+			}
+
+			namespaceClass = new CharArray(tokens[1]);
+			final Class<?> elementClass = _elementClassCache.get(namespaceClass);
+			final String namespace = _classNameSpaceCache.get(elementClass);
+
+			final QName qname = new QName(namespace, tokens[1], tokens[0]);
+			method.invoke(object, qname);
+			break;
+
 		case INTEGER:
 		case PRIMITIVE_INTEGER:
 			method.invoke(object, value.toInt());
@@ -833,6 +867,31 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			method.invoke(object, (byte)value.toInt());
 			break;
 
+		case BYTE_ARRAY:
+		case PRIMITIVE_BYTE_ARRAY:
+			final String byteString = value.toString();
+			@SuppressWarnings("rawtypes")
+			final Class<? extends XmlAdapter> typeAdapter = _xmlJavaTypeAdapterCache.get(field);
+
+			final byte[] byteArray;
+
+			// Default byte[] type is Base64
+			if(typeAdapter == null){
+				byteArray = DatatypeConverter.parseBase64Binary(byteString);
+			}
+			// If a custom handler is specified, use it. Note: JAXB parses xs:hexBinary this way
+			else {
+				try {
+					byteArray = (byte[])typeAdapter.newInstance().unmarshal(byteString);
+				}
+				catch (final Exception e) {
+					throw new UnmarshalException("Error Excuting Type Adapter - "+field.getName(), e);
+				}
+			}
+
+			method.invoke(object, byteArray);
+			break;
+
 		case FLOAT:
 		case PRIMITIVE_FLOAT:
 			method.invoke(object, value.toFloat());
@@ -848,11 +907,19 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			break;
 
 		case OBJECT:
-			try {
-				method.invoke(object, type.newInstance());
+			final XmlSchemaTypeEnum xmlSchemaType = _xmlSchemaTypeCache.get(field);
+
+			if(xmlSchemaType != null && xmlSchemaType == XmlSchemaTypeEnum.ANY_SIMPLE_TYPE){
+				method.invoke(object, DatatypeConverter.parseAnySimpleType(value.toString().trim())); // TODO: Handle more than Strings
+				return;
 			}
-			catch (final InstantiationException e) {
-				throw new UnmarshalException("Error Excecuting Setter - UnMapped Type!", e);
+			else {
+				try {
+					method.invoke(object, type.newInstance());
+				}
+				catch (final InstantiationException e) {
+					throw new UnmarshalException("Error Excecuting Setter - UnMapped Type!", e);
+				}
 			}
 			break;
 
@@ -886,15 +953,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 				if(enumValueCache.containsKey(attributeValue)){
 					enumValue = enumValueCache.get(attributeValue);
-					invokeMethod(method, fieldType, currentObj, null, enumValue);
+					invokeMethod(field, method, fieldType, currentObj, null, enumValue);
 				}
 				else if(fieldType.isEnum()){
 					enumValue = Enum.valueOf((Class<Enum>)fieldType, attributeValue.toString());
 					enumValueCache.put(attributeValue, enumValue);
-					invokeMethod(method, fieldType, currentObj, null, enumValue);
+					invokeMethod(field, method, fieldType, currentObj, null, enumValue);
 				}
 				else {
-					invokeMethod(method, fieldType, currentObj, attributeValue, null);
+					invokeMethod(field, method, fieldType, currentObj, attributeValue, null);
 				}
 
 				if(_isValidating){
@@ -1003,7 +1070,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				_methodCache.put(field, method);
 			}
 
-			invokeMethod(method, fieldType, currentObj, characters, null);
+			invokeMethod(field, method, fieldType, currentObj, characters, null);
 		}
 		catch (final Exception e){
 			throw new UnmarshalException("Error Getting JAXB Setter!", e);
@@ -1026,6 +1093,10 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					element = Enum.valueOf((Class<Enum>)elementClass, characters.toString());
 					cacheData._enumValueCache.put(characters, (Enum<?>)element);
 				}
+			}
+			else if (elementClass == Object.class){
+				listObj.add(DatatypeConverter.parseAnySimpleType(characters.toString().trim())); // TODO: Handle more than Strings
+				return;
 			}
 		}
 

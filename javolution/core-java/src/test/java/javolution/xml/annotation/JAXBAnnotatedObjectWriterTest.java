@@ -156,6 +156,33 @@ public class JAXBAnnotatedObjectWriterTest {
 		writeJAXBObjectWithJavolution(testRoot, true);
 	}
 
+	@Test
+	public void testWithQNameElement() throws JAXBException, IOException, URISyntaxException {
+		final String xml = readXMLResourceToString("/test-with-namespace-element.xml");
+		final TestCommonRoot testCommonRoot = readJAXBObjectWithJDK(TestCommonRoot.class, xml);
+		final String javolutionXml = writeJAXBObjectWithJavolution(testCommonRoot, false);
+		final String jdkXml = writeJAXBObjectWithJDK(testCommonRoot);
+		assertEquals("XML Equals", jdkXml, javolutionXml);
+	}
+
+	@Test
+	public void testWithBinaryElement() throws JAXBException, IOException, URISyntaxException{
+		final String xml = readXMLResourceToString("/test-with-binary-element.xml");
+		final TestCommonRoot testCommonRoot = readJAXBObjectWithJDK(TestCommonRoot.class, xml);
+		final String javolutionXml = writeJAXBObjectWithJavolution(testCommonRoot, false);
+		final String jdkXml = writeJAXBObjectWithJDK(testCommonRoot);
+		assertEquals("XML Equals", jdkXml, javolutionXml);
+	}
+
+	@Test
+	public void testWithValueElement() throws JAXBException, IOException, URISyntaxException{
+		final String xml = readXMLResourceToString("/test-with-value-element.xml");
+		final TestCommonRoot testCommonRoot = readJAXBObjectWithJDK(TestCommonRoot.class, xml);
+		final String javolutionXml = writeJAXBObjectWithJavolution(testCommonRoot, false);
+		final String jdkXml = writeJAXBObjectWithJDK(testCommonRoot);
+		assertEquals("XML Equals", jdkXml, javolutionXml);
+	}
+
 	private String readXMLResourceToString(final String resource) throws IOException, URISyntaxException{
 		final URL xmlUrl = JAXBAnnotatedObjectWriterTest.class.getResource(resource);
 		final File xmlFile = new File(xmlUrl.toURI());

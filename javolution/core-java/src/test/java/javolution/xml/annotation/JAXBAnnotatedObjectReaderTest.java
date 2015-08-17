@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.ValidationException;
@@ -26,11 +27,17 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 
 import javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl;
+import javolution.xml.jaxb.common.test.schema.TestAnyElement;
+import javolution.xml.jaxb.common.test.schema.TestBinaryElement;
 import javolution.xml.jaxb.common.test.schema.TestChoiceElement;
 import javolution.xml.jaxb.common.test.schema.TestChoiceElementA;
 import javolution.xml.jaxb.common.test.schema.TestChoiceElementB;
 import javolution.xml.jaxb.common.test.schema.TestCommonElement;
 import javolution.xml.jaxb.common.test.schema.TestCommonRoot;
+import javolution.xml.jaxb.common.test.schema.TestDateFormatElement;
+import javolution.xml.jaxb.common.test.schema.TestNamespaceElement;
+import javolution.xml.jaxb.common.test.schema.TestUnsignedElement;
+import javolution.xml.jaxb.common.test.schema.TestValueElement;
 import javolution.xml.jaxb.test.schema.TestAttributeElement;
 import javolution.xml.jaxb.test.schema.TestBoundedWrapperElement;
 import javolution.xml.jaxb.test.schema.TestElement;
@@ -1118,5 +1125,104 @@ public class JAXBAnnotatedObjectReaderTest {
 		final TestChoiceElementB testChoiceElementB = (TestChoiceElementB) testChoiceElement.getTestChoiceElementAOrTestChoiceElementB().get(1);
 		assertEquals("TestChoiceElementB - TestChoice = Common B", "Common B", testChoiceElementB.getTestChoice());
 		assertEquals("TestChoiceElementB - TestChoiceB = Choice B", "Choice B", testChoiceElementB.getTestChoiceB());
+	}
+
+	@Test
+	public void testReadJaxbObjectWithUnsignedElement() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-unsigned-element.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestUnsignedElement", 1, testCommonRoot.getTestUnsignedElement().size());
+		final TestUnsignedElement unsignedElement = testCommonRoot.getTestUnsignedElement().get(0);
+		assertEquals("TestUnsignedElement - testUnsignedIntElement = 3000000000", Long.valueOf(3000000000L), unsignedElement.getTestUnsignedIntElement());
+		assertEquals("TestUnsignedElement - testUnsignedShortElement = 60000", Integer.valueOf(60000), unsignedElement.getTestUnsignedShortElement());
+		assertEquals("TestUnsignedElement - testUnsignedBytetElement = 200", Short.valueOf((short)200), unsignedElement.getTestUnsignedByteElement());
+
+	}
+
+	@Test
+	public void testReadJaxbObjectWithDifferentDateFormats() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-different-date-formats.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestDateFormatElement", 1, testCommonRoot.getTestDateFormatElement().size());
+		final TestDateFormatElement dateFormatElement = testCommonRoot.getTestDateFormatElement().get(0);
+		assertEquals("TestDateFormatElement - testDateElement = 1979-08-19", "1979-08-19", dateFormatElement.getTestDateElement().toXMLFormat());
+		assertEquals("TestDateFormatElement - testDateTimeElement = 1988-04-24T01:23:45Z", "1988-04-24T01:23:45Z", dateFormatElement.getTestDateTimeElement().toXMLFormat());
+		assertEquals("TestDateFormatElement - testDurationElement = P5Y3M16D", "P5Y3M16D", dateFormatElement.getTestDurationElement().toString());
+		assertEquals("TestDateFormatElement - testTimeElement = 01:23:45", "01:23:45", dateFormatElement.getTestTimeElement().toXMLFormat());
+	}
+
+	@Test
+	public void testReadJaxbObjectWithNamespaceElement() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-namespace-element.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestNamespaceElement", 1, testCommonRoot.getTestNamespaceElement().size());
+		final TestNamespaceElement namespaceElement = testCommonRoot.getTestNamespaceElement().get(0);
+		assertEquals("TestNamespaceElement - testQNameElememnt = {http://javolution.org/xml/schema/javolution-common}testCommonRoot", "{http://javolution.org/xml/schema/javolution-common}testCommonRoot", namespaceElement.getTestQNameElement().toString());
+	}
+
+	@Test
+	public void testReadJaxbObjectWithBinaryElement() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-binary-element.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestBinaryElement", 1, testCommonRoot.getTestBinaryElement().size());
+		final TestBinaryElement binaryElement = testCommonRoot.getTestBinaryElement().get(0);
+		final String testBase64String = DatatypeConverter.printBase64Binary(binaryElement.getTestBase64Element());
+		assertEquals("TestBinaryElement - testBase64Element", "dGVzdEJhc2U2NA==", testBase64String);
+		final String hexString = DatatypeConverter.printHexBinary(binaryElement.getTestHexElement());
+		assertEquals("TestBinaryElement - testHexElement", "ABCDEF", hexString);
+	}
+
+	@Test
+	public void testReadJaxbObjectWithAnyElement() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-any-element.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestAnyElement", 1, testCommonRoot.getTestAnyElement().size());
+		final TestAnyElement testAnyElement = testCommonRoot.getTestAnyElement().get(0);
+		assertEquals("TestAnyElement - TestAnySimpleTypeElement = A", "A", testAnyElement.getTestAnySimpleTypeElement()); // TODO: More than strings
+	}
+
+	@Test
+	public void testReadJaxbObjectWithValueElement() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-value-element.xml"));
+
+		_jaxbObjectReader = new JAXBAnnotatedObjectReaderImpl(TestCommonRoot.class);
+		//final JAXBContext context = JAXBContext.newInstance(TestCommonRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestCommonRoot testCommonRoot = (TestCommonRoot) unmarshaller.unmarshal(streamSource);
+		final TestCommonRoot testCommonRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestCommonRoot - 1 TestValueElement", 1, testCommonRoot.getTestValueElement().size());
+		final TestValueElement testValueElement = testCommonRoot.getTestValueElement().get(0);
+		assertEquals("TestAnyElement - TestAnySimpleTypeElement = testValue", "testValue", testValueElement.getValue());
 	}
 }

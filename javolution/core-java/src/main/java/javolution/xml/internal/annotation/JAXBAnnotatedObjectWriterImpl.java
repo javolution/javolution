@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.MarshalException;
@@ -27,10 +28,13 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
+import javolution.text.TextBuilder;
 import javolution.util.FastCollection;
 import javolution.util.FastMap;
 import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
@@ -69,7 +73,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private boolean _isUsingCDATA;
 
 	public <T> JAXBAnnotatedObjectWriterImpl(final Class<T> inputClass) throws JAXBException {
-		super(false);
+		super(inputClass, false);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
 			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
@@ -78,7 +82,6 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		_isUsingCDATA = false;
 		_isValidating = false;
 
-		_registeredClassesCache.add(inputClass);
 		registerContextClasses(inputClass);
 	}
 
@@ -375,7 +378,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
-	private void writeBasicElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException {
+	private void writeBasicElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
 		//LogContext.info("writeBasicOrEnum: "+fieldName);
 
 		final String stringValue = getElementValue(field, invocationClassType, fieldValue);
@@ -397,7 +400,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		writer.writeEndElement();
 	}
 
-	private void writeDirectElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException {
+	private void writeDirectElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
 		//LogContext.info("writeDirect: "+fieldName);
 
 		final String stringValue = getElementValue(field, invocationClassType, fieldValue);
@@ -448,10 +451,46 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		return dateValue;
 	}
 
-	private String getElementValue(final Field field, final InvocationClassType invocationClassType, final Object fieldValue){
+	@SuppressWarnings("unchecked")
+	private String getElementValue(final Field field, final InvocationClassType invocationClassType, final Object fieldValue) throws MarshalException{
 		final String elementValue;
 
 		switch(invocationClassType){
+
+		case BYTE_ARRAY:
+		case PRIMITIVE_BYTE_ARRAY:
+			@SuppressWarnings("rawtypes")
+			final Class<? extends XmlAdapter> xmlJavaTypeAdapter = _xmlJavaTypeAdapterCache.get(field);;
+
+			// Default Binding for byte[] is Base64
+			if(xmlJavaTypeAdapter == null){
+				elementValue = DatatypeConverter.printBase64Binary((byte[])fieldValue);
+			}
+			// If it has a custom type adapter, use it; NOTE: JAXB processes xs:hexBinary this way
+			else {
+				try {
+					elementValue = String.valueOf(xmlJavaTypeAdapter.newInstance().marshal(fieldValue));
+				}
+				catch (final Exception e) {
+					throw new MarshalException("Error Executing Type Adapter - Field = "+field.getName(), e);
+				}
+			}
+
+			break;
+
+		case QNAME:
+			final QName qName = (QName)fieldValue;
+			final TextBuilder qNameBuilder = new TextBuilder();
+			final String prefix = qName.getPrefix();
+
+			if(prefix != null && prefix.length()>0){
+				qNameBuilder.append(prefix);
+				qNameBuilder.append(":");
+			}
+
+			qNameBuilder.append(qName.getLocalPart());
+			elementValue = qNameBuilder.toString();
+			break;
 
 		case XML_GREGORIAN_CALENDAR:
 			final XmlSchemaTypeEnum dateType = _xmlSchemaTypeCache.get(field);

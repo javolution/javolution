@@ -6,10 +6,22 @@
 	<xs:element name="testCommonRoot">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="testAnyElement" type="javolution-common:testAnyElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testBinaryElement" type="javolution-common:testBinaryElement"
+					minOccurs="0" maxOccurs="unbounded" />			
 				<xs:element name="testCommonElement" type="javolution-common:testCommonElement"
 					minOccurs="0" maxOccurs="unbounded" />
 				<xs:element name="testChoiceElement" type="javolution-common:testChoiceElement"
 					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testDateFormatElement" type="javolution-common:testDateFormatElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testNamespaceElement" type="javolution-common:testNamespaceElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testUnsignedElement" type="javolution-common:testUnsignedElement"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="testValueElement" type="javolution-common:testValueElement"
+					minOccurs="0" maxOccurs="unbounded" />					
 			</xs:sequence>
 			<xs:attribute name="type" type="xs:string" />
 		</xs:complexType>
@@ -54,5 +66,49 @@
 			<xs:element name="testChoiceElementB" type="javolution-common:testChoiceElementB"/>
 		</xs:choice>
 	</xs:complexType>
+
+	<xs:complexType name="testValueElement">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="stringAttribute" type="xs:string" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	
+	<xs:complexType name="testDateFormatElement">
+		<xs:sequence>
+			<xs:element name="testDateElement" type="xs:date" minOccurs="0" />
+			<xs:element name="testDateTimeElement" type="xs:dateTime" minOccurs="0" />
+			<xs:element name="testDurationElement" type="xs:duration" minOccurs="0" />
+			<xs:element name="testTimeElement" type="xs:time" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="testUnsignedElement">
+		<xs:sequence>
+			<xs:element name="testUnsignedIntElement" type="xs:unsignedInt" minOccurs="0" />
+			<xs:element name="testUnsignedShortElement" type="xs:unsignedShort" minOccurs="0" />
+			<xs:element name="testUnsignedByteElement" type="xs:unsignedByte" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="testBinaryElement">
+		<xs:sequence>
+			<xs:element name="testBase64Element" type="xs:base64Binary" minOccurs="0" />
+			<xs:element name="testHexElement" type="xs:hexBinary" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="testNamespaceElement">
+		<xs:sequence>
+			<xs:element name="testQNameElement" type="xs:QName" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="testAnyElement">
+		<xs:sequence>
+			<xs:element name="testAnySimpleTypeElement" type="xs:anySimpleType" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>	
 		
 </xs:schema>

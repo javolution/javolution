@@ -10,21 +10,21 @@ package javolution.xml.jaxb.common.test.schema;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.namespace.QName;
 
 
 /**
- * <p>Java class for testCommonBase complex type.
+ * <p>Java class for testNamespaceElement complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="testCommonBase">
+ * &lt;complexType name="testNamespaceElement">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="testChoice" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+ *         &lt;element name="testQNameElement" type="{http://www.w3.org/2001/XMLSchema}QName" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -34,39 +34,35 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "testCommonBase", propOrder = {
-    "testChoice"
+@XmlType(name = "testNamespaceElement", propOrder = {
+    "testQNameElement"
 })
-@XmlSeeAlso({
-    TestChoiceElementB.class,
-    TestChoiceElementA.class
-})
-public class TestCommonBase {
+public class TestNamespaceElement {
 
-    protected String testChoice;
+    protected QName testQNameElement;
 
     /**
-     * Gets the value of the testChoice property.
+     * Gets the value of the testQNameElement property.
      * 
      * @return
      *     possible object is
-     *     {@link String }
+     *     {@link QName }
      *     
      */
-    public String getTestChoice() {
-        return testChoice;
+    public QName getTestQNameElement() {
+        return testQNameElement;
     }
 
     /**
-     * Sets the value of the testChoice property.
+     * Sets the value of the testQNameElement property.
      * 
      * @param value
      *     allowed object is
-     *     {@link String }
+     *     {@link QName }
      *     
      */
-    public void setTestChoice(String value) {
-        this.testChoice = value;
+    public void setTestQNameElement(QName value) {
+        this.testQNameElement = value;
     }
 
 }

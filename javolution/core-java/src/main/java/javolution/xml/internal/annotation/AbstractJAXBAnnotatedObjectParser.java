@@ -28,7 +28,11 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 
 import javolution.context.LogContext;
 import javolution.text.CharArray;
@@ -58,11 +62,14 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	protected final FastMap<Class<?>, FastSet<CharArray>> _requiredCache;
 	protected final FastSet<Class<?>> _registeredClassesCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
+	@SuppressWarnings("rawtypes")
+	protected final FastMap<Field,Class<? extends XmlAdapter>> _xmlJavaTypeAdapterCache;
 	protected final FastMap<Field,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
 	protected final FastSet<Class<?>> _xmlSeeAlsoCache;
 	protected final FastMap<Class<?>,Field> _xmlValueFieldCache;
 
-	public AbstractJAXBAnnotatedObjectParser(final boolean useObjectFactories){
+	@SuppressWarnings("rawtypes")
+	public AbstractJAXBAnnotatedObjectParser(final Class<?> inputClass, final boolean useObjectFactories){
 		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_classCacheData = new FastMap<Class<?>, CacheData>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_classNameSpaceCache = new FastMap<Class<?>, String>(Equalities.IDENTITY, Equalities.LEXICAL);
@@ -76,6 +83,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
+		_xmlJavaTypeAdapterCache = new FastMap<Field, Class<? extends XmlAdapter>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlSchemaTypeCache = new FastMap<Field,XmlSchemaTypeEnum>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlSeeAlsoCache = new FastSet<Class<?>>(Equalities.IDENTITY);
 		_xmlValueFieldCache = new FastMap<Class<?>,Field>(Equalities.IDENTITY, Equalities.IDENTITY);
@@ -93,6 +101,20 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			_objectFactoryCache = null;
 		}
 
+		final XmlRootElement xmlRootElement = inputClass.getAnnotation(XmlRootElement.class);
+		final XmlType xmlType = inputClass.getAnnotation(XmlType.class);
+
+		final CharArray rootElementName;
+
+		if(xmlRootElement==null){
+			rootElementName = new CharArray(xmlType.name());
+		}
+		else {
+			rootElementName = new CharArray(xmlRootElement.name());
+		}
+
+		_registeredClassesCache.add(inputClass);
+		_elementClassCache.put(rootElementName, inputClass);
 		_useObjectFactories = useObjectFactories;
 	}
 
@@ -101,8 +123,6 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	 * register any JAXB objects as part of this reader
 	 */
 	protected void registerContextClasses(final Class<?> inputClass){
-		_registeredClassesCache.add(inputClass);
-
 		final FastSet<Field> fields = getDeclaredFields(inputClass);
 
 		// Iterate the fields of this class to scan for sub-objects
@@ -159,27 +179,10 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			_classCacheData.put(scanClass, cacheData);
 		}
 
-		// Cache NameSpace Data
 		final XmlType xmlType = scanClass.getAnnotation(XmlType.class);
-		String namespace = "##default";
 
-		if(xmlType == null || "##default".equals(namespace)){
-			final XmlRootElement xmlRootElement = scanClass.getAnnotation(XmlRootElement.class);
-			if(xmlRootElement == null || "##default".equals(namespace)){
-				final XmlSchema xmlSchema = scanClass.getPackage().getAnnotation(XmlSchema.class);
-				if(xmlSchema != null){
-					namespace = xmlSchema.namespace();
-				}
-			}
-			else {
-				namespace = xmlRootElement.namespace();
-			}
-		}
-		else {
-			namespace = xmlType.namespace();
-		}
-
-		_classNameSpaceCache.put(scanClass, namespace);
+		// Cache NameSpace Data
+		final String namespace = scanForNamespace(scanClass, xmlType);
 
 		// Detect Object Factory (Reader Uses)
 		if(_useObjectFactories) {
@@ -226,10 +229,11 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			if(isElementSkippableBasedOnFieldAnnotations(field, xmlAccessType))
 				continue field;
 
-			// Cache Value Field
-			if(field.isAnnotationPresent(XmlValue.class)) {
-				cacheData._xmlValueField = field;
-				continue field;
+			// Check Type Adapter
+			final XmlJavaTypeAdapter xmlJavaTypeAdapter = field.getAnnotation(XmlJavaTypeAdapter.class);
+
+			if(xmlJavaTypeAdapter != null){
+				_xmlJavaTypeAdapterCache.put(field, xmlJavaTypeAdapter.value());
 			}
 
 			// Check Schema Type Data
@@ -243,6 +247,13 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 					_xmlSchemaTypeCache.put(field, xmlSchemaTypeEnum);
 				}
 			}
+
+			// Cache Value Field
+			if(field.isAnnotationPresent(XmlValue.class)) {
+				cacheData._xmlValueField = field;
+				continue field;
+			}
+
 
 			// Caching Attribute Data
 			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
@@ -316,6 +327,30 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 	}
 
+	protected String scanForNamespace(final Class<?> scanClass, final XmlType xmlType){
+		String namespace = "##default";
+
+		if(xmlType == null || "##default".equals(namespace)){
+			final XmlRootElement xmlRootElement = scanClass.getAnnotation(XmlRootElement.class);
+			if(xmlRootElement == null || "##default".equals(namespace)){
+				final XmlSchema xmlSchema = scanClass.getPackage().getAnnotation(XmlSchema.class);
+				if(xmlSchema != null){
+					namespace = xmlSchema.namespace();
+				}
+			}
+			else {
+				namespace = xmlRootElement.namespace();
+			}
+		}
+		else {
+			namespace = xmlType.namespace();
+		}
+
+		_classNameSpaceCache.put(scanClass, namespace);
+
+		return namespace;
+	}
+
 	/**
 	 * This method scans an ObjectFactory and builds the caches for it
 	 * @param objectFactory Object Factory to Scan
@@ -357,7 +392,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
 
-		if(xmlElement == null){
+		if(xmlElement == null || "##default".equals(xmlElement.name())){
 			xmlElementName = new CharArray(field.getName());
 		}
 		else {
@@ -391,6 +426,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 			// Scan Choice Classes
 			if(!_registeredClassesCache.contains(elementType)) {
+				_registeredClassesCache.add(elementType);
 				registerContextClasses(elementType);
 			}
 
@@ -413,12 +449,17 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 					objClass.isAssignableFrom(Integer.class) ||
 					objClass.isAssignableFrom(String.class) ||
 					objClass.isAssignableFrom(XMLGregorianCalendar.class) ||
+					objClass.isAssignableFrom(Duration.class) ||
+					objClass.isAssignableFrom(QName.class) ||
 					objClass.isAssignableFrom(Boolean.class) ||
 					objClass.isEnum() || objClass.isPrimitive() ||
 					objClass.isAssignableFrom(Double.class) ||
 					objClass.isAssignableFrom(Float.class) ||
 					objClass.isAssignableFrom(Byte.class) ||
-					objClass.isAssignableFrom(Short.class));
+					objClass.isAssignableFrom(Byte[].class) ||
+					objClass.isAssignableFrom(byte[].class) ||
+					objClass.isAssignableFrom(Short.class) ||
+					objClass == Object.class);
 			_basicInstanceCache.put(objClass, basicInstance);
 		}
 
@@ -442,8 +483,14 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		Class<?> genericType = _genericTypeCache.get(field);
 
 		if(genericType == null){
-			final ParameterizedType type = (ParameterizedType)field.getGenericType();
-			genericType = (Class<?>)type.getActualTypeArguments()[0];
+			if(field.getGenericType() == Object.class){
+				genericType = Object.class;
+			}
+			else {
+				final ParameterizedType type = (ParameterizedType)field.getGenericType();
+				genericType = (Class<?>)type.getActualTypeArguments()[0];
+			}
+
 			_genericTypeCache.put(field, genericType);
 		}
 
@@ -578,6 +625,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		BOOLEAN(Boolean.class),
 		DOUBLE(Double.class),
 		BYTE(Byte.class),
+		BYTE_ARRAY(Byte[].class),
 		FLOAT(Float.class),
 		SHORT(Short.class),
 		PRIMITIVE_LONG(long.class),
@@ -585,9 +633,12 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		PRIMITIVE_BOOLEAN(boolean.class),
 		PRIMITIVE_DOUBLE(double.class),
 		PRIMITIVE_BYTE(byte.class),
+		PRIMITIVE_BYTE_ARRAY(byte[].class),
 		PRIMITIVE_FLOAT(float.class),
 		PRIMITIVE_SHORT(short.class),
 		ENUM(Enum.class),
+		DURATION(Duration.class),
+		QNAME(QName.class),
 		OBJECT(Object.class);
 
 		private static final HashMap<Class<?>,InvocationClassType> types;
@@ -614,9 +665,10 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 	protected enum XmlSchemaTypeEnum {
 
+		ANY_SIMPLE_TYPE("anySimpleType"),
 		DATE("date"),
-		TIME("time"),
-		DATE_TIME("dateTime");
+		DATE_TIME("dateTime"),
+		TIME("time");
 
 		private static final HashMap<String,XmlSchemaTypeEnum> types;
 
