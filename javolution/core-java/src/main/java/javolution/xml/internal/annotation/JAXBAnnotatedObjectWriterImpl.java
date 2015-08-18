@@ -385,7 +385,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 		//LogContext.info("WriteBasicOrEnumValue: "+stringValue);
 
-		if(stringValue == null || stringValue.isEmpty()) {
+		if(stringValue == null) {
 			writer.writeEmptyElement(fieldName);
 		}
 		else if(_isUsingCDATA && CDATA_CHARACTERS.matcher(stringValue).find()){
@@ -397,6 +397,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			writer.writeCharacters(stringValue);
 		}
 
+		//LogContext.info("writeEndElement: "+fieldName);
 		writer.writeEndElement();
 	}
 

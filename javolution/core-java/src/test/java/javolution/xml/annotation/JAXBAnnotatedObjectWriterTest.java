@@ -183,6 +183,24 @@ public class JAXBAnnotatedObjectWriterTest {
 		assertEquals("XML Equals", jdkXml, javolutionXml);
 	}
 
+	@Test
+	public void testWithEmptyElements() throws JAXBException, IOException, URISyntaxException{
+		final String xml = readXMLResourceToString("/test-with-empty-elements.xml");
+		final TestRoot testRoot = readJAXBObjectWithJDK(TestRoot.class, xml);
+		final String javolutionXml = writeJAXBObjectWithJavolution(testRoot, false);
+		final String jdkXml = writeJAXBObjectWithJDK(testRoot);
+		assertEquals("XML Equals", jdkXml, javolutionXml);
+	}
+
+	@Test
+	public void testWithDecimalAndInteger() throws JAXBException, IOException, URISyntaxException{
+		final String xml = readXMLResourceToString("/test-with-decimal-and-integer.xml");
+		final TestRoot testRoot = readJAXBObjectWithJDK(TestRoot.class, xml);
+		final String javolutionXml = writeJAXBObjectWithJavolution(testRoot, false);
+		final String jdkXml = writeJAXBObjectWithJDK(testRoot);
+		assertEquals("XML Equals", jdkXml, javolutionXml);
+	}
+
 	private String readXMLResourceToString(final String resource) throws IOException, URISyntaxException{
 		final URL xmlUrl = JAXBAnnotatedObjectWriterTest.class.getResource(resource);
 		final File xmlFile = new File(xmlUrl.toURI());

@@ -19,8 +19,10 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
@@ -1224,5 +1226,52 @@ public class JAXBAnnotatedObjectReaderTest {
 		assertEquals("TestCommonRoot - 1 TestValueElement", 1, testCommonRoot.getTestValueElement().size());
 		final TestValueElement testValueElement = testCommonRoot.getTestValueElement().get(0);
 		assertEquals("TestAnyElement - TestAnySimpleTypeElement = testValue", "testValue", testValueElement.getValue());
+	}
+
+	@Test
+	public void testReadJaxbObjectWithEmptyElements() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-empty-elements.xml"));
+
+		//final JAXBContext context = JAXBContext.newInstance(TestRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestRoot testRoot = (TestRoot) unmarshaller.unmarshal(streamSource);
+		final TestRoot testRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestRoot - 1 Test Element", 1, testRoot.getTestElement().size());
+		final TestElement testElement = testRoot.getTestElement().get(0);
+		assertNull("Test Element - testLongElement = null", testElement.getTestLongElement());
+		assertNull("Test Element - testBooleanElement = null", testElement.isTestBooleanElement());
+		assertNull("Test Element - testFloatElement = null", testElement.getTestFloatElement());
+		assertNull("Test Element - testDoubleElement = null", testElement.getTestDoubleElement());
+		assertNull("Test Element - testShortElement = null", testElement.getTestShortElement());
+		assertNull("Test Element - testDateElement = null", testElement.getTestDateElement());
+		assertNull("Test Element - testDecimalElement = null", testElement.getTestDecimalElement());
+		assertNull("Test Element - testIntegerElement = null", testElement.getTestIntegerElement());
+		assertEquals("Test Element - testIntElement = 0", Integer.valueOf(0), testElement.getTestIntElement());
+		assertEquals("Test Element - testStringElement = \"\"", "", testElement.getTestStringElement());
+		assertEquals("Test Element - testByteElement = 0", Byte.valueOf((byte)0), testElement.getTestByteElement());
+	}
+
+	@Test
+	public void testReadJaxbObjectWithDecimalAndInteger() throws JAXBException {
+		final StreamSource streamSource = new StreamSource(this.getClass().getResourceAsStream("/test-with-decimal-and-integer.xml"));
+
+		//final JAXBContext context = JAXBContext.newInstance(TestRoot.class);
+		//final Unmarshaller unmarshaller = context.createUnmarshaller();
+
+		//final TestRoot testRoot = (TestRoot) unmarshaller.unmarshal(streamSource);
+		final TestRoot testRoot = _jaxbObjectReader.read(streamSource);
+		assertEquals("TestRoot - 1 Test Element", 1, testRoot.getTestElement().size());
+		final TestElement testElement = testRoot.getTestElement().get(0);
+		assertEquals("Test Element - testDecimalElement = 3595386269724631416290548474634087135961411350516"
+				+ "8999319783495360631452156005707752117911726553375634308091790702876492846864265377892836"
+				+ "5536935093407075033972099821153102564152490980180778657888151737016910267884609166473806"
+				+ "445896331617118664246696549595652408289446337476354361838599762500808052368249716736",
+				"35953862697246314162905484746340871359614113505168999319783495360631452156005707752117911"
+						+ "726553375634308091790702876492846864265377892836553693509340707503397209982115310256415"
+						+ "249098018077865788815173701691026788460916647380644589633161711866424669654959565240828"
+						+ "9446337476354361838599762500808052368249716736",
+						testElement.getTestDecimalElement().toString());
+		assertEquals("Test Element - testIntegerElement = 18446744073709551614", "18446744073709551614", testElement.getTestIntegerElement().toString());
 	}
 }

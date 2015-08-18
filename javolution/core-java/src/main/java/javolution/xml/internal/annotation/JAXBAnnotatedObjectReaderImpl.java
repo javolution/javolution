@@ -13,6 +13,8 @@ import java.io.Reader;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.ParseException;
 import java.util.Iterator;
 import java.util.List;
@@ -201,7 +203,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 	@Override
 	public <T> JAXBElement<T> read(final Source source, final Class<T> targetClass) throws JAXBException {
 		if(!_registeredClassesCache.contains(targetClass)){
-			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!"));
+			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!", targetClass));
 		}
 
 		// For Compatibility Reasons for those who use StreamSources but declare w/ interface type
@@ -348,7 +350,12 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			event : switch(event){
 
 			case XMLStreamConstants.CHARACTERS:
-				characters = reader.getText();
+				if(reader.isWhiteSpace()) {
+					characters = null;
+				}
+				else {
+					characters = reader.getText();
+				}
 				break;
 
 			case XMLStreamConstants.START_ELEMENT:
@@ -789,10 +796,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 	@SuppressWarnings("unchecked")
 	private void invokeMethod(final Field field, final Method method, final Class<?> type, final Object object, final CharArray value, final Enum<?> enumValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
-		if(value == null) {
-			return;
-		}
-
 		InvocationClassType invocationClassType;
 
 		if(enumValue == null){
@@ -809,25 +812,37 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		switch(invocationClassType){
 
 		case STRING:
-			method.invoke(object, value.toString());
+			if(value == null) {
+				method.invoke(object, ""); // JDK JAXB Unmarshalls Empty String as ""
+			}
+			else {
+				method.invoke(object, value.toString());
+			}
 			break;
 
 		case LONG:
 		case PRIMITIVE_LONG:
+			if(value == null) break;
 			method.invoke(object, value.toLong());
 			break;
 
 		case XML_GREGORIAN_CALENDAR:
+			if(value == null) break;
+
 			final XMLGregorianCalendar calendar = _dataTypeFactory.newXMLGregorianCalendar(value.toString());
 			method.invoke(object, calendar);
 			break;
 
 		case DURATION:
+			if(value == null) break;
+
 			final Duration duration = _dataTypeFactory.newDuration(value.toString());
 			method.invoke(object, duration);
 			break;
 
 		case QNAME:
+			if(value == null) break;
+
 			final String valueString = value.toString();
 			CharArray namespaceClass;
 			final String[] tokens = valueString.split(":");
@@ -847,28 +862,52 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			method.invoke(object, qname);
 			break;
 
+		case DECIMAL:
+			if(value == null) break;
+			final String stringValue = value.toString().trim();
+			method.invoke(object, new BigDecimal(stringValue));
+			break;
+
+		case INT:
+		case PRIMITIVE_INT:
+			if(value == null) {
+				method.invoke(object, 0); // JDK JAXB Unmarshalls Empty Int as ""
+			}
+			else {
+				method.invoke(object, value.toInt());
+			}
+			break;
+
 		case INTEGER:
-		case PRIMITIVE_INTEGER:
-			method.invoke(object, value.toInt());
+			if(value == null) break;
+			method.invoke(object, new BigInteger(value.toString().trim()));
 			break;
 
 		case BOOLEAN:
 		case PRIMITIVE_BOOLEAN:
+			if(value == null) break;
 			method.invoke(object, value.toBoolean());
 			break;
 
 		case DOUBLE:
 		case PRIMITIVE_DOUBLE:
+			if(value == null) break;
 			method.invoke(object, value.toDouble());
 			break;
 
 		case BYTE:
 		case PRIMITIVE_BYTE:
-			method.invoke(object, (byte)value.toInt());
+			if(value == null) {
+				method.invoke(object, (byte)0);  // JDK JAXB Unmarshalls Empty Byte as ""
+			}
+			else {
+				method.invoke(object, (byte)value.toInt());
+			}
 			break;
 
 		case BYTE_ARRAY:
 		case PRIMITIVE_BYTE_ARRAY:
+			if(value == null) break;
 			final String byteString = value.toString();
 			@SuppressWarnings("rawtypes")
 			final Class<? extends XmlAdapter> typeAdapter = _xmlJavaTypeAdapterCache.get(field);
@@ -894,24 +933,28 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 		case FLOAT:
 		case PRIMITIVE_FLOAT:
+			if(value == null) break;
 			method.invoke(object, value.toFloat());
 			break;
 
 		case SHORT:
 		case PRIMITIVE_SHORT:
+			if(value == null) break;
 			method.invoke(object, (short)value.toInt());
 			break;
 
 		case ENUM:
+			if(value == null) break;
 			method.invoke(object, enumValue);
 			break;
 
 		case OBJECT:
+			if(value == null) break;
 			final XmlSchemaTypeEnum xmlSchemaType = _xmlSchemaTypeCache.get(field);
 
 			if(xmlSchemaType != null && xmlSchemaType == XmlSchemaTypeEnum.ANY_SIMPLE_TYPE){
 				method.invoke(object, DatatypeConverter.parseAnySimpleType(value.toString().trim())); // TODO: Handle more than Strings
-				return;
+				break;
 			}
 			else {
 				try {

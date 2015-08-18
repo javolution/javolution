@@ -11,6 +11,8 @@ package javolution.xml.internal.annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -459,6 +461,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 					objClass.isAssignableFrom(Byte[].class) ||
 					objClass.isAssignableFrom(byte[].class) ||
 					objClass.isAssignableFrom(Short.class) ||
+					objClass.isAssignableFrom(BigDecimal.class) ||
+					objClass.isAssignableFrom(BigInteger.class) ||
 					objClass == Object.class);
 			_basicInstanceCache.put(objClass, basicInstance);
 		}
@@ -621,15 +625,17 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		STRING(String.class),
 		LONG(Long.class),
 		XML_GREGORIAN_CALENDAR(XMLGregorianCalendar.class),
-		INTEGER(Integer.class),
+		INT(Integer.class),
+		INTEGER(BigInteger.class),
 		BOOLEAN(Boolean.class),
 		DOUBLE(Double.class),
 		BYTE(Byte.class),
 		BYTE_ARRAY(Byte[].class),
 		FLOAT(Float.class),
 		SHORT(Short.class),
+		DECIMAL(BigDecimal.class),
 		PRIMITIVE_LONG(long.class),
-		PRIMITIVE_INTEGER(int.class),
+		PRIMITIVE_INT(int.class),
 		PRIMITIVE_BOOLEAN(boolean.class),
 		PRIMITIVE_DOUBLE(double.class),
 		PRIMITIVE_BYTE(byte.class),

@@ -543,7 +543,9 @@ javolution/core-java/src/test/resources/test-with-basic-datatypes.xml -text
 javolution/core-java/src/test/resources/test-with-binary-element.xml -text
 javolution/core-java/src/test/resources/test-with-cdata-string.xml -text
 javolution/core-java/src/test/resources/test-with-choice-element.xml -text
+javolution/core-java/src/test/resources/test-with-decimal-and-integer.xml -text
 javolution/core-java/src/test/resources/test-with-different-date-formats.xml -text
+javolution/core-java/src/test/resources/test-with-empty-elements.xml -text
 javolution/core-java/src/test/resources/test-with-enum-and-date.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-attribute.xml -text
 javolution/core-java/src/test/resources/test-with-missing-required-element.xml -text

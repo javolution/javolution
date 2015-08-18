@@ -49,6 +49,8 @@
 				minOccurs="0" />
 			<xs:element name="testDecimalElement" type="xs:decimal"
 				minOccurs="0" />
+			<xs:element name="testIntegerElement" type="xs:integer"
+				minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
 
