@@ -366,6 +366,10 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					break event;
 				}
 
+				if(!reader.hasText()) {
+					characters = null;
+				}
+
 				// Read the normal localName
 				localName = reader.getLocalName();
 				// Fetch or make the persistent copy for identity comparison
