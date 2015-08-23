@@ -357,6 +357,7 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
         if (_isElementOpen) { // Empty element.
             if (_isEmptyElement) { // Closes the empty element tag.
                 closeOpenTag();
+                return;
             } else { // Start element open.
                 if (_automaticEmptyElements) { // Do as if empty element written. 		    
                     _isEmptyElement = true;
