@@ -57,7 +57,7 @@ import javolution.xml.stream.XMLStreamWriter;
  *
  * Note: Logging is left commented out, as it's too slow to leave on in a
  * release build - even at a non-visible level such as debug. To enable,
- * find/replace //LogContext -> LogContext
+ * find/replace //LogContext -> //LogContext
  *
  * @author  <a href="mailto:starlightknight@slkdev.net">Aaron Knight</a>
  * @version 6.2, August 11th, 2015
@@ -279,7 +279,8 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 					// If the element has only attributes, return here (the end element will be
 					// written after returning)
-					if(elementFieldCache.isEmpty()){
+					if(noProperties || elementFieldCache.isEmpty()){
+						writer.writeEndElement();
 						return;
 					}
 				}
@@ -292,7 +293,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 						writeAttributes(element, writer);
 					}
 					else {
-						//LogContext.info("writeElementXmlValue: "+xmlValueField.getName());
+						//LogContext.info("writeElementXmlValue: " + xmlValueField.getName());
 
 						writer.writeStartElement(elementName);
 						writeAttributes(element, writer);
@@ -309,11 +310,12 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 				while(propOrder.hasNext()){
 					final CharArray prop = propOrder.next();
+
 					final Field field = propOrderFieldCache.get(prop);
 					final Object fieldValue = field.get(element);
 
 					if(fieldValue == null) {
-						if(_isValidating && fieldValue == null && field.isAnnotationPresent(XmlElement.class) &&
+						if(_isValidating && field.isAnnotationPresent(XmlElement.class) &&
 								field.getAnnotation(XmlElement.class).required()){
 							throw new ValidationException("Missing Required Element Value: Field = "+field.getName());
 						}
@@ -366,11 +368,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 					}
 				}
 
-				// Prevent a Double Pop in the Case of an Empty Element
-				if(!noProperties){
-					//LogContext.info("writeEndElement: "+elementName);
-					writer.writeEndElement();
-				}
+				writer.writeEndElement();
 			}
 		}
 		catch(final Exception e){
