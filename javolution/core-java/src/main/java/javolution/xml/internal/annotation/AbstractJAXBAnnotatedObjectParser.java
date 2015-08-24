@@ -45,19 +45,25 @@ import javolution.util.function.Equalities;
 
 public abstract class AbstractJAXBAnnotatedObjectParser {
 
-	private final boolean _useObjectFactories;
+	protected static final CharArray _GET = new CharArray("get");
+	protected static final CharArray _IS = new CharArray("is");
+	protected static final CharArray _SET = new CharArray("set");
+	protected static final CharArray _VALUE = new CharArray("value");
 
+	protected final CacheMode _cacheMode;
 	protected final FastMap<Class<?>, CacheData> _classCacheData;
 	protected final FastMap<Class<?>, String> _classElementNameCache;
 	protected final FastMap<Class<?>,String> _classNameSpaceCache;
 	protected final FastMap<Class<?>,Object> _classObjectFactoryCache;
 	protected final FastMap<CharArray,Class<?>> _elementClassCache;
-	protected final FastMap<Field,CharArray> _fieldAttributeNameCache;
-	protected final FastMap<Field, String> _fieldElementNameCache;
-	protected final FastMap<Field,Class<?>> _genericTypeCache;
+	protected final FastMap<Field,Class<?>> _genericFieldTypeCache;
+	protected final FastMap<Method,Class<?>> _genericMethodTypeCache;
 	protected final FastMap<Class<?>,XmlAccessType> _xmlAccessTypeCache;
 	protected final FastMap<Class<?>,Boolean> _basicInstanceCache;
 	protected final FastMap<Class<?>,FastSet<Field>> _declaredFieldsCache;
+	protected final FastMap<Method,CharArray> _methodAttributeNameCache;
+	protected final FastMap<Field,Method> _methodCache;
+	protected final FastMap<Method,String> _methodElementNameCache;
 	protected final FastMap<String,Object> _namespaceObjectFactoryCache;
 	protected final FastMap<Class<?>, Method> _objectFactoryCache;
 	protected final FastMap<Class<?>, FastSet<CharArray>> _propOrderCache;
@@ -65,32 +71,35 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	protected final FastSet<Class<?>> _registeredClassesCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
 	@SuppressWarnings("rawtypes")
-	protected final FastMap<Field,Class<? extends XmlAdapter>> _xmlJavaTypeAdapterCache;
-	protected final FastMap<Field,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
+	protected final FastMap<Method,Class<? extends XmlAdapter>> _xmlJavaTypeAdapterCache;
+	protected final FastMap<Method,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
 	protected final FastSet<Class<?>> _xmlSeeAlsoCache;
 	protected final FastMap<Class<?>,Field> _xmlValueFieldCache;
 
 	@SuppressWarnings("rawtypes")
-	public AbstractJAXBAnnotatedObjectParser(final Class<?> inputClass, final boolean useObjectFactories){
+	public AbstractJAXBAnnotatedObjectParser(final Class<?> inputClass, final CacheMode cacheMode){
+		_cacheMode = cacheMode;
 		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_classCacheData = new FastMap<Class<?>, CacheData>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_classNameSpaceCache = new FastMap<Class<?>, String>(Equalities.IDENTITY, Equalities.LEXICAL);
 		_declaredFieldsCache = new FastMap<Class<?>,FastSet<Field>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-		_fieldAttributeNameCache = new FastMap<Field,CharArray>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_fieldElementNameCache = new FastMap<Field, String>(Equalities.IDENTITY, Equalities.LEXICAL_FAST);
-		_genericTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_genericFieldTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_genericMethodTypeCache = new FastMap<Method,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_methodAttributeNameCache = new FastMap<Method,CharArray>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_methodElementNameCache = new FastMap<Method, String>(Equalities.IDENTITY, Equalities.LEXICAL_FAST);
 		_propOrderCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_registeredClassesCache = new FastSet<Class<?>>(Equalities.IDENTITY);
 		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
-		_xmlJavaTypeAdapterCache = new FastMap<Field, Class<? extends XmlAdapter>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_xmlSchemaTypeCache = new FastMap<Field,XmlSchemaTypeEnum>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlJavaTypeAdapterCache = new FastMap<Method, Class<? extends XmlAdapter>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlSchemaTypeCache = new FastMap<Method,XmlSchemaTypeEnum>(Equalities.IDENTITY, Equalities.IDENTITY);
 		_xmlSeeAlsoCache = new FastSet<Class<?>>(Equalities.IDENTITY);
 		_xmlValueFieldCache = new FastMap<Class<?>,Field>(Equalities.IDENTITY, Equalities.IDENTITY);
 
-		if (useObjectFactories) {
+		if (cacheMode == CacheMode.READER) {
 			_classElementNameCache = null;
 			_classObjectFactoryCache = new FastMap<Class<?>, Object>(Equalities.IDENTITY, Equalities.IDENTITY);
 			_namespaceObjectFactoryCache = new FastMap<String,Object>(Equalities.LEXICAL,Equalities.IDENTITY);
@@ -117,14 +126,13 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		_registeredClassesCache.add(inputClass);
 		_elementClassCache.put(rootElementName, inputClass);
-		_useObjectFactories = useObjectFactories;
 	}
 
 	/**
 	 * This method will scan the input class and all subclasses and
 	 * register any JAXB objects as part of this reader
 	 */
-	protected void registerContextClasses(final Class<?> inputClass){
+	protected void registerContextClasses(final Class<?> inputClass) throws NoSuchMethodException {
 		final FastSet<Field> fields = getDeclaredFields(inputClass);
 
 		// Iterate the fields of this class to scan for sub-objects
@@ -149,7 +157,12 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 
 		// Scan the class and cache all fields, attributes, etc.
-		scanClass(inputClass, fields, !_useObjectFactories);
+		if(_cacheMode == CacheMode.READER) {
+			scanClass(inputClass, fields, false);
+		}
+		else {
+			scanClass(inputClass, fields, true);
+		}
 	}
 
 	private static boolean isElementSkippableBasedOnFieldAnnotations(final Field field, final XmlAccessType type){
@@ -172,7 +185,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	 * @param fields Fields for the Class
 	 * @param skipFactory TRUE to skip factory scanning, FALSE otherwise
 	 */
-	protected void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory){
+	protected void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory) throws NoSuchMethodException {
 		// Get or Start a Cache for the Class
 		CacheData cacheData = _classCacheData.get(scanClass);
 
@@ -187,7 +200,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		final String namespace = scanForNamespace(scanClass, xmlType);
 
 		// Detect Object Factory (Reader Uses)
-		if(_useObjectFactories) {
+		if(_cacheMode == CacheMode.READER) {
 			if(!skipFactory && !"##default".equals(namespace) && !_namespaceObjectFactoryCache.containsKey(namespace)){
 				final TextBuilder objectFactoryBuilder = new TextBuilder(scanClass.getPackage().getName());
 				objectFactoryBuilder.append(".ObjectFactory");
@@ -217,10 +230,10 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 
 		// Prepare Data Structures
-		final FastMap<CharArray, Field> cachedAttributeFields = cacheData._attributeFieldsCache;;
+		final FastMap<CharArray, Method> cachedAttributeFields = cacheData._attributeMethodsCache;
 		final FastSet<CharArray> requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 
-		field : for(final Field field : fields){
+		for(final Field field : fields){
 
 			// XmlAccessType is required to know how to treat fields that do not have an explicit
 			// JAXB annotation attached to them. The most common type is Field, which XJC generated objects use.
@@ -229,13 +242,66 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 			// Optimization: Use access type and other annotations to determine skip.
 			if(isElementSkippableBasedOnFieldAnnotations(field, xmlAccessType))
-				continue field;
+				continue;
+
+			// Caching Element Data
+			CharArray xmlName;
+			final XmlElements xmlElements = field.getAnnotation(XmlElements.class);
+
+			// Caching Attribute Data
+			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
+
+			// Method Handle
+			final Method method;
+
+			if(xmlAttribute != null){
+				// Cache Attribute Data
+				xmlName = getXmlAttributeName(field);
+
+				if(xmlAttribute.required()){
+					requiredFieldsSet.add(xmlName);
+				}
+
+				final Class<?> fieldClass = field.getType();
+				method = getMethodByXmlName(xmlName, scanClass, fieldClass);
+				_methodAttributeNameCache.put(method, xmlName);
+
+				cachedAttributeFields.put(xmlName, method);
+				cacheData._elementMethodCache.put(xmlName, method);
+			}
+			// Cache Value Field
+			else if(field.isAnnotationPresent(XmlValue.class)) {
+				final Class<?> fieldClass = field.getType();
+				method = getMethodByXmlName(_VALUE, scanClass, fieldClass);
+				cacheData._xmlValueMethod = method;
+				continue;
+			}
+			// Standalone Elements
+			else if(xmlElements == null){
+				xmlName = getXmlElementName(field);
+				cacheData._elementFieldCache.put(xmlName, field);
+				final String elementName = xmlName.toString();
+
+				final Class<?> fieldClass = field.getType();
+				method = getMethodByXmlName(xmlName, scanClass, fieldClass);
+				_methodElementNameCache.put(method, elementName);
+
+				cacheData._elementMethodCache.put(xmlName, method);
+			}
+			// Mapped Elements
+			else {
+				xmlName = getXmlElementNameWithMappedElements(scanClass, xmlElements,
+						cacheData._mappedElementsCache, cacheData._elementFieldCache,
+						cacheData._elementMethodCache, field);
+				cacheData._elementFieldCache.put(xmlName, field);
+				method = cacheData._elementMethodCache.get(xmlName);
+			}
 
 			// Check Type Adapter
 			final XmlJavaTypeAdapter xmlJavaTypeAdapter = field.getAnnotation(XmlJavaTypeAdapter.class);
 
 			if(xmlJavaTypeAdapter != null){
-				_xmlJavaTypeAdapterCache.put(field, xmlJavaTypeAdapter.value());
+				_xmlJavaTypeAdapterCache.put(method, xmlJavaTypeAdapter.value());
 			}
 
 			// Check Schema Type Data
@@ -246,50 +312,15 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				final XmlSchemaTypeEnum xmlSchemaTypeEnum = XmlSchemaTypeEnum.fromString(xmlSchemaType.name());
 
 				if(xmlSchemaTypeEnum != null){
-					_xmlSchemaTypeCache.put(field, xmlSchemaTypeEnum);
+					_xmlSchemaTypeCache.put(method, xmlSchemaTypeEnum);
 				}
 			}
-
-			// Cache Value Field
-			if(field.isAnnotationPresent(XmlValue.class)) {
-				cacheData._xmlValueField = field;
-				continue field;
-			}
-
-
-			// Caching Attribute Data
-			final XmlAttribute xmlAttribute = field.getAnnotation(XmlAttribute.class);
 
 			if(xmlAttribute != null){
-				// Cache Attribute Data
-				final CharArray xmlAttributeName = getXmlAttributeName(field);
-				cachedAttributeFields.put(xmlAttributeName, field);
-
-				if(xmlAttribute.required()){
-					requiredFieldsSet.add(xmlAttributeName);
-				}
-
-				continue field;
+				continue;
 			}
 
-			// Caching Element Data
-			CharArray xmlElementName;
-			final XmlElements xmlElements = field.getAnnotation(XmlElements.class);
-
-			// Standalone Elements
-			if(xmlElements == null){
-				xmlElementName = getXmlElementName(field);
-				cacheData._elementFieldCache.put(xmlElementName, field);
-				_fieldElementNameCache.put(field, xmlElementName.toString());
-			}
-			// Mapped Elements
-			else {
-				xmlElementName = getXmlElementNameWithMappedElements(xmlElements,
-						cacheData._mappedElementsCache, cacheData._elementFieldCache, field);
-				cacheData._elementFieldCache.put(xmlElementName, field);
-			}
-
-			cacheData._propOrderFieldCache.put(new CharArray(field.getName()), field);
+			cacheData._propOrderMethodCache.put(new CharArray(field.getName()), method);
 
 			// Cache Element -> Class Mapping
 			final Class<?> type = field.getType();
@@ -302,13 +333,13 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				typeClass = type;
 			}
 
-			_elementClassCache.put(xmlElementName, typeClass);
+			_elementClassCache.put(xmlName, typeClass);
 
 			// For validation, capture required data.
 			final XmlElement xmlElement = field.getAnnotation(XmlElement.class);
 
 			if(xmlElement != null && xmlElement.required()){
-				requiredFieldsSet.add(xmlElementName);
+				requiredFieldsSet.add(xmlName);
 			}
 		}
 
@@ -406,12 +437,18 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		return xmlElementName;
 	}
 
-	private CharArray getXmlElementNameWithMappedElements(final XmlElements xmlElements,
+	private CharArray getXmlElementNameWithMappedElements(final Class<?> scanClass, final XmlElements xmlElements,
 			final FastMap<CharArray,FastSet<CharArray>> mappedElementsCache,
-			final FastMap<CharArray,Field> elementFieldCache, final Field field){
+			final FastMap<CharArray,Field> elementFieldCache,
+			final FastMap<CharArray,Method> elementMethodCache, final Field field) throws NoSuchMethodException {
 		final CharArray thisXmlElementName = getXmlElementName(field);
 		final FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 		final XmlElement[] elements = xmlElements.value();
+
+		Method method ;
+
+		final Class<?> fieldClass = field.getType();
+		method = getMethodByXmlName(thisXmlElementName, scanClass, fieldClass);
 
 		for(final XmlElement element : elements){
 			final CharArray nameKey = new CharArray(element.name());
@@ -424,7 +461,14 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 			final Class<?> elementType = element.type();
 			_elementClassCache.put(name, elementType);
+
+			final String nameString = name.toString();
+			_methodElementNameCache.put(method, nameString);
+
 			elementFieldCache.put(name, field);
+			if(method != null) {
+				elementMethodCache.put(name, method);
+			}
 
 			// Scan Choice Classes
 			if(!_registeredClassesCache.contains(elementType)) {
@@ -440,7 +484,43 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			//LogContext.info("Store Mapped Elements: Element Key = "+name+", Mapped Elements: "+mappedElementsSet);
 		}
 
+		elementMethodCache.put(thisXmlElementName, method);
+
 		return thisXmlElementName;
+	}
+
+	private Method getMethodByXmlName(final CharArray xmlName, final Class<?> type, final Class<?> argumentType) throws NoSuchMethodException {
+		Method method = null;
+		String methodName = null;
+		Class<?> typeClass = type;
+
+		do {
+			try {
+				if (_cacheMode == CacheMode.WRITER || argumentType == List.class) {
+					if(argumentType == Boolean.class || argumentType == boolean.class){
+						methodName = getMethodName(_IS, xmlName);
+					}
+					else {
+						methodName = getMethodName(_GET, xmlName);
+					}
+					method = typeClass.getMethod(methodName);
+				} else {
+					methodName = getMethodName(_SET, xmlName);
+					method = typeClass.getMethod(methodName, argumentType);
+				}
+				break;
+			}
+			catch(final NoSuchMethodException e){
+			}
+		}
+		while((typeClass = typeClass.getSuperclass()) != null);
+
+		if(method == null){
+			throw new NoSuchMethodException(
+					String.format("Failed to Locate Method for Element, Name = %s, MethodName = %s, Type = %s, Argument Type = %s",
+							xmlName, methodName, type, argumentType));
+		}
+		return method;
 	}
 
 	protected boolean isInstanceOfBasicType(final Class<?> objClass){
@@ -484,7 +564,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	}
 
 	protected Class<?> getGenericType(final Field field){
-		Class<?> genericType = _genericTypeCache.get(field);
+		Class<?> genericType = _genericFieldTypeCache.get(field);
 
 		if(genericType == null){
 			if(field.getGenericType() == Object.class){
@@ -495,7 +575,36 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				genericType = (Class<?>)type.getActualTypeArguments()[0];
 			}
 
-			_genericTypeCache.put(field, genericType);
+			_genericFieldTypeCache.put(field, genericType);
+		}
+
+		return genericType;
+	}
+
+	protected Class<?> getGenericType(final Method method){
+		Class<?> genericType = _genericMethodTypeCache.get(method);
+
+		if(genericType == null){
+			if(_cacheMode == CacheMode.WRITER || method.getReturnType() == List.class){
+				if (method.getGenericReturnType() == Object.class) {
+					genericType = Object.class;
+				}
+				else {
+					final ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
+					genericType = (Class<?>) type.getActualTypeArguments()[0];
+				}
+			}
+			else {
+				if (method.getGenericParameterTypes()[0] == Object.class) {
+					genericType = Object.class;
+				}
+				else {
+					final ParameterizedType type = (ParameterizedType) method.getGenericParameterTypes()[0];
+					genericType = (Class<?>) type.getActualTypeArguments()[0];
+				}
+			}
+
+			_genericMethodTypeCache.put(method, genericType);
 		}
 
 		return genericType;
@@ -509,6 +618,11 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			declaredFields = new FastSet<Field>(Equalities.IDENTITY);
 
 			do {
+				if(!thisClassObject.isAnnotationPresent(XmlType.class) &&
+						!thisClassObject.isAnnotationPresent(XmlRootElement.class)){
+					continue;
+				}
+
 				final Field[] fields = thisClassObject.getDeclaredFields();
 
 				for(final Field field : fields){
@@ -608,16 +722,25 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		return outputArray;
 	}
 
-	protected CharArray getXmlAttributeName(final Field field){
-		CharArray xmlAttributeName = _fieldAttributeNameCache.get(field);
+	private static CharArray getXmlAttributeName(final Field field){
+		final XmlAttribute thisAttribute = field.getAnnotation(XmlAttribute.class);
+		return new CharArray(thisAttribute.name());
+	}
 
-		if(xmlAttributeName == null){
-			final XmlAttribute thisAttribute = field.getAnnotation(XmlAttribute.class);
-			xmlAttributeName = new CharArray(thisAttribute.name());
-			_fieldAttributeNameCache.put(field, xmlAttributeName);
-		}
+	protected static String getMethodName(final CharArray prefix, final CharArray xmlName){
+		final char[] array = new char[xmlName.length()];
+		xmlName.getChars(0, xmlName.length(), array, 0);
+		array[0] = Character.toUpperCase(array[0]);
 
-		return xmlAttributeName;
+		final TextBuilder setterBuilder = new TextBuilder(3+array.length);
+		setterBuilder.append(prefix);
+		setterBuilder.append(array);
+
+		return setterBuilder.toString();
+	}
+
+	protected enum CacheMode {
+		READER, WRITER
 	}
 
 	protected enum InvocationClassType {
@@ -659,7 +782,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		private final Class<?> type;
 
-		private InvocationClassType(final Class<?> type){
+		InvocationClassType(final Class<?> type){
 			this.type = type;
 		}
 
@@ -688,7 +811,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		private final String type;
 
-		private XmlSchemaTypeEnum(final String type){
+		XmlSchemaTypeEnum(final String type){
 			this.type = type;
 		}
 
@@ -699,23 +822,25 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	}
 
 	protected class CacheData {
-		final FastMap<CharArray,Field> _attributeFieldsCache;
+		final FastMap<CharArray,Method> _attributeMethodsCache;
 		final FastMap<CharArray,Method> _directSetValueCache;
 		final FastMap<CharArray,Field> _elementFieldCache;
+		final FastMap<CharArray,Method> _elementMethodCache;
 		final FastMap<CharArray,Enum<?>> _enumValueCache;
-		final FastMap<CharArray,Field> _propOrderFieldCache;
+		final FastMap<CharArray,Method> _propOrderMethodCache;
 
 		final FastMap<CharArray,FastSet<CharArray>> _mappedElementsCache;
-		Field _xmlValueField;
+		Method _xmlValueMethod;
 
 		public CacheData() {
-			_attributeFieldsCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_attributeMethodsCache = new FastMap<CharArray,Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_elementMethodCache = new FastMap<CharArray,Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_enumValueCache = new FastMap<CharArray,Enum<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_mappedElementsCache = new FastMap<CharArray,FastSet<CharArray>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_propOrderFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-			_xmlValueField = null;
+			_propOrderMethodCache = new FastMap<CharArray,Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			_xmlValueMethod = null;
 		}
 	}
 }

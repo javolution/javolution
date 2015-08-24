@@ -10,8 +10,8 @@ package javolution.xml.internal.annotation;
 
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,7 +24,6 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.MarshalException;
 import javax.xml.bind.ValidationException;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -73,7 +72,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private boolean _isUsingCDATA;
 
 	public <T> JAXBAnnotatedObjectWriterImpl(final Class<T> inputClass) throws JAXBException {
-		super(inputClass, false);
+		super(inputClass, CacheMode.WRITER);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
 			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
@@ -82,7 +81,12 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		_isUsingCDATA = false;
 		_isValidating = false;
 
-		registerContextClasses(inputClass);
+		try {
+			registerContextClasses(inputClass);
+		}
+		catch (NoSuchMethodException e) {
+			throw new JAXBException("Error Scanning Context Classes!", e);
+		}
 	}
 
 	@Override
@@ -196,190 +200,194 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	}
 
 	private void writeObject(final Object object, final XMLStreamWriter writer, final String defaultNamespace) throws XMLStreamException, MarshalException {
-		writer.writeStartDocument(StandardCharsets.UTF_8.name(), "1.0", true);
+		writer.writeStartDocument("UTF-8", "1.0", true);
 
 		final String rootElementName = _classElementNameCache.get(object.getClass());
 		final String rootNamespace = _classNameSpaceCache.get(object.getClass());
-		writeElement(defaultNamespace, rootNamespace, object, rootElementName, writer);
+
+		try{
+			writeElement(defaultNamespace, rootNamespace, object, rootElementName, writer);
+		}
+		catch(final Exception e){
+			throw new MarshalException("Error Writing Element", e);
+		}
 
 		writer.writeEndDocument();
 		writer.flush();
 	}
 
-	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException {
+	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastCollection<Field> attributeFields = cacheData._attributeFieldsCache.values();
+		final FastCollection<Method> attributeMethods = cacheData._attributeMethodsCache.values();
 
-		for(final Field field : attributeFields){
-			writeAttributeValue(element, field, writer);
+		for(final Method method : attributeMethods){
+			writeAttributeValue(element, method, writer);
 		}
 	}
 
-	private void writeAttributeValue(final Object element, final Field field, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException{
-		final CharArray attributeName = getXmlAttributeName(field);
+	private void writeAttributeValue(final Object element, final Method method, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
+		final CharArray attributeName = _methodAttributeNameCache.get(method);
+		final Object value = method.invoke(element, null);
 
-		field.setAccessible(true);
-		final Object value = field.get(element);
-
-		if(_isValidating && value == null && field.isAnnotationPresent(XmlAttribute.class) &&
-				field.getAnnotation(XmlAttribute.class).required()){
-			throw new ValidationException("Missing Required Attribute Value: Field = "+field.getName());
+		if(value == null) {
+			if (_isValidating && _requiredCache.get(method.getDeclaringClass()).contains(attributeName)) {
+				throw new ValidationException("Missing Required Attribute Value: Attribute = " + attributeName);
+			}
 		}
-		else if(value != null){
+		else {
 			writer.writeAttribute(attributeName, String.valueOf(value));
 		}
 	}
 
-	private void writeElement(final String defaultNamespace, final String rootNamespace, final Object element, final String elementName, final XMLStreamWriter writer) throws MarshalException{
+	private void writeElement(final String defaultNamespace, final String rootNamespace, final Object element, final String elementName, final XMLStreamWriter writer) throws MarshalException, XMLStreamException, ValidationException, IllegalAccessException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 
-		try {
-			if(_registeredClassesCache.contains(elementClass)){
-				//LogContext.info("writeElement: "+elementName);
+		if(!_registeredClassesCache.contains(elementClass)) {
+			return;
+		}
 
-				final CacheData cacheData = _classCacheData.get(elementClass);
-				final FastMap<CharArray, Field> elementFieldCache = cacheData._elementFieldCache;
-				final FastMap<CharArray, Field> propOrderFieldCache = cacheData._propOrderFieldCache;
-				final Field xmlValueField = cacheData._xmlValueField;
+		//LogContext.info("writeElement: "+elementName);
 
-				// Normal Element Processing
-				final Iterator<CharArray> propOrder = getXmlPropOrder(elementClass);
-				final boolean noProperties = !propOrder.hasNext();
+		final CacheData cacheData = _classCacheData.get(elementClass);
+		final FastMap<CharArray, Method> propOrderMethodCache = cacheData._propOrderMethodCache;
+		final Method xmlValueMethod = cacheData._xmlValueMethod;
 
-				if(xmlValueField == null) {
+		// Normal Element Processing
+		final Iterator<CharArray> propOrder = getXmlPropOrder(elementClass);
+		final boolean noProperties = !propOrder.hasNext();
 
-					// Attempt to mimic how the JDK handles namespace prefixes for 1:1
-					// output compatibility. From test observations, it seems that the
-					// JDK will prefix ns2 to the root element, with the namespace gotten
-					// from annotation scan, except if the element is wrapped with JAXBElement<T>,
-					// in which case the root element's scanned value will become the default namespace,
-					/// and ns2 prefix is given to the namespace specified in JAXBElement<T>
-					if(noProperties || elementFieldCache.isEmpty()){
-						writer.writeEmptyElement(elementName);
-					}
-					else if(rootNamespace == null){
-						writer.writeStartElement(elementName);
-					}
-					else {
-						writer.writeStartElement("ns2", elementName, rootNamespace);
-					}
+		if(xmlValueMethod == null) {
 
-					if(rootNamespace != null){
-						if(defaultNamespace == null) {
-							writer.writeNamespace("ns2", rootNamespace);
-						}
-						else {
-							writer.writeNamespace("ns2", defaultNamespace);
-							writer.writeDefaultNamespace(rootNamespace);
-						}
-					}
+			// Attempt to mimic how the JDK handles namespace prefixes for 1:1
+			// output compatibility. From test observations, it seems that the
+			// JDK will prefix ns2 to the root element, with the namespace gotten
+			// from annotation scan, except if the element is wrapped with JAXBElement<T>,
+			// in which case the root element's scanned value will become the default namespace,
+			/// and ns2 prefix is given to the namespace specified in JAXBElement<T>
+			final boolean emptyElement = (noProperties || propOrderMethodCache.isEmpty());
 
-					writeAttributes(element, writer);
+			if(emptyElement){
+				writer.writeEmptyElement(elementName);
+			}
+			else if(rootNamespace == null){
+				writer.writeStartElement(elementName);
+			}
+			else {
+				writer.writeStartElement("ns2", elementName, rootNamespace);
+			}
 
-					// If the element has only attributes, return here (the end element will be
-					// written after returning)
-					if(noProperties || elementFieldCache.isEmpty()){
-						writer.writeEndElement();
-						return;
-					}
+			if(rootNamespace != null){
+				if(defaultNamespace == null) {
+					writer.writeNamespace("ns2", rootNamespace);
 				}
-				// Complex Types W/ Simple Values - @XmlValue detection
 				else {
-					final Object fieldValue = xmlValueField.get(element);
-
-					if(fieldValue == null) {
-						writer.writeEmptyElement(elementName);
-						writeAttributes(element, writer);
-					}
-					else {
-						//LogContext.info("writeElementXmlValue: " + xmlValueField.getName());
-
-						writer.writeStartElement(elementName);
-						writeAttributes(element, writer);
-
-						final InvocationClassType invocationClassType = getInvocationClassType(fieldValue.getClass());
-
-						writeDirectElementValue(xmlValueField, invocationClassType, elementName, fieldValue, writer);
-					}
-
-					//LogContext.info("writeEndElement: "+elementName);
-					writer.writeEndElement();
-					return;
+					writer.writeNamespace("ns2", defaultNamespace);
+					writer.writeDefaultNamespace(rootNamespace);
 				}
+			}
 
-				while(propOrder.hasNext()){
-					final CharArray prop = propOrder.next();
+			writeAttributes(element, writer);
 
-					final Field field = propOrderFieldCache.get(prop);
-					final Object fieldValue = field.get(element);
-
-					if(fieldValue == null) {
-						if(_isValidating && field.isAnnotationPresent(XmlElement.class) &&
-								field.getAnnotation(XmlElement.class).required()){
-							throw new ValidationException("Missing Required Element Value: Field = "+field.getName());
-						}
-
-						continue;
-					}
-
-					final Class<?> fieldClass = field.getType();
-					String fieldElementName = _fieldElementNameCache.get(field);
-
-					InvocationClassType invocationClassType = getInvocationClassType(fieldClass);
-
-					if(invocationClassType != null) {
-						writeBasicElementValue(field, invocationClassType, fieldElementName, fieldValue, writer);
-					}
-					else if(fieldClass.isAssignableFrom(List.class)){
-						final List<?> list = (List<?>) fieldValue;
-						final Class<?> genericClass = getGenericType(field);
-						//LogContext.info("writeElementList: "+fieldElementName);
-
-						for(final Object listElement : list){
-							final Class<?> listElementClass;
-
-							// If the list has mapped elements, it's generic type will
-							// be Object. In that case we need to probe the real type of
-							// each object in the list.
-							if(genericClass == Object.class || _xmlSeeAlsoCache.contains(genericClass)) {
-								listElementClass = listElement.getClass();
-								fieldElementName = _classElementNameCache.get(listElementClass);
-							}
-							else {
-								listElementClass = genericClass;
-							}
-
-							invocationClassType = getInvocationClassType(listElementClass);
-
-							if(invocationClassType == null) {
-								//LogContext.info("writeElementListComplex: "+fieldElementName);
-								writeElement(null, null, listElement, fieldElementName, writer);
-							}
-							else {
-								//LogContext.info("writeElementListBasicOrEnum: "+fieldElementName);
-								writeBasicElementValue(field, invocationClassType, fieldElementName, listElement, writer);
-							}
-						}
-					}
-					else {
-						//LogContext.info("writeElementComplex: "+fieldElementName);
-						writeElement(null, null, fieldValue, fieldElementName, writer);
-					}
-				}
-
+			// If the element has only attributes, return here (the end element will be
+			// written after returning)
+			if(emptyElement){
 				writer.writeEndElement();
+				return;
 			}
 		}
-		catch(final Exception e){
-			throw new MarshalException("Error Writing Element", e);
+		// Complex Types W/ Simple Values - @XmlValue detection
+		else {
+			final Object fieldValue = xmlValueMethod.invoke(element, null);
+
+			if(fieldValue == null) {
+				writer.writeEmptyElement(elementName);
+				writeAttributes(element, writer);
+			}
+			else {
+				//LogContext.info("writeElementXmlValue: " + xmlValueMethod.getName());
+
+				writer.writeStartElement(elementName);
+				writeAttributes(element, writer);
+
+				final InvocationClassType invocationClassType = getInvocationClassType(fieldValue.getClass());
+
+				writeDirectElementValue(xmlValueMethod, invocationClassType, elementName, fieldValue, writer);
+			}
+
+			//LogContext.info("writeEndElement: "+elementName);
+			writer.writeEndElement();
+			return;
 		}
+
+		while(propOrder.hasNext()){
+			final CharArray prop = propOrder.next();
+
+			final Method method = propOrderMethodCache.get(prop);
+			final Object value = method.invoke(element, null);
+
+			if(value == null) {
+				if(_isValidating && method.isAnnotationPresent(XmlElement.class) &&
+						method.getAnnotation(XmlElement.class).required()){
+					throw new ValidationException("Missing Required Element Value: Field = "+method.getName());
+				}
+
+				continue;
+			}
+
+			final Class<?> methodReturnClass = method.getReturnType();
+			String fieldElementName = _methodElementNameCache.get(method);
+
+			InvocationClassType invocationClassType = getInvocationClassType(methodReturnClass);
+
+			if(invocationClassType != null) {
+				writeBasicElementValue(method, invocationClassType, fieldElementName, value, writer);
+			}
+			else if(methodReturnClass.isAssignableFrom(List.class)){
+				final List<?> list = (List<?>) value;
+				final Class<?> genericClass = getGenericType(method);
+				//LogContext.info("writeElementList: "+fieldElementName);
+
+				for(int i = 0; i < list.size(); i++){
+					final Object listElement = list.get(i);
+					final Class<?> listElementClass;
+
+					// If the list has mapped elements, it's generic type will
+					// be Object. In that case we need to probe the real type of
+					// each object in the list.
+					if(genericClass == Object.class || _xmlSeeAlsoCache.contains(genericClass)) {
+						listElementClass = listElement.getClass();
+						fieldElementName = _classElementNameCache.get(listElementClass);
+					}
+					else {
+						listElementClass = genericClass;
+					}
+
+					invocationClassType = getInvocationClassType(listElementClass);
+
+					if(invocationClassType == null) {
+						//LogContext.info("writeElementListComplex: "+fieldElementName);
+						writeElement(null, null, listElement, fieldElementName, writer);
+					}
+					else {
+						//LogContext.info("writeElementListBasicOrEnum: "+fieldElementName);
+						writeBasicElementValue(method, invocationClassType, fieldElementName, listElement, writer);
+					}
+				}
+			}
+			else {
+				//LogContext.info("writeElementComplex: "+fieldElementName);
+				writeElement(null, null, value, fieldElementName, writer);
+			}
+		}
+
+		writer.writeEndElement();
 	}
 
-	private void writeBasicElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
+	private void writeBasicElementValue(final Method method, final InvocationClassType invocationClassType, final String fieldName, final Object value, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
 		//LogContext.info("writeBasicOrEnum: "+fieldName);
 
-		final String stringValue = getElementValue(field, invocationClassType, fieldValue);
+		final String stringValue = getElementValue(method, invocationClassType, value);
 
 		//LogContext.info("WriteBasicOrEnumValue: "+stringValue);
 
@@ -399,10 +407,10 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		writer.writeEndElement();
 	}
 
-	private void writeDirectElementValue(final Field field, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
+	private void writeDirectElementValue(final Method method, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
 		//LogContext.info("writeDirect: "+fieldName);
 
-		final String stringValue = getElementValue(field, invocationClassType, fieldValue);
+		final String stringValue = String.valueOf(fieldValue);
 
 		//LogContext.info("WriteDirectElementValue: "+stringValue);
 
@@ -414,7 +422,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
-	private InvocationClassType getInvocationClassType(final Class<?> classType){
+	private static InvocationClassType getInvocationClassType(final Class<?> classType){
 		InvocationClassType invocationClassType = InvocationClassType.valueOf(classType);
 
 		if(invocationClassType == null && classType.isEnum()){
@@ -424,7 +432,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		return invocationClassType;
 	}
 
-	private String getDateValue(final XmlSchemaTypeEnum dateType, final Object fieldValue){
+	private static String getDateValue(final XmlSchemaTypeEnum dateType, final Object fieldValue){
 		final Date date = ((XMLGregorianCalendar)fieldValue).toGregorianCalendar().getTime();
 		final DateFormat dateFormat;
 		final String dateValue;
@@ -442,7 +450,6 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			break;
 
 		default:
-			dateFormat = null;
 			dateValue = String.valueOf(fieldValue);
 			break;
 		}
@@ -451,7 +458,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	}
 
 	@SuppressWarnings("unchecked")
-	private String getElementValue(final Field field, final InvocationClassType invocationClassType, final Object fieldValue) throws MarshalException{
+	private String getElementValue(final Method method, final InvocationClassType invocationClassType, final Object value) throws MarshalException{
 		final String elementValue;
 
 		switch(invocationClassType){
@@ -459,32 +466,32 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		case BYTE_ARRAY:
 		case PRIMITIVE_BYTE_ARRAY:
 			@SuppressWarnings("rawtypes")
-			final Class<? extends XmlAdapter> xmlJavaTypeAdapter = _xmlJavaTypeAdapterCache.get(field);;
+			final Class<? extends XmlAdapter> xmlJavaTypeAdapter = _xmlJavaTypeAdapterCache.get(method);;
 
 			// Default Binding for byte[] is Base64
 			if(xmlJavaTypeAdapter == null){
-				elementValue = DatatypeConverter.printBase64Binary((byte[])fieldValue);
+				elementValue = DatatypeConverter.printBase64Binary((byte[]) value);
 			}
 			// If it has a custom type adapter, use it; NOTE: JAXB processes xs:hexBinary this way
 			else {
 				try {
-					elementValue = String.valueOf(xmlJavaTypeAdapter.newInstance().marshal(fieldValue));
+					elementValue = String.valueOf(xmlJavaTypeAdapter.newInstance().marshal(value));
 				}
 				catch (final Exception e) {
-					throw new MarshalException("Error Executing Type Adapter - Field = "+field.getName(), e);
+					throw new MarshalException("Error Executing Type Adapter - Method = "+method.getName(), e);
 				}
 			}
 
 			break;
 
 		case QNAME:
-			final QName qName = (QName)fieldValue;
+			final QName qName = (QName)value;
 			final TextBuilder qNameBuilder = new TextBuilder();
 			final String prefix = qName.getPrefix();
 
 			if(prefix != null && prefix.length()>0){
 				qNameBuilder.append(prefix);
-				qNameBuilder.append(":");
+				qNameBuilder.append(':');
 			}
 
 			qNameBuilder.append(qName.getLocalPart());
@@ -492,12 +499,12 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			break;
 
 		case XML_GREGORIAN_CALENDAR:
-			final XmlSchemaTypeEnum dateType = _xmlSchemaTypeCache.get(field);
-			elementValue = getDateValue(dateType, fieldValue);
+			final XmlSchemaTypeEnum dateType = _xmlSchemaTypeCache.get(method);
+			elementValue = getDateValue(dateType, value);
 			break;
 
 		default:
-			elementValue = String.valueOf(fieldValue);
+			elementValue = String.valueOf(value);
 			break;
 
 		}
