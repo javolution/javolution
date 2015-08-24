@@ -312,7 +312,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 				final InvocationClassType invocationClassType = getInvocationClassType(fieldValue.getClass());
 
-				writeDirectElementValue(xmlValueMethod, invocationClassType, elementName, fieldValue, writer);
+				writeDirectElementValue(xmlValueMethod, invocationClassType, fieldValue, writer);
 			}
 
 			//LogContext.info("writeEndElement: "+elementName);
@@ -348,6 +348,8 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 				final Class<?> genericClass = getGenericType(method);
 				//LogContext.info("writeElementList: "+fieldElementName);
 
+				invocationClassType = getInvocationClassType(genericClass);
+
 				for(int i = 0; i < list.size(); i++){
 					final Object listElement = list.get(i);
 					final Class<?> listElementClass;
@@ -358,12 +360,8 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 					if(genericClass == Object.class || _xmlSeeAlsoCache.contains(genericClass)) {
 						listElementClass = listElement.getClass();
 						fieldElementName = _classElementNameCache.get(listElementClass);
+						invocationClassType = getInvocationClassType(listElementClass);
 					}
-					else {
-						listElementClass = genericClass;
-					}
-
-					invocationClassType = getInvocationClassType(listElementClass);
 
 					if(invocationClassType == null) {
 						//LogContext.info("writeElementListComplex: "+fieldElementName);
@@ -394,20 +392,22 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		if(stringValue == null) {
 			writer.writeEmptyElement(fieldName);
 		}
-		else if(_isUsingCDATA && CDATA_CHARACTERS.matcher(stringValue).find()){
-			writer.writeStartElement(fieldName);
-			writer.writeCData(stringValue);
-		}
 		else {
 			writer.writeStartElement(fieldName);
-			writer.writeCharacters(stringValue);
+
+			if (_isUsingCDATA && CDATA_CHARACTERS.matcher(stringValue).find()) {
+				writer.writeCData(stringValue);
+			}
+			else {
+				writer.writeCharacters(stringValue);
+			}
 		}
 
 		//LogContext.info("writeEndElement: "+fieldName);
 		writer.writeEndElement();
 	}
 
-	private void writeDirectElementValue(final Method method, final InvocationClassType invocationClassType, final String fieldName, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
+	private void writeDirectElementValue(final Method method, final InvocationClassType invocationClassType, final Object fieldValue, final XMLStreamWriter writer) throws XMLStreamException, MarshalException {
 		//LogContext.info("writeDirect: "+fieldName);
 
 		final String stringValue = String.valueOf(fieldValue);
