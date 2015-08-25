@@ -267,9 +267,10 @@
     <!-- ====================== -->
     <!--     List of modules    -->
     <!-- ====================== -->
-    <modules>
+    <modules>    	
         <module>core-java</module>
         <module>core-cpp</module>
+        <module>jmh-benchmarks</module>
         <module>test-cpp</module>  
     </modules>
 

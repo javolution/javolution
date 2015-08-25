@@ -1,0 +1,84 @@
+/*
+ * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
+ * All rights reserved.
+ *
+ * Permission to use, copy, modify, and distribute this software is
+ * freely granted, provided that this notice is preserved.
+ */
+package javolution.jmh.benchmark;
+
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.bind.JAXBException;
+
+import javolution.osgi.internal.OSGiServices;
+import javolution.xml.annotation.JAXBAnnotatedObjectReader;
+import javolution.xml.annotation.JAXBAnnotationFactory;
+import javolution.xml.jaxb.test.schema.*;
+
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+@State(Scope.Thread)
+public class JAXBAnnotatedObjectReaderBenchmark {
+
+	private InputStream xmlUrl;
+	private String xmlString;
+	private JAXBAnnotatedObjectReader reader;
+
+	@Setup
+	public void setup() throws JAXBException{
+		final JAXBAnnotationFactory jaxbFactory = OSGiServices.getJAXBAnnotationFactory();
+		reader = jaxbFactory.createJAXBAnnotatedObjectReader(TestRoot.class);
+
+		xmlUrl = JAXBAnnotatedObjectReaderBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml");
+
+		try {
+			final StringBuilder build = new StringBuilder();
+			final byte[] buf = new byte[1024];
+			int length;
+
+			while ((length = xmlUrl.read(buf)) != -1) {
+				build.append(new String(buf, 0, length));
+			}
+
+			xmlString = build.toString();
+		}
+		catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Benchmark
+	@BenchmarkMode({Mode.AverageTime, Mode.SampleTime, Mode.SingleShotTime})
+	@OutputTimeUnit(TimeUnit.NANOSECONDS)
+	public void measureJavolution(Blackhole bh) throws InterruptedException, JAXBException {
+		// Unlike its JAXB counterpart, the JAXBAnnotatedObjectReader is stateless and
+		// thus thread safe, so the same one is reusuable for all threads
+		bh.consume(reader.read(new StringReader(xmlString)));
+	}
+
+	public static void main(final String[] args) throws RunnerException {
+
+		final Options opt = new OptionsBuilder()
+		.include(JAXBAnnotatedObjectReaderBenchmark.class.getSimpleName())
+		.warmupIterations(5)
+		.measurementIterations(5)
+		.forks(1)
+		.build();
+
+		new Runner(opt).run();
+	}
+
+}
