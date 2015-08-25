@@ -13,10 +13,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -770,10 +767,10 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		QNAME(QName.class),
 		OBJECT(Object.class);
 
-		private static final HashMap<Class<?>,InvocationClassType> types;
+		private static final IdentityHashMap<Class<?>,InvocationClassType> types;
 
 		static {
-			types = new HashMap<Class<?>,InvocationClassType>(17);
+			types = new IdentityHashMap<Class<?>,InvocationClassType>(17);
 
 			for(final InvocationClassType type : EnumSet.allOf(InvocationClassType.class)){
 				types.put(type.type, type);

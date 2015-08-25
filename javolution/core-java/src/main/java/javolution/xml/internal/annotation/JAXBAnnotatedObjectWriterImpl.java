@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
@@ -433,28 +434,27 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	}
 
 	private static String getDateValue(final XmlSchemaTypeEnum dateType, final Object fieldValue){
-		final Date date = ((XMLGregorianCalendar)fieldValue).toGregorianCalendar().getTime();
-		final DateFormat dateFormat;
-		final String dateValue;
+		final XMLGregorianCalendar xmlGregorianCalendar = (XMLGregorianCalendar)fieldValue;
 
 		switch(dateType){
 
 		case DATE:
-			dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-			dateValue = dateFormat.format(date);
+			xmlGregorianCalendar.setTime(DatatypeConstants.FIELD_UNDEFINED, DatatypeConstants.FIELD_UNDEFINED,
+					DatatypeConstants.FIELD_UNDEFINED, DatatypeConstants.FIELD_UNDEFINED);
 			break;
 
 		case TIME:
-			dateFormat = new SimpleDateFormat("hh:mm:ssZ");
-			dateValue = dateFormat.format(date);
+			xmlGregorianCalendar.setDay(DatatypeConstants.FIELD_UNDEFINED);
+			xmlGregorianCalendar.setMonth(DatatypeConstants.FIELD_UNDEFINED);
+			xmlGregorianCalendar.setYear(DatatypeConstants.FIELD_UNDEFINED);
 			break;
 
 		default:
-			dateValue = String.valueOf(fieldValue);
 			break;
+
 		}
 
-		return dateValue;
+		return xmlGregorianCalendar.toXMLFormat();
 	}
 
 	@SuppressWarnings("unchecked")
