@@ -227,7 +227,8 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		}
 
 		// Prepare Data Structures
-		final FastMap<CharArray, Method> cachedAttributeFields = cacheData._attributeMethodsCache;
+		final FastMap<CharArray, Method> cachedAttributeMethods = cacheData._attributeMethodsCache;
+		final FastSet<Method> cachedAttributeSet = cacheData._attributeMethodsSet;
 		final FastSet<CharArray> requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 
 		for(final Field field : fields){
@@ -263,7 +264,13 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				method = getMethodByXmlName(xmlName, scanClass, fieldClass);
 				_methodAttributeNameCache.put(method, xmlName);
 
-				cachedAttributeFields.put(xmlName, method);
+				if(_cacheMode == CacheMode.READER) {
+					cachedAttributeMethods.put(xmlName, method);
+				}
+				else {
+					cachedAttributeSet.add(method);
+				}
+
 				cacheData._elementMethodCache.put(xmlName, method);
 			}
 			// Cache Value Field
@@ -819,6 +826,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	}
 
 	protected class CacheData {
+		final FastSet<Method> _attributeMethodsSet;
 		final FastMap<CharArray,Method> _attributeMethodsCache;
 		final FastMap<CharArray,Method> _directSetValueCache;
 		final FastMap<CharArray,Field> _elementFieldCache;
@@ -830,7 +838,15 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		Method _xmlValueMethod;
 
 		public CacheData() {
-			_attributeMethodsCache = new FastMap<CharArray,Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+			if(_cacheMode == CacheMode.READER) {
+				_attributeMethodsCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+				_attributeMethodsSet = null;
+			}
+			else {
+				_attributeMethodsCache = null;
+				_attributeMethodsSet = new FastSet<Method>(Equalities.IDENTITY);
+			}
+
 			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_elementFieldCache = new FastMap<CharArray,Field>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
 			_elementMethodCache = new FastMap<CharArray,Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);

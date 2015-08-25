@@ -35,8 +35,8 @@ import javax.xml.namespace.QName;
 import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.util.FastCollection;
 import javolution.util.FastMap;
+import javolution.util.FastSet;
 import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
 import javolution.xml.stream.XMLOutputFactory;
 import javolution.xml.stream.XMLStreamException;
@@ -203,8 +203,9 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeObject(final Object object, final XMLStreamWriter writer, final String defaultNamespace) throws XMLStreamException, MarshalException {
 		writer.writeStartDocument("UTF-8", "1.0", true);
 
-		final String rootElementName = _classElementNameCache.get(object.getClass());
-		final String rootNamespace = _classNameSpaceCache.get(object.getClass());
+		final Class<?> rootElementClass = object.getClass();
+		final String rootElementName = _classElementNameCache.get(rootElementClass);
+		final String rootNamespace = _classNameSpaceCache.get(rootElementClass);
 
 		try{
 			writeElement(defaultNamespace, rootNamespace, object, rootElementName, writer);
@@ -220,7 +221,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastCollection<Method> attributeMethods = cacheData._attributeMethodsCache.values();
+		final FastSet<Method> attributeMethods = cacheData._attributeMethodsSet;
 
 		for(final Method method : attributeMethods){
 			writeAttributeValue(element, method, writer);
