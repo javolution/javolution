@@ -22,7 +22,129 @@ public final class MathLib {
     /**
      * Default constructor.
      */
-    private MathLib() {}
+    private MathLib() {
+    }
+
+    /**
+     * Interleaves the bits of the two specified integer values (Morton code).
+     * 
+     * @param x the first positive integer value.
+     * @param y the second positive integer value.
+     * @return the corresponding morton code.
+     * @see <a href="http://en.wikipedia.org/wiki/Z-order_curve">
+     *       Wikipedia: Z-order curve</a>
+     * @see  #deinterleave2D(int)
+     * @throws IllegalArgumentException if any of the arguments is negative 
+     *         or greater than 65535.
+     */
+    public static int interleave(int x, int y) {
+        if (((x | y) & 0xFFFF0000) != 0)
+            throw new IllegalArgumentException("Overflow");
+        return part1by1(x) | (part1by1(y) << 1);
+    }
+
+    /**
+     * Deinterleaves the specified 32-bits integer value (binary result).
+     * 
+     * @param interleaved the interleaved 32-bits integer value.
+     * @return the original binary values having the specified interleaved value.
+     * @see   #interleave(int,int)
+     */
+    public static Binary<Integer, Integer> deinterleave2D(final int interleaved) {
+        return new Binary<Integer, Integer>() {
+
+            @Override
+            public Integer first() {
+                return unpart1by1(interleaved);
+            }
+
+            @Override
+            public Integer second() {
+                return unpart1by1(interleaved >> 1);
+            }};
+    }
+    
+
+    private static int part1by1(int n) {
+        n &= 0x0000ffff;
+        n = (n | (n << 8)) & 0x00FF00FF;
+        n = (n | (n << 4)) & 0x0F0F0F0F;
+        n = (n | (n << 2)) & 0x33333333;
+        n = (n | (n << 1)) & 0x55555555;
+        return n;
+    }
+
+    private static int unpart1by1(int n) {
+        n &= 0x55555555;
+        n = (n ^ (n >> 1)) & 0x33333333;
+        n = (n ^ (n >> 2)) & 0x0f0f0f0f;
+        n = (n ^ (n >> 4)) & 0x00ff00ff;
+        n = (n ^ (n >> 8)) & 0x0000ffff;
+        return n;
+    }
+
+    /**
+     * Interleaves the bits of the three specified integer values (Morton code).
+     * 
+     * @param x the first positive integer value.
+     * @param y the second positive integer value.
+     * @param y the third positive integer value.
+     * @return the corresponding morton code.
+     * @see <a href="http://en.wikipedia.org/wiki/Z-order_curve">
+     *       Wikipedia: Z-order curve</a>
+     * @see  #deinterleave3D(int)
+    * @throws IllegalArgumentException if any of the arguments is negative 
+    *         or greater than 1023.
+     */
+    public static int interleave(int x, int y, int z) {
+        if (((x | y | z) & 0xFFFFFC00) != 0)
+            throw new IllegalArgumentException("Overflow");
+        return part1by2(x) | (part1by2(y) << 1) | (part1by2(z) << 2);
+    }
+
+    /**
+     * Deinterleaves the specified 32-bits integer value (ternary result).
+     * 
+     * @param interleaved the interleaved 32-bits integer value.
+     * @return the original ternary values having the specified interleaved value.
+     * @see     #interleave(int,int,int)
+     */
+    public static Ternary<Integer, Integer, Integer> deinterleave3D(final int interleaved) {
+        return new Ternary<Integer, Integer, Integer>() {
+
+            @Override
+            public Integer first() {
+                return unpart1by2(interleaved);
+            }
+
+            @Override
+            public Integer second() {
+                return unpart1by2(interleaved >> 1);
+            }
+
+            @Override
+            public Integer third() {
+                return unpart1by2(interleaved >> 2);
+            }};
+    }
+
+    private static int part1by2(int n) {
+        n &= 0x000003ff;
+        n = (n ^ (n << 16)) & 0xff0000ff;
+        n = (n ^ (n << 8)) & 0x0300f00f;
+        n = (n ^ (n << 4)) & 0x030c30c3;
+        n = (n ^ (n << 2)) & 0x09249249;
+        return n;
+    }
+
+    private static int unpart1by2(int n) {
+        n &= 0x09249249;
+        n = (n ^ (n >> 2)) & 0x030c30c3;
+        n = (n ^ (n >> 4)) & 0x0300f00f;
+        n = (n ^ (n >> 8)) & 0xff0000ff;
+        n = (n ^ (n >> 16)) & 0x000003ff;
+        return n;
+    }
 
     /**
      * Returns the number of bits in the minimal two's-complement representation
@@ -106,6 +228,31 @@ public final class MathLib {
     }
 
     /**
+     * Compares the specified values as unsigned {@code int}.
+     * 
+     * @param left the first unsigned {@code int} to compare.
+     * @param right the second unsigned {@code int} to compare.
+     * @return  a negative integer, zero, or a positive integer as left
+     *          is less than, equal to, or greater than right.
+     */
+    public static int compareUnsigned(int left, int right) {
+        return (int) ((left & 0xffffffffL) - (right & 0xffffffffL));
+    }
+
+    /**
+     * Compares the specified values as unsigned {@code long}.
+     * 
+     * @param left the first unsigned {@code long} to compare.
+     * @param right the second unsigned {@code long} to compare.
+     * @return  a negative integer, zero, or a positive integer as left
+     *          is less than, equal to, or greater than right.
+     */
+    public static int compareUnsigned(long left, long right) {
+        return (left < right) ^ ((left < 0) != (right < 0)) ? -1
+                : (left == right) ? 0 : 1;
+    }
+
+    /**
      * Returns the number of zero bits preceding the highest-order
      * ("leftmost") one-bit in the two's complement binary representation
      * of the specified <code>long</code> value. Returns 64 if the specifed
@@ -148,7 +295,7 @@ public final class MathLib {
         y = x << 4; if (y != 0) { n = n - 4; x = y; }
         y = x << 2; if (y != 0) { n = n - 2; x = y; }
         return n - ((x << 1) >>> 31);
-      }
+    }
 
     /**
      * Returns the number of digits of the decimal representation of the 
@@ -780,7 +927,7 @@ public final class MathLib {
 
     /**
      * Returns the angle theta such that
-     * {@code (x == cos(theta)) && (y == sin(theta))}. 
+     * <code>(x == cos(theta)) && (y == sin(theta))</code>. 
      *
      * @param y the y value.
      * @param x the x value.
@@ -788,7 +935,7 @@ public final class MathLib {
      * @see <a href="http://en.wikipedia.org/wiki/Atan2">Wikipedia: Atan2</a>
      **/
     public static double atan2(double y, double x) {
-        // From Wikipedia.
+    	// From Wikipedia.
         if (x > 0) return MathLib.atan(y / x);
         if ((y >= 0) && (x < 0)) return MathLib.atan(y / x) + PI;
         if ((y < 0) && (x < 0)) return MathLib.atan(y / x) - PI;

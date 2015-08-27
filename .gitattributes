@@ -285,12 +285,14 @@ javolution/core-java/src/main/java/javolution/io/UTF8StreamReader.java -text svn
 javolution/core-java/src/main/java/javolution/io/UTF8StreamWriter.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/Union.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/io/package-info.java -text
+javolution/core-java/src/main/java/javolution/lang/Binary.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Configurable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Constant.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Ternary.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/package-info.java -text
 javolution/core-java/src/main/java/javolution/osgi/internal/ConfigurableListenerImpl.java -text

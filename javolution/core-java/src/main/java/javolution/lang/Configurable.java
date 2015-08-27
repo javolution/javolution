@@ -26,14 +26,14 @@ import javolution.text.TextContext;
  * <p> The response is obviously NO !</p>
  *
  * <p> Let's compare the following examples:
- * {@code
+ * <pre>{@code
  * class Document {
  *     private static final Font FONT = Font.decode(System.getProperty("myPkg.Document#FONT") != null ?
  *             System.getProperty("FONT") : "Arial-BOLD-18");
- * }}</p>
+ * }}</pre></p>
  * 
  * <p>With the following:
- * {@code
+ * <pre>{@code
  * class Document {
  *     public static final Configurable<Font> FONT = new Configurable<Font>() {
  *         {@literal@}Override
@@ -41,7 +41,7 @@ import javolution.text.TextContext;
  *             new Font("Arial", Font.BOLD, 18);
  *         }
  *     };
- * }}</p>
+ * }}</pre></p>
  *  
  * <p> Not only the second example is cleaner, but the actual configuration
  *     data can come from anywhere, from system properties (default), 
@@ -51,7 +51,7 @@ import javolution.text.TextContext;
  * <p> Configurables may perform any logic upon initialization or 
  *     update. Users are notified of configuration events through 
  *     the OSGi {@link Configurable.Listener} service.
- * {@code
+ * <pre>{@code
  * class Index {
  *     // Holds the number of unique preallocated instances (default {@code 1024}).  
  *     public static final Configurable<Integer> UNIQUE = new Configurable<Integer>() {
@@ -68,7 +68,7 @@ import javolution.text.TextContext;
  *             throw new UnsupportedOperationException("Dynamic reconfiguration not supported."); 
  *         }               
  *     }
- * }}</p>
+ * }</pre></p>
  *        
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013

@@ -18,28 +18,27 @@ import java.lang.annotation.Target;
 /**
  * <p> Indicates that a class, a method or a field can be used by multiple 
  *     threads concurrently and whether or not it is 
- *     {@link Parallelizable#mutexFree() mutex-free} (not blocking).</p>
- * 
- * <pre>
+ *     {@link Parallelizable#mutexFree() mutex-free} (not blocking).
+ * <pre>{@code
  * public class Operators {
- *    &#64;Parallelizable
- *    public static final Reducer&lt;Object&gt; ANY = new Reducer&lt;Object&gt;() { ... }
+ *    {@literal@}Parallelizable
+ *    public static final Reducer<Object> ANY = new Reducer<Object>() { ... }
  *    
- *    &#64;Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final Reducer&lt;Object&gt; MAX = new Reducer&lt;Object&gt;() { ... }
+ *    {@literal@}Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final Reducer<Object> MAX = new Reducer<Object>() { ... }
  *    
- *    &#64;Parallelizable(mutexFree = false, comment="Internal use of synchronization")
- *    public static final Reducer&lt;Object&gt; MIN = new Reducer&lt;Object&gt;() { ... }
+ *    {@literal@}Parallelizable(mutexFree = false, comment="Internal use of synchronization")
+ *    public static final Reducer<Object> MIN = new Reducer<Object>() { ... }
  *    
- *    &#64;Parallelizable
- *    public static final Reducer&lt;Boolean&gt; AND = new Reducer&lt;Boolean&gt;() { ... }
+ *    {@literal@}Parallelizable
+ *    public static final Reducer<Boolean>; AND = new Reducer<Boolean>() { ... }
  *    
- *    &#64;Parallelizable
- *    public static final Reducer&lt;Boolean&gt; OR = new Reducer&lt;Boolean&gt;() { ... }
+ *    {@literal@}Parallelizable
+ *    public static final Reducer<Boolean> OR = new Reducer<Boolean>() { ... }
  *    
- *    &#64;Parallelizable(comment="Internal use of AtomicInteger")
- *    public static final Reducer&lt;Integer&gt; SUM = new Reducer&lt;Integer&gt;() { ... }
- * </pre>
+ *    {@literal@}Parallelizable(comment="Internal use of AtomicInteger")
+ *    public static final Reducer<Integer> SUM = new Reducer<Integer>() { ... }
+ * }</pre></p>
  *  
  * <p> Classes with no internal fields or Immutable are usually parallelizable and mutex-free.</p>
  *

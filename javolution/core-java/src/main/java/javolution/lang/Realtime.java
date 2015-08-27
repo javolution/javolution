@@ -20,22 +20,21 @@ import java.lang.annotation.Target;
  *     <a href="http://en.wikipedia.org/wiki/Worst-case_execution_time">
  *     worst-case execution time</a>. The {@link #limit limit} behavior
  *     of the execution time with the input size may be specified (if no limit 
- *     specified the worst case execution time is assumed to be constant).</p>
- *     
- * [code]
+ *     specified the worst case execution time is assumed to be constant).    
+ * <pre>{@code
  * public class Equalities {
- *     @Realtime(limit = UNKNOWN)
+ *     {@literal@}Realtime(limit = UNKNOWN)
  *     public static final Equality<Object> STANDARD = new StandardComparatorImpl<Object>();
  *     
- *     @Realtime(limit = CONSTANT)
+ *     {@literal@}Realtime(limit = CONSTANT)
  *     public static final Equality<Object> IDENTITY = new IdentityComparatorImpl<Object>();
  *     
- *     @Realtime(limit = LINEAR)
+ *     {@literal@}Realtime(limit = LINEAR)
  *     public static final Equality<Object> ARRAY = new ArrayComparatorImpl();
  *     
- *     @Realtime(limit = LINEAR)
+ *     {@literal@}Realtime(limit = LINEAR)
  *     public static final Equality<CharSequence> LEXICAL = new LexicalComparatorImpl();
- * }[/code]      
+ * }}</pre></p>      
  *     
  * <p> Analysis tools / compilers may produce warnings if program elements 
  *     use or override elements with incompatible real-time characteristics.</p>
