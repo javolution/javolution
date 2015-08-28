@@ -36,7 +36,7 @@ import javolution.osgi.internal.OSGiServices;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.util.FastMap;
-import javolution.util.FastSet;
+import javolution.util.service.FastIdentitySet;
 import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
 import javolution.xml.stream.XMLOutputFactory;
 import javolution.xml.stream.XMLStreamException;
@@ -221,7 +221,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastSet<Method> attributeMethods = cacheData._attributeMethodsSet;
+		final FastIdentitySet<Method> attributeMethods = cacheData._attributeMethodsSet;
 
 		for(final Method method : attributeMethods){
 			writeAttributeValue(element, method, writer);

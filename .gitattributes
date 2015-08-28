@@ -320,6 +320,7 @@ javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/ConstantTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/FastIdentityMap.java -text
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSortedMap.java -text svneol=unset#text/plain
@@ -369,8 +370,10 @@ javolution/core-java/src/main/java/javolution/util/internal/comparator/StandardC
 javolution/core-java/src/main/java/javolution/util/internal/comparator/WrapperComparatorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/AtomicMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntryComparatorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/FastIdentityMapImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/map/FastMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/FractalMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/IdentityMapEntryImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/map/MapEntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/MapView.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/ParallelMapImpl.java -text svneol=unset#text/plain
@@ -416,6 +419,7 @@ javolution/core-java/src/main/java/javolution/util/internal/table/sorted/Unmodif
 javolution/core-java/src/main/java/javolution/util/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/service/BitSetService.java -text
 javolution/core-java/src/main/java/javolution/util/service/CollectionService.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/service/FastIdentitySet.java -text
 javolution/core-java/src/main/java/javolution/util/service/MapService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/SetService.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/service/SortedMapService.java -text svneol=unset#text/plain
@@ -482,6 +486,7 @@ javolution/core-java/src/test/java/javolution/text/TextReaderTest.java -text
 javolution/core-java/src/test/java/javolution/text/TextTest.java -text
 javolution/core-java/src/test/java/javolution/text/TypeFormatTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastBitSetTest.java -text
+javolution/core-java/src/test/java/javolution/util/FastIdentityMapTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastMapTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastSetTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastSortedMapTest.java -text
@@ -557,10 +562,16 @@ javolution/core-java/src/test/resources/test-with-unsigned-element.xml -text
 javolution/core-java/src/test/resources/test-with-value-element.xml -text
 javolution/index.html -text
 javolution/jmh-benchmarks/pom.xml -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/FastIdentityMapBenchmark.java -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/FastMapBenchmark.java -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/HashMapBenchmark.java -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/IdentityHashMapBenchmark.java -text
 javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBAnnotatedObjectReaderBenchmark.java -text
 javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBAnnotatedObjectWriterBenchmark.java -text
 javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBMarshallingWithJDKBenchmark.java -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBMarshallingWithJDKSingleThreadedBenchmark.java -text
 javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBUnmarshallingWithJDKBenchmark.java -text
+javolution/jmh-benchmarks/src/main/java/javolution/jmh/benchmark/JAXBUnmarshallingWithJDKSingleThreadedBenchmark.java -text
 javolution/msvc/LICENSE.txt -text
 javolution/msvc/pom.xml -text
 javolution/msvc/src/main/java/org/codehaus/mojo/natives/msvc/AbstractMSVC2005EnvFactory.java -text

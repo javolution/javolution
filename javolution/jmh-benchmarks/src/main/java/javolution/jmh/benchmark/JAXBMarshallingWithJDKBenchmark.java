@@ -36,7 +36,6 @@ public class JAXBMarshallingWithJDKBenchmark {
 
 	private JAXBAnnotatedObjectReader reader;
 	private JAXBContext jaxbContext;
-	private StringWriter stringWriter;
 	private TestRoot largeNestedMixedObject;
 
 	@Setup
@@ -67,10 +66,10 @@ public class JAXBMarshallingWithJDKBenchmark {
 	}
 
 	@Benchmark
-	@BenchmarkMode({Mode.AverageTime, Mode.SampleTime, Mode.SingleShotTime})
+	@BenchmarkMode({Mode.AverageTime})
 	@OutputTimeUnit(TimeUnit.NANOSECONDS)
 	public void measureJDK(Blackhole bh) throws InterruptedException, JAXBException {
-		stringWriter = new StringWriter();
+		final StringWriter stringWriter = new StringWriter();
 		//NOTE: Marshallers are not thread-safe, only the JAXBContext is. So a new
 		// Marshaller must be gotten each time.
 		final Marshaller marshaller = jaxbContext.createMarshaller();

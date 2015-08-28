@@ -36,9 +36,11 @@ import javax.xml.namespace.QName;
 import javolution.context.LogContext;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
+import javolution.util.FastIdentityMap;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
 import javolution.util.function.Equalities;
+import javolution.util.service.FastIdentitySet;
 
 public abstract class AbstractJAXBAnnotatedObjectParser {
 
@@ -48,62 +50,62 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	protected static final CharArray _VALUE = new CharArray("value");
 
 	protected final CacheMode _cacheMode;
-	protected final FastMap<Class<?>, CacheData> _classCacheData;
-	protected final FastMap<Class<?>, String> _classElementNameCache;
-	protected final FastMap<Class<?>,String> _classNameSpaceCache;
-	protected final FastMap<Class<?>,Object> _classObjectFactoryCache;
+	protected final FastIdentityMap<Class<?>, CacheData> _classCacheData;
+	protected final FastIdentityMap<Class<?>, String> _classElementNameCache;
+	protected final FastIdentityMap<Class<?>,String> _classNameSpaceCache;
+	protected final FastIdentityMap<Class<?>,Object> _classObjectFactoryCache;
 	protected final FastMap<CharArray,Class<?>> _elementClassCache;
-	protected final FastMap<Field,Class<?>> _genericFieldTypeCache;
-	protected final FastMap<Method,Class<?>> _genericMethodTypeCache;
-	protected final FastMap<Class<?>,XmlAccessType> _xmlAccessTypeCache;
-	protected final FastMap<Class<?>,Boolean> _basicInstanceCache;
-	protected final FastMap<Class<?>,FastSet<Field>> _declaredFieldsCache;
-	protected final FastMap<Method,CharArray> _methodAttributeNameCache;
-	protected final FastMap<Field,Method> _methodCache;
-	protected final FastMap<Method,String> _methodElementNameCache;
+	protected final FastIdentityMap<Field,Class<?>> _genericFieldTypeCache;
+	protected final FastIdentityMap<Method,Class<?>> _genericMethodTypeCache;
+	protected final FastIdentityMap<Class<?>,XmlAccessType> _xmlAccessTypeCache;
+	protected final FastIdentityMap<Class<?>,Boolean> _basicInstanceCache;
+	protected final FastIdentityMap<Class<?>,FastSet<Field>> _declaredFieldsCache;
+	protected final FastIdentityMap<Method,CharArray> _methodAttributeNameCache;
+	protected final FastIdentityMap<Field,Method> _methodCache;
+	protected final FastIdentityMap<Method,String> _methodElementNameCache;
 	protected final FastMap<String,Object> _namespaceObjectFactoryCache;
-	protected final FastMap<Class<?>, Method> _objectFactoryCache;
-	protected final FastMap<Class<?>, FastSet<CharArray>> _propOrderCache;
-	protected final FastMap<Class<?>, FastSet<CharArray>> _requiredCache;
-	protected final FastSet<Class<?>> _registeredClassesCache;
+	protected final FastIdentityMap<Class<?>, Method> _objectFactoryCache;
+	protected final FastIdentityMap<Class<?>, FastSet<CharArray>> _propOrderCache;
+	protected final FastIdentityMap<Class<?>, FastSet<CharArray>> _requiredCache;
+	protected final FastIdentitySet<Class<?>> _registeredClassesCache;
 	protected final FastMap<CharArray,CharArray> _xmlElementNameCache;
 	@SuppressWarnings("rawtypes")
-	protected final FastMap<Method,Class<? extends XmlAdapter>> _xmlJavaTypeAdapterCache;
-	protected final FastMap<Method,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
-	protected final FastSet<Class<?>> _xmlSeeAlsoCache;
-	protected final FastMap<Class<?>,Field> _xmlValueFieldCache;
+	protected final FastIdentityMap<Method,Class<? extends XmlAdapter>> _xmlJavaTypeAdapterCache;
+	protected final FastIdentityMap<Method,XmlSchemaTypeEnum> _xmlSchemaTypeCache;
+	protected final FastIdentitySet<Class<?>> _xmlSeeAlsoCache;
+	protected final FastIdentityMap<Class<?>,Field> _xmlValueFieldCache;
 
 	@SuppressWarnings("rawtypes")
 	public AbstractJAXBAnnotatedObjectParser(final Class<?> inputClass, final CacheMode cacheMode){
 		_cacheMode = cacheMode;
-		_basicInstanceCache = new FastMap<Class<?>,Boolean>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_classCacheData = new FastMap<Class<?>, CacheData>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_classNameSpaceCache = new FastMap<Class<?>, String>(Equalities.IDENTITY, Equalities.LEXICAL);
-		_declaredFieldsCache = new FastMap<Class<?>,FastSet<Field>>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_basicInstanceCache = new FastIdentityMap<Class<?>,Boolean>();
+		_classCacheData = new FastIdentityMap<Class<?>, CacheData>();
+		_classNameSpaceCache = new FastIdentityMap<Class<?>, String>();
+		_declaredFieldsCache = new FastIdentityMap<Class<?>,FastSet<Field>>();
 		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
-		_genericFieldTypeCache = new FastMap<Field,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_genericMethodTypeCache = new FastMap<Method,Class<?>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_methodAttributeNameCache = new FastMap<Method,CharArray>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_methodCache = new FastMap<Field, Method>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_methodElementNameCache = new FastMap<Method, String>(Equalities.IDENTITY, Equalities.LEXICAL_FAST);
-		_propOrderCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_registeredClassesCache = new FastSet<Class<?>>(Equalities.IDENTITY);
-		_requiredCache = new FastMap<Class<?>, FastSet<CharArray>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_xmlAccessTypeCache = new FastMap<Class<?>,XmlAccessType>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_genericFieldTypeCache = new FastIdentityMap<Field,Class<?>>();
+		_genericMethodTypeCache = new FastIdentityMap<Method,Class<?>>();
+		_methodAttributeNameCache = new FastIdentityMap<Method,CharArray>();
+		_methodCache = new FastIdentityMap<Field, Method>();
+		_methodElementNameCache = new FastIdentityMap<Method, String>();
+		_propOrderCache = new FastIdentityMap<Class<?>, FastSet<CharArray>>();
+		_registeredClassesCache = new FastIdentitySet<Class<?>>();
+		_requiredCache = new FastIdentityMap<Class<?>, FastSet<CharArray>>();
+		_xmlAccessTypeCache = new FastIdentityMap<Class<?>,XmlAccessType>();
 		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
-		_xmlJavaTypeAdapterCache = new FastMap<Method, Class<? extends XmlAdapter>>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_xmlSchemaTypeCache = new FastMap<Method,XmlSchemaTypeEnum>(Equalities.IDENTITY, Equalities.IDENTITY);
-		_xmlSeeAlsoCache = new FastSet<Class<?>>(Equalities.IDENTITY);
-		_xmlValueFieldCache = new FastMap<Class<?>,Field>(Equalities.IDENTITY, Equalities.IDENTITY);
+		_xmlJavaTypeAdapterCache = new FastIdentityMap<Method, Class<? extends XmlAdapter>>();
+		_xmlSchemaTypeCache = new FastIdentityMap<Method,XmlSchemaTypeEnum>();
+		_xmlSeeAlsoCache = new FastIdentitySet<Class<?>>();
+		_xmlValueFieldCache = new FastIdentityMap<Class<?>,Field>();
 
 		if (cacheMode == CacheMode.READER) {
 			_classElementNameCache = null;
-			_classObjectFactoryCache = new FastMap<Class<?>, Object>(Equalities.IDENTITY, Equalities.IDENTITY);
+			_classObjectFactoryCache = new FastIdentityMap<Class<?>, Object>();
 			_namespaceObjectFactoryCache = new FastMap<String,Object>(Equalities.LEXICAL,Equalities.IDENTITY);
-			_objectFactoryCache = new FastMap<Class<?>,Method>(Equalities.IDENTITY, Equalities.IDENTITY);
+			_objectFactoryCache = new FastIdentityMap<Class<?>,Method>();
 		}
 		else {
-			_classElementNameCache = new FastMap<Class<?>,String>(Equalities.IDENTITY, Equalities.LEXICAL_FAST);
+			_classElementNameCache = new FastIdentityMap<Class<?>,String>();
 			_classObjectFactoryCache = null;
 			_namespaceObjectFactoryCache = null;
 			_objectFactoryCache = null;
@@ -228,7 +230,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		// Prepare Data Structures
 		final FastMap<CharArray, Method> cachedAttributeMethods = cacheData._attributeMethodsCache;
-		final FastSet<Method> cachedAttributeSet = cacheData._attributeMethodsSet;
+		final FastIdentitySet<Method> cachedAttributeSet = cacheData._attributeMethodsSet;
 		final FastSet<CharArray> requiredFieldsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 
 		for(final Field field : fields){
@@ -774,10 +776,10 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		QNAME(QName.class),
 		OBJECT(Object.class);
 
-		private static final IdentityHashMap<Class<?>,InvocationClassType> types;
+		private static final FastIdentityMap<Class<?>,InvocationClassType> types;
 
 		static {
-			types = new IdentityHashMap<Class<?>,InvocationClassType>(17);
+			types = new FastIdentityMap<Class<?>,InvocationClassType>();
 
 			for(final InvocationClassType type : EnumSet.allOf(InvocationClassType.class)){
 				types.put(type.type, type);
@@ -806,7 +808,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		private static final HashMap<String,XmlSchemaTypeEnum> types;
 
 		static {
-			types = new HashMap<String,XmlSchemaTypeEnum>(3);
+			types = new HashMap<String,XmlSchemaTypeEnum>(4);
 
 			for(final XmlSchemaTypeEnum type : EnumSet.allOf(XmlSchemaTypeEnum.class)){
 				types.put(type.type, type);
@@ -826,7 +828,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	}
 
 	protected class CacheData {
-		final FastSet<Method> _attributeMethodsSet;
+		final FastIdentitySet<Method> _attributeMethodsSet;
 		final FastMap<CharArray,Method> _attributeMethodsCache;
 		final FastMap<CharArray,Method> _directSetValueCache;
 		final FastMap<CharArray,Field> _elementFieldCache;
@@ -844,7 +846,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 			}
 			else {
 				_attributeMethodsCache = null;
-				_attributeMethodsSet = new FastSet<Method>(Equalities.IDENTITY);
+				_attributeMethodsSet = new FastIdentitySet<Method>();
 			}
 
 			_directSetValueCache = new FastMap<CharArray, Method>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);

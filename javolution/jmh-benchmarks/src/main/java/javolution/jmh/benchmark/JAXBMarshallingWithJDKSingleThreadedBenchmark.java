@@ -8,21 +8,10 @@
  */
 package javolution.jmh.benchmark;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
 import javolution.osgi.internal.OSGiServices;
-import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
+import javolution.xml.annotation.JAXBAnnotatedObjectReader;
 import javolution.xml.annotation.JAXBAnnotationFactory;
 import javolution.xml.jaxb.test.schema.TestRoot;
-
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -30,26 +19,33 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
-public class JAXBAnnotatedObjectWriterBenchmark {
+public class JAXBMarshallingWithJDKSingleThreadedBenchmark {
 
-	private JAXBAnnotatedObjectWriter writer;
-	private Unmarshaller unmarshaller;
+	private JAXBAnnotatedObjectReader reader;
+	private JAXBContext jaxbContext;
 	private TestRoot largeNestedMixedObject;
+	private Marshaller marshaller;
 
 	@Setup
 	public void setup() throws JAXBException{
 		final JAXBAnnotationFactory jaxbFactory = OSGiServices.getJAXBAnnotationFactory();
-		writer = jaxbFactory.createJAXBAnnotatedObjectWriter(TestRoot.class);
+		reader = jaxbFactory.createJAXBAnnotatedObjectReader(TestRoot.class);
 
-		final JAXBContext jaxbContext = JAXBContext.newInstance(TestRoot.class);
-		unmarshaller = jaxbContext.createUnmarshaller();
+		jaxbContext = JAXBContext.newInstance(TestRoot.class);
+		marshaller = jaxbContext.createMarshaller();
 
-		final String largeNestedMixedObjectString = readResourceToString(JAXBAnnotatedObjectWriterBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml"));
-		largeNestedMixedObject = (TestRoot) unmarshaller.unmarshal(new StringReader(largeNestedMixedObjectString));
+		final String largeNestedMixedObjectString = readResourceToString(JAXBMarshallingWithJDKSingleThreadedBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml"));
+		largeNestedMixedObject = reader.read(new StringReader(largeNestedMixedObjectString));
 	}
 
 	private String readResourceToString(final InputStream xmlUrl){
@@ -71,18 +67,19 @@ public class JAXBAnnotatedObjectWriterBenchmark {
 	@Benchmark
 	@BenchmarkMode({Mode.AverageTime})
 	@OutputTimeUnit(TimeUnit.NANOSECONDS)
-	public void measureJavolution(Blackhole bh) throws InterruptedException, JAXBException {
+	public void measureJDK(Blackhole bh) throws InterruptedException, JAXBException {
 		final StringWriter stringWriter = new StringWriter();
-		// Unlike its JAXB counterpart, the JAXBAnnotatedObjectWriter is stateless and
-		// thus thread safe, so the same one is reusuable for all threads
-		writer.write(largeNestedMixedObject, stringWriter);
+		// NOTE: Use this benchmark with 1 thread, to represent a marshaller being
+		// able to be reused
+		marshaller.marshal(largeNestedMixedObject, stringWriter);
+		bh.consume(marshaller);
 		bh.consume(stringWriter);
 	}
 
 	public static void main(final String[] args) throws RunnerException {
 
 		final Options opt = new OptionsBuilder()
-		.include(JAXBAnnotatedObjectWriterBenchmark.class.getSimpleName())
+		.include(JAXBMarshallingWithJDKSingleThreadedBenchmark.class.getSimpleName())
 		.warmupIterations(5)
 		.measurementIterations(5)
 		.forks(1)

@@ -61,7 +61,7 @@ public class JAXBAnnotatedObjectReaderBenchmark {
 	}
 
 	@Benchmark
-	@BenchmarkMode({Mode.AverageTime, Mode.SampleTime, Mode.SingleShotTime})
+	@BenchmarkMode({Mode.AverageTime})
 	@OutputTimeUnit(TimeUnit.NANOSECONDS)
 	public void measureJavolution(Blackhole bh) throws InterruptedException, JAXBException {
 		// Unlike its JAXB counterpart, the JAXBAnnotatedObjectReader is stateless and

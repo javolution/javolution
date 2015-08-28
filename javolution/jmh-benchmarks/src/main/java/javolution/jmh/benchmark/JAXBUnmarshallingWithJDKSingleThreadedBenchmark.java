@@ -8,7 +8,7 @@
  */
 package javolution.jmh.benchmark;
 
-import javolution.xml.jaxb.test.schema.*;
+import javolution.xml.jaxb.test.schema.TestRoot;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -24,17 +24,19 @@ import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
-public class JAXBUnmarshallingWithJDKBenchmark {
+public class JAXBUnmarshallingWithJDKSingleThreadedBenchmark {
 
 	private InputStream xmlUrl;
 	private String xmlString;
 	private JAXBContext jaxbContext;
+	private Unmarshaller unmarshaller;
 
 	@Setup
 	public void setup() throws JAXBException{
 		jaxbContext = JAXBContext.newInstance(TestRoot.class);
+		unmarshaller = jaxbContext.createUnmarshaller();
 
-		xmlUrl = JAXBUnmarshallingWithJDKBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml");
+		xmlUrl = JAXBUnmarshallingWithJDKSingleThreadedBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml");
 
 		try {
 			final StringBuilder build = new StringBuilder();
@@ -56,9 +58,8 @@ public class JAXBUnmarshallingWithJDKBenchmark {
 	@BenchmarkMode({Mode.AverageTime})
 	@OutputTimeUnit(TimeUnit.NANOSECONDS)
 	public void measureJDK(Blackhole bh) throws InterruptedException, JAXBException {
-		//NOTE: Unmarshallers are not thread-safe, only the JAXBContext is. So a new
-		// Unmarshaller must be gotten each time.
-		final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		//NOTE: Use this one with only 1 thread. If you're single threaded you can
+		// reuse the unmarshaller
 		bh.consume(unmarshaller.unmarshal(new StringReader(xmlString)));
 	}
 
@@ -82,7 +83,7 @@ public class JAXBUnmarshallingWithJDKBenchmark {
 	public static void main(final String[] args) throws RunnerException {
 
 		final Options opt = new OptionsBuilder()
-		.include(JAXBUnmarshallingWithJDKBenchmark.class.getSimpleName())
+		.include(JAXBUnmarshallingWithJDKSingleThreadedBenchmark.class.getSimpleName())
 		.warmupIterations(5)
 		.measurementIterations(5)
 		.forks(1)
