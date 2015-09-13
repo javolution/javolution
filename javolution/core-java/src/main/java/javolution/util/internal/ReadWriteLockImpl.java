@@ -37,7 +37,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         public void lockInterruptibly() throws InterruptedException {
             synchronized (ReadWriteLockImpl.this) {
                 if (writerThread == Thread.currentThread()) return; // Current thread has the writer lock.
-                while ((writerThread != null) || (waitingWriters != 0)) {
+                while (givenLocks != 0) {
                     ReadWriteLockImpl.this.wait();
                 }
                 givenLocks++;
@@ -64,7 +64,6 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         public void unlock() {
             synchronized (ReadWriteLockImpl.this) {
                 if (writerThread == Thread.currentThread()) return; // Itself is the writing thread.
-                assert (givenLocks > 0);
                 givenLocks--;
                 ReadWriteLockImpl.this.notifyAll();
             }
@@ -85,11 +84,10 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         @Override
         public void lockInterruptibly() throws InterruptedException {
             synchronized (ReadWriteLockImpl.this) {
-                waitingWriters++;
                 while (givenLocks != 0) {
                     ReadWriteLockImpl.this.wait();
                 }
-                waitingWriters--;
+                givenLocks++;
                 writerThread = Thread.currentThread();
             }
         }
@@ -114,6 +112,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         public void unlock() {
             synchronized (ReadWriteLockImpl.this) {
                 writerThread = null;
+                givenLocks--;
                 ReadWriteLockImpl.this.notifyAll();
             }
         }
@@ -123,7 +122,6 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
     public final ReadLock readLock = new ReadLock();
     public final WriteLock writeLock = new WriteLock();
     private transient int givenLocks;
-    private transient int waitingWriters;
     private transient Thread writerThread;
 
     @Override
