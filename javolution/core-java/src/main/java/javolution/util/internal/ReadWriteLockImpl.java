@@ -35,9 +35,9 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
 
         @Override
         public void lockInterruptibly() throws InterruptedException {
+            if (writerThread == Thread.currentThread()) return; // Current thread has the writer lock.
             synchronized (ReadWriteLockImpl.this) {
-                if (writerThread == Thread.currentThread()) return; // Current thread has the writer lock.
-                while (givenLocks != 0) {
+                while (writerThread != null) {
                     ReadWriteLockImpl.this.wait();
                 }
                 givenLocks++;
@@ -62,8 +62,8 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
 
         @Override
         public void unlock() {
+            if (writerThread == Thread.currentThread()) return; // Itself is the writing thread.
             synchronized (ReadWriteLockImpl.this) {
-                if (writerThread == Thread.currentThread()) return; // Itself is the writing thread.
                 givenLocks--;
                 ReadWriteLockImpl.this.notifyAll();
             }
