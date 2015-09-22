@@ -15,18 +15,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlSchema;
-import javax.xml.bind.annotation.XmlSchemaType;
-import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.datatype.Duration;
@@ -131,7 +120,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	 * This method will scan the input class and all subclasses and
 	 * register any JAXB objects as part of this reader
 	 */
-	protected void registerContextClasses(final Class<?> inputClass) throws NoSuchMethodException {
+	protected void registerContextClasses(final Class<?> inputClass) throws NoSuchMethodException, NoSuchFieldException {
 		final FastSet<Field> fields = getDeclaredFields(inputClass);
 
 		// Iterate the fields of this class to scan for sub-objects
@@ -184,7 +173,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	 * @param fields Fields for the Class
 	 * @param skipFactory TRUE to skip factory scanning, FALSE otherwise
 	 */
-	protected void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory) throws NoSuchMethodException {
+	protected void scanClass(final Class<?> scanClass, final FastSet<Field> fields, final boolean skipFactory) throws NoSuchMethodException, NoSuchFieldException {
 		// Get or Start a Cache for the Class
 		CacheData cacheData = _classCacheData.get(scanClass);
 
@@ -364,6 +353,24 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				}
 			}
 		}
+
+		// Check Enum Values
+		if(scanClass.isEnum()){
+			Enum<?>[] enumConstants = (Enum<?>[])scanClass.getEnumConstants();
+
+			for(int i = 0; i < enumConstants.length; i++){
+				final String enumFieldName = enumConstants[i].name();
+				final Field enumField = scanClass.getField(enumFieldName);
+				final XmlEnumValue xmlEnumValue = enumField.getAnnotation(XmlEnumValue.class);
+
+				if(xmlEnumValue == null){
+					cacheData._enumValueCache.put(getXmlElementName(enumFieldName), enumConstants[i]);
+				}
+				else {
+					cacheData._enumValueCache.put(getXmlElementName(xmlEnumValue.value()), enumConstants[i]);
+				}
+			}
+		}
 	}
 
 	protected String scanForNamespace(final Class<?> scanClass, final XmlType xmlType){
@@ -446,7 +453,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 	private CharArray getXmlElementNameWithMappedElements(final Class<?> scanClass, final XmlElements xmlElements,
 			final FastMap<CharArray,FastSet<CharArray>> mappedElementsCache,
 			final FastMap<CharArray,Field> elementFieldCache,
-			final FastMap<CharArray,Method> elementMethodCache, final Field field) throws NoSuchMethodException {
+			final FastMap<CharArray,Method> elementMethodCache, final Field field) throws NoSuchMethodException, NoSuchFieldException {
 		final CharArray thisXmlElementName = getXmlElementName(field);
 		final FastSet<CharArray> mappedElementsSet = new FastSet<CharArray>(Equalities.CHAR_ARRAY_FAST);
 		final XmlElement[] elements = xmlElements.value();

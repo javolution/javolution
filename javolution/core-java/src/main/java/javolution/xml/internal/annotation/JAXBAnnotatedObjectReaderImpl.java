@@ -960,15 +960,9 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 			if(attributeValue != null){
 				final Class<?> methodType = method.getParameterTypes()[0];
-				final Enum<?> enumValue;
+				final Enum<?> enumValue = enumValueCache.get(attributeValue);
 
-				if(enumValueCache.containsKey(attributeValue)){
-					enumValue = enumValueCache.get(attributeValue);
-					invokeMethod(method, methodType, currentObj, null, enumValue);
-				}
-				else if(methodType.isEnum()){
-					enumValue = Enum.valueOf((Class<Enum>)methodType, attributeValue.toString());
-					enumValueCache.put(attributeValue, enumValue);
+				if(methodType.isEnum()){
 					invokeMethod(method, methodType, currentObj, null, enumValue);
 				}
 				else {
@@ -1078,11 +1072,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			if(elementClass.isEnum()){
 				final CacheData cacheData = _classCacheData.get(elementClass);
 				element = cacheData._enumValueCache.get(characters);
-
-				if(element == null){
-					element = Enum.valueOf((Class<Enum>)elementClass, characters.toString());
-					cacheData._enumValueCache.put(characters, (Enum<?>)element);
-				}
 			}
 			else if (elementClass == Object.class){
 				listObj.add(DatatypeConverter.parseAnySimpleType(characters.toString().trim())); // TODO: Handle more than Strings

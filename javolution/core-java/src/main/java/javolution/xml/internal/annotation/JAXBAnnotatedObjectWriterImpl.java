@@ -85,7 +85,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		try {
 			registerContextClasses(inputClass);
 		}
-		catch (NoSuchMethodException e) {
+		catch (Exception e) {
 			throw new JAXBException("Error Scanning Context Classes!", e);
 		}
 	}
