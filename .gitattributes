@@ -536,6 +536,8 @@ javolution/core-java/src/test/resources/test-jaxb-schema.xsd -text
 javolution/core-java/src/test/resources/test-jaxb.xml -text
 javolution/core-java/src/test/resources/test-large-nested-mixed-object.xml -text
 javolution/core-java/src/test/resources/test-large-valid-nested-mixed-object.xml -text
+javolution/core-java/src/test/resources/test-larger-nested-mixed-object.xml -text
+javolution/core-java/src/test/resources/test-larger-valid-nested-mixed-object.xml -text
 javolution/core-java/src/test/resources/test-more-than-one-of-same-element-with-mixed-data.xml -text
 javolution/core-java/src/test/resources/test-small-with-jaxbelement-wrapping-and-another-name.xml -text
 javolution/core-java/src/test/resources/test-small-with-jaxbelement-wrapping.xml -text

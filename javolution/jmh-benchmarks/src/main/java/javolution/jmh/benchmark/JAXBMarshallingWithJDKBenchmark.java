@@ -45,7 +45,13 @@ public class JAXBMarshallingWithJDKBenchmark {
 
 		jaxbContext = JAXBContext.newInstance(TestRoot.class);
 
-		final String largeNestedMixedObjectString = readResourceToString(JAXBMarshallingWithJDKBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml"));
+		String fileName = System.getProperty("test.file");
+
+		if(fileName == null){
+			fileName = "/test-large-nested-mixed-object.xml";
+		}
+
+		final String largeNestedMixedObjectString = readResourceToString(JAXBAnnotatedObjectWriterBenchmark.class.getResourceAsStream(fileName));
 		largeNestedMixedObject = reader.read(new StringReader(largeNestedMixedObjectString));
 	}
 

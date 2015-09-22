@@ -48,7 +48,13 @@ public class JAXBAnnotatedObjectWriterBenchmark {
 		final JAXBContext jaxbContext = JAXBContext.newInstance(TestRoot.class);
 		unmarshaller = jaxbContext.createUnmarshaller();
 
-		final String largeNestedMixedObjectString = readResourceToString(JAXBAnnotatedObjectWriterBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml"));
+		String fileName = System.getProperty("test.file");
+
+		if(fileName == null){
+			fileName = "/test-large-nested-mixed-object.xml";
+		}
+
+		final String largeNestedMixedObjectString = readResourceToString(JAXBAnnotatedObjectWriterBenchmark.class.getResourceAsStream(fileName));
 		largeNestedMixedObject = (TestRoot) unmarshaller.unmarshal(new StringReader(largeNestedMixedObjectString));
 	}
 

@@ -36,7 +36,13 @@ public class JAXBUnmarshallingWithJDKSingleThreadedBenchmark {
 		jaxbContext = JAXBContext.newInstance(TestRoot.class);
 		unmarshaller = jaxbContext.createUnmarshaller();
 
-		xmlUrl = JAXBUnmarshallingWithJDKSingleThreadedBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml");
+		String fileName = System.getProperty("test.file");
+
+		if(fileName == null){
+			fileName = "/test-large-nested-mixed-object.xml";
+		}
+
+		xmlUrl = JAXBAnnotatedObjectReaderBenchmark.class.getResourceAsStream(fileName);
 
 		try {
 			final StringBuilder build = new StringBuilder();

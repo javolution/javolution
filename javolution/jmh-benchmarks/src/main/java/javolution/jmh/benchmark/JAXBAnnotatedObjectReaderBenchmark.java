@@ -42,7 +42,13 @@ public class JAXBAnnotatedObjectReaderBenchmark {
 		final JAXBAnnotationFactory jaxbFactory = OSGiServices.getJAXBAnnotationFactory();
 		reader = jaxbFactory.createJAXBAnnotatedObjectReader(TestRoot.class);
 
-		xmlUrl = JAXBAnnotatedObjectReaderBenchmark.class.getResourceAsStream("/test-large-nested-mixed-object.xml");
+		String fileName = System.getProperty("test.file");
+
+		if(fileName == null){
+			fileName = "/test-large-nested-mixed-object.xml";
+		}
+
+		xmlUrl = JAXBAnnotatedObjectReaderBenchmark.class.getResourceAsStream(fileName);
 
 		try {
 			final StringBuilder build = new StringBuilder();
