@@ -916,7 +916,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			break;
 
 		case ENUM:
-			if(value == null) break;
+			if(enumValue == null) break;
 			method.invoke(object, enumValue);
 			break;
 
@@ -960,9 +960,10 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 			if(attributeValue != null){
 				final Class<?> methodType = method.getParameterTypes()[0];
-				final Enum<?> enumValue = enumValueCache.get(attributeValue);
 
 				if(methodType.isEnum()){
+					final FastMap<CharArray,Enum<?>> classEnumValueCache = _classCacheData.get(methodType)._enumValueCache;
+					final Enum<?> enumValue = classEnumValueCache.get(attributeValue);
 					invokeMethod(method, methodType, currentObj, null, enumValue);
 				}
 				else {
