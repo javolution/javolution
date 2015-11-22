@@ -15,6 +15,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
+import javolution.lang.Index;
+
 import org.junit.Test;
 
 public class IndexTest {
