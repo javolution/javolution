@@ -8,11 +8,11 @@
  */
 package javolution.xml;
 
+import javolution.lang.Index;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
-import javolution.util.Index;
 import javolution.util.function.Equalities;
 import javolution.xml.stream.XMLStreamException;
 

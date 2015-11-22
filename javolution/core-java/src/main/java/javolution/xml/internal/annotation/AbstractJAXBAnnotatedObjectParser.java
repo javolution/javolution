@@ -25,13 +25,30 @@ import javax.xml.namespace.QName;
 import javolution.context.LogContext;
 import javolution.text.CharArray;
 import javolution.text.TextBuilder;
-import javolution.util.FastIdentityMap;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
+import javolution.util.SparseMap;
+import javolution.util.SparseSet;
 import javolution.util.function.Equalities;
-import javolution.util.service.FastIdentitySet;
+import javolution.util.function.Equality;
+import javolution.util.function.Order;
 
 public abstract class AbstractJAXBAnnotatedObjectParser {
+	private static class FastIdentityMap<K,V> extends SparseMap<K,V> {
+		private static final long serialVersionUID = 5426085091010789875L;
+
+		public FastIdentityMap() {
+			super(Order.IDENTITY_HASH);
+		}
+	}
+	private static class FastIdentitySet<E> extends SparseSet<E> {
+		private static final long serialVersionUID = 5426085091010789875L;
+
+		public FastIdentitySet() {
+			super(Order.IDENTITY_HASH);
+		}
+	}
+	
 
 	protected static final CharArray _GET = new CharArray("get");
 	protected static final CharArray _IS = new CharArray("is");
@@ -71,7 +88,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_classCacheData = new FastIdentityMap<Class<?>, CacheData>();
 		_classNameSpaceCache = new FastIdentityMap<Class<?>, String>();
 		_declaredFieldsCache = new FastIdentityMap<Class<?>,FastSet<Field>>();
-		_elementClassCache = new FastMap<CharArray,Class<?>>(Equalities.CHAR_ARRAY_FAST, Equalities.IDENTITY);
+		_elementClassCache = FastMap.newMap(Order.LEXICAL, Equality.IDENTITY);
 		_genericFieldTypeCache = new FastIdentityMap<Field,Class<?>>();
 		_genericMethodTypeCache = new FastIdentityMap<Method,Class<?>>();
 		_methodAttributeNameCache = new FastIdentityMap<Method,CharArray>();
@@ -81,7 +98,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_registeredClassesCache = new FastIdentitySet<Class<?>>();
 		_requiredCache = new FastIdentityMap<Class<?>, FastSet<CharArray>>();
 		_xmlAccessTypeCache = new FastIdentityMap<Class<?>,XmlAccessType>();
-		_xmlElementNameCache = new FastMap<CharArray, CharArray>(Equalities.CHAR_ARRAY_FAST, Equalities.CHAR_ARRAY_FAST);
+		_xmlElementNameCache = FastMap.newMap(Order.LEXICAL, Equality.IDENTITY);
 		_xmlJavaTypeAdapterCache = new FastIdentityMap<Method, Class<? extends XmlAdapter>>();
 		_xmlSchemaTypeCache = new FastIdentityMap<Method,XmlSchemaTypeEnum>();
 		_xmlSeeAlsoCache = new FastIdentitySet<Class<?>>();
