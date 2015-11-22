@@ -8,95 +8,140 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+import javolution.util.FastCollection;
+import javolution.util.FastIterator;
 import javolution.util.FastSet;
+import javolution.util.FastTable;
 import javolution.util.function.Equality;
-import javolution.util.service.CollectionService;
+import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 
 /**
  * A view which does not iterate twice over the same elements.
  */
-public class DistinctCollectionImpl<E> extends CollectionView<E> {
+public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
-    /** Peeking ahead iterator. */
-    private class IteratorImpl implements Iterator<E> {
+	private static class IteratorImpl<E> implements FastIterator<E> {
 
-        private boolean ahead; 
-        private final FastSet<E> iterated = new FastSet<E>(comparator());
-        private E next;
-        private final Iterator<E> targetIterator = target().iterator();
+		private final FastCollection<E> iterated;
+		private final FastIterator<E> inner;
+		private boolean onNext;
+		private E next;
 
-        @Override
-        public boolean hasNext() {
-            if (ahead) return true;
-            while (targetIterator.hasNext()) {
-                next = targetIterator.next();
-                if (!iterated.contains(next)) {
-                    ahead = true;
-                    return true;
-                }
-            }
-            return false;
-        }
+		public IteratorImpl(FastIterator<E> inner, Equality<? super E> equality) {
+			this.inner = inner;
+			this.iterated = (equality instanceof Order) ? FastSet
+					.newSet((Order<? super E>) equality) : FastTable
+					.newTable(equality);
+		}
 
-        @Override
-        public E next() {
-            hasNext(); // Moves ahead.
-            ahead = false;
-            return next;
-        }
+		public IteratorImpl(FastIterator<E> inner, FastCollection<E> iterated) {
+			this.inner = inner;
+			this.iterated = iterated;
+		}
 
-        @Override
-        public void remove() {
-            targetIterator.remove();
-        }
-    }
+		@Override
+		public boolean hasNext() {
+			if (onNext)
+				return true;
+			// Move to next.
+			while (inner.hasNext()) {
+				next = inner.next();
+				synchronized (iterated) { // To support split iterators.
+					if (iterated.contains(next))
+						continue; // Already iterated.
+					iterated.add(next);
+				}
+				onNext = true;
+				return true;
+			}
+			return false;
+		}
 
-    private static final long serialVersionUID = 0x600L; // Version.
+		@Override
+		public E next() {
+			if (!hasNext())
+				throw new NoSuchElementException();
+			onNext = false;
+			return next;
+		}
 
-    public DistinctCollectionImpl(CollectionService<E> target) {
-        super(target);
-    }
+		@Override
+		public void remove() {
+			inner.remove();
+		}
 
-    @Override
-    public boolean add(E element) {
-        if (target().contains(element)) return false;
-        return target().add(element);
-    }
+		@Override
+		public FastIterator<E> reversed() {
+			return new IteratorImpl<E>(inner.reversed(), iterated);
+		}
 
-    @Override
-    public void clear() {
-        target().clear();
-    }
+		@Override
+		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
+			inner.split(subIterators);
+			int i = 0;
+			for (FastIterator<E> itr : subIterators)
+				if (itr != null)
+					subIterators[i++] = new IteratorImpl<E>(itr, iterated);
+			return subIterators;
+		}
 
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
-    }
+	}
 
-    @Override
-    public boolean contains(Object o) {
-        return target().contains(o);
-    }
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastCollection<E> inner;
 
-    @Override
-    public boolean isEmpty() {
-        return target().isEmpty();
-    }
+	public DistinctCollectionImpl(FastCollection<E> inner) {
+		this.inner = inner;
+	}
 
-    @Override
-    public Iterator<E> iterator() {
-        return new IteratorImpl();
-    }
+	@Override
+	public boolean add(E element) {
+		return this.contains(element) ? false : inner.add(element);
+	}
 
-    @Override
-    public boolean remove(Object o) { // Remove all instances.
-        boolean changed = false;
-        while (true) {
-            if (!remove(o)) return changed;
-            changed = true;
-        }
-    }
+	@Override
+	public void clear() { // Optimization.
+		inner.clear();
+	}
+
+	@Override
+	public DistinctCollectionImpl<E> clone() {
+		return new DistinctCollectionImpl<E>(inner.clone());
+	}
+
+	@Override
+	public boolean contains(Object searched) { // Optimization.
+		return inner.contains(searched);
+	}
+
+	@Override
+	public Equality<? super E> equality() {
+		return inner.equality();
+	}
+
+	@Override
+	public boolean isEmpty() { // Optimization.
+		return inner.isEmpty();
+	}
+
+	@Override
+	public FastIterator<E> iterator() {
+		return new IteratorImpl<E>(inner.iterator(), equality());
+	}
+
+	@Override
+	public boolean remove(final Object searched) { // Remove all occurrences.
+		return removeIf(new Predicate<E>() {
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public boolean test(E param) {
+				return equality().areEqual((E) searched, param);
+			}
+		});
+	}
 
 }

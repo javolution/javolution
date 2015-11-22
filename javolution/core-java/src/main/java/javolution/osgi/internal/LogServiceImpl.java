@@ -25,7 +25,7 @@ public final class LogServiceImpl extends Thread implements LogService {
         String message;
     }
 
-    private final FastTable<LogEvent> eventQueue = new FastTable<LogEvent>();
+    private final FastTable<LogEvent> eventQueue = FastTable.newTable();
 
     public LogServiceImpl() {
         super("Logging-Thread");

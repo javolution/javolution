@@ -12,23 +12,47 @@ package javolution.util.function;
  * <p> A function which states or affirms the attribute or quality of something.</p>
  * 
  * <p> Note: In future version this interface may derive from 
- *           {@code Function<P, Boolean>}.</p>
-
- * @param <T> The type of input object to test.
- *           
+ *     {@code Function<P, Boolean>}.</p>
+ * 
+ * @param <T>
+ *            The type of input object to test.
+ * 
  * @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
- * Wikipedia: Predicate</a>    
- *                  
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ *      Wikipedia: Predicate</a>
+ * 
+ * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
 public interface Predicate<T> {
 
-    /**
-     * Tests the specified value.
-     * @param param the type of input obect to test
-     * @return true if the test passes
-     */
-    boolean test(T param);
+	/**
+	 * Predicate always returning true.
+	 */
+	public static final Predicate<Object> TRUE = new Predicate<Object>() {
+
+		@Override
+		public boolean test(Object param) {
+			return true;
+		}
+	};
+
+	/**
+	 * Predicate always returning true.
+	 */
+	public static final Predicate<Object> FALSE = new Predicate<Object>() {
+
+		@Override
+		public boolean test(Object param) {
+			return false;
+		}
+	};
+
+	/**
+	 * Tests the specified value.
+	 * 
+	 * @param param the type of input object to test
+	 * @return true if the test passes
+	 */
+	boolean test(T param);
 
 }

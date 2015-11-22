@@ -14,7 +14,7 @@ import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.lang.ValueType;
 import javolution.util.FastMap;
-import javolution.util.function.Equalities;
+import javolution.util.function.Order;
 import javolution.xml.XMLSerializable;
 
 /**
@@ -79,7 +79,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	/**
 	 * Holds the texts interned in immortal memory.
 	 */
-	private static final FastMap<Text, Text> INTERN = new FastMap<Text, Text>(Equalities.LEXICAL);
+	private static final FastMap<Text, Text> INTERN = FastMap.newMap(Order.LEXICAL);
 
 	/**
 	 * Holds an empty character sequence.
@@ -849,12 +849,12 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 	 * lexicographically.
 	 *
 	 * @param   csq the character sequence to be compared.
-	 * @return  <code>TypeFormat.LEXICAL_COMPARATOR.compare(this, csq)</code>
+	 * @return  <code>Order.LEXICAL.compare(this, csq)</code>
 	 * @throws  ClassCastException if the specifed object is not a
 	 *          <code>CharSequence</code> or a <code>String</code>.
 	 */
 	public int compareTo(CharSequence csq) {
-		return Equalities.LEXICAL.compare(this, csq);
+		return Order.LEXICAL.compare(this, csq);
 	}
 
 	/**

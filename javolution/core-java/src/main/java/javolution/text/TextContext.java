@@ -90,7 +90,8 @@ public abstract class TextContext extends FormatContext {
      */
     public static Appendable format(Object obj, Appendable dest) throws IOException {
     	if (obj == null) return dest.append("null");
-    	return TextContext.getFormat(obj.getClass()).format(obj, dest);    	
+    	TextFormat<Object> textFormat = TextContext.getFormat(obj.getClass());
+    	return textFormat.format(obj, dest);    	
     }
 
     /**

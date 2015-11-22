@@ -8,94 +8,103 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
-import javolution.util.function.Equalities;
+import javolution.util.FastCollection;
+import javolution.util.FastIterator;
 import javolution.util.function.Equality;
 import javolution.util.function.Function;
-import javolution.util.service.CollectionService;
 
 /**
  * A mapped view over a collection.
  */
-public class MappedCollectionImpl<E, R> extends CollectionView<R> {
+public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 
-    /** Mapping iterator. */
-    private class IteratorImpl implements Iterator<R> {
-        private final Iterator<E> targetIterator;
+	private static class IteratorImpl<E, R> implements FastIterator<R> {
+		private final FastIterator<E> inner;
+		private final Function<? super E, ? extends R> function;
 
-        @SuppressWarnings("unchecked")
-        public IteratorImpl() {
-            targetIterator = (Iterator<E>) target().iterator();
-        }
+		public IteratorImpl(FastIterator<E> inner,
+				Function<? super E, ? extends R> function) {
+			this.inner = inner;
+			this.function = function;
+		}
 
-        @Override
-        public boolean hasNext() {
-            return targetIterator.hasNext();
-        }
+		@Override
+		public boolean hasNext() {
+			return inner.hasNext();
+		}
 
-        @Override
-        public R next() {
-            return function.apply(targetIterator.next());
-        }
+		@Override
+		public R next() {
+			return function.apply(inner.next());
+		}
 
-        @Override
-        public void remove() {
-            targetIterator.remove();
-        }
+		@Override
+		public void remove() {
+			inner.remove();
+		}
 
-    }
+		@Override
+		public FastIterator<R> reversed() {
+			return new IteratorImpl<E, R>(inner.reversed(), function);
+		}
 
-    private static final long serialVersionUID = 0x600L; // Version.
-    protected final Function<? super E, ? extends R> function;
+		@SuppressWarnings("unchecked")
+		@Override
+		public FastIterator<R>[] split(FastIterator<R>[] subIterators) {
+			FastIterator<E>[] inners = inner
+					.split((FastIterator<E>[]) subIterators);
+			int i = 0;
+			for (FastIterator<E> itr : inners)
+				if (itr != null)
+					subIterators[i++] = new IteratorImpl<E, R>(itr, function);
+			return subIterators;
+		}
+	}
 
-    @SuppressWarnings("unchecked")
-    public MappedCollectionImpl(CollectionService<E> target,
-            Function<? super E, ? extends R> function) {
-        super((CollectionService<R>) target); // Beware target is of type <E>
-        this.function = function;
-    }
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastCollection<E> inner;
+	private final Function<? super E, ? extends R> function;
 
-    @Override
-    public boolean add(R element) {
-        throw new UnsupportedOperationException(
-                "New elements cannot be added to mapped views");
-    }
+	public MappedCollectionImpl(FastCollection<E> inner,
+			Function<? super E, ? extends R> function) {
+		this.inner = inner;
+		this.function = function;
+	}
 
-    @Override
-    public void clear() {
-        target().clear();
-    }
+	@Override
+	public boolean add(R element) {
+		throw new UnsupportedOperationException(
+				"New elements cannot be added to mapped views");
+	}
 
-    @Override
-    public Equality<? super R> comparator() {
-        return Equalities.STANDARD;
-    }
+	@Override
+	public void clear() { // Optimization.
+		inner.clear();
+	}
 
-    @Override
-    public boolean isEmpty() {
-        return target().isEmpty();
-    }
+	@Override
+	public MappedCollectionImpl<E, R> clone() {
+		return new MappedCollectionImpl<E, R>(inner.clone(), function);
+	}
 
-    @Override
-    public Iterator<R> iterator() {
-        return new IteratorImpl();
-    }
-    
-    @Override
-    public int size() {
-        return target().size();
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    public CollectionService<R>[] split(int n, boolean updateable) {
-        CollectionService<E>[] subTargets = (CollectionService<E>[]) target().split(n, updateable);
-        CollectionService<R>[] result = new CollectionService[subTargets.length];
-        for (int i = 0; i < subTargets.length; i++) {
-            result[i] = new MappedCollectionImpl<E, R>(subTargets[i], function);
-        }
-        return result;
-    }
-        
+	@Override
+	public Equality<? super R> equality() {
+		return Equality.STANDARD;
+	}
+
+	@Override
+	public boolean isEmpty() { // Optimization.
+		return inner.isEmpty();
+	}
+
+	@Override
+	public FastIterator<R> iterator() {
+		return new IteratorImpl<E, R>(inner.iterator(), function);
+	}
+
+	@Override
+	public int size() { // Optimization.
+		return inner.size();
+	}
+
 }

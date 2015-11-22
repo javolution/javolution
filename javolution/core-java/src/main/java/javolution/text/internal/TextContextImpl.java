@@ -9,6 +9,7 @@
 package javolution.text.internal;
 
 import java.io.IOException;
+
 import javolution.context.LogContext;
 import javolution.text.CharSet;
 import javolution.text.Cursor;
@@ -27,8 +28,7 @@ import javolution.util.FastMap;
 public final class TextContextImpl extends TextContext {
 
     // Holds class->format mapping. 
-    private final FastMap<Class<?>, TextFormat<?>> classToFormat = new FastMap<Class<?>, TextFormat<?>>()
-            .shared();
+    private final FastMap<Class<?>, TextFormat<?>> classToFormat = FastMap.newSharedMap();
 
     // Holds parent (null if root).
     private final TextContextImpl parent;

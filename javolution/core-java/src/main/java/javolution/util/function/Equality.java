@@ -8,70 +8,91 @@
  */
 package javolution.util.function;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import static javolution.lang.Realtime.Limit.CONSTANT;
+import static javolution.lang.Realtime.Limit.LINEAR;
+import static javolution.lang.Realtime.Limit.UNKNOWN;
+import javolution.lang.Parallelizable;
+import javolution.lang.Realtime;
+import javolution.util.internal.function.ArrayEqualityImpl;
+import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
+import javolution.util.internal.function.HashOrderImpl;
+import javolution.util.internal.function.IdentityHashOrderImpl;
+import javolution.util.internal.function.LexicalOrderImpl;
+import javolution.util.internal.function.NaturalOrderImpl;
 
 /**
- * <p> A comparator to be used for element equality as well as for 
- *     ordering. Implementing classes should ensure that:</p>
- *  <ul>
- *     <li> The {@link #compare compare} function is consistent with 
- *          {@link #equal(Object, Object) equal}. If two objects 
- *          {@link #compare compare} to {@code 0} then they are 
- *          {@link #equal(Object, Object) equal} and the 
- *          reciprocal is true (this ensures that sorted collections/maps
- *          do not break the general contract of their parent class based on
- *          object equal).</li>
- *     <li> The {@link #hashOf hash} function is consistent with
- *          {@link #equal(Object, Object) equal}: If two objects are equal, 
- *          they have the same hashcode (the reciprocal is not true).</li>
- *     <li> The {@code null} value is supported (even for 
- *          {@link #compare comparisons}) and the {@link #hashOf(Object)
- *          hashcode} value of {@code null} is {@code 0}.</li>
- *  </ul>
+ * <p>  A function (functional interface) indicating if two objects 
+ *      are considered equals.</p>
  * 
- * @param <T> the type of objects that may be compared for equality or order.
+ * @param <T>the type of objects that may be compared for equality.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
- * @see Equalities
+ * @version 7.0 September 13, 2015
  */
-public interface Equality<T> extends EqualityComparer<T>, Comparator<T>, Serializable {
+public interface Equality<T> {
+	
+    /**
+     * The standard object equality ({@link #HASH} order).
+     */
+    @Parallelizable
+    @Realtime(limit = UNKNOWN)
+    public static final Equality<Object> STANDARD = HashOrderImpl.INSTANCE;
 
     /**
-     * Returns the hash code for the specified object (consistent with 
-     * {@link #equal(Object, Object)}). 
-     * Two objects considered equal have the same hash code. 
-     * The hash code of <code>null</code> is always <code>0</code>.
-     * 
-     * @param  object the object to return the hashcode for.
-     * @return the hashcode for the specified object.
+     * The identity object equality ({@link #IDENTITY_HASH} order)
+     * for which instances are only equals to themselves.
      */
-    int hashOf(T object);
+    @Parallelizable
+    @Realtime(limit = CONSTANT)
+    public static final Equality<Object> IDENTITY 
+       = IdentityHashOrderImpl.INSTANCE;
+
+     /**
+     * A content based array comparator (recursive). 
+     * The {@link #STANDARD standard} comparator is used for non-array elements. 
+     */
+    @Parallelizable
+    @Realtime(limit = LINEAR)
+    public static final Equality<Object> ARRAY = ArrayEqualityImpl.INSTANCE;
+ 
+    /**
+     * A lexical equality for any {@link CharSequence} ({@link #LEXICAL} order).
+     */
+    @Parallelizable
+    @Realtime(limit = LINEAR)
+    public static final Equality<CharSequence> LEXICAL
+        = LexicalOrderImpl.INSTANCE;
 
     /**
-     * Indicates if the specified objects can be considered equal.
-     * This methods is equivalent to {@code (compare(o1, o2) == 0)} but 
-     * usually faster.
-     * 
-     * @param left the first object (or <code>null</code>).
-     * @param right the second object (or <code>null</code>).
-     * @return <code>true</code> if both objects are considered equal;
-     *         <code>false</code> otherwise. 
+     * A case sensitive lexical equality for any {@link CharSequence} 
+     * ({@link #LEXICAL_CASE_INSENSITIVE} order).
      */
-    boolean equal(T left, T right);
-
+    @Parallelizable
+    @Realtime(limit = LINEAR)
+    public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
+        = CaseInsensitiveLexicalOrderImpl.INSTANCE;
+  
     /**
-     * Compares the specified objects for order. Returns a negative integer, 
-     * zero, or a positive integer as the first argument is less than, possibly 
-     * equal to, or greater than the second. Implementation classes should 
-     * ensure that comparisons with {@code null} is supported.
-     * 
-     * @param left the first object.
-     * @param right the second object.
-     * @return a negative integer, zero, or a positive integer as the first
-     *         argument is less than, possibly equal to, or greater than the second.
+     * A natural equality for {@link Comparable} instances. Two objects 
+     * are considered equals if they compare to {@code 0}.
+     *  
+     * @throws ClassCastException if used with non {@link Comparable} instances.
      */
-    int compare(T left, T right);
+    @Parallelizable
+    @Realtime(limit = UNKNOWN)
+    public static final Equality<Object> NATURAL 
+        = NaturalOrderImpl.INSTANCE;
+ 
+	/**
+	 * Indicates if two specified objects are considered equal.
+	 * 
+	 * @param left
+	 *            the first object (can be {@code null}).
+	 * @param right
+	 *            the second object (can be {@code null}).
+	 * @return <code>true</code> if both objects are considered equal;
+	 *         <code>false</code> otherwise.
+	 */
+	boolean areEqual(T left, T right);
 
 }

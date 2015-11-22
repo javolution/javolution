@@ -13,15 +13,18 @@ import javolution.util.FastIterator;
 import javolution.util.function.Equality;
 
 /**
- * A reversed view over a collection (copy-on-write).
+ * A view using a custom equality.
  */
-public final class ReversedCollectionImpl<E> extends FastCollection<E> {
+public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
+	private final Equality<? super E> equality;
 
-	public ReversedCollectionImpl(FastCollection<E> inner) {
+	public CustomEqualityCollectionImpl(FastCollection<E> inner,
+			Equality<? super E> equality) {
 		this.inner = inner;
+		this.equality = equality;
 	}
 
 	@Override
@@ -35,13 +38,13 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastCollection<E> clone() {
-		return new ReversedCollectionImpl<E>(inner.clone());
+	public CustomEqualityCollectionImpl<E> clone() {
+		return new CustomEqualityCollectionImpl<E>(inner.clone(), equality);
 	}
 
 	@Override
 	public Equality<? super E> equality() {
-		return inner.equality();
+		return equality;
 	}
 
 	@Override
@@ -51,7 +54,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public FastIterator<E> iterator() {
-		return inner.iterator().reversed();
+		return inner.iterator();
 	}
 
 	@Override

@@ -9,7 +9,9 @@
 package javolution.util.function;
 
 /**
- * <p> A special type of function which does not return anything.</p>
+ * <p> An operation that accepts a single input argument and returns no result.
+ *     Unlike most other functional interfaces, Consumers are expected 
+ *     to operate via side-effects.</p>
  * 
  * <p> Note: In future version this interface may derive from 
  *           {@code Function<P, Void>}.</p>

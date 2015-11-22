@@ -8,65 +8,70 @@
  */
 package javolution.util.internal.bitset;
 
-import javolution.util.Index;
-import javolution.util.internal.set.UnmodifiableSetImpl;
-import javolution.util.service.BitSetService;
+import java.util.Iterator;
+
+import javolution.lang.Index;
+import javolution.util.FastBitSet;
+import javolution.util.FastIterator;
+import javolution.util.function.Consumer;
+import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 
 /**
  * A table of indices which cannot be modified.
  */
-public class UnmodifiableBitSetImpl extends UnmodifiableSetImpl<Index>
-		implements BitSetService {
+public final class UnmodifiableBitSetImpl extends FastBitSet {
 
-	private static final long serialVersionUID = 0x600L; // Version.
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastBitSet inner;
 
-	public UnmodifiableBitSetImpl(BitSetService target) {
-		super(target);
+	public UnmodifiableBitSetImpl(FastBitSet inner) {
+		this.inner = inner;
 	}
 
 	@Override
 	public int cardinality() {
-		return target().cardinality();
+		return inner.cardinality();
 	}
 
 	@Override
 	public boolean get(int bitIndex) {
-		return target().get(bitIndex);
+		return inner.get(bitIndex);
 	}
 
 	@Override
-	public BitSetService get(int fromIndex, int toIndex) {
-		return target().get(fromIndex, toIndex);
+	public FastBitSet get(int fromIndex, int toIndex) {
+		return inner.get(fromIndex, toIndex);
 	}
 
 	@Override
-	public boolean intersects(BitSetService that) {
-		return target().intersects(that);
+	public boolean intersects(FastBitSet that) {
+		return inner.intersects(that);
 	}
 
 	@Override
 	public int length() {
-		return target().length();
+		return inner.length();
 	}
 
 	@Override
 	public int nextClearBit(int fromIndex) {
-		return target().nextClearBit(fromIndex);
+		return inner.nextClearBit(fromIndex);
 	}
 
 	@Override
 	public int nextSetBit(int fromIndex) {
-		return target().nextSetBit(fromIndex);
+		return inner.nextSetBit(fromIndex);
 	}
 
 	@Override
 	public int previousClearBit(int fromIndex) {
-		return target().previousClearBit(fromIndex);
+		return inner.previousClearBit(fromIndex);
 	}
 
 	@Override
 	public int previousSetBit(int fromIndex) {
-		return target().previousSetBit(fromIndex);
+		return inner.previousSetBit(fromIndex);
 	}
 
 	@Override
@@ -115,33 +120,78 @@ public class UnmodifiableBitSetImpl extends UnmodifiableSetImpl<Index>
 	}
 
 	@Override
-	public void and(BitSetService that) {
+	public void and(FastBitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void andNot(BitSetService that) {
+	public void andNot(FastBitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void or(BitSetService that) {
+	public void or(FastBitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void xor(BitSetService that) {
+	public void xor(FastBitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
 	public long[] toLongArray() {
-		return target().toLongArray().clone();
+		return inner.toLongArray().clone();
 	}
 
 	@Override
-	protected BitSetService target() {
-		return (BitSetService) super.target();
+	public void clear() {
+		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
+	@Override
+	public UnmodifiableBitSetImpl clone() {
+		return new UnmodifiableBitSetImpl(inner.clone());
+	}
+
+	@Override
+	public int size() {
+		return inner.size();
+	}
+
+	@Override
+	public boolean contains(Object obj) {
+		return inner.contains(obj);
+	}
+
+	@Override
+	public boolean remove(Object obj) {
+		throw new UnsupportedOperationException("Unmodifiable");
+	}
+
+	@Override
+	public Order<? super Index> comparator() {
+		return inner.comparator();
+	}
+
+	@Override
+	public void forEach(Consumer<? super Index> consumer) {
+		inner.forEach(consumer);	
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super Index> filter) {
+		throw new UnsupportedOperationException("Unmodifiable");
+	}
+
+	@Override
+	public boolean add(Index element) {
+		throw new UnsupportedOperationException("Unmodifiable");
+	}
+
+	@Override
+	public FastIterator<Index> iterator() {
+	    return new BitSetIteratorImpl(this, 0, true);
+	}
+    
 }

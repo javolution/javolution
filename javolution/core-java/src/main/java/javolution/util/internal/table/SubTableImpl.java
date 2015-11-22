@@ -8,94 +8,88 @@
  */
 package javolution.util.internal.table;
 
+import javolution.util.FastTable;
 import javolution.util.function.Equality;
-import javolution.util.service.TableService;
 
 /**
- * A view over a portion of a table. 
+ * A view over a portion of a table.
  */
-public class SubTableImpl<E> extends TableView<E> {
+public final class SubTableImpl<E> extends FastTable<E> {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final int fromIndex;
+	private int toIndex;
+	private final FastTable<E> inner;
 
-    /** Splits the specified table.  */
-    @SuppressWarnings("unchecked")
-    public static <E> TableService<E>[] splitOf(TableService<E> table,
-            int n, boolean updateable) {
-        if (updateable) table = new SharedTableImpl<E>(table);
-        if (n < 1) throw new IllegalArgumentException("Invalid argument n: "
-                + n);
-        TableService<E>[] subTables = new TableService[n];
-        int minSize = table.size() / n;
-        int start = 0;
-        for (int i = 0; i < n - 1; i++) {
-            subTables[i] = new SubTableImpl<E>(table, start, start + minSize);
-            start += minSize;
-        }
-        subTables[n - 1] = new SubTableImpl<E>(table, start, table.size());
-        return subTables;
-    }
+	public SubTableImpl(FastTable<E> inner, int fromIndex, int toIndex) {
+		this.inner = inner;
+		this.fromIndex = fromIndex;
+		this.toIndex = toIndex;
+	}
 
-    protected final int fromIndex;
-    protected int toIndex;
+	@Override
+	public boolean add(E element) {
+		inner.add(toIndex++, element);
+		return true;
+	}
 
-    public SubTableImpl(TableService<E> target, int from, int to) {
-        super(target);
-        if ((from < 0) || (to > target.size()) || (from > to)) throw new IndexOutOfBoundsException(
-                "fromIndex: " + from + ", toIndex: " + to + ", size(): "
-                        + target.size()); // As per List.subList contract.
-        fromIndex = from;
-        toIndex = to;
-    }
+	@Override
+	public void add(int index, E element) {
+		if ((index < 0) && (index > size()))
+			indexError(index);
+		inner.add(index + fromIndex, element);
+		toIndex++;
+	}
 
-    @Override
-    public boolean add(E element) {
-        target().add(toIndex++, element);
-        return true;
-    }
+	@Override
+	public void clear() {
+		for (int i = toIndex - 1; i >= fromIndex; i--) { // Better to do it from
+															// the end (less
+															// shift).
+			inner.remove(i);
+		}
+		toIndex = fromIndex;
+	}
 
-    @Override
-    public void add(int index, E element) {
-        if ((index < 0) && (index > size())) indexError(index);
-        target().add(index + fromIndex, element);
-        toIndex++;
-    }
+	@Override
+	public SubTableImpl<E> clone() {
+		return new SubTableImpl<E>(inner, fromIndex, toIndex);
+	}
 
-    @Override
-    public void clear() {
-        for (int i = toIndex - 1; i >= fromIndex; i--) { // Better to do it from the end (less shift).
-            target().remove(i);
-        }
-        toIndex = fromIndex;
-    }
+	@Override
+	public Equality<? super E> equality() {
+		return inner.equality();
+	}
 
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
-    }
+	@Override
+	public E get(int index) {
+		if ((index < 0) && (index >= size()))
+			indexError(index);
+		return inner.get(index + fromIndex);
+	}
 
-    @Override
-    public E get(int index) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        return target().get(index + fromIndex);
-    }
+	@Override
+	public boolean isEmpty() {
+		return fromIndex == toIndex;
+	}
 
-    @Override
-    public E remove(int index) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        toIndex--;
-        return target().remove(index + fromIndex);
-    }
+	@Override
+	public E remove(int index) {
+		if ((index < 0) && (index >= size()))
+			indexError(index);
+		toIndex--;
+		return inner.remove(index + fromIndex);
+	}
 
-    @Override
-    public E set(int index, E element) {
-        if ((index < 0) && (index >= size())) indexError(index);
-        return target().set(index + fromIndex, element);
-    }
+	@Override
+	public E set(int index, E element) {
+		if ((index < 0) && (index >= size()))
+			indexError(index);
+		return inner.set(index + fromIndex, element);
+	}
 
-    @Override
-    public int size() {
-        return toIndex - fromIndex;
-    }
-
+	@Override
+	public int size() {
+		return toIndex - fromIndex;
+	}
 }

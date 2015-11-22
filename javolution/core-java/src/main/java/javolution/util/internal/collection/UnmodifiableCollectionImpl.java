@@ -8,91 +8,95 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
+import javolution.util.FastCollection;
+import javolution.util.FastIterator;
 import javolution.util.function.Equality;
-import javolution.util.service.CollectionService;
 
 /**
  * An unmodifiable view over a collection.
  */
-public class UnmodifiableCollectionImpl<E> extends CollectionView<E> {
+public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
-    /** Read-Only Iterator. */
-    private class IteratorImpl implements Iterator<E> {
-        private final Iterator<E> targetIterator = target().iterator();
+	public static class IteratorImpl<E> implements FastIterator<E> {
+		private final FastIterator<E> inner;
 
-        @Override
-        public boolean hasNext() {
-            return targetIterator.hasNext();
-        }
+		public IteratorImpl(FastIterator<E> inner) {
+			this.inner = inner;
+		}
 
-        @Override
-        public E next() {
-            return targetIterator.next();
-        }
+		@Override
+		public boolean hasNext() {
+			return inner.hasNext();
+		}
 
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Read-Only Collection.");
-        }
-    }
-    
-    private static final long serialVersionUID = 0x600L; // Version.
+		@Override
+		public E next() {
+			return inner.next();
+		}
 
-    public UnmodifiableCollectionImpl(CollectionService<E> target) {
-        super(target);
-    }
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("Read-Only Iterator.");
+		}
 
-    @Override
-    public boolean add(E element) {
-        throw new UnsupportedOperationException("Read-Only Collection.");
-    }
+		@Override
+		public FastIterator<E> reversed() {
+			return new IteratorImpl<E>(inner.reversed());
+		}
 
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Read-Only Collection.");
-    }
+		@Override
+		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
+			inner.split(subIterators);
+			for (int i = 0, n = subIterators.length; i < n; i++) {
+				FastIterator<E> itr = subIterators[i];
+				if (itr != null)
+					subIterators[i] = new IteratorImpl<E>(itr);
+			}
+			return subIterators;
+		}
+	}
 
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
-    }
+	private static final long serialVersionUID = 0x700L; // Version.
 
-    @Override
-    public boolean contains(Object obj) {
-        return target().contains(obj);
-    }
+	private FastCollection<E> inner;
 
-    @Override
-    public boolean isEmpty() {
-        return target().isEmpty();
-    }
+	public UnmodifiableCollectionImpl(FastCollection<E> inner) {
+		this.inner = inner;
+	}
 
-    @Override
-    public Iterator<E> iterator() {
-        return new IteratorImpl();
-   }
+	@Override
+	public boolean add(E element) {
+		throw new UnsupportedOperationException("Read-Only Collection.");
+	}
 
-    @Override
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException("Read-Only Collection.");
-    }
+	@Override
+	public UnmodifiableCollectionImpl<E> clone() {
+		return new UnmodifiableCollectionImpl<E>(inner.clone());
+	}
 
-    @Override
-    public int size() {
-        return target().size();
-    }
+	@Override
+	public boolean contains(Object searched) { // Optimization.
+		return inner.contains(searched);
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public CollectionService<E>[] split(int n, boolean updateable) {
-        CollectionService<E>[] subTargets = target().split(n, updateable);
-        CollectionService<E>[] result = new CollectionService[subTargets.length];
-        for (int i = 0; i < subTargets.length; i++) {
-            result[i] = new UnmodifiableCollectionImpl<E>(subTargets[i]);
-        }
-        return result;
-    }
-    
+	@Override
+	public Equality<? super E> equality() {
+		return inner.equality();
+	}
+
+	@Override
+	public boolean isEmpty() { // Optimization.
+		return inner.isEmpty();
+	}
+
+	@Override
+	public FastIterator<E> iterator() {
+		return new IteratorImpl<E>(inner.iterator());
+	}
+
+	@Override
+	public int size() { // Optimization.
+		return inner.size();
+	}
+
 }

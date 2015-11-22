@@ -8,53 +8,52 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Comparator;
-
 import javolution.util.FastCollection;
 import javolution.util.FastIterator;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
 
 /**
- * A sorted view over a collection.
+ * A view tracking insertion order.
  */
-public final class SortedCollectionImpl<E> extends FastCollection<E> {
+public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
 	private static class IteratorImpl<E> implements FastIterator<E> {
-		private final FastIterator<E> sorted;
+		private final FastIterator<E> insertionOrdered;
 		private final FastCollection<E> collection;
 		private E next;
 
-		public IteratorImpl(FastIterator<E> sorted, FastCollection<E> collection) {
-			this.sorted = sorted;
+		public IteratorImpl(FastIterator<E> insertionOrdered,
+				FastCollection<E> collection) {
+			this.insertionOrdered = insertionOrdered;
 			this.collection = collection;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return sorted.hasNext();
+			return insertionOrdered.hasNext();
 		}
 
 		@Override
 		public E next() {
-			next = sorted.next();
+			next = insertionOrdered.next();
 			return next;
 		}
 
 		@Override
 		public void remove() {
-			sorted.remove();
+			insertionOrdered.remove();
 			collection.remove(next);
 		}
 
 		@Override
 		public FastIterator<E> reversed() {
-			return new IteratorImpl<E>(sorted.reversed(), collection);
+			return new IteratorImpl<E>(insertionOrdered.reversed(), collection);
 		}
 
 		@Override
 		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-			sorted.split(subIterators);
+			insertionOrdered.split(subIterators);
 			int i = 0;
 			for (FastIterator<E> itr : subIterators)
 				if (itr != null)
@@ -65,27 +64,30 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
-	private final Comparator<? super E> cmp;
+	private final FastTable<E> insertionOrdered = FastTable
+			.newTable(equality());
 
-	public SortedCollectionImpl(FastCollection<E> inner,
-			Comparator<? super E> cmp) {
+	public LinkedCollectionImpl(FastCollection<E> inner) {
 		this.inner = inner;
-		this.cmp = cmp;
 	}
 
 	@Override
 	public boolean add(E element) {
-		return inner.add(element);
+		boolean added = inner.add(element);
+		if (added)
+			insertionOrdered.add(element);
+		return added;
 	}
 
 	@Override
 	public void clear() { // Optimization.
 		inner.clear();
+		insertionOrdered.clear();
 	}
 
 	@Override
-	public SortedCollectionImpl<E> clone() {
-		return new SortedCollectionImpl<E>(inner.clone(), cmp);
+	public LinkedCollectionImpl<E> clone() {
+		return new LinkedCollectionImpl<E>(inner.clone());
 	}
 
 	@Override
@@ -105,19 +107,20 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public FastIterator<E> iterator() {
-		FastTable<E> sorted = FastTable.newTable();
-		sorted.addAll(inner);
-		sorted.sort(cmp);
-		return new IteratorImpl<E>(sorted.iterator(), this);
+		return new IteratorImpl<E>(insertionOrdered.iterator(), inner);
 	}
 
 	@Override
-	public boolean remove(Object searched) { // Optimization.
-		return inner.remove(searched);
+	public boolean remove(Object searched) {
+		boolean removed = inner.remove(searched);
+		if (removed)
+			insertionOrdered.remove(searched);
+		return removed;
 	}
 
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
 	}
+
 }

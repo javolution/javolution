@@ -8,104 +8,121 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+import javolution.util.FastCollection;
+import javolution.util.FastIterator;
 import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
-import javolution.util.service.CollectionService;
 
 /**
  * A filtered view over a collection.
  */
-public class FilteredCollectionImpl<E> extends CollectionView<E> {
+public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 
-    /** Peeking ahead iterator. */
-    private class IteratorImpl implements Iterator<E> {
+	private static class IteratorImpl<E> implements FastIterator<E> {
 
-        private boolean ahead; // Indicates if the iterator is ahead (on next element)
-        private final Predicate<? super E> filter;
-        private E next;
-        private final Iterator<E> targetIterator;
+		private final Predicate<? super E> filter;
+		private final FastIterator<E> inner;
+		private boolean onNext;
+		private E next;
 
-        public IteratorImpl(Predicate<? super E> filter) {
-            this.filter = filter;
-            targetIterator = target().iterator();
-        }
+		public IteratorImpl(FastIterator<E> inner, Predicate<? super E> filter) {
+			this.inner = inner;
+			this.filter = filter;
+		}
 
-        @Override
-        public boolean hasNext() {
-            if (ahead) return true;
-            while (targetIterator.hasNext()) {
-                next = targetIterator.next();
-                if (filter.test(next)) {
-                    ahead = true;
-                    return true;
-                }
-            }
-            return false;
-        }
+		@Override
+		public boolean hasNext() {
+			if (onNext)
+				return true;
+			// Move to next.
+			while (inner.hasNext()) {
+				next = inner.next();
+				if (!filter.test(next))
+					continue; // Ignored
+				onNext = true;
+				return true;
+			}
+			return false;
+		}
 
-        @Override
-        public E next() {
-            hasNext(); // Moves ahead.
-            ahead = false;
-            return next;
-        }
+		@Override
+		public E next() {
+			if (!hasNext())
+				throw new NoSuchElementException();
+			onNext = false;
+			return next;
+		}
 
-        @Override
-        public void remove() {
-            targetIterator.remove();
-        }
-    }
+		@Override
+		public void remove() {
+			inner.remove();
+		}
 
-    private static final long serialVersionUID = 0x600L; // Version.
-    protected final Predicate<? super E> filter;
+		@Override
+		public FastIterator<E> reversed() {
+			return new IteratorImpl<E>(inner.reversed(), filter);
+		}
 
-    public FilteredCollectionImpl(CollectionService<E> target,
-            Predicate<? super E> filter) {
-        super(target);
-        this.filter = filter;
-    }
+		@Override
+		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
+			inner.split(subIterators);
+			int i = 0;
+			for (FastIterator<E> itr : subIterators)
+				if (itr != null)
+					subIterators[i++] = new IteratorImpl<E>(itr, filter);
+			return subIterators;
+		}
 
-    @Override
-    public boolean add(E element) {
-        if (!filter.test(element)) return false;
-        return target().add(element);
-    }
+	}
 
-    @Override
-    public Equality<? super E> comparator() {
-        return target().comparator();
-    }
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final Predicate<? super E> filter;
+	private final FastCollection<E> inner;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean contains(Object o) {
-        if (!filter.test((E) o)) return false;
-        return target().contains(o);
-    }
+	public FilteredCollectionImpl(FastCollection<E> inner,
+			Predicate<? super E> filter) {
+		this.inner = inner;
+		this.filter = filter;
+	}
 
-    @Override
-    public Iterator<E> iterator() {
-        return new IteratorImpl(filter);
-    }
+	@Override
+	public boolean add(E element) {
+		if (!filter.test(element))
+			return false;
+		return inner.add(element);
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean remove(Object o) {
-        if (!filter.test((E) o)) return false;
-        return target().remove(o);
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    public CollectionService<E>[] split(int n, boolean updateable) {
-        CollectionService<E>[] subTargets = target().split(n, updateable);
-        CollectionService<E>[] result = new CollectionService[subTargets.length];
-        for (int i = 0; i < subTargets.length; i++) {
-            result[i] = new FilteredCollectionImpl<E>(subTargets[i], filter);
-        }
-        return result;
-    }
-    
+	@Override
+	public FastCollection<E> clone() {
+		return new FilteredCollectionImpl<E>(inner.clone(), filter);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean contains(Object searched) {
+		if (!filter.test((E) searched))
+			return false;
+		return inner.contains(searched);
+	}
+
+	@Override
+	public Equality<? super E> equality() {
+		return inner.equality();
+	}
+
+	@Override
+	public FastIterator<E> iterator() {
+		return new IteratorImpl<E>(inner.iterator(), filter);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean remove(Object searched) {
+		if (!filter.test((E) searched))
+			return false;
+		return inner.remove(searched);
+	}
+
 }

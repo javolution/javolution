@@ -12,26 +12,28 @@ import javolution.util.FastTable;
 import javolution.util.function.Equality;
 
 /**
- * A reverse view over a table.
+ * A table view using a custom equality.
  */
-public final class ReversedTableImpl<E> extends FastTable<E> {
+public final class CustomEqualityTableImpl<E> extends FastTable<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastTable<E> inner;
+	private final Equality<? super E> equality;
 
-	public ReversedTableImpl(FastTable<E> inner) {
+	public CustomEqualityTableImpl(FastTable<E> inner,
+			Equality<? super E> equality) {
 		this.inner = inner;
+		this.equality = equality;
 	}
 
 	@Override
-	public boolean add(E e) {
-		inner.addFirst(e);
-		return true;
+	public boolean add(E element) {
+		return inner.add(element);
 	}
 
 	@Override
 	public void add(int index, E element) {
-		inner.add(size() - index - 1, element);
+		inner.add(index, element);
 	}
 
 	@Override
@@ -40,45 +42,28 @@ public final class ReversedTableImpl<E> extends FastTable<E> {
 	}
 
 	@Override
-	public ReversedTableImpl<E> clone() {
-		return new ReversedTableImpl<E>(inner.clone());
+	public FastTable<E> clone() {
+		return new CustomEqualityTableImpl<E>(inner.clone(), equality);
 	}
 
 	@Override
 	public Equality<? super E> equality() {
-		return inner.equality();
+		return equality;
 	}
 
 	@Override
 	public E get(int index) {
-		return inner.get(size() - index - 1);
-	}
-
-	@Override
-	public int indexOf(Object searched) {
-		int i = inner.lastIndexOf(searched);
-		return i < 0 ? i : size() - i - 1;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return inner.isEmpty();
-	}
-
-	@Override
-	public int lastIndexOf(Object searched) {
-		int i = inner.indexOf(searched);
-		return i < 0 ? i : size() - i - 1;
+		return inner.get(index);
 	}
 
 	@Override
 	public E remove(int index) {
-		return inner.remove(size() - index - 1);
+		return inner.remove(index);
 	}
 
 	@Override
 	public E set(int index, E element) {
-		return inner.set(size() - index - 1, element);
+		return inner.set(index, element);
 	}
 
 	@Override

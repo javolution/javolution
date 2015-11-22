@@ -9,228 +9,313 @@
 package javolution.util.internal.table;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.ListIterator;
 
-import javolution.util.internal.collection.AtomicCollectionImpl;
-import javolution.util.service.TableService;
+import javolution.util.FastIterator;
+import javolution.util.FastTable;
+import javolution.util.function.BinaryOperator;
+import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
- * An atomic view over a table.
+ * An atomic view over a table. All updates are synchronized, reads are
+ * performed on immutable copy.
  */
-public class AtomicTableImpl<E> extends AtomicCollectionImpl<E> implements
-        TableService<E> {
+public final class AtomicTableImpl<E> extends FastTable<E> {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastTable<E> inner;
+	private volatile FastTable<E> innerConst; // The copy used by readers.
 
-    public AtomicTableImpl(TableService<E> target) {
-        super(target);
-    }
+	public AtomicTableImpl(FastTable<E> inner) {
+		this.inner = inner;
+		this.innerConst = inner.clone();
+	}
 
-    @Override
-    public synchronized void add(int index, E element) {
-        target().add(index, element);
-        if (!updateInProgress()) immutable = cloneTarget();
-    }
+	@Override
+	public synchronized boolean add(E element) {
+		boolean changed = inner.add(element);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public synchronized boolean addAll(int index, Collection<? extends E> c) {
-        boolean changed = target().addAll(index, c);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public synchronized void add(int index, E element) {
+		inner.add(index, element);
+		innerConst = inner.clone();
+	}
 
-    @Override
-    public synchronized void addFirst(E element) {
-        target().addFirst(element);
-        if (!updateInProgress()) immutable = cloneTarget();
-    }
+	@Override
+	public synchronized boolean addAll(Collection<? extends E> that) {
+		boolean changed = inner.addAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public synchronized void addLast(E element) {
-        target().addLast(element);
-        if (!updateInProgress()) immutable = cloneTarget();
-    }
+	@Override
+	public synchronized void addFirst(E element) {
+		inner.addFirst(element);
+		innerConst = inner.clone();
+	}
 
-    @Override
-    public Iterator<E> descendingIterator() {
-        return new ReversedTableImpl<E>(this).iterator();
-    }
+	@Override
+	public synchronized void addLast(E element) {
+		inner.addLast(element);
+		innerConst = inner.clone();
+	}
 
-    @Override
-    public E element() {
-        return getFirst();
-    }
+	@Override
+	public E any() {
+		return innerConst.any();
+	}
 
-    @Override
-    public E get(int index) {
-        return targetView().get(index);
-    }
+	@Override
+	public synchronized void clear() {
+		inner.clear();
+		innerConst = inner.clone();
+	}
 
-    @Override
-    public E getFirst() {
-        return targetView().getFirst();
-    }
+	@Override
+	public FastTable<E> clone() {
+		return new AtomicTableImpl<E>(innerConst.clone());
+	}
 
-    @Override
-    public E getLast() {
-        return targetView().getLast();
-    }
+	@Override
+	public boolean contains(Object searched) {
+		return innerConst.contains(searched);
+	}
 
-    @Override
-    public int indexOf(Object element) {
-        return targetView().indexOf(element);
-    }
+	@Override
+	public boolean containsAll(Collection<?> that) {
+		return innerConst.containsAll(that);
+	}
 
-    @Override
-    public ListIterator<E> iterator() {
-        return listIterator(0);
-    }
+	@Override
+	public FastIterator<E> descendingIterator() {
+		return innerConst.unmodifiable().descendingIterator();
+	}
 
-    @Override
-    public int lastIndexOf(Object element) {
-        return targetView().lastIndexOf(element);
-    }
+	@Override
+	public Equality<? super E> equality() {
+		return innerConst.equality();
+	}
 
-    @Override
-    public ListIterator<E> listIterator() {
-        return listIterator(0);
-    }
+	@Override
+	public boolean equals(Object obj) {
+		return innerConst.equals(obj);
+	}
 
-    @Override
-    public ListIterator<E> listIterator(int index) {
-        return new TableIteratorImpl<E>(this, index); // Iterator view on this.
-    }
+	@Override
+	public void forEach(Consumer<? super E> consumer) {
+		innerConst.forEach(consumer);
+	}
 
-    @Override
-    public boolean offer(E e) {
-        return offerLast(e);
-    }
+	@Override
+	public E get(int index) {
+		return innerConst.get(index);
+	}
 
-    @Override
-    public synchronized boolean offerFirst(E e) {
-        boolean changed = target().offerFirst(e);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public E getFirst() {
+		return innerConst.getFirst();
+	}
 
-    @Override
-    public synchronized boolean offerLast(E e) {
-        boolean changed = target().offerLast(e);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public E getLast() {
+		return innerConst.getLast();
+	}
 
-    @Override
-    public E peek() {
-        return peekFirst();
-    }
+	@Override
+	public int hashCode() {
+		return innerConst.hashCode();
+	}
 
-    @Override
-    public E peekFirst() {
-        return targetView().peekFirst();
-    }
+	@Override
+	public int indexOf(Object element) {
+		return innerConst.indexOf(element);
+	}
 
-    @Override
-    public E peekLast() {
-        return targetView().peekLast();
-    }
+	@Override
+	public boolean isEmpty() {
+		return innerConst.isEmpty();
+	}
 
-    @Override
-    public E poll() {
-        return pollFirst();
-    }
+	@Override
+	public FastIterator<E> iterator() {
+		return innerConst.unmodifiable().iterator();
+	}
 
-    @Override
-    public synchronized E pollFirst() {
-        E e = target().pollFirst();
-        if ((e != null) && !updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
+	@Override
+	public int lastIndexOf(Object element) {
+		return innerConst.lastIndexOf(element);
+	}
 
-    @Override
-    public synchronized E pollLast() {
-        E e = target().pollLast();
-        if ((e != null) && !updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
+	@Override
+	public ListIterator<E> listIterator() {
+		return innerConst.unmodifiable().listIterator();
+	}
 
-    @Override
-    public E pop() {
-        return removeFirst();
-    }
+	@Override
+	public ListIterator<E> listIterator(int index) {
+		return innerConst.unmodifiable().listIterator();
+	}
 
-    @Override
-    public void push(E e) {
-        addFirst(e);
-    }
+	@Override
+	public E max() {
+		return innerConst.max();
+	}
 
-    @Override
-    public E remove() {
-        return removeFirst();
-    }
+	@Override
+	public E min() {
+		return innerConst.min();
+	}
 
-    @Override
-    public synchronized E remove(int index) {
-        E e = target().remove(index);
-        if (!updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
+	@Override
+	public E peekFirst() {
+		return innerConst.peekFirst();
+	}
 
-    @Override
-    public synchronized E removeFirst() {
-        E e = target().removeFirst();
-        if (!updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
+	@Override
+	public E peekLast() {
+		return innerConst.peekLast();
+	}
 
-    @Override
-    public synchronized boolean removeFirstOccurrence(Object o) {
-        boolean changed = target().removeFirstOccurrence(o);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public synchronized E pollFirst() {
+		if (inner.isEmpty())
+			return null;
+		E result = inner.removeFirst();
+		innerConst = inner.clone();
+		return result;
+	}
 
-    @Override
-    public synchronized E removeLast() {
-        E e = target().removeLast();
-        if (!updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
+	@Override
+	public synchronized E pollLast() {
+		if (inner.isEmpty())
+			return null;
+		E result = inner.removeLast();
+		innerConst = inner.clone();
+		return result;
+	}
 
-    @Override
-    public synchronized boolean removeLastOccurrence(Object o) {
-        boolean changed = target().removeLastOccurrence(o);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public E reduce(BinaryOperator<E> operator) {
+		return innerConst.reduce(operator);
+	}
 
-    @Override
-    public synchronized E set(int index, E element) {
-        E e = target().set(index, element);
-        if (!updateInProgress()) immutable = cloneTarget();
-        return e;
-    }
- 
-    @Override
-    public TableService<E>[] split(int n, boolean updateable) {
-        return SubTableImpl.splitOf(this, n, false); // Sub-views over this.
-    }
+	@Override
+	public synchronized E remove(int index) {
+		E result = inner.remove(index);
+		innerConst = inner.clone();
+		return result;
+	}
 
-    @Override
-    public TableService<E> subList(int fromIndex, int toIndex) {
-        return new SubTableImpl<E>(this, fromIndex, toIndex); // View on this.
-    }
+	@Override
+	public synchronized boolean remove(Object searched) {
+		boolean changed = inner.remove(searched);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    /** Returns the actual target */
-    @Override
-    protected TableService<E> target() {
-        return (TableService<E>) super.target();
-    }
+	@Override
+	public synchronized boolean removeAll(Collection<?> that) {
+		boolean changed = inner.removeAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    protected TableService<E> targetView() {
-        return (TableService<E>) super.targetView();
-    }
+	@Override
+	public synchronized E removeFirst() {
+		if (inner.isEmpty())
+			emptyError();
+		E result = inner.remove(0);
+		innerConst = inner.clone();
+		return result;
+	}
+
+	@Override
+	public synchronized boolean removeFirstOccurrence(Object o) {
+		int i = inner.indexOf(o);
+		if (i < 0)
+			return false;
+		inner.remove(i);
+		innerConst = inner.clone();
+		return true;
+	}
+
+	@Override
+	public synchronized boolean removeIf(Predicate<? super E> filter) {
+		if (inner.removeIf(filter)) {
+			innerConst = inner.clone();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public synchronized E removeLast() {
+		if (inner.isEmpty())
+			emptyError();
+		E result = inner.remove(size() - 1);
+		innerConst = inner.clone();
+		return result;
+	}
+
+	@Override
+	public synchronized boolean removeLastOccurrence(Object o) {
+		int i = lastIndexOf(o);
+		if (i < 0)
+			return false;
+		inner.remove(i);
+		innerConst = inner.clone();
+		return true;
+	}
+
+	@Override
+	public synchronized boolean retainAll(Collection<?> that) {
+		boolean changed = inner.retainAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
+
+	@Override
+	public synchronized E set(int index, E element) {
+		E result = inner.set(index, element);
+		innerConst = inner.clone();
+		return result;
+	}
+
+	@Override
+	public int size() {
+		return innerConst.size();
+	}
+
+	@Override
+	public synchronized void sort(Comparator<? super E> cmp) {
+		inner.sort(cmp);
+		innerConst = inner.clone();
+	}
+
+	@Override
+	public Object[] toArray() {
+		return innerConst.toArray();
+	}
+
+	@Override
+	public <T> T[] toArray(final T[] array) {
+		return innerConst.toArray(array);
+	}
+
+	@Override
+	public String toString() {
+		return innerConst.toString();
+	}
 
 }

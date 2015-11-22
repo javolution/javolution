@@ -11,23 +11,24 @@ package javolution.util.internal.bitset;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import javolution.util.Index;
-import javolution.util.service.BitSetService;
+import javolution.lang.Index;
+import javolution.util.FastBitSet;
+import javolution.util.FastIterator;
 
 /**
  * An iterator over a bit set.
  */
-public final class BitSetIteratorImpl implements Iterator<Index> {
+public final class BitSetIteratorImpl implements FastIterator<Index> {
 
-    private final BitSetService that;
-
+    private final FastBitSet that;
     private int nextIndex;
-
     private int currentIndex = -1;
+    private final boolean unmodifiable;
 
-    public BitSetIteratorImpl(BitSetService that, int index) {
+    public BitSetIteratorImpl(FastBitSet that, int index, boolean unmodifiable) {
         this.that = that;
         this.nextIndex = that.nextSetBit(index);
+        this.unmodifiable = unmodifiable;
     }
 
     public boolean hasNext() {
@@ -43,9 +44,23 @@ public final class BitSetIteratorImpl implements Iterator<Index> {
     }
 
     public void remove() {
+    	if (unmodifiable) 
+    		throw new UnsupportedOperationException("Read-Only BitSet.");
         if (currentIndex < 0)
             throw new IllegalStateException();
         that.clear(currentIndex);
         currentIndex = -1;
     }
+
+	@Override
+	public FastIterator<Index>[] split(FastIterator<Index>[] subIterators) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public FastIterator<Index> reversed() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

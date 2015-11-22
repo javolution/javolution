@@ -9,186 +9,166 @@
 package javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
+import javolution.util.FastCollection;
+import javolution.util.FastIterator;
+import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
-import javolution.util.service.CollectionService;
+import javolution.util.function.Predicate;
 
 /**
  * An atomic view over a collection (copy-on-write).
  */
-public class AtomicCollectionImpl<E> extends CollectionView<E> {
+public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 
-    /** Thread-Safe Iterator. */
-    private class IteratorImpl implements Iterator<E> {
-        private E current;
-        private final Iterator<E> targetIterator;
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastCollection<E> inner;
+	private volatile FastCollection<E> innerConst; // The copy used by readers.
 
-        public IteratorImpl() {
-            targetIterator = targetView().iterator();
-        }
+	public AtomicCollectionImpl(FastCollection<E> inner) {
+		this.inner = inner;
+		this.innerConst = inner.clone();
 
-        @Override
-        public boolean hasNext() {
-            return targetIterator.hasNext();
-        }
+	}
 
-        @Override
-        public E next() {
-            current = targetIterator.next();
-            return current;
-        }
+	@Override
+	public synchronized boolean add(E element) {
+		boolean changed = inner.add(element);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-        @Override
-        public void remove() {
-            if (current == null) throw new IllegalStateException();
-            AtomicCollectionImpl.this.remove(current);
-            current = null;
-        }
-    }
+	@Override
+	public synchronized boolean addAll(Collection<? extends E> that) {
+		boolean changed = inner.addAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    private static final long serialVersionUID = 0x600L; // Version.
-    protected volatile CollectionService<E> immutable; // The copy used by readers.
-    protected transient Thread updatingThread; // The thread executing an update.
+	@Override
+	public E any() {
+		return innerConst.any();
+	}
 
-    public AtomicCollectionImpl(CollectionService<E> target) {
-        super(target);
-        this.immutable = cloneTarget();
-    }
+	@Override
+	public synchronized void clear() {
+		inner.clear();
+		innerConst = inner.clone();
+	}
 
-    @Override
-    public synchronized boolean add(E element) {
-        boolean changed = target().add(element);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public FastCollection<E> clone() {
+		return new AtomicCollectionImpl<E>(innerConst.clone());
+	}
 
-    @Override
-    public synchronized boolean addAll(Collection<? extends E> c) {
-        boolean changed = target().addAll(c);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public boolean contains(Object searched) {
+		return innerConst.contains(searched);
+	}
 
-    @Override
-    public synchronized void clear() {
-        clear();
-        if (!updateInProgress()) {
-            immutable = cloneTarget();
-        }
-    }
+	@Override
+	public boolean containsAll(Collection<?> that) {
+		return innerConst.containsAll(that);
+	}
 
-    @Override
-    public synchronized AtomicCollectionImpl<E> clone() { // Synchronized required since working with real target.
-        AtomicCollectionImpl<E> copy = (AtomicCollectionImpl<E>) super.clone();
-        copy.updatingThread = null;
-        return copy;
-    }
+	@Override
+	public Equality<? super E> equality() {
+		return innerConst.equality();
+	}
 
-    @Override
-    public Equality<? super E> comparator() {
-        return immutable.comparator();
-    }
+	@Override
+	public boolean equals(Object obj) {
+		return innerConst.equals(obj);
+	}
 
-    @Override
-    public boolean contains(Object o) {
-        return targetView().contains(o);
-    }
+	@Override
+	public void forEach(Consumer<? super E> consumer) {
+		innerConst.forEach(consumer);
+	}
 
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        return targetView().containsAll(c);
-    }
+	@Override
+	public int hashCode() {
+		return innerConst.hashCode();
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        return targetView().equals(o);
-    }
+	@Override
+	public boolean isEmpty() {
+		return innerConst.isEmpty();
+	}
 
-    @Override
-    public int hashCode() {
-        return targetView().hashCode();
-    }
+	@Override
+	public FastIterator<E> iterator() {
+		return innerConst.unmodifiable().iterator();
+	}
 
-    @Override
-    public boolean isEmpty() {
-        return targetView().isEmpty();
-    }
+	@Override
+	public E max() {
+		return innerConst.max();
+	}
 
-    @Override
-    public Iterator<E> iterator() {
-        return new IteratorImpl();
-    }
+	@Override
+	public E min() {
+		return innerConst.min();
+	}
 
-    @Override
-    public synchronized boolean remove(Object o) {
-        boolean changed = target().remove(o);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public E reduce(BinaryOperator<E> operator) {
+		return innerConst.reduce(operator);
+	}
 
-    @Override
-    public synchronized boolean removeAll(Collection<?> c) {
-        boolean changed = target().removeAll(c);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public synchronized boolean remove(Object searched) {
+		boolean changed = inner.remove(searched);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public synchronized boolean retainAll(Collection<?> c) {
-        boolean changed = target().retainAll(c);
-        if (changed && !updateInProgress()) immutable = cloneTarget();
-        return changed;
-    }
+	@Override
+	public synchronized boolean removeAll(Collection<?> that) {
+		boolean changed = inner.removeAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public int size() {
-        return targetView().size();
-    }
+	@Override
+	public synchronized boolean removeIf(Predicate<? super E> filter) {
+		boolean changed = inner.removeIf(filter);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public Object[] toArray() {
-        return targetView().toArray();
-    }
+	@Override
+	public synchronized boolean retainAll(Collection<?> that) {
+		boolean changed = inner.retainAll(that);
+		if (changed)
+			innerConst = inner.clone();
+		return changed;
+	}
 
-    @Override
-    public <T> T[] toArray(T[] a) {
-        return targetView().toArray(a);
-    }
+	@Override
+	public int size() {
+		return innerConst.size();
+	}
 
-    @Override
-    public synchronized void update(Consumer<CollectionService<E>> action,
-            CollectionService<E> view) {
-        updatingThread = Thread.currentThread(); // Update in progress.
-        try {
-            target().update(action, view); // No copy performed.
-        } finally {
-            updatingThread = null;
-            immutable = cloneTarget(); // One single copy !
-        }
-    }
+	@Override
+	public Object[] toArray() {
+		return innerConst.toArray();
+	}
 
-    /** Returns a clone copy of target. */
-    protected CollectionService<E> cloneTarget() {
-        try {
-            return target().clone();
-        } catch (CloneNotSupportedException e) {
-            throw new Error("Cannot happen since target is Cloneable.");
-        }
-    }
+	@Override
+	public <T> T[] toArray(final T[] array) {
+		return innerConst.toArray(array);
+	}
 
-    /** Returns either the immutable target or the actual target if updating 
-     *  thread. */
-    protected CollectionService<E> targetView() {
-        return ((updatingThread == null) || (updatingThread != Thread.currentThread()))
-                ? immutable : target();
-    }
+	@Override
+	public String toString() {
+		return innerConst.toString();
+	}
 
-    /** Indicates if the current thread is doing an atomic update. */
-    protected final boolean updateInProgress() {
-        return updatingThread == Thread.currentThread();
-
-    }
 }
-

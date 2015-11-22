@@ -211,8 +211,8 @@ public final class ComputeContextImpl extends ComputeContext {
 		CLKernel clKernel;
 		int[] globalWorkSize;
 		int[] localWorkSize;
-		FastTable<BufferImpl> updatedBuffers = new FastTable<BufferImpl>();
-		FastTable<CLEvent> dependencies = new FastTable<CLEvent>();
+		FastTable<BufferImpl> updatedBuffers = FastTable.newTable();
+		FastTable<CLEvent> dependencies = FastTable.newTable();
 
 		KernelImpl(CLKernel clKernel) {
 			this.clKernel = clKernel;
@@ -278,7 +278,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	/** Program implementation. */
 	class ProgramImpl {
 		CLProgram clProgram;
-		FastMap<String, CLKernel> kernels = new FastMap<String, CLKernel>();
+		FastMap<String, CLKernel> kernels = FastMap.newMap();
 
 		ProgramImpl(String opencl) {
 			clProgram = clContext.createProgram(PRAGMA_DOUBLE_SUPPORT + opencl);
@@ -317,8 +317,8 @@ public final class ComputeContextImpl extends ComputeContext {
 
 	// Each context instance has its own local programs and buffers.
 	private final ComputeContextImpl parent;
-	private final FastMap<Class<? extends Program>, ProgramImpl> programs = new FastMap<Class<? extends Program>, ProgramImpl>();
-	private final FastTable<BufferImpl> buffers = new FastTable<BufferImpl>();
+	private final FastMap<Class<? extends Program>, ProgramImpl> programs = FastMap.newMap();
+	private final FastTable<BufferImpl> buffers = FastTable.newTable();
 
 	public ComputeContextImpl() {
 		parent = null;

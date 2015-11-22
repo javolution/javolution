@@ -8,7 +8,7 @@
  */
 package javolution.text;
 
-import javolution.util.function.Equalities;
+import javolution.util.function.Order;
 
 /**
  * <p> A {@link CharSequence} backed up by a <code>char</code> array. 
@@ -391,12 +391,12 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      * sequence lexicographically.
      *
      * @param   seq the character sequence to be compared.
-     * @return  <code>{@link Equalities#LEXICAL}.compare(this, seq)</code>
+     * @return  <code>{@link Order#LEXICAL}.compare(this, seq)</code>
      * @throws  ClassCastException if the specifed object is not a
      *          <code>CharSequence</code>.
      */
     public int compareTo(CharSequence seq) {
-        return Equalities.LEXICAL.compare(this, seq);
+        return Order.LEXICAL.compare(this, seq);
     }
 
     /**

@@ -11,10 +11,9 @@ package javolution.util;
 import java.util.Collection;
 
 import javolution.lang.Constant;
-import javolution.util.internal.table.ConstantTableImpl;
-import javolution.util.internal.table.ReversedTableImpl;
-import javolution.util.internal.table.SubTableImpl;
-import javolution.util.service.TableService;
+import javolution.util.function.Consumer;
+import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 import javolution.xml.DefaultXMLFormat;
 import javolution.xml.XMLFormat;
 import javolution.xml.stream.XMLStreamException;
@@ -27,7 +26,7 @@ import javolution.xml.stream.XMLStreamException;
  */
 @Constant(comment = "Immutable")
 @DefaultXMLFormat(ConstantTable.XML.class)
-public class ConstantTable<E> extends FastTable<E> {
+public final class ConstantTable<E> extends FastTable<E> {
 
 	/**
 	 * The default XML representation for constant tables 
@@ -64,45 +63,51 @@ public class ConstantTable<E> extends FastTable<E> {
 			}
 		}
 
-	};
-
-	private static final long serialVersionUID = 0x600L; // Version.
-
-	/**
-	 * Returns a new constant table holding the specified {@link Constant 
-	 * constant} elements.
-	 * @param <E> Type of the ConstantTable
-	 * @param elements Elements to place in the a ConstantTable
-	 * @return ConstantTable containing the specified elements
-	 */
-	public static <E> ConstantTable<E> of(@Constant E... elements) {
-		return new ConstantTable<E>(new ConstantTableImpl<E>(elements));
 	}
+	
+	private static final long serialVersionUID = 0x700L; // Version.
 
 	/**
 	 * Returns a new constant table holding the same elements as the specified 
 	 * collection (convenience method).
-	 * @param <E> Type of the ConstantTable
-	 * @param that Collection to convert to a ConstantTable
-	 * @return A ConstantTable containing the elements specified in the collection
+	 * @param <E> Element Type
+	 * @param that the collection holding the elements to place in the table.
+	 * @return the table containing the elements specified in the collection
 	 */
 	@SuppressWarnings("unchecked")
-	public static <E> ConstantTable<E> of(Collection<? extends E> that) {
-		return ConstantTable.of((E[]) that.toArray(new Object[that.size()]));
+	public static <E> ConstantTable<E> of(Collection<? extends E> that) {	
+		return (ConstantTable<E>) ConstantTable.of(that.toArray());
 	}
 
 	/**
-	 * Creates a constant table backed up by the specified{@link Constant 
-	 * constant} service implementation.
-	 * @param service A TableService to back the ConstantTable
+	 * Returns a new constant table holding the specified {@link Constant 
+	 * constant} elements.
+	 * @param <E> Element Type 
+	 * @param elements the elements to place in the table
+	 * @return the table containing the specified elements
 	 */
-	protected ConstantTable(@Constant TableService<E> service) {
-		super(service);
+	public static <E> ConstantTable<E> of(@SuppressWarnings("unchecked") @Constant E... elements) {
+		return new ConstantTable<E>(elements);
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-	// Views.
-	//
+	private final E[] elements;
+
+	/** Default constructor */
+	private ConstantTable(E[] elements) {
+		this.elements = elements;
+	}
+
+	@Override
+	public boolean add(E element) {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
+	}
+
+	@Override
+	public void add(int index, E element) {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
+	}
 
 	@Constant
 	@Override
@@ -110,10 +115,42 @@ public class ConstantTable<E> extends FastTable<E> {
 		return this; // Thread-Safe (unmodifiable)
 	}
 
-	@Constant
 	@Override
-	public ConstantTable<E> reversed() {
-		return new ConstantTable<E>(new ReversedTableImpl<E>(service()));
+	public void clear() {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
+	}
+	
+	@Override
+	public ConstantTable<E> clone() {
+		return this;
+	}
+
+	@Override
+	public Equality<? super E> equality() {
+		return Equality.STANDARD;
+	}
+
+	@Override
+	public E get(int index) {
+		return elements[index];
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return elements.length == 0;
+	}
+
+	@Override
+	public E remove(int index) {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
+	}
+
+	@Override
+	public E set(int index, E element) {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
 	}
 
 	@Constant
@@ -122,11 +159,15 @@ public class ConstantTable<E> extends FastTable<E> {
 		return this; // Thread-Safe (unmodifiable)
 	}
 
+	@Override
+	public int size() {
+		return elements.length;
+	}
+
 	@Constant
 	@Override
 	public ConstantTable<E> subTable(int fromIndex, int toIndex) {
-		return new ConstantTable<E>(new SubTableImpl<E>(service(), fromIndex,
-				toIndex));
+		return ConstantTable.of(this.subTable(fromIndex, toIndex));
 	}
 
 	@Constant
@@ -135,9 +176,15 @@ public class ConstantTable<E> extends FastTable<E> {
 		return this;
 	}
 
-	@Constant
 	@Override
-	protected TableService<E> service() {
-		return super.service();
+	public void forEach(Consumer<? super E> consumer) { // Optimization.
+		for (E e : elements) consumer.accept(e);
 	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		throw new UnsupportedOperationException(
+				"Constant tables cannot be modified.");
+	}
+
 }
