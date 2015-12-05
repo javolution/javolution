@@ -8,17 +8,19 @@
  */
 package javolution.util;
 
+import java.io.Serializable;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+import javolution.lang.Index;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
 
 /**
- *  <p> A high-performance map based on {@link SparseArray}.</p>
- * 
- * <p> The <a href="http://en.wikipedia.org/wiki/Trie">
- *     trie-based</a> implementation allows for quick searches, insertions and
- *     deletion. Worst-case execution time when adding new entries is 
+ * <p> A <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> map 
+ *     allowing for quick searches, insertions and deletion.</p> 
+ *     
+ * <p> Worst-case execution time when adding new entries is 
  *     significantly better than when using standard hash table since there is
  *     no resize/rehash ever performed.</p> 
  *   
@@ -89,7 +91,10 @@ import javolution.util.function.Order;
  *     } else {
  *         wordCount.put(word, Index.ONE); // New entry.
  *     }
- * }[/code]</p> 
+ * }[/code]</p>
+ * 
+ * <p> The memory footprint of the map is automatically adjusted up or down
+ *     based on the map size (minimal when the map is cleared).</p>
  *      
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
@@ -97,15 +102,19 @@ import javolution.util.function.Order;
 public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	private static final long serialVersionUID = 0x700L; // Version. 
-	static final int SHIFT = 4;
-	static final int SIZE = 1 << SHIFT;
-	static final int MASK = SIZE - 1;
-		
-	private final Order<? super K> order;
-	private final Object[] nodes = new Object[SIZE]; 
-	private final int shift;
+	
+	private final Order<? super K> order; // Null if no order.
+	private final SparseArray<Object> nodes;
 	private int size;
-	   
+	
+	private interface  SparseArray<E> {
+	    E get(int index); // Returns the node at the specified index (can be an entry).
+		E set(int index, E node); // Returns the previous node.
+		E setIfAbsent(int index, E node);
+		FastIterator<E> iterator(int start, int end);
+		void clear();
+	}
+	
 	/**
      * Creates an empty map using an arbitrary order (hash based).
      */
@@ -119,13 +128,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      * @param order the ordering of the map.
      */
     public SparseMap(Order<? super K> order) {
-    	this(order, Math.max(order.bitLength() - SHIFT, 0));
-    	
-    }
-    
-    private SparseMap(Order<? super K> order, int shift) {
     	this.order = order;
-    	this.shift = shift;
     }
     
 	@Override
@@ -143,202 +146,80 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 		return Equality.STANDARD;
 	}
 	
+	/**
+	 * Returns a new map having the exact same entries (not duplicated) as
+	 * this map.
+	 */
 	@Override
-	public FastMap<K, V> clone() {
-		// TODO: Optimize
+	public SparseMap<K, V> clone() {
 		SparseMap<K,V> copy = new SparseMap<K,V>(order);
-		copy.entrySet().addAll(this.entrySet());
+		copy.entrySet().addAll(this.entrySet()); 
 		return copy;
 	}
 	
-	@Override
-	public EntryImpl<K, V> getEntry(K key) {
-	    return getEntry(key, order.indexOf(key));
-	}	
-	
 	@SuppressWarnings("unchecked")
-    private EntryImpl<K, V> getEntry(K key, int index) {
-    	Object node = nodes[(index >>> shift) & MASK];
-		if (node == null) return null;
-		if (node instanceof SparseMap) { // Recursion.
-			SparseMap<K,V> subMap = (SparseMap<K,V>)node;
-			return (subMap.order == order) ? 
-					subMap.getEntry(key, index) : subMap.getEntry(key);
-		}
-		if (node instanceof EntryImpl) {
-		     EntryImpl<K,V> entry = (EntryImpl<K,V>) node;
-		     return (entry.index == index) && order.areEqual(key, entry.key)
-		    		 ? entry : null;
-		}
-		// Hopefully we should not get there very often (no sub-order)
-		FractalTable<EntryImpl<K,V>> colliding = (FractalTable<EntryImpl<K,V>>) node;
-		for (EntryImpl<K,V> entry : colliding) 
-			if (order.areEqual(key, entry.key)) return entry;
-		return null;
-	}	
-	
 	@Override
-    public V put(K key, V value) {
-		return put(key, value, order.indexOf(key));
-	}
-	
-	@SuppressWarnings("unchecked")
-    private V put(K key, V value, int index) {
-      	Object node = nodes[(index >>> shift) & MASK];
-    	if (node == null) {
-    		nodes[(index >>> shift) & MASK] = new EntryImpl<K,V>(key, value, index);
-    		size++;
-    		return null;
-    	} 
-    	if (node instanceof SparseMap) { // Recursion.
-    		SparseMap<K,V> subMap = (SparseMap<K,V>)node;
-    		int subMapPreviousSize = subMap.size;
-    		V previous = (subMap.order == order) ? 
-    			subMap.put(key, value, index) : subMap.put(key, value);
-    	    size += subMap.size - subMapPreviousSize; 
-			return previous;
-    	}
-		if (node instanceof EntryImpl) {
-			EntryImpl<K,V> entry = (EntryImpl<K,V>) node;
-			if ((entry.index == index) && order.areEqual(key, entry.key)) {
-				V previous = entry.value;
-				entry.value = value;
-				return previous;
-			}
-			size++;
-			if (shift > 0) {
-      			SparseMap<K,V> subMap = new SparseMap<K,V>(order, Math.max(shift - SHIFT, 0));
-      			subMap.put(entry.key, entry.value, entry.index);
-      			nodes[(index >>> shift) & MASK] = subMap;
-      		    return subMap.put(key, value, index);
-      	    }
-			if (index != entry.index) throw new IllegalStateException("Check Order.bitLength");
-			Order<? super K> subOrder = order.subOrder(entry.key);
-			if (subOrder != null) {
-			     SparseMap<K,V> subMap = new SparseMap<K,V>(subOrder);
-  			     subMap.put(entry.key, entry.value);
-  			     nodes[(index >>> shift) & MASK] = subMap;
-  		         return subMap.put(key, value);
-			}
-			FractalTable<EntryImpl<K,V>> colliding = new FractalTable<EntryImpl<K,V>>();
-		    colliding.add(entry);
-		    nodes[(index >>> shift) & MASK] = colliding;
-		    colliding.add(new EntryImpl<K,V>(key, value, index));
-	  		return null;    
-		}
-		FractalTable<EntryImpl<K,V>> colliding = (FractalTable<EntryImpl<K,V>>) node;
-		for (EntryImpl<K,V> entry : colliding) 
-			if (order.areEqual(key, entry.key)) {
-				V previous = entry.value;
-				entry.value = value;
-				return previous;
-			}
-		colliding.add(new EntryImpl<K,V>(key, value, index));
-		size++;
-		return null;
-	}
+	public Entry<K, V> getEntry(K key) {
+        Object node = nodes.get(order.indexOf(key));
+        if (node == null) return null;
+        if (node instanceof FastMap) 
+        	return ((FastMap<K,V>)node).getEntry(key);
+        Entry<K,V> entry = (Entry<K,V>)node;
+        return order.areEqual(entry.getKey(), key) ? entry : null;
+    }		
 
 	@SuppressWarnings("unchecked")
 	@Override
-    public EntryImpl<K,V> removeEntry(K key) {
-		return removeEntry(key, order.indexOf((K)key));
+    public Entry<K,V> putEntry(Entry<K,V> entry) { // Lock only required for writes.
+		int i = order.indexOf(entry.getKey());
+        Object node = nodes.setIfAbsent(i, entry);
+        if (node != null) {
+             if (node instanceof FastMap) {
+           	     Entry<K,V> previous = ((FastMap<K,V>)node).putEntry(entry);
+        	     if (previous != null) return previous;
+             } else { // Entry
+                 Entry<K,V> previous = (Entry<K,V>)node;
+                 if (order.areEqual(previous.getKey(), entry.getKey())) {
+        	         nodes.set(i, entry);
+        	         return previous;
+                 } // Collision.
+                 Order<? super K> subOrder = order.subOrder(entry.getKey());
+                 FastMap<K,V> subMap = (subOrder != null) ? 
+        		 new SparseMap<K,V>(subOrder) : new SortedMap<K,V>(order);
+                 subMap.putEntry(previous);
+                 subMap.putEntry(entry);
+                 nodes.set(i, subMap);
+             }
+        }
+        size++;
+        return null;
 	}
 	
 	@SuppressWarnings("unchecked")
-    private EntryImpl<K,V> removeEntry(K key, int index) {
-    	Object node = nodes[(index >>> shift) & MASK];
-		if (node == null) return null;
-		if (node instanceof SparseMap) { // Recursion.
-    		SparseMap<K,V> subMap = (SparseMap<K,V>)node;
-	  	    EntryImpl<K,V> previous = (subMap.order == order) ? 
-	  	    		subMap.removeEntry(key, index) : subMap.removeEntry(key);
-    	    if (previous != null) size--;
-    	    if (subMap.size <= 1) // Cleanup.
-    	    	nodes[(index >>> shift) & MASK] = subMap.iterator().next();
-			return previous;
-    	}
-		if (node instanceof EntryImpl) {
-		     EntryImpl<K,V> entry = (EntryImpl<K,V>) node;
-		     if ((entry.index == index) &&  order.areEqual(key, entry.key)) {
-		    	 size--;
-		    	 nodes[(index >>> shift) & MASK] = null;
-		    	 return entry;
-		     }
-		     return null;
-		}
-		FractalTable<EntryImpl<K,V>> colliding = (FractalTable<EntryImpl<K,V>>) node;
-		for (Iterator<EntryImpl<K,V>> itr = colliding.iterator(); itr.hasNext();) {
-			EntryImpl<K,V> entry = itr.next();
-			if (order.areEqual(key, entry.key)) {
-				itr.remove();
-				size--;
-				if (colliding.size() <= 1) 
-					 nodes[(index >>> shift) & MASK] = colliding.iterator().next();
-				return entry;
-			}
-		}
-		return null;
-	}	
-		
-	/** Entry Implementation **/
-   private static class EntryImpl<K,V> implements Entry<K, V> { 
-		private final int index; 
-		private final K key;
-		private V value; 
-		private EntryImpl(K key, V value, int index) {
-			this.key = key;
-			this.value = value;
-			this.index = index;
-		}
-
-		@Override
-		public K getKey() {
-			return key;
-		}
-		
-		@Override
-		public V getValue() {
-			return value;
-		}
-		
-		@Override
-		public V setValue(V newValue) {
-			V oldValue = value;	
-		    this.value = newValue;
-			return oldValue;
-		}
-
-		@Override
-		public boolean equals(Object obj) { // As per Map.Entry contract.
-			if (!(obj instanceof Entry)) return false;
-			@SuppressWarnings("unchecked")
-			Entry<K,V> that = (Entry<K,V>) obj;
-			return Equality.STANDARD.areEqual(key, that.getKey())
-					&& Equality.STANDARD.areEqual(value, that.getValue());
-		}
-
-		@Override
-		public int hashCode() { // As per Map.Entry contract.
-			return (key == null ? 0 : key.hashCode())
-					^ (value == null ? 0 : value.hashCode());
-		}
-
-		@Override
-		public String toString() {
-			return "(" + key + '=' + value + ')'; // For debug.
-		}
-   }
-
+	@Override
+    public Entry<K,V> removeEntry(K key) {
+		int i = order.indexOf(key);
+        Object node = nodes.get(i);        
+        if (node == null) return null;
+        if (node instanceof FastMap) {
+        	FastMap<K,V> map = (FastMap<K,V>)node;
+        	Entry<K,V> previous = map.removeEntry(key);
+        	if (previous == null) return null;
+        	if (map.size() <= 1) nodes.set(i, map.entrySet().iterator().next());
+        	size--;
+        	return previous;
+        }
+        Entry<K,V> entry = (Entry<K,V>)node;
+        if (!order.areEqual(entry.getKey(), key)) return null;
+        nodes.set(i, null);
+        size--;
+        return entry;
+	}
+	
 	@Override
 	public void clear() {
-		for (int i=0; i < nodes.length; i++) nodes[i] = null;
+		nodes.clear();
 		size = 0;
 	}
-
-	@Override
-	public FastIterator<Entry<K, V>> iterator(K fromKey, K toKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+     
 }

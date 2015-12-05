@@ -19,8 +19,8 @@ import javolution.util.function.Equality;
 import javolution.util.function.Order;
 
 /**
- * <p> A specialized version of the fractal-based table with fast 
- *     search capabilities.</p>
+ * <p> A specialized version of the {@link FractalTable fractal-based table}
+ *     with fast search capabilities.</p>
  *     
  * <p> Unlike {@link FastSet}, sorted tables allow for elements 
  *     duplications and support simple comparator-based ordering.</p>

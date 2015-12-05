@@ -8,21 +8,14 @@
  */
 package javolution.util;
 
-import java.util.Iterator;
-
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 
 /**
- *  <p> A high-performance set based on {@link SparseArray}.</p>
+ * <p> A set allowing for quick searches, insertions and deletion
+ *     (based on {@link SparseMap}).</p> 
  *  
- * <p> The <a href="http://en.wikipedia.org/wiki/Trie">
- *     trie-based</a> implementation allows for quick searches, insertions and
- *     deletion. Worst-case execution time when adding new elements is 
- *     significantly better than when using standard hash set since there is
- *     no resize/rehash ever performed.</p> 
- *      
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */

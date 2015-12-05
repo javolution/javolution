@@ -6,38 +6,42 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package javolution.util.internal.bitset;
+package javolution.util;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
 import javolution.lang.Index;
 import javolution.lang.MathLib;
-import javolution.util.FastBitSet;
-import javolution.util.FastIterator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
+import javolution.util.internal.bitset.BitSetIteratorImpl;
 
 /**
- * A table of indices implemented using packed bits (long[]).
+ * <p> An array data structure that compactly stores bits.</p>
+ * 
+ * @see <a href="https://en.wikipedia.org/wiki/Bit_array">
+ *      Wikipedia: Bit Array</a>
+ *      
+ * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
+ * @version 7.0, September 13, 2015
  */
-public class BitSetImpl extends FastBitSet {
+public class BitArray extends FastBitSet {
 
-    private static final long serialVersionUID = 0x600L; // Version.
+    private static final long serialVersionUID = 0x700L; // Version. 
     private static final long[] ALL_CLEARED = new long[0];
     
     /** Holds the bits (64 bits per long). */
     private long[] bits;
     
-
     /** Creates a bit set (all bits cleared). */
-    public BitSetImpl() {
+    public BitArray() {
         bits = ALL_CLEARED;
     }
 
     /** Creates a bit set having the specified bits. */
-    public BitSetImpl(long[] bits) {
+    public BitArray(long[] bits) {
         this.bits = bits;
     }
 
@@ -152,10 +156,10 @@ public class BitSetImpl extends FastBitSet {
     }
 
     @Override
-    public BitSetImpl get(int fromIndex, int toIndex) {
+    public BitArray get(int fromIndex, int toIndex) {
         if (fromIndex < 0 || fromIndex > toIndex)
             throw new IndexOutOfBoundsException();
-        BitSetImpl bitSet = new BitSetImpl();
+        BitArray bitSet = new BitArray();
         int length = MathLib.min(bits.length, (toIndex >>> 6) + 1);
         bitSet.bits = new long[length];
         System.arraycopy(bits, 0, bitSet.bits, 0, length);
@@ -237,7 +241,7 @@ public class BitSetImpl extends FastBitSet {
 
     @Override
     public void or(FastBitSet that) {
-        long[] thatBits = (that instanceof BitSetImpl) ? ((BitSetImpl) that).bits
+        long[] thatBits = (that instanceof BitArray) ? ((BitArray) that).bits
                 : that.toLongArray();
         ensureCapacity(thatBits.length);
         for (int i = thatBits.length; --i >= 0;) {
@@ -342,7 +346,7 @@ public class BitSetImpl extends FastBitSet {
     
     @Override
     public void xor(FastBitSet that) {
-        long[] thatBits = (that instanceof BitSetImpl) ? ((BitSetImpl) that).bits
+        long[] thatBits = (that instanceof BitArray) ? ((BitArray) that).bits
                 : that.toLongArray();
         ensureCapacity(thatBits.length);
         for (int i = thatBits.length; --i >= 0;) {
@@ -367,8 +371,8 @@ public class BitSetImpl extends FastBitSet {
     }
 
 	@Override
-	public BitSetImpl clone() {
-		return new BitSetImpl(bits.clone());
+	public BitArray clone() {
+		return new BitArray(bits.clone());
 	}
 
 	@Override

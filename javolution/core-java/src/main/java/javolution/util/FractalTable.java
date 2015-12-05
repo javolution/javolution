@@ -35,7 +35,6 @@ import javolution.util.internal.table.FractalTableImpl;
  */
 public class FractalTable<E> extends FastTable<E> {
 
-
     private static final long serialVersionUID = 0x700L; // Version. 
   
     /**

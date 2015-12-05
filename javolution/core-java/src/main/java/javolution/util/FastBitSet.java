@@ -12,7 +12,6 @@ import static javolution.lang.Realtime.Limit.LINEAR;
 import javolution.lang.Constant;
 import javolution.lang.Index;
 import javolution.lang.Realtime;
-import javolution.util.internal.bitset.BitSetImpl;
 import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
@@ -32,7 +31,7 @@ public abstract class FastBitSet extends FastSet<Index> {
      * Returns an empty bit set.
      */
 	public static FastBitSet newBitSet() {
-        return new BitSetImpl();
+        return new BitArray();
     }
     
     /**
@@ -43,7 +42,7 @@ public abstract class FastBitSet extends FastSet<Index> {
      *        new bit set.
      */
     public static FastBitSet newBitSet(@Constant long[] bits) {
-        return new BitSetImpl(bits);
+        return new BitArray(bits);
     }
 
     /**

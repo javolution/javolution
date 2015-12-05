@@ -13,8 +13,8 @@ import java.util.Iterator;
 import javolution.lang.Realtime;
 
 /**
- * <p> The iterator used by {@link FastCollection} allowing 
- *     parallel processing and iterations in reverse order.</p>
+ * <p> A high-performance iterator (used by all {@link FastCollection}) 
+ *     allowing parallel processing and reverse order iterations.</p>
  * 
  * @param <E> The type of element on which the iterator iterates.
  *     
@@ -35,28 +35,24 @@ public interface FastIterator<E> extends Iterator<E>{
     void remove();
 	
     /**
-     * Splits this iterators into sub-iterators (iterating 
-     * over a partial view of the {@link FastCollection}).
-     * If the iterator cannot fully split; the array may hold 
-     * {@code null} values. Implementations must ensure that
-     * concurrent removal using the sub-iterators is supported
-     * when this iterator itself supports elements removal
-     * (e.g. using single read-write lock).
+     * If this iterator can be partitioned, returns an iterator covering 
+     * elements, that will, upon return from this method, not be covered by
+     * this iterator. Implementations must ensure that concurrent removal 
+     * (if supported) is thread-safe. This method should be called before
+     * iterating.
      * 
-     * @param subIterators the array to hold the subIterators. 
-     * @return the specified subIterators array.
-     * @throws IllegalArgumentException if {@code  
-     *        (subIterators.length == 0)}
+     * @return an iterator covering some portion of the elements, or
+     *         {@link null} if this iterator cannot split.}
      * @see #remove
      */
 	@Realtime(limit = CONSTANT)
-    FastIterator<E>[] split(FastIterator<E>[] subIterators);
+    FastIterator<E> trySplit();
     
     /**
      * Returns an iterator iterating through the same collection 
-     * as the one iterated by this iterator but in reverse order.
+     * but in reverse order.
      *   
-     * @return the reversed iterator. 
+     * @return the reversed iterator (can be {@code this}). 
      */
 	@Realtime(limit = CONSTANT)
     FastIterator<E> reversed();

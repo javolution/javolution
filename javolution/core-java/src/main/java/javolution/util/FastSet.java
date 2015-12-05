@@ -17,9 +17,9 @@ import javolution.lang.Realtime;
 import javolution.util.function.Order;
 
 /**
- * <p> A high-performance set (based on {@link SparseArray sparse-arrays}) 
+ * <p> A high-performance set ({@link SparseMap trie-based}) 
  *     with documented {@link Realtime real-time} behavior.</p>
- *     
+ * 
  * <p> Iterations order over the set elements  is typically determined 
  *     by the set {@link #order() order} except for {@link #newLinkedSet() 
  *     linked set} for which the iterations order is based on the insertion 

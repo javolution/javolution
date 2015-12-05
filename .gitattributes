@@ -318,6 +318,7 @@ javolution/core-java/src/main/java/javolution/text/TextReader.java -text svneol=
 javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
+javolution/core-java/src/main/java/javolution/util/BitArray.java -text
 javolution/core-java/src/main/java/javolution/util/ConstantTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
@@ -340,7 +341,6 @@ javolution/core-java/src/main/java/javolution/util/function/Predicate.java -text
 javolution/core-java/src/main/java/javolution/util/function/Supplier.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/function/package-info.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/ReadWriteLockImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/bitset/BitSetIteratorImpl.java -text
 javolution/core-java/src/main/java/javolution/util/internal/bitset/UnmodifiableBitSetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/AtomicCollectionImpl.java -text svneol=unset#text/plain
@@ -360,8 +360,10 @@ javolution/core-java/src/main/java/javolution/util/internal/function/HashOrderIm
 javolution/core-java/src/main/java/javolution/util/internal/function/IdentityHashOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/function/LexicalOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/function/NaturalOrderImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/EntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntrySetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/KeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/MapIteratorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/SubMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain

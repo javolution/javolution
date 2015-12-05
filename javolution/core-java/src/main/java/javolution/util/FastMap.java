@@ -25,13 +25,15 @@ import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
+import javolution.util.internal.map.EntryImpl;
 import javolution.util.internal.map.EntrySetImpl;
 import javolution.util.internal.map.KeySetImpl;
+import javolution.util.internal.map.MapIteratorImpl;
 import javolution.util.internal.map.SubMapImpl;
 import javolution.util.internal.map.ValuesImpl;
 
 /**
- * <p> A high-performance map (based on sparse-arrays) 
+ * <p> A high-performance map ({@link SparseMap trie-based}) 
  *     with documented {@link Realtime real-time} behavior.</p>
  * 
  * <p> Iterations order over map keys, values or entries is typically determined 
@@ -75,8 +77,9 @@ import javolution.util.internal.map.ValuesImpl;
  * }</pre></p>
  * 
  * <p> In addition to concurrent map interface being implemented,  
- *     fast map supports direct entry access/removal ({@link #getEntry getEntry}
- *     / {@link #removeEntry removeEntry}).
+ *     fast map supports direct entry access/addition/removal 
+ *     ({@link #getEntry getEntry} / {@link #putEntry putEntry} / 
+ *     {@link #removeEntry removeEntry}).
  * [code]
  * FastMap<CharSequence, Index> wordCount = FastMap.newMap(Order.LEXICAL);    
  * void incrementCount(CharSequence word) {
@@ -419,10 +422,16 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      * Returns the entry for the specified key or {@code null} if none.
      * This method may return specific entry types (e.g. entry with additional
      * fields).
-     * @see #putEntry
      */
     @Realtime(limit = CONSTANT)
     public abstract Entry<K,V> getEntry(K key);
+
+    /** 
+     * Adds the specified entry to this map and returns the previous entry
+     * with the same key if any.
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract Entry<K,V> putEntry(Entry<K,V> entry);
 
     /** 
      * Removes and returns the entry for the specified key.
@@ -430,13 +439,16 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     @Realtime(limit = CONSTANT)
     public abstract Entry<K,V> removeEntry(K key);
 
-    /** Associates the specified value with the specified key.
+    /** 
+     * Associates the specified value with the specified key.
      * 
      * @return the previous value associated to that key.
      */
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract V put(K key, V value);
+    public V put(K key, V value) {
+    	return putEntry(new EntryImpl<K,V>(key,value)).getValue();
+    }
 
     /** Adds the specified map entries to this map. */
     @Override
@@ -519,9 +531,9 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      */
 	@Override
 	@Realtime(limit = CONSTANT)
-	public K firstKey() {
-		FastIterator<Entry<K,V>> itr = iterator();
-		return itr.hasNext() ? itr.next().getKey() : null;
+	public final K firstKey() {
+		Entry<K,V> firstEntry = firstEntry();;
+		return (firstEntry != null) ? firstEntry.getKey() : null;
 	}
 
 	/** 
@@ -529,14 +541,45 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      */
 	@Override
 	@Realtime(limit = CONSTANT)
-	public K lastKey() {
-		FastIterator<Entry<K,V>> itr = iterator().reversed();
-		return itr.hasNext() ? itr.next().getKey() : null;
+	public final K lastKey() {
+		Entry<K,V> lastEntry = lastEntry();;
+		return (lastEntry != null) ? lastEntry.getKey() : null;
 	}
 
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
+
+    /** 
+     * Returns the first entry of this map or {@link null} if the map is empty.
+     */
+	@Realtime(limit = CONSTANT)
+	public abstract Entry<K,V> firstEntry();
+
+	/** 
+     * Returns the last entry of this map or {@link null} if the map is empty.
+     */
+	@Realtime(limit = CONSTANT)
+	public abstract Entry<K,V> lastEntry();
+
+    /**
+     * Returns the entry after the specified key or {@code null} if none. 
+     */
+	@Realtime(limit = CONSTANT)
+	public abstract Entry<K,V> entryAfter(K key);
+    
+    /**
+     * Returns the entry before the specified key or {@code null} if none. 
+     */
+	@Realtime(limit = CONSTANT)
+	public abstract Entry<K,V> entryBefore(K key);
+    
+	/** 
+     * Returns the entry at mid-point between the specified key or 
+     * {@link null} if none.
+     */
+	@Realtime(limit = CONSTANT)
+	public abstract Entry<K,V> midEntry(K fromKey, K toKey);
 
     /**
      * Compares the specified object with this map for equality.
@@ -591,7 +634,9 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      * key (inclusive) and the toKey (exclusive) (or {@code null} if
      * no upper bound). 
      */
-	public abstract FastIterator<Entry<K,V>> iterator(K fromKey, K toKey);
+	public FastIterator<Entry<K,V>> iterator(K fromKey, K toKey) {
+		return new MapIteratorImpl<K,V>(this, fromKey, toKey);
+	}
 
 	/** 
      * Returns the string representation of this map using its 
