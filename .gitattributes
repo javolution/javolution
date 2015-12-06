@@ -328,6 +328,7 @@ javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=uns
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FractalTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SortedTable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/SparseArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SparseMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SparseSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/doc-files/FastTable-WCET.png -text

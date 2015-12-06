@@ -107,14 +107,6 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	private final SparseArray<Object> nodes;
 	private int size;
 	
-	private interface  SparseArray<E> {
-	    E get(int index); // Returns the node at the specified index (can be an entry).
-		E set(int index, E node); // Returns the previous node.
-		E setIfAbsent(int index, E node);
-		FastIterator<E> iterator(int start, int end);
-		void clear();
-	}
-	
 	/**
      * Creates an empty map using an arbitrary order (hash based).
      */
@@ -129,6 +121,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      */
     public SparseMap(Order<? super K> order) {
     	this.order = order;
+    	this.nodes = new SparseArray<Object>(order.bitLength());
     }
     
 	@Override
