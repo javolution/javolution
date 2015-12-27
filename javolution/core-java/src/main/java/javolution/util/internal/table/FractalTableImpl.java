@@ -114,13 +114,9 @@ public final class FractalTableImpl {
 			}
 			System.arraycopy(data, tail - n + 1, data, tail - n, n);
 			data[tail] = inserted;
-		} else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift
-																				// local
-																				// to
-																				// inner
-																				// table.
-			F(head >> shift).shiftLeft(inserted, tail, length); // (no
-																// wrapping).
+		} else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { 
+			// Shift local to inner table.
+			F(head >> shift).shiftLeft(inserted, tail, length); // (no wrapping).
 		} else {
 			int low = head >> shift;
 			int high = (low != data.length - 1) ? low + 1 : 0;
@@ -152,13 +148,9 @@ public final class FractalTableImpl {
 			}
 			System.arraycopy(data, head, data, head + 1, n);
 			data[head] = inserted;
-		} else if ((head <= tail) && ((head >> shift) == (tail >> shift))) { // Shift
-																				// local
-																				// to
-																				// inner
-																				// table.
-			F(head >> shift).shiftRight(inserted, head, length); // (no
-																	// wrapping).
+		} else if ((head <= tail) && ((head >> shift) == (tail >> shift))) {
+			// Shift local to inner table.
+			F(head >> shift).shiftRight(inserted, head, length); // (no wrapping).
 		} else {
 			int high = tail >> shift;
 			int low = (high != 0) ? high - 1 : data.length - 1;

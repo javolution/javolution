@@ -121,7 +121,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      */
     public SparseMap(Order<? super K> order) {
     	this.order = order;
-    	this.nodes = new SparseArray<Object>(order.bitLength());
+    	this.nodes = new SparseArray<Object>();
     }
     
 	@Override
