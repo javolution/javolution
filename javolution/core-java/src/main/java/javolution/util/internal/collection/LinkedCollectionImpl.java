@@ -8,8 +8,9 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
+
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
 
@@ -17,50 +18,6 @@ import javolution.util.function.Equality;
  * A view tracking insertion order.
  */
 public final class LinkedCollectionImpl<E> extends FastCollection<E> {
-
-	private static class IteratorImpl<E> implements FastIterator<E> {
-		private final FastIterator<E> insertionOrdered;
-		private final FastCollection<E> collection;
-		private E next;
-
-		public IteratorImpl(FastIterator<E> insertionOrdered,
-				FastCollection<E> collection) {
-			this.insertionOrdered = insertionOrdered;
-			this.collection = collection;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return insertionOrdered.hasNext();
-		}
-
-		@Override
-		public E next() {
-			next = insertionOrdered.next();
-			return next;
-		}
-
-		@Override
-		public void remove() {
-			insertionOrdered.remove();
-			collection.remove(next);
-		}
-
-		@Override
-		public FastIterator<E> reversed() {
-			return new IteratorImpl<E>(insertionOrdered.reversed(), collection);
-		}
-
-		@Override
-		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-			insertionOrdered.split(subIterators);
-			int i = 0;
-			for (FastIterator<E> itr : subIterators)
-				if (itr != null)
-					subIterators[i++] = new IteratorImpl<E>(itr, collection);
-			return subIterators;
-		}
-	}
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
@@ -106,7 +63,7 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return new IteratorImpl<E>(insertionOrdered.iterator(), inner);
 	}
 
@@ -121,6 +78,36 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
+	}
+
+	/** Default linked iterator for generic collections **/
+	private static class IteratorImpl<E> implements Iterator<E> {
+		private final Iterator<E> inner;
+		private final FastCollection<E> target;
+		private E next;
+
+		public IteratorImpl(Iterator<E> inner,
+				FastCollection<E> collection) {
+			this.inner = inner;
+			this.target = collection;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return inner.hasNext();
+		}
+
+		@Override
+		public E next() {
+			next = inner.next();
+			return next;
+		}
+
+		@Override
+		public void remove() {
+			inner.remove();
+			target.remove(next);
+		}
 	}
 
 }

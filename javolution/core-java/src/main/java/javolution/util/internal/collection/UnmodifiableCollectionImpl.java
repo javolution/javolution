@@ -8,8 +8,9 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
+
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.function.Equality;
 
 /**
@@ -17,44 +18,6 @@ import javolution.util.function.Equality;
  */
 public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
-	public static class IteratorImpl<E> implements FastIterator<E> {
-		private final FastIterator<E> inner;
-
-		public IteratorImpl(FastIterator<E> inner) {
-			this.inner = inner;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return inner.hasNext();
-		}
-
-		@Override
-		public E next() {
-			return inner.next();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Read-Only Iterator.");
-		}
-
-		@Override
-		public FastIterator<E> reversed() {
-			return new IteratorImpl<E>(inner.reversed());
-		}
-
-		@Override
-		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-			inner.split(subIterators);
-			for (int i = 0, n = subIterators.length; i < n; i++) {
-				FastIterator<E> itr = subIterators[i];
-				if (itr != null)
-					subIterators[i] = new IteratorImpl<E>(itr);
-			}
-			return subIterators;
-		}
-	}
 
 	private static final long serialVersionUID = 0x700L; // Version.
 
@@ -90,13 +53,54 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return new IteratorImpl<E>(inner.iterator());
 	}
 
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
+	}
+
+	@Override
+	public UnmodifiableCollectionImpl<E> reversed() { // Optimization.
+	    return new UnmodifiableCollectionImpl<E>(inner.reversed());
+	}
+	
+	@Override
+	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
+		inner.subViews(subViews);
+		for (int i = 0; i < subViews.length; i++) {
+			FastCollection<E> subView = subViews[i];
+			if (subView == null) continue;
+			subViews[i] = new UnmodifiableCollectionImpl<E>(subView);
+		}
+		return subViews;
+	}
+
+	/** Default read-only iterator for generic collections **/
+	private static class IteratorImpl<E> implements Iterator<E> {
+		private final Iterator<E> inner;
+
+		public IteratorImpl(Iterator<E> inner) {
+			this.inner = inner;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return inner.hasNext();
+		}
+
+		@Override
+		public E next() {
+			return inner.next();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("Read-Only Iterator.");
+		}
+
 	}
 
 }

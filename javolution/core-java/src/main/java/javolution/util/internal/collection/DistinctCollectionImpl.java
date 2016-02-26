@@ -8,10 +8,10 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.FastSet;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
@@ -22,73 +22,6 @@ import javolution.util.function.Predicate;
  * A view which does not iterate twice over the same elements.
  */
 public final class DistinctCollectionImpl<E> extends FastCollection<E> {
-
-	private static class IteratorImpl<E> implements FastIterator<E> {
-
-		private final FastCollection<E> iterated;
-		private final FastIterator<E> inner;
-		private boolean onNext;
-		private E next;
-
-		public IteratorImpl(FastIterator<E> inner, Equality<? super E> equality) {
-			this.inner = inner;
-			this.iterated = (equality instanceof Order) ? FastSet
-					.newSet((Order<? super E>) equality) : FastTable
-					.newTable(equality);
-		}
-
-		public IteratorImpl(FastIterator<E> inner, FastCollection<E> iterated) {
-			this.inner = inner;
-			this.iterated = iterated;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (onNext)
-				return true;
-			// Move to next.
-			while (inner.hasNext()) {
-				next = inner.next();
-				synchronized (iterated) { // To support split iterators.
-					if (iterated.contains(next))
-						continue; // Already iterated.
-					iterated.add(next);
-				}
-				onNext = true;
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public E next() {
-			if (!hasNext())
-				throw new NoSuchElementException();
-			onNext = false;
-			return next;
-		}
-
-		@Override
-		public void remove() {
-			inner.remove();
-		}
-
-		@Override
-		public FastIterator<E> reversed() {
-			return new IteratorImpl<E>(inner.reversed(), iterated);
-		}
-
-		@Override
-		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-			inner.split(subIterators);
-			int i = 0;
-			for (FastIterator<E> itr : subIterators)
-				if (itr != null)
-					subIterators[i++] = new IteratorImpl<E>(itr, iterated);
-			return subIterators;
-		}
-
-	}
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
@@ -128,7 +61,7 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return new IteratorImpl<E>(inner.iterator(), equality());
 	}
 
@@ -144,4 +77,56 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 		});
 	}
 
+	@Override
+	public DistinctCollectionImpl<E> reversed() { // Optimization.
+	    return new DistinctCollectionImpl<E>(inner.reversed());
+	}
+
+	/** Default distinct elements iterator for generic collections **/
+	private static class IteratorImpl<E> implements Iterator<E> {
+
+		private final FastCollection<E> iterated;
+		private final Iterator<E> inner;
+		private boolean onNext;
+		private E next;
+
+		public IteratorImpl(Iterator<E> inner, Equality<? super E> equality) {
+			this.inner = inner;
+			this.iterated = (equality instanceof Order) ? FastSet
+					.newSet((Order<? super E>) equality) : FastTable
+					.newTable(equality);
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (onNext)
+				return true;
+			// Move to next.
+			while (inner.hasNext()) {
+				next = inner.next();
+				synchronized (iterated) { // To support split iterators.
+					if (iterated.contains(next))
+						continue; // Already iterated.
+					iterated.add(next);
+				}
+				onNext = true;
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public E next() {
+			if (!hasNext())
+				throw new NoSuchElementException();
+			onNext = false;
+			return next;
+		}
+
+		@Override
+		public void remove() {
+			inner.remove();
+		}
+
+	}
 }

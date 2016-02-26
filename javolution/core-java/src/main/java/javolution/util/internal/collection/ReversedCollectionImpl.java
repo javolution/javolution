@@ -8,8 +8,11 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
+import javolution.util.FractalTable;
 import javolution.util.function.Equality;
 
 /**
@@ -50,8 +53,8 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
-		return inner.iterator().reversed();
+	public Iterator<E> iterator() {
+		return new IteratorImpl<E>(inner);
 	}
 
 	@Override
@@ -59,4 +62,42 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 		return inner.size();
 	}
 
+	@Override
+	public FastCollection<E> reversed() { // Optimization.
+	    return inner;
+	}
+
+	/** Default reversed iterator for generic collections **/
+	private static class IteratorImpl<E> implements Iterator<E> {
+		private final FastCollection<E> target;
+		private final FractalTable<E> elements = new FractalTable<E>();
+		private int nextIndex;
+		private int currentIndex = -1;
+		
+		public IteratorImpl(FastCollection<E> target) {
+			this.target = target;
+			elements.addAll(target);
+			nextIndex = elements.size() - 1;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return nextIndex >= 0;
+		}
+
+		@Override
+		public E next() {
+			if (nextIndex < 0) throw new NoSuchElementException();
+			currentIndex = nextIndex--;
+			return elements.get(currentIndex);
+		}
+
+		@Override
+		public void remove() {
+			if (currentIndex < 0) throw new IllegalStateException();
+			target.remove(elements.get(currentIndex));
+			currentIndex = -1;
+		}
+	}
+	
 }

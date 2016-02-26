@@ -8,8 +8,9 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
+
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.function.Equality;
 
 /**
@@ -53,13 +54,29 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return inner.iterator();
 	}
 
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
+	}
+
+	@Override
+	public CustomEqualityCollectionImpl<E> reversed() { // Optimization.
+	    return new CustomEqualityCollectionImpl<E>(inner.reversed(), equality);
+	}
+	
+	@Override
+	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
+		inner.subViews(subViews);
+		for (int i = 0; i < subViews.length; i++) {
+			FastCollection<E> subView = subViews[i];
+			if (subView == null) continue;
+			subViews[i] = new CustomEqualityCollectionImpl<E>(subView, equality);
+		}
+		return subViews;
 	}
 
 }

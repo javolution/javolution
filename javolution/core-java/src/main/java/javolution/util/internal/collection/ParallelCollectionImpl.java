@@ -8,9 +8,11 @@
  */
 package javolution.util.internal.collection;
 
+import java.util.Iterator;
+
 import javolution.context.ConcurrentContext;
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
+import javolution.util.FastTable;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
@@ -23,20 +25,18 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 
 	private static class ForEachRunnable<E> implements Runnable {
 		private final Consumer<? super E> consumer;
-		private final FastIterator<E> iterator;
+		private final Iterator<E> iterator; // Shared
 
 		public ForEachRunnable(Consumer<? super E> consumer,
-				FastIterator<E> iterator) {
+				Iterator<E> iterator) {
 			this.consumer = consumer;
 			this.iterator = iterator;
 		}
 
 		@Override
 		public void run() {
-			if (iterator == null)
-				return;
 			while (iterator.hasNext()) {
-				consumer.accept(iterator.next());
+			   consumer.accept(iterator.next());
 			}
 		}
 
@@ -44,44 +44,38 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 
 	private static class ReduceRunnable<E> implements Runnable {
 		private final BinaryOperator<E> operator;
-		private final FastIterator<E> iterator;
+		private final Iterator<E> iterator;
 		private E result;
 
 		public ReduceRunnable(BinaryOperator<E> operator,
-				FastIterator<E> iterator) {
+				Iterator<E> iterator) {
 			this.operator = operator;
 			this.iterator = iterator;
 		}
 
 		@Override
 		public void run() {
-			if (iterator == null)
-				return;
-			E result = null;
+			if (!iterator.hasNext()) return;
+			result = iterator.next();
 			while (iterator.hasNext()) {
-				E next = iterator.next();
-				if (next == null)
-					continue;
-				result = (result != null) ? operator.apply(result, next) : next;
+				result = operator.apply(result, iterator.next());
 			}
 		}
 	}
 
 	private static class RemoveIfRunnable<E> implements Runnable {
 		private final Predicate<? super E> filter;
-		private final FastIterator<E> iterator;
+		private final Iterator<E> iterator;
 		private boolean result;
 
 		public RemoveIfRunnable(Predicate<? super E> filter,
-				FastIterator<E> iterator) {
+				Iterator<E> iterator) {
 			this.filter = filter;
 			this.iterator = iterator;
 		}
 
 		@Override
 		public void run() {
-			if (iterator == null)
-				return;
 			while (iterator.hasNext()) {
 				if (filter.test(iterator.next())) {
 					iterator.remove();
@@ -123,57 +117,49 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 	public void forEach(Consumer<? super E> consumer) {
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
-			int concurrency = ctx.getConcurrency();
-			FastIterator<E> itr = iterator();
+			int n = ctx.getConcurrency() + 1;
 			@SuppressWarnings("unchecked")
-			FastIterator<E>[] subIterators = itr
-					.split((FastIterator<E>[]) new FastIterator[concurrency + 1]);
-			for (int i = 0; i < concurrency; i++) {
-				ctx.execute(new ForEachRunnable<E>(consumer, subIterators[i]));
-			}
-			new ForEachRunnable<E>(consumer, subIterators[concurrency]).run(); // Current
-																				// thread.
+			FastCollection<E>[] subViews = new FastCollection[n];
+			inner.subViews(subViews);
+			for (FastCollection<E> subView : subViews) {
+				if (subView == null) continue;
+				ctx.execute(new ForEachRunnable<E>(consumer, subView.iterator()));
+			}			
 		} finally {
-			ctx.exit();
+			ctx.exit(); // Joins.
 		}
 	}
-
+	
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return inner.iterator();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public E reduce(BinaryOperator<E> operator) {
-		ReduceRunnable<E>[] runnables;
+		FastTable<ReduceRunnable<E>> runnables = FastTable.newTable();
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
-			int concurrency = ctx.getConcurrency();
-			FastIterator<E> itr = iterator();
-			final FastIterator<E>[] subIterators = itr
-					.split((FastIterator<E>[]) new FastIterator[concurrency + 1]);
-			runnables = new ReduceRunnable[concurrency + 1];
-			for (int i = 0; i < runnables.length; i++) {
-				runnables[i] = new ReduceRunnable<E>(operator, subIterators[i]);
-				if (i < concurrency)
-					ctx.execute(runnables[i]);
-				else
-					runnables[i].run(); // Current thread.
-			}
+			int n = ctx.getConcurrency() + 1;
+			@SuppressWarnings("unchecked")
+			FastCollection<E>[] subViews = new FastCollection[n];
+			inner.subViews(subViews);
+			for (FastCollection<E> subView : subViews) {
+				if (subView == null) continue;
+				ReduceRunnable<E> r = new ReduceRunnable<E>(operator, subView.iterator()); 
+				ctx.execute(r);
+				runnables.add(r);
+			}			
 		} finally {
 			ctx.exit();
 		}
-		E result = runnables[0].result;
-		for (int i = 1; i < runnables.length; i++) {
-			E next = runnables[i].result;
-			if (result == null)
-				result = next;
-			else if (next != null)
-				result = operator.apply(result, next);
+		Iterator<ReduceRunnable<E>> itr = runnables.iterator();
+		if (!itr.hasNext()) return null;
+		E accumulator = itr.next().result;
+		while (itr.hasNext()) {
+			accumulator = operator.apply(accumulator, itr.next().result);
 		}
-		return result;
-
+		return accumulator;
 	}
 
 	@Override
@@ -181,24 +167,21 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 		return inner.remove(searched);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean removeIf(Predicate<? super E> filter) {
-		RemoveIfRunnable<E>[] runnables;
+		FastTable<RemoveIfRunnable<E>> runnables = FastTable.newTable();
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
-			int concurrency = ctx.getConcurrency();
-			FastIterator<E> itr = iterator();
-			final FastIterator<E>[] subIterators = itr
-					.split((FastIterator<E>[]) new FastIterator[concurrency + 1]);
-			runnables = new RemoveIfRunnable[concurrency + 1];
-			for (int i = 0; i < runnables.length; i++) {
-				runnables[i] = new RemoveIfRunnable<E>(filter, subIterators[i]);
-				if (i < concurrency)
-					ctx.execute(runnables[i]);
-				else
-					runnables[i].run(); // Current thread.
-			}
+			int n = ctx.getConcurrency() + 1;
+			@SuppressWarnings("unchecked")
+			FastCollection<E>[] subViews = new FastCollection[n];
+			inner.subViews(subViews);
+			for (FastCollection<E> subView : subViews) {
+				if (subView == null) continue;
+				RemoveIfRunnable<E> r = new RemoveIfRunnable<E>(filter, subView.iterator()); 
+				ctx.execute(r);
+				runnables.add(r);
+			}			
 		} finally {
 			ctx.exit();
 		}

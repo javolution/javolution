@@ -9,9 +9,9 @@
 package javolution.util.internal.collection;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
@@ -100,7 +100,7 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		return innerConst.unmodifiable().iterator();
 	}
 
