@@ -11,7 +11,6 @@ package javolution.util.internal.map;
 import java.io.Serializable;
 import java.util.Map.Entry;
 
-import javolution.util.function.Equality;
 
 /**
  * The default entry implementation.
@@ -49,8 +48,9 @@ public final class EntryImpl<K, V> implements Entry<K, V>, Serializable {
 			return false;
 		@SuppressWarnings("unchecked")
 		Entry<K, V> that = (Entry<K, V>) obj;
-		return Equality.STANDARD.areEqual(key, that.getKey())
-				&& Equality.STANDARD.areEqual(value, that.getValue());
+		return (key == null ? that.getKey() == null : key.equals(that.getKey()))
+				&& (value == null ? that.getValue() == null
+						: value.equals(that.getValue()));
 	}
 
 	@Override

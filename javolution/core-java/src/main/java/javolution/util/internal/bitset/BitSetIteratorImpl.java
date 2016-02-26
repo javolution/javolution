@@ -13,22 +13,21 @@ import java.util.NoSuchElementException;
 
 import javolution.lang.Index;
 import javolution.util.FastBitSet;
-import javolution.util.FastIterator;
 
 /**
  * An iterator over a bit set.
  */
-public final class BitSetIteratorImpl implements FastIterator<Index> {
+public final class BitSetIteratorImpl implements Iterator<Index> {
 
     private final FastBitSet that;
     private int nextIndex;
     private int currentIndex = -1;
-    private final boolean unmodifiable;
+    private boolean reversed;
 
-    public BitSetIteratorImpl(FastBitSet that, int index, boolean unmodifiable) {
+    public BitSetIteratorImpl(FastBitSet that, boolean reversed) {
         this.that = that;
-        this.nextIndex = that.nextSetBit(index);
-        this.unmodifiable = unmodifiable;
+        this.nextIndex = reversed ? that.previousSetBit(that.length()-1) : that.nextSetBit(0);
+        this.reversed = reversed;
     }
 
     public boolean hasNext() {
@@ -39,28 +38,15 @@ public final class BitSetIteratorImpl implements FastIterator<Index> {
         if (nextIndex < 0)
             throw new NoSuchElementException();
         currentIndex = nextIndex;
-        nextIndex = that.nextSetBit(nextIndex + 1);
+        nextIndex = reversed ? that.previousSetBit(nextIndex - 1) : that.nextSetBit(nextIndex + 1);
         return Index.of(currentIndex);
     }
 
     public void remove() {
-    	if (unmodifiable) 
-    		throw new UnsupportedOperationException("Read-Only BitSet.");
         if (currentIndex < 0)
             throw new IllegalStateException();
         that.clear(currentIndex);
         currentIndex = -1;
     }
 
-	@Override
-	public FastIterator<Index>[] split(FastIterator<Index>[] subIterators) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public FastIterator<Index> reversed() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

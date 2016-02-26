@@ -13,6 +13,7 @@ import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
@@ -25,10 +26,8 @@ import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
-import javolution.util.internal.map.EntryImpl;
 import javolution.util.internal.map.EntrySetImpl;
 import javolution.util.internal.map.KeySetImpl;
-import javolution.util.internal.map.MapIteratorImpl;
 import javolution.util.internal.map.SubMapImpl;
 import javolution.util.internal.map.ValuesImpl;
 
@@ -36,21 +35,16 @@ import javolution.util.internal.map.ValuesImpl;
  * <p> A high-performance map ({@link SparseMap trie-based}) 
  *     with documented {@link Realtime real-time} behavior.</p>
  * 
- * <p> Iterations order over map keys, values or entries is typically determined 
- *     by the map {@link #order() order} except for {@link #newLinkedMap() 
- *     linked maps} for which the iterations order is based on the insertion 
- *     order.</p> 
- * 
- * <p> Instances of this class can advantageously replace {@code java.util.*} 
- *     maps in terms of adaptability, space or performance. 
+ * <p> Iterations order over map keys, values or entries is always determined 
+ *     by the map {@link #keyOrder() key order}. This order can be the 
+ *     insertion order for {@link #newLinkedMap() linked maps}.
  * <pre>{@code
- * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order.
- * FastMap<Foo, Bar> linkedHashMap = FastMap.newLinkedMap(); // Insertion order.
- * FastMap<Foo, Bar> concurrentHashMap = FastMap.newSharedMap(); // Implements ConcurrentMap interface.
+ * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
+ * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
  * FastMap<String, Bar> treeMap = FastMap.newMap(Order.LEXICAL); 
- * FastMap<String, Bar> linkedTreeMap = FastMap.newLinkedMap(Order.LEXICAL); // Does not exist in standard Java! 
- * FastMap<String, Bar> concurrentSkipListMap = FastMap.newSharedMap(Order.LEXICAL);
- * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY_HASH);
+ * FastMap<Foo, Bar> linkedHashMap = FastMap.newLinkedMap(); // Insertion order.
+ * FastMap<Foo, Bar> concurrentHashMap = new SparseMap<Foo, Bar>().shared(); // Implements ConcurrentMap interface.
+ * FastMap<String, Bar> concurrentSkipListMap = new SparseMap<Foo, Bar>(Order.LEXICAL).shared();
  * ...
  * }</pre> </p> 
  * <p> FastMap supports various views.
@@ -77,10 +71,8 @@ import javolution.util.internal.map.ValuesImpl;
  * }</pre></p>
  * 
  * <p> In addition to concurrent map interface being implemented,  
- *     fast map supports direct entry access/addition/removal 
- *     ({@link #getEntry getEntry} / {@link #putEntry putEntry} / 
- *     {@link #removeEntry removeEntry}).
- * [code]
+ *     fast map supports direct entry {@link #getEntry access}.
+ * <pre>{@code
  * FastMap<CharSequence, Index> wordCount = FastMap.newMap(Order.LEXICAL);    
  * void incrementCount(CharSequence word) {
  *     Entry<CharSequence, Index> entry = wordCount.getEntry(word); // Fast !
@@ -89,7 +81,10 @@ import javolution.util.internal.map.ValuesImpl;
  *     } else {
  *         wordCount.put(word, Index.ONE); // New entry.
  *     }
- * }[/code]</p> 
+ * }}</pre></p>
+ *  
+ * @param <K> the type of keys maintained by this map (can be {@code null})
+ * @param <V> the type of mapped values (can be {@code null})
  *             
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 7.0, September 13, 2015
@@ -121,77 +116,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     }
     
     /**
-     * Returns a new empty map (based on sparse arrays) using the specified 
-     * key order and value equality.
-     * 
-     * @return {@code new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality)}
-     */
-    public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder, 
-    		Equality<? super V> valueEquality) {
-    	return new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality);
-    }
-    
-    /**
-     * Returns a new empty shared hash map (based on sparse arrays).
-     * 
-     * @return {@code new SparseMap<K,V>().shared()}
-     */
-    public static <K,V> FastMap<K,V> newSharedMap() {
-    	return new SparseMap<K,V>().shared();
-    }
-    
-    /**
-     * Returns a new empty shared map (based on sparse arrays) using the 
-     * specified key order.
-     * 
-     * @return {@code new SparseMap<K,V>(keyOrder).shared()}
-     */
-    public static <K,V> FastMap<K,V> newSharedMap(Order<? super K> keyOrder) {
-    	return new SparseMap<K,V>(keyOrder).shared();
-    }
-    
-    /**
-     * Returns a new empty shared map (based on sparse arrays) using 
-     * the specified key order and value equality.
-     * 
-     * @return {@code new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality).shared()}
-     */
-    public static <K,V> FastMap<K,V> newSharedMap(Order<? super K> keyOrder, 
-    		Order<? super V> valueEquality) {
-    	return new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality).shared();
-    }
-    
-    /**
-     * Returns a new empty atomic hash map (based on sparse arrays).
-     * 
-     * @return {@code new SparseMap<K,V>().atomic()}
-     */
-    public static <K,V> FastMap<K,V> newAtomicMap() {
-    	return new SparseMap<K,V>().atomic();
-    }
- 
-    /**
-     * Returns a new empty atomic map (based on sparse arrays) using the 
-     * specified key order.
-     * 
-     * @return {@code new SparseMap<K,V>(keyOrder).atomic()}
-     */
-    public static <K,V> FastMap<K,V> newAtomicMap(Order<? super K> keyOrder) {
-    	return new SparseMap<K,V>(keyOrder).atomic();
-    }
-    
-    /**
-     * Returns a new empty atomic map (based on sparse arrays) using 
-     * the specified key order and value equality.
-     * 
-     * @return {@code new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality).atomic()}
-     */
-    public static <K,V> FastMap<K,V> newAtomicMap(Order<? super K> keyOrder, 
-    		Order<? super V> valueEquality) {
-    	return new SparseMap<K,V>(keyOrder).valuesUsing(valueEquality).atomic();
-    }
-    
-    /**
      * Returns a new empty linked hash map (based on sparse arrays).
      * Iterations order is based on insertion order.
      * 
@@ -200,29 +124,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     public static <K,V> FastMap<K,V> newLinkedMap() {
     	return null;
     }
- 
-    /**
-     * Returns a new empty linked map (based on sparse arrays) using the 
-     * specified key order.
-     * Iterations order is based on insertion order.
-     * 
-     * @return {@code new LinkedMap<K,V>(keyOrder)}
-     */
-    public static <K,V> FastMap<K,V> newLinkedMap(Order<? super K> keyOrder) {
-    	return null;
-    }
-    
-    /**
-     * Returns a new empty linked map (based on sparse arrays) using 
-     * the specified key order and value equality.
-     * Iterations order is based on insertion order.
-     * 
-     * @return {@code new LinkedMap<K,V>(keyOrder).valuesUsing(valueEquality)}
-     */
-    public static <K,V> FastMap<K,V> newLinkedMap(Order<? super K> keyOrder, 
-    		Order<? super V> valueEquality) {
-    	return null;
-    }   
     
     /**
      * Default constructor.
@@ -316,8 +217,8 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      * Returns a view of the portion of this map whose keys range from 
      * fromKey, inclusive, to toKey, exclusive.
      * 
-     * @param fromKey the first key inclusive or {@code null} for head maps.
-     * @param toKey the last key exclusive or {@code null} for tail maps.
+     * @param fromKey the first key inclusive.
+     * @param toKey the last key exclusive.
      */
     @Override
     public FastMap<K, V> subMap(K fromKey, K toKey) {
@@ -328,14 +229,14 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      *  less than toKey. */
     @Override
     public FastMap<K, V> headMap(K toKey) {
-        return subMap(null, toKey);
+        return null;
     }
 
     /** Returns a view of the portion of this map whose keys are greater 
      *  than or equal to fromKey. */
     @Override
     public FastMap<K, V> tailMap(K fromKey) {
-        return subMap(fromKey, null);
+        return null;
     }
 
     /**
@@ -412,32 +313,15 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      */
     @Override
     @Realtime(limit = CONSTANT)
-    public V remove(Object key) {
-    	@SuppressWarnings("unchecked")
-		Entry<K,V> previous = removeEntry((K)key);
-    	return previous != null ? previous.getValue() : null;
-    }
+    public abstract V remove(Object key);
 
     /** 
      * Returns the entry for the specified key or {@code null} if none.
-     * This method may return specific entry types (e.g. entry with additional
+     * Sub-classes may return specific entry types (e.g. entries with additional
      * fields).
      */
     @Realtime(limit = CONSTANT)
     public abstract Entry<K,V> getEntry(K key);
-
-    /** 
-     * Adds the specified entry to this map and returns the previous entry
-     * with the same key if any.
-     */
-    @Realtime(limit = CONSTANT)
-    public abstract Entry<K,V> putEntry(Entry<K,V> entry);
-
-    /** 
-     * Removes and returns the entry for the specified key.
-     */
-    @Realtime(limit = CONSTANT)
-    public abstract Entry<K,V> removeEntry(K key);
 
     /** 
      * Associates the specified value with the specified key.
@@ -446,9 +330,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      */
     @Override
     @Realtime(limit = CONSTANT)
-    public V put(K key, V value) {
-    	return putEntry(new EntryImpl<K,V>(key,value)).getValue();
-    }
+    public abstract V put(K key, V value);
 
     /** Adds the specified map entries to this map. */
     @Override
@@ -531,57 +413,41 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
      */
 	@Override
 	@Realtime(limit = CONSTANT)
-	public final K firstKey() {
-		Entry<K,V> firstEntry = firstEntry();;
-		return (firstEntry != null) ? firstEntry.getKey() : null;
-	}
+	public abstract K firstKey();
 
 	/** 
      * Returns the last key of this map or {@link null} if the map is empty.
      */
 	@Override
 	@Realtime(limit = CONSTANT)
-	public final K lastKey() {
-		Entry<K,V> lastEntry = lastEntry();;
-		return (lastEntry != null) ? lastEntry.getKey() : null;
-	}
+	public abstract K lastKey();
 
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
 
     /** 
-     * Returns the first entry of this map or {@link null} if the map is empty.
+     * Returns the entry ordered after the one specified.
+     * 
+     * @param previous the entry ordered before the one to be returned
+     *        or {@code null} to return the first entry.
+     * @return the corresponding entry or {@code null} if none.
      */
 	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> firstEntry();
-
-	/** 
-     * Returns the last entry of this map or {@link null} if the map is empty.
+	public abstract Entry<K,V> getEntryAfter(Entry<K,V> previous);
+	
+    /** 
+     * Returns the entry ordered before the one specified.
+     * 
+     * @param next the entry ordered after the one to be returned
+     *        or {@code null} to return the last entry.
+     * @return the corresponding entry or {@code null} if none.
+     * @throws IllegalArgumentException if the specified entry is not 
      */
 	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> lastEntry();
-
-    /**
-     * Returns the entry after the specified key or {@code null} if none. 
-     */
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> entryAfter(K key);
-    
-    /**
-     * Returns the entry before the specified key or {@code null} if none. 
-     */
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> entryBefore(K key);
-    
-	/** 
-     * Returns the entry at mid-point between the specified key or 
-     * {@link null} if none.
-     */
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> midEntry(K fromKey, K toKey);
-
-    /**
+	public abstract Entry<K,V> getEntryBefore(Entry<K,V> next);
+	
+	/**
      * Compares the specified object with this map for equality.
      * This method follows the {@link Map#equals(Object)} specification 
      * regardless of the fast map's key/value equalities.
@@ -617,27 +483,10 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     }
 
     /**
-     * Returns the iterator over this map's entries.
+     * Returns the iterator over all this map's entries.
      */
-	public FastIterator<Entry<K,V>> iterator() {
-		return iterator(null, null);
-	}
-
-    /** Returns the iterator over this map's entries starting from 
-     *  the specified key (inclusive).     */
-	public FastIterator<Entry<K,V>> iterator(K fromKey) {
-		return iterator(fromKey, null);
-	}
-
-    /**
-     * Returns the iterator over this map's entries between the from 
-     * key (inclusive) and the toKey (exclusive) (or {@code null} if
-     * no upper bound). 
-     */
-	public FastIterator<Entry<K,V>> iterator(K fromKey, K toKey) {
-		return new MapIteratorImpl<K,V>(this, fromKey, toKey);
-	}
-
+	public abstract Iterator<Entry<K,V>> iterator();
+	
 	/** 
      * Returns the string representation of this map using its 
      * {@link TextContext contextual format}.

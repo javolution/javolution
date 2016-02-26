@@ -9,9 +9,13 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.LINEAR;
+
+import java.util.Iterator;
+
 import javolution.lang.Constant;
 import javolution.lang.Index;
 import javolution.lang.Realtime;
+import javolution.util.internal.bitset.BitSetIteratorImpl;
 import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
@@ -316,4 +320,10 @@ public abstract class FastBitSet extends FastSet<Index> {
      */
     @Realtime(limit = LINEAR)
     public abstract void xor(FastBitSet that);
+    
+    @Override
+    public Iterator<Index> iterator() {
+        return new BitSetIteratorImpl(this, false);
+    }
+
 }

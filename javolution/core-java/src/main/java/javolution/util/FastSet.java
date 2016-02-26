@@ -12,7 +12,6 @@ import static javolution.lang.Realtime.Limit.CONSTANT;
 
 import java.util.SortedSet;
 
-import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
 import javolution.util.function.Order;
 
@@ -29,21 +28,19 @@ import javolution.util.function.Order;
  *     sets in terms of adaptability, space or performance. 
  * <pre>{@code
  * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
+ * FastSet<Foo> identityHashSet = FastSet.newSet(Equality.IDENTITY);
  * FastSet<Foo> linkedHashSet = newLinkedSet(); // Iteration order.
- * FastSet<Foo> concurrentHashSet = FastSet.newSharedSet(); 
- * FastSet<String> treeSet = FastSet.newSet(Equalities.LEXICAL); 
- * FastSet<String> linkedTreeSet = FastSet.newLinkedSet(Equalities.LEXICAL);  // Does not exist in standard Java! 
- * FastSet<String> concurrentSkipListSet = FastSet.newSharedSet(Equalities.LEXICAL);
- * FastSet<Foo> identityHashSet = FastSet.newSet(Equalities.IDENTITY_HASH);
- * ...
- * FastSet<Foo> copyOnWriteArraySet = FastSet.newAtomicSet();
+ * FastSet<String> treeSet = FastSet.newSet(Equality.LEXICAL); 
+ * FastSet<Foo> concurrentHashSet = new SparseSet<Foo>().shared(); 
+ * FastSet<String> concurrentSkipListSet = new SparseSet<String>(Equality.LEXICAL).shared();
+ * FastSet<Foo> copyOnWriteArraySet = new SparseSet<Foo>().atomic();
  * ...
  * }</pre> </p>
  * 
  * <p> This class inherits all the {@link FastCollection} views and support 
  *     the new {@link #subSet subSet} view over a portion of the set.
  * <pre>{@code
- * FastSet<String> names = FastSet.newSet(Equalities.LEXICAL); 
+ * FastSet<String> names = FastSet.newSet(Equality.LEXICAL); 
  * ...
  * names.subSet("A", "B").clear(); // Removes the names starting with "A"  (see java.util.SortedSet.subSet specification).
  * names.filter(str -> str.length < 5).clear(); // Removes all short name (Java 8 notation).
@@ -79,87 +76,15 @@ public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<
     }
   
     /**
-     * Returns a new empty atomic set (based on sparse arrays). All operations
-     * that write or access multiple elements in the table (such as 
-     * {@code addAll(), retainAll()}) are atomic. 
-     * All read operations are mutex-free.
-     * 
-     * @return {@code new SparseSet<E>().atomic()}
-     * @see SparseSet
-     */
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
-    public static <E> FastSet<E> newAtomicSet() {
-    	return new SparseSet<E>().atomic();
-    }
-	
-    /**
-     * Returns a new empty atomic set (based on sparse arrays) using the 
-     * specified elements order. All operations that write or access multiple 
-     * elements in the table (such as {@code addAll(), retainAll()}) are atomic. 
-     * All read operations are mutex-free.
-     * 
-     * @return {@code new SparseSet<E>(order).atomic()}
-     * @see SparseSet
-     */
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
-    public static <E> FastSet<E> newAtomicSet(Order<? super E> order) {
-    	return new SparseSet<E>(order).atomic();
-    }
-
-	/**
-     * Returns a new empty thread-safe set (based on sparse arrays).
-     * The returned set allows for concurrent read as long as there 
-     * is no writer. The default implementation is based on <a href=
-	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-	 * readers-writers locks</a> giving priority to writers.
-     * 
-     * @return {@code new SparseSet<E>().shared()}
-     * @see SparseSet
-     */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
-    public static <E> FastSet<E> newSharedSet() {
-    	return new SparseSet<E>().shared();
-    }
-    
-	/**
-     * Returns a new empty thread-safe set (based on sparse arrays) using the 
-     * specified elements order.
-     * The returned set allows for concurrent read as long as there 
-     * is no writer. The default implementation is based on <a href=
-	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-	 * readers-writers locks</a> giving priority to writers.
-     * 
-     * @return {@code new SparseSet<E>(order).shared()}
-     * @see SparseSet
-     */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
-    public static <E> FastSet<E> newSharedSet(Order<? super E> order) {
-    	return new SparseSet<E>(order).shared();
-    }
-    
-    /**
-     * Returns a new empty linked hash set (based on sparse arrays).
-     * Iterations order is based on insertion order.
+     * Returns a new empty sorted set (based on sparse arrays) 
+     * using an insertion order. 
      * 
      * @return {@code new LinkedSet<E>()}
-     * @see LinkedSet
      */
     public static <E> FastSet<E> newLinkedSet() {
     	return null;
     }
  
-    /**
-     * Returns a new empty linked map (based on sparse arrays) using the 
-     * specified elements order.
-     * Iterations order is based on insertion order.
-     * 
-     * @return {@code new LinkedSet<E>(order)}
-     * @see LinkedSet
-     */
-    public static <E> FastSet<E> newLinkedSet(Order<? super E> order) {
-    	return null;
-    }
-    
     /**
      * Default constructor.
      */

@@ -16,7 +16,6 @@ import javolution.lang.MathLib;
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
-import javolution.util.internal.bitset.BitSetIteratorImpl;
 
 /**
  * <p> An array data structure that compactly stores bits.</p>
@@ -190,11 +189,6 @@ public class BitArray extends FastBitSet {
             if ((bits[i] & thatBits[i]) != 0) return true; 
         }
         return false;
-    }
-
-   @Override
-    public FastIterator<Index> iterator() {
-        return new BitSetIteratorImpl(this, 0, false);
     }
 
     @Override

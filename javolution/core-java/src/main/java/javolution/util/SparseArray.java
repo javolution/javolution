@@ -28,11 +28,12 @@ import javolution.util.function.Order;
  * @version 7.0, September 13, 2015
  */
 public class SparseArray<E> extends FastMap<Index, E> {
-	
+
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final int SHIFT = 4;
 	private static final int SIZE = 1 << SHIFT;
 	private static final int MASK = SIZE - 1;
+
 	private static final Object UPSIZE = new Object();
 	private static final Object DOWNSIZE = new Object();
 	private static final Object DELETE = new Object();
@@ -56,27 +57,11 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public FastMap<Index, E> clone() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Entry<Index, E> entryAfter(Index key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Entry<Index, E> entryBefore(Index key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Entry<Index, E> firstEntry() {
-		// TODO Auto-generated method stub
-		return null;
+	public SparseArray<E> clone() {
+		SparseArray<E> copy = new SparseArray<E>();
+		copy.root = (root != null) ? root.clone() : null;
+		copy.size = size;
+		return copy;
 	}
 
 	/**
@@ -89,6 +74,11 @@ public class SparseArray<E> extends FastMap<Index, E> {
 
 	@Override
 	public Entry<Index, E> getEntry(Index key) {
+		return (root != null) ? root.getEntry(key.intValue()) : null;
+	}
+
+	@Override
+	public FastIterator<Entry<Index, E>> iterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -99,21 +89,8 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public Entry<Index, E> lastEntry() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Entry<Index, E> midEntry(Index fromKey, Index toKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Entry<Index, E> putEntry(Entry<Index, E> entry) {
-		// TODO Auto-generated method stub
-		return null;
+	public E put(Index key, E value) {
+		return set(key.intValue(), value);
 	}
 
 	/**
@@ -138,9 +115,8 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public Entry<Index, E> removeEntry(Index key) {
-		// TODO Auto-generated method stub
-		return null;
+	public E remove(Object key) {
+		return (key instanceof Index) ? set(((Index)key).intValue(), null) : null;
 	}
 
 	/**
@@ -200,18 +176,47 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	public Equality<? super E> valueEquality() {
 		return Equality.STANDARD;
 	}
-
+	
+	/**
+	 * Returns the minimal shift for two indices (the higher the number of
+	 * common high bits the minimal the shift)
+	 */
+	private static int commonShift(int i, int j) {
+		int xor = i ^ j;
+		if ((xor & 0xFFFF0000) == 0)
+			if ((xor & 0xFFFFFF00) == 0)
+				if ((xor & 0xFFFFFFF0) == 0)
+					return 0;
+				else
+					return 4;
+			else if ((xor & 0xFFFFF000) == 0)
+				return 8;
+			else
+				return 12;
+		else if ((xor & 0xFF000000) == 0)
+			if ((xor & 0xFFF00000) == 0)
+				return 16;
+			else
+				return 20;
+		else if ((xor & 0xF0000000) == 0)
+			return 24;
+		else
+			return 28;
+	}
+	
 	/**
 	 * A Node is either an entry node (leaf) or a trie structure. To ensure
 	 * minimal depth and memory footprint, there is no trie structure with less
 	 * than two sub-nodes. Also there is no entry node with null elements.
 	 */
 	private interface Node<V> {
+		Node<V> clone();
 		Node<V> downsize(int indexRemoved); // Returns the down-sized node.
 		V get(int index);
-		Object remove(int index); // May return DOWNSIZE or DELETE (for Entry)
-		Object set(int index, V value); // May return UPSIZE request.
-		Object setIfAbsent(int index, V value); // May return UPSIZE request.
+		EntryNode<V> getEntry(int index);
+		Object remove(int index); // May return DOWNSIZE (trie node) or DELETE (entry node)
+		Object set(int index, V value); // May return UPSIZE request, value should never be null.
+		Object setIfAbsent(int index, V value); // May return UPSIZE request, value should never be null.
 		Node<V> upsize(int indexAdded); // Returns the up-sized node.
 	}
 
@@ -219,10 +224,15 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	private static final class EntryNode<V> implements Node<V>, Entry<Index, V> {
 		private final int index;
 		private V value; // Always different from null.
-		
+
 		public EntryNode(int index, V value) {
 			this.index = index;
 			this.value = value;
+		}
+
+		@Override
+		public EntryNode<V> clone() {
+			return new EntryNode<V>(index, value);
 		}
 
 		@Override
@@ -230,9 +240,44 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			throw new UnsupportedOperationException("Cannot downsize entries");
 		}
 
+		public boolean equals(EntryNode<V> that) { 
+			return (this.index == that.index) && (this.value.equals(that.value));
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public boolean equals(Object obj) { // As per Map.Entry contract.
+			if (obj instanceof EntryNode) return equals((EntryNode<V>)obj);
+			if (!(obj instanceof Entry)) return false;
+			Entry<Index, V> that = (Entry<Index, V>) obj;
+			Index thatKey = that.getKey();
+			return (thatKey != null) && (index == thatKey.intValue())
+					&& value.equals(that.getValue());
+		}
+
 		@Override
 		public V get(int i) {
 			return (index == i) ? value : null;
+		}
+
+		@Override
+		public EntryNode<V> getEntry(int i) {
+			return (index == i) ? this : null;
+		}
+
+		@Override
+		public Index getKey() {
+			return Index.of(index);
+		}
+
+		@Override
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public int hashCode() { // As per Map.Entry contract.
+			return index ^ value.hashCode();
 		}
 
 		@Override
@@ -248,7 +293,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			value = newValue;
 			return previous;
 		}
-
+		
 		@Override
 		public Object setIfAbsent(int i, V newValue) {
 			if (index != i)
@@ -257,66 +302,53 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		}
 
 		@Override
-		public Node<V> upsize(int indexAdded) {
-			return new TrieNode<V>(commonShift(index, indexAdded), index, this);
-		}
-
-		@Override
-		public Index getKey() {
-			return Index.of(index);
-		}
-
-		@Override
-		public V getValue() {
-			return value;
-		}
-
-		@Override
 		public V setValue(V newValue) {
 			V previous = value;
 			value = newValue;
 			return previous;
-		}
-		
-		@Override
-		public boolean equals(Object obj) { // As per Map.Entry contract.
-			if (!(obj instanceof Entry))
-				return false;
-			@SuppressWarnings("unchecked")
-			Entry<Index, V> that = (Entry<Index, V>) obj;
-			return Equality.STANDARD.areEqual(this.getKey(), that.getKey())
-					&& Equality.STANDARD.areEqual(value, that.getValue());
-		}
-
-		@Override
-		public int hashCode() { // As per Map.Entry contract.
-			return index;
 		}
 
 		@Override
 		public String toString() {
 			return "(" + index + '=' + value + ')'; // For debug.
 		}
-	}
 
+		@Override
+		public Node<V> upsize(int indexAdded) {
+			return new TrieNode<V>(commonShift(index, indexAdded), index, this);
+		}
+	}
+	
 	/** Defines the trie node */
 	private static final class TrieNode<V> implements Node<V> {
 		@SuppressWarnings("unchecked")
 		private final Node<V>[] trie = (Node<V>[]) new Node[SIZE];
-		private final int shift; // 32 - SHIFT - 'prefix bit length'
-		private final int prefix; // Lower bits are reset.
-		int count; // Number of sub-node set.
+		private final int shift; // 0 for leaf trie-nodes
+		private final int prefix; // Lower (shift) bits are reset.
+		int count; // Number of direct sub-nodes different from null.
 
 		public TrieNode(int shift, int index, Node<V> subNodeAtIndex) {
 			this.shift = shift;
-			this.prefix = index & (0xFFFFFFF0 << shift);
+			this.prefix = index & (~MASK << shift);
 			trie[(index >>> shift) & MASK] = subNodeAtIndex;
 			count = 1;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
-		public Node<V> downsize(int indexRemoved) { // Only called if count
-													// would go to 1.
+		public TrieNode<V> clone() {
+			try {
+				TrieNode<V> copy = (TrieNode<V>)super.clone();
+				for (int i=0, n=copy.trie.length; i < n; i++)
+					if (trie[i] != null) trie[i] = trie[i].clone();
+				return copy;
+			} catch (CloneNotSupportedException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		@Override
+		public Node<V> downsize(int indexRemoved) { // Called if count goes to 1
 			int j = (indexRemoved >>> shift) & MASK;
 			for (int i = 0; (i < trie.length) & (i != j); i++) {
 				Node<V> n = trie[i];
@@ -327,11 +359,17 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		}
 
 		@Override
-		public V get(int index) {
+		public V get(int i) {
 			// We don't check the prefix, since the index will be validated
 			// (or not) by the entry node.
-			Node<V> n = trie[(index >>> shift) & MASK];
-			return (n != null) ? n.get(index) : null;
+			Node<V> n = trie[(i >>> shift) & MASK];
+			return (n != null) ? n.get(i) : null;
+		}
+
+		@Override
+		public EntryNode<V> getEntry(int i) {
+			Node<V> n = trie[(i >>> shift) & MASK];
+			return (n != null) ? n.getEntry(i) : null;
 		}
 
 		@Override
@@ -344,11 +382,12 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			if (previous == DOWNSIZE) {
 				previous = n.get(index);
 				trie[i] = n.downsize(index);
-			} else if (previous == DELETE) {
+			} else if (previous == DELETE) { // EntryNode 
 				if (count <= 2)
 					return DOWNSIZE;
 				previous = n.get(index);
 				trie[i] = null;
+				count--;
 			}
 			return previous;
 		}
@@ -398,33 +437,6 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			return new TrieNode<V>(commonShift(prefix, indexAdded), prefix,
 					this);
 		}
-
 	}
 
-	/**
-	 * Returns the minimal shift for two indices (the higher the number of
-	 * common high bits the minimal the shift)
-	 */
-	private static int commonShift(int i, int j) {
-		int xor = i ^ j;
-		if ((xor & 0xFFFF0000) == 0)
-			if ((xor & 0xFFFFFF00) == 0)
-				if ((xor & 0xFFFFFFF0) == 0)
-					return 0;
-				else
-					return 4;
-			else if ((xor & 0xFFFFF000) == 0)
-				return 8;
-			else
-				return 12;
-		else if ((xor & 0xFF000000) == 0)
-			if ((xor & 0xFFF00000) == 0)
-				return 16;
-			else
-				return 20;
-		else if ((xor & 0xF0000000) == 0)
-			return 24;
-		else
-			return 28;
-	}
 }

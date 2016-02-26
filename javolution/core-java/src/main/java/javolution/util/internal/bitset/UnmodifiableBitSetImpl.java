@@ -8,11 +8,8 @@
  */
 package javolution.util.internal.bitset;
 
-import java.util.Iterator;
-
 import javolution.lang.Index;
 import javolution.util.FastBitSet;
-import javolution.util.FastIterator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
@@ -187,11 +184,6 @@ public final class UnmodifiableBitSetImpl extends FastBitSet {
 	@Override
 	public boolean add(Index element) {
 		throw new UnsupportedOperationException("Unmodifiable");
-	}
-
-	@Override
-	public FastIterator<Index> iterator() {
-	    return new BitSetIteratorImpl(this, 0, true);
 	}
     
 }

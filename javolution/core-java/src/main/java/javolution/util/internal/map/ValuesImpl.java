@@ -49,15 +49,9 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 		}
 
 		@Override
-		public FastIterator<V>[] split(FastIterator<V>[] subIterators) {
-			@SuppressWarnings("unchecked")
-			FastIterator<Entry<K, V>>[] mapItrs = mapItr
-					.split((FastIterator<Entry<K, V>>[]) subIterators);
-			int i = 0;
-			for (FastIterator<Entry<K, V>> itr : mapItrs)
-				if (itr != null)
-					subIterators[i++] = new IteratorImpl<K, V>(itr);
-			return subIterators;
+		public FastIterator<V> trySplit() {
+			FastIterator<Map.Entry<K, V>> split = mapItr.trySplit();
+			return split != null ? new IteratorImpl<K, V>(split) : null;
 		}
 	}
 

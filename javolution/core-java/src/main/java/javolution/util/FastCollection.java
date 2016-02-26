@@ -66,11 +66,10 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * mapping function.</li>
  * <li>{@link #sorted(Comparator)} - View exposing elements sorted according to
  * the specified comparator.</li>
- * <li>{@link #reversed} - View exposing elements in the reverse iterative
- * order.</li>
+ * <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
  * <li>{@link #distinct} - View exposing each element only once.</li>
- * <li>{@link #linked} - View exposing each element sorted based on their 
- *     [@link {@link #add insertion} order.</li>
+ * <li>{@link #linked} - View exposing each element based on its {@link #add 
+ *      insertion} order in the view.</li>
  * <li>{@link #using(Equality)} - View using the specified comparator to test
  * for equality (e.g. {@link #contains}, {@link #remove}, {@link #distinct},
  * ...)</li>
@@ -81,13 +80,14 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * </p>
  * <p> In general, the chaining order does matter!
  * <pre>{@code 
- * FastCollection<String> elements ...;
+ * FastCollection<String> names ...;
+ * ConstantTable<String> namesToRemove = ConstantTable.of("Eva Poré");
  *      
  * // Parallel processing.
- * elements.using(Equality.IDENTITY).parallel().removeAll(ConstantTable.of("Eva Poré"));
+ * elements.using(Equality.IDENTITY).parallel().removeAll(namesToRemove);
  *      
  * // Sequential, using(Equality) is not a parallel view.  
- * elements.parallel().using(Equality.IDENTITY).removeAll(ConstantTable.of("Eva Poré"));
+ * elements.parallel().using(Equality.IDENTITY).removeAll(namesToRemove);
  * 
  * // Thread-safe view.
  * elements.distinct().shared();
@@ -107,7 +107,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * <p> Views are similar to <a
  *     href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
  *     Java 8 streams</a> except that views are themselves collections and 
- *     support actions which may impact the original collection. 
+ *     actions on the view will impact the original collection. 
  *     Collection views are nothing "new" since they already existed in the 
  *     original java.util collection classes (e.g. List.subList(...), 
  *     Map.keySet(), Map.values()). Javolution extends to this concept and 
@@ -139,14 +139,12 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * return matching;
  * }</pre></p>
  * 
- * <p> If the collection is {@link #parallel parallel}, the default implementation
- *     uses {@link ConcurrentContext} to dispatch parallel processing. Sequential
- *     views ({@link #sequential sequential} and {@link #sorted sorted}) always
- *     perform closure operations in sequential order (same order as iterators).
+ * <p> Closure operations are performed in sequential order (same order as 
+ *     the view iterator) except for {@link #parallel parallel} views when 
+ *     multiple iterations can be performed concurrently.
  * <pre>{@code
- * FastTable<Runnable> tasks = ...;
+ * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order.
  * tasks.parallel().forEach(task -> task.run()); // Execute concurrently each task and wait for their completion to continue.
- * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order (even if names is parallel())
  * }</pre></p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -197,12 +195,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 
 	/**
 	 * Returns a view allowing bulk collection operations to be performed
-	 * {@link javolution.context.ConcurrentContext in parallel} internally using
+	 * {@link javolution.context.ConcurrentContext in parallel} using
 	 * {@link ConcurrentContext}.
-	 * 
-	 * <p>
-	 * Note: This view is not thread-safe for external threads.
-	 * </p>
 	 * 
 	 * @return the parallel view.
 	 * @see #forEach
@@ -238,8 +232,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * ensures that this collection has only elements satisfying the filter
 	 * predicate.
 	 * 
-	 * @param filter
-	 *            the filter predicate.
+	 * @param filter the filter predicate.
 	 * @return the filtered view.
 	 */
 	public FastCollection<E> filter(Predicate<? super E> filter) {
@@ -250,8 +243,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * Returns a view exposing elements through the specified mapping function.
 	 * The returned view does not allow new elements to be added.
 	 * 
-	 * @param function
-	 *            the mapping function.
+	 * @param function the mapping function.
 	 * @return the mapped view.
 	 */
 	public <R> FastCollection<R> map(Function<? super E, ? extends R> function) {
@@ -262,8 +254,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * Returns a view exposing its elements sorted according to the specified
 	 * comparator.
 	 * 
-	 * @param comparator
-	 *            the comparator used for sorting.
+	 * @param comparator the comparator used for sorting.
 	 * @return the sorted view.
 	 */
 	public FastCollection<E> sorted(Comparator<? super E> comparator) {
@@ -275,9 +266,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * order (convenience method).
 	 * 
 	 * @return {@code sorted(Equalities.NATURAL)}
-	 * @throws ClassCastException
-	 *             if this collection's elements do not implement
-	 *             {@link Comparable}.
+	 * @throws ClassCastException if this collection's elements do not implement
+	 *         {@link Comparable}.
 	 * @see #sorted(Comparator)
 	 * @see Order#NATURAL
 	 */
@@ -291,13 +281,24 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * @return reversed view.
 	 */
 	public FastCollection<E> reversed() {
-		return new ReversedCollectionImpl<E>(this);
+	    return new ReversedCollectionImpl<E>(this);
+	}
+
+	/**
+	 * Returns distinct sub-views over this collection.
+	 * 
+	 * @param subViews the array to return the sub-views.
+	 * @return the specified sub-views array (may contains {@code null} 
+	 *         values if the collection cannot be fully split).
+	 */
+	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
+		subViews[0] = this;
+		return subViews;
 	}
 
 	/**
 	 * Returns a view exposing only distinct elements. It does not iterate twice
-	 * over the {@link #equality() same} elements even when iterations are
-	 * performed in {@link #parallel() in parallel}. Adding elements already
+	 * over the {@link #equality() same} elements. Adding elements already
 	 * present has no effect. If this collection is initially empty, using a
 	 * distinct view to add new elements ensures that this collection has no
 	 * duplicate element.
@@ -385,22 +386,19 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * operator needs to be associative). If this collection is empty this
 	 * method returns {@code null}.
 	 * 
-	 * @param operator
-	 *            the binary operator applied to the collection elements.
+	 * @param operator the binary operator applied to the collection elements.
 	 * @return the result of the reduction or {@code null} if the collection is
 	 *         empty.
 	 */
 	@Realtime(limit = LINEAR)
 	public E reduce(BinaryOperator<E> operator) {
 		Iterator<E> itr = iterator();
-		E result = null;
+		if (!itr.hasNext()) return null;
+		E accumulator = itr.next();
 		while (itr.hasNext()) {
-			E next = itr.next();
-			if (next == null) continue;
-			result = (result != null) ? 
-					operator.apply(result, next) : next;
+			accumulator = operator.apply(accumulator, itr.next());
 		}
-		return result;
+		return accumulator;
 	}
 
 	/**
@@ -564,13 +562,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	}
 
 	/**
-	 * Returns a fast iterator over this collection's elements. This iterator
-	 * allows {@link FastIterator#split splitting}.
-	 */
-	@Override
-	public abstract FastIterator<E> iterator();
-
-	/**
 	 * Adds all the elements of the specified collection to this collection.
 	 */
 	@Override
@@ -677,7 +668,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	// //////////////////////////////////////////////////////////////////////////
 	// Misc.
 	//
-
+	
 	/**
 	 * Returns the element equality for this collection.
 	 * 

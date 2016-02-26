@@ -43,9 +43,8 @@ public final class SubTableImpl<E> extends FastTable<E> {
 
 	@Override
 	public void clear() {
-		for (int i = toIndex - 1; i >= fromIndex; i--) { // Better to do it from
-															// the end (less
-															// shift).
+		for (int i = toIndex - 1; i >= fromIndex; i--) { 
+			// Better to do it from the end (less shift).
 			inner.remove(i);
 		}
 		toIndex = fromIndex;

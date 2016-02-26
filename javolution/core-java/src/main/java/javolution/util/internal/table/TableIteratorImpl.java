@@ -21,113 +21,38 @@ import javolution.util.internal.ReadWriteLockImpl;
 public final class TableIteratorImpl<E> implements FastIterator<E>,
 		ListIterator<E> {
 
-	private static class LinkedIterator<E> implements FastIterator<E> { // Thread-Safe
-		private final FastTable<E> table;
-		private final ReadWriteLockImpl lock;
-		private int nextIndex;
-		private int currentIndex;
-		private int fromIndex;
-		private int toIndex;
-		private LinkedIterator<E> nextIterator;
-
-		public LinkedIterator(FastTable<E> table, int fromIndex, int toIndex,
-				ReadWriteLockImpl lock) {
-			this.table = table;
-			this.lock = lock;
-			this.fromIndex = fromIndex;
-			this.toIndex = toIndex;
-			this.nextIndex = fromIndex;
-			this.currentIndex = -1;
-		}
-
-		@Override
-		public boolean hasNext() {
-			lock.readLock.lock();
-			try {
-				return nextIndex < toIndex;
-			} finally {
-				lock.readLock.unlock();
-			}
-		}
-
-		@Override
-		public E next() {
-			lock.readLock.lock();
-			try {
-				if (nextIndex >= toIndex)
-					throw new NoSuchElementException();
-				currentIndex = nextIndex++;
-				return table.get(currentIndex);
-			} finally {
-				lock.readLock.unlock();
-			}
-		}
-
-		@Override
-		public void remove() {
-			lock.writeLock.lock();
-			try {
-				if (currentIndex < 0)
-					throw new IllegalStateException();
-				table.remove(currentIndex);
-				toIndex--;
-				currentIndex = -1;
-				for (LinkedIterator<E> itr = nextIterator; itr != null; itr = itr.nextIterator)
-					itr.shiftLeft();
-			} finally {
-				lock.writeLock.unlock();
-			}
-		}
-
-		@Override
-		public FastIterator<E> reversed() {
-			throw new UnsupportedOperationException(); // Not a list iterator.
-		}
-
-		private void shiftLeft() {
-			fromIndex--;
-			toIndex--;
-			currentIndex--;
-		}
-
-		@Override
-		public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-			subIterators[0] = this; // No splitting.
-			return subIterators;
-		}
-	}
-
 	private int currentIndex = -1;
-	private int size;
+	private int fromIndex; // Inclusive.
+	private int toIndex; // Exclusive
 	private int nextIndex;
 	private final FastTable<E> table;
 
-	public TableIteratorImpl(FastTable<E> table, int index) {
+	public TableIteratorImpl(FastTable<E> table, int fromIndex, int toIndex) {
 		this.table = table;
-		this.nextIndex = index;
-		this.size = table.size();
+		this.nextIndex = fromIndex;
+		this.toIndex = toIndex;
 	}
 
 	@Override
 	public void add(E e) {
 		table.add(nextIndex++, e);
-		size++;
+		toIndex++;
 		currentIndex = -1;
 	}
 
 	@Override
 	public boolean hasNext() {
-		return (nextIndex < size);
+		return nextIndex < toIndex;
 	}
 
 	@Override
 	public boolean hasPrevious() {
-		return nextIndex > 0;
+		return nextIndex > fromIndex;
 	}
 
 	@Override
 	public E next() {
-		if (nextIndex >= size)
+		if (nextIndex >= toIndex)
 			throw new NoSuchElementException();
 		currentIndex = nextIndex++;
 		return table.get(currentIndex);
@@ -140,7 +65,7 @@ public final class TableIteratorImpl<E> implements FastIterator<E>,
 
 	@Override
 	public E previous() {
-		if (nextIndex <= 0)
+		if (nextIndex <= fromIndex)
 			throw new NoSuchElementException();
 		currentIndex = --nextIndex;
 		return table.get(currentIndex);
@@ -156,7 +81,7 @@ public final class TableIteratorImpl<E> implements FastIterator<E>,
 		if (currentIndex < 0)
 			throw new IllegalStateException();
 		table.remove(currentIndex);
-		size--;
+		toIndex--;
 		if (currentIndex < nextIndex) {
 			nextIndex--;
 		}
@@ -165,7 +90,8 @@ public final class TableIteratorImpl<E> implements FastIterator<E>,
 
 	@Override
 	public FastIterator<E> reversed() {
-		return new TableIteratorImpl<E>(table.reversed(), 0);
+		int size = table.size();
+		return new TableIteratorImpl<E>(table.reversed(), size - toIndex, size - fromIndex);
 	}
 
 	@Override
@@ -178,27 +104,12 @@ public final class TableIteratorImpl<E> implements FastIterator<E>,
 	}
 
 	@Override
-	public FastIterator<E>[] split(FastIterator<E>[] subIterators) {
-		if (subIterators.length == 0)
-			throw new IllegalArgumentException();
-		int rem = size % subIterators.length;
-		int subSize = (size - rem) / subIterators.length;
-		LinkedIterator<E> previous = null;
-		ReadWriteLockImpl lock = new ReadWriteLockImpl();
-		int index = 0;
-		for (int i = 0; i < subIterators.length; i++) {
-			int toIndex = Math.min(size, index + subSize);
-
-			LinkedIterator<E> subIterator = new LinkedIterator<E>(table, index,
-					toIndex, lock);
-			if (previous != null)
-				previous.nextIterator = subIterator;
-			previous = subIterator;
-
-			subIterators[i] = subIterator;
-			index = toIndex;
-		}
-		return subIterators;
+	public FastIterator<E> trySplit() {
+		int half = (toIndex - fromIndex) >> 1;
+		if (half == 0) return null; // Cannot split single element.
+		FastIterator<E> tail = new TableIteratorImpl<E>(table, fromIndex + half, toIndex);
+		toIndex = fromIndex + half;
+		return tail;		
 	}
 
 }

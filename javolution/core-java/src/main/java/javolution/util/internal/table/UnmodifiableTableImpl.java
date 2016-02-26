@@ -8,70 +8,14 @@
  */
 package javolution.util.internal.table;
 
-import java.util.ListIterator;
-
-import javolution.util.FastIterator;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
-import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 
 /**
  * An unmodifiable view over a table.
  */
 public final class UnmodifiableTableImpl<E> extends FastTable<E> {
 
-	public static class ListIteratorImpl<E> implements ListIterator<E> {
-		private final ListIterator<E> itr;
-
-		public ListIteratorImpl(ListIterator<E> itr) {
-			this.itr = itr;
-		}
-
-		@Override
-		public void add(E e) {
-			throw new UnsupportedOperationException("Read-Only Collection.");
-		}
-
-		@Override
-		public boolean hasNext() {
-			return itr.hasNext();
-		}
-
-		@Override
-		public boolean hasPrevious() {
-			return itr.hasPrevious();
-		}
-
-		@Override
-		public E next() {
-			return itr.next();
-		}
-
-		@Override
-		public int nextIndex() {
-			return itr.nextIndex();
-		}
-
-		@Override
-		public E previous() {
-			return itr.previous();
-		}
-
-		@Override
-		public int previousIndex() {
-			return itr.previousIndex();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Read-Only Collection.");
-		}
-
-		@Override
-		public void set(E e) {
-			throw new UnsupportedOperationException("Read-Only Collection.");
-		}
-	}
 	private static final long serialVersionUID = 0x700L; // Version.
 
 	private final FastTable<E> inner;
@@ -116,23 +60,8 @@ public final class UnmodifiableTableImpl<E> extends FastTable<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
-		return new UnmodifiableCollectionImpl.IteratorImpl<E>(inner.iterator());
-	}
-
-	@Override
 	public int lastIndexOf(Object searched) {
 		return inner.lastIndexOf(searched);
-	}
-
-	@Override
-	public ListIterator<E> listIterator() {
-		return new ListIteratorImpl<E>(inner.listIterator());
-	}
-
-	@Override
-	public ListIterator<E> listIterator(int index) {
-		return new ListIteratorImpl<E>(inner.listIterator(index));
 	}
 
 	@Override

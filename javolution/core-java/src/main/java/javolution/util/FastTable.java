@@ -17,12 +17,12 @@ import static javolution.lang.Realtime.Limit.N_SQUARE;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
-import javolution.lang.Parallelizable;
 import javolution.lang.Realtime;
 import javolution.util.function.Equality;
 import javolution.util.internal.table.AtomicTableImpl;
@@ -132,67 +132,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     public static <E> FastTable<E> newSortedTable(Comparator<? super E> comparator) {
     	return new SortedTable<E>(comparator);
     }
-    
-    /**
-     * Returns a new empty atomic table (fractal-based). All operations that
-     * write or access multiple elements in the table (such as 
-     * {@code addAll(), retainAll()}) are atomic. 
-     * All read operations are mutex-free.
-     * 
-     * @return {@code new FractalTable<E>().atomic()}
-     * @see FractalTable
-     */
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
-    public static <E> FastTable<E> newAtomicTable() {
-    	return new FractalTable<E>().atomic();
-    }
-	
-	/**
-     * Returns a new empty atomic table (fractal-based) using the specified 
-     * equality for elements comparisons. All operations that
-     * write or access multiple elements in the table (such as 
-     * {@code addAll(), retainAll()}) are atomic. 
-     * All read operations are mutex-free.
-     * 
-     * @return {@code new FractalTable<E>().using(equality).atomic()}
-     * @see FractalTable
-     */	
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
-    public static <E> FastTable<E> newAtomicTable(Equality<? super E> equality) {
-    	return new FractalTable<E>().using(equality).atomic();
-    }
-    
-    /**
-     * Returns a new empty thread-safe table (fractal-based).
-     * The returned table allows for concurrent read as long as there 
-     * is no writer. The default implementation is based on <a href=
-	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-	 * readers-writers locks</a> giving priority to writers.
-     * 
-     * @return {@code new FractalTable<E>().shared()}
-     * @see FractalTable
-     */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
-    public static <E> FastTable<E> newSharedTable() {
-    	return new FractalTable<E>().shared();
-    }
-    
-    /**
-     * Returns a new empty thread-safe table (fractal-based) using the 
-     * specified equality for elements comparisons.
-     * The returned table allows for concurrent read as long as there 
-     * is no writer. The default implementation is based on <a href=
-	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-	 * readers-writers locks</a> giving priority to writers.
-     * 
-     * @return {@code new FractalTable<E>().using(equality).shared()}
-     * @see FractalTable
-     */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
-    public static <E> FastTable<E> newSharedTable(Equality<? super E> equality) {
-    	return new FractalTable<E>().shared();
-    }
-
+ 
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
@@ -342,8 +282,8 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     /** Returns an iterator over the elements in this table. */
     @Override
     @Realtime(limit = CONSTANT)
-	public FastIterator<E> iterator() {
-		return new TableIteratorImpl<E>(this, 0);
+	public Iterator<E> iterator() {
+		return new TableIteratorImpl<E>(this, 0, size());
 	}
 
     /** Returns a list iterator over the elements in this table. */
@@ -358,7 +298,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     @Override
     @Realtime(limit = CONSTANT)
     public ListIterator<E> listIterator(int index) {
-    	return new TableIteratorImpl<E>(this, index);
+    	return new TableIteratorImpl<E>(this, index, size());
     }
 
     ////////////////////////////////////////////////////////////////////////////

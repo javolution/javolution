@@ -48,15 +48,9 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 		}
 
 		@Override
-		public FastIterator<K>[] split(FastIterator<K>[] subIterators) {
-			@SuppressWarnings("unchecked")
-			FastIterator<Entry<K, V>>[] mapItrs = mapItr
-					.split((FastIterator<Entry<K, V>>[]) subIterators);
-			int i = 0;
-			for (FastIterator<Entry<K, V>> itr : mapItrs)
-				if (itr != null)
-					subIterators[i++] = new IteratorImpl<K, V>(itr);
-			return subIterators;
+		public FastIterator<K> trySplit() {
+			FastIterator<Entry<K, V>> split = mapItr.trySplit();
+			return split != null ? new IteratorImpl<K,V>(split) : null;
 		}
 	}
 
