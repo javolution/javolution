@@ -363,7 +363,7 @@ javolution/core-java/src/main/java/javolution/util/internal/function/NaturalOrde
 javolution/core-java/src/main/java/javolution/util/internal/map/EntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntrySetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/KeySetImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/map/MapIteratorImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/MapEntryIteratorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/SubMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain

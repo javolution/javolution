@@ -78,12 +78,6 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public FastIterator<Entry<Index, E>> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Order<? super Index> keyOrder() {
 		return Order.INDEX;
 	}

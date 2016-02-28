@@ -8,11 +8,9 @@
  */
 package javolution.util.internal.map;
 
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Iterator;
 
 import javolution.util.FastCollection;
-import javolution.util.FastIterator;
 import javolution.util.FastMap;
 import javolution.util.function.Equality;
 
@@ -21,42 +19,7 @@ import javolution.util.function.Equality;
  */
 public final class ValuesImpl<K, V> extends FastCollection<V> {
 
-	private static class IteratorImpl<K, V> implements FastIterator<V> {
-		FastIterator<Map.Entry<K, V>> mapItr;
-
-		public IteratorImpl(FastIterator<Map.Entry<K, V>> mapItr) {
-			this.mapItr = mapItr;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return mapItr.hasNext();
-		}
-
-		@Override
-		public V next() {
-			return mapItr.next().getValue();
-		}
-
-		@Override
-		public void remove() {
-			mapItr.remove();
-		}
-
-		@Override
-		public FastIterator<V> reversed() {
-			return new IteratorImpl<K, V>(mapItr.reversed());
-		}
-
-		@Override
-		public FastIterator<V> trySplit() {
-			FastIterator<Map.Entry<K, V>> split = mapItr.trySplit();
-			return split != null ? new IteratorImpl<K, V>(split) : null;
-		}
-	}
-
 	private static final long serialVersionUID = 0x700L; // Version.
-
 	private final FastMap<K, V> map;
 
 	public ValuesImpl(FastMap<K, V> map) {
@@ -72,7 +35,6 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 	@Override
 	public void clear() {
 		map.clear();
-
 	}
 
 	@Override
@@ -91,27 +53,37 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 	}
 
 	@Override
-	public FastIterator<V> iterator() {
-		return new IteratorImpl<K, V>(map.iterator());
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean remove(Object value) {
-		Equality<Object> valueEquality = (Equality<Object>) map.valueEquality();
-		for (FastIterator<Entry<K, V>> itr = map.iterator(); itr.hasNext();) {
-			Entry<K, V> entry = itr.next();
-			if (valueEquality.areEqual(entry.getValue(), value)) {
-				itr.remove();
-				return true;
-			}
-		}
-		return false;
+	public Iterator<V> iterator() {
+		return new IteratorImpl<K, V>(new MapEntryIteratorImpl<K,V>(map));
 	}
 
 	@Override
 	public int size() {
 		return map.size();
+	}
+
+	/** Then generic iterator over the map values */
+	private static class IteratorImpl<K, V> implements Iterator<V> {
+		final MapEntryIteratorImpl<K,V> mapItr;
+
+		public IteratorImpl(MapEntryIteratorImpl<K,V> mapItr) {
+			this.mapItr = mapItr;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return mapItr.hasNext();
+		}
+
+		@Override
+		public V next() {
+			return mapItr.next().getValue();
+		}
+
+		@Override
+		public void remove() {
+			mapItr.remove();
+		}
 	}
 
 }

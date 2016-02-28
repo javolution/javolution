@@ -11,15 +11,12 @@ package javolution.util.internal.table;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import javolution.util.FastIterator;
 import javolution.util.FastTable;
-import javolution.util.internal.ReadWriteLockImpl;
 
 /**
  * A generic list iterator over a fast table.
  */
-public final class TableIteratorImpl<E> implements FastIterator<E>,
-		ListIterator<E> {
+public final class TableIteratorImpl<E> implements ListIterator<E> {
 
 	private int currentIndex = -1;
 	private int fromIndex; // Inclusive.
@@ -89,27 +86,12 @@ public final class TableIteratorImpl<E> implements FastIterator<E>,
 	}
 
 	@Override
-	public FastIterator<E> reversed() {
-		int size = table.size();
-		return new TableIteratorImpl<E>(table.reversed(), size - toIndex, size - fromIndex);
-	}
-
-	@Override
 	public void set(E e) {
 		if (currentIndex >= 0) {
 			table.set(currentIndex, e);
 		} else {
 			throw new IllegalStateException();
 		}
-	}
-
-	@Override
-	public FastIterator<E> trySplit() {
-		int half = (toIndex - fromIndex) >> 1;
-		if (half == 0) return null; // Cannot split single element.
-		FastIterator<E> tail = new TableIteratorImpl<E>(table, fromIndex + half, toIndex);
-		toIndex = fromIndex + half;
-		return tail;		
 	}
 
 }

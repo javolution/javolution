@@ -8,9 +8,8 @@
  */
 package javolution.util.internal.map;
 
-import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import javolution.util.FastIterator;
 import javolution.util.FastMap;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
@@ -22,40 +21,38 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
 
-	private final K fromKey;
-	private final K toKey;
+	private final K fromKey; // Inclusive.
+	private final K toKey; // Exclusive.
+    private final boolean isFromSet; 
+    private final boolean isToSet;
 	private final FastMap<K, V> inner;
 
-	public SubMapImpl(FastMap<K, V> inner, K fromKey, K toKey) {
+	public SubMapImpl(FastMap<K, V> inner, K fromKey, boolean isFromSet, 
+			K toKey, boolean isToSet) {
 		this.inner = inner;
 		this.fromKey = fromKey;
 		this.toKey = toKey;
+		this.isFromSet = isFromSet;
+		this.isToSet = isToSet;
 	}
 
-	@Override
-	public void clear() {
-	    for (Iterator<?> itr = iterator(); itr.hasNext(); itr.next()) 
-	    	itr.remove();
-	}
 
 	@Override
 	public SubMapImpl<K, V> clone() {
-		return new SubMapImpl<K,V>(inner.clone(), fromKey, toKey);
+		return new SubMapImpl<K,V>(inner.clone(), fromKey, isFromSet, toKey, isToSet);
 	}
 
 	@Override
 	public Entry<K, V> getEntry(K key) {
-		if (!inScope(key)) return null;
+		if (isTooSmall(key) || isTooLarge(key)) return null;
 		return inner.getEntry(key);
 	}
 
-	/** Indicates if this map may contain the specified key.*/
-	private boolean inScope(K key) {
-		if (keyOrder().compare(fromKey, key) > 0)
-			return false;
-		if (keyOrder().compare(toKey, key) <= 0)
-			return false;
-		return true;
+	private boolean isTooSmall(K key) {
+		return isFromSet && keyOrder().compare(fromKey, key) > 0;
+	}
+	private boolean isTooLarge(K key) {
+		return isToSet && keyOrder().compare(toKey, key) <= 0;
 	}
 
 	@Override
@@ -65,15 +62,9 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 
 	@Override
 	public V put(K key, V value) {
-		if (!inScope(key)) throw new IllegalArgumentException("Key not in submap range");
+		if (isTooSmall(key) || isTooLarge(key))
+			throw new IllegalArgumentException("Key not in submap range");
 		return inner.put(key, value);
-	}
-
-	@Override
-	public int size() {
-		int count = 0;
-	    for (Iterator<?> itr = iterator(); itr.hasNext(); itr.next()) count++;
-		return count;
 	}
 
 	@Override
@@ -81,31 +72,43 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 		return inner.valueEquality();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public V remove(Object key) {
-		// TODO Auto-generated method stub
-		return null;
+		if (isTooSmall((K)key) || isTooLarge((K)key)) return null;
+		return inner.remove(key);
 	}
 
 	@Override
-	public Entry<K, V> getEntryAfter(Entry<K, V> previous) {
-		if (previous == null) return inner
-		
-		// TODO Auto-generated method stub
-		return null;
+	public Entry<K, V> firstEntry() {
+		Entry<K,V> first = inner.getEntry(fromKey);
+		if (first != null) return first;
+		first = inner.getEntryAfter(fromKey);
+		if ((first == null) || isTooLarge(first.getKey()))
+				throw new NoSuchElementException();
+		return first;
 	}
 
 	@Override
-	public java.util.Map.Entry<K, V> getEntryBefore(
-			java.util.Map.Entry<K, V> next) {
-		// TODO Auto-generated method stub
-		return null;
+	public java.util.Map.Entry<K, V> lastEntry() {
+		Entry<K,V> last = inner.getEntryBefore(toKey);
+		if ((last == null) || isTooSmall(last.getKey()))
+				throw new NoSuchElementException();
+		return last;
 	}
 
 	@Override
-	public FastIterator<java.util.Map.Entry<K, V>> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+	public java.util.Map.Entry<K, V> getEntryAfter(K key) {
+		Entry<K,V> after = inner.getEntryAfter(key);
+		if ((after == null) || isTooLarge(after.getKey())) return null;
+		return after;
+	}
+
+	@Override
+	public java.util.Map.Entry<K, V> getEntryBefore(K key) {
+		Entry<K,V> before = inner.getEntryAfter(key);
+		if ((before == null) || isTooSmall(before.getKey())) return null;
+		return before;
 	}
 	
 }

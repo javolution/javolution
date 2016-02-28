@@ -10,9 +10,9 @@ package javolution.util.internal.table;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.ListIterator;
 
-import javolution.util.FastIterator;
 import javolution.util.FastTable;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
@@ -145,7 +145,7 @@ public final class SharedTableImpl<E> extends FastTable<E> {
 	}
 
 	@Override
-	public FastIterator<E> descendingIterator() {
+	public Iterator<E> descendingIterator() {
 		lock.readLock.lock();
 		try {
 			return inner.clone().unmodifiable().descendingIterator();
@@ -245,7 +245,7 @@ public final class SharedTableImpl<E> extends FastTable<E> {
 	}
 
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		lock.readLock.lock();
 		try {
 			return inner.clone().unmodifiable().iterator();

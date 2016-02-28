@@ -8,10 +8,10 @@
  */
 package javolution.util.internal.map;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javolution.util.FastIterator;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
 import javolution.util.function.Equality;
@@ -21,6 +21,72 @@ import javolution.util.function.Order;
  * An entry set view over a map.
  */
 public final class EntrySetImpl<K, V> extends FastSet<Map.Entry<K, V>> {
+
+	private static final long serialVersionUID = 0x700L; // Version.
+	private final FastMap<K, V> map;
+
+	public EntrySetImpl(FastMap<K, V> map) {
+		this.map = map;
+	}
+
+	@Override
+	public boolean add(Entry<K, V> entry) {
+		Entry<K, V> existing = map.getEntry(entry.getKey());
+		if (existing != null) {
+			if (map.valueEquality().areEqual(existing.getValue(),
+					entry.getValue()))
+				return false;
+			existing.setValue(entry.getValue());
+		} else { // No entry with the same key.
+			map.put(entry.getKey(), entry.getValue());
+		}
+		return true;
+	}
+
+	@Override
+	public void clear() {
+		map.clear();
+	}
+
+	@Override
+	public EntrySetImpl<K, V> clone() {
+		return new EntrySetImpl<K, V>(map.clone());
+	}
+
+	@Override
+	public Order<? super Entry<K, V>> comparator() {
+		return new EntryOrder<K, V>(map.keyOrder(), map.valueEquality());
+	}
+
+	@Override
+	public boolean contains(Object obj) {
+		if (!(obj instanceof Entry))
+			return false;
+		@SuppressWarnings("unchecked")
+		Entry<K, V> searched = (Entry<K, V>) obj;
+		Entry<K, V> entry = map.getEntry(searched.getKey());
+		return map.valueEquality().areEqual(entry.getValue(),
+				searched.getValue());
+	}
+
+	@Override
+	public Iterator<Entry<K, V>> iterator() {
+		return new MapEntryIteratorImpl<K,V>(map);
+	}
+
+	@Override
+	public boolean remove(Object obj) {
+		if (contains(obj)) {
+			map.remove(((Entry<?, ?>) obj).getKey());
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public int size() {
+		return map.size();
+	}
 
 	/** The entry order */
 	private static class EntryOrder<K, V> implements Order<Entry<K, V>> {
@@ -70,72 +136,4 @@ public final class EntrySetImpl<K, V> extends FastSet<Map.Entry<K, V>> {
 		}
 
 	}
-
-	private static final long serialVersionUID = 0x700L; // Version.
-
-	private final FastMap<K, V> map;
-
-	public EntrySetImpl(FastMap<K, V> map) {
-		this.map = map;
-	}
-
-	@Override
-	public boolean add(Entry<K, V> entry) {
-		Entry<K, V> existing = map.getEntry(entry.getKey());
-		if (existing != null) {
-			if (map.valueEquality().areEqual(existing.getValue(),
-					entry.getValue()))
-				return false;
-			existing.setValue(entry.getValue());
-		} else { // No entry with the same key.
-			map.put(entry.getKey(), entry.getValue());
-		}
-		return true;
-	}
-
-	@Override
-	public void clear() {
-		map.clear();
-	}
-
-	@Override
-	public EntrySetImpl<K, V> clone() {
-		return new EntrySetImpl<K, V>(map.clone());
-	}
-
-	@Override
-	public Order<? super Entry<K, V>> comparator() {
-		return new EntryOrder<K, V>(map.keyOrder(), map.valueEquality());
-	}
-
-	@Override
-	public boolean contains(Object obj) {
-		if (!(obj instanceof Entry))
-			return false;
-		@SuppressWarnings("unchecked")
-		Entry<K, V> searched = (Entry<K, V>) obj;
-		Entry<K, V> entry = map.getEntry(searched.getKey());
-		return map.valueEquality().areEqual(entry.getValue(),
-				searched.getValue());
-	}
-
-	@Override
-	public FastIterator<Entry<K, V>> iterator() {
-		return map.iterator();
-	}
-
-	@Override
-	public boolean remove(Object obj) {
-		if (contains(obj)) {
-			map.remove(((Entry<?, ?>) obj).getKey());
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public int size() {
-		return map.size();
-	}
-
 }

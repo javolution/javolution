@@ -35,15 +35,15 @@ import javolution.util.internal.table.TableIteratorImpl;
 import javolution.util.internal.table.UnmodifiableTableImpl;
 
 /**
- * <p> A high-performance table ({@link FractalTable fractal-based}) 
- *     with documented {@link Realtime real-time} behavior.</p>
+ * <p> A high-performance fractal table with documented 
+ *     {@link Realtime real-time} behavior.</p>
  *     
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance. They inherit all the fast collection views
  *     and support the new {@link #subTable subTable} view over a portion of the table.
  * <pre>{@code
- * FastTable<String> names = FastTable.newTable(); // Default FractalTable instance.
+ * FastTable<String> names = new FractalTable<>(); 
  * ...
  * names.sort(Order.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
@@ -51,7 +51,7 @@ import javolution.util.internal.table.UnmodifiableTableImpl;
  * names.filter(str -> str.startsWith("A")).parallel().clear(); // Same as above but removal performed concurrently.
  * }</pre></p>
  *
- * <p> As for any {@link FastCollection fast collection}, iterations can be 
+ * <p> As for any {@link FastCollection}, iterations can be 
  *     performed using closures.
  * <pre>{@code
  * FastTable<Person> persons = ...;
@@ -62,14 +62,15 @@ import javolution.util.internal.table.UnmodifiableTableImpl;
  *     }).any();
  * }</pre></p>
  * 
- * <p>  The notation is shorter with Java 8.
+ * <p> The notation is shorter with Java 8.
  * <pre>{@code
  * Person john= persons.filter(person -> person.getName().equals("John")).any();
  * }</pre></p>
  * 
- * <p> For faster search capabilities {@link #newSortedTable(Comparable) 
- *     sorted tables} can be used (alternative to  {@link FastSet} allowing 
- *     for elements duplications).</p> 
+ * <p> For faster search capabilities {@link SortedTable} can be used 
+ *     (alternative to {@link FastSet} allowing for elements duplications).</p> 
+ * 
+ * @param <E> the type of table element (can be {@code null})
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
@@ -83,54 +84,6 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
      * Default constructor.
      */
     protected FastTable() {
-    }
-
-    /**
-     * Returns a new empty table (fractal-based).
-     * 
-     * @return {@code new FractalTable<E>()}
-     * @see FractalTable
-     */
-    public static <E> FastTable<E> newTable() {
-    	return new FractalTable<E>();
-    }
-    
-    /**
-     * Returns a new empty table (fractal-based) using the specified 
-     * equality for elements comparison.
-     * 
-     * @return {@code new FractalTable<E>().using(equality)}
-     * @see FractalTable
-     */
-    public static <E> FastTable<E> newTable(Equality<? super E> equality) {
-    	return new FractalTable<E>().using(equality);
-    }
-    
-    /**
-     * Returns a new empty sorted table (fractal-based) keeping its elements 
-     * sorted according to their natural order. This table has faster 
-     * search capabilities and unlike {@link FastSet} allows for elements 
-     * duplications.
-     * 
-     * @return {@code new SortedTable<E>()}
-     * @see SortedTable
-     */
-	public static <E> FastTable<E> newSortedTable() {
-    	return new SortedTable<E>();
-    }
-
-    /**
-     * Returns a new empty sorted table (fractal-based) keeping its elements 
-     * sorted according to the specified comparator. This table has faster 
-     * search capabilities and unlike {@link FastSet} allows for elements 
-     * duplications. Any operation which inserts or sets elements at fixed 
-     * location will throw an {@link UnsupportedOperationException}.
-     * 
-     * @return {@code new SortedTable<E>(comparator)}
-     * @see SortedTable
-     */
-    public static <E> FastTable<E> newSortedTable(Comparator<? super E> comparator) {
-    	return new SortedTable<E>(comparator);
     }
  
     ////////////////////////////////////////////////////////////////////////////
@@ -472,8 +425,8 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     /** Returns an iterator over the elements in this table in reverse sequential order. */
     @Override
     @Realtime(limit = CONSTANT)
-    public FastIterator<E> descendingIterator() {
-        return iterator().reversed();
+    public Iterator<E> descendingIterator() {
+        return this.reversed().iterator();
     }
 
     ////////////////////////////////////////////////////////////////////////////

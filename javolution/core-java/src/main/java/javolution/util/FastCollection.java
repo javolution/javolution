@@ -48,8 +48,8 @@ import javolution.util.internal.collection.SortedCollectionImpl;
 import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 
 /**
- * <p> A high-performance collection with documented 
- *     {@link Realtime real-time} behavior.</p>
+ * <p> A high-performance collection with documented {@link Realtime real-time}
+ *     behavior.</p>
  * 
  * <p> Instances of this class support numerous views which can be chained:
  * <ul>
@@ -146,6 +146,8 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order.
  * tasks.parallel().forEach(task -> task.run()); // Execute concurrently each task and wait for their completion to continue.
  * }</pre></p>
+ * 
+ * @param <E> the type of collection element (can be {@code null})
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015

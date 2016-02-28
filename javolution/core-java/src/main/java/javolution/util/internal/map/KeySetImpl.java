@@ -8,9 +8,8 @@
  */
 package javolution.util.internal.map;
 
-import java.util.Map.Entry;
+import java.util.Iterator;
 
-import javolution.util.FastIterator;
 import javolution.util.FastMap;
 import javolution.util.FastSet;
 import javolution.util.function.Order;
@@ -19,43 +18,8 @@ import javolution.util.function.Order;
  * An key set view over a fast map.
  */
 public final class KeySetImpl<K, V> extends FastSet<K> {
-
-	private static class IteratorImpl<K, V> implements FastIterator<K> {
-		FastIterator<Entry<K, V>> mapItr;
-
-		public IteratorImpl(FastIterator<Entry<K, V>> mapItr) {
-			this.mapItr = mapItr;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return mapItr.hasNext();
-		}
-
-		@Override
-		public K next() {
-			return mapItr.next().getKey();
-		}
-
-		@Override
-		public void remove() {
-			mapItr.remove();
-		}
-
-		@Override
-		public FastIterator<K> reversed() {
-			return new IteratorImpl<K, V>(mapItr.reversed());
-		}
-
-		@Override
-		public FastIterator<K> trySplit() {
-			FastIterator<Entry<K, V>> split = mapItr.trySplit();
-			return split != null ? new IteratorImpl<K,V>(split) : null;
-		}
-	}
-
+	
 	private static final long serialVersionUID = 0x700L; // Version.
-
 	private final FastMap<K, V> map;
 
 	public KeySetImpl(FastMap<K, V> map) {
@@ -73,7 +37,6 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 	@Override
 	public void clear() {
 		map.clear();
-
 	}
 
 	@Override
@@ -92,10 +55,10 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 	}
 
 	@Override
-	public FastIterator<K> iterator() {
-		return new IteratorImpl<K, V>(map.iterator());
+	public Iterator<K> iterator() {
+		return new IteratorImpl<K, V>(new MapEntryIteratorImpl<K,V>(map));
 	}
-
+	
 	@Override
 	public boolean remove(Object key) {
 		if (!map.containsKey(key))
@@ -103,10 +66,34 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 		map.remove(key);
 		return true;
 	}
-
+	
 	@Override
 	public int size() {
 		return map.size();
+	}
+
+	/** The generic iterator over the map keys */
+	private static class IteratorImpl<K, V> implements Iterator<K> {
+		final MapEntryIteratorImpl<K, V> mapItr;
+
+		public IteratorImpl(MapEntryIteratorImpl<K, V> mapItr) {
+			this.mapItr = mapItr;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return mapItr.hasNext();
+		}
+
+		@Override
+		public K next() {
+			return mapItr.next().getKey();
+		}
+
+		@Override
+		public void remove() {
+			mapItr.remove();
+		}
 	}
 
 }

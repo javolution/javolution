@@ -8,16 +8,19 @@
  */
 package javolution.util;
 
+import java.util.Iterator;
+
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 
 /**
- * <p> A set allowing for quick searches, insertions and deletion
- *     (based on {@link SparseMap}).</p> 
+* <p> A <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> set 
+ *     allowing for quick searches, insertions and deletion.</p> 
  *  
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
+ * @see SparseMap
  */
 public class SparseSet<E> extends FastSet<E> {
 	   
@@ -83,7 +86,7 @@ public class SparseSet<E> extends FastSet<E> {
 		return false;
 	}
 	@Override
-	public FastIterator<E> iterator() {
+	public Iterator<E> iterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}
