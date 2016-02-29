@@ -12,27 +12,32 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
+import javolution.util.FractalTable;
 import javolution.util.function.Equality;
 
 /**
- * A view tracking insertion order.
+ * A sequential view tracking insertion order.
  */
-public final class LinkedCollectionImpl<E> extends FastCollection<E> {
+public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastCollection<E> inner;
-	private final FastTable<E> insertionOrdered = FastTable
-			.newTable(equality());
+	private final FastTable<E> insertionOrdered;
 
 	public LinkedCollectionImpl(FastCollection<E> inner) {
-		this.inner = inner;
+		super(inner);
+		insertionOrdered = new FractalTable<E>().using(inner.equality());
+    }
+	
+	private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> insertionOrdered) {
+		super(inner);
+		this.insertionOrdered = insertionOrdered;
 	}
 
 	@Override
 	public boolean add(E element) {
 		boolean added = inner.add(element);
 		if (added)
-			insertionOrdered.add(element);
+			insertionOrdered.addLast(element);
 		return added;
 	}
 
@@ -44,7 +49,7 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public LinkedCollectionImpl<E> clone() {
-		return new LinkedCollectionImpl<E>(inner.clone());
+		return new LinkedCollectionImpl<E>(inner.clone(), insertionOrdered.clone());
 	}
 
 	@Override

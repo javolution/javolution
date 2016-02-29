@@ -16,7 +16,7 @@ import javolution.util.FastMap;
 /**
  * A generic iterator over the entries of a fast map.
  */
-public final class MapEntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
+public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 
 	private final FastMap<K, V> map;
 	private Entry<K,V> toEntry; // Exclusive.
@@ -24,7 +24,7 @@ public final class MapEntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 	private Entry<K,V> next;
 
 	/** Iterates the whole collection */
-	public MapEntryIteratorImpl(FastMap<K, V> map) {
+	public EntryIteratorImpl(FastMap<K, V> map) {
 		this.map = map;
 	    this.toEntry = null;
 		if (!map.isEmpty()) {
@@ -33,7 +33,7 @@ public final class MapEntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 	}
 
 	/** Iterates from the specified key (inclusive). */
-	public MapEntryIteratorImpl(FastMap<K, V> map, K fromKey) {
+	public EntryIteratorImpl(FastMap<K, V> map, K fromKey) {
 		this.map = map;
 		this.toEntry = null;
 	    next = map.getEntry(fromKey);
@@ -42,7 +42,7 @@ public final class MapEntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 
 	/** Iterates from the specified key (inclusive) to the specified key 
 	 * (exclusive). */
-	public MapEntryIteratorImpl(FastMap<K, V> map, K fromKey, K toKey) {
+	public EntryIteratorImpl(FastMap<K, V> map, K fromKey, K toKey) {
         this(map, fromKey);
 	    toEntry = map.getEntry(toKey);
 		if (toEntry == null) toEntry = map.getEntryAfter(toKey);

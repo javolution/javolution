@@ -56,7 +56,7 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
 	@Override
 	public Iterator<K> iterator() {
-		return new IteratorImpl<K, V>(new MapEntryIteratorImpl<K,V>(map));
+		return new IteratorImpl<K, V>(new EntryIteratorImpl<K,V>(map));
 	}
 	
 	@Override
@@ -74,9 +74,9 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
 	/** The generic iterator over the map keys */
 	private static class IteratorImpl<K, V> implements Iterator<K> {
-		final MapEntryIteratorImpl<K, V> mapItr;
+		final EntryIteratorImpl<K, V> mapItr;
 
-		public IteratorImpl(MapEntryIteratorImpl<K, V> mapItr) {
+		public IteratorImpl(EntryIteratorImpl<K, V> mapItr) {
 			this.mapItr = mapItr;
 		}
 

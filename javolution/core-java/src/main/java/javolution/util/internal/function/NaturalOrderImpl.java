@@ -42,9 +42,5 @@ public final class NaturalOrderImpl<T> implements Order<T>, Serializable {
 		return null;
 	}
 
-	@Override
-	public int bitLength() {
-		return 0;
-	}
 
 }

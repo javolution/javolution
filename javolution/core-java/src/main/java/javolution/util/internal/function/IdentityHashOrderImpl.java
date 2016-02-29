@@ -43,9 +43,4 @@ public final class IdentityHashOrderImpl<T> implements Order<T>, Serializable {
 		return null; // No sub-order.
 	}
 
-	@Override
-	public int bitLength() {
-		return 32; // Maximum range.
-	}
-
 }

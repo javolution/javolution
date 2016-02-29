@@ -12,27 +12,26 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.FastCollection;
-import javolution.util.FastSet;
-import javolution.util.FastTable;
+import javolution.util.FractalTable;
+import javolution.util.SparseSet;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 
 /**
- * A view which does not iterate twice over the same elements.
+ * A sequential view which does not iterate twice over the same elements.
  */
-public final class DistinctCollectionImpl<E> extends FastCollection<E> {
+public final class DistinctCollectionImpl<E> extends SequentialCollectionImpl<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastCollection<E> inner;
 
 	public DistinctCollectionImpl(FastCollection<E> inner) {
-		this.inner = inner;
+		super(inner);
 	}
 
 	@Override
-	public boolean add(E element) {
-		return this.contains(element) ? false : inner.add(element);
+	public boolean add(E element) { 
+		return inner.contains(element) ? false : inner.add(element);
 	}
 
 	@Override
@@ -67,7 +66,7 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public boolean remove(final Object searched) { // Remove all occurrences.
-		return removeIf(new Predicate<E>() {
+		return inner.removeIf(new Predicate<E>() {
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -92,23 +91,20 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
 		public IteratorImpl(Iterator<E> inner, Equality<? super E> equality) {
 			this.inner = inner;
-			this.iterated = (equality instanceof Order) ? FastSet
-					.newSet((Order<? super E>) equality) : FastTable
-					.newTable(equality);
+			this.iterated = (equality instanceof Order) ? 
+					new SparseSet<E>((Order<? super E>) equality) : 
+						new FractalTable<E>().using(equality);
 		}
 
 		@Override
 		public boolean hasNext() {
 			if (onNext)
 				return true;
-			// Move to next.
-			while (inner.hasNext()) {
+			while (inner.hasNext()) { // Move to next.
 				next = inner.next();
-				synchronized (iterated) { // To support split iterators.
-					if (iterated.contains(next))
+				if (iterated.contains(next))
 						continue; // Already iterated.
-					iterated.add(next);
-				}
+				iterated.add(next);
 				onNext = true;
 				return true;
 			}

@@ -9,6 +9,9 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
+
+import java.util.NoSuchElementException;
+
 import javolution.lang.Index;
 import javolution.lang.Realtime;
 import javolution.util.function.Equality;
@@ -28,6 +31,12 @@ import javolution.util.function.Order;
  * @version 7.0, September 13, 2015
  */
 public class SparseArray<E> extends FastMap<Index, E> {
+	
+	/** The SparseArray indexed entry. */
+	public interface SparseEntry<E> extends Entry<Index, E> {
+		/** Returns the unsigned key index value of this entry */
+		int index(); 
+	}
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final int SHIFT = 4;
@@ -73,8 +82,8 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public Entry<Index, E> getEntry(Index key) {
-		return (root != null) ? root.getEntry(key.intValue()) : null;
+	public SparseEntry<E> getEntry(Index key) {
+		return getEntry(key.intValue());
 	}
 
 	@Override
@@ -160,6 +169,23 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		return null;
 	}
 
+	/** Returns the sparse entry at the specified index. */
+	public SparseEntry<E> getEntry(int index) {
+		return (root != null) ? root.getEntry(index) : null;
+	}
+	
+	/** Returns the sparse entry after the specified index. */
+	public SparseEntry<E> getEntryAfter(int index) {
+		if ((root == null) || (index == -1)) return null;
+		return root.getEntryUpFrom(index+1);
+	}
+	
+	/** Returns the sparse entry before the specified index. */
+	public SparseEntry<E> getEntryBefore(int index) {
+		if ((root == null) || (index == 0)) return null;
+		return root.getEntryDownFrom(index-1);
+	}
+
 	@Override
 	@Realtime(limit = CONSTANT)
 	public int size() {
@@ -171,6 +197,28 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		return Equality.STANDARD;
 	}
 	
+	@Override
+	public SparseEntry<E> firstEntry() {
+		if (root == null) throw new NoSuchElementException();
+		return root.getEntryUpFrom(0);
+	}
+
+	@Override
+	public SparseEntry<E> lastEntry() {
+		if (root == null) throw new NoSuchElementException();
+		return root.getEntryDownFrom(-1);
+	}
+
+	@Override
+	public SparseEntry<E> getEntryAfter(Index key) {
+		return getEntryAfter(key.intValue());
+	}
+	
+	@Override
+	public SparseEntry<E> getEntryBefore(Index key) {
+		return getEntryBefore(key.intValue());
+	}
+
 	/**
 	 * Returns the minimal shift for two indices (the higher the number of
 	 * common high bits the minimal the shift)
@@ -197,6 +245,11 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		else
 			return 28;
 	}
+
+	/** Converts to unsigned */
+	private static long toUnsigned(int i) {
+		return 0xFFFFFFFFL & i;
+	}
 	
 	/**
 	 * A Node is either an entry node (leaf) or a trie structure. To ensure
@@ -208,14 +261,17 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		Node<V> downsize(int indexRemoved); // Returns the down-sized node.
 		V get(int index);
 		EntryNode<V> getEntry(int index);
+		EntryNode<V> getEntryUpFrom(int index);
+		EntryNode<V> getEntryDownFrom(int index);
 		Object remove(int index); // May return DOWNSIZE (trie node) or DELETE (entry node)
 		Object set(int index, V value); // May return UPSIZE request, value should never be null.
 		Object setIfAbsent(int index, V value); // May return UPSIZE request, value should never be null.
 		Node<V> upsize(int indexAdded); // Returns the up-sized node.
+		
 	}
 
 	/** Defines the entry (leaf node) */
-	private static final class EntryNode<V> implements Node<V>, Entry<Index, V> {
+	private static final class EntryNode<V> implements Node<V>, SparseEntry<V> {
 		private final int index;
 		private V value; // Always different from null.
 
@@ -259,6 +315,20 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			return (index == i) ? this : null;
 		}
 
+		@Override
+		public EntryNode<V> getEntryUpFrom(int i) {
+			return toUnsigned(index) >=  toUnsigned(i) ? this : null;
+		}
+		
+		@Override
+		public EntryNode<V> getEntryDownFrom(int i) {
+			return toUnsigned(index) <=  toUnsigned(i) ? this : null;
+		}
+		
+		@Override
+		public int index() {
+			return index;
+		}
 		@Override
 		public Index getKey() {
 			return Index.of(index);
@@ -367,6 +437,26 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		}
 
 		@Override
+		public EntryNode<V> getEntryUpFrom(int i) {
+			for (int j=(i >>> shift) & MASK; j < SIZE; j++) {
+				Node<V> n = trie[j];
+				if (n == null) continue;
+				return n.getEntryUpFrom(i); 
+			}
+			return null;
+		}
+		
+		@Override
+		public EntryNode<V> getEntryDownFrom(int i) {
+			for (int j=(i >>> shift) & MASK; j >= 0; j--) {
+				Node<V> n = trie[j];
+				if (n == null) continue;
+				return n.getEntryDownFrom(i); 
+			}
+			return null;
+		}
+
+		@Override
 		public Object remove(int index) {
 			final int i = (index >>> shift) & MASK;
 			Node<V> n = trie[i];
@@ -432,5 +522,6 @@ public class SparseArray<E> extends FastMap<Index, E> {
 					this);
 		}
 	}
+
 
 }

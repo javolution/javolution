@@ -77,11 +77,6 @@ public class CaseInsensitiveLexicalOrderImpl implements Order<CharSequence>,
 		return new CaseInsensitiveLexicalOrderImpl(fromIndex+1);
 	}
 
-	@Override
-	public int bitLength() {
-		return 5;
-	}
-
 	private static class Low extends CaseInsensitiveLexicalOrderImpl {
 		private Low(int fromIndex) {
 			super(fromIndex);

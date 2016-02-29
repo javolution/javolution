@@ -35,15 +35,15 @@ import javolution.util.internal.table.TableIteratorImpl;
 import javolution.util.internal.table.UnmodifiableTableImpl;
 
 /**
- * <p> A high-performance fractal table with documented 
- *     {@link Realtime real-time} behavior.</p>
+ * <p> A high-performance table (fractal-based) with {@link Realtime strict 
+ *     timing constraints}.</p>
  *     
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
  *     in terms of adaptability, space or performance. They inherit all the fast collection views
  *     and support the new {@link #subTable subTable} view over a portion of the table.
  * <pre>{@code
- * FastTable<String> names = new FractalTable<>(); 
+ * FastTable<String> names = FastTable.newTable(); 
  * ...
  * names.sort(Order.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
@@ -86,7 +86,14 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     protected FastTable() {
     }
  
-    ////////////////////////////////////////////////////////////////////////////
+    /**
+     * Returns a new high-performance table (convenience method).
+     */
+    public static <E> FastTable<E> newTable() {
+    	return new FractalTable<E>();
+    }
+
+   ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
 
@@ -433,7 +440,15 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     // Misc.
     //
 
-	@Realtime(limit = LINEAR)
+    /**
+     * Casts this table to the expected parameterized type.
+     */
+    @SuppressWarnings("unchecked")
+	public <T> FastTable<T> cast() {
+    	return (FastTable<T>) this;
+    }
+
+    @Realtime(limit = LINEAR)
 	public abstract FastTable<E> clone();
 	
     /**

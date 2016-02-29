@@ -71,7 +71,7 @@ public final class EntrySetImpl<K, V> extends FastSet<Map.Entry<K, V>> {
 
 	@Override
 	public Iterator<Entry<K, V>> iterator() {
-		return new MapEntryIteratorImpl<K,V>(map);
+		return new EntryIteratorImpl<K,V>(map);
 	}
 
 	@Override
@@ -128,11 +128,6 @@ public final class EntrySetImpl<K, V> extends FastSet<Map.Entry<K, V>> {
 		public Order<Entry<K, V>> subOrder(Entry<K, V> entry) {
 			return entry != null ? new EntryOrder<K, V>(keyOrder.subOrder(entry
 					.getKey()), valueEquality) : null;
-		}
-
-		@Override
-		public int bitLength() {
-			return keyOrder.bitLength();
 		}
 
 	}

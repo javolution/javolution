@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javolution.lang.Parallelizable;
+import javolution.lang.Parallel;
 import javolution.lang.Realtime;
 import javolution.text.Cursor;
 import javolution.text.DefaultTextFormat;
@@ -32,8 +32,8 @@ import javolution.util.internal.map.SubMapImpl;
 import javolution.util.internal.map.ValuesImpl;
 
 /**
- * <p> A high-performance ordered map with documented 
- *     {@link Realtime real-time} behavior.</p>
+ * <p> A high-performance ordered map (trie-based) with 
+ *     {@link Realtime strict timing constraints}.</p>
  * 
  * <p> Iterations order over map keys, values or entries is determined 
  *     by the map {@link #keyOrder() key order} except for specific views 
@@ -43,12 +43,12 @@ import javolution.util.internal.map.ValuesImpl;
  * <p> Instances of this class can advantageously replace {@code java.util.*} 
  *     sets in terms of adaptability, space or performance. 
  * <pre>{@code
- * FastMap<Foo, Bar> hashMap = new SparseMap<Foo, Bar>(); // Hash order (default).
- * FastMap<Foo, Bar> identityHashMap = new SparseMap<Foo, Bar>(Order.IDENTITY);
- * FastMap<String, Bar> treeMap = new SparseMap<String, Bar>(Order.LEXICAL); 
- * FastMap<Foo, Bar> linkedHashMap = new SparseMap<Foo, Bar>().linked(); // Insertion order.
- * FastMap<Foo, Bar> concurrentHashMap = new SparseMap<Foo, Bar>().shared(); // Implements ConcurrentMap interface.
- * FastMap<String, Bar> concurrentSkipListMap = new SparseMap<Foo, Bar>(Order.LEXICAL).shared();
+ * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
+ * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
+ * FastMap<String, Bar> treeMap = FastMap.newMap(Order.LEXICAL); 
+ * FastMap<Foo, Bar> linkedHashMap = FastMap.newMap().linked().cast(); // Insertion order.
+ * FastMap<Foo, Bar> concurrentHashMap = FastMap.newMap().shared().cast(); // Implements ConcurrentMap interface.
+ * FastMap<String, Bar> concurrentSkipListMap = FastMap.newMap(Order.LEXICAL).shared().cast();
  * ...
  * }</pre> </p> 
  * <p> FastMap supports a great diversity of views.
@@ -111,6 +111,21 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     protected FastMap() {
     }
 
+    /**
+     * Returns a new high-performance map sorted arbitrarily (hash-based).
+     */
+    public static <K,V> FastMap<K,V> newMap() {
+    	return new SparseMap<K,V>();
+    }
+
+    /**
+     * Returns a new high-performance map sorted according to the specified
+     * order.
+     */
+    public static <K,V> FastMap<K,V> newMap(Order<? super K> order) {
+    	return new SparseMap<K,V>(order);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
@@ -120,7 +135,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
 	 * access multiple elements in the map are atomic. 
 	 * All read operations are mutex-free.
 	 */
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
 	public FastMap<K,V> atomic() {
 		return null;
 	}
@@ -132,7 +146,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
 	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
 	 * readers-writers locks</a> giving priority to writers. 
 	 */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
 	public FastMap<K,V> shared() {
 		return null;
 	}
@@ -426,6 +439,14 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     // Misc.
     //
 	
+    /**
+     * Casts this map to the expected parameterized type.
+     */
+    @SuppressWarnings("unchecked")
+	public <X,Y> FastMap<X,Y> cast() {
+    	return (FastMap<X, Y>) this;
+    }
+    
     /** 
      * Returns the first entry of this map.
      * 
@@ -501,7 +522,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, SortedMap<K,
     /**
      * Default text format for fast maps (parsing not supported).
      */
-    @Parallelizable
+    @Parallel
     public static class Text extends TextFormat<FastMap<?, ?>> {
 
         @Override

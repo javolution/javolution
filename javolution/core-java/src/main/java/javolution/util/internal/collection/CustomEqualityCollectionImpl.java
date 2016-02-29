@@ -11,7 +11,10 @@ package javolution.util.internal.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
+import javolution.util.function.BinaryOperator;
+import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * A view using a custom equality.
@@ -49,6 +52,11 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public void forEach(Consumer<? super E> consumer) {
+		inner.forEach(consumer);
+	}
+
+	@Override
 	public boolean isEmpty() { // Optimization.
 		return inner.isEmpty();
 	}
@@ -59,24 +67,28 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public int size() { // Optimization.
-		return inner.size();
+	public FastCollection<E> parallel() { // Full support.
+	    return new CustomEqualityCollectionImpl<E>(inner.parallel(), equality);
+	}
+
+	@Override
+	public E reduce(BinaryOperator<E> operator) {
+		return inner.reduce(operator);
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		return inner.removeIf(filter);
 	}
 
 	@Override
 	public CustomEqualityCollectionImpl<E> reversed() { // Optimization.
 	    return new CustomEqualityCollectionImpl<E>(inner.reversed(), equality);
 	}
-	
+
 	@Override
-	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
-		inner.subViews(subViews);
-		for (int i = 0; i < subViews.length; i++) {
-			FastCollection<E> subView = subViews[i];
-			if (subView == null) continue;
-			subViews[i] = new CustomEqualityCollectionImpl<E>(subView, equality);
-		}
-		return subViews;
-	}
+	public int size() { // Optimization.
+		return inner.size();
+	}	
 
 }

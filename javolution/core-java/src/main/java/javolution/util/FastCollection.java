@@ -23,16 +23,16 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javolution.context.ConcurrentContext;
-import javolution.lang.Parallelizable;
+import javolution.lang.Parallel;
 import javolution.lang.Realtime;
 import javolution.text.Cursor;
 import javolution.text.DefaultTextFormat;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
+import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Function;
-import javolution.util.function.BinaryOperator;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 import javolution.util.internal.collection.AtomicCollectionImpl;
@@ -41,25 +41,30 @@ import javolution.util.internal.collection.DistinctCollectionImpl;
 import javolution.util.internal.collection.FilteredCollectionImpl;
 import javolution.util.internal.collection.LinkedCollectionImpl;
 import javolution.util.internal.collection.MappedCollectionImpl;
-import javolution.util.internal.collection.ParallelCollectionImpl;
 import javolution.util.internal.collection.ReversedCollectionImpl;
+import javolution.util.internal.collection.SequentialCollectionImpl;
 import javolution.util.internal.collection.SharedCollectionImpl;
 import javolution.util.internal.collection.SortedCollectionImpl;
 import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 
 /**
- * <p> A high-performance collection with documented {@link Realtime real-time}
- *     behavior.</p>
+ * <p> A high-performance collection with {@link Realtime strict timing 
+ *     constraints}.</p>
  * 
  * <p> Instances of this class support numerous views which can be chained:
  * <ul>
- * <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free and
- * collection updates (e.g. {@link #addAll addAll}, {@link #removeIf removeIf})
- * are atomic.</li>
+ * <li>{@link #parallel} - View allowing parallel processing of bulk operations
+ * (e.g. {@link #forEach}, {@link #removeIf}, {@link #reduce},
+ * {@link #removeAll}, ...)</li>
+ * <li>{@link #sequential} - View for which all bulk operations are 
+ *     performed sequentially.</li>
+ * <li>{@link #unmodifiable} - View which does not allow for any modification.</li>
  * <li>{@link #shared} - Thread-safe view based on <a href=
  * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">readers-writer
  * locks</a>.</li>
- * <li>{@link #unmodifiable} - View which does not allow for modifications.</li>
+ * <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free and
+ * collection updates (e.g. {@link #addAll addAll}, {@link #removeIf removeIf})
+ * are atomic.</li>
  * <li>{@link #filter filter(Predicate)} - View exposing only the elements
  * matching the specified filter.</li>
  * <li>{@link #map map(Function)} - View exposing elements through the specified
@@ -73,9 +78,6 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * <li>{@link #using(Equality)} - View using the specified comparator to test
  * for equality (e.g. {@link #contains}, {@link #remove}, {@link #distinct},
  * ...)</li>
- * <li>{@link #parallel} - View allowing parallel processing of bulk operations
- * (e.g. {@link #forEach}, {@link #removeIf}, {@link #reduce},
- * {@link #removeAll}, ...)</li>
  * </ul>
  * </p>
  * <p> In general, the chaining order does matter!
@@ -83,16 +85,19 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * FastCollection<String> names ...;
  * ConstantTable<String> namesToRemove = ConstantTable.of("Eva Poré");
  *      
- * // Parallel processing.
+ * // Parallel removal.
  * elements.using(Equality.IDENTITY).parallel().removeAll(namesToRemove);
  *      
- * // Sequential, using(Equality) is not a parallel view.  
+ * // Still parallel removal, since using(Equality) is not a sequential view.  
  * elements.parallel().using(Equality.IDENTITY).removeAll(namesToRemove);
+ * 
+ * // Sequential removal (sorted is a sequential view).  
+ * elements.parallel().sorted().removeAll(namesToRemove);
  * 
  * // Thread-safe view.
  * elements.distinct().shared();
  * 
- * // Not a thread-safe view.
+ * // Not thread-safe anymore (two concurrent threads could add the same element twice).
  * elements.shared().distinct();
  * }</pre></p>
  * 
@@ -131,7 +136,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * int sumLength = names.map(s -> s.length).parallel().reduce((x,y)-> x + y); // Calculates the sum in parallel.
  * 
  * // JDK Class.getEnclosingMethod using Javolution's views and Java 8 (to be compared with the current 20 lines implementation !).
- * Method matching = FastTable.of(enclosingInfo.getEnclosingClass().getDeclaredMethods())
+ * Method matching = ConstantTable.of(enclosingInfo.getEnclosingClass().getDeclaredMethods())
  *     .filter(m -> Objects.equals(m.getName(), enclosingInfo.getName())
  *     .filter(m -> Arrays.equals(m.getParameterTypes(), parameterClasses))
  *     .filter(m -> Objects.equals(m.getReturnType(), returnType)).reduce(Operators.ANY); 
@@ -152,6 +157,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
+@Parallel
 @Realtime
 @DefaultTextFormat(FastCollection.Format.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable,
@@ -170,13 +176,39 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	//
 
 	/**
+	 * Returns a view allowing {@link Parallel} operations to be performed
+	 * faster by using {@link ConcurrentContext concurrent} threads.
+	 * Sub-classes / views supporting parallel processing should override
+	 * this method (by default parallel processing is not supported).
+	 * 
+	 * @see #isParallel
+	 */
+	public FastCollection<E> parallel() {
+		return this; // No support by default.
+	}
+
+	/**
+	 * Returns a sequential view disallowing {@link #parallel} processing of 
+	 * {@link Parallel} operations.
+	 */
+	public FastCollection<E> sequential() {
+		return new SequentialCollectionImpl<E>(this);
+	}
+
+	/**
+	 * Returns a sequential view exposing elements in reversed iterative order.
+	 */
+	public FastCollection<E> reversed() {
+		return new ReversedCollectionImpl<E>(this);
+	}
+
+	/**
 	 * Returns an atomic view over this collection. All operations that write or
 	 * access multiple elements in the collection (such as {@code addAll(),
 	 * retainAll()}) are atomic. All read operations are mutex-free.
 	 * 
-	 * @return the atomic view.
+	 * The returned view is {@link #parallel} if this collection is parallel.
 	 */
-	@Parallelizable(mutexFree = true, comment = "Except for write operations, all read operations are mutex-free.")
 	public FastCollection<E> atomic() {
 		return new AtomicCollectionImpl<E>(this);
 	}
@@ -188,32 +220,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
 	 * readers-writers locks</a> giving priority to writers.
 	 * 
-	 * @return the shared view.
+	 * The returned view is {@link #parallel} if this collection is parallel.
 	 */
-	@Parallelizable(mutexFree = false, comment = "Use multiple-readers/single-writer lock.")
 	public FastCollection<E> shared() {
 		return new SharedCollectionImpl<E>(this);
-	}
-
-	/**
-	 * Returns a view allowing bulk collection operations to be performed
-	 * {@link javolution.context.ConcurrentContext in parallel} using
-	 * {@link ConcurrentContext}.
-	 * 
-	 * @return the parallel view.
-	 * @see #forEach
-	 * @see #removeIf
-	 * @see #reduce
-	 * @see #any
-	 * @see #min
-	 * @see #max
-	 * @see #size
-	 * @see #clear
-	 * @see #removeAll
-	 * @see #retainAll
-	 */
-	public FastCollection<E> parallel() {
-		return new ParallelCollectionImpl<E>(this);
 	}
 
 	/**
@@ -221,7 +231,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * the collection through this view will result into a
 	 * {@link java.lang.UnsupportedOperationException} being raised.
 	 * 
-	 * @return the unmodifiable view.
+	 * The returned view is {@link #parallel} if this collection is parallel.
 	 */
 	public FastCollection<E> unmodifiable() {
 		return new UnmodifiableCollectionImpl<E>(this);
@@ -234,8 +244,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * ensures that this collection has only elements satisfying the filter
 	 * predicate.
 	 * 
-	 * @param filter the filter predicate.
-	 * @return the filtered view.
+	 * Except for {@link #reduce reduction} operations, the returned view 
+	 * is {@link #parallel} if this collection is parallel.
 	 */
 	public FastCollection<E> filter(Predicate<? super E> filter) {
 		return new FilteredCollectionImpl<E>(this, filter);
@@ -245,90 +255,61 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * Returns a view exposing elements through the specified mapping function.
 	 * The returned view does not allow new elements to be added.
 	 * 
-	 * @param function the mapping function.
-	 * @return the mapped view.
+	 * The returned view is {@link #parallel} if this collection is parallel.
 	 */
 	public <R> FastCollection<R> map(Function<? super E, ? extends R> function) {
 		return new MappedCollectionImpl<E, R>(this, function);
 	}
 
 	/**
-	 * Returns a view exposing its elements sorted according to the specified
-	 * comparator.
-	 * 
-	 * @param comparator the comparator used for sorting.
-	 * @return the sorted view.
+	 * Returns a sequential view exposing its elements sorted according to 
+	 * the specified comparator.
 	 */
 	public FastCollection<E> sorted(Comparator<? super E> comparator) {
 		return new SortedCollectionImpl<E>(this, comparator);
 	}
 
 	/**
-	 * Returns a view exposing elements sorted according to the elements natural
-	 * order (convenience method).
+	 * Returns a sequential view exposing elements sorted according to the 
+	 * elements natural order (convenience method).
 	 * 
-	 * @return {@code sorted(Equalities.NATURAL)}
+	 * @return {@code sorted(Order.NATURAL)}
 	 * @throws ClassCastException if this collection's elements do not implement
 	 *         {@link Comparable}.
-	 * @see #sorted(Comparator)
-	 * @see Order#NATURAL
 	 */
 	public FastCollection<E> sorted() {
 		return sorted(Order.NATURAL);
 	}
 
 	/**
-	 * Returns a view exposing elements in reversed iterative order.
-	 * 
-	 * @return reversed view.
-	 */
-	public FastCollection<E> reversed() {
-	    return new ReversedCollectionImpl<E>(this);
-	}
-
-	/**
-	 * Returns distinct sub-views over this collection.
-	 * 
-	 * @param subViews the array to return the sub-views.
-	 * @return the specified sub-views array (may contains {@code null} 
-	 *         values if the collection cannot be fully split).
-	 */
-	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
-		subViews[0] = this;
-		return subViews;
-	}
-
-	/**
-	 * Returns a view exposing only distinct elements. It does not iterate twice
-	 * over the {@link #equality() same} elements. Adding elements already
-	 * present has no effect. If this collection is initially empty, using a
-	 * distinct view to add new elements ensures that this collection has no
-	 * duplicate element.
-	 * 
-	 * @return the view having only distinct elements.
+	 * Returns a sequential view exposing only distinct elements. 
+	 * It does not iterate twice over the {@link #equality() same} elements.
+	 * Adding elements already present has no effect. 
+	 * If this collection is initially empty, using a distinct view to add 
+	 * new elements ensures that this collection has no duplicate element.
 	 */
 	public FastCollection<E> distinct() {
 		return new DistinctCollectionImpl<E>(this);
 	}
 
 	/**
-	 * Returns a view keeping track of the insertion order and exposing 
-	 * elements in that order (first added, first to iterate).
+	 * Returns a sequential view keeping track of the insertion order and 
+	 * exposing elements in that order (first added, first to iterate).
 	 * This view can be useful for compatibility with Java linked collections
 	 * (e.g. {@code LinkedHashSet}). Any element not added through this 
 	 * view is ignored.
-	 * 
-	 * @return a view maintaining insertion order.
 	 */
 	public FastCollection<E> linked() {
 		return new LinkedCollectionImpl<E>(this);
 	}
 
 	/**
-	 * Returns a view using the specified comparator for element equalities.
+	 * Returns a view using the specified comparator to test for element 
+	 * equality.
 	 * 
-	 * @param equality
-	 *            the equality to use for element comparisons.
+	 * The returned view is {@link #parallel} if this collection is parallel.
+	 * 
+	 * @param equality the equality to use for element comparisons.
 	 * @return a view using the specified custom equality.
 	 * @see #contains
 	 * @see #containsAll
@@ -347,12 +328,13 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 
 	/**
 	 * Iterates over all this collection elements applying the specified
-	 * consumer. Iterations may be performed concurrently if this collection is
-	 * {@link #parallel parallel}.
+	 * consumer. {@link #parallel Parallel} views may perform concurrent
+	 * iterations.
 	 * 
-	 * @param consumer
-	 *            the functional consumer applied to the collection elements.
+	 * @param consumer the functional consumer applied to the collection 
+	 *        elements.
 	 */
+	@Parallel(comment="Parallel views should override this operation")
 	@Realtime(limit = LINEAR)
 	public void forEach(Consumer<? super E> consumer) {
 		for (Iterator<E> itr = iterator(); itr.hasNext();)
@@ -361,14 +343,15 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 
 	/**
 	 * Removes from this collection all the elements matching the specified
-	 * functional predicate. Removals may be performed concurrently if this
-	 * collection is {@link #parallel parallel}.
-	 * 
-	 * @param filter
-	 *            a predicate returning {@code true} for elements to be removed.
+	 * functional predicate. {@link #parallel Parallel} views may perform
+	 * concurrent removals.
+	 * 	 
+	 * @param filter a predicate returning {@code true} for elements to be
+	 *        removed.
 	 * @return {@code true} if at least one element has been removed;
 	 *         {@code false} otherwise.
 	 */
+	@Parallel(comment="Parallel views should override this operation")
 	@Realtime(limit = LINEAR)
 	public boolean removeIf(Predicate<? super E> filter) {
 		boolean removed = false;
@@ -376,26 +359,27 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 			if (filter.test(itr.next())) {
 				removed = true;
 				itr.remove();
-			}	
+			}
 		}
 		return removed;
 	}
 
 	/**
 	 * Performs a reduction by applying the specified operator on all the
-	 * elements of this collection. Reduction may be performed concurrently if
-	 * this collection is {@link #parallel parallel} (in which case the binary
-	 * operator needs to be associative). If this collection is empty this
-	 * method returns {@code null}.
+	 * elements of this collection. If this collection is empty this
+	 * method returns {@code null}. {@link #parallel Parallel} views may 
+	 * perform concurrent reductions.
 	 * 
 	 * @param operator the binary operator applied to the collection elements.
 	 * @return the result of the reduction or {@code null} if the collection is
 	 *         empty.
 	 */
+	@Parallel(comment="Parallel views should override this operation")
 	@Realtime(limit = LINEAR)
 	public E reduce(BinaryOperator<E> operator) {
 		Iterator<E> itr = iterator();
-		if (!itr.hasNext()) return null;
+		if (!itr.hasNext())
+			return null;
 		E accumulator = itr.next();
 		while (itr.hasNext()) {
 			accumulator = operator.apply(accumulator, itr.next());
@@ -406,19 +390,16 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	/**
 	 * Returns any {@code non-null} elements through reduction (convenience
 	 * method). 
-	 * The search may be performed concurrently if this collection
-	 * is {@link #parallel parallel}.
 	 * 
 	 * @return {@code reduce((x,y) -> x == null ? y : x)}
 	 */
+	@Parallel
 	@Realtime(limit = LINEAR)
 	@SuppressWarnings("unchecked")
 	public E any() {
 		return reduce((BinaryOperator<E>) ANY);
 	}
-
 	private static final BinaryOperator<Object> ANY = new BinaryOperator<Object>() {
-
 		@Override
 		public Object apply(Object first, Object second) {
 			return first == null ? second : first;
@@ -428,22 +409,19 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	/**
 	 * Returns the greatest element of this collection according to its 
 	 * natural order (convenience method).
-	 * The search may be performed concurrently if this collection
-	 * is {@link #parallel parallel}.
 	 * 
-	 * @return {@code reduce((x,y) -> Equalities.NATURAL.compare(x, y) > 0 ? x : y)} 
+	 * @return {@code reduce((x,y) -> Order.NATURAL.compare(x, y) > 0 ? x : y)} 
 	 * @throws ClassCastException if any element of this collection do not
 	 *         implement {@link Comparable}
 	 * @see Order#NATURAL
 	 */
+	@Parallel
 	@Realtime(limit = LINEAR)
 	@SuppressWarnings("unchecked")
 	public E max() {
 		return reduce((BinaryOperator<E>)MAX);
 	}
-
 	private static final BinaryOperator<Object> MAX = new BinaryOperator<Object>() {
-
 		@Override
 		public Object apply(Object first, Object second) {
 			return Order.NATURAL.compare(first, second) > 0 ? first : second;
@@ -453,22 +431,19 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	/**
 	 * Returns the smallest element of this collection according to its 
 	 * natural order (convenience method).
-	 * The search may be performed concurrently if this collection
-	 * is {@link #parallel parallel}.
 	 * 
-	 * @return {@code reduce((x,y) -> Equalities.NATURAL.compare(x, y) < 0 ? x : y)} 
+	 * @return {@code reduce((x,y) -> Order.NATURAL.compare(x, y) < 0 ? x : y)} 
 	 * @throws ClassCastException if any element of this collection do not
 	 *         implement {@link Comparable}
 	 * @see Order#NATURAL
 	 */
+	@Parallel
 	@Realtime(limit = LINEAR)
 	@SuppressWarnings("unchecked")
 	public E min() {
 		return reduce((BinaryOperator<E>)MIN);
 	}
-
 	private static final BinaryOperator<Object> MIN = new BinaryOperator<Object>() {
-
 		@Override
 		public Object apply(Object first, Object second) {
 			return Order.NATURAL.compare(first, second) < 0 ? first : second;
@@ -486,153 +461,136 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 
 	/** Indicates if this collection is empty. */
 	@Override
+	@Parallel
 	@Realtime(limit = LINEAR, comment = "Could iterate the whole collection (e.g. filtered view).")
 	public boolean isEmpty() {
-		return !iterator().hasNext();
+		return size() == 0;
 	}
 
-	/**
-	 * Returns the size of this collection. The size may be calculated
-	 * concurrently if this collection is {@link #parallel() parallel} (e.g.
-	 * parallel view over filtered collection).
-	 * 
-	 * @return {@code map(x -> 1).reduce((x,y) -> x + y)}
-	 */
+	/** Returns the size of this collection. */
 	@Override
+	@Parallel
 	@Realtime(limit = LINEAR, comment = "Could count the elements (e.g. filtered view).")
 	public int size() {
 		// map(x -> 1).reduce((x,y) -> x + y);
 		return map(TO_ONE).reduce(SUM);
 	}
-
-	private static final Function<Object, Integer> TO_ONE = new Function<Object, Integer>() {
-
+	private static final Function<Object, Integer> TO_ONE = new Function<Object, Integer>() {		
 		@Override
 		public Integer apply(Object param) {
 			return 1;
 		}
 	};
 	private static final BinaryOperator<Integer> SUM = new BinaryOperator<Integer>() {
-
 		@Override
 		public Integer apply(Integer first, Integer second) {
 			return first + second;
 		}
 	};
 
-	/**
-	 * Removes all elements from this collection. The removal may be performed
-	 * concurrently if this collection is {@link #parallel() parallel} (e.g.
-	 * parallel view over filtered collection).
-	 * 
-	 * @return {@code removeIf(Predicate.TRUE)}
-	 */
+	/** Removes all elements from this collection. */
 	@Override
+	@Parallel
 	@Realtime(limit = LINEAR, comment = "Could remove the elements one at a time.")
 	public void clear() {
 		removeIf(Predicate.TRUE);
 	}
 
-	/**
-	 * Indicates if this collection contains the specified element.
-	 */
-	@SuppressWarnings("unchecked")
+	/** Indicates if this collection contains the specified element testing 
+	 * for element equality using this collection {@link #equality}. */
 	@Override
+	@Parallel
 	@Realtime(limit = LINEAR, comment = "Could search the whole collection.")
 	public boolean contains(Object searched) {
-		Equality<? super E> cmp = equality();
-		for (Iterator<E> itr = iterator(); itr.hasNext();)
-			if (cmp.areEqual((E) searched, itr.next()))
-				return true;
-		return false;
-	}
+		final AtomicBoolean found = new AtomicBoolean(false);
+		forEach(new Consumer<E>() {
 
-	/**
-	 * Removes a single instance of the specified element from this collection.
-	 */
-	@SuppressWarnings("unchecked")
+			@SuppressWarnings("unchecked")
+			@Override
+			public void accept(E param) {
+				if (!found.get() && equality().areEqual(param, (E)searched))
+				    found.set(false);
+			}});
+	   return found.get();
+    }
+
+	/** Removes a single instance of the specified element from 
+	 *  this collection testing for element equality using this collection
+	 *  {@link #equality}. */
 	@Override
+	@Parallel
 	@Realtime(limit = LINEAR, comment = "Could search the whole collection.")
 	public boolean remove(Object searched) {
-		Equality<? super E> cmp = equality();
-		for (Iterator<E> itr = iterator(); itr.hasNext();)
-			if (cmp.areEqual((E) searched, itr.next())) {
-				itr.remove();
-				return true;
-			}
-		return false;
+		final AtomicBoolean found = new AtomicBoolean(false);
+		removeIf(new Predicate<E>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public boolean test(E param) {
+				if (!found.get() && equality().areEqual(param, (E)searched)) 
+					if (!found.getAndSet(true)) return true;
+				return false;
+			}});
+	   return found.get();
 	}
 
-	/**
-	 * Adds all the elements of the specified collection to this collection.
-	 */
+	/** Adds all the elements of the specified collection to this collection.  */
 	@Override
 	@Realtime(limit = LINEAR)
 	public boolean addAll(Collection<? extends E> that) {
 		boolean changed = false;
-		Iterator<? extends E> it = that.iterator();
-		while (it.hasNext()) {
-			if (add(it.next()))
-				changed = true;
-		}
+		for (E e : that) 
+			if (add(e))changed = true;
 		return changed;
 	}
 
-	/** Indicates if this collection contains all the specified elements. */
+	/** Indicates if this collection contains all the specified elements
+	 *  testing for element equality using this collection
+	 *  {@link #equality}. */
 	@Override
+	@Parallel
 	@Realtime(limit = N_SQUARE)
 	public boolean containsAll(Collection<?> that) {
-		for (Object e : that) {
-			if (!contains(e))
-				return false;
-		}
+		for (Object e : that)
+			if (!contains(e)) return false;
 		return true;
 	}
 
-	/**
-	 * Removes all the specified element from this collection. The removal may
-	 * be performed concurrently if this collection is {@link #parallel()
-	 * parallel}.
-	 */
+	/** Removes all the specified elements from this collection
+	 *  testing for element equality using this collection {@link #equality}. */
 	@Override
+	@Parallel
 	@Realtime(limit = N_SQUARE)
-	public boolean removeAll(final Collection<?> that) {
-		final AtomicBoolean changed = new AtomicBoolean(false);
-		removeIf(new Predicate<E>() {
-
+	public boolean removeAll(Collection<?> that) {
+		@SuppressWarnings("unchecked")
+		Equality<Object> equality = (Equality<Object>) equality();
+		final FastCollection<Object> toRemove = (equality instanceof Order) ?
+				new SparseSet<Object>((Order<Object>)equality) : 
+					new FractalTable<Object>().using(equality);
+		toRemove.addAll(that);		
+		return removeIf(new Predicate<E>() {
 			@Override
 			public boolean test(E param) {
-				if (that.contains(param)) {
-					changed.set(true);
-					return true;
-				}
-				return false;
-			}
-		});
-		return changed.get();
+				return toRemove.contains(param);
+			}});
 	}
 
-	/**
-	 * Removes all the elements except those in the specified collection. The
-	 * removal may be performed concurrently if this collection is
-	 * {@link #parallel() parallel}.
-	 */
+	/** Removes all the elements except those in the specified collection
+	 *  testing for element equality using this collection {@link #equality}. */
 	@Override
+	@Parallel
 	@Realtime(limit = N_SQUARE)
 	public boolean retainAll(final Collection<?> that) {
-		final AtomicBoolean changed = new AtomicBoolean(false);
-		removeIf(new Predicate<E>() {
-
+		@SuppressWarnings("unchecked")
+		Equality<Object> equality = (Equality<Object>) equality();
+		final FastCollection<Object> toRetain = (equality instanceof Order) ?
+				new SparseSet<Object>((Order<Object>)equality) : 
+					new FractalTable<Object>().using(equality);
+		toRetain.addAll(that);		
+		return removeIf(new Predicate<E>() {
 			@Override
 			public boolean test(E param) {
-				if (!that.contains(param)) {
-					changed.set(true);
-					return true;
-				}
-				return false;
-			}
-		});
-		return changed.get();
+				return !toRetain.contains(param);
+			}});
 	}
 
 	/** Returns an array holding this collection elements. */
@@ -641,13 +599,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	public Object[] toArray() {
 		return toArray(EMPTY_ARRAY);
 	}
-
 	private final static Object[] EMPTY_ARRAY = new Object[0];
 
-	/**
-	 * Returns the specified array holding this collection elements if enough
-	 * capacity.
-	 */
+	/** Returns the specified array holding this collection elements if enough
+	 *  capacity. */
 	@SuppressWarnings("unchecked")
 	@Override
 	@Realtime(limit = LINEAR)
@@ -671,18 +626,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	// Misc.
 	//
 	
-	/**
-	 * Returns the element equality for this collection.
-	 * 
-	 * @see #using(Equality)
-	 */
+	/** Returns the element equality for this collection. */
 	@Realtime(limit = CONSTANT)
 	public abstract Equality<? super E> equality();
 
-	/**
-	 * Returns a copy of this collection; updates of the copy should not impact
-	 * the original.
-	 */
+	/** Returns a copy of this collection; updates of the copy should not impact
+	 *  the original. */
 	@Realtime(limit = LINEAR)
 	public abstract FastCollection<E> clone();
 
@@ -691,8 +640,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * method follows the {@link Collection#equals(Object)} specification
 	 * regardless of this collection element {@link #equality equality}.
 	 * 
-	 * @param obj
-	 *            the object to be compared for equality with this collection
+	 * @param obj the object to be compared for equality with this collection
 	 * @return <code>true</code> if this collection is considered equals to the
 	 *         one specified; <code>false</code> otherwise.
 	 */
@@ -730,12 +678,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		}
 	}
 
-	/**
-	 * Returns the hash code of this collection. This method always follows the
-	 * {@link Collection#hashCode()} specification..
-	 * 
-	 * @return this collection hash code.
-	 */
+	/** Returns the hash code of this collection. This method always follows the
+	 * {@link Collection#hashCode()} specification. */
 	@Override
 	@Realtime(limit = LINEAR)
 	public int hashCode() {
@@ -755,12 +699,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		return hash;
 	}
 
-	/**
-	 * Returns the string representation of this collection using its default
-	 * {@link TextFormat format}.
-	 * 
-	 * @see TextContext
-	 */
+	/** Returns the string representation of this collection using its default
+	 * {@link TextFormat format}. */
 	@Override
 	@Realtime(limit = LINEAR)
 	public String toString() {
@@ -770,7 +710,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	/**
 	 * Default text format for fast collections (parsing not supported).
 	 */
-	@Parallelizable
 	public static class Format extends TextFormat<FastCollection<?>> {
 
 		@Override
@@ -792,6 +731,5 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 			}
 			return dest.append(']');
 		}
-
 	}
 }

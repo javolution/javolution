@@ -11,18 +11,19 @@ package javolution.util.internal.collection;
 import java.util.Iterator;
 
 import javolution.util.FastCollection;
+import javolution.util.function.BinaryOperator;
+import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * An unmodifiable view over a collection.
  */
 public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
-
 	private static final long serialVersionUID = 0x700L; // Version.
-
 	private FastCollection<E> inner;
-
+	
 	public UnmodifiableCollectionImpl(FastCollection<E> inner) {
 		this.inner = inner;
 	}
@@ -48,6 +49,11 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public void forEach(Consumer<? super E> consumer) {
+		inner.forEach(consumer);
+	}
+
+	@Override
 	public boolean isEmpty() { // Optimization.
 		return inner.isEmpty();
 	}
@@ -58,24 +64,28 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public int size() { // Optimization.
-		return inner.size();
+	public FastCollection<E> parallel() { // Full support.
+	    return new UnmodifiableCollectionImpl<E>(inner.parallel());
+	}
+
+	@Override
+	public E reduce(BinaryOperator<E> operator) {
+		return inner.reduce(operator);
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		throw new UnsupportedOperationException("Read-Only Collection.");
 	}
 
 	@Override
 	public UnmodifiableCollectionImpl<E> reversed() { // Optimization.
 	    return new UnmodifiableCollectionImpl<E>(inner.reversed());
 	}
-	
+
 	@Override
-	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
-		inner.subViews(subViews);
-		for (int i = 0; i < subViews.length; i++) {
-			FastCollection<E> subView = subViews[i];
-			if (subView == null) continue;
-			subViews[i] = new UnmodifiableCollectionImpl<E>(subView);
-		}
-		return subViews;
+	public int size() { // Optimization.
+		return inner.size();
 	}
 
 	/** Default read-only iterator for generic collections **/

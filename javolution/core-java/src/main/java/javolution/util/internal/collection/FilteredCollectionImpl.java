@@ -12,6 +12,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.FastCollection;
+import javolution.util.FractalTable;
+import javolution.util.function.BinaryOperator;
+import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
 
@@ -74,14 +77,41 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastCollection<E>[] subViews(FastCollection<E>[] subViews) {
-		inner.subViews(subViews);
-		for (int i = 0; i < subViews.length; i++) {
-			FastCollection<E> subView = subViews[i];
-			if (subView == null) continue;
-			subViews[i] = new FilteredCollectionImpl<E>(subView, filter);
-		}
-		return subViews;
+	public FilteredCollectionImpl<E> parallel() { // Partial support.
+	    return new FilteredCollectionImpl<E>(inner.parallel(), filter);
+	}
+	
+	@Override
+	public void forEach(final Consumer<? super E> consumer) {
+		inner.forEach(new Consumer<E>() {
+			@Override
+			public void accept(E param) {
+				if (filter.test(param)) consumer.accept(param);				
+			}});
+	}
+
+	@Override
+	public boolean removeIf(final Predicate<? super E> toRemove) {
+		return inner.removeIf(new Predicate<E>() {
+			@Override
+			public boolean test(E param) {
+				return filter.test(param) && toRemove.test(param);
+			}});
+	}
+
+	@Override
+	public E reduce(BinaryOperator<E> operator) {
+		final FractalTable<E> toReduce = new FractalTable<E>();
+		inner.forEach(new Consumer<E>() { // Parallel.
+			@Override
+			public void accept(E param) {
+				if (filter.test(param)) {
+					synchronized (toReduce) {
+						toReduce.add(param);				
+					}
+				}
+			}});		
+		return toReduce.reduce(operator); // Sequential.
 	}
 
 	/** Default filtered iterator for generic collections **/
@@ -126,4 +156,5 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 		}
 		
 	}
+
 }

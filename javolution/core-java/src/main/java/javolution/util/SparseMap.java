@@ -8,13 +8,10 @@
  */
 package javolution.util;
 
-import java.io.Serializable;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import javolution.lang.Index;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
+import javolution.util.internal.map.EntryImpl;
+import javolution.util.internal.map.UnorderedMapImpl;
 
 /**
  * <p> A <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> map 
@@ -104,7 +101,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	private static final long serialVersionUID = 0x700L; // Version. 
 	
 	private final Order<? super K> order; // Null if no order.
-	private final SparseArray<Object> nodes;
+	private final SparseArray<Object> nodes; // Values are either entries or maps. 
 	private int size;
 	
 	/**
@@ -139,10 +136,6 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 		return Equality.STANDARD;
 	}
 	
-	/**
-	 * Returns a new map having the exact same entries (not duplicated) as
-	 * this map.
-	 */
 	@Override
 	public SparseMap<K, V> clone() {
 		SparseMap<K,V> copy = new SparseMap<K,V>(order);
@@ -163,56 +156,113 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-    public Entry<K,V> putEntry(Entry<K,V> entry) { // Lock only required for writes.
-		int i = order.indexOf(entry.getKey());
-        Object node = nodes.setIfAbsent(i, entry);
-        if (node != null) {
-             if (node instanceof FastMap) {
-           	     Entry<K,V> previous = ((FastMap<K,V>)node).putEntry(entry);
-        	     if (previous != null) return previous;
-             } else { // Entry
-                 Entry<K,V> previous = (Entry<K,V>)node;
-                 if (order.areEqual(previous.getKey(), entry.getKey())) {
-        	         nodes.set(i, entry);
-        	         return previous;
-                 } // Collision.
-                 Order<? super K> subOrder = order.subOrder(entry.getKey());
-                 FastMap<K,V> subMap = (subOrder != null) ? 
-        		 new SparseMap<K,V>(subOrder) : new SortedMap<K,V>(order);
-                 subMap.putEntry(previous);
-                 subMap.putEntry(entry);
-                 nodes.set(i, subMap);
-             }
-        }
-        size++;
-        return null;
+	public V put(K key, V value) {
+		int i = order.indexOf(key);
+		Object node = nodes.setIfAbsent(i, blanck);
+		if (node == null) {
+			blanck.key = key;
+			blanck.value = value;
+			blanck = new EntryImpl<K,V>(null,null);
+			size++;
+			return null;
+		}
+		// Slot taken!
+		FastMap<K,V> subMap;
+		if (node instanceof EntryImpl) {
+			Entry<K,V> previous = (Entry<K,V>)node;
+            if (order.areEqual(previous.getKey(), key)) // Replace value.
+   	            return previous.setValue(value);
+            // Collision.
+            Order<? super K> subOrder = order.subOrder(key);
+            subMap = (subOrder != null) ? 
+   		         new SparseMap<K,V>(subOrder) : new UnorderedMapImpl<K,V>(order);
+   	        subMap.put(previous.getKey(), previous.getValue());
+   	        nodes.set(i, subMap);
+		} else {
+			subMap = (FastMap<K,V>) node;
+		}
+		int sizeBefore = subMap.size();
+		V result = subMap.put(key, value);
+		int sizeAfter = subMap.size();
+		size += sizeAfter - sizeBefore;
+		return result;
 	}
+	private EntryImpl<K,V> blanck = new EntryImpl<K,V>(null, null);
 	
 	@SuppressWarnings("unchecked")
 	@Override
-    public Entry<K,V> removeEntry(K key) {
-		int i = order.indexOf(key);
+	public V remove(Object key) {
+		int i = order.indexOf((K)key);
         Object node = nodes.get(i);        
         if (node == null) return null;
         if (node instanceof FastMap) {
-        	FastMap<K,V> map = (FastMap<K,V>)node;
-        	Entry<K,V> previous = map.removeEntry(key);
-        	if (previous == null) return null;
-        	if (map.size() <= 1) nodes.set(i, map.entrySet().iterator().next());
-        	size--;
-        	return previous;
+        	FastMap<K,V> subMap = (FastMap<K,V>)node;
+    		int sizeBefore = subMap.size();
+    		V result = subMap.remove(key);
+    		int sizeAfter = subMap.size();
+    		if (sizeAfter == 1) nodes.set(i, subMap.firstEntry());
+        	size += sizeAfter - sizeBefore;
+        	return result;
         }
-        Entry<K,V> entry = (Entry<K,V>)node;
-        if (!order.areEqual(entry.getKey(), key)) return null;
+        EntryImpl<K,V> entry = (EntryImpl<K,V>)node;
+        if (!order.areEqual(entry.key, (K)key)) return null;
         nodes.set(i, null);
         size--;
-        return entry;
+		return entry.value;
 	}
 	
 	@Override
 	public void clear() {
 		nodes.clear();
 		size = 0;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Entry<K, V> firstEntry() {
+		Object node = nodes.firstEntry();
+		if (node instanceof FastMap) 
+			return ((FastMap<K,V>)node).firstEntry();
+		return (Entry<K,V>) node;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Entry<K, V> lastEntry() {
+		Object node = nodes.lastEntry();
+		if (node instanceof FastMap) 
+			return ((FastMap<K,V>)node).lastEntry();
+		return (Entry<K,V>) node;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Entry<K, V> getEntryAfter(K key) {
+		int i = order.indexOf(key);
+        Object node = nodes.get(i);
+        if (node instanceof FastMap) {
+        	Entry<K,V> next = ((FastMap<K,V>)node).getEntryAfter(key);
+        	if (next != null) return next;
+        }
+        node = nodes.getEntryAfter(i).getValue();
+        if (node instanceof FastMap) 
+        	return ((FastMap<K,V>)node).firstEntry();
+        return (Entry<K,V>)node;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Entry<K, V> getEntryBefore(K key) {
+		int i = order.indexOf(key);
+        Object node = nodes.get(i);
+        if (node instanceof FastMap) {
+        	Entry<K,V> previous = ((FastMap<K,V>)node).getEntryBefore(key);
+        	if (previous != null) return previous;
+        }
+        node = nodes.getEntryBefore(i).getValue();
+        if (node instanceof FastMap) 
+        	return ((FastMap<K,V>)node).lastEntry();
+        return (Entry<K,V>)node;
 	}
 
     

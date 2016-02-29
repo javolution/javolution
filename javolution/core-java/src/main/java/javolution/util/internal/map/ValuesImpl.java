@@ -54,7 +54,7 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
 	@Override
 	public Iterator<V> iterator() {
-		return new IteratorImpl<K, V>(new MapEntryIteratorImpl<K,V>(map));
+		return new IteratorImpl<K, V>(new EntryIteratorImpl<K,V>(map));
 	}
 
 	@Override
@@ -64,9 +64,9 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
 	/** Then generic iterator over the map values */
 	private static class IteratorImpl<K, V> implements Iterator<V> {
-		final MapEntryIteratorImpl<K,V> mapItr;
+		final EntryIteratorImpl<K,V> mapItr;
 
-		public IteratorImpl(MapEntryIteratorImpl<K,V> mapItr) {
+		public IteratorImpl(EntryIteratorImpl<K,V> mapItr) {
 			this.mapItr = mapItr;
 		}
 

@@ -14,26 +14,19 @@ import java.util.NoSuchElementException;
 
 import javolution.util.FastCollection;
 import javolution.util.FractalTable;
-import javolution.util.function.Equality;
 
 /**
  * A sorted view over a collection.
  */
-public final class SortedCollectionImpl<E> extends FastCollection<E> {
+public final class SortedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastCollection<E> inner;
 	private final Comparator<? super E> cmp;
 
 	public SortedCollectionImpl(FastCollection<E> inner,
 			Comparator<? super E> cmp) {
-		this.inner = inner;
+		super(inner);
 		this.cmp = cmp;
-	}
-
-	@Override
-	public boolean add(E element) {
-		return inner.add(element);
 	}
 
 	@Override
@@ -49,11 +42,6 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
 	@Override
 	public boolean contains(Object searched) { // Optimization.
 		return inner.contains(searched);
-	}
-
-	@Override
-	public Equality<? super E> equality() {
-		return inner.equality();
 	}
 
 	@Override

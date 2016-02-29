@@ -18,8 +18,8 @@ import javolution.lang.Realtime;
 import javolution.util.function.Order;
 
 /**
- * <p> A high-performance ordered set with documented {@link Realtime 
- *     real-time} behavior.</p>
+ * <p> A high-performance ordered set (trie-based) with 
+ *     {@link Realtime strict timing constraints}.</p>
  * 
  * <p> Iterations order over the set elements is typically determined 
  *     by the set {@link #comparator() order} except for specific views 
@@ -29,20 +29,20 @@ import javolution.util.function.Order;
  * <p> Instances of this class can advantageously replace {@code java.util.*} 
  *     sets in terms of adaptability, space or performance. 
  * <pre>{@code
- * FastSet<Foo> hashSet = new SparseSet<Foo>(); // Hash order. 
- * FastSet<Foo> identityHashSet = new SparseSet<Foo>(Order.IDENTITY);
- * FastSet<String> treeSet = new SparseSet<String>(Order.LEXICAL); 
- * FastSet<Foo> linkedHashSet = new SparseSet<Foo>().linked(); // Insertion order.
- * FastSet<Foo> concurrentHashSet = new SparseSet<Foo>().shared(); 
- * FastSet<String> concurrentSkipListSet = new SparseSet<String>(Order.LEXICAL).shared();
- * FastSet<Foo> copyOnWriteArraySet = new SparseSet<Foo>().atomic();
+ * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
+ * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY);
+ * FastSet<String> treeSet = FastSet.newSet(Order.LEXICAL); 
+ * FastSet<Foo> linkedHashSet = FastSet.newSet().linked().cast(); // Insertion order.
+ * FastSet<Foo> concurrentHashSet = FastSet.newSet().shared().cast(); 
+ * FastSet<String> concurrentSkipListSet = FastSet.newSet(Order.LEXICAL).shared().cast();
+ * FastSet<Foo> copyOnWriteArraySet = FastSet.newSet().atomic().cast();
  * ...
  * }</pre> </p>
  * 
  * <p> This class inherits all the {@link FastCollection} views and support 
  *     the new {@link #subSet subSet} view over a portion of the set.
  * <pre>{@code
- * FastSet<String> names = new SparseSet<String>(Equality.LEXICAL); 
+ * FastSet<String> names = FastSet.newSet(Equality.LEXICAL); 
  * ...
  * names.subSet("A", "B").clear(); // Removes the names starting with "A"  (see java.util.SortedSet.subSet specification).
  * names.filter(str -> str.length < 5).clear(); // Removes all short name (Java 8 notation).
@@ -62,6 +62,21 @@ public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<
      * Default constructor.
      */
     protected FastSet() {
+    }
+
+    /**
+     * Returns a new high-performance set sorted arbitrarily (hash-based).
+     */
+    public static <E> FastSet<E> newSet() {
+    	return new SparseSet<E>();
+    }
+
+    /**
+     * Returns a new high-performance set sorted according to the specified
+     * order.
+     */
+    public static <E> FastSet<E> newSet(Order<? super E> order) {
+    	return new SparseSet<E>(order);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -177,6 +192,14 @@ public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<
     // Misc.
     //
 
+    /**
+     * Casts this set to the expected parameterized type.
+     */
+    @SuppressWarnings("unchecked")
+	public <T> FastSet<T> cast() {
+    	return (FastSet<T>) this;
+    }
+    
     @Override
 	public final Order<? super E> equality() {
 		return comparator();

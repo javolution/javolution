@@ -76,11 +76,6 @@ public class LexicalOrderImpl implements Order<CharSequence>,
 		if (i == 63) return new High(fromIndex);
 		return new LexicalOrderImpl(fromIndex+1);
 	}
-
-	@Override
-	public int bitLength() {
-		return 6;
-	}
 	
 	private static class Low extends LexicalOrderImpl {
 		private Low(int fromIndex) {

@@ -349,8 +349,8 @@ javolution/core-java/src/main/java/javolution/util/internal/collection/DistinctC
 javolution/core-java/src/main/java/javolution/util/internal/collection/FilteredCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/LinkedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/MappedCollectionImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/collection/ParallelCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/ReversedCollectionImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/collection/SequentialCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/SharedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/SortedCollectionImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/collection/UnmodifiableCollectionImpl.java -text svneol=unset#text/plain
@@ -361,10 +361,11 @@ javolution/core-java/src/main/java/javolution/util/internal/function/IdentityHas
 javolution/core-java/src/main/java/javolution/util/internal/function/LexicalOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/function/NaturalOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntryImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/EntryIteratorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntrySetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/KeySetImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/map/MapEntryIteratorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/SubMapImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/UnorderedMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/CustomEqualityTableImpl.java -text svneol=unset#text/plain

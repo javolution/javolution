@@ -11,7 +11,7 @@ package javolution.util.function;
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 import static javolution.lang.Realtime.Limit.UNKNOWN;
-import javolution.lang.Parallelizable;
+import javolution.lang.Parallel;
 import javolution.lang.Realtime;
 import javolution.util.internal.function.ArrayEqualityImpl;
 import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
@@ -34,7 +34,7 @@ public interface Equality<T> {
     /**
      * The standard object equality ({@link #HASH} order).
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = UNKNOWN)
     public static final Equality<Object> STANDARD = HashOrderImpl.INSTANCE;
 
@@ -42,7 +42,7 @@ public interface Equality<T> {
      * The identity object equality ({@link #IDENTITY_HASH} order)
      * for which instances are only equals to themselves.
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = CONSTANT)
     public static final Equality<Object> IDENTITY 
        = IdentityHashOrderImpl.INSTANCE;
@@ -51,14 +51,14 @@ public interface Equality<T> {
      * A content based array comparator (recursive). 
      * The {@link #STANDARD standard} comparator is used for non-array elements. 
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<Object> ARRAY = ArrayEqualityImpl.INSTANCE;
  
     /**
      * A lexical equality for any {@link CharSequence} ({@link #LEXICAL} order).
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<CharSequence> LEXICAL
         = LexicalOrderImpl.INSTANCE;
@@ -67,7 +67,7 @@ public interface Equality<T> {
      * A case sensitive lexical equality for any {@link CharSequence} 
      * ({@link #LEXICAL_CASE_INSENSITIVE} order).
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
         = CaseInsensitiveLexicalOrderImpl.INSTANCE;
@@ -78,7 +78,7 @@ public interface Equality<T> {
      *  
      * @throws ClassCastException if used with non {@link Comparable} instances.
      */
-    @Parallelizable
+    @Parallel
     @Realtime(limit = UNKNOWN)
     public static final Equality<Object> NATURAL 
         = NaturalOrderImpl.INSTANCE;

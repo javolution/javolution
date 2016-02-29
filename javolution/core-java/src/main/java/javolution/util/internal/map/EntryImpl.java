@@ -17,8 +17,8 @@ import java.util.Map.Entry;
  */
 public final class EntryImpl<K, V> implements Entry<K, V>, Serializable {
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final K key;
-	private V value;
+	public K key;
+	public V value;
 
 	public EntryImpl(K key, V value) {
 		this.key = key;
