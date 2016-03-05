@@ -9,9 +9,6 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
-
-import java.util.NoSuchElementException;
-
 import javolution.lang.Index;
 import javolution.lang.Realtime;
 import javolution.util.function.Equality;
@@ -32,23 +29,13 @@ import javolution.util.function.Order;
  */
 public class SparseArray<E> extends FastMap<Index, E> {
 	
-	/** The SparseArray indexed entry. */
-	public interface SparseEntry<E> extends Entry<Index, E> {
-		/** Returns the unsigned key index value of this entry */
-		int index(); 
-	}
-
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final int SHIFT = 4;
 	private static final int SIZE = 1 << SHIFT;
 	private static final int MASK = SIZE - 1;
 
-	private static final Object UPSIZE = new Object();
-	private static final Object DOWNSIZE = new Object();
-	private static final Object DELETE = new Object();
-
 	/** Holds the trie structure of minimal depth. */
-	private Node<E> root = null;
+	private Node<Index, E> root = NullNode.getInstance();
 
 	/** Holds the number of non-null elements */
 	private int size;
@@ -59,35 +46,98 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	public SparseArray() {
 	}
 
-	@Override
-	@Realtime(limit = CONSTANT)
-	public void clear() {
-		root = null;
-	}
-
-	@Override
-	public SparseArray<E> clone() {
-		SparseArray<E> copy = new SparseArray<E>();
-		copy.root = (root != null) ? root.clone() : null;
-		copy.size = size;
-		return copy;
-	}
-
 	/**
 	 * Returns the element at the specified index.
 	 */
 	@Realtime(limit = CONSTANT)
 	public E get(int index) {
-		return (root != null) ? root.get(index) : null;
+		EntryNode<Index, E> entry = root.getEntry(index);
+		return (entry != null) ? entry.getValue() : null;
 	}
 
+	/** Returns the entry at the specified index. */
+	public Entry<Index, E> getEntry(int index) {
+		return root.getEntry(index);
+	}
+	
+    /**
+	 * Removes and returns the entry at the specified index.
+	 */
+	@Realtime(limit = CONSTANT)
+	public Entry<Index,E> removeEntry(int index) {
+		EntryNode<Index,E> previous = root.removeEntry(index);
+		if (previous != null)
+			size--;
+		if (previous == DOWNSIZE) {
+			previous = root.getEntry(index); 
+			root = root.downsize(index);
+		} else if (previous == DELETE) {
+			previous = root.getEntry(index);
+			root = NullNode.getInstance();
+		}
+		return previous;
+	}
+
+	/**
+	 * Sets the element at the specified index and returns the previous element.
+	 */
+	@Realtime(limit = CONSTANT)
+	public E set(int index, E element) {
+		if (element == null)
+			return remove(index);
+		EntryNode<Index, E> entry = root.entry(index);
+		if (entry == UPSIZE) { // Resizes.
+			root = root.upsize(index);
+			entry = root.entry(index);
+		}
+		if (entry.key == EntryNode.NOT_INITIALIZED) {
+			entry.key = Index.of(index);
+			size++;
+		}
+		return entry.setValue(element);
+	}
+
+	/** Returns the sparse entry after the specified index or {@code null}
+	 * if none. */
+	public Entry<Index, E> higherEntry(int index) {
+		if (index == -1) return null;
+		return root.ceilingEntry(index+1);
+	}
+	
+	/** Returns the sparse entry before the specified index or {@code null}
+	 * if none. */
+	public Entry<Index, E> lowerEntry(int index) {
+		if (index == 0) return null;
+		return root.floorEntry(index-1);
+	}
+
+	/** Returns the sparse entry at or after the specified index or {@code null}
+	 * if none. */
+	public Entry<Index, E> ceilingEntry(int index) {
+		return root.ceilingEntry(index);
+	}
+	
+	/** Returns the sparse entry at or before the specified index or {@code null}
+	 * if none. */
+	public Entry<Index, E> floorEntry(int index) {
+		return root.floorEntry(index);
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+	// FastMap<Index,E> 
+	
 	@Override
-	public SparseEntry<E> getEntry(Index key) {
+	public Entry<Index, E> getEntry(Index key) {
 		return getEntry(key.intValue());
 	}
 
 	@Override
-	public Order<? super Index> keyOrder() {
+	public Entry<Index, E> removeEntry(Index key) {
+		return removeEntry(key.intValue());
+	}
+	
+	@Override
+	public Order<? super Index> order() {
 		return Order.INDEX;
 	}
 
@@ -96,94 +146,17 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		return set(key.intValue(), value);
 	}
 
-	/**
-	 * Removes and returns the element at the specified index.
-	 */
-	@SuppressWarnings("unchecked")
-	@Realtime(limit = CONSTANT)
-	public E remove(int index) {
-		if (root == null)
-			return null;
-		Object previous = root.remove(index);
-		if (previous != null)
-			size--;
-		if (previous == DOWNSIZE) {
-			previous = root.get(index);
-			root = root.downsize(index);
-		} else if (previous == DELETE) {
-			previous = root.get(index);
-			root = null;
-		}
-		return (E) previous;
+	@Override
+	public void clear() {
+		root = NullNode.getInstance();
+		size = 0;
 	}
 
 	@Override
-	public E remove(Object key) {
-		return (key instanceof Index) ? set(((Index)key).intValue(), null) : null;
-	}
-
-	/**
-	 * Sets the element at the specified index and returns the previous element.
-	 */
-	@SuppressWarnings("unchecked")
-	@Realtime(limit = CONSTANT)
-	public E set(int index, E element) {
-		if (element == null)
-			return remove(index);
-		if (root != null) {
-			Object previous = root.set(index, element);
-			if (previous == null)
-				size++;
-			if (previous != UPSIZE)
-				return (E) previous;
-			root = root.upsize(index);
-			root.set(index, element);
-		} else {
-			root = new EntryNode<E>(index, element);
-		}
-		size++; // We had to up-size.
-		return null;
-	}
-
-	/**
-	 * Sets the element at the specified index only if none and returns the
-	 * previous element.
-	 */
-	@Realtime(limit = CONSTANT)
-	@SuppressWarnings("unchecked")
-	public E setIfAbsent(int index, E element) {
-		if (element == null)
-			return get(index);
-		if (root != null) {
-			Object previous = root.setIfAbsent(index, element);
-			if (previous == null)
-				size++;
-			if (previous != UPSIZE)
-				return (E) previous;
-			root = root.upsize(index);
-			root.setIfAbsent(index, element);
-		} else {
-			root = new EntryNode<E>(index, element);
-		}
-		size++; // We had to up-size.
-		return null;
-	}
-
-	/** Returns the sparse entry at the specified index. */
-	public SparseEntry<E> getEntry(int index) {
-		return (root != null) ? root.getEntry(index) : null;
-	}
-	
-	/** Returns the sparse entry after the specified index. */
-	public SparseEntry<E> getEntryAfter(int index) {
-		if ((root == null) || (index == -1)) return null;
-		return root.getEntryUpFrom(index+1);
-	}
-	
-	/** Returns the sparse entry before the specified index. */
-	public SparseEntry<E> getEntryBefore(int index) {
-		if ((root == null) || (index == 0)) return null;
-		return root.getEntryDownFrom(index-1);
+	public SparseArray<E> clone() {
+		SparseArray<E> copy = (SparseArray<E>) super.clone();
+		copy.root = root.clone();
+		return copy;
 	}
 
 	@Override
@@ -193,30 +166,340 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	@Override
-	public Equality<? super E> valueEquality() {
-		return Equality.STANDARD;
+	public Equality<? super E> valuesEquality() {
+		return Equality.DEFAULT;
 	}
 	
 	@Override
-	public SparseEntry<E> firstEntry() {
-		if (root == null) throw new NoSuchElementException();
-		return root.getEntryUpFrom(0);
+	public Entry<Index,E> firstEntry() {
+		return root.ceilingEntry(0);
 	}
 
 	@Override
-	public SparseEntry<E> lastEntry() {
-		if (root == null) throw new NoSuchElementException();
-		return root.getEntryDownFrom(-1);
+	public Entry<Index, E> lastEntry() {
+		return root.floorEntry(-1);
 	}
 
 	@Override
-	public SparseEntry<E> getEntryAfter(Index key) {
-		return getEntryAfter(key.intValue());
+	public Entry<Index, E> higherEntry(Index key) {
+		return higherEntry(key.intValue());
 	}
 	
 	@Override
-	public SparseEntry<E> getEntryBefore(Index key) {
-		return getEntryBefore(key.intValue());
+	public Entry<Index,E> lowerEntry(Index key) {
+		return lowerEntry(key.intValue());
+	}
+
+	@Override
+	public Entry<Index,E> ceilingEntry(Index key) {
+		return ceilingEntry(key.intValue());
+	}
+
+	@Override
+	public Entry<Index, E> floorEntry(Index key) {
+		return floorEntry(key.intValue());
+	}
+
+	/** Converts to unsigned */
+	private static long toUnsigned(int i) {
+		return 0xFFFFFFFFL & i;
+	}
+	
+	/**
+	 * A Node is either an entry node (leaf) or a trie structure. To ensure
+	 * minimal depth and memory footprint, there is no trie structure with less
+	 * than two sub-nodes. Also there is no entry node with null elements.
+	 */
+	interface Node<K,V> extends Cloneable {
+		Node<K,V> clone();
+		Node<K,V> downsize(int indexRemoved); // Returns the down-sized node.
+		EntryNode<K,V> getEntry(int index); // Returns the entry or null.
+		EntryNode<K,V> entry(int index); // Returns the entry, a new entry or UPSIZE 
+		EntryNode<K,V> ceilingEntry(int index); // Returns entry at or above specified index.
+		EntryNode<K,V> floorEntry(int index); // Returns entry at or below specified index.
+		EntryNode<K,V> removeEntry(int index); // May return DOWNSIZE (trie node) or DELETE (entry node)
+		Node<K,V> upsize(int indexAdded); // Returns the up-sized node.		
+	}
+	static final EntryNode<?,?> UPSIZE = new EntryNode<Object, Object>(-1);
+	static final EntryNode<?,?> DOWNSIZE = new EntryNode<Object, Object>(-1);
+	static final EntryNode<?,?> DELETE = new EntryNode<Object, Object>(-1);
+	
+
+	/** Defines the entry (leaf node) */
+	static final class EntryNode<K,V> implements Node<K,V>, Entry<K,V> {
+        static final Object NOT_INITIALIZED = new Object();
+		private final int index;
+		K key;
+		V value;
+
+		@SuppressWarnings("unchecked")
+		public EntryNode(int index) {
+			this.index = index;
+			this.key = (K) NOT_INITIALIZED;
+		}
+		public EntryNode(int index, K key, V value) {
+			this.index = index;
+			this.key = key;
+			this.value = value;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K,V> clone() {
+			try {
+				return (EntryNode<K, V>) super.clone();
+			} catch (CloneNotSupportedException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		@Override
+		public EntryNode<K, V> getEntry(int i) {
+			return (index == i) ? this : null;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K,V> entry(int i) {
+			if (index != i)
+				return (EntryNode<K,V>)UPSIZE;
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K,V> removeEntry(int i) {
+			return (index == i) ? (EntryNode<K,V>)DELETE : null;
+		}
+
+		@Override
+		public TrieNode<K,V> upsize(int indexAdded) {
+			return new TrieNode<K,V>(commonShift(index, indexAdded), index, this);
+		}
+
+		@Override
+		public Node<K,V> downsize(int indexRemoved) {
+			throw new AssertionError();
+		}
+
+		@Override
+		public EntryNode<K,V> ceilingEntry(int i) {
+			return toUnsigned(index) >=  toUnsigned(i) ? this : null;
+		}
+		
+		@Override
+		public EntryNode<K,V> floorEntry(int i) {
+			return toUnsigned(index) <=  toUnsigned(i) ? this : null;
+		}
+
+		///////////////////////////////////////////////////////////////////////
+		// Entry<K,V> Implementation.
+		
+		@Override
+		public K getKey() {
+			return key;
+		}
+
+		@Override
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public V setValue(V newValue) {
+			V previous = value;
+			value = newValue;
+			return previous;
+		}
+
+		@Override
+		public boolean equals(Object obj) { // As per Map.Entry contract.
+			if (!(obj instanceof Entry))
+				return false;
+			@SuppressWarnings("unchecked")
+			Entry<K, V> that = (Entry<K, V>) obj;
+			return (key == null ? that.getKey() == null : key.equals(that.getKey()))
+					&& (value == null ? that.getValue() == null
+							: value.equals(that.getValue()));
+		}
+
+		@Override
+		public int hashCode() { // As per Map.Entry contract.
+			return (key == null ? 0 : key.hashCode())
+					^ (value == null ? 0 : value.hashCode());
+		}
+
+		@Override
+		public String toString() {
+			return "(" + key + '=' + value + ')'; // For debug.
+		}
+	}
+	
+	/** Defines the trie node */
+	private static final class TrieNode<K,V> implements Node<K,V> {
+		@SuppressWarnings("unchecked")
+		private final Node<K,V>[] trie = (Node<K,V>[]) new Node[SIZE];
+		private final int shift; // 0 for leaf trie-nodes
+		private final int prefix; // Lower (shift) bits are reset.
+		int count; // Number of direct sub-nodes different from null.
+
+		public TrieNode(int shift, int index, Node<K,V> subNodeAtIndex) {
+			this.shift = shift;
+			this.prefix = index & (~MASK << shift);
+			trie[(index >>> shift) & MASK] = subNodeAtIndex;
+			count = 1;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public TrieNode<K,V> clone() {
+			try {
+				TrieNode<K,V> copy = (TrieNode<K,V>)super.clone();
+				for (int i=0, n=copy.trie.length; i < n; i++)
+					if (trie[i] != null) trie[i] = trie[i].clone();
+				return copy;
+			} catch (CloneNotSupportedException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		@Override
+		public Node<K,V> downsize(int indexRemoved) { // Called if count goes to 1
+			int j = (indexRemoved >>> shift) & MASK;
+			for (int i = 0; (i < trie.length) & (i != j); i++) {
+				Node<K,V> n = trie[i];
+				if (n != null)
+					return n;
+			}
+			throw new AssertionError("Trie Corruption !?");
+		}
+
+		@Override
+		public EntryNode<K,V> getEntry(int i) {
+			// We don't check the prefix, since the index will be validated
+			// (or not) by the entry node.
+			Node<K,V> n = trie[(i >>> shift) & MASK];
+			return (n != null) ? n.getEntry(i) : null;
+		}
+
+		@Override
+		public EntryNode<K,V> ceilingEntry(int i) {
+			for (int j=(i >>> shift) & MASK; j < SIZE; j++) {
+				Node<K,V> n = trie[j];
+				if (n == null) continue;
+				return n.ceilingEntry(i); 
+			}
+			return null;
+		}
+		
+		@Override
+		public EntryNode<K,V> floorEntry(int i) {
+			for (int j=(i >>> shift) & MASK; j >= 0; j--) {
+				Node<K,V> n = trie[j];
+				if (n == null) continue;
+				return n.floorEntry(i); 
+			}
+			return null;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K,V> removeEntry(int index) {
+			final int i = (index >>> shift) & MASK;
+			Node<K,V> n = trie[i];
+			if (n == null)
+				return null;
+			EntryNode<K,V> previous = n.removeEntry(index);
+			if (previous == DOWNSIZE) {
+				previous = n.getEntry(index);
+				trie[i] = n.downsize(index);
+			} else if (previous == DELETE) { // EntryNode 
+				if (count <= 2)
+					return (EntryNode<K,V>)DOWNSIZE;
+				previous = n.getEntry(index);
+				trie[i] = null;
+				count--;
+			}
+			return previous;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K,V> entry(int index) {
+			if (((prefix ^ index) & (0xFFFFFFF0 << shift)) != 0)
+				return (EntryNode<K,V>) UPSIZE;
+			final int i = (index >>> shift) & MASK;
+			Node<K,V> n = trie[i];
+			if (n == null) {
+				count++;
+			    EntryNode<K,V> newEntry = new EntryNode<K,V>(index);
+			    trie[i] = newEntry;
+				return newEntry;
+			}
+			EntryNode<K,V> previous = n.entry(index);
+			if (previous != UPSIZE)
+				return previous;
+			Node<K,V> tmp = n.upsize(index);
+			trie[i] = tmp;
+			return tmp.entry(index);
+		}
+
+		@Override
+		public TrieNode<K,V> upsize(int indexAdded) {
+			return new TrieNode<K,V>(commonShift(prefix, indexAdded), prefix,
+					this);
+		}
+	}
+	
+	/** Defines the trie node */
+	static final class NullNode<K,V> implements Node<K,V> {
+		private static final NullNode<?,?> NULL = new NullNode<Object, Object>();
+
+		@SuppressWarnings("unchecked")
+		public static <K,V> NullNode<K,V> getInstance() {
+			return (NullNode<K, V>) NULL;
+		}
+		@Override
+		public Node<K, V> clone() {
+			return this;
+		}
+
+		@Override
+		public Node<K, V> downsize(int indexRemoved) {
+			throw new AssertionError();
+		}
+
+		@Override
+		public EntryNode<K, V> getEntry(int index) {
+			return null;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public EntryNode<K, V> entry(int index) {
+			return (EntryNode<K, V>) UPSIZE;
+		}
+
+		@Override
+		public EntryNode<K, V> ceilingEntry(int index) {
+			return null;
+		}
+
+		@Override
+		public EntryNode<K, V> floorEntry(int index) {
+			return null;
+		}
+
+		@Override
+		public EntryNode<K, V> removeEntry(int index) {
+			return null;
+		}
+
+		@Override
+		public Node<K, V> upsize(int indexAdded) {
+			return new EntryNode<K,V>(indexAdded);
+		}
+		
 	}
 
 	/**
@@ -245,283 +528,5 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		else
 			return 28;
 	}
-
-	/** Converts to unsigned */
-	private static long toUnsigned(int i) {
-		return 0xFFFFFFFFL & i;
-	}
-	
-	/**
-	 * A Node is either an entry node (leaf) or a trie structure. To ensure
-	 * minimal depth and memory footprint, there is no trie structure with less
-	 * than two sub-nodes. Also there is no entry node with null elements.
-	 */
-	private interface Node<V> {
-		Node<V> clone();
-		Node<V> downsize(int indexRemoved); // Returns the down-sized node.
-		V get(int index);
-		EntryNode<V> getEntry(int index);
-		EntryNode<V> getEntryUpFrom(int index);
-		EntryNode<V> getEntryDownFrom(int index);
-		Object remove(int index); // May return DOWNSIZE (trie node) or DELETE (entry node)
-		Object set(int index, V value); // May return UPSIZE request, value should never be null.
-		Object setIfAbsent(int index, V value); // May return UPSIZE request, value should never be null.
-		Node<V> upsize(int indexAdded); // Returns the up-sized node.
-		
-	}
-
-	/** Defines the entry (leaf node) */
-	private static final class EntryNode<V> implements Node<V>, SparseEntry<V> {
-		private final int index;
-		private V value; // Always different from null.
-
-		public EntryNode(int index, V value) {
-			this.index = index;
-			this.value = value;
-		}
-
-		@Override
-		public EntryNode<V> clone() {
-			return new EntryNode<V>(index, value);
-		}
-
-		@Override
-		public Node<V> downsize(int indexRemoved) {
-			throw new UnsupportedOperationException("Cannot downsize entries");
-		}
-
-		public boolean equals(EntryNode<V> that) { 
-			return (this.index == that.index) && (this.value.equals(that.value));
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public boolean equals(Object obj) { // As per Map.Entry contract.
-			if (obj instanceof EntryNode) return equals((EntryNode<V>)obj);
-			if (!(obj instanceof Entry)) return false;
-			Entry<Index, V> that = (Entry<Index, V>) obj;
-			Index thatKey = that.getKey();
-			return (thatKey != null) && (index == thatKey.intValue())
-					&& value.equals(that.getValue());
-		}
-
-		@Override
-		public V get(int i) {
-			return (index == i) ? value : null;
-		}
-
-		@Override
-		public EntryNode<V> getEntry(int i) {
-			return (index == i) ? this : null;
-		}
-
-		@Override
-		public EntryNode<V> getEntryUpFrom(int i) {
-			return toUnsigned(index) >=  toUnsigned(i) ? this : null;
-		}
-		
-		@Override
-		public EntryNode<V> getEntryDownFrom(int i) {
-			return toUnsigned(index) <=  toUnsigned(i) ? this : null;
-		}
-		
-		@Override
-		public int index() {
-			return index;
-		}
-		@Override
-		public Index getKey() {
-			return Index.of(index);
-		}
-
-		@Override
-		public V getValue() {
-			return value;
-		}
-
-		@Override
-		public int hashCode() { // As per Map.Entry contract.
-			return index ^ value.hashCode();
-		}
-
-		@Override
-		public Object remove(int i) {
-			return (index == i) ? DELETE : null;
-		}
-
-		@Override
-		public Object set(int i, V newValue) {
-			if (index != i)
-				return UPSIZE;
-			V previous = value;
-			value = newValue;
-			return previous;
-		}
-		
-		@Override
-		public Object setIfAbsent(int i, V newValue) {
-			if (index != i)
-				return UPSIZE;
-			return value; // Always different from null.
-		}
-
-		@Override
-		public V setValue(V newValue) {
-			V previous = value;
-			value = newValue;
-			return previous;
-		}
-
-		@Override
-		public String toString() {
-			return "(" + index + '=' + value + ')'; // For debug.
-		}
-
-		@Override
-		public Node<V> upsize(int indexAdded) {
-			return new TrieNode<V>(commonShift(index, indexAdded), index, this);
-		}
-	}
-	
-	/** Defines the trie node */
-	private static final class TrieNode<V> implements Node<V> {
-		@SuppressWarnings("unchecked")
-		private final Node<V>[] trie = (Node<V>[]) new Node[SIZE];
-		private final int shift; // 0 for leaf trie-nodes
-		private final int prefix; // Lower (shift) bits are reset.
-		int count; // Number of direct sub-nodes different from null.
-
-		public TrieNode(int shift, int index, Node<V> subNodeAtIndex) {
-			this.shift = shift;
-			this.prefix = index & (~MASK << shift);
-			trie[(index >>> shift) & MASK] = subNodeAtIndex;
-			count = 1;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public TrieNode<V> clone() {
-			try {
-				TrieNode<V> copy = (TrieNode<V>)super.clone();
-				for (int i=0, n=copy.trie.length; i < n; i++)
-					if (trie[i] != null) trie[i] = trie[i].clone();
-				return copy;
-			} catch (CloneNotSupportedException e) {
-				throw new AssertionError(e);
-			}
-		}
-
-		@Override
-		public Node<V> downsize(int indexRemoved) { // Called if count goes to 1
-			int j = (indexRemoved >>> shift) & MASK;
-			for (int i = 0; (i < trie.length) & (i != j); i++) {
-				Node<V> n = trie[i];
-				if (n != null)
-					return n;
-			}
-			throw new IllegalStateException("Trie Corruption");
-		}
-
-		@Override
-		public V get(int i) {
-			// We don't check the prefix, since the index will be validated
-			// (or not) by the entry node.
-			Node<V> n = trie[(i >>> shift) & MASK];
-			return (n != null) ? n.get(i) : null;
-		}
-
-		@Override
-		public EntryNode<V> getEntry(int i) {
-			Node<V> n = trie[(i >>> shift) & MASK];
-			return (n != null) ? n.getEntry(i) : null;
-		}
-
-		@Override
-		public EntryNode<V> getEntryUpFrom(int i) {
-			for (int j=(i >>> shift) & MASK; j < SIZE; j++) {
-				Node<V> n = trie[j];
-				if (n == null) continue;
-				return n.getEntryUpFrom(i); 
-			}
-			return null;
-		}
-		
-		@Override
-		public EntryNode<V> getEntryDownFrom(int i) {
-			for (int j=(i >>> shift) & MASK; j >= 0; j--) {
-				Node<V> n = trie[j];
-				if (n == null) continue;
-				return n.getEntryDownFrom(i); 
-			}
-			return null;
-		}
-
-		@Override
-		public Object remove(int index) {
-			final int i = (index >>> shift) & MASK;
-			Node<V> n = trie[i];
-			if (n == null)
-				return null;
-			Object previous = n.remove(index);
-			if (previous == DOWNSIZE) {
-				previous = n.get(index);
-				trie[i] = n.downsize(index);
-			} else if (previous == DELETE) { // EntryNode 
-				if (count <= 2)
-					return DOWNSIZE;
-				previous = n.get(index);
-				trie[i] = null;
-				count--;
-			}
-			return previous;
-		}
-
-		@Override
-		public Object set(int index, V value) {
-			if (((prefix ^ index) & (0xFFFFFFF0 << shift)) != 0)
-				return UPSIZE;
-			final int i = (index >>> shift) & MASK;
-			Node<V> n = trie[i];
-			if (n == null) {
-				trie[i] = new EntryNode<V>(index, value);
-				count++;
-				return null;
-			}
-			Object previous = n.set(index, value);
-			if (previous != UPSIZE)
-				return previous;
-			Node<V> tmp = n.upsize(index);
-			trie[i] = tmp;
-			tmp.set(index, value);
-			return null;
-		}
-
-		@Override
-		public Object setIfAbsent(int index, V newValue) {
-			if (((prefix ^ index) & (0xFFFFFFF0 << shift)) != 0)
-				return UPSIZE;
-			final int i = (index >>> shift) & MASK;
-			Node<V> n = trie[i];
-			if (n == null) {
-				trie[i] = new EntryNode<V>(index, newValue);
-				count++;
-				return null;
-			}
-			Object previous = n.setIfAbsent(index, newValue);
-			if (previous != UPSIZE)
-				return previous;
-			Node<V> tmp = n.upsize(index);
-			trie[i] = tmp;
-			tmp.setIfAbsent(index, newValue);
-			return null;
-		}
-
-		@Override
-		public Node<V> upsize(int indexAdded) {
-			return new TrieNode<V>(commonShift(prefix, indexAdded), prefix,
-					this);
-		}
-	}
-
 
 }
