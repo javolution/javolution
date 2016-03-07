@@ -75,7 +75,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * <li>{@link #distinct} - View exposing each element only once.</li>
  * <li>{@link #linked} - View exposing each element based on its {@link #add 
  *      insertion} order in the view.</li>
- * <li>{@link #using(Equality)} - View using the specified comparator to test
+ * <li>{@link #equality(Equality)} - View using the specified comparator to test
  * for equality (e.g. {@link #contains}, {@link #remove}, {@link #distinct},
  * ...)</li>
  * </ul>
@@ -304,8 +304,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	}
 
 	/**
-	 * Returns a view using the specified comparator to test for element 
-	 * equality.
+	 * Returns a view using the specified equality comparator.
 	 * 
 	 * The returned view is {@link #parallel} if this collection is parallel.
 	 * 
@@ -318,7 +317,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	 * @see #retainAll
 	 * @see #distinct
 	 */
-	public FastCollection<E> using(Equality<? super E> equality) {
+	public FastCollection<E> equality(Equality<? super E> equality) {
 		return new CustomEqualityCollectionImpl<E>(this, equality);
 	}
 
@@ -508,11 +507,12 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 			@SuppressWarnings("unchecked")
 			@Override
 			public void accept(E param) {
-				if (!found.get() && equality().areEqual(param, (E)searched))
-				    found.set(false);
-			}});
-	   return found.get();
-    }
+				if (!found.get() && equality().areEqual(param, (E) searched))
+					found.set(true);
+			}
+		});
+		return found.get();
+	}
 
 	/** Removes a single instance of the specified element from 
 	 *  this collection testing for element equality using this collection
@@ -526,8 +526,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 			@SuppressWarnings("unchecked")
 			@Override
 			public boolean test(E param) {
-				if (!found.get() && equality().areEqual(param, (E)searched)) 
-					if (!found.getAndSet(true)) return true;
+				if (!found.get() && equality().areEqual(param, (E)searched)) {
+					if (!found.getAndSet(true)) 
+						return true;
+				}
 				return false;
 			}});
 	   return found.get();
@@ -565,7 +567,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		Equality<Object> equality = (Equality<Object>) equality();
 		final FastCollection<Object> toRemove = (equality instanceof Order) ?
 				new SparseSet<Object>((Order<Object>)equality) : 
-					new FractalTable<Object>().using(equality);
+					new FractalTable<Object>().equality(equality);
 		toRemove.addAll(that);		
 		return removeIf(new Predicate<E>() {
 			@Override
@@ -584,7 +586,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		Equality<Object> equality = (Equality<Object>) equality();
 		final FastCollection<Object> toRetain = (equality instanceof Order) ?
 				new SparseSet<Object>((Order<Object>)equality) : 
-					new FractalTable<Object>().using(equality);
+					new FractalTable<Object>().equality(equality);
 		toRetain.addAll(that);		
 		return removeIf(new Predicate<E>() {
 			@Override
@@ -625,15 +627,22 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	// //////////////////////////////////////////////////////////////////////////
 	// Misc.
 	//
-	
+
 	/** Returns the element equality for this collection. */
 	@Realtime(limit = CONSTANT)
 	public abstract Equality<? super E> equality();
 
 	/** Returns a copy of this collection; updates of the copy should not impact
 	 *  the original. */
+	@SuppressWarnings("unchecked")
 	@Realtime(limit = LINEAR)
-	public abstract FastCollection<E> clone();
+	public FastCollection<E> clone() {
+		try {
+			return (FastCollection<E>) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new AssertionError("FastCollection is Cloneable");
+		}
+	}
 
 	/**
 	 * Compares the specified object with this collection for equality. This
@@ -661,7 +670,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 			List<E> list = (List<E>) obj;
 			if (size() != list.size())
 				return false; // Short-cut.
-			Equality<? super E> cmp = Equality.STANDARD;
+			Equality<? super E> cmp = Equality.DEFAULT;
 			Iterator<E> it1 = this.iterator();
 			Iterator<E> it2 = list.iterator();
 			while (it1.hasNext()) {

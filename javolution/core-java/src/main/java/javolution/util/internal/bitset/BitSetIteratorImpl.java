@@ -12,19 +12,19 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.lang.Index;
-import javolution.util.FastBitSet;
+import javolution.util.BitSet;
 
 /**
  * An iterator over a bit set.
  */
 public final class BitSetIteratorImpl implements Iterator<Index> {
 
-    private final FastBitSet that;
+    private final BitSet that;
     private int nextIndex;
     private int currentIndex = -1;
     private boolean reversed;
 
-    public BitSetIteratorImpl(FastBitSet that, boolean reversed) {
+    public BitSetIteratorImpl(BitSet that, boolean reversed) {
         this.that = that;
         this.nextIndex = reversed ? that.previousSetBit(that.length()-1) : that.nextSetBit(0);
         this.reversed = reversed;

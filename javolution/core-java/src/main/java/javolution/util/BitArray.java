@@ -26,7 +26,7 @@ import javolution.util.function.Predicate;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 7.0, September 13, 2015
  */
-public class BitArray extends FastBitSet {
+public class BitArray extends BitSet {
 
     private static final long serialVersionUID = 0x700L; // Version. 
     private static final long[] ALL_CLEARED = new long[0];
@@ -50,7 +50,7 @@ public class BitArray extends FastBitSet {
     }
 
     @Override
-    public void and(FastBitSet that) {
+    public void and(BitSet that) {
         long[] thatBits = that.toLongArray();
         int n = MathLib.min(this.bits.length, thatBits.length);
         for (int i = 0; i < n; i++) {
@@ -62,7 +62,7 @@ public class BitArray extends FastBitSet {
     }
 
     @Override
-    public void andNot(FastBitSet that) {
+    public void andNot(BitSet that) {
         long[] thatBits = that.toLongArray();
         int n = MathLib.min(this.bits.length, thatBits.length);
         for (int i = 0; i < n; i++) {
@@ -182,7 +182,7 @@ public class BitArray extends FastBitSet {
     }
 
     @Override
-    public boolean intersects(FastBitSet that) {
+    public boolean intersects(BitSet that) {
         long[] thatBits = that.toLongArray();
         int i = MathLib.min(this.bits.length, thatBits.length);
         while (--i >= 0) {
@@ -234,7 +234,7 @@ public class BitArray extends FastBitSet {
     }
 
     @Override
-    public void or(FastBitSet that) {
+    public void or(BitSet that) {
         long[] thatBits = (that instanceof BitArray) ? ((BitArray) that).bits
                 : that.toLongArray();
         ensureCapacity(thatBits.length);
@@ -339,7 +339,7 @@ public class BitArray extends FastBitSet {
     }
     
     @Override
-    public void xor(FastBitSet that) {
+    public void xor(BitSet that) {
         long[] thatBits = (that instanceof BitArray) ? ((BitArray) that).bits
                 : that.toLongArray();
         ensureCapacity(thatBits.length);

@@ -13,22 +13,16 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
-public class MultiVariableTest {
+public class OrderTest {
 
-	private MultiVariable<String,String> _multiVariable;
-	
 	@Before
 	public void init(){
-		_multiVariable = new MultiVariable<String,String>("Test","tseT");
 	}
 	
 	@Test
-	public void testGetLeft(){
-		assertEquals("Left Is Test", "Test", _multiVariable.getLeft());
+	public void testLexical(){
+		boolean b = Order.LEXICAL_CASE_INSENSITIVE.areEqual("Toto", "ToTo");
+		assertEquals("Lexical Case Insensitive", true, b);
 	}
 	
-	@Test
-	public void testGetRight(){
-		assertEquals("Right Is tseT", "tseT", _multiVariable.getRight());
-	}
 }

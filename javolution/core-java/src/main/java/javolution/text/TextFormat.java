@@ -10,7 +10,6 @@ package javolution.text;
 
 import java.io.IOException;
 
-import javolution.lang.Parallelizable;
 
 /**
  * <p> The service for plain text parsing and formatting;
@@ -49,7 +48,6 @@ import javolution.lang.Parallelizable;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </a>
  * @version 6.0, July 21, 2013
  */
-@Parallelizable
 public abstract class TextFormat<T> {
 
     /**

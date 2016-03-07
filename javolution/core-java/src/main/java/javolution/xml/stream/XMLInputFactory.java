@@ -11,7 +11,6 @@ package javolution.xml.stream;
 import java.io.InputStream;
 import java.io.Reader;
 
-import javolution.lang.Parallelizable;
 
 /**
  * <p> The OSGi factory service to create {@link XMLStreamReader} instances.
@@ -50,7 +49,6 @@ import javolution.lang.Parallelizable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-@Parallelizable(comment="Factory configuration should be performed sequentially.")
 public interface XMLInputFactory extends Cloneable {
 
     /**

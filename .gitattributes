@@ -291,7 +291,7 @@ javolution/core-java/src/main/java/javolution/lang/Constant.java -text svneol=un
 javolution/core-java/src/main/java/javolution/lang/Index.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Initializer.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/MathLib.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/lang/Parallelizable.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/lang/Parallel.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Realtime.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/Ternary.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/lang/ValueType.java -text svneol=unset#text/plain
@@ -319,14 +319,13 @@ javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=
 javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
 javolution/core-java/src/main/java/javolution/util/BitArray.java -text
+javolution/core-java/src/main/java/javolution/util/BitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/ConstantTable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/FastBitSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FractalTable.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/SortedTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SparseArray.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SparseMap.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/SparseSet.java -text svneol=unset#text/plain
@@ -360,12 +359,11 @@ javolution/core-java/src/main/java/javolution/util/internal/function/HashOrderIm
 javolution/core-java/src/main/java/javolution/util/internal/function/IdentityHashOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/function/LexicalOrderImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/function/NaturalOrderImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/map/EntryImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntryIteratorImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/EntrySetImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/KeySetImpl.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/internal/map/SortedMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/SubMapImpl.java -text svneol=unset#text/plain
-javolution/core-java/src/main/java/javolution/util/internal/map/UnorderedMapImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/map/ValuesImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/AtomicTableImpl.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/internal/table/CustomEqualityTableImpl.java -text svneol=unset#text/plain
@@ -444,7 +442,7 @@ javolution/core-java/src/test/java/javolution/util/FastSortedSetTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastSortedTableTest.java -text
 javolution/core-java/src/test/java/javolution/util/FastTableTest.java -text
 javolution/core-java/src/test/java/javolution/util/IndexTest.java -text
-javolution/core-java/src/test/java/javolution/util/function/MultiVariableTest.java -text
+javolution/core-java/src/test/java/javolution/util/function/OrderTest.java -text
 javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectReaderTest.java -text
 javolution/core-java/src/test/java/javolution/xml/annotation/JAXBAnnotatedObjectWriterTest.java -text
 javolution/core-java/src/test/java/javolution/xml/jaxb/common/test/schema/ObjectFactory.java -text

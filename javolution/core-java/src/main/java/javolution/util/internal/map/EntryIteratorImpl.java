@@ -27,9 +27,7 @@ public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 	public EntryIteratorImpl(FastMap<K, V> map) {
 		this.map = map;
 	    this.toEntry = null;
-		if (!map.isEmpty()) {
-		    next = map.firstEntry();
-		}
+	    this.next = map.firstEntry();
 	}
 
 	/** Iterates from the specified key (inclusive). */
@@ -37,7 +35,7 @@ public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 		this.map = map;
 		this.toEntry = null;
 	    next = map.getEntry(fromKey);
-		if (next == null) next = map.getEntryAfter(fromKey);
+		if (next == null) next = map.higherEntry(fromKey);
 	}
 
 	/** Iterates from the specified key (inclusive) to the specified key 
@@ -45,7 +43,7 @@ public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 	public EntryIteratorImpl(FastMap<K, V> map, K fromKey, K toKey) {
         this(map, fromKey);
 	    toEntry = map.getEntry(toKey);
-		if (toEntry == null) toEntry = map.getEntryAfter(toKey);
+		if (toEntry == null) toEntry = map.higherEntry(toKey);
 	}
 	
 	@Override
@@ -58,7 +56,7 @@ public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 		if (next == null)
 			throw new IllegalStateException();
 		current = next;
-		next = map.getEntryAfter(current.getKey());
+		next = map.higherEntry(current.getKey());
 		if (next == toEntry) next = null;
 		return current;
 	}

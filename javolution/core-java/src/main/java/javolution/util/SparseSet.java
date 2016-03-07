@@ -8,11 +8,7 @@
  */
 package javolution.util;
 
-import java.util.Iterator;
-
-import javolution.util.function.Consumer;
 import javolution.util.function.Order;
-import javolution.util.function.Predicate;
 
 /**
 * <p> A <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> set 
@@ -24,13 +20,15 @@ import javolution.util.function.Predicate;
  */
 public class SparseSet<E> extends FastSet<E> {
 	   
-	private static final long serialVersionUID = 0x700L; // Version. 
+	private static final long serialVersionUID = 0x700L; // Version.
+	private static final Object PRESENT = new Object();
+	private SparseMap<E,Object> sparse;
 	   
 	/**
      * Creates an empty set using an arbitrary order (hash based).
      */
     public SparseSet() {
-    	this(Order.HASH);
+    	this(Order.DEFAULT);
     }
 	/**
      * Creates an empty set using the specified order.
@@ -38,57 +36,56 @@ public class SparseSet<E> extends FastSet<E> {
      * @param order the ordering of the map.
      */
     public SparseSet(Order<? super E> order) {
+    	sparse = new SparseMap<E, Object>(order);
     }
     
 	@Override
-	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+	public E first() {
+		return sparse.firstKey();
 	}
+	
 	@Override
-	public void clear() {
-		// TODO Auto-generated method stub
-		
+	public E last() {
+		return sparse.lastKey();
 	}
-	@Override
-	public boolean contains(Object obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	@Override
-	public boolean remove(Object obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	
 	@Override
 	public Order<? super E> comparator() {
-		// TODO Auto-generated method stub
-		return null;
+		return sparse.order();
 	}
+	
 	@Override
-	public FastSet<E> clone() {
-		// TODO Auto-generated method stub
-		return null;
+	public int size() {
+		return sparse.size();
 	}
+
 	@Override
-	public void forEach(Consumer<? super E> consumer) {
-		// TODO Auto-generated method stub
-		
+	public void clear() {
+		sparse.clear();
 	}
+
+	@SuppressWarnings("unchecked")
 	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean contains(Object obj) {
+		return sparse.containsKey((E) obj); // Cast has no effect here.
 	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean remove(Object obj) {
+		return sparse.removeEntry((E)obj) != null;
+	}
+
+	@Override
+	public SparseSet<E> clone() {
+		SparseSet<E> copy = (SparseSet<E>) super.clone();
+		copy.sparse = sparse.clone();
+		return copy;
+	}
+	
 	@Override
 	public boolean add(E element) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	@Override
-	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return sparse.put(element, PRESENT) == null;
 	}
 
 }

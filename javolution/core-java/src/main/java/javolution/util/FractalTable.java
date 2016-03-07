@@ -8,8 +8,6 @@
  */
 package javolution.util;
 
-import java.util.Collection;
-
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
@@ -26,7 +24,7 @@ import javolution.util.internal.table.FractalTableImpl;
  *     <a href="doc-files/FastTable-WCET.png">
  *     <img src="doc-files/FastTable-WCET.png" alt="Worst Case Execution Time" height="210" width="306" />
  *     </a>
- *     
+ *    
  * <p> The memory footprint of the table is automatically adjusted up or down
  *     based on the table size (minimal when the table is cleared).</p>
  *     
@@ -36,35 +34,6 @@ import javolution.util.internal.table.FractalTableImpl;
 public class FractalTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version. 
-  
-    /**
-     * Returns a new table holding the same elements as the specified 
-     * collection (convenience method).
-     * 
-     * @param <E> Element Type
-     * @param that the collection holding the elements to copy.
-     * @return the table containing the elements specified in the collection
-     */
-    public static <E> FractalTable<E> of(Collection<? extends E> that) {
-    	FractalTable<E> table = new FractalTable<E>();
-    	table.addAll(that);
-        return table;
-    }
-    
-    /**
-     * Returns a new table holding the same elements as the specified 
-     * array (convenience method).
-     * 
-     * @param <E> Element Type
-     * @param elements Elements to place in the table
-     * @return the table containing the specified elements
-     */
-    public static <E> FractalTable<E> of(@SuppressWarnings("unchecked") E... elements) {
-    	FractalTable<E> table = new FractalTable<E>();
-    	for (E e : elements) table.add(e);
-        return table;
-    }
-    
     private transient int capacity; 
     private transient FractalTableImpl fractal; // Null if empty (capacity 0)
     private transient int size;
@@ -129,7 +98,7 @@ public class FractalTable<E> extends FastTable<E> {
 
     @Override
     public Equality<? super E> equality() {
-        return Equality.STANDARD;
+        return Equality.DEFAULT;
     }
 
 	@SuppressWarnings("unchecked")

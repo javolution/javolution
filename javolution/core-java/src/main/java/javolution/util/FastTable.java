@@ -67,8 +67,10 @@ import javolution.util.internal.table.UnmodifiableTableImpl;
  * Person john= persons.filter(person -> person.getName().equals("John")).any();
  * }</pre></p>
  * 
- * <p> For faster search capabilities {@link SortedTable} can be used 
- *     (alternative to {@link FastSet} allowing for elements duplications).</p> 
+ * <p> Fast tables allows for sorting either through the {@link #sort} method
+ *     or through the {@link #addSorted} method keeping the table sorted.
+ *     For sorted tables, faster access is provided through 
+ *     the {@link #indexOfSorted} method.</p> 
  * 
  * @param <E> the type of table element (can be {@code null})
  * 
@@ -87,10 +89,29 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
  
     /**
-     * Returns a new high-performance table (convenience method).
+     * Returns a new high-performance table.
      */
     public static <E> FastTable<E> newTable() {
     	return new FractalTable<E>();
+    }
+
+    /**
+     * Returns a new high-performance table using the specified equality
+     * comparator for its elements.
+     */
+    public static <E> FastTable<E> newTable(Equality<? super E> equality) {
+    	return new FractalTable<E>().equality(equality);
+    }
+
+    /**
+     * Returns a high-performance table holding the specified elements
+     * (convenience method).
+     */
+    @SafeVarargs
+	public static <E> FastTable<E> of(E...elements) {
+    	FastTable<E> table = FastTable.newTable();
+    	for (E e:elements) table.add(e);
+    	return table;
     }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -112,7 +133,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
 		return new UnmodifiableTableImpl<E>(this);
 	}
 
-	public FastTable<E> using(Equality<? super E> equality) {
+	public FastTable<E> equality(Equality<? super E> equality) {
 		return new CustomEqualityTableImpl<E>(this, equality);
 	}
 
@@ -144,7 +165,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     //
 
 	@Override
-    @Realtime(limit = CONSTANT, comment="LOG_N for sorted tables.")
+    @Realtime(limit = CONSTANT)
     public abstract boolean add(E element);
 
 	@Override
@@ -152,7 +173,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     public abstract void clear();
 
 	@Override
-    @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
+    @Realtime(limit = LINEAR, comment="For sorted tables indexOfSorted should be used.")
     public boolean contains(Object searched) {
 		return indexOf(searched) >= 0;
 	}
@@ -164,7 +185,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
     
 	@Override
-    @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
+    @Realtime(limit = LINEAR)
     public boolean remove(Object searched) {
 		int i = indexOf(searched);
 		if (i < 0) return false;
@@ -213,15 +234,20 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     @Realtime(limit = CONSTANT)
     public abstract E set(int index, E element);
 
-    /** Returns the index of the first occurrence of the specified element in this table,
-     *  or -1 if this table does not contain the element. */
+    /**
+     *  Returns the index of the first occurrence of the specified object 
+     *  in this table, or -1 if this table does not contain the element.
+     *  
+     *  <p> Note: For sorted tables, the method {@link #indexOfSorted} has 
+     *      better limit behavior (in O(Log(n)).</p> 
+     */
     @Override
-    @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
-    public int indexOf(Object element) {
+    @Realtime(limit = LINEAR, comment="For sorted tables indexOfSorted should be used.")
+    public int indexOf(Object searched) {
         @SuppressWarnings("unchecked")
 		Equality<Object> cmp = (Equality<Object>) this.equality();
         for (int i = 0, n = size(); i < n; i++) {
-            if (cmp.areEqual(element, get(i))) return i;
+            if (cmp.areEqual(searched, get(i))) return i;
         }
         return -1;
     }
@@ -229,7 +255,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     /** Returns the index of the last occurrence of the specified element in this table,
      * or -1 if this table does not contain the element. */
     @Override
-    @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
+    @Realtime(limit = LINEAR)
     public int lastIndexOf(Object element) {
         @SuppressWarnings("unchecked")
 		Equality<Object> cmp = (Equality<Object>) this.equality();
@@ -441,6 +467,29 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     //
 
     /**
+     * Assuming the table is sorted according to the specified comparator;
+     * inserts the specified element at the proper index and returns that index.
+     */
+    @Realtime(limit = LOG_N)
+	public int addSorted(E element, Comparator<? super E> comparator) {
+    	int i = indexOfSorted(element, comparator);
+    	if (i < 0) i = -(i+1);
+    	add(i, element);
+    	return i;
+    }
+
+    /**
+     * Assuming the table is sorted according to the specified comparator;
+     * returns the index of the specified element or a negative number 
+     * {@code n} such as {@code -(n+1)} would be the insertion index of 
+     * the element keeping this table sorted.
+     */
+    @Realtime(limit = LOG_N)
+	public int indexOfSorted(Object obj, Comparator<? super E> comparator) {
+        return indexOfSorted(obj, comparator, 0, size());
+    }
+
+    /**
      * Casts this table to the expected parameterized type.
      */
     @SuppressWarnings("unchecked")
@@ -449,7 +498,9 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Realtime(limit = LINEAR)
-	public abstract FastTable<E> clone();
+	public FastTable<E> clone() {
+    	return (FastTable<E>) super.clone();
+    }
 	
     /**
      * Sorts this table in place (quick sort).
@@ -479,6 +530,18 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     protected void indexError(int index) {
         throw new IndexOutOfBoundsException("index: " + index + ", size: "
                 + size());
+    }
+ 
+    /** In sorted table find the real or "would be" index of the specified
+     *  element in the given range */
+	private int indexOfSorted(Object obj, Comparator<? super E> cmp, int start, int length) {
+        if (length == 0) return -(start+1);
+        int half = length >> 1;
+        @SuppressWarnings("unchecked")
+		int test = cmp.compare((E)obj, get(start + half)); // Cast has no effect.
+        if (test == 0) return start + half; // Found.
+        return (test < 0) ? indexOfSorted(obj, cmp, start, half) :
+             indexOfSorted(obj, cmp, start + half + 1, length - half - 1);
     }
 
 }

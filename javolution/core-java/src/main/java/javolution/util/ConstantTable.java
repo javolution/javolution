@@ -70,6 +70,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 	/**
 	 * Returns a new constant table holding the same elements as the specified 
 	 * collection (convenience method).
+	 * 
 	 * @param <E> Element Type
 	 * @param that the collection holding the elements to place in the table.
 	 * @return the table containing the elements specified in the collection
@@ -82,6 +83,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 	/**
 	 * Returns a new constant table holding the specified {@link Constant 
 	 * constant} elements.
+	 * 
 	 * @param <E> Element Type 
 	 * @param elements the elements to place in the table
 	 * @return the table containing the specified elements
@@ -128,7 +130,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 
 	@Override
 	public Equality<? super E> equality() {
-		return Equality.STANDARD;
+		return Equality.DEFAULT;
 	}
 
 	@Override

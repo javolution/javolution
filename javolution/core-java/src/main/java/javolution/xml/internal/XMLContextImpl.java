@@ -33,8 +33,7 @@ import javolution.xml.stream.XMLStreamException;
 public final class XMLContextImpl extends XMLContext {
 
     // Holds class->format mapping. 
-    private final FastMap<Class<?>, XMLFormat<?>> classToFormat = new FastMap<Class<?>, XMLFormat<?>>()
-            .shared();
+    private final FastMap<Class<?>, XMLFormat<?>> classToFormat = FastMap.newMap().shared().cast();
 
     // Holds parent (null if root).
     private final XMLContextImpl parent;

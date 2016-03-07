@@ -9,18 +9,24 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
+import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.util.Iterator;
+import java.util.NavigableSet;
 import java.util.NoSuchElementException;
-import java.util.SortedSet;
 
 import javolution.lang.Realtime;
+import javolution.util.function.Equality;
 import javolution.util.function.Order;
 
 /**
  * <p> A high-performance ordered set (trie-based) with 
  *     {@link Realtime strict timing constraints}.</p>
  * 
+ * <p> In general, fast set methods have a limiting behavior in 
+ *     {@link Realtime#Limit#CONSTANT O(1)} (constant) to be compared 
+ *     with {@link Realtime#Limit#LOG_N O(log n)} for most sorted sets.</p>
+ *     
  * <p> Iterations order over the set elements is typically determined 
  *     by the set {@link #comparator() order} except for specific views 
  *     such as the {@link #linked linked} view for which the iterations 
@@ -54,7 +60,7 @@ import javolution.util.function.Order;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2013
  */
-public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<E> {
+public abstract class FastSet<E> extends FastCollection<E> implements NavigableSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
 
@@ -79,65 +85,26 @@ public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<
     	return new SparseSet<E>(order);
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // SortedSet Interface.
-    //
-
-    /** Returns a view of the portion of this set whose elements range
-     * from fromElement, inclusive, to toElement, exclusive. */
-    @Override
-    public FastSet<E> subSet(E fromElement, E toElement) {
-    	return null;
-    }
-
-    /** Returns a view of the portion of this set whose elements are 
-     *  strictly less than toElement. */
-    @Override
-    public FastSet<E> headSet(E toElement) {
-        return null;
-    }
-
-    /** Returns a view of the portion of this set whose elements are
-     *  greater than or equal to fromElement. */
-    @Override
-    public FastSet<E> tailSet(E fromElement) {
-        return null;
-    }
-
     /**
-     *  Returns the first (lowest) element currently in this set.
-     * 
-     *  @throws NoSuchElementException if the set is empty.
+     * Returns a high-performance set holding the specified elements
+     * (convenience method).
      */
-    @Override
-    @Realtime(limit = CONSTANT)
-    public E first() {
-    	Iterator<E> itr = iterator();
-    	return itr.hasNext() ? itr.next() : null;
+    @SafeVarargs
+	public static <E> FastSet<E> of(E...elements) {
+    	FastSet<E> set = FastSet.newSet();
+    	for (E e:elements) set.add(e);
+    	return set;
     }
-
-    /**
-     *  Returns the last (highest) element currently in this set.
-     * 
-     *  @throws NoSuchElementException if the set is empty.
-     */
-    @Override
-    @Realtime(limit = CONSTANT)
-    public E last() {
-      	Iterator<E> itr = this.reversed().iterator();
-    	return itr.hasNext() ? itr.next() : null;
-    }
-
-	/** Returns the ordering of this set. */
-	@Override
-    @Realtime(limit = CONSTANT)
-	public abstract Order<? super E> comparator();
 
 	////////////////////////////////////////////////////////////////////////////
     // Change in time limit behavior.
     //
 
-    @Override
+	@Override
+	@Realtime(limit = CONSTANT)
+	public abstract boolean add(E element);
+
+	@Override
     @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
         return size() == 0;
@@ -177,35 +144,146 @@ public abstract class FastSet<E> extends FastCollection<E> implements SortedSet<
 	public FastSet<E> unmodifiable() {
 		return null;
 	}
-
+	
     @Override
 	public FastSet<E> reversed() {
 		return null;
 	}
     
     @Override
-	public FastSet<E> linked() {
+    public FastSet<E> subSet(E fromElement, E toElement) {
+    	return subSet(fromElement, true, toElement, false);
+    }
+
+    @Override
+    public FastSet<E> headSet(E toElement) {
+        return subSet(first(), true, toElement, false);
+    }
+
+    @Override
+    public FastSet<E> tailSet(E fromElement) {
+        return subSet(fromElement, true, last(), true);
+    }
+
+    @Override
+	public FastSet<E> headSet(E toElement, boolean inclusive) {
+		return subSet(first(), true, toElement, inclusive);
+	}
+
+	@Override
+	public FastSet<E> tailSet(E fromElement, boolean inclusive) {
+		return subSet(fromElement, inclusive, last(), true);
+	}
+
+	@Override
+	public FastSet<E> subSet(E fromElement, boolean fromInclusive,
+			E toElement, boolean toInclusive) {
 		return null;
 	}
-	
+
+	/** 
+     * Equivalent to {@link #reversed()}.
+     * @deprecated {@link #reversed()} should be used.
+     */
+	@Override
+    @Realtime(limit = LINEAR)
+	public NavigableSet<E> descendingSet() {
+		return reversed();
+	}
+
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
-
-    /**
+	
+	/**
      * Casts this set to the expected parameterized type.
      */
     @SuppressWarnings("unchecked")
+    @Realtime(limit = CONSTANT)
 	public <T> FastSet<T> cast() {
     	return (FastSet<T>) this;
     }
     
-    @Override
-	public final Order<? super E> equality() {
+	@Override
+    @Realtime(limit = CONSTANT)
+	public Iterator<E> iterator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+    @Realtime(limit = CONSTANT)
+	public final Equality<? super E> equality() {
 		return comparator();
 	}
 	
 	@Override
-	public abstract FastSet<E> clone();
+    @Realtime(limit = LINEAR)
+	public FastSet<E> clone() {
+		return (FastSet<E>) super.clone();
+	}
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // NavigableSet Interface.
+    //
+
+    /**
+     *  Returns the first (lowest) element currently in this set.
+     * 
+     *  @throws NoSuchElementException if the set is empty.
+     */
+    @Override
+    @Realtime(limit = CONSTANT)
+    public abstract E first();
+
+    /**
+     *  Returns the last (highest) element currently in this set.
+     * 
+     *  @throws NoSuchElementException if the set is empty.
+     */
+    @Override
+    @Realtime(limit = CONSTANT)
+    public abstract E last();
+
+	/** Returns the ordering of this set. */
+	@Override
+    @Realtime(limit = CONSTANT)
+	public abstract Order<? super E> comparator();
+	
+	@Override
+    @Realtime(limit = CONSTANT)
+	public abstract E ceiling(E element);
+
+	@Override
+    @Realtime(limit = CONSTANT)
+	public Iterator<E> descendingIterator() {
+		return reversed().iterator();
+	}
+
+	@Override
+    @Realtime(limit = CONSTANT)
+	public abstract E floor(E element);
+	
+	@Override
+	@Realtime(limit = CONSTANT)
+	public abstract E higher(E element);
+
+	@Override
+	@Realtime(limit = CONSTANT)
+	public abstract E lower(E element);
+
+	@Override
+	@Realtime(limit = CONSTANT)
+	public E pollFirst() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	@Realtime(limit = CONSTANT)
+	public E pollLast() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

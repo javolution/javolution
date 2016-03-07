@@ -8,14 +8,6 @@
  */
 package javolution.lang;
 
-import java.lang.reflect.Field;
-
-import javolution.context.LogContext;
-import javolution.context.SecurityContext;
-import javolution.context.SecurityContext.Permission;
-import javolution.osgi.internal.OSGiServices;
-import javolution.text.TextContext;
-
 /**
  * <p> An object composed of two items.</p>
  * 

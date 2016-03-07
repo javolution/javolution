@@ -38,8 +38,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     // Property setting.
     private String _repairingPrefix = "ns";
 
-    private FastTable<XMLStreamWriterImpl> _recycled = new FastTable<XMLStreamWriterImpl>()
-            .shared();
+    private FastTable<XMLStreamWriterImpl> _recycled = FastTable.newTable().shared().cast();
 
     // Implements XMLOutputFactory abstract method.
     public XMLStreamWriterImpl createXMLStreamWriter(OutputStream stream)
@@ -142,7 +141,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     public XMLOutputFactory clone() {
         try {
             XMLOutputFactoryImpl clone = (XMLOutputFactoryImpl) super.clone();
-            clone._recycled = new FastTable<XMLStreamWriterImpl>().shared();
+            clone._recycled = FastTable.newTable().shared().cast();
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new Error();// Cannot happen since cloneable.

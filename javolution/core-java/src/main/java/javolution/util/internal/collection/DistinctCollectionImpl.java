@@ -93,7 +93,7 @@ public final class DistinctCollectionImpl<E> extends SequentialCollectionImpl<E>
 			this.inner = inner;
 			this.iterated = (equality instanceof Order) ? 
 					new SparseSet<E>((Order<? super E>) equality) : 
-						new FractalTable<E>().using(equality);
+						new FractalTable<E>().equality(equality);
 		}
 
 		@Override

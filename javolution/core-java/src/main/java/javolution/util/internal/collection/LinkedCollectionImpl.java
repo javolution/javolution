@@ -12,7 +12,6 @@ import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
-import javolution.util.FractalTable;
 import javolution.util.function.Equality;
 
 /**
@@ -21,35 +20,35 @@ import javolution.util.function.Equality;
 public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastTable<E> insertionOrdered;
+	private final FastTable<E> ordered;
 
 	public LinkedCollectionImpl(FastCollection<E> inner) {
 		super(inner);
-		insertionOrdered = new FractalTable<E>().using(inner.equality());
+		ordered = FastTable.newTable(inner.equality());
     }
 	
-	private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> insertionOrdered) {
+	private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> ordered) {
 		super(inner);
-		this.insertionOrdered = insertionOrdered;
+		this.ordered = ordered;
 	}
 
 	@Override
 	public boolean add(E element) {
 		boolean added = inner.add(element);
-		if (added)
-			insertionOrdered.addLast(element);
+		if (added) 
+			ordered.add(element);
 		return added;
 	}
 
 	@Override
 	public void clear() { // Optimization.
 		inner.clear();
-		insertionOrdered.clear();
+		ordered.clear();
 	}
 
 	@Override
 	public LinkedCollectionImpl<E> clone() {
-		return new LinkedCollectionImpl<E>(inner.clone(), insertionOrdered.clone());
+		return new LinkedCollectionImpl<E>(inner.clone(), ordered.clone());
 	}
 
 	@Override
@@ -68,15 +67,14 @@ public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 	}
 
 	@Override
-	public Iterator<E> iterator() {
-		return new IteratorImpl<E>(insertionOrdered.iterator(), inner);
+	public Iterator<E> iterator() {		
+		return new IteratorImpl(); 
 	}
 
 	@Override
 	public boolean remove(Object searched) {
 		boolean removed = inner.remove(searched);
-		if (removed)
-			insertionOrdered.remove(searched);
+		if (removed) ordered.remove(searched);
 		return removed;
 	}
 
@@ -86,32 +84,30 @@ public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 	}
 
 	/** Default linked iterator for generic collections **/
-	private static class IteratorImpl<E> implements Iterator<E> {
-		private final Iterator<E> inner;
-		private final FastCollection<E> target;
-		private E next;
+	private class IteratorImpl implements Iterator<E> {
+		Iterator<E> orderedIterator;
+		E next;
 
-		public IteratorImpl(Iterator<E> inner,
-				FastCollection<E> collection) {
-			this.inner = inner;
-			this.target = collection;
+		public IteratorImpl() {
+			orderedIterator = ordered.iterator();
 		}
 
 		@Override
 		public boolean hasNext() {
-			return inner.hasNext();
+			return orderedIterator.hasNext();
 		}
 
 		@Override
 		public E next() {
-			next = inner.next();
+			next = orderedIterator.next();
 			return next;
 		}
 
 		@Override
 		public void remove() {
-			inner.remove();
-			target.remove(next);
+			orderedIterator.remove();
+			inner.remove(next);
+			next = null;
 		}
 	}
 

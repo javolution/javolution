@@ -13,7 +13,7 @@ import javolution.text.CharArray;
 import javolution.text.TextBuilder;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
-import javolution.util.function.Equalities;
+import javolution.util.function.Order;
 import javolution.xml.stream.XMLStreamException;
 
 /**
@@ -32,13 +32,13 @@ public class XMLReferenceResolver {
     /**
      * Holds object to identifier (FastTable.Index) mapping.
      */
-    private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>(
-            Equalities.IDENTITY);
+    private FastMap<Object, Index> _objectToId 
+        = FastMap.newMap(Order.IDENTITY);
 
     /**
      * Holds the objects (index to object mapping).
      */
-    private FastTable<Object> _idToObject = new FastTable<Object>();
+    private FastTable<Object> _idToObject = FastTable.newTable();
 
     /**
      * Holds the id counter.

@@ -9,7 +9,7 @@
 package javolution.util.internal.bitset;
 
 import javolution.lang.Index;
-import javolution.util.FastBitSet;
+import javolution.util.BitSet;
 import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
@@ -17,12 +17,12 @@ import javolution.util.function.Predicate;
 /**
  * A table of indices which cannot be modified.
  */
-public final class UnmodifiableBitSetImpl extends FastBitSet {
+public final class UnmodifiableBitSetImpl extends BitSet {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastBitSet inner;
+	private final BitSet inner;
 
-	public UnmodifiableBitSetImpl(FastBitSet inner) {
+	public UnmodifiableBitSetImpl(BitSet inner) {
 		this.inner = inner;
 	}
 
@@ -37,12 +37,12 @@ public final class UnmodifiableBitSetImpl extends FastBitSet {
 	}
 
 	@Override
-	public FastBitSet get(int fromIndex, int toIndex) {
+	public BitSet get(int fromIndex, int toIndex) {
 		return inner.get(fromIndex, toIndex);
 	}
 
 	@Override
-	public boolean intersects(FastBitSet that) {
+	public boolean intersects(BitSet that) {
 		return inner.intersects(that);
 	}
 
@@ -117,22 +117,22 @@ public final class UnmodifiableBitSetImpl extends FastBitSet {
 	}
 
 	@Override
-	public void and(FastBitSet that) {
+	public void and(BitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void andNot(FastBitSet that) {
+	public void andNot(BitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void or(FastBitSet that) {
+	public void or(BitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 
 	@Override
-	public void xor(FastBitSet that) {
+	public void xor(BitSet that) {
 		throw new UnsupportedOperationException("Unmodifiable");
 	}
 

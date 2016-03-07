@@ -51,7 +51,7 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 
 	@Override
 	public Equality<? super R> equality() {
-		return Equality.STANDARD;
+		return Equality.DEFAULT;
 	}
 
 	@Override

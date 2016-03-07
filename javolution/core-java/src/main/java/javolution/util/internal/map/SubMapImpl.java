@@ -27,8 +27,7 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     private final boolean isToSet;
 	private final FastMap<K, V> inner;
 
-	public SubMapImpl(FastMap<K, V> inner, K fromKey, boolean isFromSet, 
-			K toKey, boolean isToSet) {
+	public SubMapImpl(FastMap<K, V> inner, K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
 		this.inner = inner;
 		this.fromKey = fromKey;
 		this.toKey = toKey;
@@ -83,7 +82,7 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 	public Entry<K, V> firstEntry() {
 		Entry<K,V> first = inner.getEntry(fromKey);
 		if (first != null) return first;
-		first = inner.getEntryAfter(fromKey);
+		first = inner.higherEntry(fromKey);
 		if ((first == null) || isTooLarge(first.getKey()))
 				throw new NoSuchElementException();
 		return first;
@@ -91,22 +90,22 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 
 	@Override
 	public java.util.Map.Entry<K, V> lastEntry() {
-		Entry<K,V> last = inner.getEntryBefore(toKey);
+		Entry<K,V> last = inner.lowerEntry(toKey);
 		if ((last == null) || isTooSmall(last.getKey()))
 				throw new NoSuchElementException();
 		return last;
 	}
 
 	@Override
-	public java.util.Map.Entry<K, V> getEntryAfter(K key) {
-		Entry<K,V> after = inner.getEntryAfter(key);
+	public java.util.Map.Entry<K, V> higherEntry(K key) {
+		Entry<K,V> after = inner.higherEntry(key);
 		if ((after == null) || isTooLarge(after.getKey())) return null;
 		return after;
 	}
 
 	@Override
-	public java.util.Map.Entry<K, V> getEntryBefore(K key) {
-		Entry<K,V> before = inner.getEntryAfter(key);
+	public java.util.Map.Entry<K, V> lowerEntry(K key) {
+		Entry<K,V> before = inner.higherEntry(key);
 		if ((before == null) || isTooSmall(before.getKey())) return null;
 		return before;
 	}

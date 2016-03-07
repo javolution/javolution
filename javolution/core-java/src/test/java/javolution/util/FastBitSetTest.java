@@ -18,23 +18,23 @@ import org.junit.Test;
 
 public class FastBitSetTest {
 
-	private FastBitSet _fastBitSet1248;
-	private FastBitSet _fastBitSet3567;
-	private FastBitSet _fastBitSetAll;
-	private FastBitSet _fastBitSetNone;
+	private BitSet _fastBitSet1248;
+	private BitSet _fastBitSet3567;
+	private BitSet _fastBitSetAll;
+	private BitSet _fastBitSetNone;
 	
 	@Before
 	public void init(){
-		_fastBitSet1248 = FastBitSet.of(Index.of(1), Index.of(2), Index.of(4), Index.of(8));
-		_fastBitSet3567 = FastBitSet.of(Index.of(3), Index.of(5), Index.of(6), Index.of(7));
-		_fastBitSetAll = FastBitSet.of(Index.of(1), Index.of(2), Index.of(3), Index.of(4), 
+		_fastBitSet1248 = BitSet.of(1,2,4,8);
+		_fastBitSet3567 = BitSet.of(Index.of(3), Index.of(5), Index.of(6), Index.of(7));
+		_fastBitSetAll = BitSet.of(Index.of(1), Index.of(2), Index.of(3), Index.of(4), 
 				Index.of(5), Index.of(6), Index.of(7), Index.of(8));
-		_fastBitSetNone = new FastBitSet();
+		_fastBitSetNone = new BitSet();
 	}
 	
 	@Test
 	public void testAnd(){
-		FastBitSet resultBitSet = new FastBitSet();
+		BitSet resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.and(_fastBitSet3567);
 		
@@ -42,7 +42,7 @@ public class FastBitSetTest {
 			assertFalse(String.format("Bit %d = False", i), resultBitSet.get(i));
 		}
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.and(_fastBitSetNone);
 		
@@ -50,7 +50,7 @@ public class FastBitSetTest {
 			assertFalse(String.format("Bit %d = False", i), resultBitSet.get(i));
 		}
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.and(_fastBitSetAll);
 		
@@ -125,7 +125,7 @@ public class FastBitSetTest {
 	
 	@Test
 	public void testOr(){
-		FastBitSet resultBitSet = new FastBitSet();
+		BitSet resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.or(_fastBitSet3567);
 		
@@ -133,7 +133,7 @@ public class FastBitSetTest {
 			assertTrue(String.format("Bit %d = True", i), resultBitSet.get(i));
 		}
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.or(_fastBitSetAll);
 		
@@ -141,7 +141,7 @@ public class FastBitSetTest {
 			assertTrue(String.format("Bit %d = True", i), resultBitSet.get(i));
 		}
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.or(_fastBitSetNone);
 		
@@ -153,7 +153,7 @@ public class FastBitSetTest {
 	
 	@Test
 	public void testXOr(){
-		FastBitSet resultBitSet = new FastBitSet();
+		BitSet resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.xor(_fastBitSet3567);
 		
@@ -161,7 +161,7 @@ public class FastBitSetTest {
 			assertTrue(String.format("Bit %d = True", i), resultBitSet.get(i));
 		}
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.xor(_fastBitSetAll);
 		
@@ -170,7 +170,7 @@ public class FastBitSetTest {
 		assertTrue("Bit 6 = True", resultBitSet.get(6));
 		assertTrue("Bit 7 = True", resultBitSet.get(7));
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.xor(_fastBitSetNone);
 		
@@ -179,7 +179,7 @@ public class FastBitSetTest {
 		assertTrue("Bit 4 = True", resultBitSet.get(4));
 		assertTrue("Bit 8 = True", resultBitSet.get(8));
 		
-		resultBitSet = new FastBitSet();
+		resultBitSet = new BitSet();
 		resultBitSet.addAll(_fastBitSet1248);
 		resultBitSet.xor(_fastBitSet1248);
 

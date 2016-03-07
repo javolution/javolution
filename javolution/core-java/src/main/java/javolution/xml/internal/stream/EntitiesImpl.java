@@ -127,9 +127,9 @@ public final class EntitiesImpl {
      * new FastMap().put("copy", "©")} to define the copyright entity.
      */
     public void setEntitiesMapping(Map<String, String> entityToReplacementText) {
-        FastTable<String> values = new FastTable<String>();
+        FastTable<String> values = FastTable.newTable();
         values.addAll(entityToReplacementText.values());
-        _maxLength = values.mapped(new Function<CharSequence, Integer>() {
+        _maxLength = values.map(new Function<CharSequence, Integer>() {
 
             @Override
             public Integer apply(CharSequence csq) {

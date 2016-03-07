@@ -21,8 +21,7 @@ import javolution.xml.stream.XMLStreamException;
  */
 public final class XMLInputFactoryImpl implements XMLInputFactory {
     private Map<String, String> _entities = null;
-    private FastTable<XMLStreamReaderImpl> _recycled = new FastTable<XMLStreamReaderImpl>()
-            .shared();
+    private FastTable<XMLStreamReaderImpl> _recycled = FastTable.newTable().shared().cast();
 
     // Implements XMLInputFactory abstract method.
     public XMLStreamReaderImpl createXMLStreamReader(InputStream stream)
@@ -97,7 +96,7 @@ public final class XMLInputFactoryImpl implements XMLInputFactory {
     public XMLInputFactory clone() {
         try {
             XMLInputFactoryImpl clone = (XMLInputFactoryImpl) super.clone();
-            clone._recycled = new FastTable<XMLStreamReaderImpl>().shared();
+            clone._recycled = FastTable.newTable().shared().cast();
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new Error();// Cannot happen since cloneable.

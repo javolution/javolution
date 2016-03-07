@@ -11,7 +11,6 @@ package javolution.util.function;
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 import static javolution.lang.Realtime.Limit.UNKNOWN;
-import javolution.lang.Parallel;
 import javolution.lang.Realtime;
 import javolution.util.internal.function.ArrayEqualityImpl;
 import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
@@ -32,42 +31,35 @@ import javolution.util.internal.function.NaturalOrderImpl;
 public interface Equality<T> {
 	
     /**
-     * The standard object equality ({@link #HASH} order).
+     * A default object equality (based on {@link Object#equals}).
      */
-    @Parallel
     @Realtime(limit = UNKNOWN)
-    public static final Equality<Object> STANDARD = HashOrderImpl.INSTANCE;
+    public static final Equality<Object> DEFAULT = HashOrderImpl.INSTANCE;
 
     /**
-     * The identity object equality ({@link #IDENTITY_HASH} order)
-     * for which instances are only equals to themselves.
+     * An identity object equality (instances are only equals to themselves).
      */
-    @Parallel
     @Realtime(limit = CONSTANT)
     public static final Equality<Object> IDENTITY 
        = IdentityHashOrderImpl.INSTANCE;
 
      /**
      * A content based array comparator (recursive). 
-     * The {@link #STANDARD standard} comparator is used for non-array elements. 
+     * The {@link #DEFAULT default} equality is used for non-array elements. 
      */
-    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<Object> ARRAY = ArrayEqualityImpl.INSTANCE;
  
     /**
-     * A lexical equality for any {@link CharSequence} ({@link #LEXICAL} order).
+     * A lexical equality for any {@link CharSequence}.
      */
-    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<CharSequence> LEXICAL
         = LexicalOrderImpl.INSTANCE;
 
     /**
-     * A case sensitive lexical equality for any {@link CharSequence} 
-     * ({@link #LEXICAL_CASE_INSENSITIVE} order).
+     * A case insensitive lexical equality for any {@link CharSequence}.
      */
-    @Parallel
     @Realtime(limit = LINEAR)
     public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
         = CaseInsensitiveLexicalOrderImpl.INSTANCE;
@@ -78,7 +70,6 @@ public interface Equality<T> {
      *  
      * @throws ClassCastException if used with non {@link Comparable} instances.
      */
-    @Parallel
     @Realtime(limit = UNKNOWN)
     public static final Equality<Object> NATURAL 
         = NaturalOrderImpl.INSTANCE;
@@ -86,10 +77,8 @@ public interface Equality<T> {
 	/**
 	 * Indicates if two specified objects are considered equal.
 	 * 
-	 * @param left
-	 *            the first object (can be {@code null}).
-	 * @param right
-	 *            the second object (can be {@code null}).
+	 * @param left the first object (can be {@code null}).
+	 * @param right the second object (can be {@code null}).
 	 * @return <code>true</code> if both objects are considered equal;
 	 *         <code>false</code> otherwise.
 	 */

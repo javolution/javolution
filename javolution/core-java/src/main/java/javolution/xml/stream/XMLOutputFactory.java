@@ -11,8 +11,6 @@ package javolution.xml.stream;
 import java.io.OutputStream;
 import java.io.Writer;
 
-import javolution.lang.Parallelizable;
-
 /**
  * <p> The OSGi factory service to create {@link XMLStreamWriter} instances.
  *     For each bundle, a distinct factory instance is returned and can be 
@@ -53,7 +51,6 @@ import javolution.lang.Parallelizable;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0 December 12, 2012
  */
-@Parallelizable(comment="Factory configuration should be performed sequentially.")
 public interface XMLOutputFactory extends Cloneable {
 
     /**

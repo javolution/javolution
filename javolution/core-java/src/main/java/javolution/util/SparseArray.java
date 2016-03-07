@@ -29,6 +29,18 @@ import javolution.util.function.Order;
  */
 public class SparseArray<E> extends FastMap<Index, E> {
 	
+	/**
+	 * Custom entry holding an additional index field (unsigned 32-bits).
+	 */
+	public interface SparseEntry<K,V> extends Entry<K, V> {
+		
+		/**
+		 * Returns the index of the entry (unsigned 32-bits value).
+		 */
+		int getIndex(); 
+		
+	}
+
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final int SHIFT = 4;
 	private static final int SIZE = 1 << SHIFT;
@@ -56,7 +68,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	/** Returns the entry at the specified index. */
-	public Entry<Index, E> getEntry(int index) {
+	public SparseEntry<Index,E> getEntry(int index) {
 		return root.getEntry(index);
 	}
 	
@@ -64,7 +76,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	 * Removes and returns the entry at the specified index.
 	 */
 	@Realtime(limit = CONSTANT)
-	public Entry<Index,E> removeEntry(int index) {
+	public SparseEntry<Index,E> removeEntry(int index) {
 		EntryNode<Index,E> previous = root.removeEntry(index);
 		if (previous != null)
 			size--;
@@ -99,27 +111,27 @@ public class SparseArray<E> extends FastMap<Index, E> {
 
 	/** Returns the sparse entry after the specified index or {@code null}
 	 * if none. */
-	public Entry<Index, E> higherEntry(int index) {
+	public SparseEntry<Index,E> higherEntry(int index) {
 		if (index == -1) return null;
 		return root.ceilingEntry(index+1);
 	}
 	
 	/** Returns the sparse entry before the specified index or {@code null}
 	 * if none. */
-	public Entry<Index, E> lowerEntry(int index) {
+	public SparseEntry<Index,E> lowerEntry(int index) {
 		if (index == 0) return null;
 		return root.floorEntry(index-1);
 	}
 
 	/** Returns the sparse entry at or after the specified index or {@code null}
 	 * if none. */
-	public Entry<Index, E> ceilingEntry(int index) {
+	public SparseEntry<Index,E> ceilingEntry(int index) {
 		return root.ceilingEntry(index);
 	}
 	
 	/** Returns the sparse entry at or before the specified index or {@code null}
 	 * if none. */
-	public Entry<Index, E> floorEntry(int index) {
+	public SparseEntry<Index,E> floorEntry(int index) {
 		return root.floorEntry(index);
 	}
 
@@ -127,12 +139,12 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	// FastMap<Index,E> 
 	
 	@Override
-	public Entry<Index, E> getEntry(Index key) {
+	public SparseEntry<Index,E> getEntry(Index key) {
 		return getEntry(key.intValue());
 	}
 
 	@Override
-	public Entry<Index, E> removeEntry(Index key) {
+	public SparseEntry<Index,E> removeEntry(Index key) {
 		return removeEntry(key.intValue());
 	}
 	
@@ -171,32 +183,32 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 	
 	@Override
-	public Entry<Index,E> firstEntry() {
+	public SparseEntry<Index,E> firstEntry() {
 		return root.ceilingEntry(0);
 	}
 
 	@Override
-	public Entry<Index, E> lastEntry() {
+	public SparseEntry<Index,E> lastEntry() {
 		return root.floorEntry(-1);
 	}
 
 	@Override
-	public Entry<Index, E> higherEntry(Index key) {
+	public SparseEntry<Index,E> higherEntry(Index key) {
 		return higherEntry(key.intValue());
 	}
 	
 	@Override
-	public Entry<Index,E> lowerEntry(Index key) {
+	public SparseEntry<Index,E> lowerEntry(Index key) {
 		return lowerEntry(key.intValue());
 	}
 
 	@Override
-	public Entry<Index,E> ceilingEntry(Index key) {
+	public SparseEntry<Index,E> ceilingEntry(Index key) {
 		return ceilingEntry(key.intValue());
 	}
 
 	@Override
-	public Entry<Index, E> floorEntry(Index key) {
+	public SparseEntry<Index,E> floorEntry(Index key) {
 		return floorEntry(key.intValue());
 	}
 
@@ -226,7 +238,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	
 
 	/** Defines the entry (leaf node) */
-	static final class EntryNode<K,V> implements Node<K,V>, Entry<K,V> {
+	static final class EntryNode<K,V> implements Node<K,V>, SparseEntry<K,V> {
         static final Object NOT_INITIALIZED = new Object();
 		private final int index;
 		K key;
@@ -293,8 +305,12 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		}
 
 		///////////////////////////////////////////////////////////////////////
-		// Entry<K,V> Implementation.
+		// SparseEntry<K,V> Implementation.
 		
+		@Override
+		public int getIndex() {
+			return index;
+		}
 		@Override
 		public K getKey() {
 			return key;
@@ -318,15 +334,13 @@ public class SparseArray<E> extends FastMap<Index, E> {
 				return false;
 			@SuppressWarnings("unchecked")
 			Entry<K, V> that = (Entry<K, V>) obj;
-			return (key == null ? that.getKey() == null : key.equals(that.getKey()))
-					&& (value == null ? that.getValue() == null
-							: value.equals(that.getValue()));
+			return Order.DEFAULT.areEqual(key, that.getKey())
+					&& Order.DEFAULT.areEqual(value, that.getValue());
 		}
 
 		@Override
 		public int hashCode() { // As per Map.Entry contract.
-			return (key == null ? 0 : key.hashCode())
-					^ (value == null ? 0 : value.hashCode());
+			return Order.DEFAULT.indexOf(key) ^ Order.DEFAULT.indexOf(value);
 		}
 
 		@Override

@@ -28,7 +28,8 @@ import javolution.util.FastMap;
 public final class TextContextImpl extends TextContext {
 
     // Holds class->format mapping. 
-    private final FastMap<Class<?>, TextFormat<?>> classToFormat = FastMap.newSharedMap();
+    private final FastMap<Class<?>, TextFormat<?>> classToFormat 
+        = FastMap.newMap().shared().cast();
 
     // Holds parent (null if root).
     private final TextContextImpl parent;

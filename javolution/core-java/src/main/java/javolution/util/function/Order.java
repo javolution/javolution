@@ -17,7 +17,6 @@ import java.util.Comparator;
 
 import javolution.lang.Binary;
 import javolution.lang.Index;
-import javolution.lang.Parallel;
 import javolution.lang.Realtime;
 import javolution.lang.Ternary;
 import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
@@ -43,17 +42,16 @@ import javolution.util.internal.function.NaturalOrderImpl;
 public interface Order<T> extends Equality<T>, Comparator<T> {
 	
     /**
-     * An order based on the object hash code and equals methods.
-     * The index of an object is its hash code value as unsigned 32 bits.
+     * A default object order (based on {@link Object#hashCode} as 32-bits 
+     * unsigned index).
      */
-    @Parallel
     @Realtime(limit = UNKNOWN)
-    public static final Order<Object> HASH = HashOrderImpl.INSTANCE;
+    public static final Order<Object> DEFAULT = HashOrderImpl.INSTANCE;
 
     /**
-     * An order based on system hash code and operator ({@code == }).
+     * An identity object order (based on {@link System#identityHashCode}
+     * as 32-bits unsigned index).
      */
-    @Parallel
     @Realtime(limit = CONSTANT)
     public static final Order<Object> IDENTITY
         = IdentityHashOrderImpl.INSTANCE;
@@ -61,7 +59,6 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
     /**
      * A lexicographic order for any {@link CharSequence}.
      */
-    @Parallel
     @Realtime(limit = LINEAR)
     public static final Order<CharSequence> LEXICAL
         = LexicalOrderImpl.INSTANCE;
@@ -69,7 +66,6 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
     /**
      * A case insensitive lexicographic order for any {@link CharSequence}.
      */
-    @Parallel
     @Realtime(limit = LINEAR)
     public static final Order<CharSequence> LEXICAL_CASE_INSENSITIVE 
        = CaseInsensitiveLexicalOrderImpl.INSTANCE;
@@ -77,14 +73,12 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
     /**
      * A numeric order based on {@link Number#doubleValue()}.
      */
-    @Parallel
     @Realtime(limit = LOG_N)
     public static final Order<Number> NUMERIC = null;
     
     /**
      * An unsigned 32-bits order.
      */
-    @Parallel
     @Realtime(limit = LOG_N)
     public static final Order<Index> INDEX = null;
     
@@ -94,7 +88,6 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
      * @see <a href="http://en.wikipedia.org/wiki/Quadtree">Wikipedia: Quadtree</a>
      * @see #INDEX
      */
-    @Parallel
     @Realtime(limit = LOG_N)
     public static Order<Binary<Index, Index>> QUADTREE = null;
     
@@ -104,7 +97,6 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
      * @see <a href="http://en.wikipedia.org/wiki/Octree">Wikipedia: Octree</a>
      * @see #NUMERIC
      */
-    @Parallel
     @Realtime(limit = LOG_N)
     public static Order<Ternary<Index, Index, Index>> OCTREE = null;    
 
@@ -113,13 +105,12 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
 	//
     
     /**
-     * A natural order (only for {@link Comparable} instances). 
-     * The method {@link #indexOf indexOf} returns {@code 0})
-     * and does not allow direct access in a collection.
+     * A relative order for {@link Comparable} instances which does not support 
+     * direct access in a collection ({@link #indexOf indexOf} returns 
+     * {@code 0}).
      * 
      * @throws ClassCastException if used with non {@link Comparable} instances.
-     */
-    @Parallel
+    */
     @Realtime(limit = UNKNOWN)
     public static final Order<Object> NATURAL 
         = NaturalOrderImpl.INSTANCE;

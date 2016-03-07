@@ -29,7 +29,8 @@ import javolution.text.TypeFormat;
  *     for small values and similar to {@link Integer} instances for large
  *     values (but extended to a 32-bits unsigned range).</p>
  *     
- * <p> Small indices have no adverse  effect on garbage collection.</p>
+ * <p> {@link #UNIQUE Unicity} is maintained for small indices 
+ *     (no adverse effect on garbage collection).</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.1, February 25, 2014
@@ -123,8 +124,8 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @return the corresponding index.
      */
     public static Index of(int unsigned) {
-        return (unsigned >= 0) & (unsigned < INSTANCES.length) ? INSTANCES[unsigned]
-                : new Index(unsigned);
+        return (unsigned >= 0) & (unsigned < INSTANCES.length) ?
+        		INSTANCES[unsigned] : new Index(unsigned);
     }
 
     /**
