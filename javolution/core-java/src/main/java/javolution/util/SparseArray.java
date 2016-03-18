@@ -27,7 +27,7 @@ import javolution.util.function.Order;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public class SparseArray<E> extends FastMap<Index, E> {
+public final class SparseArray<E> extends FastMap<Index, E> {
 	
 	/**
 	 * Custom entry holding an additional index field (unsigned 32-bits).
@@ -149,7 +149,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 	
 	@Override
-	public Order<? super Index> order() {
+	public Order<? super Index> comparator() {
 		return Order.INDEX;
 	}
 

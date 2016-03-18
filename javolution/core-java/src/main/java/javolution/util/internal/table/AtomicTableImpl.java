@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import javolution.util.ConstantTable;
 import javolution.util.FastTable;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
@@ -82,6 +83,11 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 	@Override
 	public FastTable<E> clone() {
 		return new AtomicTableImpl<E>(innerConst.clone());
+	}
+
+	@Override
+	public ConstantTable<E> constant() {
+		return innerConst.constant();
 	}
 
 	@Override

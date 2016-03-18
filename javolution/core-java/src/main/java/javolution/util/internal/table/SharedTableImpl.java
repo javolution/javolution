@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import javolution.util.ConstantTable;
 import javolution.util.FastTable;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
@@ -119,6 +120,16 @@ public final class SharedTableImpl<E> extends FastTable<E> {
 		lock.readLock.lock();
 		try {
 			return new SharedTableImpl<E>(inner.clone());
+		} finally {
+			lock.readLock.unlock();
+		}
+	}
+
+	@Override
+	public ConstantTable<E> constant() {
+		lock.readLock.lock();
+		try {
+			return inner.constant();
 		} finally {
 			lock.readLock.unlock();
 		}

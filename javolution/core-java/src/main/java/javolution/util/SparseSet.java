@@ -8,17 +8,19 @@
  */
 package javolution.util;
 
+import java.util.Map.Entry;
+
 import javolution.util.function.Order;
 
 /**
-* <p> A <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> set 
- *     allowing for quick searches, insertions and deletion.</p> 
+ * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> 
+ *     implementation of {@link FastSet}.</p> 
  *  
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  * @see SparseMap
  */
-public class SparseSet<E> extends FastSet<E> {
+public final class SparseSet<E> extends FastSet<E> {
 	   
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final Object PRESENT = new Object();
@@ -51,7 +53,7 @@ public class SparseSet<E> extends FastSet<E> {
 	
 	@Override
 	public Order<? super E> comparator() {
-		return sparse.order();
+		return sparse.comparator();
 	}
 	
 	@Override
@@ -86,6 +88,36 @@ public class SparseSet<E> extends FastSet<E> {
 	@Override
 	public boolean add(E element) {
 		return sparse.put(element, PRESENT) == null;
+	}
+	@Override
+	public boolean isEmpty() {
+		return sparse.isEmpty();
+	}
+	@Override
+	public E ceiling(E element) {
+		return sparse.ceilingKey(element);
+	}
+	@Override
+	public E floor(E element) {
+		return sparse.floorKey(element);
+	}
+	@Override
+	public E higher(E element) {
+		return sparse.higherKey(element);
+	}
+	@Override
+	public E lower(E element) {
+		return sparse.lowerKey(element);
+	}
+	@Override
+	public E pollFirst() {
+		Entry<E,Object> entry = sparse.pollFirstEntry();
+		return entry != null ? entry.getKey() : null;
+	}
+	@Override
+	public E pollLast() {
+		Entry<E,Object> entry = sparse.pollLastEntry();
+		return entry != null ? entry.getKey() : null;
 	}
 
 }

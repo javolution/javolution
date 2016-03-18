@@ -117,18 +117,51 @@ public class BitSet extends FastSet<Index> {
         return cardinality();
  	}
 
- 	@Override
- 	public Index next(Index index) {
-     	 int i = nextSetBit(index.intValue()+1);
+	@Override
+	public boolean isEmpty() {
+		return size() == 0;
+	}
+
+	@Override
+	public Index ceiling(Index index) {
+	 	 int i = nextSetBit(index.intValue());
      	 return i >= 0 ? Index.of(i) : null;
- 	}
+	}
 
- 	@Override
- 	public Index previous(Index index) {
-    	 int i = previousSetBit(index.intValue()-1);
-    	 return i >= 0 ? Index.of(i) : null;
- 	}
+	@Override
+	public Index floor(Index index) {
+   	 int i = previousSetBit(index.intValue());
+   	 return i >= 0 ? Index.of(i) : null;
+	}
 
+	@Override
+	public Index higher(Index index) {
+	 	 int i = nextSetBit(index.intValue()+1);
+     	 return i >= 0 ? Index.of(i) : null;
+	}
+
+	@Override
+	public Index lower(Index index) {
+	   	 int i = previousSetBit(index.intValue()-1);
+	   	 return i >= 0 ? Index.of(i) : null;
+	}
+
+	@Override
+	public Index pollFirst() {
+		int i = nextSetBit(0);
+		if (i < 0) return null;
+		clear(i);
+		return Index.of(i);
+	}
+
+	@Override
+	public Index pollLast() {
+	   	int i = previousSetBit(length());
+		if (i < 0) return null;
+		clear(i);
+		return Index.of(i);
+	}  
+	
      ////////////////////////////////////////////////////////////////////////////
      // BitSet Operations.
      //
@@ -585,5 +618,6 @@ public class BitSet extends FastSet<Index> {
         if (++n != bits.length) { // Trim.
             bits = Arrays.copyOf(bits, n);
         }        
-    }    
+    }
+
 }

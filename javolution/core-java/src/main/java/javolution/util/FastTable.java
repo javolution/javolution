@@ -80,6 +80,7 @@ import javolution.util.internal.table.UnmodifiableTableImpl;
 public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         Deque<E>, RandomAccess {
 
+	
     private static final long serialVersionUID = 0x700L; // Version.
 
     /**
@@ -91,30 +92,35 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Returns a new high-performance table.
      */
-    public static <E> FastTable<E> newTable() {
+    public static <E> FractalTable<E> newTable() {
     	return new FractalTable<E>();
     }
 
     /**
+     * Returns a new high-performance table for the specified element type.
+     */
+    public static <E> FractalTable<E> newTable(Class<E> elementType) {
+    	return new FractalTable<E>();
+    }
+    
+    /**
      * Returns a new high-performance table using the specified equality
      * comparator for its elements.
      */
-    public static <E> FastTable<E> newTable(Equality<? super E> equality) {
-    	return new FractalTable<E>().equality(equality);
+    public static <E> FractalTable<E> newTable(Equality<? super E> equality) {
+    	return new FractalTable<E>(equality);
     }
 
     /**
-     * Returns a high-performance table holding the specified elements
-     * (convenience method).
+     * Returns a new high-performance table of the specified element type 
+     * and using the specified equality comparator for its elements.
      */
-    @SafeVarargs
-	public static <E> FastTable<E> of(E...elements) {
-    	FastTable<E> table = FastTable.newTable();
-    	for (E e:elements) table.add(e);
-    	return table;
+    public static <E> FractalTable<E> newTable(Equality<? super E> equality, 
+    		Class<E> elementType) {
+    	return new FractalTable<E>(equality);
     }
 
-   ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
 
@@ -133,6 +139,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
 		return new UnmodifiableTableImpl<E>(this);
 	}
 
+    @Override
 	public FastTable<E> equality(Equality<? super E> equality) {
 		return new CustomEqualityTableImpl<E>(this, equality);
 	}
@@ -466,7 +473,28 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     // Misc.
     //
 
-    /**
+	/**
+	 * Returns an immutable table holding the same elements as this table,
+	 * in the same order and using the same element equality as this table. 	
+     */
+	@Override
+	@Realtime(limit = LINEAR)
+	public ConstantTable<E> constant() {
+		int size = size();
+		@SuppressWarnings("unchecked")
+		E[] elements = (E[]) new Object[size];
+		for (int i=0; i < size; i++)
+			elements[i] = get(i); 
+		return new ConstantTable<E>(elements, equality());
+	}
+	
+	@Override
+    public FastTable<E> addAll(E first, @SuppressWarnings("unchecked") E... others) {
+		super.addAll(first, others);
+		return this;
+	}
+
+	/**
      * Assuming the table is sorted according to the specified comparator;
      * inserts the specified element at the proper index and returns that index.
      */
@@ -487,14 +515,6 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     @Realtime(limit = LOG_N)
 	public int indexOfSorted(Object obj, Comparator<? super E> comparator) {
         return indexOfSorted(obj, comparator, 0, size());
-    }
-
-    /**
-     * Casts this table to the expected parameterized type.
-     */
-    @SuppressWarnings("unchecked")
-	public <T> FastTable<T> cast() {
-    	return (FastTable<T>) this;
     }
 
     @Realtime(limit = LINEAR)

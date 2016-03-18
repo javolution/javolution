@@ -83,6 +83,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public FastCollection<E> constant() {
+		lock.readLock.lock();
+		try {
+			return inner.constant();
+		} finally {
+			lock.readLock.unlock();
+		}
+	}
+
+	@Override
 	public boolean contains(final Object searched) {
 		lock.readLock.lock();
 		try {

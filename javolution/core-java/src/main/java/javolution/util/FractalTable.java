@@ -14,8 +14,7 @@ import javolution.util.function.Predicate;
 import javolution.util.internal.table.FractalTableImpl;
 
 /**
- * <p> A fractal-based table with fast insertion/deletion capabilities 
- *     regardless of the collection size.</p>
+ * <p> The default fractal-based implementation of {@link FastTable}.</p> 
  *     
  * <p> The fractal-based implementation ensures that add/insertion/deletion operations 
  *     worst-case execution time is always less than <i><b>O(log(size))</b></i>. 
@@ -31,20 +30,30 @@ import javolution.util.internal.table.FractalTableImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public class FractalTable<E> extends FastTable<E> {
+public final class FractalTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version. 
     private transient int capacity; 
     private transient FractalTableImpl fractal; // Null if empty (capacity 0)
     private transient int size;
+    private final Equality<? super E> equality;
 
     /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
      */
     public FractalTable() {
+    	this(Equality.DEFAULT);
     }
  
+    /**
+     * Creates an empty table using the specified equality for element
+     * comparisons.
+     */
+    public FractalTable(Equality<? super E> equality) {
+    	this.equality = equality;
+    }
+
     @Override
     public boolean add(E element) {
         addLast(element);
@@ -98,7 +107,7 @@ public class FractalTable<E> extends FastTable<E> {
 
     @Override
     public Equality<? super E> equality() {
-        return Equality.DEFAULT;
+        return equality;
     }
 
 	@SuppressWarnings("unchecked")

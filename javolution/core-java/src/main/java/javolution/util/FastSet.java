@@ -13,11 +13,11 @@ import static javolution.lang.Realtime.Limit.LINEAR;
 
 import java.util.Iterator;
 import java.util.NavigableSet;
-import java.util.NoSuchElementException;
 
 import javolution.lang.Realtime;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 
 /**
  * <p> A high-performance ordered set (trie-based) with 
@@ -38,10 +38,10 @@ import javolution.util.function.Order;
  * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
  * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY);
  * FastSet<String> treeSet = FastSet.newSet(Order.LEXICAL); 
- * FastSet<Foo> linkedHashSet = FastSet.newSet().linked().cast(); // Insertion order.
- * FastSet<Foo> concurrentHashSet = FastSet.newSet().shared().cast(); 
- * FastSet<String> concurrentSkipListSet = FastSet.newSet(Order.LEXICAL).shared().cast();
- * FastSet<Foo> copyOnWriteArraySet = FastSet.newSet().atomic().cast();
+ * FastSet<Foo> linkedHashSet = FastSet.newSet(Foo.class).linked(); // Insertion order.
+ * FastSet<Foo> concurrentHashSet = FastSet.newSet(Foo.class).shared(); 
+ * FastSet<String> concurrentSkipListSet = FastSet.newSet(Order.LEXICAL, String.class).shared();
+ * FastSet<Foo> copyOnWriteArraySet = FastSet.newSet(Foo.class).atomic();
  * ...
  * }</pre> </p>
  * 
@@ -58,7 +58,7 @@ import javolution.util.function.Order;
  * @param <E> the type of set element (can be {@code null})
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 7.0, September 13, 2013
+ * @version 7.0, March 14, 2016
  */
 public abstract class FastSet<E> extends FastCollection<E> implements NavigableSet<E> {
 
@@ -71,29 +71,34 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     }
 
     /**
-     * Returns a new high-performance set sorted arbitrarily (hash-based).
+     * Returns a new high-performance set sorted arbitrarily (hash-based order).
      */
-    public static <E> FastSet<E> newSet() {
+    public static <E> SparseSet<E> newSet() {
+    	return new SparseSet<E>();
+    }
+
+    /**
+     * Returns a new high-performance set sorted arbitrarily for the specified
+     * element type.
+     */
+    public static <E> SparseSet<E> newSet(Class<E> elementType) {
     	return new SparseSet<E>();
     }
 
     /**
      * Returns a new high-performance set sorted according to the specified
-     * order.
+     * comparator.
      */
-    public static <E> FastSet<E> newSet(Order<? super E> order) {
-    	return new SparseSet<E>(order);
+    public static <E> SparseSet<E> newSet(Order<? super E> comparator) {
+    	return new SparseSet<E>(comparator);
     }
 
     /**
-     * Returns a high-performance set holding the specified elements
-     * (convenience method).
+     * Returns a new high-performance set sorted according to the specified
+     * comparator for the specified element type.
      */
-    @SafeVarargs
-	public static <E> FastSet<E> of(E...elements) {
-    	FastSet<E> set = FastSet.newSet();
-    	for (E e:elements) set.add(e);
-    	return set;
+    public static <E> SparseSet<E> newSet(Order<? super E> comparator, Class<E> elementType) {
+    	return new SparseSet<E>(comparator);
     }
 
 	////////////////////////////////////////////////////////////////////////////
@@ -106,9 +111,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 
 	@Override
     @Realtime(limit = CONSTANT)
-    public boolean isEmpty() {
-        return size() == 0;
-    }
+    public abstract boolean isEmpty();
 
     @Override
     @Realtime(limit = CONSTANT)
@@ -148,8 +151,16 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     @Override
 	public FastSet<E> reversed() {
 		return null;
-	}
+    }
     
+	public FastSet<E> filter(Predicate<? super E> filter) {
+		return null;
+	}
+
+	public FastSet<E> linked() {
+		return null;
+	}
+   
     @Override
     public FastSet<E> subSet(E fromElement, E toElement) {
     	return subSet(fromElement, true, toElement, false);
@@ -196,14 +207,23 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     //
 	
 	/**
-     * Casts this set to the expected parameterized type.
+	 * Returns an immutable set holding the same elements and having 
+	 * the same comparator as this set. 	
      */
-    @SuppressWarnings("unchecked")
-    @Realtime(limit = CONSTANT)
-	public <T> FastSet<T> cast() {
-    	return (FastSet<T>) this;
-    }
-    
+	@Override
+	@Realtime(limit = LINEAR)
+	public ConstantSet<E> constant() {
+		SparseSet<E> sparse = new SparseSet<E>(comparator());
+		sparse.addAll(this);
+		return new ConstantSet<E>(sparse);
+	}
+
+	@Override
+    public FastSet<E> addAll(E first, @SuppressWarnings("unchecked") E... others) {
+		super.addAll(first, others);
+		return this;
+	}
+
 	@Override
     @Realtime(limit = CONSTANT)
 	public Iterator<E> iterator() {
@@ -225,28 +245,17 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // NavigableSet Interface.
+    // SortedSet / NavigableSet Interface.
     //
 
-    /**
-     *  Returns the first (lowest) element currently in this set.
-     * 
-     *  @throws NoSuchElementException if the set is empty.
-     */
     @Override
     @Realtime(limit = CONSTANT)
     public abstract E first();
 
-    /**
-     *  Returns the last (highest) element currently in this set.
-     * 
-     *  @throws NoSuchElementException if the set is empty.
-     */
     @Override
     @Realtime(limit = CONSTANT)
     public abstract E last();
 
-	/** Returns the ordering of this set. */
 	@Override
     @Realtime(limit = CONSTANT)
 	public abstract Order<? super E> comparator();
@@ -275,15 +284,9 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 
 	@Override
 	@Realtime(limit = CONSTANT)
-	public E pollFirst() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public abstract E pollFirst();
 
 	@Override
 	@Realtime(limit = CONSTANT)
-	public E pollLast() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public abstract E pollLast();
 }

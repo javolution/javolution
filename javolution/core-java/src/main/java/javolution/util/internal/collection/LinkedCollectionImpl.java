@@ -24,7 +24,8 @@ public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 
 	public LinkedCollectionImpl(FastCollection<E> inner) {
 		super(inner);
-		ordered = FastTable.newTable(inner.equality());
+		// This class is thread-safe if inner is thread-safe (ordered itself is thread-safe).
+		ordered = new FractalTable<E>().using(FastTable.newTable(inner.equality()); 
     }
 	
 	private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> ordered) {

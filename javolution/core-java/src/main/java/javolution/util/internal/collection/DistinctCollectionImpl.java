@@ -30,7 +30,7 @@ public final class DistinctCollectionImpl<E> extends SequentialCollectionImpl<E>
 	}
 
 	@Override
-	public boolean add(E element) { 
+	public synchronized boolean add(E element) { // Synchronized necessary to propagate thread-safety.
 		return inner.contains(element) ? false : inner.add(element);
 	}
 

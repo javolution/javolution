@@ -318,8 +318,9 @@ javolution/core-java/src/main/java/javolution/text/TextReader.java -text svneol=
 javolution/core-java/src/main/java/javolution/text/TypeFormat.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/text/internal/TextContextImpl.java -text
 javolution/core-java/src/main/java/javolution/text/package-info.java -text
-javolution/core-java/src/main/java/javolution/util/BitArray.java -text
 javolution/core-java/src/main/java/javolution/util/BitSet.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/ConstantMap.java -text svneol=unset#text/plain
+javolution/core-java/src/main/java/javolution/util/ConstantSet.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/ConstantTable.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastCollection.java -text svneol=unset#text/plain
 javolution/core-java/src/main/java/javolution/util/FastMap.java -text svneol=unset#text/plain

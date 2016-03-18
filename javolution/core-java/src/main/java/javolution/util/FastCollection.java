@@ -86,10 +86,10 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * ConstantTable<String> namesToRemove = ConstantTable.of("Eva Poré");
  *      
  * // Parallel removal.
- * elements.using(Equality.IDENTITY).parallel().removeAll(namesToRemove);
+ * elements.equality(LEXICAL_CASE_INSENSITIVE).parallel().removeAll(namesToRemove);
  *      
  * // Still parallel removal, since using(Equality) is not a sequential view.  
- * elements.parallel().using(Equality.IDENTITY).removeAll(namesToRemove);
+ * elements.parallel().equality(LEXICAL_CASE_INSENSITIVE).removeAll(namesToRemove);
  * 
  * // Sequential removal (sorted is a sequential view).  
  * elements.parallel().sorted().removeAll(namesToRemove);
@@ -97,16 +97,24 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * // Thread-safe view.
  * elements.distinct().shared();
  * 
- * // Not thread-safe anymore (two concurrent threads could add the same element twice).
+ * // Still thread-safe (two concurrent threads cannot add the same element twice).
  * elements.shared().distinct();
  * }</pre></p>
  * 
  * <p> It should be noted that {@link #unmodifiable Unmodifiable} views <b>are not
- *     immutable</b>;constant/immutable collections can only be obtained through
- *     class specializations (e.g. {@link ConstantTable}, {@link ConstantSet}...)
+ *     immutable</b>; constant/immutable collections (or maps) can only be obtained
+ *     through class specializations (e.g. {@link ConstantTable}, {@link ConstantSet}, 
+ *     {@link ConstantMap}, ...)
  * <pre>{@code
- * // Immutable collection.
- * ConstantTable<String> winners = ConstantTable.of("John Deuff", "Otto Graf", "Sim Kamil").using(Equality.LEXICAL_CASE_INSENSITIVE);
+ * 
+ * // From literal elements.
+ * ConstantSet<String> winners = ConstantSet.of("John Deuff", "Otto Graf", "Sim Kamil");
+ * 
+ * // From FastCollection instances.
+ * ConstantSet<String> caseInsensitiveWinners 
+ *     = FastTable.newSet(LEXICAL_CASE_INSENSITIVE, String.class)
+ *         .addAll("John Deuff", "Otto Graf", "Sim Kamil").constant();
+ *         
  * }</pre></p>
  * 
  * <p> Views are similar to <a
@@ -119,7 +127,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
  *     allows views to be chained in order to address the issue of class
  *     proliferation.
  * <pre>{@code
- * FastTable<String> names = ...;
+ * FastTable<String> names = FastTable.newTable(String.class).addAll("Sim Ilicuir", "Pat Ibulair");
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
  * names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
  * names.filter(s -> s.length > 16).clear(); // Removes all the persons with long names.
@@ -162,7 +170,7 @@ import javolution.util.internal.collection.UnmodifiableCollectionImpl;
 @DefaultTextFormat(FastCollection.Format.class)
 public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		Cloneable {
-
+	
 	private static final long serialVersionUID = 0x610L; // Version.
 
 	/**
@@ -176,8 +184,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	//
 
 	/**
-	 * Returns a view allowing {@link Parallel} operations to be performed
-	 * faster by using {@link ConcurrentContext concurrent} threads.
+	 * Returns a view allowing {@link Parallel parallel} operations to be 
+	 * performed faster by using {@link ConcurrentContext concurrent} threads.
 	 * Sub-classes / views supporting parallel processing should override
 	 * this method (by default parallel processing is not supported).
 	 * 
@@ -305,8 +313,6 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 
 	/**
 	 * Returns a view using the specified equality comparator.
-	 * 
-	 * The returned view is {@link #parallel} if this collection is parallel.
 	 * 
 	 * @param equality the equality to use for element comparisons.
 	 * @return a view using the specified custom equality.
@@ -628,6 +634,21 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 	// Misc.
 	//
 
+	/**
+	 * Returns an immutable collection holding the same elements as this 
+	 * collection, in the same order and having the same {@link #equality}
+	 * comparator. 
+	 */
+	public FastCollection<E> constant() {
+		int size = size();
+		@SuppressWarnings("unchecked")
+		E[] table = (E[]) new Object[size];
+		int i = 0;
+		for (Iterator<E> it = iterator(); it.hasNext();)
+			table[i++] = (E) it.next();
+		return new ConstantTable<E>(table, equality());
+	}
+	
 	/** Returns the element equality for this collection. */
 	@Realtime(limit = CONSTANT)
 	public abstract Equality<? super E> equality();
@@ -642,6 +663,17 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable,
 		} catch (CloneNotSupportedException e) {
 			throw new AssertionError("FastCollection is Cloneable");
 		}
+	}
+
+    /** 
+     * Adds the specified elements to this collection and returns this 
+     * collection (convenience method).
+     */
+	@Realtime(limit = LINEAR)
+    public FastCollection<E> addAll(E first, @SuppressWarnings("unchecked") E... others) {
+		add(first);
+		for (E e : others) add(e);
+		return this;
 	}
 
 	/**

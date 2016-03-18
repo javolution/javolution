@@ -65,6 +65,11 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public FastCollection<E> constant() {
+		return innerConst.constant();
+	}
+
+	@Override
 	public boolean contains(Object searched) {
 		return innerConst.contains(searched);
 	}

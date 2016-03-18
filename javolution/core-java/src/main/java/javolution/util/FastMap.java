@@ -10,7 +10,6 @@ package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
-import static javolution.lang.Realtime.Limit.LOG_N;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -27,6 +26,7 @@ import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 import javolution.util.internal.map.EntrySetImpl;
 import javolution.util.internal.map.KeySetImpl;
 import javolution.util.internal.map.SubMapImpl;
@@ -41,7 +41,7 @@ import javolution.util.internal.map.ValuesImpl;
  *     with {@link Realtime#Limit#LOG_N O(log n)} for most sorted maps.</p>
  * 
  * <p> Iterations order over map keys, values or entries is determined 
- *     by the map {@link #order() order} except for specific views 
+ *     by the map {@link #comparator() order} except for specific views 
  *     such as the {@link #linked linked} view for which the iterations 
  *     order is the insertion order.</p>
  *     
@@ -51,11 +51,9 @@ import javolution.util.internal.map.ValuesImpl;
  * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
  * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
  * FastMap<String, Bar> treeMap = FastMap.newMap(Order.LEXICAL); 
- * FastMap<Foo, Bar> linkedHashMap = FastMap.newMap().linked().cast(); // Insertion order.
- * FastMap<Foo, Bar> concurrentHashMap = FastMap.newMap().shared().cast(); // Implements ConcurrentMap interface.
- * FastMap<String, Bar> concurrentSkipListMap = FastMap.newMap(Order.LEXICAL).shared().cast();
- * ...
- * FastMap<Index, Foo> sparseArray = new SparseArray<Foo>(); // Extremely fast.
+ * FastMap<Foo, Bar> linkedHashMap = FastMap.newMap(Foo.class, Bar.class).linked(); // Insertion order.
+ * FastMap<Foo, Bar> concurrentHashMap = FastMap.newMap(Foo.class, Bar.class).shared(); // Implements ConcurrentMap interface.
+ * FastMap<String, Bar> concurrentSkipListMap = FastMap.newMap(Order.LEXICAL, String.class, Bar.class).shared();
  * ...
  * }</pre> </p> 
  * <p> FastMap supports a great diversity of views.
@@ -81,7 +79,8 @@ import javolution.util.internal.map.ValuesImpl;
  *  <p> The entry/key/value views over a map are instances 
  *      of {@link FastCollection} which supports parallel processing.
  * <pre>{@code
- * FastMap<String, Integer> names = FastMap.of("Oscar Thon", 1, "Yvon Tremblay", 2);
+ * FastMap<String, Value> names = FastMap.newMap(String.class, Value.class)
+ *     .putAll("Oscar Thon", v0, "Yvon Tremblay", v1);
  * ...
  * names.values().removeIf(v -> v == null); // Remove all entries with null values.
  * names.values().parallel().removeIf(v -> v == null); // Same but performed in parallel.
@@ -109,7 +108,15 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     /**
      * Returns a new high-performance map sorted arbitrarily (hash-based).
      */
-    public static <K,V> FastMap<K,V> newMap() {
+    public static <K,V> SparseMap<K,V> newMap() {
+    	return new SparseMap<K,V>();
+    }
+
+    /**
+     * Returns a new high-performance map sorted arbitrarily (hash-based) for 
+     * the specified key and value types.
+     */
+    public static <K,V> SparseMap<K,V> newMap(Class<K> keyType, Class<V> valueType) {
     	return new SparseMap<K,V>();
     }
 
@@ -117,24 +124,19 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
      * Returns a new high-performance map sorted according to the specified
      * order.
      */
-    public static <K,V> FastMap<K,V> newMap(Order<? super K> order) {
-    	return new SparseMap<K,V>(order);
+    public static <K,V> SparseMap<K,V> newMap(Order<? super K> comparator) {
+    	return new SparseMap<K,V>(comparator);
     }
 
     /**
-     * Returns a high-performance map holding the specified key, values 
-     * pairs (convenience method).
+     * Returns a new high-performance map sorted according to the specified
+     * order for the specified key and value types. 
      */
-    @SuppressWarnings("unchecked")
-	@SafeVarargs
-	public static <K,V> FastMap<K,V> of(K firstKey, V firstValue, Object...others) {
-    	FastMap<K,V> map = FastMap.newMap();
-    	map.put(firstKey, firstValue);
-    	for (int i=0; i < others.length; i++) 
-    		map.put((K)others[i], (V)others[++i]);
-    	return map;
+    public static <K,V> SparseMap<K,V> newMap(Order<? super K> comparator,
+    		Class<K> keyType, Class<V> valueType) {
+    	return new SparseMap<K,V>(comparator);
     }
-
+    
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
@@ -163,6 +165,17 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	 * Returns a reverse order view of this map.
 	 */
 	public FastMap<K,V> reversed() {
+		return null;
+	}
+
+	/**
+	 * Returns a view exposing only the entries matching the specified filter.
+	 * Adding new entries not matching the specified filter has no effect. If this
+	 * map is initially empty, using a filtered view to put new entries
+	 * ensures that this map has only entries satisfying the filter
+	 * predicate.
+	 */
+	public FastMap<K,V> filter(Predicate<? super Entry<K, V>> filter) {
 		return null;
 	}
 
@@ -326,7 +339,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     /** 
      * Indicates if this map contains the specified key according to
      * this map {@link #order() equality}.
-     * @throws ClassCastException if the map {@link #order} does not
+     * @throws ClassCastException if the map {@link #comparator} does not
      *         support the type of the specified key. 
      */
     @SuppressWarnings("unchecked")
@@ -350,7 +363,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 
     /**
      * Returns the value for the specified key.
-     * @throws ClassCastException if the map {@link #order} does not
+     * @throws ClassCastException if the map {@link #comparator} does not
      *         support the type of the specified key. 
      */
     @Override
@@ -364,7 +377,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     /** 
      * Removes the entry for the specified key and returns
      * the previous value associated to that key.
-     * @throws ClassCastException if the map {@link #order} does not
+     * @throws ClassCastException if the map {@link #comparator} does not
      *         support the type of the specified key. 
      */
     @Override
@@ -515,7 +528,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	}
 
 	@Override
-	@Realtime(limit = LOG_N)
+	@Realtime(limit = CONSTANT)
 	public Entry<K, V> pollLastEntry() {
 		return isEmpty() ? null : removeEntry(lastKey());
 	}
@@ -524,6 +537,30 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     // Misc.
     //
 	
+	/**
+	 * Returns an immutable map holding the same key/value pairs, the same
+	 * comparator and the same value equality as this map.
+	 */
+	@Realtime(limit = LINEAR)
+	public ConstantMap<K,V> constant() {
+		SparseMap<K,V> sparse = new SparseMap<K,V>(comparator());
+		sparse.putAll(this);
+		return new ConstantMap<K,V>(sparse, valuesEquality());
+	}
+	
+    /** 
+     * Maps the specified (key, value) pairs and returns this map
+     * (convenience method).
+     */
+	@SuppressWarnings("unchecked")
+	@Realtime(limit = LINEAR)
+    public FastMap<K,V> putAll(K key, V value, Object... others) {
+		put(key, value);
+		for (int i=0; i < others.length;) 
+			put((K)others[i++], (V)others[i++]);
+		return this;
+	}
+
     /** 
      * Returns the entry for the specified key or {@code null} if none.
      * Sub-classes may return specific entry types 
@@ -541,12 +578,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
      */
 	@Realtime(limit = CONSTANT)
     public abstract Entry<K,V> removeEntry(K key);
-
-	/**
-     * Returns the key order of this map.
-     */
-	@Realtime(limit = CONSTANT)   
-	public abstract Order<? super K> order();
 
     /**
      * Returns the value equality of this map.
@@ -567,15 +598,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 			throw new AssertionError("FastMap is Cloneable");
 		}
 	}
-
-    /**
-     * Casts this map to the expected fast map parameterized type.
-     */
-    @SuppressWarnings("unchecked")
-    @Realtime(limit = CONSTANT)   
-	public <X,Y> FastMap<X,Y> cast() {
-    	return (FastMap<X, Y>) this;
-    }
     
 	/**
      * Compares the specified object with this map for equality.
@@ -606,9 +628,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 
     @Override
     @Realtime(limit = CONSTANT)   
-	public final Order<? super K> comparator() {
-    	return order();
-    }
+	public abstract Order<? super K> comparator();
 
 	/** 
      * Returns the string representation of this map using its 
