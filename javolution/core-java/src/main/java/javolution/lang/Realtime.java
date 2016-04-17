@@ -17,23 +17,21 @@ import java.lang.annotation.Target;
 
 /**
  * <p> Indicates that an element has strict timing constraints and has a
- *     deterministic behavior. The {@link #limit limit} indicator indicates 
+ *     deterministic time behavior. The {@link #limit limit} indicator indicates 
  *     the evolution of the 
  *     <a href="http://en.wikipedia.org/wiki/Worst-case_execution_time">
- *     worst-case execution time</a> with the input size.    
+ *     worst-case execution time</a> of a method with the size of the instance
+ *     and its inputs (or only the size of the inputs for static methods).    
  * <pre>{@code
- * public class Equality {
- *     {@literal@}Realtime(limit = UNKNOWN)
- *     public static final Equality<Object> STANDARD = new StandardComparatorImpl<Object>();
- *     
- *     {@literal@}Realtime(limit = CONSTANT)
- *     public static final Equality<Object> IDENTITY = new IdentityComparatorImpl<Object>();
- *     
+ * public class FastCollection<E> {
  *     {@literal@}Realtime(limit = LINEAR)
- *     public static final Equality<Object> ARRAY = new ArrayComparatorImpl();
+ *     public boolean contains(Object obj) { ... }
  *     
- *     {@literal@}Realtime(limit = LINEAR)
- *     public static final Equality<CharSequence> LEXICAL = new LexicalComparatorImpl();
+ *     {@literal@}Realtime(limit = N_SQUARE)
+ *     public boolean containsAll(Collection<?> that) { ... }
+ *     
+ *     {@literal@}Realtime(limit = LINEAR, comment = "Could count the elements (e.g. filtered view).")
+ *     public abstract int size();
  * }}</pre></p>      
  *     
  * <p> Analysis tools / compilers may produce warnings if program elements 
@@ -58,9 +56,9 @@ public @interface Realtime {
 
     /**
      * Returns the limit behavior for the worst-case execution time
-     * (default {@link Limit#CONSTANT}).
+     * (default {@link Limit#UNKNOWN}).
      */
-    Limit limit() default Limit.CONSTANT;
+    Limit limit() default Limit.UNKNOWN;
 
     /**
      * Provides additional information (default {@code ""}).

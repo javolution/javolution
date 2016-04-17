@@ -8,6 +8,8 @@
  */
 package javolution.util.internal.table;
 
+import java.io.Serializable;
+
 import javolution.lang.MathLib;
 
 /**
@@ -16,11 +18,12 @@ import javolution.lang.MathLib;
  * patterns at any scale (large tables have the same structure as smaller tables
  * which have similar structure as even smaller tables and so on).
  */
-public final class FractalTableImpl {
+public final class FractalTableImpl implements Serializable, Cloneable{
 
 	static final int BASE_CAPACITY_MIN = 16;
 	static final int SHIFT = 8;
 	private static final int BASE_CAPACITY_MAX = 1 << SHIFT;
+    private static final long serialVersionUID = 0x700L; // Version. 
 
 	/** Offset value, it is the index of the first element (modulo data.length). */
 	public int offset;
@@ -55,6 +58,21 @@ public final class FractalTableImpl {
 				new Object[1 << SHIFT], 0);
 		data[i] = fractal;
 		return fractal;
+	}
+
+	@Override
+	public FractalTableImpl clone() {
+		try {
+			FractalTableImpl copy = (FractalTableImpl)super.clone();
+			if (shift != 0) {
+			     for (int i=0, n=data.length; i < n; i++)
+			    	 if (data[i] != null) 
+			    		 copy.data[i] = ((FractalTableImpl)data[i]).clone();
+			}
+			return copy;
+		} catch (CloneNotSupportedException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	public int capacity() {

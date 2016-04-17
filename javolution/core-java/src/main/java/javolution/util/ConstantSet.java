@@ -9,6 +9,7 @@
 package javolution.util;
 
 import javolution.lang.Constant;
+import javolution.util.function.Consumer;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 
@@ -37,8 +38,7 @@ public final class ConstantSet<E> extends FastSet<E> {
      * Returns a constant set (hash-ordered) holding the specified 
      * elements. 
      */
-	@SafeVarargs
-	public static <E> ConstantSet<E> of(E... elements) {
+	public static <E> ConstantSet<E> of(@SuppressWarnings("unchecked") E... elements) {
     	SparseSet<E> sparse = new SparseSet<E>();
     	for (int i=0; i < elements.length;) 
     		sparse.add(elements[i++]);
@@ -78,6 +78,7 @@ public final class ConstantSet<E> extends FastSet<E> {
 				"Constant sets cannot be modified.");
 	}
 
+	/**  Returns {@code this}.*/
 	@Override
 	public ConstantSet<E> clone() {
 		return this;
@@ -178,6 +179,27 @@ public final class ConstantSet<E> extends FastSet<E> {
 	@Override
 	public ConstantSet<E> unmodifiable() {
 		return this;
+	}
+	
+	@Override
+	public void forEach(Consumer<? super E> consumer) { // Optimization.
+		sparse.forEach(consumer);
+	}
+
+	@Override
+	public E until(Predicate<? super E> matching) { // Optimization.
+		return sparse.until(matching);
+	}
+
+	@Override
+	public Iterator<E> iterator() { // Optimization.
+		return sparse.iterator();
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

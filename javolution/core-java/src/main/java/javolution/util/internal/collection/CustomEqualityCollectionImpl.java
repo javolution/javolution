@@ -8,10 +8,7 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
 import javolution.util.FastCollection;
-import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
@@ -50,9 +47,9 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 	public Equality<? super E> equality() {
 		return equality;
 	}
-
+	
 	@Override
-	public void forEach(Consumer<? super E> consumer) {
+	public void forEach(Consumer<? super E> consumer) { // Optimization.
 		inner.forEach(consumer);
 	}
 
@@ -67,28 +64,32 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public FastCollection<E> parallel() { // Full support.
-	    return new CustomEqualityCollectionImpl<E>(inner.parallel(), equality);
-	}
-
-	@Override
-	public E reduce(BinaryOperator<E> operator) {
-		return inner.reduce(operator);
-	}
-
-	@Override
 	public boolean removeIf(Predicate<? super E> filter) {
 		return inner.removeIf(filter);
 	}
 
 	@Override
 	public CustomEqualityCollectionImpl<E> reversed() { // Optimization.
-	    return new CustomEqualityCollectionImpl<E>(inner.reversed(), equality);
+		return new CustomEqualityCollectionImpl<E>(inner.reversed(), equality);
 	}
 
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
-	}	
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		FastCollection<E>[] subViews = inner.trySplit(n);
+		for (int i = 0; i < subViews.length; i++)
+			subViews[i] = new CustomEqualityCollectionImpl<E>(subViews[i],
+					equality);
+		return subViews;
+	}
+
+	@Override
+	public E until(Predicate<? super E> matching) { // Optimization.
+		return inner.until(matching);
+	}
 
 }

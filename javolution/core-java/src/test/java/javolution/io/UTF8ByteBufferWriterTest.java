@@ -14,7 +14,6 @@ import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 import javolution.text.CharArray;
 
@@ -69,27 +68,27 @@ public class UTF8ByteBufferWriterTest {
 	public void testWriteArray() throws IOException{
 		char[] charArray = {'T', 'e', 's', 't'};
 		_utf8ByteBufferWriter.write(charArray);
-		assertEquals("Text Written Is Test", "Test", new String(_byteArray, StandardCharsets.UTF_8));		
+		assertEquals("Text Written Is Test", "Test", new String(_byteArray));		
 	}
 	
 	@Test
 	public void testWriteArrayWithOffset() throws IOException{
 		char[] charArray = {'a', 'T', 'e', 's', 't', 'b' };
 		_utf8ByteBufferWriter.write(charArray, 1, 4);
-		assertEquals("Text Written Is Test", "Test", new String(_byteArray, StandardCharsets.UTF_8));		
+		assertEquals("Text Written Is Test", "Test", new String(_byteArray));		
 	}
 	
 	@Test
 	public void testWriteChar() throws IOException{
 		_utf8ByteBufferWriter.write('T');
-		assertEquals("Text Written Is T", "T", new String(_byteArray, StandardCharsets.UTF_8).trim());
+		assertEquals("Text Written Is T", "T", new String(_byteArray).trim());
 	}
 	
 	@Test
 	public void testWriteCharSequence() throws IOException{
 		CharSequence charSequence = new CharArray("Test");
 		_utf8ByteBufferWriter.write(charSequence);
-		assertEquals("Text Written Is Test", "Test", new String(_byteArray, StandardCharsets.UTF_8));
+		assertEquals("Text Written Is Test", "Test", new String(_byteArray));
 	}
 	
 	@Test(expected=IOException.class)
@@ -108,7 +107,7 @@ public class UTF8ByteBufferWriterTest {
 	@Test
 	public void testWriteInt() throws IOException{
 		_utf8ByteBufferWriter.write((int)'T');
-		assertEquals("Text Written Is T", "T", new String(_byteArray, StandardCharsets.UTF_8).trim());
+		assertEquals("Text Written Is T", "T", new String(_byteArray).trim());
 	}
 	
 	@Test(expected=IOException.class)
@@ -120,7 +119,7 @@ public class UTF8ByteBufferWriterTest {
 	@Test
 	public void testWriteStringWithOffset() throws IOException{
 		_utf8ByteBufferWriter.write("aTesta", 1, 4);
-		assertEquals("Text Written Is Test", "Test", new String(_byteArray, StandardCharsets.UTF_8));		
+		assertEquals("Text Written Is Test", "Test", new String(_byteArray));		
 	}
 	
 	@Test(expected=IOException.class)

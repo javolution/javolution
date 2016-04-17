@@ -10,10 +10,10 @@ package javolution.util.internal.table;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.ListIterator;
 
 import javolution.util.ConstantTable;
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
@@ -513,6 +513,12 @@ public final class SharedTableImpl<E> extends FastTable<E> {
 		} finally {
 			lock.readLock.unlock();
 		}
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 
 import javolution.util.FastTable;
+import javolution.util.FractalTable;
 import javolution.xml.stream.XMLOutputFactory;
 import javolution.xml.stream.XMLStreamException;
 
@@ -38,7 +39,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     // Property setting.
     private String _repairingPrefix = "ns";
 
-    private FastTable<XMLStreamWriterImpl> _recycled = FastTable.newTable().shared().cast();
+    private FastTable<XMLStreamWriterImpl> _recycled = new FractalTable<XMLStreamWriterImpl>().shared();
 
     // Implements XMLOutputFactory abstract method.
     public XMLStreamWriterImpl createXMLStreamWriter(OutputStream stream)
@@ -141,7 +142,7 @@ public final class XMLOutputFactoryImpl implements XMLOutputFactory {
     public XMLOutputFactory clone() {
         try {
             XMLOutputFactoryImpl clone = (XMLOutputFactoryImpl) super.clone();
-            clone._recycled = FastTable.newTable().shared().cast();
+            clone._recycled = new FractalTable<XMLStreamWriterImpl>().shared();
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new Error();// Cannot happen since cloneable.

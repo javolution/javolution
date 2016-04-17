@@ -25,9 +25,9 @@ public class FastBitSetTest {
 	
 	@Before
 	public void init(){
-		_fastBitSet1248 = BitSet.of(1,2,4,8);
-		_fastBitSet3567 = BitSet.of(Index.of(3), Index.of(5), Index.of(6), Index.of(7));
-		_fastBitSetAll = BitSet.of(Index.of(1), Index.of(2), Index.of(3), Index.of(4), 
+		_fastBitSet1248 = new BitSet().addAll(Index.of(1), Index.of(2), Index.of(4), Index.of(8));
+		_fastBitSet3567 = new BitSet().addAll(Index.of(3), Index.of(5), Index.of(6), Index.of(7));
+		_fastBitSetAll = new BitSet().addAll(Index.of(1), Index.of(2), Index.of(3), Index.of(4), 
 				Index.of(5), Index.of(6), Index.of(7), Index.of(8));
 		_fastBitSetNone = new BitSet();
 	}

@@ -49,7 +49,7 @@ import javolution.util.internal.map.SortedMapImpl;
  * @version 7.0, September 13, 2015
  * @see SparseArray
  */
-public final class SparseMap<K,V> extends FastMap<K,V> {
+public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	private static final long serialVersionUID = 0x700L; // Version. 
 	private static final Object SUB_MAP = new Object();
@@ -90,8 +90,9 @@ public final class SparseMap<K,V> extends FastMap<K,V> {
 	
 	@Override
 	public SparseMap<K, V> clone() {
-		SparseMap<K,V> copy = (SparseMap<K,V>) super.clone();
-		copy.root = root.clone();
+		SparseMap<K,V> copy = new SparseMap<K,V>(comparator);
+		copy.root = root != null ? root.clone() : null;
+		copy.size = size;
 		return copy;
 	}
 	
@@ -129,7 +130,7 @@ public final class SparseMap<K,V> extends FastMap<K,V> {
 		} 
 		// Existing entry.
 		if (comparator.areEqual(entry.key, key))
-			return entry.setValue(value);
+			return entry.setValueBypass(value);
 		// Collision.
         Order<? super K> subOrder = comparator.subOrder(key);
         FastMap<K,V> subMap = (subOrder != null) ? 

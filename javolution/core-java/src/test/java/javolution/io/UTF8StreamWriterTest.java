@@ -14,7 +14,6 @@ import static org.junit.Assert.assertNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import javolution.text.CharArray;
 
@@ -68,7 +67,7 @@ public class UTF8StreamWriterTest {
 		char[] charArray = {'T', 'e', 's', 't'};
 		_utf8StreamWriter.write(charArray);
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));		
+		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString());		
 	}
 	
 	@Test
@@ -76,14 +75,14 @@ public class UTF8StreamWriterTest {
 		char[] charArray = {'a', 'T', 'e', 's', 't', 'b' };
 		_utf8StreamWriter.write(charArray, 1, 4);
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));		
+		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString());		
 	}
 	
 	@Test
 	public void testWriteChar() throws IOException{
 		_utf8StreamWriter.write('T');
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is T", "T", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
+		assertEquals("Text Written Is T", "T", _byteArrayOutputStream.toString());
 	}
 	
 	@Test
@@ -91,7 +90,7 @@ public class UTF8StreamWriterTest {
 		CharSequence charSequence = new CharArray("Test");
 		_utf8StreamWriter.write(charSequence);
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
+		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString());
 	}
 	
 	@Test(expected=IOException.class)
@@ -111,7 +110,7 @@ public class UTF8StreamWriterTest {
 	public void testWriteInt() throws IOException{
 		_utf8StreamWriter.write((int)'T');
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is T", "T", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
+		assertEquals("Text Written Is T", "T", _byteArrayOutputStream.toString());
 	}
 	
 	@Test(expected=IOException.class)
@@ -124,7 +123,7 @@ public class UTF8StreamWriterTest {
 	public void testWriteStringWithOffset() throws IOException{
 		_utf8StreamWriter.write("aTesta", 1, 4);
 		_utf8StreamWriter.flush();
-		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));		
+		assertEquals("Text Written Is Test", "Test", _byteArrayOutputStream.toString());		
 	}
 	
 	@Test(expected=IOException.class)

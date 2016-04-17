@@ -9,6 +9,9 @@
 package javolution.util;
 
 import static javolution.lang.Realtime.Limit.CONSTANT;
+
+import java.io.Serializable;
+
 import javolution.lang.Index;
 import javolution.lang.Realtime;
 import javolution.util.function.Equality;
@@ -27,7 +30,7 @@ import javolution.util.function.Order;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public final class SparseArray<E> extends FastMap<Index, E> {
+public class SparseArray<E> extends FastMap<Index, E> {
 	
 	/**
 	 * Custom entry holding an additional index field (unsigned 32-bits).
@@ -166,8 +169,9 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 
 	@Override
 	public SparseArray<E> clone() {
-		SparseArray<E> copy = (SparseArray<E>) super.clone();
-		copy.root = root.clone();
+		SparseArray<E> copy = new SparseArray<E>();
+		copy.root = (root != null) ? root.clone() : null;
+		copy.size = size;
 		return copy;
 	}
 
@@ -222,7 +226,7 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 	 * minimal depth and memory footprint, there is no trie structure with less
 	 * than two sub-nodes. Also there is no entry node with null elements.
 	 */
-	interface Node<K,V> extends Cloneable {
+	interface Node<K,V> extends Cloneable, Serializable {
 		Node<K,V> clone();
 		Node<K,V> downsize(int indexRemoved); // Returns the down-sized node.
 		EntryNode<K,V> getEntry(int index); // Returns the entry or null.
@@ -239,6 +243,7 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 
 	/** Defines the entry (leaf node) */
 	static final class EntryNode<K,V> implements Node<K,V>, SparseEntry<K,V> {
+	    private static final long serialVersionUID = 0x700L; // Version. 
         static final Object NOT_INITIALIZED = new Object();
 		private final int index;
 		K key;
@@ -321,8 +326,15 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 			return value;
 		}
 
+		/**
+		 * @deprecated
+		 */
 		@Override
 		public V setValue(V newValue) {
+			throw new UnsupportedOperationException();
+		}
+
+		V setValueBypass(V newValue) {
 			V previous = value;
 			value = newValue;
 			return previous;
@@ -351,6 +363,7 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 	
 	/** Defines the trie node */
 	private static final class TrieNode<K,V> implements Node<K,V> {
+	    private static final long serialVersionUID = 0x700L; // Version. 
 		@SuppressWarnings("unchecked")
 		private final Node<K,V>[] trie = (Node<K,V>[]) new Node[SIZE];
 		private final int shift; // 0 for leaf trie-nodes
@@ -467,6 +480,7 @@ public final class SparseArray<E> extends FastMap<Index, E> {
 	
 	/** Defines the trie node */
 	static final class NullNode<K,V> implements Node<K,V> {
+	    private static final long serialVersionUID = 0x700L; // Version. 
 		private static final NullNode<?,?> NULL = new NullNode<Object, Object>();
 
 		@SuppressWarnings("unchecked")

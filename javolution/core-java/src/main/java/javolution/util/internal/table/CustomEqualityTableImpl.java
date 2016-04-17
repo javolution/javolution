@@ -8,8 +8,10 @@
  */
 package javolution.util.internal.table;
 
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * A table view using a custom equality.
@@ -69,6 +71,18 @@ public final class CustomEqualityTableImpl<E> extends FastTable<E> {
 	@Override
 	public int size() {
 		return inner.size();
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

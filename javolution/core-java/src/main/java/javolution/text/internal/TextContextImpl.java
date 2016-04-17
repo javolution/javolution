@@ -18,6 +18,7 @@ import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.text.TypeFormat;
 import javolution.util.FastMap;
+import javolution.util.SparseMap;
 
 /**
  * Holds the default implementation of TextContext.
@@ -29,7 +30,7 @@ public final class TextContextImpl extends TextContext {
 
     // Holds class->format mapping. 
     private final FastMap<Class<?>, TextFormat<?>> classToFormat 
-        = FastMap.newMap().shared().cast();
+        = new SparseMap<Class<?>, TextFormat<?>>().shared();
 
     // Holds parent (null if root).
     private final TextContextImpl parent;

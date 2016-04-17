@@ -9,7 +9,6 @@
 package javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.function.BinaryOperator;
@@ -29,7 +28,6 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 	public AtomicCollectionImpl(FastCollection<E> inner) {
 		this.inner = inner;
 		this.innerConst = inner.clone();
-
 	}
 
 	@Override
@@ -106,7 +104,7 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return innerConst.unmodifiable().iterator();
+		return innerConst.iterator();
 	}
 
 	@Override
@@ -174,6 +172,18 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
 	@Override
 	public String toString() {
 		return innerConst.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		return new FastCollection[] { this }; // Cannot split atomic
+												// collections.
+	}
+
+	@Override
+	public E until(Predicate<? super E> matching) {
+		return innerConst.until(matching);
 	}
 
 }

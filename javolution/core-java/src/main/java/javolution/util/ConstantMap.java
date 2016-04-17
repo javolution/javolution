@@ -8,8 +8,6 @@
  */
 package javolution.util;
 
-import java.util.Map;
-
 import javolution.lang.Constant;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
@@ -30,31 +28,6 @@ import javolution.util.function.Order;
  */
 @Constant(comment = "Immutable")
 public final class ConstantMap<K,V> extends FastMap<K,V> {
-
-	/** Constant view over an entry. */
-	private static class Unmodifiable<K,V> implements Entry<K,V> {
-		private Entry<K,V> inner;
-		public Unmodifiable(Entry<K,V> inner) {
-			this.inner = inner;
-		}
-
-		@Override
-		public K getKey() {
-			return inner.getKey();
-		}
-
-		@Override
-		public V getValue() {
-			return inner.getValue();
-		}
-
-		@Override
-		public V setValue(V value) {
-			throw new UnsupportedOperationException(
-					"Constant maps cannot be modified.");
-		}
-		
-	}
     
     private static final long serialVersionUID = 0x700L; // Version.
 
@@ -63,7 +36,6 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
      * values pairs. 
      */
     @SuppressWarnings("unchecked")
-	@SafeVarargs
 	public static <K,V> ConstantMap<K,V> of(K firstKey, V firstValue, Object...others) {
     	SparseMap<K,V> sparse = new SparseMap<K,V>();
     	sparse.put(firstKey, firstValue);
@@ -86,8 +58,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
 	}
 
 	@Override
-	public Map.Entry<K, V> ceilingEntry(K key) {
-		return new Unmodifiable<K,V>(sparse.ceilingEntry(key));
+	public Entry<K, V> ceilingEntry(K key) {
+		return sparse.ceilingEntry(key);
 	}
 
 	/** 
@@ -114,39 +86,32 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
 
 	@Override
 	public Entry<K, V> firstEntry() {
-		return new Unmodifiable<K,V>(sparse.firstEntry());
+		return sparse.firstEntry();
 	}
 
 	@Override
-	public Map.Entry<K, V> floorEntry(K key) {
-		return new Unmodifiable<K,V>(sparse.floorEntry(key));
+	public Entry<K, V> floorEntry(K key) {
+		return sparse.floorEntry(key);
 	}
-
-	@Override
-    public V get(Object key) { // Optimization.
-    	@SuppressWarnings("unchecked")
-		Entry<K,V> entry = sparse.getEntry((K)key); // Cast has no effect here.
-    	return entry != null ? entry.getValue() : null;
-    }
 	
 	@Override
 	public Entry<K, V> getEntry(K key) {
-		return new Unmodifiable<K,V>(sparse.getEntry(key));
+		return sparse.getEntry(key);
 	}
 
 	@Override
 	public Entry<K, V> higherEntry(K key) {
-		return new Unmodifiable<K,V>(sparse.higherEntry(key));
+		return sparse.higherEntry(key);
 	}
 
 	@Override
 	public Entry<K, V> lastEntry() {
-		return new Unmodifiable<K,V>(sparse.lastEntry());
+		return sparse.lastEntry();
 	}
 
     @Override
 	public Entry<K, V> lowerEntry(K key) {
-		return new Unmodifiable<K,V>(sparse.lowerEntry(key));
+		return sparse.lowerEntry(key);
 	}
 
 	@Override
@@ -163,16 +128,6 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
 		throw new UnsupportedOperationException(
 				"Constant maps cannot be modified.");
 	}
-	
-	/** 
-	 * Guaranteed to throw an exception and leave the map unmodified.
-	 * @deprecated Should never be used on immutable map.
-	 */
-    @Override
-    public V remove(Object key) {
-		throw new UnsupportedOperationException(
-				"Constant maps cannot be modified.");
-    }
 	
 	/** 
 	 * Guaranteed to throw an exception and leave the map unmodified.

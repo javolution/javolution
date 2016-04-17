@@ -11,11 +11,9 @@ package javolution.util;
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 
-import java.util.Iterator;
 import java.util.NavigableSet;
 
 import javolution.lang.Realtime;
-import javolution.util.function.Equality;
 import javolution.util.function.Order;
 import javolution.util.function.Predicate;
 
@@ -23,7 +21,7 @@ import javolution.util.function.Predicate;
  * <p> A high-performance ordered set (trie-based) with 
  *     {@link Realtime strict timing constraints}.</p>
  * 
- * <p> In general, fast set methods have a limiting behavior in 
+ * <p> In general, ordered set methods have a limiting behavior in 
  *     {@link Realtime#Limit#CONSTANT O(1)} (constant) to be compared 
  *     with {@link Realtime#Limit#LOG_N O(log n)} for most sorted sets.</p>
  *     
@@ -38,10 +36,10 @@ import javolution.util.function.Predicate;
  * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
  * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY);
  * FastSet<String> treeSet = FastSet.newSet(Order.LEXICAL); 
- * FastSet<Foo> linkedHashSet = FastSet.newSet(Foo.class).linked(); // Insertion order.
- * FastSet<Foo> concurrentHashSet = FastSet.newSet(Foo.class).shared(); 
- * FastSet<String> concurrentSkipListSet = FastSet.newSet(Order.LEXICAL, String.class).shared();
- * FastSet<Foo> copyOnWriteArraySet = FastSet.newSet(Foo.class).atomic();
+ * FastSet<Foo> linkedHashSet = new SparseSet<Foo>().linked(); // Insertion order.
+ * FastSet<Foo> concurrentHashSet = new SparseSet<Foo>().shared(); 
+ * FastSet<String> concurrentSkipListSet = new SparseSet<String>(Order.LEXICAL).shared();
+ * FastSet<Foo> copyOnWriteArraySet = new SparseSet<Foo>().atomic();
  * ...
  * }</pre> </p>
  * 
@@ -71,17 +69,9 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     }
 
     /**
-     * Returns a new high-performance set sorted arbitrarily (hash-based order).
+     * Returns a new high-performance set sorted arbitrarily (hash order).
      */
-    public static <E> SparseSet<E> newSet() {
-    	return new SparseSet<E>();
-    }
-
-    /**
-     * Returns a new high-performance set sorted arbitrarily for the specified
-     * element type.
-     */
-    public static <E> SparseSet<E> newSet(Class<E> elementType) {
+    public static <E> FastSet<E> newSet() {
     	return new SparseSet<E>();
     }
 
@@ -89,15 +79,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
      * Returns a new high-performance set sorted according to the specified
      * comparator.
      */
-    public static <E> SparseSet<E> newSet(Order<? super E> comparator) {
-    	return new SparseSet<E>(comparator);
-    }
-
-    /**
-     * Returns a new high-performance set sorted according to the specified
-     * comparator for the specified element type.
-     */
-    public static <E> SparseSet<E> newSet(Order<? super E> comparator, Class<E> elementType) {
+    public static <E> FastSet<E> newSet(Order<? super E> comparator) {
     	return new SparseSet<E>(comparator);
     }
 
@@ -139,32 +121,9 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 	}
 
     @Override
-	public FastSet<E> shared() {
-		return null;
-	}
-
-    @Override
-	public FastSet<E> unmodifiable() {
-		return null;
-	}
-	
-    @Override
-	public FastSet<E> reversed() {
-		return null;
-    }
-    
 	public FastSet<E> filter(Predicate<? super E> filter) {
 		return null;
 	}
-
-	public FastSet<E> linked() {
-		return null;
-	}
-   
-    @Override
-    public FastSet<E> subSet(E fromElement, E toElement) {
-    	return subSet(fromElement, true, toElement, false);
-    }
 
     @Override
     public FastSet<E> headSet(E toElement) {
@@ -172,19 +131,29 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     }
 
     @Override
-    public FastSet<E> tailSet(E fromElement) {
-        return subSet(fromElement, true, last(), true);
-    }
-
-    @Override
 	public FastSet<E> headSet(E toElement, boolean inclusive) {
 		return subSet(first(), true, toElement, inclusive);
 	}
 
-	@Override
-	public FastSet<E> tailSet(E fromElement, boolean inclusive) {
-		return subSet(fromElement, inclusive, last(), true);
+    @Override
+	public FastSet<E> linked() {
+		return null;
 	}
+   
+    @Override
+	public FastSet<E> parallel() {
+		return null;
+	}
+
+    @Override
+	public FastSet<E> reversed() {
+		return null;
+    }
+    
+    @Override
+    public FastSet<E> subSet(E fromElement, E toElement) {
+    	return subSet(fromElement, true, toElement, false);
+    }
 
 	@Override
 	public FastSet<E> subSet(E fromElement, boolean fromInclusive,
@@ -192,6 +161,26 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 		return null;
 	}
 
+    @Override
+	public FastSet<E> shared() {
+		return null;
+	}
+
+    @Override
+    public FastSet<E> tailSet(E fromElement) {
+        return subSet(fromElement, true, last(), true);
+    }
+
+	@Override
+	public FastSet<E> tailSet(E fromElement, boolean inclusive) {
+		return subSet(fromElement, inclusive, last(), true);
+	}
+
+    @Override
+	public FastSet<E> unmodifiable() {
+		return null;
+	}
+	
 	/** 
      * Equivalent to {@link #reversed()}.
      * @deprecated {@link #reversed()} should be used.
@@ -206,12 +195,12 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     // Misc.
     //
 	
-	/**
-	 * Returns an immutable set holding the same elements and having 
-	 * the same comparator as this set. 	
-     */
+    @Override
+    public FastSet<E> all() {
+    	return (FastSet<E>) super.all();
+    }
+    
 	@Override
-	@Realtime(limit = LINEAR)
 	public ConstantSet<E> constant() {
 		SparseSet<E> sparse = new SparseSet<E>(comparator());
 		sparse.addAll(this);
@@ -225,24 +214,12 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 	}
 
 	@Override
-    @Realtime(limit = CONSTANT)
-	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-    @Realtime(limit = CONSTANT)
-	public final Equality<? super E> equality() {
+	public final Order<? super E> equality() {
 		return comparator();
 	}
 	
 	@Override
-    @Realtime(limit = LINEAR)
-	public FastSet<E> clone() {
-		return (FastSet<E>) super.clone();
-	}
-
+	public abstract FastSet<E> clone();
 
     ////////////////////////////////////////////////////////////////////////////
     // SortedSet / NavigableSet Interface.

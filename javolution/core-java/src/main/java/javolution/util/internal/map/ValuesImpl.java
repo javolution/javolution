@@ -8,18 +8,36 @@
  */
 package javolution.util.internal.map;
 
-import java.util.Iterator;
-
 import javolution.util.FastCollection;
 import javolution.util.FastMap;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * A collection view over a map values.
  */
 public final class ValuesImpl<K, V> extends FastCollection<V> {
 
+	/** Then generic iterator over the map values */
+	private static class IteratorImpl<K, V> extends Iterator<V> {
+		final EntryIteratorImpl<K,V> mapItr;
+
+		public IteratorImpl(EntryIteratorImpl<K,V> mapItr) {
+			this.mapItr = mapItr;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return mapItr.hasNext();
+		}
+
+		@Override
+		public V next() {
+			return mapItr.next().getValue();
+		}
+	}
 	private static final long serialVersionUID = 0x700L; // Version.
+
 	private final FastMap<K, V> map;
 
 	public ValuesImpl(FastMap<K, V> map) {
@@ -49,7 +67,7 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
 	@Override
 	public Equality<? super V> equality() {
-		return map.valueEquality();
+		return map.valuesEquality();
 	}
 
 	@Override
@@ -62,28 +80,16 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 		return map.size();
 	}
 
-	/** Then generic iterator over the map values */
-	private static class IteratorImpl<K, V> implements Iterator<V> {
-		final EntryIteratorImpl<K,V> mapItr;
+	@Override
+	public boolean removeIf(Predicate<? super V> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
-		public IteratorImpl(EntryIteratorImpl<K,V> mapItr) {
-			this.mapItr = mapItr;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return mapItr.hasNext();
-		}
-
-		@Override
-		public V next() {
-			return mapItr.next().getValue();
-		}
-
-		@Override
-		public void remove() {
-			mapItr.remove();
-		}
+	@Override
+	public FastCollection<V>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

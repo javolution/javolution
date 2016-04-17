@@ -30,30 +30,20 @@ import javolution.util.internal.table.FractalTableImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public final class FractalTable<E> extends FastTable<E> {
+public class FractalTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version. 
-    private transient int capacity; 
-    private transient FractalTableImpl fractal; // Null if empty (capacity 0)
-    private transient int size;
-    private final Equality<? super E> equality;
+    private int capacity; 
+    private FractalTableImpl fractal; // Null if empty (capacity 0)
+    private int size;
 
     /**
      * Creates an empty table whose capacity increments/decrements smoothly
      * without large resize operations to best fit the table current size.
      */
     public FractalTable() {
-    	this(Equality.DEFAULT);
     }
  
-    /**
-     * Creates an empty table using the specified equality for element
-     * comparisons.
-     */
-    public FractalTable(Equality<? super E> equality) {
-    	this.equality = equality;
-    }
-
     @Override
     public boolean add(E element) {
         addLast(element);
@@ -98,16 +88,18 @@ public final class FractalTable<E> extends FastTable<E> {
         size = 0;
     }
 
-    @Override
-    public FractalTable<E> clone() { // Make a copy.
-        FractalTable<E> copy = new FractalTable<E>();
-        copy.addAll(this);
-        return copy;
-    }
+	@Override
+	public FractalTable<E> clone() {
+		FractalTable<E> copy = new FractalTable<E>();
+		copy.capacity = capacity;
+		copy.size = size;
+		copy.fractal = (fractal != null) ? fractal.clone() : null;
+		return copy;
+	}
 
     @Override
     public Equality<? super E> equality() {
-        return equality;
+        return Equality.DEFAULT;
     }
 
 	@SuppressWarnings("unchecked")
@@ -133,15 +125,6 @@ public final class FractalTable<E> extends FastTable<E> {
 	public boolean isEmpty() {
 		return size == 0;
 	}
-
-    /** For serialization support */
-    @SuppressWarnings("unchecked")
-    private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
-        int n = s.readInt();
-        for (int i = 0; i < n; i++)
-            addLast((E) s.readObject());
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -193,14 +176,6 @@ public final class FractalTable<E> extends FastTable<E> {
         capacity = fractal.capacity();
     }
 
-    /** For serialization support */
-    private void writeObject(java.io.ObjectOutputStream s)
-            throws java.io.IOException {
-        s.writeInt(size);
-        for (int i = 0; i < size; i++)
-            s.writeObject(fractal.get(i));
-    }
-    
 	@SuppressWarnings("unchecked")
 	@Override
 	public void forEach(Consumer<? super E> consumer) { // Optimization.
@@ -226,6 +201,11 @@ public final class FractalTable<E> extends FastTable<E> {
 			}
 		}
 		return initialSize != size;
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		return null; // TODO
 	}
 
 }

@@ -8,8 +8,10 @@
  */
 package javolution.util.internal.table;
 
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * A view over a portion of a table.
@@ -90,5 +92,17 @@ public final class SubTableImpl<E> extends FastTable<E> {
 	@Override
 	public int size() {
 		return toIndex - fromIndex;
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

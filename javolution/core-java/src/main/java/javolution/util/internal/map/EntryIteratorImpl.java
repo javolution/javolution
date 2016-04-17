@@ -8,7 +8,7 @@
  */
 package javolution.util.internal.map;
 
-import java.util.Iterator;
+import javolution.util.FastCollection.Iterator;
 import java.util.Map.Entry;
 
 import javolution.util.FastMap;
@@ -16,34 +16,16 @@ import javolution.util.FastMap;
 /**
  * A generic iterator over the entries of a fast map.
  */
-public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
+public final class EntryIteratorImpl<K, V> extends Iterator<Entry<K, V>> {
 
 	private final FastMap<K, V> map;
-	private Entry<K,V> toEntry; // Exclusive.
 	private Entry<K,V> current;
 	private Entry<K,V> next;
 
 	/** Iterates the whole collection */
 	public EntryIteratorImpl(FastMap<K, V> map) {
 		this.map = map;
-	    this.toEntry = null;
 	    this.next = map.firstEntry();
-	}
-
-	/** Iterates from the specified key (inclusive). */
-	public EntryIteratorImpl(FastMap<K, V> map, K fromKey) {
-		this.map = map;
-		this.toEntry = null;
-	    next = map.getEntry(fromKey);
-		if (next == null) next = map.higherEntry(fromKey);
-	}
-
-	/** Iterates from the specified key (inclusive) to the specified key 
-	 * (exclusive). */
-	public EntryIteratorImpl(FastMap<K, V> map, K fromKey, K toKey) {
-        this(map, fromKey);
-	    toEntry = map.getEntry(toKey);
-		if (toEntry == null) toEntry = map.higherEntry(toKey);
 	}
 	
 	@Override
@@ -57,16 +39,7 @@ public final class EntryIteratorImpl<K, V> implements Iterator<Entry<K, V>> {
 			throw new IllegalStateException();
 		current = next;
 		next = map.higherEntry(current.getKey());
-		if (next == toEntry) next = null;
 		return current;
-	}
-
-	@Override
-	public void remove() {
-		if (current == null)
-			throw new IllegalStateException();
-		map.remove(current.getKey());
-		current = null;
 	}
 
 }

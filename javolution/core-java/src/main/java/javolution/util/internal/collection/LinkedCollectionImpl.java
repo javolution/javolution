@@ -8,48 +8,49 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
 import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
- * A sequential view tracking insertion order.
+ * A sequential view tracking the insertion order.
  */
-public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
+public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastTable<E> ordered;
+	private final FastCollection<E> inner;
+	private final FastTable<E> insertionTable;
 
 	public LinkedCollectionImpl(FastCollection<E> inner) {
-		super(inner);
-		// This class is thread-safe if inner is thread-safe (ordered itself is thread-safe).
-		ordered = new FractalTable<E>().using(FastTable.newTable(inner.equality()); 
-    }
-	
-	private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> ordered) {
-		super(inner);
-		this.ordered = ordered;
+		this.inner = inner;
+		insertionTable = FastTable.newTable(inner.equality());
+	}
+
+	private LinkedCollectionImpl(FastCollection<E> inner,
+			FastTable<E> insertionTable) {
+		this.inner = inner;
+		this.insertionTable = insertionTable;
 	}
 
 	@Override
 	public boolean add(E element) {
 		boolean added = inner.add(element);
-		if (added) 
-			ordered.add(element);
+		if (added)
+			insertionTable.add(element);
 		return added;
 	}
 
 	@Override
-	public void clear() { // Optimization.
+	public void clear() {
 		inner.clear();
-		ordered.clear();
+		insertionTable.clear();
 	}
 
 	@Override
-	public LinkedCollectionImpl<E> clone() {
-		return new LinkedCollectionImpl<E>(inner.clone(), ordered.clone());
+	public synchronized LinkedCollectionImpl<E> clone() {
+		return new LinkedCollectionImpl<E>(inner.clone(),
+				insertionTable.clone());
 	}
 
 	@Override
@@ -68,15 +69,24 @@ public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 	}
 
 	@Override
-	public Iterator<E> iterator() {		
-		return new IteratorImpl(); 
+	public Iterator<E> iterator() {
+		return insertionTable.iterator();
 	}
 
 	@Override
 	public boolean remove(Object searched) {
 		boolean removed = inner.remove(searched);
-		if (removed) ordered.remove(searched);
+		if (removed)
+			insertionTable.remove(searched);
 		return removed;
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		boolean modified = inner.removeIf(filter);
+		if (modified)
+			insertionTable.removeIf(filter);
+		return modified;
 	}
 
 	@Override
@@ -84,32 +94,8 @@ public final class LinkedCollectionImpl<E> extends SequentialCollectionImpl<E> {
 		return inner.size();
 	}
 
-	/** Default linked iterator for generic collections **/
-	private class IteratorImpl implements Iterator<E> {
-		Iterator<E> orderedIterator;
-		E next;
-
-		public IteratorImpl() {
-			orderedIterator = ordered.iterator();
-		}
-
-		@Override
-		public boolean hasNext() {
-			return orderedIterator.hasNext();
-		}
-
-		@Override
-		public E next() {
-			next = orderedIterator.next();
-			return next;
-		}
-
-		@Override
-		public void remove() {
-			orderedIterator.remove();
-			inner.remove(next);
-			next = null;
-		}
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		return inner.trySplit(n);
 	}
-
 }

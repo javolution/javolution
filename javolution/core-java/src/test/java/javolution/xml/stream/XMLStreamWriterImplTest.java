@@ -8,23 +8,10 @@
  */
 package javolution.xml.stream;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-
-import javolution.io.AppendableWriter;
 import javolution.text.CharArray;
-import javolution.text.TextBuilder;
 import javolution.xml.internal.stream.XMLStreamWriterImpl;
 
 import org.junit.Before;
-import org.junit.Test;
 
 public class XMLStreamWriterImplTest {
 
@@ -39,7 +26,7 @@ public class XMLStreamWriterImplTest {
 	public void init(){
 		_xmlStreamWriterImpl = new XMLStreamWriterImpl();		
 	}
-
+/**
 	@Test
 	public void testWriteXMLWithStream() throws XMLStreamException, URISyntaxException, IOException{
 		URL xmlUrl = this.getClass().getResource("/test-stax.xml");
@@ -73,7 +60,7 @@ public class XMLStreamWriterImplTest {
 		
 		assertEquals("Written / Read XML Is Equal", xmlString, builder.toString());
 	}
-		
+**/		
 	private void writeStaxXML() throws XMLStreamException{
 		_xmlStreamWriterImpl.setRepairingNamespaces(true);
 		_xmlStreamWriterImpl.setDefaultNamespace("http://javolution.org/xml/schema/javolution");

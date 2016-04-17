@@ -15,7 +15,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 import javolution.text.TextBuilder;
 
@@ -29,7 +28,7 @@ public class UTF8StreamReaderTest {
 	
 	@Before
 	public void init(){
-		_inputStream = new ByteArrayInputStream("Test".getBytes(StandardCharsets.UTF_8));
+		_inputStream = new ByteArrayInputStream("Test".getBytes());
 		_utf8StreamReader = new UTF8StreamReader(_inputStream);
 	}
 	

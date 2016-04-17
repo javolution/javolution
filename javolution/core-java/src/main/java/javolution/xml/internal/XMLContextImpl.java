@@ -18,6 +18,7 @@ import javolution.text.TextBuilder;
 import javolution.text.TextContext;
 import javolution.text.TextFormat;
 import javolution.util.FastMap;
+import javolution.util.SparseMap;
 import javolution.xml.DefaultXMLFormat;
 import javolution.xml.XMLContext;
 import javolution.xml.XMLFormat;
@@ -33,7 +34,8 @@ import javolution.xml.stream.XMLStreamException;
 public final class XMLContextImpl extends XMLContext {
 
     // Holds class->format mapping. 
-    private final FastMap<Class<?>, XMLFormat<?>> classToFormat = FastMap.newMap().shared().cast();
+    private final FastMap<Class<?>, XMLFormat<?>> 
+         classToFormat = new SparseMap<Class<?>, XMLFormat<?>>().shared();
 
     // Holds parent (null if root).
     private final XMLContextImpl parent;

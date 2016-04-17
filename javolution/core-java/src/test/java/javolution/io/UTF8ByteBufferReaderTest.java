@@ -14,7 +14,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 import javolution.text.TextBuilder;
 
@@ -28,7 +27,7 @@ public class UTF8ByteBufferReaderTest {
 	
 	@Before
 	public void init(){
-		_byteBuffer = ByteBuffer.wrap("Test".getBytes(StandardCharsets.UTF_8));
+		_byteBuffer = ByteBuffer.wrap("Test".getBytes());
 		_utf8ByteBufferReader = new UTF8ByteBufferReader(_byteBuffer);
 	}
 	

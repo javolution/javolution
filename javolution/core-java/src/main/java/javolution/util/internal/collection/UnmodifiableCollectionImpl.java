@@ -8,8 +8,6 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
 import javolution.util.FastCollection;
 import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
@@ -22,14 +20,20 @@ import javolution.util.function.Predicate;
 public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
+
 	private FastCollection<E> inner;
-	
+
 	public UnmodifiableCollectionImpl(FastCollection<E> inner) {
 		this.inner = inner;
 	}
 
 	@Override
 	public boolean add(E element) {
+		throw new UnsupportedOperationException("Read-Only Collection.");
+	}
+
+	@Override
+	public void clear() {
 		throw new UnsupportedOperationException("Read-Only Collection.");
 	}
 
@@ -49,7 +53,7 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public void forEach(Consumer<? super E> consumer) {
+	public void forEach(Consumer<? super E> consumer) { // Optimization.
 		inner.forEach(consumer);
 	}
 
@@ -60,17 +64,17 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return new IteratorImpl<E>(inner.iterator());
+		return inner.iterator();
 	}
 
 	@Override
-	public FastCollection<E> parallel() { // Full support.
-	    return new UnmodifiableCollectionImpl<E>(inner.parallel());
-	}
-
-	@Override
-	public E reduce(BinaryOperator<E> operator) {
+	public E reduce(BinaryOperator<E> operator) { // Optimization.
 		return inner.reduce(operator);
+	}
+
+	@Override
+	public boolean remove(Object searched) {
+		throw new UnsupportedOperationException("Read-Only Collection.");
 	}
 
 	@Override
@@ -80,7 +84,7 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public UnmodifiableCollectionImpl<E> reversed() { // Optimization.
-	    return new UnmodifiableCollectionImpl<E>(inner.reversed());
+		return new UnmodifiableCollectionImpl<E>(inner.reversed());
 	}
 
 	@Override
@@ -88,29 +92,18 @@ public class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
 		return inner.size();
 	}
 
-	/** Default read-only iterator for generic collections **/
-	private static class IteratorImpl<E> implements Iterator<E> {
-		private final Iterator<E> inner;
-
-		public IteratorImpl(Iterator<E> inner) {
-			this.inner = inner;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return inner.hasNext();
-		}
-
-		@Override
-		public E next() {
-			return inner.next();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Read-Only Iterator.");
-		}
-
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		FastCollection<E>[] subViews = inner.trySplit(n);
+		for (int i = 0; i < subViews.length; i++)
+			subViews[i] = new UnmodifiableCollectionImpl<E>(subViews[i]);
+		return subViews;
 	}
+
+	@Override
+	public E until(Predicate<? super E> matching) { // Optimization.
+		return inner.until(matching);
+	}
+	
 
 }

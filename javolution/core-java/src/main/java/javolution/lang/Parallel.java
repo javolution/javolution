@@ -20,7 +20,6 @@ import java.lang.annotation.Target;
  *     concurrently using multiple threads.
  *     
  * <pre>{@code
- * {@literal@}Parallel
  * public abstract class FastCollection<E> {
  * 
  *    {@literal@}Parallel
@@ -41,7 +40,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Inherited
-@Target({ ElementType.TYPE, ElementType.FIELD, ElementType.METHOD })
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Parallel {
 

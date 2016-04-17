@@ -8,12 +8,9 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javolution.util.FastCollection;
-import javolution.util.FractalTable;
-import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Predicate;
@@ -59,8 +56,43 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public void forEach(final Consumer<? super E> consumer) { // Optimization.
+		inner.forEach(new Consumer<E>() {
+			@Override
+			public void accept(E param) {
+				if (filter.test(param)) consumer.accept(param);
+			}});
+	}
+
+	@Override
 	public Iterator<E> iterator() {
-		return new IteratorImpl<E>(inner.iterator(), filter);
+		return new Iterator<E>() {
+			Iterator<E> itr = inner.iterator();
+			boolean currentIsNext;
+			E current;
+
+			@Override
+			public boolean hasNext() {
+				if (currentIsNext)
+					return true;
+				while (itr.hasNext()) {
+					current = itr.next();
+					if (!filter.test(current))
+						continue; // Ignore.
+					currentIsNext = true;
+					return true;
+				}
+				return false;
+			}
+
+			@Override
+			public E next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				currentIsNext = false;
+				return current;
+			}
+		};
 	}
 
 	@SuppressWarnings("unchecked")
@@ -70,25 +102,6 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 			return false;
 		return inner.remove(searched);
 	}
-	
-	@Override
-	public FilteredCollectionImpl<E> reversed() { // Optimization.
-	    return new FilteredCollectionImpl<E>(inner.reversed(), filter);
-	}
-
-	@Override
-	public FilteredCollectionImpl<E> parallel() { // Partial support.
-	    return new FilteredCollectionImpl<E>(inner.parallel(), filter);
-	}
-	
-	@Override
-	public void forEach(final Consumer<? super E> consumer) {
-		inner.forEach(new Consumer<E>() {
-			@Override
-			public void accept(E param) {
-				if (filter.test(param)) consumer.accept(param);				
-			}});
-	}
 
 	@Override
 	public boolean removeIf(final Predicate<? super E> toRemove) {
@@ -96,65 +109,30 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 			@Override
 			public boolean test(E param) {
 				return filter.test(param) && toRemove.test(param);
-			}});
+			}
+		});
 	}
 
 	@Override
-	public E reduce(BinaryOperator<E> operator) {
-		final FractalTable<E> toReduce = new FractalTable<E>();
-		inner.forEach(new Consumer<E>() { // Parallel.
-			@Override
-			public void accept(E param) {
-				if (filter.test(param)) {
-					synchronized (toReduce) {
-						toReduce.add(param);				
-					}
-				}
-			}});		
-		return toReduce.reduce(operator); // Sequential.
+	public FilteredCollectionImpl<E> reversed() { // Optimization.
+		return new FilteredCollectionImpl<E>(inner.reversed(), filter);
+	}
+	
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		FastCollection<E>[] subViews = inner.trySplit(n);
+		for (int i = 0; i < subViews.length; i++)
+			subViews[i] = new FilteredCollectionImpl<E>(subViews[i], filter);
+		return subViews;
 	}
 
-	/** Default filtered iterator for generic collections **/
-	private static class IteratorImpl<E> implements Iterator<E> {
-
-		private final Predicate<? super E> filter;
-		private final Iterator<E> inner;
-		private boolean onNext;
-		private E next;
-
-		public IteratorImpl(Iterator<E> inner, Predicate<? super E> filter) {
-			this.inner = inner;
-			this.filter = filter;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (onNext)
-				return true;
-			// Move to next.
-			while (inner.hasNext()) {
-				next = inner.next();
-				if (!filter.test(next))
-					continue; // Ignored
-				onNext = true;
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public E next() {
-			if (!hasNext())
-				throw new NoSuchElementException();
-			onNext = false;
-			return next;
-		}
-
-		@Override
-		public void remove() {
-			inner.remove();
-		}
-		
+	@Override
+	public E until(Predicate<? super E> matching) { // Optimization.
+		return inner.until(new Predicate<E>() {
+			@Override
+			public boolean test(E param) {
+				return filter.test(param) && matching.test(param);
+			}});
 	}
 
 }

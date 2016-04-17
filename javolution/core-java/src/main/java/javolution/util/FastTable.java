@@ -17,7 +17,6 @@ import static javolution.lang.Realtime.Limit.N_SQUARE;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -92,32 +91,16 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     /**
      * Returns a new high-performance table.
      */
-    public static <E> FractalTable<E> newTable() {
+    public static <E> FastTable<E> newTable() {
     	return new FractalTable<E>();
     }
 
-    /**
-     * Returns a new high-performance table for the specified element type.
-     */
-    public static <E> FractalTable<E> newTable(Class<E> elementType) {
-    	return new FractalTable<E>();
-    }
-    
     /**
      * Returns a new high-performance table using the specified equality
      * comparator for its elements.
      */
-    public static <E> FractalTable<E> newTable(Equality<? super E> equality) {
-    	return new FractalTable<E>(equality);
-    }
-
-    /**
-     * Returns a new high-performance table of the specified element type 
-     * and using the specified equality comparator for its elements.
-     */
-    public static <E> FractalTable<E> newTable(Equality<? super E> equality, 
-    		Class<E> elementType) {
-    	return new FractalTable<E>(equality);
+    public static <E> FastTable<E> newTable(Equality<? super E> equality) {
+    	return new FractalTable<E>().equality(equality);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -130,23 +113,23 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
 	}
 
     @Override
-	public FastTable<E> shared() {
-		return new SharedTableImpl<E>(this);
-	}
+  	public FastTable<E> equality(Equality<? super E> equality) {
+  		return new CustomEqualityTableImpl<E>(this, equality);
+  	}
 
     @Override
-	public FastTable<E> unmodifiable() {
-		return new UnmodifiableTableImpl<E>(this);
+	public FastTable<E> parallel() {
+		return null;
 	}
 
-    @Override
-	public FastTable<E> equality(Equality<? super E> equality) {
-		return new CustomEqualityTableImpl<E>(this, equality);
-	}
-
-    @Override
+   @Override
 	public FastTable<E> reversed() {
 		return new ReversedTableImpl<E>(this);
+	}
+
+   @Override
+	public FastTable<E> shared() {
+		return new SharedTableImpl<E>(this);
 	}
     
     /**
@@ -166,6 +149,11 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
                         + size()); // As per List.subList contract.
         return new SubTableImpl<E>(this, fromIndex, toIndex);
     }
+
+    @Override
+	public FastTable<E> unmodifiable() {
+		return new UnmodifiableTableImpl<E>(this);
+	}
 
     ////////////////////////////////////////////////////////////////////////////
     // Change in time limit behavior.
@@ -276,7 +264,21 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     @Override
     @Realtime(limit = CONSTANT)
 	public Iterator<E> iterator() {
-		return new TableIteratorImpl<E>(this, 0, size());
+		return new Iterator<E>() {
+			int nextIndex = 0;
+			int size = size();
+
+			@Override
+			public boolean hasNext() {
+				return nextIndex < size;
+			}
+
+			@Override
+			public E next() {
+				if (nextIndex >= size)
+					throw new NoSuchElementException();
+				return get(nextIndex++);
+			}};
 	}
 
     /** Returns a list iterator over the elements in this table. */
@@ -473,12 +475,12 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     // Misc.
     //
 
-	/**
-	 * Returns an immutable table holding the same elements as this table,
-	 * in the same order and using the same element equality as this table. 	
-     */
 	@Override
-	@Realtime(limit = LINEAR)
+	public FastTable<E> all() {
+		return (FastTable<E>) super.all();
+	}
+
+	@Override
 	public ConstantTable<E> constant() {
 		int size = size();
 		@SuppressWarnings("unchecked")
@@ -518,9 +520,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     @Realtime(limit = LINEAR)
-	public FastTable<E> clone() {
-    	return (FastTable<E>) super.clone();
-    }
+	public abstract FastTable<E> clone();
 	
     /**
      * Sorts this table in place (quick sort).

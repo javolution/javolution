@@ -8,8 +8,6 @@
  */
 package javolution.util.internal.map;
 
-import java.util.NoSuchElementException;
-
 import javolution.util.FastMap;
 import javolution.util.function.Equality;
 import javolution.util.function.Order;
@@ -23,91 +21,112 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
 
 	private final K fromKey; // Inclusive.
 	private final K toKey; // Exclusive.
-    private final boolean isFromSet; 
-    private final boolean isToSet;
+    private final boolean fromInclusive; 
+    private final boolean toInclusive;
 	private final FastMap<K, V> inner;
 
 	public SubMapImpl(FastMap<K, V> inner, K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
 		this.inner = inner;
 		this.fromKey = fromKey;
 		this.toKey = toKey;
-		this.isFromSet = isFromSet;
-		this.isToSet = isToSet;
+		this.fromInclusive = fromInclusive;
+		this.toInclusive = toInclusive;
 	}
 
+
+	@Override
+	public Entry<K, V> ceilingEntry(K key) {
+		Entry<K,V> entry = inner.ceilingEntry(key);
+		if ((entry == null) || !inRange(entry.getKey())) return null;
+		return entry;
+	}
+
+	@Override
+	public void clear() {
+        entrySet().clear();
+	}
 
 	@Override
 	public SubMapImpl<K, V> clone() {
-		return new SubMapImpl<K,V>(inner.clone(), fromKey, isFromSet, toKey, isToSet);
+		return new SubMapImpl<K,V>(inner.clone(), fromKey, fromInclusive, toKey, toInclusive);
 	}
 
 	@Override
-	public Entry<K, V> getEntry(K key) {
-		if (isTooSmall(key) || isTooLarge(key)) return null;
+	public Order<? super K> comparator() {
+		return inner.comparator();
+	}
+
+	@Override
+	public Entry<K, V> firstEntry() {
+		return fromInclusive ? 
+				inner.ceilingEntry(fromKey) : inner.higherEntry(fromKey);
+	}
+
+	@Override
+	public Entry<K, V> floorEntry(K key) {
+		Entry<K,V> entry = inner.floorEntry(key);
+		if ((entry == null) || !inRange(entry.getKey())) return null;
+		return entry;
+	}
+
+	@Override
+	public Entry<K, V> getEntry(K key) {		
+		if (!inRange(key)) return null;
 		return inner.getEntry(key);
 	}
 
-	private boolean isTooSmall(K key) {
-		return isFromSet && keyOrder().compare(fromKey, key) > 0;
+	@Override
+	public Entry<K, V> higherEntry(K key) {
+		Entry<K,V> entry = inner.higherEntry(key);
+		if ((entry == null) || !inRange(entry.getKey())) return null;
+		return entry;
 	}
-	private boolean isTooLarge(K key) {
-		return isToSet && keyOrder().compare(toKey, key) <= 0;
+
+	private boolean inRange(K key) {
+		int i = comparator().compare(fromKey, key);
+		if (i > 0) return false;
+		if ((i == 0) && !fromInclusive) return false;
+		i = comparator().compare(toKey, key);
+		if (i < 0) return false;
+		if ((i == 0) && !toInclusive) return false;
+		return true;
 	}
 
 	@Override
-	public Order<? super K> keyOrder() {
-		return inner.keyOrder();
+	public Entry<K, V> lastEntry() {
+		return toInclusive ? 
+				inner.floorEntry(fromKey) : inner.lowerEntry(fromKey);
+	}
+
+
+	@Override
+	public java.util.Map.Entry<K, V> lowerEntry(K key) {
+		Entry<K,V> entry = inner.lowerEntry(key);
+		if ((entry == null) || !inRange(entry.getKey())) return null;
+		return entry;
 	}
 
 	@Override
 	public V put(K key, V value) {
-		if (isTooSmall(key) || isTooLarge(key))
+		if (!inRange(key))
 			throw new IllegalArgumentException("Key not in submap range");
 		return inner.put(key, value);
 	}
 
 	@Override
-	public Equality<? super V> valueEquality() {
-		return inner.valueEquality();
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public V remove(Object key) {
-		if (isTooSmall((K)key) || isTooLarge((K)key)) return null;
-		return inner.remove(key);
+	public Entry<K, V> removeEntry(K key) {
+		if (!inRange(key)) return null;
+		return inner.removeEntry(key);
 	}
 
 	@Override
-	public Entry<K, V> firstEntry() {
-		Entry<K,V> first = inner.getEntry(fromKey);
-		if (first != null) return first;
-		first = inner.higherEntry(fromKey);
-		if ((first == null) || isTooLarge(first.getKey()))
-				throw new NoSuchElementException();
-		return first;
+	public int size() {
+		return entrySet().size();
 	}
 
 	@Override
-	public java.util.Map.Entry<K, V> lastEntry() {
-		Entry<K,V> last = inner.lowerEntry(toKey);
-		if ((last == null) || isTooSmall(last.getKey()))
-				throw new NoSuchElementException();
-		return last;
-	}
-
-	@Override
-	public java.util.Map.Entry<K, V> higherEntry(K key) {
-		Entry<K,V> after = inner.higherEntry(key);
-		if ((after == null) || isTooLarge(after.getKey())) return null;
-		return after;
-	}
-
-	@Override
-	public java.util.Map.Entry<K, V> lowerEntry(K key) {
-		Entry<K,V> before = inner.higherEntry(key);
-		if ((before == null) || isTooSmall(before.getKey())) return null;
-		return before;
+	public Equality<? super V> valuesEquality() {
+		return inner.valuesEquality();
 	}
 	
 }

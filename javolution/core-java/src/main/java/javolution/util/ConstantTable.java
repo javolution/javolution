@@ -38,8 +38,7 @@ public final class ConstantTable<E> extends FastTable<E> {
      * Returns a constant table (using default element equality) holding 
      * the specified elements. 
      */
-	@SafeVarargs
-	public static <E> ConstantTable<E> of(E... elements) {
+	public static <E> ConstantTable<E> of(@SuppressWarnings("unchecked") E... elements) {
     	return new ConstantTable<E>(elements.clone(), Equality.DEFAULT);
     }
 
@@ -85,6 +84,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 				"Constant tables cannot be modified.");
 	}
 
+	/**  Returns {@code this}.*/
 	@Override
 	public ConstantTable<E> clone() {
 		return this;
@@ -104,6 +104,12 @@ public final class ConstantTable<E> extends FastTable<E> {
 	@Override
 	public void forEach(Consumer<? super E> consumer) { // Optimization.
 		for (E e : elements) consumer.accept(e);
+	}
+
+	@Override
+	public E until(Predicate<? super E> matching) { // Optimization.
+		for (E e : elements) if (matching.test(e)) return e;
+		return null;
 	}
 
 	@Override
@@ -155,6 +161,12 @@ public final class ConstantTable<E> extends FastTable<E> {
 	@Override
 	public ConstantTable<E> unmodifiable() {
 		return this;
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

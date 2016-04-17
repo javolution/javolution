@@ -11,6 +11,9 @@ package javolution.util.function;
 import static javolution.lang.Realtime.Limit.CONSTANT;
 import static javolution.lang.Realtime.Limit.LINEAR;
 import static javolution.lang.Realtime.Limit.UNKNOWN;
+
+import java.io.Serializable;
+
 import javolution.lang.Realtime;
 import javolution.util.internal.function.ArrayEqualityImpl;
 import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
@@ -28,19 +31,19 @@ import javolution.util.internal.function.NaturalOrderImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0 September 13, 2015
  */
-public interface Equality<T> {
+public interface Equality<T> extends Serializable {
 	
     /**
      * A default object equality (based on {@link Object#equals}).
      */
     @Realtime(limit = UNKNOWN)
-    public static final Equality<Object> DEFAULT = HashOrderImpl.INSTANCE;
+    public static final Order<Object> DEFAULT = HashOrderImpl.INSTANCE;
 
     /**
      * An identity object equality (instances are only equals to themselves).
      */
     @Realtime(limit = CONSTANT)
-    public static final Equality<Object> IDENTITY 
+    public static final Order<Object> IDENTITY 
        = IdentityHashOrderImpl.INSTANCE;
 
      /**
@@ -54,14 +57,14 @@ public interface Equality<T> {
      * A lexical equality for any {@link CharSequence}.
      */
     @Realtime(limit = LINEAR)
-    public static final Equality<CharSequence> LEXICAL
+    public static final Order<CharSequence> LEXICAL
         = LexicalOrderImpl.INSTANCE;
 
     /**
      * A case insensitive lexical equality for any {@link CharSequence}.
      */
     @Realtime(limit = LINEAR)
-    public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
+    public static final Order<CharSequence> LEXICAL_CASE_INSENSITIVE
         = CaseInsensitiveLexicalOrderImpl.INSTANCE;
   
     /**
@@ -71,7 +74,7 @@ public interface Equality<T> {
      * @throws ClassCastException if used with non {@link Comparable} instances.
      */
     @Realtime(limit = UNKNOWN)
-    public static final Equality<Object> NATURAL 
+    public static final Order<Object> NATURAL 
         = NaturalOrderImpl.INSTANCE;
  
 	/**

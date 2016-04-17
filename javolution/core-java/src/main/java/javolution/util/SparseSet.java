@@ -11,6 +11,7 @@ package javolution.util;
 import java.util.Map.Entry;
 
 import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 
 /**
  * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> 
@@ -20,7 +21,7 @@ import javolution.util.function.Order;
  * @version 7.0, September 13, 2015
  * @see SparseMap
  */
-public final class SparseSet<E> extends FastSet<E> {
+public class SparseSet<E> extends FastSet<E> {
 	   
 	private static final long serialVersionUID = 0x700L; // Version.
 	private static final Object PRESENT = new Object();
@@ -39,6 +40,11 @@ public final class SparseSet<E> extends FastSet<E> {
      */
     public SparseSet(Order<? super E> order) {
     	sparse = new SparseMap<E, Object>(order);
+    }
+    
+    /** Structural constructor (for cloning) */
+    private SparseSet(SparseMap<E, Object> sparse) {
+        this.sparse = sparse;	
     }
     
 	@Override
@@ -80,9 +86,7 @@ public final class SparseSet<E> extends FastSet<E> {
 
 	@Override
 	public SparseSet<E> clone() {
-		SparseSet<E> copy = (SparseSet<E>) super.clone();
-		copy.sparse = sparse.clone();
-		return copy;
+		return new SparseSet<E>(sparse.clone());
 	}
 	
 	@Override
@@ -118,6 +122,21 @@ public final class SparseSet<E> extends FastSet<E> {
 	public E pollLast() {
 		Entry<E,Object> entry = sparse.pollLastEntry();
 		return entry != null ? entry.getKey() : null;
+	}
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public Iterator<E> iterator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

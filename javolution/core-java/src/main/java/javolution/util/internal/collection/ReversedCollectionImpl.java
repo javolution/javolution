@@ -8,18 +8,15 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import javolution.util.FastCollection;
-import javolution.util.FractalTable;
+import javolution.util.FastTable;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
- * A reversed view over a collection (copy-on-write).
+ * A reversed view over a collection.
  */
 public final class ReversedCollectionImpl<E> extends FastCollection<E> {
-
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
 
@@ -43,6 +40,11 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
+	public boolean contains(Object searched) { // Optimization.
+		return inner.contains(searched);
+	}
+
+	@Override
 	public Equality<? super E> equality() {
 		return inner.equality();
 	}
@@ -54,50 +56,36 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return new IteratorImpl<E>(inner);
+		FastTable<E> reversed = FastTable.newTable();
+		for (Iterator<E> itr = inner.iterator(); itr.hasNext();)
+			reversed.addFirst(itr.next());
+		return reversed.iterator();
+	}
+
+	@Override
+	public boolean remove(Object searched) { // Optimization.
+		return inner.remove(searched);
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		return inner.removeIf(filter);
+	}
+
+	@Override
+	public FastCollection<E> reversed() { // Optimization.
+		return inner;
 	}
 
 	@Override
 	public int size() { // Optimization.
 		return inner.size();
 	}
-
-	@Override
-	public FastCollection<E> reversed() { // Optimization.
-	    return inner;
-	}
-
-	/** Default reversed iterator for generic collections **/
-	private static class IteratorImpl<E> implements Iterator<E> {
-		private final FastCollection<E> target;
-		private final FractalTable<E> elements = new FractalTable<E>();
-		private int nextIndex;
-		private int currentIndex = -1;
-		
-		public IteratorImpl(FastCollection<E> target) {
-			this.target = target;
-			elements.addAll(target);
-			nextIndex = elements.size() - 1;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return nextIndex >= 0;
-		}
-
-		@Override
-		public E next() {
-			if (nextIndex < 0) throw new NoSuchElementException();
-			currentIndex = nextIndex--;
-			return elements.get(currentIndex);
-		}
-
-		@Override
-		public void remove() {
-			if (currentIndex < 0) throw new IllegalStateException();
-			target.remove(elements.get(currentIndex));
-			currentIndex = -1;
-		}
-	}
 	
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		return inner.trySplit(n);
+	}
+
+
 }

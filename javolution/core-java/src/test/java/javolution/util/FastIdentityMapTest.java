@@ -8,24 +8,28 @@
  */
 package javolution.util;
 
-import javolution.util.function.Consumer;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import javolution.util.function.Order;
+
+import org.junit.Before;
+import org.junit.Test;
 
 public class FastIdentityMapTest {
 
-	private FastIdentityMap<Class<?>,Class<?>> _fastIdentityMap;
+	private FastMap<Class<?>,Class<?>> _fastIdentityMap;
 	
 	@Before
 	public void init(){
-		_fastIdentityMap = new FastIdentityMap<Class<?>,Class<?>>();
+		_fastIdentityMap = FastMap.newMap(Order.IDENTITY);
 	}
 
 	@Test
@@ -115,7 +119,7 @@ public class FastIdentityMapTest {
 	
 	@Test
 	public void testPutAll(){
-		Map<Class<?>,Class<?>> map = new FastIdentityMap<Class<?>,Class<?>>();
+		Map<Class<?>,Class<?>> map = FastMap.newMap(Order.IDENTITY);
 		map.put(Integer.class, int.class);
 		map.put(Boolean.class, boolean.class);
 		map.put(Long.class, long.class);
@@ -149,30 +153,5 @@ public class FastIdentityMapTest {
 		assertEquals("Size Equals 3", _fastIdentityMap.size(), 3);
 	}
 	
-	@Test
-	public void testUpdate(){
-		_fastIdentityMap.put(Integer.class, int.class);
-		_fastIdentityMap.put(Boolean.class, boolean.class);
-		_fastIdentityMap.put(Long.class, long.class);
-		
-		Consumer<Map<Class<?>,Class<?>>> value2Update = new Consumer<Map<Class<?>,Class<?>>>() {
-			public void accept(Map<Class<?>,Class<?>> view) {
-				Iterator<Entry<Class<?>,Class<?>>> it = view.entrySet().iterator();
-				while (it.hasNext()) {
-					Entry<Class<?>,Class<?>> entry = it.next();
-					entry.setValue(int.class);
-				}
-			}
-		};
-		
-		_fastIdentityMap.update(value2Update);
-		
-		Class<?> result = _fastIdentityMap.get(Integer.class);
-		assertEquals("Result for TestKey1 Is int.class", int.class, result);
-		result = _fastIdentityMap.get(Boolean.class);
-		assertEquals("Result for TestKey1 Is int.class", int.class, result);
-		result = _fastIdentityMap.get(Long.class);
-		assertEquals("Result for TestKey1 Is int.class", int.class, result);
-	}
 	
 }

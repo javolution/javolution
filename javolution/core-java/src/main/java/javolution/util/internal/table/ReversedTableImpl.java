@@ -8,8 +8,10 @@
  */
 package javolution.util.internal.table;
 
+import javolution.util.FastCollection;
 import javolution.util.FastTable;
 import javolution.util.function.Equality;
+import javolution.util.function.Predicate;
 
 /**
  * A reverse view over a table.
@@ -84,6 +86,18 @@ public final class ReversedTableImpl<E> extends FastTable<E> {
 	@Override
 	public int size() {
 		return inner.size();
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super E> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

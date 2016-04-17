@@ -18,8 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javolution.util.function.Consumer;
-import javolution.util.function.Equalities;
+import javolution.util.function.Order;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,12 +29,12 @@ public class FastMapTest {
 	
 	@Before
 	public void init(){
-		_fastMap = new FastMap<String,String>();
+		_fastMap = FastMap.newMap();
 	}
 	
 	@Test
 	public void testCaseInsensitiveMapWithLexicalCaseInsensitive(){
-		_fastMap = new FastMap<String,String>(Equalities.LEXICAL_CASE_INSENSITIVE);
+		_fastMap = FastMap.newMap(Order.LEXICAL_CASE_INSENSITIVE);
 		_fastMap.put("TestKey1", "TestValue1");
 		String result = _fastMap.get("TestKey1");
 		assertEquals("Result Should Equal TestValue1", "TestValue1", result);
@@ -132,7 +131,7 @@ public class FastMapTest {
 	
 	@Test
 	public void testPutAll(){
-		Map<String,String> map = new FastMap<String,String>();
+		Map<String,String> map = FastMap.newMap();
 		map.put("TestKey1", "TestValue1");
 		map.put("TestKey2", "TestValue2");
 		map.put("TestKey3", "TestValue3");
@@ -164,32 +163,6 @@ public class FastMapTest {
 		assertEquals("Size Equals 2", _fastMap.size(), 2);
 		_fastMap.put("TestKey3", "TestValue3");
 		assertEquals("Size Equals 3", _fastMap.size(), 3);
-	}
-	
-	@Test
-	public void testUpdate(){
-		_fastMap.put("TestKey1", "TestValue1");
-		_fastMap.put("TestKey2", "TestValue1");
-		_fastMap.put("TestKey3", "TestValue1");
-		
-		Consumer<Map<String,String>> value2Update = new Consumer<Map<String,String>>() {  
-			public void accept(Map<String,String> view) {
-				Iterator<Entry<String,String>> it = view.entrySet().iterator();
-				while (it.hasNext()) {
-					Entry<String,String> entry = it.next();
-					entry.setValue("TestValue2");
-				}
-			}
-		};
-		
-		_fastMap.update(value2Update);
-		
-		String result = _fastMap.get("TestKey1");		
-		assertEquals("Result for TestKey1 Is TestValue2", "TestValue2", result);
-		result = _fastMap.get("TestKey2");
-		assertEquals("Result for TestKey2 Is TestValue2", "TestValue2", result);
-		result = _fastMap.get("TestKey3");
-		assertEquals("Result for TestKey3 Is TestValue2", "TestValue2", result);		
 	}
 	
 }

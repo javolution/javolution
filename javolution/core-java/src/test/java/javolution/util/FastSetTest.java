@@ -17,8 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import javolution.util.function.Consumer;
-import javolution.util.function.Equalities;
+import javolution.util.function.Order;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +28,7 @@ public class FastSetTest {
 	
 	@Before
 	public void init(){
-		_fastSet = new FastSet<String>();
+		_fastSet = FastSet.newSet();
 	}
 	
 	@Test
@@ -39,14 +38,14 @@ public class FastSetTest {
 		_fastSet.add("AAAA");
 		_fastSet.add("AAA");	
 		
-		String anyString = _fastSet.any(String.class);
+		String anyString = _fastSet.any();
 		assertNotNull("Any String Obtained", anyString);
 		assertTrue("Set Contains String", _fastSet.contains(anyString));
 	}
 	
 	@Test
 	public void testCaseInsensitiveSetWithLexicalCaseInsensitive(){
-		_fastSet = new FastSet<String>(Equalities.LEXICAL_CASE_INSENSITIVE);
+		_fastSet = FastSet.newSet(Order.LEXICAL_CASE_INSENSITIVE);
 		_fastSet.add("Test");
 		
 		assertTrue("Set Contains Test", _fastSet.contains("Test"));
@@ -71,7 +70,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testContainsAll(){
-		Set<String> set = new FastSet<String>();
+		Set<String> set = FastSet.newSet();
 		set.add("Test1");
 		set.add("Test2");
 		set.add("Test3");
@@ -127,7 +126,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testRetainAll(){
-		Set<String> set = new FastSet<String>();
+		Set<String> set = FastSet.newSet();
 		set.add("A");
 		
 		_fastSet.add("AA");
@@ -170,27 +169,5 @@ public class FastSetTest {
 	public void testUnmodifiableView(){
 		Set<String> unmodifiableSet = _fastSet.unmodifiable();
 		unmodifiableSet.add("Test");
-	}
-	
-	@Test
-	public void testUpdate(){
-		_fastSet.add("Test1");
-		_fastSet.add("Test2");
-		_fastSet.add("Test3");
-		
-		Consumer<Set<String>> removeAllUpdate = new Consumer<Set<String>>() {  
-			public void accept(Set<String> view) {
-				Iterator<String> it = view.iterator();
-				while (it.hasNext()) {
-					it.next();
-					it.remove();
-				}
-			}
-		};
-		
-		_fastSet.update(removeAllUpdate);
-		
-		assertEquals("Set Size Is 0 After Update", 0, _fastSet.size());
-		assertTrue("Set Is Empty After Update", _fastSet.isEmpty());
 	}
 }

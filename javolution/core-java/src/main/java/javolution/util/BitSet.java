@@ -17,6 +17,7 @@ import javolution.lang.Index;
 import javolution.lang.MathLib;
 import javolution.lang.Realtime;
 import javolution.util.function.Order;
+import javolution.util.function.Predicate;
 import javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
@@ -619,5 +620,29 @@ public class BitSet extends FastSet<Index> {
             bits = Arrays.copyOf(bits, n);
         }        
     }
+
+    @Override
+    public BitSet addAll(Index first, Index... others) {
+		super.addAll(first, others);
+		return this;
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super Index> filter) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public javolution.util.FastCollection.Iterator<Index> iterator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public FastCollection<Index>[] trySplit(int n) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

@@ -23,7 +23,6 @@ import javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
 import javolution.util.internal.function.HashOrderImpl;
 import javolution.util.internal.function.IdentityHashOrderImpl;
 import javolution.util.internal.function.LexicalOrderImpl;
-import javolution.util.internal.function.NaturalOrderImpl;
 
 /**
  * <p> A disposition of things following one after another, smallest first.</p>
@@ -105,21 +104,7 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
 	//
     
     /**
-     * A relative order for {@link Comparable} instances which does not support 
-     * direct access in a collection ({@link #indexOf indexOf} returns 
-     * {@code 0}).
-     * 
-     * @throws ClassCastException if used with non {@link Comparable} instances.
-    */
-    @Realtime(limit = UNKNOWN)
-    public static final Order<Object> NATURAL 
-        = NaturalOrderImpl.INSTANCE;
-       
-    /**
      * Returns the index (unsigned 32-bits value) of the specified object.
-     * If an absolute order cannot be determined this method returns 
-     * {@code 0} (see {@link #NATURAL}). This methods also returns 
-     * {@code 0} if the specified object is {@code null}.
      */
     int indexOf(T object);
 

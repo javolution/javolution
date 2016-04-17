@@ -9,7 +9,6 @@
 package javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import javolution.util.FastCollection;
 import javolution.util.function.BinaryOperator;
@@ -30,6 +29,11 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
 	public SharedCollectionImpl(FastCollection<E> inner) {
 		this.inner = inner;
 		this.lock = new ReadWriteLockImpl();
+	}
+
+	public SharedCollectionImpl(FastCollection<E> inner, ReadWriteLockImpl lock) {
+		this.inner = inner;
+		this.lock = lock;
 	}
 
 	@Override
@@ -164,12 +168,14 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
+		FastCollection<E> innerClone;
 		lock.readLock.lock();
 		try {
-			return inner.clone().unmodifiable().iterator();
+			innerClone = inner.clone();
 		} finally {
 			lock.readLock.unlock();
 		}
+		return innerClone.iterator();
 	}
 
 	@Override
@@ -277,6 +283,29 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
 		lock.readLock.lock();
 		try {
 			return inner.toString();
+		} finally {
+			lock.readLock.unlock();
+		}
+	}
+
+	@Override
+	public FastCollection<E>[] trySplit(int n) {
+		lock.readLock.lock();
+		try {
+			FastCollection<E>[] subViews = inner.trySplit(n);
+			for (int i = 0; i < subViews.length; i++)
+				subViews[i] = new SharedCollectionImpl<E>(subViews[i], lock);
+			return subViews;
+		} finally {
+			lock.readLock.unlock();
+		}
+	}
+
+	@Override
+	public E until(Predicate<? super E> matching) {
+		lock.readLock.lock();
+		try {
+			return inner.until(matching);
 		} finally {
 			lock.readLock.unlock();
 		}

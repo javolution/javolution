@@ -8,11 +8,7 @@
  */
 package javolution.util.internal.collection;
 
-import java.util.Iterator;
-
 import javolution.util.FastCollection;
-import javolution.util.FractalTable;
-import javolution.util.function.BinaryOperator;
 import javolution.util.function.Consumer;
 import javolution.util.function.Equality;
 import javolution.util.function.Function;
@@ -25,6 +21,7 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 
 	private static final long serialVersionUID = 0x700L; // Version.
 	private final FastCollection<E> inner;
+
 	private final Function<? super E, ? extends R> function;
 
 	public MappedCollectionImpl(FastCollection<E> inner,
@@ -55,32 +52,34 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 	}
 
 	@Override
+	public void forEach(final Consumer<? super R> consumer) { // Optimization.
+		inner.forEach(new Consumer<E>() {
+			@Override
+			public void accept(E param) {
+				consumer.accept(function.apply(param));
+			}});
+	}
+
+	@Override
 	public boolean isEmpty() { // Optimization.
 		return inner.isEmpty();
 	}
 
 	@Override
 	public Iterator<R> iterator() {
-		return new IteratorImpl<E, R>(inner.iterator(), function);
-	}
+		return new Iterator<R>() {
+			Iterator<E> itr = inner.iterator();
 
-	@Override
-	public int size() { // Optimization.
-		return inner.size();
-	}
-
-	@Override
-	public MappedCollectionImpl<E,R> reversed() { // Optimization.
-	    return new MappedCollectionImpl<E,R>(inner.reversed(), function);
-	}
-
-	@Override
-	public void forEach(final Consumer<? super R> consumer) {
-		inner.forEach(new Consumer<E>() {
 			@Override
-			public void accept(E param) {
-				consumer.accept(function.apply(param));				
-			}});
+			public boolean hasNext() {
+				return itr.hasNext();
+			}
+
+			@Override
+			public R next() {
+				return function.apply(itr.next());
+			}
+		};
 	}
 
 	@Override
@@ -89,49 +88,37 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 			@Override
 			public boolean test(E param) {
 				return toRemove.test(function.apply(param));
-			}});
+			}
+		});
 	}
 
 	@Override
-	public R reduce(BinaryOperator<R> operator) {
-		final FractalTable<R> toReduce = new FractalTable<R>();
-		inner.forEach(new Consumer<E>() { // Parallel.
+	public MappedCollectionImpl<E, R> reversed() { // Optimization.
+		return new MappedCollectionImpl<E, R>(inner.reversed(), function);
+	}
+
+	@Override
+	public int size() { // Optimization.
+		return inner.size();
+	}
+	
+	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public FastCollection<R>[] trySplit(int n) {
+		FastCollection[] subViews = inner.trySplit(n);
+		for (int i = 0; i < subViews.length; i++)
+			subViews[i] = new MappedCollectionImpl(subViews[i], function);
+		return subViews;
+	}
+
+	@Override
+	public R until(Predicate<? super R> matching) { // Optimization.
+		return function.apply(inner.until(new Predicate<E>() {
 			@Override
-			public void accept(E param) {
-				R r = function.apply(param);
-				synchronized (toReduce) {
-					toReduce.add(r);				
-				}				
-			}});		
-		return toReduce.reduce(operator); // Sequential.
+			public boolean test(E param) {
+				return matching.test(function.apply(param));
+			}}));
 	}
-
-	/** Default mapped iterator for generic collections **/
-	private static class IteratorImpl<E, R> implements Iterator<R> {
-		private final Iterator<E> inner;
-		private final Function<? super E, ? extends R> function;
-
-		public IteratorImpl(Iterator<E> inner,
-				Function<? super E, ? extends R> function) {
-			this.inner = inner;
-			this.function = function;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return inner.hasNext();
-		}
-
-		@Override
-		public R next() {
-			return function.apply(inner.next());
-		}
-
-		@Override
-		public void remove() {
-			inner.remove();
-		}
-
-	}
+	
 
 }
