@@ -1,0 +1,167 @@
+/*
+ * Javolution - Java(TM) Solution for Real-Time and Embedded Systems
+ * Copyright (C) 2012 - Javolution (http://javolution.org/)
+ * All rights reserved.
+ * 
+ * Permission to use, copy, modify, and distribute this software is
+ * freely granted, provided that this notice is preserved.
+ */
+package org.javolution.context;
+
+import org.javolution.lang.Configurable;
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.text.TextContext;
+
+/**
+ * <p> Asynchronous logging context integrated with the OSGi logging framework.
+ *     The logging back-end, or how the log entries are displayed, stored, or
+ *     processed is unspecified but always performed asynchronously. 
+ *     When running outside OSGi, log messages are sent to {@link System#out}. 
+ *     Message formatting itself is always performed synchronously using the 
+ *     current {@link TextContext}.</p> 
+ *     
+ * <p> Logging contexts support automatic prefixing/suffixing of any information 
+ *     relevant to the user/developer (thread info, user id, and so on). 
+ * {@code
+ * void run() {
+ *     LogContext ctx = LogContext.enter(); 
+ *     try {
+ *         // Prefix the executing thread to any message being logged.
+ *         ctx.prefix("[Thread: ", Thead.currentThread(), "] "); 
+ *         ... 
+ *      } finally {
+ *         ctx.exit();
+ *      }
+ *  }}</p>
+ *  
+ *  <p> Applications should separate messages elements by commas and not 
+ *      use {@link String} concatenations when calling log methods otherwise 
+ *      the concatenation is performed even when log events are filtered out.
+ * {@code
+ * LogContext ctx = LogContext.enter();
+ * try {
+ *     ctx.setLevel(Level.INFO); // Does not log debug messages. 
+ *     ... 
+ *     LogContext.debug("Index: ", index, " at maximum value"); // GOOD, no formatting performed !
+ *     LogContext.debug("Index: " + index + " at maximum value"); // BAD, formatting performed even though nothing is logged !
+ *     ...
+ * } finally {
+ *     ctx.exit();
+ * }}</p>
+ * 
+ * <p> In general, the {@link Level#DEBUG} level provides information only 
+ *     relevant to developers and can be turned off after deployment.</p> 
+ *  
+ * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @version 6.0, July 21, 2013
+ * @see <a href="https://code.google.com/p/osgi-logging/wiki/UnderstandingTheOSGiLogging">Understanding OSGi Logging</a>
+ */
+public abstract class LogContext extends AbstractContext {
+
+    /**
+     * Defines the logging levels.
+     */
+    public enum Level {
+
+        DEBUG, INFO, WARNING, ERROR, FATAL
+
+    }
+
+    /**
+     * Holds the default logging level (<code>INFO</code>).
+     * This level is configurable. For example, running with 
+     * the option <code>-Djavolution.context.LogContext#LEVEL=WARNING</code>  
+     * causes the debug/info not to be logged. 
+     */
+    public static final Configurable<Level> LEVEL = new Configurable<Level>() {
+        @Override
+        protected Level getDefault() {
+            return Level.INFO;
+        }
+        @Override
+        public Level parse(String str) {
+            return Level.valueOf(str);
+        }
+    };
+
+    /**
+     * Logs the specified debug message.
+     * @param message Message to log 
+     */
+    public static void debug(Object... message) {
+        currentLogContext().log(Level.DEBUG, message);
+    }
+
+    /**
+     * Enters and returns a new log context instance.
+     * @return Reference to the entered LogContext
+     */
+    public static LogContext enter() {
+        return (LogContext) currentLogContext().enterInner();
+    }
+
+    /**
+     * Logs the specified error message (which may include any {@link Throwable}
+     * instance).
+     * @param message Message to log
+     */
+    public static void error(Object... message) {
+        currentLogContext().log(Level.ERROR, message);
+    }
+
+    /**
+     * Logs the specified info message.
+     * @param message Message to log 
+     */
+    public static void info(Object... message) {
+        currentLogContext().log(Level.INFO, message);
+    }
+
+    /**
+     * Logs the specified warning message.
+     * @param message Message to log 
+     */
+    public static void warning(Object... message) {
+        currentLogContext().log(Level.WARNING, message);
+    }
+
+    private static LogContext currentLogContext() {
+        LogContext ctx = current(LogContext.class);
+        if (ctx != null)
+            return ctx;
+        return OSGiServices.getLogContext();
+    }
+
+    /**
+     * Default constructor.
+     */
+    protected LogContext() {}
+
+    /**
+     * Prefixes all messages being logged by the specified prefixes 
+     * (prefixing existing prefixes if any).
+     * @param prefixes Message Prefixes
+     */
+    public abstract void prefix(Object... prefixes);
+
+    /**
+     * Set the logging level, messages below that level are not logged.
+     * @param level Logging Level
+     */
+    public abstract void setLevel(Level level);
+
+    /**
+     * Suffixes all messages being logged by the specified suffixes
+     * (suffixing existing suffixes if any).
+     * @param suffixes Message Suffixes
+     */
+    public abstract void suffix(Object... suffixes);
+
+    /**
+     * Logs the specified message at the specified level.
+     * @param level Level to Log At
+     * @param message Message to Log
+     */
+    protected abstract void log(Level level, Object... message);
+
+}
