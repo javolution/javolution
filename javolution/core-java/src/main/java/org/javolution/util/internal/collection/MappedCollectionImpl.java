@@ -112,7 +112,7 @@ public final class MappedCollectionImpl<E, R> extends FastCollection<R> {
 	}
 
 	@Override
-	public R until(Predicate<? super R> matching) { // Optimization.
+	public R until(final Predicate<? super R> matching) { // Optimization.
 		return function.apply(inner.until(new Predicate<E>() {
 			@Override
 			public boolean test(E param) {

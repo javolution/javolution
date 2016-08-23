@@ -8,24 +8,24 @@
        {
        for(var i=0; i<document.images.length; i++)
           {
-	  var img = document.images[i]
-	  var imgName = img.src.toUpperCase()
-	  if (imgName.substring(imgName.length-3, imgName.length) == "PNG")
-	     {
-		 var imgID = (img.id) ? "id='" + img.id + "' " : ""
-		 var imgClass = (img.className) ? "class='" + img.className + "' " : ""
-		 var imgTitle = (img.title) ? "title='" + img.title + "' " : "title='" + img.alt + "' "
-		 var imgStyle = "display:inline-block;" + img.style.cssText
-		 if (img.align == "left") imgStyle = "float:left;" + imgStyle
-		 if (img.align == "right") imgStyle = "float:right;" + imgStyle
-		 if (img.parentElement.href) imgStyle = "cursor:hand;" + imgStyle
-		 var strNewHTML = "<span " + imgID + imgClass + imgTitle
-		 + " style=\"" + "width:" + img.width + "px; height:" + img.height + "px;" + imgStyle + ";"
-	     + "filter:progid:DXImageTransform.Microsoft.AlphaImageLoader"
-		 + "(src=\'" + img.src + "\', sizingMethod='scale');\"></span>"
-		 img.outerHTML = strNewHTML
-		 i = i-1
-	     }
+      var img = document.images[i]
+      var imgName = img.src.toUpperCase()
+      if (imgName.substring(imgName.length-3, imgName.length) == "PNG")
+         {
+         var imgID = (img.id) ? "id='" + img.id + "' " : ""
+         var imgClass = (img.className) ? "class='" + img.className + "' " : ""
+         var imgTitle = (img.title) ? "title='" + img.title + "' " : "title='" + img.alt + "' "
+         var imgStyle = "display:inline-block;" + img.style.cssText
+         if (img.align == "left") imgStyle = "float:left;" + imgStyle
+         if (img.align == "right") imgStyle = "float:right;" + imgStyle
+         if (img.parentElement.href) imgStyle = "cursor:hand;" + imgStyle
+         var strNewHTML = "<span " + imgID + imgClass + imgTitle
+         + " style=\"" + "width:" + img.width + "px; height:" + img.height + "px;" + imgStyle + ";"
+         + "filter:progid:DXImageTransform.Microsoft.AlphaImageLoader"
+         + "(src=\'" + img.src + "\', sizingMethod='scale');\"></span>"
+         img.outerHTML = strNewHTML
+         i = i-1
+         }
           }
        }
     window.attachEvent("onload", correctPNG);
@@ -39,7 +39,7 @@
         <STYLE TYPE="text/css">
             <!--
             body {
-                background-image:  url(src/site/css/img/bg.jpg);
+                background-image:  url(css/img/bg.jpg);
                 margin-left: 0px;
                 margin-top: 0px;
                 margin-right: 0px;
@@ -48,7 +48,7 @@
             -->
         </STYLE>
 
-        <LINK HREF="src/site/css/index.css" TYPE="text/css" REL="stylesheet">
+        <LINK HREF="css/index.css" TYPE="text/css" REL="stylesheet">
         <STYLE TYPE="text/css">
 
             <!--
@@ -76,35 +76,35 @@
                CELLPADDING="0" WIDTH="707">
             <TR>
                 <TD WIDTH="26">
-                    <IMG HEIGHT="100%" SRC="src/site/css/img/bg_left.png" WIDTH="26"></TD>
-                <TD VALIGN="top" BACKGROUND="src/site/css/img/bg_collumb.jpg" WIDTH="675">
-                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="src/site/css/img/header_bg.jpg"
+                    <IMG HEIGHT="100%" SRC="css/img/bg_left.png" WIDTH="26"></TD>
+                <TD VALIGN="top" BACKGROUND="css/img/bg_collumb.jpg" WIDTH="675">
+                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/header_bg.jpg"
                            CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="37">
-                                <IMG HEIGHT="85" SRC="src/site/css/img/header_leftcollumn.jpg" WIDTH="8"></TD>
+                                <IMG HEIGHT="85" SRC="css/img/header_leftcollumn.jpg" WIDTH="8"></TD>
                             <TD VALIGN="top" WIDTH="619">
                                 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="596">
                                     <TR>
                                         <TD VALIGN="top" WIDTH="19%">
-                                            <IMG HEIGHT="58" SRC="src/site/css/img/javolution_log.gif" WIDTH="101"></TD>
+                                            <IMG HEIGHT="58" SRC="css/img/javolution_log.gif" WIDTH="101"></TD>
                                         <TD WIDTH="4%">
-                                            <IMG HEIGHT="85" SRC="src/site/css/img/seperator.jpg" WIDTH="1"></TD>
+                                            <IMG HEIGHT="85" SRC="css/img/seperator.jpg" WIDTH="1"></TD>
                                         <TD VALIGN="top" WIDTH="77%">
-                                            <IMG HEIGHT="51" SRC="src/site/css/img/thesolution.gif" WIDTH="401"></TD>
+                                            <IMG HEIGHT="51" SRC="css/img/thesolution.gif" WIDTH="401"></TD>
                                     </TR>
                                 </TABLE></TD>
                             <TD WIDTH="10">
                                 <DIV ALIGN="right"><IMG HEIGHT="85"
-                                                        SRC="src/site/css/img/header_rightcollumn.jpg"
+                                                        SRC="css/img/header_rightcollumn.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
-                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="src/site/css/img/detailler_bg.jpg"
+                    <TABLE BORDER="0" CELLSPACING="0" BACKGROUND="css/img/detailler_bg.jpg"
                            CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="10">
-                                <IMG HEIGHT="48" SRC="src/site/css/img/detailler_leftcollumn.jpg" WIDTH="8">
+                                <IMG HEIGHT="48" SRC="css/img/detailler_leftcollumn.jpg" WIDTH="8">
                             </TD>
                             <TD VALIGN="top" WIDTH="656">
                                 <DIV ALIGN="center"><SPAN CLASS="detaillerclass">Because real-time
@@ -112,7 +112,7 @@
                             </TD>
                             <TD WIDTH="10">
                                 <DIV ALIGN="right"><IMG HEIGHT="48"
-                                                        SRC="src/site/css/img/detailler_rightcollumn.jpg"
+                                                        SRC="css/img/detailler_rightcollumn.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -135,7 +135,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -145,19 +145,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_ajavarevolution.jpg" WIDTH="222">
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_ajavarevolution.jpg" WIDTH="222">
                                         </TD>
                                     </TR>
                                     <TR>
@@ -166,19 +166,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -190,7 +190,7 @@
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
                                 <UL>
-                                    <LI> <B>High-Performance -</B> <IMG SRC="src/site/css/img/new.gif"/> Hardware accelerated computing (GPUs) with   
+                                    <LI> <B>High-Performance -</B> <IMG SRC="css/img/new.gif"/> Hardware accelerated computing (GPUs) with   
                                          <A HREF="apidocs/javolution/context/ComputeContext.html">ComputeContext</A>.</LI>
                                     <LI> <B>Minimalistic -</B> <A HREF="apidocs/javolution/util/package-summary.html#package_description">Collection</A> classes, 
                                          supporting custom <A HREF="apidocs/javolution/util/FastCollection.html">views</A>,
@@ -212,7 +212,7 @@
                                          direct interfacing with native applications. Development of the Javolution C++ library  
                                          to mirror its Java counterpart and  makes it easy to port <b>any</b> Java application 
                                          to C++ for native compilation (maven based) or to write Java-Like code directly in C++ 
-                                         (more at <A HREF="src/site/doc/Javolution_Cpp_Overview.pdf">Javolution C++ Overview)</A>).</LI>
+                                         (more at <A HREF="doc/Javolution_Cpp_Overview.pdf">Javolution C++ Overview)</A>).</LI>
                                     <LI> <B>Simple -</B> You don't need to know the hundreds of new Java 8 util.* classes, 
                                           most can be built from scratch by chaining Javolution 
                                           <A HREF="apidocs/javolution/util/FastCollection.html">collections</A> or 
@@ -228,7 +228,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -238,19 +238,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_topten.jpg" WIDTH="370"></TD>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_topten.jpg" WIDTH="370"></TD>
                                     </TR>
                                     <TR>
                                         <TD VALIGN="top">
@@ -258,19 +258,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -336,22 +336,22 @@
                     <TABLE CLASS="quotetable" ALIGN="center" BORDER="0" CELLSPACING="0"
                            CELLPADDING="0" WIDTH="89%">
                         <TR>
-                            <TD HEIGHT="29" BACKGROUND="src/site/css/img/getproduct_bg.jpg">
-                                <DIV ALIGN="center"> <IMG SRC="src/site/css/img/new.gif"/>
+                            <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
+                                <DIV ALIGN="center"> <IMG SRC="css/img/new.gif"/>
                                 <SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 6.1 - December 22nd, 2013</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 7.0 - September 1st, 2016 (Soon!)</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
                                 <DIV ALIGN="center"><A HREF="apidocs/index.html"><IMG HEIGHT="51"
                                                                                                   BORDER="0"
-                                                                                                  SRC="src/site/css/img/browseapi.jpg"
+                                                                                                  SRC="css/img/browseapi.jpg"
                                                                                                   WIDTH="198"></A>
-                                    <A HREF="http://java.net/projects/javolution/sources"><IMG HEIGHT="51" BORDER="0"
-                                                                                               SRC="src/site/css/img/getsource.jpg"
+                                    <A HREF="https://github.com/javolution/javolution"><IMG HEIGHT="51" BORDER="0"
+                                                                                               SRC="css/img/getsource.jpg"
                                                                                                WIDTH="194"></A>
                                     <A HREF="https://maven.java.net/content/repositories/snapshots/org/javolution/"><IMG HEIGHT="51" BORDER="0"
-                                                                                                 SRC="src/site/css/img/getlibrary.jpg"
+                                                                                                 SRC="css/img/getlibrary.jpg"
                                                                                                  WIDTH="198"></A></DIV></TD>
                         </TR>
                     </TABLE>
@@ -360,7 +360,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -370,19 +370,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_usage.jpg" WIDTH="48"></TD>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_usage.jpg" WIDTH="48"></TD>
                                     </TR>
                                     <TR>
                                         <TD VALIGN="top">
@@ -390,19 +390,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -417,7 +417,7 @@
                                 <pre>      &lt;dependency&gt;
           &lt;groupId&gt;org.javolution&lt;/groupId&gt;
           &lt;artifactId&gt;javolution-core-java&lt;/artifactId&gt;
-          &lt;version&gt;6.1.0&lt;/version&gt;
+          &lt;version&gt;7.0.0&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
       The native dynamic library (.dll or .so) is generated from the sources using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
       <BR>
@@ -436,7 +436,7 @@
                     </TABLE>
                     <TABLE CLASS="quotetable2" ALIGN="center" BORDER="0" CELLSPACING="0"
                            CELLPADDING="7" WIDTH="604">
-                        <TR BACKGROUND="src/site/css/img/detailler_bg.jpg">
+                        <TR BACKGROUND="css/img/detailler_bg.jpg">
                             <TD WIDTH="80">
                                 <DIV CLASS="style9" ALIGN="center">Java Packages
                                 </DIV></TD>
@@ -482,8 +482,8 @@
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 Developpers may <A HREF="http://java.net/projects/javolution/sources">download</A> the <code>test-cpp</code> maven submodule which illustrates the use of OSGi and JUnit in C++
                                 Both libraries (Java and C++) provide benchmark tests.
-                                <A HREF="src/site/doc/benchmark_java.html">Here</A> are the Java benchmark results and 
-                                <A HREF="src/site/doc/benchmark_cpp.html">here</A> are the C++ native test results.</TD>
+                                <A HREF="doc/benchmark_java.html">Here</A> are the Java benchmark results and 
+                                <A HREF="doc/benchmark_cpp.html">here</A> are the C++ native test results.</TD>
                         </TR>
                     </TABLE>
 
@@ -492,7 +492,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -502,19 +502,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_tools.jpg" WIDTH="43"></TD>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_tools.jpg" WIDTH="43"></TD>
                                     </TR>
                                     <TR>
                                         <TD VALIGN="top">
@@ -522,19 +522,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -550,10 +550,10 @@
                                 <SPAN CLASS="style13">OpenCL Binding: </SPAN><A HREF="https://code.google.com/p/javacl/">JavaCL<BR> </A>
                                 <SPAN CLASS="style13">Issues Tracking: </SPAN><A HREF="https://java.net/jira/browse/JAVOLUTION">JIRA (java.net)</A> <BR>
                                 <SPAN CLASS="style13">Style Guide:</SPAN>
-                                <A HREF="src/site/doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
+                                <A HREF="doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
                                 <SPAN CLASS="style13">Preferred Environment:</SPAN>
-                                <A HREF="http://www.eclipse.org/">Eclipse</A> (UTF-8 Encoding)
-                                and <A HREF="http://www.netbeans.org/">NetBeans</A> <BR>
+                                <A HREF="http://www.eclipse.org/">Eclipse</A> (Import Project from Git, e.g. 
+                                <code>https://github.com/javolution/javolution</code>).<BR>
                                 <SPAN CLASS="style13">Others:</SPAN>
                                 <A HREF="http://javolution.org/colapi/index.html">Colapi</A> - Maven Plugin to format/colorize Java code in API documentation.</TD>
                         </TR>
@@ -563,7 +563,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -573,19 +573,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_links.jpg" WIDTH="46"></TD>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_links.jpg" WIDTH="46"></TD>
                                     </TR>
                                     <TR>
                                         <TD VALIGN="top">
@@ -593,19 +593,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -667,11 +667,11 @@
                                     <BR></I><B><I>Javolution</I></B>'s users can also show their
                                 support with the "Powered By Javolution" button:<BR>
                                 <BR>
-                                <IMG HEIGHT="32" SRC="src/site/css/img/javolution.png" WIDTH="144">
+                                <IMG HEIGHT="32" SRC="css/img/javolution.png" WIDTH="144">
                                 <BR>
                                 <BR> (e.g. <SPAN CLASS="style15">&lt;a
                                     href="http://javolution.org"&gt;&lt;img
-                                    src="http://javolution.org/src/site/css/img/javolution.png"&gt;&lt;/a&gt;</SPAN>);<BR> this is of course
+                                    src="http://javolution.org/css/img/javolution.png"&gt;&lt;/a&gt;</SPAN>);<BR> this is of course
                                 purely optional. </TD>
                         </TR>
                     </TABLE>
@@ -680,7 +680,7 @@
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="675">
                         <TR>
                             <TD WIDTH="28">
-                                <IMG HEIGHT="59" SRC="src/site/css/img/infobar_left.jpg" WIDTH="28"></TD>
+                                <IMG HEIGHT="59" SRC="css/img/infobar_left.jpg" WIDTH="28"></TD>
                             <TD WIDTH="639">
                                 <TABLE HEIGHT="59" BORDER="0" CELLSPACING="0" CELLPADDING="0"
                                        WIDTH="100%">
@@ -690,19 +690,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topleft.jpg" WIDTH="97">
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topleft.jpg" WIDTH="97">
                                                     </TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
+                                                    <TD BACKGROUND="css/img/infobar_sub_center.jpg" WIDTH="76%">&nbsp;
                                                     </TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="9" SRC="src/site/css/img/infobar_sub_topright.jpg"
+                                                        <IMG HEIGHT="9" SRC="css/img/infobar_sub_topright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                     <TR>
-                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="src/site/css/img/infobar_bg.jpg">
-                                            <IMG HEIGHT="28" SRC="src/site/css/img/a_history.jpg" WIDTH="55"></TD>
+                                        <TD VALIGN="bottom" HEIGHT="35" BACKGROUND="css/img/infobar_bg.jpg">
+                                            <IMG HEIGHT="28" SRC="css/img/a_history.jpg" WIDTH="55"></TD>
                                     </TR>
                                     <TR>
                                         <TD VALIGN="top">
@@ -710,19 +710,19 @@
                                                    WIDTH="100%">
                                                 <TR>
                                                     <TD WIDTH="15%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomleft.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomleft.jpg"
                                                              WIDTH="97"></TD>
-                                                    <TD BACKGROUND="src/site/css/img/infobar_sub_bottommiddle.jpg"
+                                                    <TD BACKGROUND="css/img/infobar_sub_bottommiddle.jpg"
                                                         WIDTH="76%">&nbsp;</TD>
                                                     <TD WIDTH="9%">
-                                                        <IMG HEIGHT="15" SRC="src/site/css/img/infobar_sub_bottomright.jpg"
+                                                        <IMG HEIGHT="15" SRC="css/img/infobar_sub_bottomright.jpg"
                                                              WIDTH="122"></TD>
                                                 </TR>
                                             </TABLE></TD>
                                     </TR>
                                 </TABLE></TD>
-                            <TD BACKGROUND="src/site/css/img/infobar_right.jpg" WIDTH="10">
-                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="src/site/css/img/infobar_right.jpg"
+                            <TD BACKGROUND="css/img/infobar_right.jpg" WIDTH="10">
+                                <DIV ALIGN="right"><IMG HEIGHT="59" SRC="css/img/infobar_right.jpg"
                                                         WIDTH="8"></DIV></TD>
                         </TR>
                     </TABLE>
@@ -733,6 +733,10 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
+                                    <LI CLASS="simplespacer_body"><B>September 1st, 2016: Javolution 7.0</B><BR>
+                                        Moved to <A HREF="https://github.com/javolution/javolution">GitHub</A>
+                                        Moved packages from javolution.* to org.javolution.*
+                                    </LI>
                                     <LI CLASS="simplespacer_body"><B>December 22nd, 2013: Javolution 6.1</B><BR>
                                         Support for GPU accelerated high precisions scientific computing algorithms/applications 
                                         (<A HREF="apidocs/javolution/context/ComputeContext.html">ComputeContext</A>).
@@ -764,22 +768,22 @@
                            WIDTH="92%">
                         <TR>
                             <TD CLASS="simplespacer_body style14" >
-                                <A HREF="http://java.net/projects/javolution"><IMG BORDER="0" SRC="src/site/css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A>
+                                <A HREF="http://java.net/projects/javolution"><IMG BORDER="0" SRC="css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A>
                             </TD>
                             <TD CLASS="simplespacer_body style14">
-                                <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="src/site/css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
+                                <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
                             </TD>
                             <TD CLASS="simplespacer_body style14">
                                 Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
                                 Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : December 22nd, 2013<BR>
+                                Revision      : August 19th, 2016<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
                         <TR>
                             <TD>
                                 <DIV ALIGN="center"><A HREF="http://members.shaw.ca/ventro2/design/"><IMG
-                                            HEIGHT="31" BORDER="0" SRC="src/site/css/img/ventrobanner.jpg"
+                                            HEIGHT="31" BORDER="0" SRC="css/img/ventrobanner.jpg"
                                             WIDTH="590"></A><BR>
                                     <A HREF="http://java.sun.com/">Java</A> is a trademark of <A HREF="http://www.oracle.com/index.html">Oracle, Inc</A>
                                 </DIV>
@@ -788,7 +792,7 @@
                     </TABLE>
                     <BR> </TD>
                 <TD WIDTH="10">
-                    <IMG HEIGHT="100%" SRC="src/site/css/img/bg_right.png" WIDTH="15"></TD>
+                    <IMG HEIGHT="100%" SRC="css/img/bg_right.png" WIDTH="15"></TD>
             </TR>
         </TABLE>
     </BODY>

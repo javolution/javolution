@@ -127,7 +127,7 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public E until(Predicate<? super E> matching) { // Optimization.
+	public E until(final Predicate<? super E> matching) { // Optimization.
 		return inner.until(new Predicate<E>() {
 			@Override
 			public boolean test(E param) {

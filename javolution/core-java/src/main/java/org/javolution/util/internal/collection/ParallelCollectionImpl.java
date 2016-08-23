@@ -83,7 +83,7 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public void forEach(Consumer<? super E> consumer) {
+	public void forEach(final Consumer<? super E> consumer) {
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
 			int concurrency = ctx.getConcurrency();
@@ -115,7 +115,7 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public E reduce(BinaryOperator<E> operator) {
+	public E reduce(final BinaryOperator<E> operator) {
 		final E[] results;
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
@@ -145,7 +145,7 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 	}
 
 	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
+	public boolean removeIf(final Predicate<? super E> filter) {
 		final AtomicBoolean changed = new AtomicBoolean(false);
 		ConcurrentContext ctx = ConcurrentContext.enter();
 		try {
@@ -178,7 +178,7 @@ public class ParallelCollectionImpl<E> extends FastCollection<E> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public E until(Predicate<? super E> matching) {
+	public E until(final Predicate<? super E> matching) {
 		final AtomicReference<Object> found = new AtomicReference<Object>(
 				NOT_FOUND);
 		final Predicate<E> matchingOrFound = new Predicate<E>() {

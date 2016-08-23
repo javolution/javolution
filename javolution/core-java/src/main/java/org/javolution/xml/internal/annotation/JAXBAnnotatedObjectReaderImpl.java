@@ -297,9 +297,11 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		// We'll push the output object onto the stack as an initial entry. All stack entries get wrapped in an AnnotationStackData class.
 		// The fields in this class are package-private to provide as cheap of access as possible since they are used frequently.
 		AnnotationStackData stackData;
+		FastSet<CharArray> requiredSet = FastSet.newSet(Order.LEXICAL);
+		
 		if(_isValidating){
 			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null,
-					FastSet.newSet(Order.LEXICAL), getXmlPropOrder(inputClass));
+					requiredSet, getXmlPropOrder(inputClass));
 		}
 		else {
 			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null, null, null);

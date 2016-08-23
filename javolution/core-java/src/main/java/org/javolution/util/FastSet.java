@@ -10,6 +10,7 @@ package org.javolution.util;
 
 import static org.javolution.lang.Realtime.Limit.CONSTANT;
 import static org.javolution.lang.Realtime.Limit.LINEAR;
+import static org.javolution.lang.Realtime.Limit.UNKNOWN;
 
 import java.util.NavigableSet;
 
@@ -83,7 +84,11 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     	return new SparseSet<E>(comparator);
     }
 
-	////////////////////////////////////////////////////////////////////////////
+    @Override
+	@Realtime(limit = UNKNOWN)
+	public abstract Iterator<E> iterator(); // To avoid clash with java.util.NavigableSet#iterator
+    
+    ////////////////////////////////////////////////////////////////////////////
     // Change in time limit behavior.
     //
 
