@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot type="Test6" xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testElement>
+		<testIntElement>1</testIntElement>
+		<testBooleanElement>true</testBooleanElement>
+	</testElement>
+	<testElement>
+		<testLongElement>999999999999999</testLongElement>
+		<testStringElement>ABC</testStringElement>
+	</testElement>
+	<testElement>
+		<testIntElement>131</testIntElement>
+		<testLongElement>333333333333333</testLongElement>
+		<testBooleanElement>true</testBooleanElement>
+		<testFloatElement>5.0</testFloatElement>
+		<testDoubleElement>11152.725</testDoubleElement>
+		<testStringElement>TEST</testStringElement>
+	</testElement>
+	<testElement>
+		<testFloatElement>1.0</testFloatElement>
+		<testDoubleElement>83952.1525</testDoubleElement>
+	</testElement>
+	<testElement>
+		<testBooleanElement>false</testBooleanElement>
+		<testStringElement>DEF</testStringElement>
+	</testElement>
+	<testElement>
+		<testIntElement>153</testIntElement>
+		<testFloatElement>9.0</testFloatElement>
+	</testElement>
+</ns2:testRoot>

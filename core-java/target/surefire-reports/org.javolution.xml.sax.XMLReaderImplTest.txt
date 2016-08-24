@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.javolution.xml.sax.XMLReaderImplTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.048 sec - in org.javolution.xml.sax.XMLReaderImplTest

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.javolution.util.FastSetTest" time="0.01" tests="13" errors="9" skipped="0" failures="2">
+  <properties>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386"/>
+    <property name="java.vm.version" value="25.45-b02"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="maven.multiModuleProjectDirectory" value="/home/ubuntu/workspace/javolution/javolution/core-java"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="OpenJDK Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/home/ubuntu/workspace/javolution/javolution/core-java"/>
+    <property name="java.runtime.version" value="1.8.0_45-internal-b14"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/endorsed"/>
+    <property name="os.arch" value="i386"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Linux"/>
+    <property name="classworlds.conf" value="/home/ubuntu/workspace/.metadata/.plugins/org.eclipse.m2e.launching/launches/m2conf3171514128192128333.tmp"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386/server:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386::/usr/java/packages/lib/i386:/usr/lib/i386-linux-gnu/jni:/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot Tiered Compilers"/>
+    <property name="os.version" value="3.19.0-26-generic"/>
+    <property name="user.home" value="/home/ubuntu"/>
+    <property name="user.timezone" value="Europe/Paris"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="user.name" value="ubuntu"/>
+    <property name="java.class.path" value="/home/ubuntu/eclipse/java-neon/eclipse/../../../.p2/pool/plugins/org.eclipse.m2e.maven.runtime_1.7.0.20160603-1931/jars/plexus-classworlds-2.5.2.jar:/usr/share/java/jayatanaag.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="32"/>
+    <property name="java.home" value="/usr/lib/jvm/java-8-openjdk-i386/jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -B install"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_45-internal"/>
+    <property name="java.ext.dirs" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/ext:/usr/java/packages/lib/ext"/>
+    <property name="securerandom.source" value="file:/dev/./urandom"/>
+    <property name="sun.boot.class.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/classes"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="maven.home" value="/home/ubuntu/workspace/javolution/javolution/core-java/EMBEDDED"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.desktop" value="gnome"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase name="testUnmodifiableView" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error message="Unexpected exception, expected&lt;java.lang.UnsupportedOperationException&gt; but was&lt;java.lang.NullPointerException&gt;" type="java.lang.Exception"><![CDATA[java.lang.Exception: Unexpected exception, expected<java.lang.UnsupportedOperationException> but was<java.lang.NullPointerException>
+	at org.javolution.util.FastSetTest.testUnmodifiableView(FastSetTest.java:171)
+]]></error>
+  </testcase>
+  <testcase name="testIteratorAndSetRetainsInsertOrder" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastSetTest.testIteratorAndSetRetainsInsertOrder(FastSetTest.java:101)
+</error>
+  </testcase>
+  <testcase name="testAny" classname="org.javolution.util.FastSetTest" time="0.003">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.until(FastCollection.java:352)
+	at org.javolution.util.FastCollection.any(FastCollection.java:398)
+	at org.javolution.util.FastSetTest.testAny(FastSetTest.java:41)
+</error>
+  </testcase>
+  <testcase name="testMax" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.reduce(FastCollection.java:385)
+	at org.javolution.util.FastCollection.max(FastCollection.java:423)
+	at org.javolution.util.FastSetTest.testMax(FastSetTest.java:114)
+</error>
+  </testcase>
+  <testcase name="testMin" classname="org.javolution.util.FastSetTest" time="0">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.reduce(FastCollection.java:385)
+	at org.javolution.util.FastCollection.min(FastCollection.java:434)
+	at org.javolution.util.FastSetTest.testMin(FastSetTest.java:124)
+</error>
+  </testcase>
+  <testcase name="testClear" classname="org.javolution.util.FastSetTest" time="0">
+    <failure message="Set Is Empty After Clear" type="java.lang.AssertionError">java.lang.AssertionError: Set Is Empty After Clear
+	at org.junit.Assert.fail(Assert.java:88)
+	at org.junit.Assert.assertTrue(Assert.java:41)
+	at org.javolution.util.FastSetTest.testClear(FastSetTest.java:62)
+</failure>
+  </testcase>
+  <testcase name="testSize" classname="org.javolution.util.FastSetTest" time="0"/>
+  <testcase name="testRetainAll" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.addAll(FastCollection.java:531)
+	at org.javolution.util.FastCollection.retainAll(FastCollection.java:577)
+	at org.javolution.util.FastSetTest.testRetainAll(FastSetTest.java:137)
+</error>
+  </testcase>
+  <testcase name="testContainsAll" classname="org.javolution.util.FastSetTest" time="0">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.containsAll(FastCollection.java:542)
+	at org.javolution.util.FastSetTest.testContainsAll(FastSetTest.java:82)
+</error>
+  </testcase>
+  <testcase name="testContains" classname="org.javolution.util.FastSetTest" time="0"/>
+  <testcase name="testReversedView" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error type="java.lang.NullPointerException:">java.lang.NullPointerException: null
+	at org.javolution.util.FastSetTest.testReversedView(FastSetTest.java:152)
+</error>
+  </testcase>
+  <testcase name="testCaseInsensitiveSetWithLexicalCaseInsensitive" classname="org.javolution.util.FastSetTest" time="0.001">
+    <error message="String index out of range: -1" type="java.lang.StringIndexOutOfBoundsException">java.lang.StringIndexOutOfBoundsException: String index out of range: -1
+	at java.lang.String.charAt(String.java:646)
+	at org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl.areEqual(CaseInsensitiveLexicalOrderImpl.java:41)
+	at org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl.areEqual(CaseInsensitiveLexicalOrderImpl.java:18)
+	at org.javolution.util.SparseMap.getEntry(SparseMap.java:106)
+	at org.javolution.util.FastMap.containsKey(FastMap.java:342)
+	at org.javolution.util.SparseSet.contains(SparseSet.java:78)
+	at org.javolution.util.FastSetTest.testCaseInsensitiveSetWithLexicalCaseInsensitive(FastSetTest.java:52)
+</error>
+  </testcase>
+  <testcase name="testIsEmpty" classname="org.javolution.util.FastSetTest" time="0.001">
+    <failure message="Set Is Empty" type="java.lang.AssertionError">java.lang.AssertionError: Set Is Empty
+	at org.junit.Assert.fail(Assert.java:88)
+	at org.junit.Assert.assertTrue(Assert.java:41)
+	at org.javolution.util.FastSetTest.testIsEmpty(FastSetTest.java:87)
+</failure>
+  </testcase>
+</testsuite>

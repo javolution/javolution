@@ -1,0 +1,250 @@
+-------------------------------------------------------------------------------
+Test set: org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest
+-------------------------------------------------------------------------------
+Tests run: 41, Failures: 0, Errors: 41, Skipped: 0, Time elapsed: 0.104 sec <<< FAILURE! - in org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest
+testReadJaxbObjectWithOutOfOrderElementAndValidationOff(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.034 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithDecimalAndInteger(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithUnmappedElementAndValidationOff(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithJAXBElementWrappingAndAnotherName(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithStreamSource(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithBinaryElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithAnyElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithMoreThanOneOfSameElementWithMixedData(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithMissingRequiredAttributeAndValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasic(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithValueElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithBoundedElementWithNestedAttributeOnly(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithInputSource(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.002 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithCustomObjectFactory(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithEmptyElements(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithAllBasicDatatypes(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithCDataString(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithChoiceElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.002 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithJAXBElementWrapping(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.005 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithMissingRequiredElementAndValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithUnsupportedSource(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithMissingRequiredElementAndValidationOff(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithRootContextAndJAXBElementFromCommonSchema(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.002 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithLargeNestedMixedObject(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithMissingRequiredAttributeAndValidationOff(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithOutOfOrderElementAndValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithUnmappedAttributeAndValidationOff(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithBoundedAndUnboundedNesting(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithUnmappedAttributeAndValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithBoundedElementAndMixedBoundedNesting(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.022 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithNamespaceElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithReader(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectBasicWithSource(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithUnsignedElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithUnmappedElementAndValidationOn(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithSkippedElements(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithLargeValidNestedMixedObject(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithEnumAndDate(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithDifferentDateFormats(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+
+testReadJaxbObjectWithCommonElement(org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.xml.internal.annotation.AbstractJAXBAnnotatedObjectParser.<init>(AbstractJAXBAnnotatedObjectParser.java:132)
+	at org.javolution.xml.internal.annotation.JAXBAnnotatedObjectReaderImpl.<init>(JAXBAnnotatedObjectReaderImpl.java:77)
+	at org.javolution.xml.annotation.JAXBAnnotatedObjectReaderTest.init(JAXBAnnotatedObjectReaderTest.java:64)
+

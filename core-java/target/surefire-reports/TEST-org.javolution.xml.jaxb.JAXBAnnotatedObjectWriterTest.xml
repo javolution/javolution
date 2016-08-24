@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.788" tests="19" errors="19" skipped="0" failures="0">
+  <properties>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386"/>
+    <property name="java.vm.version" value="25.45-b02"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="maven.multiModuleProjectDirectory" value="/home/ubuntu/workspace/javolution/javolution/core-java"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="OpenJDK Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/home/ubuntu/workspace/javolution/javolution/core-java"/>
+    <property name="java.runtime.version" value="1.8.0_45-internal-b14"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/endorsed"/>
+    <property name="os.arch" value="i386"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Linux"/>
+    <property name="classworlds.conf" value="/home/ubuntu/workspace/.metadata/.plugins/org.eclipse.m2e.launching/launches/m2conf3171514128192128333.tmp"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386/server:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/i386::/usr/java/packages/lib/i386:/usr/lib/i386-linux-gnu/jni:/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot Tiered Compilers"/>
+    <property name="os.version" value="3.19.0-26-generic"/>
+    <property name="user.home" value="/home/ubuntu"/>
+    <property name="user.timezone" value="Europe/Paris"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="user.name" value="ubuntu"/>
+    <property name="java.class.path" value="/home/ubuntu/eclipse/java-neon/eclipse/../../../.p2/pool/plugins/org.eclipse.m2e.maven.runtime_1.7.0.20160603-1931/jars/plexus-classworlds-2.5.2.jar:/usr/share/java/jayatanaag.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="32"/>
+    <property name="java.home" value="/usr/lib/jvm/java-8-openjdk-i386/jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -B install"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_45-internal"/>
+    <property name="java.ext.dirs" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/ext:/usr/java/packages/lib/ext"/>
+    <property name="securerandom.source" value="file:/dev/./urandom"/>
+    <property name="sun.boot.class.path" value="/usr/lib/jvm/java-8-openjdk-i386/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-i386/jre/classes"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="maven.home" value="/home/ubuntu/workspace/javolution/javolution/core-java/EMBEDDED"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.desktop" value="gnome"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase name="testWithValueElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.498">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithValueElement(JAXBAnnotatedObjectWriterTest.java:178)
+</error>
+  </testcase>
+  <testcase name="testLargeValidNestedMixedObject" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.063">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testLargeValidNestedMixedObject(JAXBAnnotatedObjectWriterTest.java:83)
+</error>
+  </testcase>
+  <testcase name="testWithChoiceElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.011">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithChoiceElement(JAXBAnnotatedObjectWriterTest.java:119)
+</error>
+  </testcase>
+  <testcase name="testWithMissingRequiredElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.013">
+    <error message="Unexpected exception, expected&lt;javax.xml.bind.MarshalException&gt; but was&lt;javax.xml.bind.UnmarshalException&gt;" type="java.lang.Exception"><![CDATA[java.lang.Exception: Unexpected exception, expected<javax.xml.bind.MarshalException> but was<javax.xml.bind.UnmarshalException>
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithMissingRequiredElement(JAXBAnnotatedObjectWriterTest.java:153)
+]]></error>
+  </testcase>
+  <testcase name="testSmall" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.011">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testSmall(JAXBAnnotatedObjectWriterTest.java:38)
+</error>
+  </testcase>
+  <testcase name="testWithBasicDatatypes" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.017">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithBasicDatatypes(JAXBAnnotatedObjectWriterTest.java:101)
+</error>
+  </testcase>
+  <testcase name="testWithEnumAndDate" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.015">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithEnumAndDate(JAXBAnnotatedObjectWriterTest.java:128)
+</error>
+  </testcase>
+  <testcase name="testLargeNestedMixedObject" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.012">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testLargeNestedMixedObject(JAXBAnnotatedObjectWriterTest.java:74)
+</error>
+  </testcase>
+  <testcase name="testBoundedElementWithMixedBoundedNesting" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.015">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testBoundedElementWithMixedBoundedNesting(JAXBAnnotatedObjectWriterTest.java:47)
+</error>
+  </testcase>
+  <testcase name="testWithQNameElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.023">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithQNameElement(JAXBAnnotatedObjectWriterTest.java:160)
+</error>
+  </testcase>
+  <testcase name="testWithDecimalAndInteger" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.007">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithDecimalAndInteger(JAXBAnnotatedObjectWriterTest.java:196)
+</error>
+  </testcase>
+  <testcase name="testWithSkippedElements" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.036">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithSkippedElements(JAXBAnnotatedObjectWriterTest.java:137)
+</error>
+  </testcase>
+  <testcase name="testWithMissingRequiredAttribute" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0">
+    <error message="Unexpected exception, expected&lt;javax.xml.bind.MarshalException&gt; but was&lt;javax.xml.bind.UnmarshalException&gt;" type="java.lang.Exception"><![CDATA[java.lang.Exception: Unexpected exception, expected<javax.xml.bind.MarshalException> but was<javax.xml.bind.UnmarshalException>
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithMissingRequiredAttribute(JAXBAnnotatedObjectWriterTest.java:146)
+]]></error>
+  </testcase>
+  <testcase name="testWithBinaryElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.005">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithBinaryElement(JAXBAnnotatedObjectWriterTest.java:169)
+</error>
+  </testcase>
+  <testcase name="testWithCDataString" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.015">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithCDataString(JAXBAnnotatedObjectWriterTest.java:110)
+</error>
+  </testcase>
+  <testcase name="testCommonElement" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.014">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testCommonElement(JAXBAnnotatedObjectWriterTest.java:65)
+</error>
+  </testcase>
+  <testcase name="testMoreThanOneOfSameElementWithMixedData" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.013">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testMoreThanOneOfSameElementWithMixedData(JAXBAnnotatedObjectWriterTest.java:92)
+</error>
+  </testcase>
+  <testcase name="testBoundedElementWithNestedAttributeOnly" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.009">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testBoundedElementWithNestedAttributeOnly(JAXBAnnotatedObjectWriterTest.java:56)
+</error>
+  </testcase>
+  <testcase name="testWithEmptyElements" classname="org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest" time="0.011">
+    <error type="javax.xml.bind.UnmarshalException:">javax.xml.bind.UnmarshalException: null
+	at org.javolution.io.CharSequenceReader.read(CharSequenceReader.java:129)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.load(XMLEntityScanner.java:1743)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.arrangeCapacity(XMLEntityScanner.java:1614)
+	at com.sun.org.apache.xerces.internal.impl.XMLEntityScanner.skipString(XMLEntityScanner.java:1652)
+	at com.sun.org.apache.xerces.internal.impl.XMLVersionDetector.determineDocVersion(XMLVersionDetector.java:196)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:812)
+	at com.sun.org.apache.xerces.internal.parsers.XML11Configuration.parse(XML11Configuration.java:777)
+	at com.sun.org.apache.xerces.internal.parsers.XMLParser.parse(XMLParser.java:141)
+	at com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1213)
+	at com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:649)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal0(UnmarshallerImpl.java:243)
+	at com.sun.xml.internal.bind.v2.runtime.unmarshaller.UnmarshallerImpl.unmarshal(UnmarshallerImpl.java:214)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:157)
+	at javax.xml.bind.helpers.AbstractUnmarshallerImpl.unmarshal(AbstractUnmarshallerImpl.java:214)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.readJAXBObjectWithJDK(JAXBAnnotatedObjectWriterTest.java:212)
+	at org.javolution.xml.jaxb.JAXBAnnotatedObjectWriterTest.testWithEmptyElements(JAXBAnnotatedObjectWriterTest.java:187)
+</error>
+  </testcase>
+</testsuite>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonRoot xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testUnsignedElement>
+		<testUnsignedIntElement>3000000000</testUnsignedIntElement>
+		<testUnsignedShortElement>60000</testUnsignedShortElement>
+		<testUnsignedByteElement>200</testUnsignedByteElement>
+	</testUnsignedElement>
+</ns2:testCommonRoot>

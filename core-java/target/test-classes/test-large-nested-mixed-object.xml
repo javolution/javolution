@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot type="Test6" type2="Test9" xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testElement>
+		<testIntElement>1</testIntElement>
+		<testBooleanElement>true</testBooleanElement>
+	</testElement>
+	<testElement>
+		<testLongElement>999999999999999</testLongElement>
+		<testStringElement>ABC</testStringElement>
+	</testElement>
+	<testElement>
+		<testIntElement>131</testIntElement>
+		<testLongElement>333333333333333</testLongElement>
+		<testBooleanElement>true</testBooleanElement>
+		<testFloatElement>5.0</testFloatElement>
+		<testDoubleElement>11152.725</testDoubleElement>
+		<testStringElement>TEST</testStringElement>
+	</testElement>
+	<testElement>
+		<testFloatElement>1.0</testFloatElement>
+		<testDoubleElement>83952.1525</testDoubleElement>
+	</testElement>
+	<testElement>
+		<testBooleanElement>false</testBooleanElement>
+		<testStringElement>DEF</testStringElement>
+	</testElement>
+	<testElement>
+		<testIntElement>153</testIntElement>
+		<testFloatElement>9.0</testFloatElement>
+	</testElement>
+	<testElement>
+		<testDateElement>1988-01-01</testDateElement>
+	</testElement>
+	<testElement>
+		<testDateElement>1979-01-01T01:23:45</testDateElement>
+	</testElement>
+	<testValidationElement>
+		<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+		<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>
+	</testValidationElement>
+	<testValidationElement>
+		<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+	</testValidationElement>
+	<testAttributeElement stringAttribute="string"
+		intAttribute="1" longAttribute="1" booleanAttribute="true"
+		floatAttribute="1.0" doubleAttribute="1.0" byteAttribute="1"
+		shortAttribute="1" dateAttribute="1960-01-01" />
+	<testAttributeElement stringAttribute="string2"
+		intAttribute="2" longAttribute="2" booleanAttribute="false"
+		floatAttribute="2.0" doubleAttribute="2.0" byteAttribute="2"
+		shortAttribute="2" dateAttribute="1963-01-01" />
+	<testAttributeElement stringAttribute="string3" />
+	<testAttributeElement intAttribute="4"
+		longAttribute="4" />
+	<testBoundedWrapperElement>
+		<testElement>
+			<testIntElement>131</testIntElement>
+			<testLongElement>333333333333333</testLongElement>
+			<testBooleanElement>true</testBooleanElement>
+			<testFloatElement>5.0</testFloatElement>
+			<testDoubleElement>11152.725</testDoubleElement>
+			<testStringElement>TEST</testStringElement>
+		</testElement>
+		<testValidationElement>
+			<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>
+		</testValidationElement>
+		<testAttributeElement stringAttribute="string3"
+			intAttribute="3" longAttribute="3" booleanAttribute="true"
+			floatAttribute="3.0" doubleAttribute="3.0" byteAttribute="3"
+			shortAttribute="3" dateAttribute="1999-01-01" />
+	</testBoundedWrapperElement>
+	<testUnboundedWrapperElement>
+		<testElement>
+			<testIntElement>231</testIntElement>
+			<testLongElement>4444444444444</testLongElement>
+			<testBooleanElement>true</testBooleanElement>
+			<testFloatElement>50.0</testFloatElement>
+			<testDoubleElement>21152.725</testDoubleElement>
+			<testStringElement>TEST2</testStringElement>
+		</testElement>
+		<testValidationElement>
+			<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+		</testValidationElement>
+		<testAttributeElement stringAttribute="string4"
+			intAttribute="4" longAttribute="4" booleanAttribute="true"
+			floatAttribute="4.0" doubleAttribute="4.0" byteAttribute="4"
+			shortAttribute="4" dateAttribute="2002-01-01" />
+	</testUnboundedWrapperElement>
+	<testUnboundedWrapperElement>
+		<testElement>
+			<testIntElement>331</testIntElement>
+			<testLongElement>5555555555555</testLongElement>
+			<testBooleanElement>true</testBooleanElement>
+			<testFloatElement>60.0</testFloatElement>
+			<testDoubleElement>61152.725</testDoubleElement>
+			<testStringElement>TEST3</testStringElement>
+		</testElement>
+		<testValidationElement>
+			<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+			<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>			
+			<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+		</testValidationElement>
+		<testAttributeElement stringAttribute="string5"
+			intAttribute="5" longAttribute="5" booleanAttribute="true"
+			floatAttribute="5.0" doubleAttribute="5.0" byteAttribute="5"
+			shortAttribute="5" dateAttribute="1934-01-01" />
+	</testUnboundedWrapperElement>
+</ns2:testRoot>

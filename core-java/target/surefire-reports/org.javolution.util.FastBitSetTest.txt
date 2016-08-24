@@ -1,0 +1,19 @@
+-------------------------------------------------------------------------------
+Test set: org.javolution.util.FastBitSetTest
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 3, Skipped: 0, Time elapsed: 0.021 sec <<< FAILURE! - in org.javolution.util.FastBitSetTest
+testAnd(org.javolution.util.FastBitSetTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.addAll(FastCollection.java:531)
+	at org.javolution.util.FastBitSetTest.testAnd(FastBitSetTest.java:39)
+
+testXOr(org.javolution.util.FastBitSetTest)  Time elapsed: 0.001 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.addAll(FastCollection.java:531)
+	at org.javolution.util.FastBitSetTest.testXOr(FastBitSetTest.java:158)
+
+testOr(org.javolution.util.FastBitSetTest)  Time elapsed: 0 sec  <<< ERROR!
+java.lang.NullPointerException: null
+	at org.javolution.util.FastCollection.addAll(FastCollection.java:531)
+	at org.javolution.util.FastBitSetTest.testOr(FastBitSetTest.java:130)
+

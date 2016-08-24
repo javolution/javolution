@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.javolution.text.TypeFormatTest
+-------------------------------------------------------------------------------
+Tests run: 48, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 sec - in org.javolution.text.TypeFormatTest

@@ -1,0 +1,14 @@
+-------------------------------------------------------------------------------
+Test set: org.javolution.text.TextTest
+-------------------------------------------------------------------------------
+Tests run: 56, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.033 sec <<< FAILURE! - in org.javolution.text.TextTest
+testIntern(org.javolution.text.TextTest)  Time elapsed: 0.002 sec  <<< ERROR!
+java.lang.ArrayIndexOutOfBoundsException: -1
+	at org.javolution.text.Text.charAt(Text.java:948)
+	at org.javolution.util.internal.function.LexicalOrderImpl.areEqual(LexicalOrderImpl.java:42)
+	at org.javolution.util.internal.function.LexicalOrderImpl.areEqual(LexicalOrderImpl.java:18)
+	at org.javolution.util.SparseMap.getEntry(SparseMap.java:106)
+	at org.javolution.util.FastMap.get(FastMap.java:359)
+	at org.javolution.text.Text.intern(Text.java:753)
+	at org.javolution.text.TextTest.testIntern(TextTest.java:160)
+

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonRoot xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testAnyElement>
+		<testAnySimpleTypeElement xsi:type="xs:string"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">A</testAnySimpleTypeElement>
+	</testAnyElement>
+</ns2:testCommonRoot>

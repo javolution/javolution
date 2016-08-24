@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonRoot xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testBinaryElement>
+		<testBase64Element>dGVzdEJhc2U2NA==</testBase64Element>
+		<testHexElement>ABCDEF</testHexElement>
+	</testBinaryElement>
+</ns2:testCommonRoot>

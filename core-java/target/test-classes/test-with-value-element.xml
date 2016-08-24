@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:testCommonRoot xmlns:ns2="http://javolution.org/xml/schema/javolution-common">
+	<testValueElement stringAttribute="testValueAttribute">testValue
+	</testValueElement>
+</ns2:testCommonRoot>

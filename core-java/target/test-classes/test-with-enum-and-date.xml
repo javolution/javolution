@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:testRoot xmlns:ns2="http://javolution.org/xml/schema/javolution">
+	<testElement>
+		<testDateElement>1988-01-01</testDateElement>
+	</testElement>
+	<testElement>
+		<testDateElement>1979-01-01T01:23:45</testDateElement>
+	</testElement>
+	<testValidationElement>
+		<testUnboundedEnumElement>TEST_ENUM_ONE</testUnboundedEnumElement>
+		<testUnboundedEnumElement>TEST_ENUM_THREE</testUnboundedEnumElement>
+	</testValidationElement>
+	<testValidationElement>
+		<testUnboundedEnumElement>TEST_ENUM_TWO</testUnboundedEnumElement>
+	</testValidationElement>
+</ns2:testRoot>
