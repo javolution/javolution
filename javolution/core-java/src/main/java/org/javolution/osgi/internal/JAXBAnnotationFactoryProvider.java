@@ -8,9 +8,8 @@
  */
 package org.javolution.osgi.internal;
 
-import org.javolution.xml.annotation.JAXBAnnotationFactory;
-import org.javolution.xml.internal.annotation.JAXBAnnotationFactoryImpl;
-
+import org.javolution.xml.internal.jaxb.JAXBAnnotationFactoryImpl;
+import org.javolution.xml.jaxb.JAXBAnnotationFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceRegistration;
