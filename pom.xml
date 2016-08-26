@@ -29,11 +29,11 @@
     <name>Javolution</name>
     <url>http://javolution.org</url>
     <description>Javolution - Java Solution for Real-Time and Embedded Systems.
-        This project provides a Java library and a (mirror) C++ library.
-        Both libraries are maven-based and can be used to build multi-platform real-time applications 
-        or to port Java applications to C++. The C++ library contains already a port of OSGi and JUnit 
-        (demonstrated by the subproject test-cpp). 
-        On Windows, the C++ module require Visual C++ to be installed (see link below).        
+        This project provides a cross platform library (Java and native Linux/Solaris/Windows)
+        for real-time and high-performance applications (e.g. embedded software).  
+        Using Javolution, it is straight forward to port Java code to C++ (java-like syntax).
+        A port of standard java classes (java.lang.*), OSGi and JUnit is included in the library.
+        On Windows, the C++ module require Visual Studio to be installed (see link below).        
     </description>
     <licenses>
         <license>
@@ -71,7 +71,6 @@
     <!-- ======================================================= -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <native.compilerConcurrency>16</native.compilerConcurrency>                
     </properties>
     
     <!-- ======================================================= -->
@@ -89,6 +88,7 @@
                 <native.classifier>win32</native.classifier>  
                 <native.dll>dll</native.dll> <!-- Default -->
                 <native.exe>exe</native.exe>                  
+                <native.compilerConcurrency>1</native.compilerConcurrency>  <!--  Bug in Visual Studio 2013 for parallel compilations -->              
                 
                 <!-- Only maven dependencies to dynamic libraries are supported 
                      since we build either a dynamic library (default) or an executable.  --> 
@@ -97,9 +97,9 @@
                 <runtime.dependency.type>dll</runtime.dependency.type>
                 <runtime.dependency.classifier>win32</runtime.dependency.classifier>
           
-                <!-- Microsoft Visual C++ 2010 can be installed free of charge from: http://www.microsoft.com/visualstudio/eng/products/visual-studio-2010-express  -->                
-                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2010x86EnvFactory</native.envFactoryName>                 
+                <!-- Microsoft Visual Studio Community 2013 can be installed free of charge from: https://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx  -->                
                 <native.compilerProvider>msvc</native.compilerProvider>
+                <native.envFactoryName>org.codehaus.mojo.natives.msvc.MSVC2013x86EnvFactory</native.envFactoryName>                 
                 <native.compilerExecutable />
                 <native.linkerProvider>msvc</native.linkerProvider>
                 <native.linkerExecutable />
@@ -127,6 +127,7 @@
              <native.classifier>linux</native.classifier>  
                 <native.dll>so</native.dll> <!-- Default -->
                 <native.exe>exe</native.exe>                  
+                <native.compilerConcurrency>16</native.compilerConcurrency>
                 
                 <!-- Only maven dependencies to dynamic libraries are supported 
                      since we build either a dynamic library (default) or an executable.  --> 
@@ -164,6 +165,7 @@
              <native.classifier>solaris</native.classifier>  
                 <native.dll>so</native.dll> <!-- Default -->
                 <native.exe>exe</native.exe>                  
+                <native.compilerConcurrency>16</native.compilerConcurrency>
                 
                 <!-- Only maven dependencies to dynamic libraries are supported 
                      since we build either a dynamic library (default) or an executable.  --> 
