@@ -37,7 +37,7 @@ public class CaseInsensitiveLexicalOrderImpl implements Order<CharSequence>,
 		int n = left.length();
 		if (right.length() != n)
 			return false;
-		for (int i = n; i >= fromIndex;) { // Search from the tail.
+		for (int i = n; i > fromIndex;) { // Search from the tail.
 			if (Character.toUpperCase(left.charAt(--i)) != 
 					Character.toUpperCase(right.charAt(i)))
 				return false;
