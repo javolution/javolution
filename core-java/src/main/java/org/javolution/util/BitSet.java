@@ -635,8 +635,21 @@ public class BitSet extends FastSet<Index> {
 
 	@Override
 	public org.javolution.util.FastCollection.Iterator<Index> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return new Iterator<Index>(){
+			private int i;
+			@Override
+			public boolean hasNext() {
+				int i = nextSetBit(this.i);
+				if(i<0) return false;
+				this.i = i;
+				return true;
+			}
+
+			@Override
+			public Index next() {
+				return Index.of(i++);
+			}
+		};
 	}
 
 	@Override
