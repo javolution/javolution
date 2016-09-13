@@ -38,7 +38,7 @@ public class LexicalOrderImpl implements Order<CharSequence>,
 		int n = left.length();
 		if (right.length() != n)
 			return false;
-		for (int i = n; i >= fromIndex;) { // Search from the tail.
+		for (int i = n; i > fromIndex;) { // Search from the tail.
 			if (left.charAt(--i) != right.charAt(i))
 				return false;
 		}
