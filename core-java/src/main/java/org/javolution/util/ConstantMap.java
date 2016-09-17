@@ -106,8 +106,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 	
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public V remove(Object key) {
@@ -115,8 +115,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public V put(K key, V value) {
@@ -124,8 +124,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
         
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public void putAll(Map<? extends K, ? extends V> that) {
@@ -133,8 +133,17 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
+     */
+    @Override
+    public void putAll(K key, V value, Object...others) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public void clear() {
@@ -142,8 +151,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public V putIfAbsent(K key, V value) {
@@ -151,8 +160,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public boolean remove(Object key, Object value) {
@@ -160,8 +169,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
@@ -169,8 +178,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public V replace(K key, V value) {
@@ -178,8 +187,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
     
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public Entry<K, V> pollFirstEntry() {
@@ -187,8 +196,8 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     @Override
     public Entry<K, V> pollLastEntry() {
@@ -216,16 +225,16 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
     
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     public Entry<K,V> putEntry(K key, V value) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
     /** 
-     * Guaranteed to throw an exception and leave the set unmodified.
-     * @deprecated Should never be used on immutable set.
+     * Guaranteed to throw an exception and leave the map unmodified.
+     * @deprecated Should never be used on immutable map.
      */
     public Entry<K,V> removeEntry(K key) {
         throw new UnsupportedOperationException(ERROR_MSG);

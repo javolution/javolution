@@ -194,7 +194,13 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
 		inner.putAll(that);
 		innerConst = inner.clone();
 	}
-
+	
+    @Override
+    public synchronized void putAll(K key, V value, Object... others) {
+        inner.putAll(key, value, others);
+        innerConst = inner.clone();
+    }
+	
 	@Override
 	public synchronized V putIfAbsent(K key, V value) {
 		V previous = inner.putIfAbsent(key, value);

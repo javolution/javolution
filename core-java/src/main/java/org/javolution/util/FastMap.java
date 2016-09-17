@@ -78,9 +78,10 @@ import org.javolution.util.internal.map.ValuesImpl;
  * 
  *  <p> The entry/key/value views over a map are instances of {@link FastCollection} which supports parallel processing.
  * <pre>{@code
- * FastMap<String, Value> names = ...
- * names.values().removeIf(v -> v == null); // Remove all entries with null values.
- * names.values().parallel().removeIf(v -> v == null); // Same but performed in parallel.
+ * FastMap<String, Integer> ranking = FastMap.newMap();
+ * ranking.putAll("John Doe", 234, "Jane Dee", 123, "Sam Anta", null); 
+ * ranking.values().removeIf(v -> v == null); // Remove all entries with null values.
+ * ranking.values().parallel().removeIf(v -> v == null); // Same but performed in parallel.
  * }</pre></p>
  * 
  * <p> Finally, it should be noted that FastMap allows for {@code null} keys and values (unlike 
@@ -356,6 +357,15 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     public void putAll(Map<? extends K, ? extends V> that) {
     	for (java.util.Map.Entry<? extends K, ? extends V> entry : that.entrySet()) 
 			put(entry.getKey(), entry.getValue());
+    }
+
+    /** Adds the specified key-value pairs to this maps.*/ 
+    @SuppressWarnings("unchecked")
+    @Realtime(limit = LINEAR)
+    public void putAll(K key, V value, Object... others) {
+        put(key, value);
+        for (int i=0; i < others.length; i+=2)
+            put((K)others[i], (V)others[i+1]);
     }
 
     @Override

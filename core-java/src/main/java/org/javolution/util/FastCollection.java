@@ -104,7 +104,8 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  *     java.util collection classes (e.g. List.subList(...), Map.keySet(), Map.values()). Javolution extends to 
  *     this concept and allows views to be chained in order to address the issue of class proliferation.
  * <pre>{@code
- * FastTable<String> names = new FractalTable<String>().addAll("Sim Ilicuir", "Pat Ibulair");
+ * FastTable<String> names = FastTable.newTable();
+ * names.addAll("Sim Ilicuir", "Pat Ibulair");
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
  * names.distinct().add("Guy Liguili"); // Adds "Guy Liguili" only if not already present.
  * names.filter(s -> s.length > 16).clear(); // Removes all the persons with long names.
