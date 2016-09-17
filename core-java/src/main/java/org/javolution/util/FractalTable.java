@@ -8,9 +8,7 @@
  */
 package org.javolution.util;
 
-import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
-import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.table.FractalTableImpl;
 
 /**
@@ -175,37 +173,5 @@ public class FractalTable<E> extends FastTable<E> {
         fractal = (fractal == null) ? new FractalTableImpl() : fractal.upsize();
         capacity = fractal.capacity();
     }
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public void forEach(Consumer<? super E> consumer) { // Optimization.
-		for (int i = 0; i < size;) {
-			consumer.accept((E)fractal.get(i++));
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) { // Optimization
-		int initialSize = size;
-		for (int i = 0; i < size;) {
-			if (filter.test((E)fractal.get(i++))) {
-		        if (i >= (size >> 1)) {
-		            fractal.shiftLeft(null, size - 1, size - i - 1);
-		        } else {
-		            fractal.shiftRight(null, 0, i);
-		            fractal.offset++;
-		        }
-		        size--;
-		        i--;
-			}
-		}
-		return initialSize != size;
-	}
-
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		return null; // TODO
-	}
 
 }

@@ -73,13 +73,13 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
      * A numeric order based on {@link Number#doubleValue()}.
      */
     @Realtime(limit = LOG_N)
-    public static final Order<Number> NUMERIC = null;
+    public static final Order<Number> NUMERIC = null; // TODO
     
     /**
      * An unsigned 32-bits order.
      */
     @Realtime(limit = LOG_N)
-    public static final Order<Index> INDEX = null;
+    public static final Order<Index> INDEX = null; // TODO
     
      /**
      * A two-dimensional order (index-based) preserving space locality.
@@ -88,7 +88,7 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
      * @see #INDEX
      */
     @Realtime(limit = LOG_N)
-    public static Order<Binary<Index, Index>> QUADTREE = null;
+    public static Order<Binary<Index, Index>> QUADTREE = null; // TODO
     
     /**
      * A three-dimensional order (index-based) preserving space locality.
@@ -97,7 +97,7 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
      * @see #NUMERIC
      */
     @Realtime(limit = LOG_N)
-    public static Order<Ternary<Index, Index, Index>> OCTREE = null;    
+    public static Order<Ternary<Index, Index, Index>> OCTREE = null; // TODO   
 
     //////////////////////////////////////////////////////////////////////////////
 	// Comparators.

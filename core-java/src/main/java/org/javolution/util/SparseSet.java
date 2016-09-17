@@ -8,10 +8,9 @@
  */
 package org.javolution.util;
 
-import java.util.Map.Entry;
+import java.util.Iterator;
 
 import org.javolution.util.function.Order;
-import org.javolution.util.function.Predicate;
 
 /**
  * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> 
@@ -47,6 +46,68 @@ public class SparseSet<E> extends FastSet<E> {
         this.sparse = sparse;	
     }
     
+    @Override
+    public Iterator<E> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public boolean isEmpty() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    @Override
+    public boolean contains(Object obj) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    @Override
+    public boolean remove(Object obj) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    @Override
+    public Iterator<E> iterator(E fromElement) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public Iterator<E> descendingIterator(E fromElement) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public FastSet<E> clone() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public Order<? super E> comparator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public Iterator<E> descendingIterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    @Override
+    public boolean add(E element) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    @Override
+    public int size() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    @Override
+    public void clear() {
+        // TODO Auto-generated method stub
+        
+    }
+    
+/*    
 	@Override
 	public E first() {
 		return sparse.firstKey();
@@ -62,11 +123,13 @@ public class SparseSet<E> extends FastSet<E> {
 		return sparse.comparator();
 	}
 	
+    @Realtime(limit = CONSTANT)
 	@Override
 	public int size() {
 		return sparse.size();
 	}
 
+    @Realtime(limit = CONSTANT)
 	@Override
 	public void clear() {
 		sparse.clear();
@@ -123,20 +186,5 @@ public class SparseSet<E> extends FastSet<E> {
 		Entry<E,Object> entry = sparse.pollLastEntry();
 		return entry != null ? entry.getKey() : null;
 	}
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	@Override
-	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+*/
 }

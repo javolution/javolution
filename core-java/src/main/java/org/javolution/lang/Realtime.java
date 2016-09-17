@@ -37,6 +37,9 @@ import java.lang.annotation.Target;
  * <p> Analysis tools / compilers may produce warnings if program elements 
  *     use or override elements with incompatible real-time characteristics.</p>
  *          
+ * <p> Note: If a class is annotated {@code {@literal@}Realtime} or {@code {@literal@}Realtime(limit = CONSTANT)},
+ *     all its methods and constructors have a constant execution time unless explicitly stated.</p>
+ *     
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  * @see <a href="http://en.wikipedia.org/wiki/Real-time_computing">Real-Time Computing</a>
@@ -56,9 +59,9 @@ public @interface Realtime {
 
     /**
      * Returns the limit behavior for the worst-case execution time
-     * (default {@link Limit#UNKNOWN}).
+     * (default {@link Limit#CONSTANT}).
      */
-    Limit limit() default Limit.UNKNOWN;
+    Limit limit() default Limit.CONSTANT;
 
     /**
      * Provides additional information (default {@code ""}).

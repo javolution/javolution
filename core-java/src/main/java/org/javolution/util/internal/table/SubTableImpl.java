@@ -8,7 +8,6 @@
  */
 package org.javolution.util.internal.table;
 
-import org.javolution.util.FastCollection;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
@@ -18,91 +17,93 @@ import org.javolution.util.function.Predicate;
  */
 public final class SubTableImpl<E> extends FastTable<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
-	private final int fromIndex;
-	private int toIndex;
-	private final FastTable<E> inner;
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastTable<E> inner;
+    private final int fromIndex;
+    private int toIndex;
+    private final boolean readOnly;
 
-	public SubTableImpl(FastTable<E> inner, int fromIndex, int toIndex) {
-		this.inner = inner;
-		this.fromIndex = fromIndex;
-		this.toIndex = toIndex;
-	}
+    public SubTableImpl(FastTable<E> inner, int fromIndex, int toIndex) {
+        this(inner, fromIndex, toIndex, false);
+    }
 
-	@Override
-	public boolean add(E element) {
-		inner.add(toIndex++, element);
-		return true;
-	}
+    public SubTableImpl(FastTable<E> inner, int fromIndex, int toIndex, boolean readOnly) {
+        this.inner = inner;
+        this.fromIndex = fromIndex;
+        this.toIndex = toIndex;
+        this.readOnly = readOnly;
+    }
 
-	@Override
-	public void add(int index, E element) {
-		if ((index < 0) && (index > size()))
-			indexError(index);
-		inner.add(index + fromIndex, element);
-		toIndex++;
-	}
+    @Override
+    public boolean add(E element) {
+        if (readOnly)
+            throw new UnsupportedOperationException("Read-Only Collection");
+        inner.add(toIndex++, element);
+        return true;
+    }
 
-	@Override
-	public void clear() {
-		for (int i = toIndex - 1; i >= fromIndex; i--) { 
-			// Better to do it from the end (less shift).
-			inner.remove(i);
-		}
-		toIndex = fromIndex;
-	}
+    @Override
+    public void add(int index, E element) {
+        if (readOnly)
+            throw new UnsupportedOperationException("Read-Only Collection");
+        if ((index < 0) && (index > size()))
+            indexError(index);
 
-	@Override
-	public SubTableImpl<E> clone() {
-		return new SubTableImpl<E>(inner, fromIndex, toIndex);
-	}
+        inner.add(index + fromIndex, element);
+        toIndex++;
+    }
 
-	@Override
-	public Equality<? super E> equality() {
-		return inner.equality();
-	}
+    @Override
+    public void clear() {
+        if (readOnly)
+            throw new UnsupportedOperationException("Read-Only Collection");
+        removeIf(Predicate.TRUE);
+    }
 
-	@Override
-	public E get(int index) {
-		if ((index < 0) && (index >= size()))
-			indexError(index);
-		return inner.get(index + fromIndex);
-	}
+    @Override
+    public SubTableImpl<E> clone() {
+        return new SubTableImpl<E>(inner.clone(), fromIndex, toIndex, readOnly);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return fromIndex == toIndex;
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return inner.equality();
+    }
 
-	@Override
-	public E remove(int index) {
-		if ((index < 0) && (index >= size()))
-			indexError(index);
-		toIndex--;
-		return inner.remove(index + fromIndex);
-	}
+    @Override
+    public E get(int index) {
+        if ((index < 0) && (index >= size()))
+            indexError(index);
+        return inner.get(index + fromIndex);
+    }
 
-	@Override
-	public E set(int index, E element) {
-		if ((index < 0) && (index >= size()))
-			indexError(index);
-		return inner.set(index + fromIndex, element);
-	}
+    @Override
+    public boolean isEmpty() {
+        return fromIndex == toIndex;
+    }
 
-	@Override
-	public int size() {
-		return toIndex - fromIndex;
-	}
+    @Override
+    public E remove(int index) {
+        if (readOnly)
+            throw new UnsupportedOperationException("Read-Only Collection");
+        if ((index < 0) && (index >= size()))
+            indexError(index);
+        toIndex--;
+        return inner.remove(index + fromIndex);
+    }
 
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public E set(int index, E element) {
+        if (readOnly)
+            throw new UnsupportedOperationException("Read-Only Collection");
+        if ((index < 0) && (index >= size()))
+            indexError(index);
+        return inner.set(index + fromIndex, element);
+    }
 
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public int size() {
+        return toIndex - fromIndex;
+    }
+
 }

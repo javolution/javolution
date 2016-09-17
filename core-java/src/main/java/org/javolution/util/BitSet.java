@@ -11,13 +11,13 @@ package org.javolution.util;
 import static org.javolution.lang.Realtime.Limit.LINEAR;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.javolution.lang.Index;
 import org.javolution.lang.MathLib;
 import org.javolution.lang.Realtime;
 import org.javolution.util.function.Order;
-import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
@@ -42,17 +42,6 @@ public class BitSet extends FastSet<Index> {
      */
     public BitSet() {
         bits = ALL_CLEARED;
-    }
-
-    /** 
-     * Creates a bit-set having the specified bits.
-     * 
-     * @param bits a long array containing a little-endian representation
-     *        of a sequence of bits to be used as the initial bits of the
-     *        new bit set.
-     */
-    public BitSet(long[] bits) {
-        this.bits = bits;
     }
 
      ////////////////////////////////////////////////////////////////////////////
@@ -80,7 +69,9 @@ public class BitSet extends FastSet<Index> {
 
  	@Override
  	public BitSet clone() {
- 		return new BitSet(bits.clone());
+ 	    BitSet copy = new BitSet();
+ 	    copy.bits = this.bits.clone();
+ 	    return copy;
  	}
 
      @Override
@@ -622,27 +613,27 @@ public class BitSet extends FastSet<Index> {
     }
 
     @Override
-    public BitSet addAll(Index first, Index... others) {
-		super.addAll(first, others);
-		return this;
-	}
+    public Iterator<Index> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public boolean removeIf(Predicate<? super Index> filter) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public Iterator<Index> iterator(Index fromElement) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public org.javolution.util.FastCollection.Iterator<Index> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Iterator<Index> descendingIterator(Index fromElement) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public FastCollection<Index>[] trySplit(int n) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Iterator<Index> descendingIterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

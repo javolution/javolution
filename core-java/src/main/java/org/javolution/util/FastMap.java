@@ -8,16 +8,17 @@
  */
 package org.javolution.util;
 
-import static org.javolution.lang.Realtime.Limit.CONSTANT;
 import static org.javolution.lang.Realtime.Limit.LINEAR;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
 
+import org.javolution.lang.MathLib;
 import org.javolution.lang.Realtime;
 import org.javolution.text.Cursor;
 import org.javolution.text.DefaultTextFormat;
@@ -26,26 +27,29 @@ import org.javolution.text.TextFormat;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
+import org.javolution.util.internal.map.AtomicMapImpl;
 import org.javolution.util.internal.map.EntrySetImpl;
+import org.javolution.util.internal.map.FilteredMapImpl;
 import org.javolution.util.internal.map.KeySetImpl;
+import org.javolution.util.internal.map.LinkedMapImpl;
+import org.javolution.util.internal.map.ReversedMapImpl;
+import org.javolution.util.internal.map.SharedMapImpl;
 import org.javolution.util.internal.map.SubMapImpl;
+import org.javolution.util.internal.map.UnmodifiableMapImpl;
 import org.javolution.util.internal.map.ValuesImpl;
 
 /**
- * <p> A high-performance ordered map (trie-based) with 
- *     {@link Realtime strict timing constraints}.</p>
+ * <p> A high-performance ordered map (trie-based) with {@link Realtime strict timing constraints}.</p>
  *     
- * <p> In general, fast map methods have a limiting behavior in 
- *     {@link Realtime#Limit#CONSTANT O(1)} (constant) to be compared 
- *     with {@link Realtime#Limit#LOG_N O(log n)} for most sorted maps.</p>
+ * <p> In general, fast map methods have a limiting behavior in {@link Realtime#Limit#CONSTANT O(1)} (constant) 
+ *     to be compared with {@link Realtime#Limit#LOG_N O(log n)} for most sorted maps.</p>
  * 
- * <p> Iterations order over map keys, values or entries is determined 
- *     by the map {@link #comparator() order} except for specific views 
- *     such as the {@link #linked linked} view for which the iterations 
- *     order is the insertion order.</p>
+ * <p> Iterations order over map keys, values or entries is determined by the map {@link #comparator() order} 
+ *     except for specific views such as the {@link #linked linked} view for which the iterations order is 
+ *     the insertion order.</p>
  *     
- * <p> Instances of this class can advantageously replace any 
- *     {@code java.util.*} map in terms of adaptability, space or performance. 
+ * <p> Instances of this class can advantageously replace any {@code java.util.*} map in terms of adaptability, 
+ *     space or performance. 
  * <pre>{@code
  * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
  * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
@@ -64,30 +68,31 @@ import org.javolution.util.internal.map.ValuesImpl;
  *    <li>{@link #keySet} - View over the map keys allowing keys to be removed or added (entries with {@code null} values).</li>
  *    <li>{@link #values} - View over the map values (removal is supported but not adding new values).</li>
  *    <li>{@link #shared} - Thread-safe view based on <a href=
- *                          "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">readers-writer
- *                          locks</a>.</li>
- *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free and
- *                          map updates (e.g. {@link #putAll putAll}) are atomic.</li>
+ *                          "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">readers-writer locks</a>.</li>
+ *    <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free and map updates 
+ *                           (e.g. {@link #putAll putAll}) are atomic.</li>
  *    <li>{@link #reversed} - Reversed order view.</li>
- *    <li>{@link #linked} - View exposing each entry based on the {@link #put 
- *                          insertion} order in the view.</li>
+ *    <li>{@link #linked} - View exposing each entry based on the {@link #put insertion} order in the view.</li>
  *    <li>{@link #unmodifiable} - View which does not allow for modification.</li>
- *    <li>{@link #valuesEquality} - View using the specified equality for its values.</li>
  * </ul></p>      
  * 
- *  <p> The entry/key/value views over a map are instances 
- *      of {@link FastCollection} which supports parallel processing.
+ *  <p> The entry/key/value views over a map are instances of {@link FastCollection} which supports parallel processing.
  * <pre>{@code
- * FastMap<String, Value> names = new SparseMap<String, Value>
- *     .putAll("Oscar Thon", v0, "Yvon Tremblay", v1);
- * ...
+ * FastMap<String, Value> names = ...
  * names.values().removeIf(v -> v == null); // Remove all entries with null values.
  * names.values().parallel().removeIf(v -> v == null); // Same but performed in parallel.
  * }</pre></p>
  * 
- * <p> Finally, it should be noted that FastMap entries are immutable, 
- *     any attempt to set the value of an entry directly will raise 
- *     an {@link UnsupportedOperationException}. </p>
+ * <p> Finally, it should be noted that FastMap allows for {@code null} keys and values (unlike 
+ *     {@code ConcurrentHashMap}); to differentiate between no entry and a {@code null} value,
+ *     the method {@link #getEntry} can be used in place of {@link #get}. The method {@link #getEntry} does 
+ *     not allow for direct modification of the map values ({@link Entry#setValue} is not supported).
+ * <pre>{@code
+ * FastMap<String, AtomicInteger> wordCount = ...;
+ * Entry<String, AtomicInteger> counter = wordCount.getEntry(word);
+ * if (counter != null) counter.getValue().getAndIncrement(); // counter.setValue is not supported.
+ * else wordCount.put(word, new AtomicInteger(1));     
+ * }</pre></p>
  *  
  * @param <K> the type of keys maintained by this map (can be {@code null})
  * @param <V> the type of mapped values (can be {@code null})
@@ -101,6 +106,16 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
         Cloneable, Serializable {
 
 	private static final long serialVersionUID = 0x700L; // Version.
+    
+	/** 
+     * A read-only map entry (key-value pair).
+     */
+    public interface Entry<K,V> extends java.util.Map.Entry<K, V> {
+            
+        /** Should throw an exception and leave the entry unmodified.
+         * @deprecated Entries should be modified through the map. */
+        V setValue(V value);
+    }    
     
     /**
      * Default constructor.
@@ -116,20 +131,18 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     /**
-     * Returns a new high-performance map ordered according to the specified
-     * key order.
+     * Returns a new high-performance map sorted according to the specified key order.
      */
     public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder) {
     	return new SparseMap<K,V>(keyOrder);
     }
-
+    
     /**
-     * Returns a new high-performance map ordered according to the specified
-     * key order and using the specified value equality.
+     * Returns a new high-performance map sorted according to the specified key order and using the specified 
+     * equality for values comparisons.
      */
-    public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder,
-    		Equality<? super V> valuesEquality) {
-    	return new SparseMap<K,V>(keyOrder).valuesEquality(valuesEquality);
+    public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality) {
+        return new SparseMap<K,V>(keyOrder, valuesEquality);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -137,76 +150,58 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     //
 
 	/**
-	 * Returns an atomic view over this map. All operations that write or
-	 * access multiple elements in the map are atomic. 
-	 * All read operations are mutex-free.
+	 * Returns an atomic view over this map. All operations that write or access multiple elements in the map 
+	 * are atomic. All read operations are mutex-free.
 	 */
 	public FastMap<K,V> atomic() {
-		return null;
+		return new AtomicMapImpl<K,V>(this);
 	}
 
-	/**
-	 * Returns a thread-safe view over this map. The shared view allows
-	 * for concurrent read as long as there is no writer. The default
-	 * implementation is based on <a href=
-	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
-	 * readers-writers locks</a> giving priority to writers. 
+    /**
+     * Returns a view exposing only the entries matching the specified key filter. Mapping keys not 
+     * matching the specified filter has no effect. If this map is initially empty, using a filtered view 
+     * ensures that this map has only entries satisfying the specified filter predicate.
+     */
+    public FastMap<K,V> filter(Predicate<? super K> keyFilter) {
+        return new FilteredMapImpl<K,V>(this, keyFilter); 
+    }
+
+    /**
+	 * Returns a thread-safe view over this map. The shared view allows for concurrent read as long as 
+	 * there is no writer. The default implementation is based on <a href=
+	 * "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock"> readers-writers locks</a> giving priority to writers. 
 	 */
 	public FastMap<K,V> shared() {
-		return null;
+		return new SharedMapImpl<K,V>(this); 
 	}
 
 	/**
 	 * Returns a reverse order view of this map.
 	 */
 	public FastMap<K,V> reversed() {
-		return null;
+		return new ReversedMapImpl<K,V>(this);
 	}
 
 	/**
-	 * Returns a view exposing only the entries matching the specified filter.
-	 * Adding new entries not matching the specified filter has no effect. If this
-	 * map is initially empty, using a filtered view to put new entries
-	 * ensures that this map has only entries satisfying the filter
-	 * predicate.
-	 */
-	public FastMap<K,V> filter(Predicate<? super Entry<K, V>> filter) {
-		return null;
-	}
-
-	/**
-	 * Returns a view keeping track of the insertion order and exposing 
-	 * entries/keys/values in that order (first added, first to iterate).
-	 * This view can be useful for compatibility with Java linked collections
-	 * (e.g. {@code LinkedHashMap}). Elements not added through this 
-	 * view are ignored when iterating.
+	 * Returns a view keeping track of the insertion order and exposing entries/keys/values in that order 
+	 * (first added, first to iterate). This view can be useful for compatibility with Java linked collections
+	 * (e.g. {@code LinkedHashMap}). Elements not added through this view are ignored when iterating.
 	 */
 	public FastMap<K,V> linked() {
-		return null;
+		return new LinkedMapImpl<K,V>(this); 
 	}
 
 	/**
-	 * Returns an unmodifiable view over this map. Any attempt to modify
-	 * the map through this view will result into a
+	 * Returns an unmodifiable view over this map. Any attempt to modify the map through this view will result into a
 	 * {@link java.lang.UnsupportedOperationException} being raised.
 	 */
 	public FastMap<K,V> unmodifiable() {
-		return null;
+		return new UnmodifiableMapImpl<K,V>(this);
 	}
 	
-    /**
-     * Returns a view over this map using the specified equality for 
-     * values comparisons.
-     */
-    public FastMap<K,V> valuesEquality(Equality<? super V> equality) {
-        return null;
-    }
-    
      /**
-     * Returns a set view of the keys contained in this map.
-     * The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa.  The set supports 
-     * adding new keys for which the corresponding entry value 
+     * Returns a set view of the keys contained in this map. The set is backed by the map, so changes to the map are
+     * reflected in the set, and vice-versa.  The set supports adding new keys for which the corresponding entry value 
      * is always {@code null}.
      */
     @Override
@@ -224,9 +219,8 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	}
 
     /**
-     * Returns a collection view of the values contained in this map.
-     * The collection is backed by the map, so changes to the map are
-     * reflected in the collection, and vice-versa. The collection
+     * Returns a collection view of the values contained in this map.The collection is backed by the map, 
+     * so changes to the map are reflected in the collection, and vice-versa. The collection
      * supports removing values (hence entries) but not adding new values.
      */
     @Override
@@ -235,19 +229,19 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     /**
-     * Returns a set view of the mappings contained in 
-     * this map. The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa. The set support 
-     * adding/removing entries.
+     * Returns a set view of the entries in this map. The set is backed by this map, so changes to this map are
+     * reflected in the set, and vice-versa. The set supports element removal, which removes the corresponding 
+     * mapping from the map. It does not support the {@link FastSet#add} or {@link FastSet#addAll} operations.
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public FastSet<Entry<K, V>> entrySet() {
-    	return new EntrySetImpl<K,V>(this);
+    public FastSet<Map.Entry<K, V>> entrySet() {
+        FastSet<? extends Map.Entry<K,V>> entrySet = new EntrySetImpl<K,V>(this);
+        return (FastSet<Map.Entry<K, V>>) entrySet;
     }
 
     /** 
-     * Returns a view of the portion of this map whose keys range from 
-     * fromKey, inclusive, to toKey, exclusive.
+     * Returns a view of the portion of this map whose keys range from fromKey, inclusive, to toKey, exclusive.
      */
     @Override
     public FastMap<K, V> subMap(K fromKey, K toKey) {
@@ -255,8 +249,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
 	/** 
-     * Returns a view of the portion of this map whose keys range from 
-     * fromKey to toKey.
+     * Returns a view of the portion of this map whose keys range from fromKey to toKey.
      */
 	@Override
 	public FastMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
@@ -264,8 +257,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	}
 
 	/** 
-	 * Returns a view of the portion of this map whose keys are strictly
-     * less than toKey.
+	 * Returns a view of the portion of this map whose keys are strictly less than toKey.
      */
     @Override
     public FastMap<K, V> headMap(K toKey) {
@@ -273,17 +265,15 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
 	/** 
-	 * Returns a view of the portion of this map whose keys are less than 
-	 * (or equal to, if inclusive is true) toKey.
+	 * Returns a view of the portion of this map whose keys are less than (or equal to, if inclusive is true) toKey.
      */
 	@Override
 	public FastMap<K, V> headMap(K toKey, boolean inclusive) {
-        return subMap(firstKey(), true, toKey, inclusive);
+        return new SubMapImpl<K,V>(this, null, null, toKey, inclusive);
 	}
 
     /** 
-     * Returns a view of the portion of this map whose keys are greater than
-     * or equal to fromKey.
+     * Returns a view of the portion of this map whose keys are greater than or equal to fromKey.
      */
     @Override
     public FastMap<K, V> tailMap(K fromKey) {
@@ -291,12 +281,12 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
 	/** 
-     * Returns a view of the portion of this map whose keys are greater than
-     * (or equal to, if inclusive is true) fromKey.
+     * Returns a view of the portion of this map whose keys are greater than (or equal to, if inclusive is true) 
+     * fromKey.
      */
 	@Override
 	public FastMap<K, V> tailMap(K fromKey, boolean inclusive) {
-        return subMap(fromKey, inclusive, lastKey(), true);
+	     return new SubMapImpl<K,V>(this, fromKey, inclusive, null, null);
 	}
 
 	/** 
@@ -316,36 +306,25 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	public final FastMap<K, V> descendingMap() {
 		return reversed();
 	}
-
+	
     ////////////////////////////////////////////////////////////////////////////
     // Map Interface.
     //
 
     @Override
-    @Realtime(limit = LINEAR, comment="Views may count the number of entries (e.g. subMap)")
+    @Realtime(limit = LINEAR, comment="May count the number of entries (e.g. filtered views)")
     public abstract int size();
     
     @Override
-    @Realtime(limit = CONSTANT)
-    public boolean isEmpty() {
-        return firstEntry() != null;
-    }
+    @Realtime(limit = LINEAR, comment = "Could iterate the whole collection (e.g. filtered views).")
+    public abstract boolean isEmpty();
 
-    /** 
-     * Indicates if this map contains the specified key according to
-     * this map {@link #comparator() comparator}.
-     */
     @SuppressWarnings("unchecked")
 	@Override
-    @Realtime(limit = CONSTANT)
     public boolean containsKey(Object key) {
     	return getEntry((K)key) != null;  // Cast has no effect here.
     }
 
-    /** 
-     * Indicates if this map contains the specified value according to
-     * this map {@link #valuesEquality() values equality}.
-     */
     @Override
     @Realtime(limit = LINEAR)
     public boolean containsValue(Object value) {
@@ -353,57 +332,49 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     @Override
-    @Realtime(limit = CONSTANT)
     public V get(Object key) {
     	@SuppressWarnings("unchecked")
 		Entry<K,V> entry = getEntry((K)key); // Cast has no effect here.
     	return entry != null ? entry.getValue() : null;
     }
 
-    /** 
-     * Removes the entry for the specified key and returns
-     * the previous value associated to that key.
-     */
     @Override
-    @Realtime(limit = CONSTANT)
     public V remove(Object key) {
     	@SuppressWarnings("unchecked")
 		Entry<K,V> entry = removeEntry((K)key); // Cast has no effect here.
     	return entry != null ? entry.getValue() : null;
     }
 
-    /** 
-     * Associates the specified value with the specified key and returns 
-     * the previous value associated to that key or {@code null} if none.
-     */
     @Override
-	@Realtime(limit = CONSTANT)
-    public abstract V put(K key, V value);
+    public V put(K key, V value) {
+        Entry<K,V> entry = putEntry(key, value);
+        return (entry != null) ? entry.getValue() : null;
+    }
         
     @Override
     @Realtime(limit = LINEAR)
     public void putAll(Map<? extends K, ? extends V> that) {
-    	for (Entry<? extends K, ? extends V> entry : that.entrySet()) 
+    	for (java.util.Map.Entry<? extends K, ? extends V> entry : that.entrySet()) 
 			put(entry.getKey(), entry.getValue());
     }
 
     @Override
-    @Realtime(limit = LINEAR, comment="Views may remove entries one at a time (e.g. subMap)")
-    public abstract void clear();
+    @Realtime(limit = LINEAR, comment="Views may have to remove entries one at a time (e.g. filtered views)")
+    public void clear() {
+        entrySet().clear();
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // ConcurrentMap Interface.
     //
 
     @Override
-    @Realtime(limit = CONSTANT)
     public V putIfAbsent(K key, V value) {
 		Entry<K,V> entry = getEntry(key);
 		return (entry == null) ? put(key, value) : entry.getValue();
     }
 
     @Override
-    @Realtime(limit = CONSTANT)
 	@SuppressWarnings("unchecked")
     public boolean remove(Object key, Object value) {
 		Equality<Object> valueEquality = (Equality<Object>) valuesEquality();
@@ -416,24 +387,22 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     @Override
-    @Realtime(limit = CONSTANT)
     public boolean replace(K key, V oldValue, V newValue) {
     	@SuppressWarnings("unchecked")
 		Equality<Object> valueEquality = (Equality<Object>) valuesEquality();
     	Entry<K,V> entry = getEntry(key);
 		if ((entry != null) && valueEquality.areEqual(entry.getValue(), oldValue)) {
-			put(key, newValue);
+			entry.setValue(newValue);
 			return true;
 		}
 		return false;
     }
 
     @Override
-    @Realtime(limit = CONSTANT)
     public V replace(K key, V value) {
     	Entry<K,V> entry = getEntry(key);
     	if (entry != null)
-			return put(key, value);
+			return entry.setValue(value);
 	    return null;
     }
     
@@ -441,31 +410,49 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     // SortedMap/NavigableMap Interface.
     //
 
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> firstEntry();
+    @Override
+	public Entry<K,V> firstEntry() {
+        Iterator<Entry<K,V>> itr = iterator();
+	    return itr.hasNext() ? itr.next() : null;
+	}
 
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> lastEntry();
+    @Override
+	public Entry<K,V> lastEntry() {
+        Iterator<Entry<K,V>> itr = descendingIterator();
+        return itr.hasNext() ? itr.next() : null;
+	}
 		
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> higherEntry(K key);
+    @Override
+	public Entry<K,V> higherEntry(K key) {
+        Iterator<Entry<K,V>> itr = iterator(key);
+        if (!itr.hasNext()) return null;
+        Entry<K,V> ceiling = itr.next();
+        if (!comparator().areEqual(key, ceiling.getKey())) return ceiling;
+        return itr.hasNext() ? itr.next() : null;               
+    }
 	
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K,V> lowerEntry(K key);
+    @Override
+	public Entry<K,V> lowerEntry(K key) {
+        Iterator<Entry<K,V>> itr = descendingIterator(key);
+        if (!itr.hasNext()) return null;
+        Entry<K,V> floor = itr.next();
+        if (!comparator().areEqual(key, floor.getKey())) return floor;
+        return itr.hasNext() ? itr.next() : null;               
+    }
 
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K, V> ceilingEntry(K key);
+	public Entry<K, V> ceilingEntry(K key) {
+	    Iterator<Entry<K,V>> itr = iterator(key);
+        return itr.hasNext() ? itr.next() : null;	    
+	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K ceilingKey(K key) {
 		Entry<K,V> ceilingEntry = ceilingEntry(key);
 		return ceilingEntry != null ? ceilingEntry.getKey() : null;
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K firstKey() {
 		Entry<K,V> firstEntry = firstEntry();
 		if (firstEntry == null) throw new NoSuchElementException();
@@ -473,25 +460,24 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract Entry<K, V> floorEntry(K key);
+	public Entry<K, V> floorEntry(K key) {
+	     Iterator<Entry<K,V>> itr = descendingIterator(key);
+	        return itr.hasNext() ? itr.next() : null;
+	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K floorKey(K key) {
 		Entry<K,V> floorEntry = floorEntry(key);
 		return floorEntry != null ? floorEntry.getKey() : null;
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K higherKey(K key) {
 		Entry<K,V> higherEntry = higherEntry(key);
 		return higherEntry != null ? higherEntry.getKey() : null;
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K lastKey() {
 		Entry<K,V> lastEntry = lastEntry();
 		if (lastEntry == null) throw new NoSuchElementException();
@@ -499,20 +485,17 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public K lowerKey(K key) {
 		Entry<K,V> lowerEntry = lowerEntry(key);
 		return lowerEntry != null ? lowerEntry.getKey() : null;
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public Entry<K, V> pollFirstEntry() {
 		return isEmpty() ? null : removeEntry(firstKey());
 	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
 	public Entry<K, V> pollLastEntry() {
 		return isEmpty() ? null : removeEntry(lastKey());
 	}
@@ -521,65 +504,50 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     // Misc.
     //
 	
-	/**
-	 * Returns an immutable map holding the same key/value pairs, the same
-	 * comparator and the same value equality as this map.
-	 */
-	@Realtime(limit = LINEAR)
-	public ConstantMap<K,V> constant() {
-		SparseMap<K,V> sparse = new SparseMap<K,V>(comparator());
-		sparse.putAll(this);
-		return new ConstantMap<K,V>(sparse, valuesEquality());
-	}
-	
+    /** Returns an entry iterator over this map's entries. */
+    public abstract Iterator<Entry<K,V>> iterator();
+    
+    /** Returns a descending entry iterator over this map's entries. */
+    public abstract Iterator<Entry<K,V>> descendingIterator();
+        
+    /** Returns an entry iterator over this map's entries starting from the specified key. */
+    public abstract Iterator<Entry<K,V>> iterator(K fromKey);
+    
+    /** Returns a descending entry iterator over this map's entries starting from the specified key. */
+    public abstract Iterator<Entry<K,V>> descendingIterator(K fromKey);
+    
     /** 
-     * Maps the specified (key, value) pairs and returns this map
-     * (convenience method).
+     * Returns the entry for the specified key or {@code null} if none. Sub-classes may return specific entry types 
+     * (e.g. {@link SparseArray#SparseEntry SparseEntry} for sparse arrays).
      */
-	@SuppressWarnings("unchecked")
-	@Realtime(limit = LINEAR)
-    public FastMap<K,V> putAll(K key, V value, Object... others) {
-		put(key, value);
-		for (int i=0; i < others.length;) 
-			put((K)others[i++], (V)others[i++]);
-		return this;
-	}
-
-    /** 
-     * Returns the entry for the specified key or {@code null} if none.
-     * Sub-classes may return specific entry types 
-     * (e.g. {@link SparseArray SparseArray#SparseEntry SparseEntry} for 
-     * sparse arrays).
-     */
-	@Realtime(limit = CONSTANT)
     public abstract Entry<K,V> getEntry(K key);
 
-	/** 
-     * Removes and returns the entry for the specified key or {@code null} 
-     * if none. Sub-classes may return specific entry types 
-     * (e.g. {@link SparseArray SparseArray#SparseEntry SparseEntry} for 
-     * sparse arrays).
+    /** 
+     * Associates the specified value with the specified key and returns the previous entry for that key 
+     * or {@code null} if none.
      */
-	@Realtime(limit = CONSTANT)
+    public abstract Entry<K,V> putEntry(K key, V value);
+
+	/** 
+     * Removes and returns the entry for the specified key or {@code null} if none. Sub-classes may return specific
+     * entry types (e.g. {@link SparseArray#SparseEntry SparseEntry} for sparse arrays).
+     */
     public abstract Entry<K,V> removeEntry(K key);
 
     /**
      * Returns the value equality of this map.
      */
-	@Realtime(limit = CONSTANT)   
 	public abstract Equality<? super V> valuesEquality();
 
 	/**
-	 * Returns a copy of this map; updates of the copy should not impact
-	 * the original.
+	 * Returns a copy of this map; updates of the copy should not impact the original.
 	 */
 	@Realtime(limit = LINEAR)
 	public abstract FastMap<K,V> clone();
     
 	/**
-     * Compares the specified object with this map for equality.
-     * This method follows the {@link Map#equals(Object)} specification 
-     * regardless of the fast map's keys/values equalities.
+     * Compares the specified object with this map for equality. This method follows the 
+     * {@link Map#equals(Object)} specification regardless of the fast map's keys/values equalities.
      */
 	@Override
     @Realtime(limit = LINEAR)   
@@ -593,8 +561,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
 	/**
-     * Returns the hash code of this map.
-     * This method follows the {@link Map#hashCode} specification 
+     * Returns the hash code of this map. This method follows the {@link Map#hashCode} specification 
      * regardless of the map's keys/values equalities.
      */
     @Override
@@ -604,17 +571,46 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     @Override
-    @Realtime(limit = CONSTANT)   
 	public abstract Order<? super K> comparator();
 
 	/** 
-     * Returns the string representation of this map using its 
-     * {@link TextContext contextual format}.
+     * Returns the string representation of this map using its {@link TextContext contextual format}.
      */
     @Override
     @Realtime(limit = LINEAR)
     public String toString() {
         return TextContext.getFormat(FastMap.class).format(this);
+    }
+
+    /**
+     * Returns multiple read-only views over this map (to support {@link #parallel} processing). 
+     * How this collection splits (or does not split) is collection dependent (for example {@link #distinct}
+     * views do not split). There is no guarantee over the iterative order of the sub-views which may 
+     * be different from this collection iterative order.
+     * 
+     * <p> Any attempt to modify this collection through its sub-views will result 
+     *     in a {@link UnsupportedOperationException} being thrown.</p>
+     * 
+     * @param n the desired number of independent views.
+     * @return the sub-views (array of length in range [1..n])
+     * @throws IllegalArgumentException if {@code n <= 0} 
+     */
+    @SuppressWarnings("unchecked")
+    public FastMap<K,V>[] trySplit(final int n) {
+        // Split into filtered maps with filter based on the element index (hashed to ensure balanced distribution). 
+        final Order<? super K> order = comparator();
+        FastMap<K,V>[] split = new FastMap[n];        
+        for (int i=0; i < n; i++) {
+            final int m = i;
+            split[i] = this.filter(new Predicate<K>() {
+
+                @Override
+                public boolean test(K param) {
+                    int hash = MathLib.hash(order.indexOf(param));
+                    return Math.abs(hash) % n == m;
+                }});
+        }
+        return split;
     }
 
     /**
@@ -633,7 +629,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
                 throws IOException {
         	dest.append('{');
         	boolean firstEntry = true;
-            for (Entry<?,?> entry : that.entrySet()) {
+            for (java.util.Map.Entry<?,?> entry : that.entrySet()) {
                 if (!firstEntry) dest.append(',').append(' ');
             	TextContext.format(entry.getKey(), dest);
         	    dest.append('=');

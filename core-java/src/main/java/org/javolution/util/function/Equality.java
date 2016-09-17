@@ -14,13 +14,13 @@ import static org.javolution.lang.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;
 
+import org.javolution.lang.Constant;
 import org.javolution.lang.Realtime;
 import org.javolution.util.internal.function.ArrayEqualityImpl;
 import org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
 import org.javolution.util.internal.function.HashOrderImpl;
 import org.javolution.util.internal.function.IdentityHashOrderImpl;
 import org.javolution.util.internal.function.LexicalOrderImpl;
-import org.javolution.util.internal.function.NaturalOrderImpl;
 
 /**
  * <p>  A function (functional interface) indicating if two objects 
@@ -31,19 +31,20 @@ import org.javolution.util.internal.function.NaturalOrderImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0 September 13, 2015
  */
+@Constant
 public interface Equality<T> extends Serializable {
 	
     /**
      * A default object equality (based on {@link Object#equals}).
      */
     @Realtime(limit = UNKNOWN)
-    public static final Order<Object> DEFAULT = HashOrderImpl.INSTANCE;
+    public static final Equality<Object> DEFAULT = HashOrderImpl.INSTANCE;
 
     /**
      * An identity object equality (instances are only equals to themselves).
      */
     @Realtime(limit = CONSTANT)
-    public static final Order<Object> IDENTITY 
+    public static final Equality<Object> IDENTITY 
        = IdentityHashOrderImpl.INSTANCE;
 
      /**
@@ -57,26 +58,16 @@ public interface Equality<T> extends Serializable {
      * A lexical equality for any {@link CharSequence}.
      */
     @Realtime(limit = LINEAR)
-    public static final Order<CharSequence> LEXICAL
+    public static final Equality<CharSequence> LEXICAL
         = LexicalOrderImpl.INSTANCE;
 
     /**
      * A case insensitive lexical equality for any {@link CharSequence}.
      */
     @Realtime(limit = LINEAR)
-    public static final Order<CharSequence> LEXICAL_CASE_INSENSITIVE
+    public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
         = CaseInsensitiveLexicalOrderImpl.INSTANCE;
   
-    /**
-     * A natural equality for {@link Comparable} instances. Two objects 
-     * are considered equals if they compare to {@code 0}.
-     *  
-     * @throws ClassCastException if used with non {@link Comparable} instances.
-     */
-    @Realtime(limit = UNKNOWN)
-    public static final Order<Object> NATURAL 
-        = NaturalOrderImpl.INSTANCE;
- 
 	/**
 	 * Indicates if two specified objects are considered equal.
 	 * 

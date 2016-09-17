@@ -6,27 +6,28 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package org.javolution.util.internal.collection;
+package org.javolution.util.internal.set;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.FastSet;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
-import org.javolution.util.function.Equality;
+import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
+import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
- * An atomic view over a collection (copy-on-write).
+ * An atomic view over a set (copy-on-write).
  */
-public final class AtomicCollectionImpl<E> extends FastCollection<E> {
+public final class AtomicSetImpl<E> extends FastSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
-    private volatile FastCollection<E> innerConst; // The copy used by readers.
+    private final FastSet<E> inner;
+    private volatile FastSet<E> innerConst; // The copy used by readers.
 
-    public AtomicCollectionImpl(FastCollection<E> inner) {
+    public AtomicSetImpl(FastSet<E> inner) {
         this.inner = inner;
         this.innerConst = inner.clone();
     }
@@ -61,14 +62,24 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public E ceiling(E element) {
+        return innerConst.ceiling(element);
+    }
+
+    @Override
     public synchronized void clear() {
         inner.clear();
         innerConst = inner.clone();
     }
 
     @Override
-    public FastCollection<E> clone() {
-        return new AtomicCollectionImpl<E>(innerConst.clone());
+    public FastSet<E> clone() {
+        return new AtomicSetImpl<E>(innerConst.clone());
+    }
+
+    @Override
+    public Order<? super E> comparator() {
+        return innerConst.comparator();
     }
 
     @Override
@@ -82,13 +93,28 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Equality<? super E> equality() {
-        return innerConst.equality();
+    public Iterator<E> descendingIterator() {
+        return ReadOnlyIteratorImpl.of(innerConst.descendingIterator());
+    }
+
+    @Override
+    public Iterator<E> descendingIterator(E fromElement) {
+        return ReadOnlyIteratorImpl.of(innerConst.descendingIterator(fromElement));
     }
 
     @Override
     public boolean equals(Object obj) {
         return innerConst.equals(obj);
+    }
+
+    @Override
+    public E first() {
+        return innerConst.first();
+    }
+
+    @Override
+    public E floor(E element) {
+        return innerConst.floor(element);
     }
 
     @Override
@@ -102,6 +128,11 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public E higher(E element) {
+        return innerConst.higher(element);
+    }
+
+    @Override
     public boolean isEmpty() {
         return innerConst.isEmpty();
     }
@@ -112,6 +143,21 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public Iterator<E> iterator(E fromElement) {
+        return ReadOnlyIteratorImpl.of(innerConst.iterator(fromElement));
+    }
+
+    @Override
+    public E last() {
+        return innerConst.last();
+    }
+
+    @Override
+    public E lower(E element) {
+        return innerConst.lower(element);
+    }
+
+    @Override
     public E max() {
         return innerConst.max();
     }
@@ -119,6 +165,16 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     @Override
     public E min() {
         return innerConst.min();
+    }
+
+    @Override
+    public E pollFirst() {
+        return innerConst.pollFirst();
+    }
+
+    @Override
+    public E pollLast() {
+        return innerConst.pollLast();
     }
 
     @Override
@@ -179,7 +235,7 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public FastSet<E>[] trySplit(int n) {
         return innerConst.trySplit(n);
     }
 

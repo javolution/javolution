@@ -10,6 +10,7 @@ package org.javolution.util.internal.map;
 
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.Iterator;
 
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
@@ -175,5 +176,41 @@ public final class SortedMapImpl<K, V> extends FastMap<K, V> {
 	public Equality<? super V> valuesEquality() {
 		return Equality.DEFAULT;
 	}
+
+    @Override
+    public boolean isEmpty() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator(K fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator(K fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public org.javolution.util.FastMap.Entry<K, V> putEntry(K key, V value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

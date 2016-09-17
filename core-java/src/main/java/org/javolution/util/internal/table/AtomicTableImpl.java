@@ -10,15 +10,16 @@ package org.javolution.util.internal.table;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.ListIterator;
 
-import org.javolution.util.ConstantTable;
-import org.javolution.util.FastCollection;
+import org.javolution.lang.Parallel;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
+import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * An atomic view over a table. All updates are synchronized, reads are
@@ -57,6 +58,45 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 		return changed;
 	}
 
+    @Override
+    public synchronized boolean addAll(E... elements) {
+        boolean changed = inner.addAll(elements);
+        if (changed)
+            innerConst = inner.clone();
+        return changed;
+    }
+    
+    @Override
+    public synchronized boolean addAll(int index, Collection<? extends E> that) {
+        boolean changed = inner.addAll(index, that);
+        if (changed)
+            innerConst = inner.clone();
+        return changed;
+    }
+
+    @Override
+	public synchronized boolean addAllSorted(Collection<? extends E> that, Comparator<? super E> cmp) {
+        boolean changed = inner.addAllSorted(that, cmp);
+        if (changed)
+            innerConst = inner.clone();
+        return changed;
+	}
+
+    @Override
+    public synchronized int addSorted(E element, Comparator<? super E> cmp) {
+        int i = inner.addSorted(element, cmp);
+        innerConst = inner.clone();
+        return i;
+    }
+
+    @Override
+    public synchronized int removeSorted(E element, Comparator<? super E> cmp) {
+        int i = inner.removeSorted(element, cmp);
+        if (i >= 0)
+            innerConst = inner.clone();
+        return i;
+    }
+    
 	@Override
 	public synchronized void addFirst(E element) {
 		inner.addFirst(element);
@@ -83,11 +123,6 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 	@Override
 	public FastTable<E> clone() {
 		return new AtomicTableImpl<E>(innerConst.clone());
-	}
-
-	@Override
-	public ConstantTable<E> constant() {
-		return innerConst.constant();
 	}
 
 	@Override
@@ -152,7 +187,7 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return innerConst.unmodifiable().iterator();
+        return ReadOnlyIteratorImpl.of(innerConst.iterator());
 	}
 
 	@Override
@@ -325,9 +360,13 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 	}
 
 	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		// TODO Auto-generated method stub
-		return null;
+	public FastTable<E>[] trySplit(int n) {
+		return innerConst.trySplit(n);
 	}
+
+    @Parallel
+    public boolean until(Predicate<? super E> matching) {
+        return inner.until(matching);
+    }
 
 }

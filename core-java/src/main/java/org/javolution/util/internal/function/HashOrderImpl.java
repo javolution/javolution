@@ -8,25 +8,22 @@
  */
 package org.javolution.util.internal.function;
 
-import java.io.Serializable;
-
 import org.javolution.util.function.Order;
 
 /**
  * The hash order implementation.
+ * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public final class HashOrderImpl<T> implements Order<T>, Serializable {
-
-	private static final long serialVersionUID = 0x700L; // Version.
-	public static final HashOrderImpl<Object> INSTANCE = new HashOrderImpl<Object>();
+public enum HashOrderImpl implements Order<Object> { 
+	INSTANCE; 
 
 	@Override
-	public boolean areEqual(T left, T right) {
+	public boolean areEqual(Object left, Object right) {
 		return (left == right) || (left != null && left.equals(right));
 	}
 
 	@Override
-	public int compare(T left, T right) {
+	public int compare(Object left, Object right) {
 		int hashLeft = (left != null) ? left.hashCode() : 0;
 		int hashRight = (right != null) ? right.hashCode() : 0;
 		return (hashLeft == hashRight) ? 0
@@ -35,12 +32,12 @@ public final class HashOrderImpl<T> implements Order<T>, Serializable {
 	}
 
 	@Override
-	public int indexOf(T object) { // Unsigned 32-bits
+	public int indexOf(Object object) { // Unsigned 32-bits
 		return (object != null) ? object.hashCode() : 0;
 	}
 
 	@Override
-	public Order<T> subOrder(T obj) {
+	public Order<Object> subOrder(Object obj) {
 		return null; // No sub-order.
 	}
 

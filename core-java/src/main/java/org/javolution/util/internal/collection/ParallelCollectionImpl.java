@@ -8,211 +8,207 @@
  */
 package org.javolution.util.internal.collection;
 
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.javolution.context.ConcurrentContext;
+import org.javolution.lang.Parallel;
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastTable;
+import org.javolution.util.FastSet;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
- * A view allowing parallel processing.
+ * A view to support parallel processing (methods annotated {@link Parallel}).
  */
-public class ParallelCollectionImpl<E> extends FastCollection<E> {
+public final class ParallelCollectionImpl<E> extends FastCollection<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
-	private static final Object NOT_FOUND = new Object();
+    private static final long serialVersionUID = 0x700L; // Version.
 
-	private final FastCollection<E> inner;
+    public static <E> void forEach(FastCollection<E> that, final Consumer<? super E> consumer) {
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            int concurrency = ctx.getConcurrency();
+            final FastCollection<E>[] subViews = that.trySplit(concurrency + 1);
+            for (int i = 1; i < subViews.length; i++) {
+                final int j = i;
+                ctx.execute(new Runnable() {
 
-	// //////////////////////////////////////////////////////////////////////////
-	// Closure operations.
-	//
+                    @Override
+                    public void run() {
+                        subViews[j].forEach(consumer);
+                    }
+                });
+            }
+            subViews[0].forEach(consumer);
+        } finally {
+            ctx.exit(); // Waits for concurrent completion.
+        }
+    }
 
-	public ParallelCollectionImpl(FastCollection<E> inner) {
-		this.inner = inner;
-	}
+    @SuppressWarnings("unchecked")
+    public static <E> E reduce(FastCollection<E> that, final BinaryOperator<E> operator) {
+        final E[] results;
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            int concurrency = ctx.getConcurrency();
+            final FastCollection<E>[] subViews = that.trySplit(concurrency + 1);
+            results = (E[]) new Object[subViews.length];
+            for (int i = 1; i < subViews.length; i++) {
+                final int j = i;
+                ctx.execute(new Runnable() {
 
-	@Override
-	public boolean add(E element) {
-		return inner.add(element);
-	}
+                    @Override
+                    public void run() {
+                        results[j] = subViews[j].reduce(operator);
+                    }
+                });
+            }
+            results[0] = subViews[0].reduce(operator);
+        } finally {
+            ctx.exit(); // Waits for concurrent completion.
+        }
+        E accumulator = results[0];
+        for (int i = 1; i < results.length;)
+            accumulator = operator.apply(accumulator, results[i]);
+        return accumulator;
+    }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public FastCollection<E> all() {
-		final FastCollection<E> results[];
-		ConcurrentContext ctx = ConcurrentContext.enter();
-		try {
-			int concurrency = ctx.getConcurrency();
-			final FastCollection<E>[] subViews = inner
-					.trySplit(concurrency + 1);
-			results = new FastCollection[subViews.length];
-			for (int i = 1; i < subViews.length; i++) {
-				final int j = i;
-				ctx.execute(new Runnable() {
+    public static <E> boolean removeIf(FastCollection<E> that, final Predicate<? super E> matching) {
+        final FastSet<E> toRemove = FastSet.newSet();
+        // Default equality comparator, assumes that if x.equals(y) then matching.test(x) == matching.
 
-					@Override
-					public void run() {
-						results[j] = subViews[j].all();
-					}
-				});
-			}
-			results[0] = subViews[0].all();
-		} finally {
-			ctx.exit(); // Waits for concurrent completion.
-		}
-		FastTable<E> mergeResults = FastTable.newTable(equality());
-		for (FastCollection<E> result : results)
-			mergeResults.addAll(result);
-		return mergeResults;
-	}
+        ParallelCollectionImpl.forEach(that, new Consumer<E>() { // Parallel
+            @Override
+            public void accept(E param) {
+                if (matching.test(param)) {
+                    synchronized (toRemove) {
+                        toRemove.add(param);
+                    }
+                }
+            }
+        });
+        that.removeIf(new Predicate<E>() { // Sequential.
+            @Override
+            public boolean test(E param) {
+                return toRemove.contains(param);
+            }
+        });
+        return !toRemove.isEmpty();
+    }
 
-	@Override
-	public ParallelCollectionImpl<E> clone() {
-		return new ParallelCollectionImpl<E>(inner.clone());
-	}
+    public static <E> boolean until(FastCollection<E> that, final Predicate<? super E> matching) {
+        final AtomicBoolean found = new AtomicBoolean(false);
+        final Predicate<E> matchingOrFound = new Predicate<E>() {
+            @Override
+            public boolean test(E param) {
+                if (found.get())
+                    return true;
+                if (!matching.test(param))
+                    return false;
+                found.set(true);
+                return true;
+            }
+        };
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            int concurrency = ctx.getConcurrency();
+            final FastCollection<E>[] subViews = that.trySplit(concurrency + 1);
+            for (int i = 1; i < subViews.length; i++) {
+                final int j = i;
+                ctx.execute(new Runnable() {
 
-	@Override
-	public Equality<? super E> equality() {
-		return inner.equality();
-	}
+                    @Override
+                    public void run() {
+                        subViews[j].until(matchingOrFound);
+                    }
+                });
+            }
+        } finally {
+            ctx.exit(); // Waits for concurrent completion.
+        }
+        return found.get();
+    }
 
-	@Override
-	public void forEach(final Consumer<? super E> consumer) {
-		ConcurrentContext ctx = ConcurrentContext.enter();
-		try {
-			int concurrency = ctx.getConcurrency();
-			final FastCollection<E>[] subViews = inner
-					.trySplit(concurrency + 1);
-			for (int i = 1; i < subViews.length; i++) {
-				final int j = i;
-				ctx.execute(new Runnable() {
+    private final FastCollection<E> inner;
 
-					@Override
-					public void run() {
-						subViews[j].forEach(consumer);
-					}
-				});
-			}
-			subViews[0].forEach(consumer);
-		} finally {
-			ctx.exit(); // Waits for concurrent completion.
-		}
-	}
+    public ParallelCollectionImpl(FastCollection<E> inner) {
+        this.inner = inner;
+    }
 
-	// //////////////////////////////////////////////////////////////////////////
-	// Implements abstract methods.
+    @Override
+    public boolean add(E element) {
+        return inner.add(element);
+    }
 
-	@Override
-	public Iterator<E> iterator() {
-		return inner.iterator();
-	}
+    @Override
+    public void clear() {
+        removeIf(Predicate.TRUE); // Parallel.
+    }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public E reduce(final BinaryOperator<E> operator) {
-		final E[] results;
-		ConcurrentContext ctx = ConcurrentContext.enter();
-		try {
-			int concurrency = ctx.getConcurrency();
-			final FastCollection<E>[] subViews = inner
-					.trySplit(concurrency + 1);
-			results = (E[]) new Object[subViews.length];
-			for (int i = 1; i < subViews.length; i++) {
-				final int j = i;
-				ctx.execute(new Runnable() {
+    @Override
+    public ParallelCollectionImpl<E> clone() {
+        return new ParallelCollectionImpl<E>(inner.clone());
+    }
 
-					@Override
-					public void run() {
-						results[j] = subViews[j].reduce(operator);
-					}
-				});
-			}
-			results[0] = subViews[0].reduce(operator);
-		} finally {
-			ctx.exit(); // Waits for concurrent completion.
-		}
-		E accumulator = null;
-		for (E e : results)
-			accumulator = (accumulator != null) ? ((e != null) ? operator
-					.apply(accumulator, e) : accumulator) : e;
-		return accumulator;
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return inner.equality();
+    }
 
-	@Override
-	public boolean removeIf(final Predicate<? super E> filter) {
-		final AtomicBoolean changed = new AtomicBoolean(false);
-		ConcurrentContext ctx = ConcurrentContext.enter();
-		try {
-			int concurrency = ctx.getConcurrency();
-			final FastCollection<E>[] subViews = inner
-					.trySplit(concurrency + 1);
-			for (int i = 1; i < subViews.length; i++) {
-				final int j = i;
-				ctx.execute(new Runnable() {
+    @Override
+    public void forEach(Consumer<? super E> consumer) {
+        ParallelCollectionImpl.forEach(inner, consumer);
+    }
 
-					@Override
-					public void run() {
-						if (subViews[j].removeIf(filter))
-							changed.set(true);
-					}
-				});
-			}
-			if (subViews[0].removeIf(filter))
-				changed.set(true);
-		} finally {
-			ctx.exit(); // Waits for concurrent completion.
-		}
-		return changed.get();
-	}
+    @Override
+    public boolean isEmpty() {
+        return until(Predicate.TRUE); // Parallel.
+    }
 
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		return inner.trySplit(n);
-	}
+    @Override
+    public Iterator<E> iterator() {
+        return inner.iterator();
+    }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public E until(final Predicate<? super E> matching) {
-		final AtomicReference<Object> found = new AtomicReference<Object>(
-				NOT_FOUND);
-		final Predicate<E> matchingOrFound = new Predicate<E>() {
+    @Override
+    public E reduce(BinaryOperator<E> operator) {
+        return ParallelCollectionImpl.reduce(inner, operator);
+    }
 
-			@Override
-			public boolean test(E param) {
-				if (found.get() != NOT_FOUND)
-					return true; // Terminates, already found.
-				if (matching.test(param)) {
-					found.set(param);
-					return true;
-				}
-				return false;
-			}
-		};
-		ConcurrentContext ctx = ConcurrentContext.enter();
-		try {
-			int concurrency = ctx.getConcurrency();
-			final FastCollection<E>[] subViews = inner
-					.trySplit(concurrency + 1);
-			for (int i = 1; i < subViews.length; i++) {
-				final int j = i;
-				ctx.execute(new Runnable() {
+    @Override
+    public boolean removeIf(Predicate<? super E> matching) {
+        return ParallelCollectionImpl.removeIf(inner, matching);
+    }
 
-					@Override
-					public void run() {
-						subViews[j].until(matchingOrFound);
-					}
-				});
-			}
-		} finally {
-			ctx.exit(); // Waits for concurrent completion.
-		}
-		return (E) found.get();
-	}
+    @Override
+    public FastCollection<E> sequential() {
+        return inner.sequential();
+    }
+
+    @Override
+    public int size() {
+        final AtomicInteger count = new AtomicInteger(0);
+        forEach(new Consumer<E>() {// Parallel.
+            @Override
+            public void accept(E param) {
+                count.incrementAndGet();
+            }
+        });
+        return count.get();
+    }
+
+    @Override
+    public FastCollection<E>[] trySplit(int n) {
+        return inner.trySplit(n);
+    }
+
+    @Override
+    public boolean until(Predicate<? super E> matching) {
+        return ParallelCollectionImpl.until(inner, matching);
+    }
 
 }

@@ -26,6 +26,26 @@ public final class MathLib {
     }
 
     /**
+     * 32 bits hashing function based on FNV-1 algorithm.
+     *  
+     * @param intValue the 32 bits number input.
+     * @return the corresponding hash value.
+     * @see <a href="https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function">
+     *       Wikipedia: Fowler–Noll–Vo hash function</a>
+     */
+    public static int hash(int intValue) {
+        final int FNV_OFFSET = (int) 2166136261L;
+        final int FNV_PRIME = (int) 16777619L;
+        int hash = FNV_OFFSET;
+        for (int i=0; i < 32; i +=8) {
+            int byteValue = (intValue >> i) & 0xFF;
+            hash *= FNV_PRIME;
+            hash ^= byteValue;
+        }
+        return hash;
+    }
+
+    /**
      * Interleaves the bits of the two specified integer values (Morton code).
      * 
      * @param x the first positive integer value.

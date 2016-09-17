@@ -8,18 +8,16 @@
  */
 package org.javolution.util.internal.function;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
 import org.javolution.util.function.Equality;
 
 /**
  * The array equality implementation.
+ * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public final class ArrayEqualityImpl implements Equality<Object>, Serializable {
-
-	private static final long serialVersionUID = 0x700L; // Version.
-	public static final ArrayEqualityImpl INSTANCE = new ArrayEqualityImpl();
+public enum ArrayEqualityImpl implements Equality<Object> { 
+	INSTANCE; 
 
 	@Override
 	public boolean areEqual(Object left, Object right) {

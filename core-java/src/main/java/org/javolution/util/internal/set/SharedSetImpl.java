@@ -6,33 +6,34 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package org.javolution.util.internal.collection;
+package org.javolution.util.internal.set;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.FastSet;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
-import org.javolution.util.function.Equality;
+import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.ReadWriteLockImpl;
+import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
- * A shared view over a collection (reads-write locks).
+ * A shared view over a set (reads-write locks).
  */
-public final class SharedCollectionImpl<E> extends FastCollection<E> {
+public final class SharedSetImpl<E> extends FastSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
+    private final FastSet<E> inner;
     private final ReadWriteLockImpl lock;
 
-    public SharedCollectionImpl(FastCollection<E> inner) {
+    public SharedSetImpl(FastSet<E> inner) {
         this.inner = inner;
         this.lock = new ReadWriteLockImpl();
     }
 
-    public SharedCollectionImpl(FastCollection<E> inner, ReadWriteLockImpl lock) {
+    public SharedSetImpl(FastSet<E> inner, ReadWriteLockImpl lock) {
         this.inner = inner;
         this.lock = lock;
     }
@@ -78,6 +79,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public E ceiling(E element) {
+        lock.readLock.lock();
+        try {
+            return inner.ceiling(element);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
     public void clear() {
         lock.writeLock.lock();
         try {
@@ -88,13 +99,18 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public SharedCollectionImpl<E> clone() {
+    public SharedSetImpl<E> clone() {
         lock.readLock.lock();
         try {
-            return new SharedCollectionImpl<E>(inner.clone());
+            return new SharedSetImpl<E>(inner.clone());
         } finally {
             lock.readLock.unlock();
         }
+    }
+
+    @Override
+    public Order<? super E> comparator() {
+        return inner.comparator(); // Immutable.
     }
 
     @Override
@@ -118,8 +134,23 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Equality<? super E> equality() {
-        return inner.equality(); // Immutable.
+    public Iterator<E> descendingIterator() {
+        lock.readLock.lock();
+        try {
+            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator());
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public Iterator<E> descendingIterator(E fromElement) {
+        lock.readLock.lock();
+        try {
+            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator(fromElement));
+        } finally {
+            lock.readLock.unlock();
+        }
     }
 
     @Override
@@ -127,6 +158,26 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
         lock.readLock.lock();
         try {
             return inner.equals(obj);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E first() {
+        lock.readLock.lock();
+        try {
+            return inner.first();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E floor(E element) {
+        lock.readLock.lock();
+        try {
+            return inner.floor(element);
         } finally {
             lock.readLock.unlock();
         }
@@ -153,6 +204,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public E higher(E element) {
+        lock.readLock.lock();
+        try {
+            return inner.higher(element);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
     public boolean isEmpty() {
         lock.readLock.lock();
         try {
@@ -173,6 +234,36 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public Iterator<E> iterator(E fromElement) {
+        lock.readLock.lock();
+        try {
+            return ReadOnlyIteratorImpl.of(inner.clone().iterator(fromElement));
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E last() {
+        lock.readLock.lock();
+        try {
+            return inner.last();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E lower(E element) {
+        lock.readLock.lock();
+        try {
+            return inner.lower(element);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
     public E max() {
         lock.readLock.lock();
         try {
@@ -187,6 +278,26 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
         lock.readLock.lock();
         try {
             return inner.min();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E pollFirst() {
+        lock.readLock.lock();
+        try {
+            return inner.pollFirst();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E pollLast() {
+        lock.readLock.lock();
+        try {
+            return inner.pollLast();
         } finally {
             lock.readLock.unlock();
         }
@@ -283,7 +394,7 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public FastSet<E>[] trySplit(int n) {
         lock.readLock.lock();
         try {
             return inner.clone().trySplit(n);

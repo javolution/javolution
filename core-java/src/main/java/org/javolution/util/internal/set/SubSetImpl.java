@@ -6,29 +6,30 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package org.javolution.util.internal.map;
+package org.javolution.util.internal.set;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.javolution.util.FastMap;
-import org.javolution.util.function.Equality;
+import org.javolution.lang.Parallel;
+import org.javolution.util.FastSet;
 import org.javolution.util.function.Order;
+import org.javolution.util.function.Predicate;
 
 /**
- * An sub-map view over a map.
+ * A sub-set view over a set.
  */
-public final class SubMapImpl<K, V> extends FastMap<K, V> {
+public final class SubSetImpl<E> extends FastSet<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K,V> inner;
-    private final K from;
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastSet<E> inner;
+    private final E from;
     private final Boolean fromInclusive;
-    private final K to;
+    private final E to;
     private final Boolean toInclusive;
 
-    /** Returns a sub-map, there is no bound when inclusive Boolean value is null. */
-    public SubMapImpl(FastMap<K,V> inner, K from, Boolean fromInclusive, K to, Boolean toInclusive) {
+    /** Returns a sub-set, there is no bound when inclusive Boolean value is null. */
+    public SubSetImpl(FastSet<E> inner, E from, Boolean fromInclusive, E to, Boolean toInclusive) {
         this.inner = inner;
         this.from = from;
         this.fromInclusive = fromInclusive;
@@ -37,11 +38,69 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public int size() {
-        int count = 0;
-        for (Iterator<Entry<K,V>> itr = iterator(); itr.hasNext(); itr.next())
-            count++;
-        return count;
+    public boolean add(E element) {
+        if (!inRange(element)) return false;
+        return inner.add(element);
+    }
+
+    @Parallel
+    @Override
+    public void clear() {
+        removeIf(Predicate.TRUE);
+    }
+
+    @Override
+    public SubSetImpl<E> clone() {
+        return new SubSetImpl<E>(inner.clone(), from, fromInclusive, to, toInclusive);
+    }
+
+    @Override
+    public Order<? super E> comparator() {
+        return inner.comparator();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean contains(Object obj) {
+        if (!inRange((E)obj)) return false;
+        return inner.contains(obj);
+    }
+
+    @Override
+    public Iterator<E> descendingIterator() {
+        if (toInclusive == null) return new LowerLimitIterator(inner.descendingIterator());
+        Iterator<E> itr = new LowerLimitIterator(inner.descendingIterator(to));
+        if (!toInclusive && inner.contains(to)) itr.next(); // Pass element.  
+        return itr;
+    }
+
+    @Override
+    public Iterator<E> descendingIterator(E fromElement) {
+        if (toInclusive == null) return new LowerLimitIterator(inner.descendingIterator(fromElement));
+        return (inner.comparator().compare(to, fromElement) <= 0) ? descendingIterator() :
+            new LowerLimitIterator(inner.descendingIterator(fromElement));
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        if (fromInclusive == null) return new UpperLimitIterator(inner.iterator());
+        Iterator<E> itr = new UpperLimitIterator(inner.iterator(from));
+        if (!fromInclusive && inner.contains(from)) itr.next(); // Pass element.  
+        return itr;
+    }
+
+    @Override
+    public Iterator<E> iterator(E fromElement) {
+        if (fromInclusive == null) return new UpperLimitIterator(inner.iterator(fromElement));
+        return (inner.comparator().compare(from, fromElement) >= 0) ? iterator() :
+            new UpperLimitIterator(inner.iterator(fromElement));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean remove(Object obj) {
+        if (!inRange((E)obj)) return false;
+        return inner.remove(obj);
     }
 
     @Override
@@ -49,73 +108,22 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
         return !iterator().hasNext();
     }
 
-     @Override
-    public Iterator<Entry<K,V>> descendingIterator() {
-        if (toInclusive == null) return new LowerLimitIterator(inner.descendingIterator());
-        Iterator<Entry<K,V>> itr = new LowerLimitIterator(inner.descendingIterator(to));
-        if (!toInclusive && inner.containsKey(to)) itr.next(); // Pass element.  
-        return itr;
+    @Parallel
+    @Override
+    public int size() {
+        int count = 0;
+        for (Iterator<E> itr = iterator(); itr.hasNext(); itr.next())
+            count++;
+        return count;
     }
 
-    @Override
-    public Iterator<Entry<K,V>> descendingIterator(K fromElement) {
-        if (toInclusive == null) return new LowerLimitIterator(inner.descendingIterator(fromElement));
-        return (inner.comparator().compare(to, fromElement) <= 0) ? descendingIterator() :
-            new LowerLimitIterator(inner.descendingIterator(fromElement));
-    }
-
-    @Override
-    public Iterator<Entry<K,V>> iterator() {
-        if (fromInclusive == null) return new UpperLimitIterator(inner.iterator());
-        Iterator<Entry<K,V>> itr = new UpperLimitIterator(inner.iterator(from));
-        if (!fromInclusive && inner.containsKey(from)) itr.next(); // Pass element.  
-        return itr;
-    }
-
-    @Override
-    public Iterator<Entry<K,V>> iterator(K fromElement) {
-        if (fromInclusive == null) return new UpperLimitIterator(inner.iterator(fromElement));
-        return (inner.comparator().compare(from, fromElement) >= 0) ? iterator() :
-            new UpperLimitIterator(inner.iterator(fromElement));
-    }
-    
-    @Override
-    public Entry<K, V> getEntry(K key) {
-        return inRange(key) ? inner.getEntry(key) : null;
-    }
-
-    @Override
-    public Entry<K, V> putEntry(K key, V value) {
-        return inRange(key) ? inner.putEntry(key, value) : null;
-    }
-
-    @Override
-    public Entry<K, V> removeEntry(K key) {
-        return inRange(key) ? inner.removeEntry(key) : null;
-    }
-
-    @Override
-    public Equality<? super V> valuesEquality() {
-        return inner.valuesEquality();
-    }
-
-    @Override
-    public FastMap<K, V> clone() {
-        return new SubMapImpl<K,V>(inner.clone(), from, fromInclusive, to, toInclusive);
-    }
-
-    @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
-    }
-		
     /** Iterator bounded by the from limit over the sub-set. */
-    private class UpperLimitIterator implements Iterator<Entry<K,V>> {
-        private final Iterator<Entry<K,V>> itr;
+    private class UpperLimitIterator implements Iterator<E> {
+        private final Iterator<E> itr;
         boolean currentIsNext;
-        Entry<K,V> current;
+        E current;
         
-        public UpperLimitIterator(Iterator<Entry<K,V>> itr) {
+        public UpperLimitIterator(Iterator<E> itr) {
             this.itr = itr;
         }
         
@@ -125,13 +133,13 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
                 return true;
             if (!itr.hasNext()) return false;
             current = itr.next();
-            if (tooHigh(current.getKey())) return false;
+            if (tooHigh(current)) return false;
             currentIsNext = true;
             return true;
         }
 
         @Override
-        public Entry<K,V> next() {
+        public E next() {
             if (!hasNext())
                 throw new NoSuchElementException();
             currentIsNext = false;
@@ -147,12 +155,12 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     /** Iterator bounded by the to limit over the sub-set. */
-    private class LowerLimitIterator implements Iterator<Entry<K,V>> {
-        private final Iterator<Entry<K,V>> itr;
+    private class LowerLimitIterator implements Iterator<E> {
+        private final Iterator<E> itr;
         boolean currentIsNext;
-        Entry<K,V> current;
+        E current;
       
-        public LowerLimitIterator(Iterator<Entry<K,V>> itr) {
+        public LowerLimitIterator(Iterator<E> itr) {
             this.itr = itr;
         }
            
@@ -162,13 +170,13 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
                 return true;
             if (!itr.hasNext()) return false;
             current = itr.next();
-            if (tooLow(current.getKey())) return false;
+            if (tooLow(current)) return false;
             currentIsNext = true;
             return true;
         }
 
         @Override
-        public Entry<K,V> next() {
+        public E next() {
             if (!hasNext())
                 throw new NoSuchElementException();
             currentIsNext = false;
@@ -182,20 +190,21 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
         }   
     }
 
-    private boolean inRange(K e) {     
+    private boolean inRange(E e) {     
         return !tooHigh(e) && !tooLow(e);
     }
     
-    private boolean tooHigh(K e) {
+    private boolean tooHigh(E e) {
         if (toInclusive == null) return false;
         int i = inner.comparator().compare(to, e);
         return (i < 0) || ((i == 0) && !toInclusive);
     }
     
-    private boolean tooLow(K e) {
+    private boolean tooLow(E e) {
         if (fromInclusive == null) return false;
         int i = inner.comparator().compare(from, e);
         return (i > 0) || ((i == 0) && !toInclusive);
     }
       
+
 }

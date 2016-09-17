@@ -8,6 +8,8 @@
  */
 package org.javolution.util;
 
+import java.util.Iterator;
+
 import org.javolution.util.SparseArray.EntryNode;
 import org.javolution.util.SparseArray.Node;
 import org.javolution.util.SparseArray.NullNode;
@@ -19,8 +21,8 @@ import org.javolution.util.internal.map.SortedMapImpl;
  * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> 
  *     implementation of {@link FastMap}.</p> 
  *     
- * <p> Worst-case execution time when adding new entries is 
- *     significantly better than when using standard hash table since there is
+ * <p> Worst-case execution time when adding new entries is significantly 
+ *     better than when using standard hash table since there is
  *     no resize/rehash ever performed.</p> 
  *   
  * <p> Sparse maps are efficient for indexing multi-dimensional information 
@@ -53,25 +55,38 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	private static final long serialVersionUID = 0x700L; // Version. 
 	private static final Object SUB_MAP = new Object();
-	private final Order<? super K> comparator; 
-	private Node<K,V> root = NullNode.getInstance(); // Value is either V or FastMap<K,V>
+	private final Order<? super K> keyOrder; 
+    private final Equality<? super V> valueEquality; 
+	private Node<K,V> root = NullNode.getInstance(); // Map's values are either instances of V or FastMap<K,V>
 	private int size;
 	
 	/**
-     * Creates an empty map using an arbitrary order (hash based).
+     * Creates an empty map sorted arbitrarily (hash based).
      */
     public SparseMap() {
     	this(Order.DEFAULT);
     }
     
 	/**
-     * Creates an empty map using the specified order.
+     * Creates an empty map sorted according to the specified order.
      * 
-     * @param comparator the ordering of the map.
+     * @param keyOrder the key order of the map.
      */
-    public SparseMap(Order<? super K> comparator) {
-    	this.comparator = comparator;
+    public SparseMap(Order<? super K> order) {
+    	this(Order.DEFAULT, Equality.DEFAULT);
     }
+    
+    /**
+     * Creates an empty map sorted according to the specified key order and using the specified 
+     * equality for values comparisons.
+     * 
+     * @param keyOrder the key order of the map.
+     */
+    public SparseMap(Order<? super K> keyOrder, Equality<? super V> valueEquality) {
+        this.keyOrder = keyOrder;
+        this.valueEquality = valueEquality; 
+    }
+        
         
 	@Override
 	public int size() {
@@ -80,17 +95,17 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	@Override
 	public Order<? super K> comparator() {
-		return comparator;
+		return keyOrder;
 	}
 	
 	@Override
 	public Equality<? super V> valuesEquality() {
-		return Equality.DEFAULT;
+		return valueEquality;
 	}
 	
 	@Override
 	public SparseMap<K, V> clone() {
-		SparseMap<K,V> copy = new SparseMap<K,V>(comparator);
+		SparseMap<K,V> copy = new SparseMap<K,V>(keyOrder, valueEquality);
 		copy.root = root != null ? root.clone() : null;
 		copy.size = size;
 		return copy;
@@ -99,17 +114,17 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> getEntry(K key) {
-		EntryNode<K,V> entry = root.getEntry(comparator.indexOf(key));
+		EntryNode<K,V> entry = root.getEntry(keyOrder.indexOf(key));
         if (entry == null) return null;
         if (entry.key == SUB_MAP)    
              return ((FastMap<K,V>)entry.value).getEntry(key); 
-        return comparator.areEqual(entry.getKey(), key) ? entry : null;
+        return keyOrder.areEqual(entry.key, key) ? entry : null;
     }		
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public V put(K key, V value) {
-		int i = comparator.indexOf(key);
+		int i = keyOrder.indexOf(key);
 		EntryNode<K,V> entry = root.entry(i);
 		if (entry.key == SUB_MAP) {
 			FastMap<K,V> subMap = (FastMap<K,V>)entry.value;
@@ -129,13 +144,13 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 			return null;
 		} 
 		// Existing entry.
-		if (comparator.areEqual(entry.key, key))
+		if (keyOrder.areEqual(entry.key, key))
 			return entry.setValueBypass(value);
 		// Collision.
-        Order<? super K> subOrder = comparator.subOrder(key);
+        Order<? super K> subOrder = keyOrder.subOrder(key);
         FastMap<K,V> subMap = (subOrder != null) ? 
 		         new SparseMap<K,V>(subOrder) : 
-		        	 new SortedMapImpl<K,V>(comparator);
+		        	 new SortedMapImpl<K,V>(keyOrder);
 	    subMap.put(entry.key, entry.value);
 	    entry.key = (K) SUB_MAP; // Cast has no effect.
 	    entry.value = (V) subMap; // Cast has no effect.
@@ -146,7 +161,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K,V> removeEntry(K key) {
-		int i = comparator.indexOf((K)key);
+		int i = keyOrder.indexOf((K)key);
 		EntryNode<K,V> entry = root.getEntry(i);
         if (entry == null) return null;
         if (entry.key == SUB_MAP) {
@@ -154,7 +169,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         	if (previousEntry != null) size--;
         	return previousEntry;
         }
-        if (!comparator.areEqual(entry.getKey(), key)) return null;
+        if (!keyOrder.areEqual(entry.getKey(), key)) return null;
         Object tmp = root.removeEntry(i);
         if (tmp == SparseArray.DOWNSIZE) {
         	root = root.downsize(i);
@@ -192,16 +207,16 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> higherEntry(K key) {
-		int i = comparator.indexOf(key);
+		int i = keyOrder.indexOf(key);
 		EntryNode<K,V> entry = root.ceilingEntry(i);
 		if (entry == null) return null;
 		if (entry.key == SUB_MAP) {
 			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).higherEntry(key);
 			if (subMapEntry != null) return subMapEntry;
 		} else {
-			if (comparator.compare(entry.key, key) > 0) return entry;
+			if (keyOrder.compare(entry.key, key) > 0) return entry;
 		}
-		if (entry.getIndex() == -1) return null;
+		if (entry.index == -1) return null;
 		entry = root.ceilingEntry(i+1);
 		if ((entry != null) && (entry.key == SUB_MAP)) 
 			return ((FastMap<K,V>)entry.value).firstEntry();
@@ -211,16 +226,16 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> lowerEntry(K key) {
-		int i = comparator.indexOf(key);
+		int i = keyOrder.indexOf(key);
 		EntryNode<K,V> entry = root.floorEntry(i);
 		if (entry == null) return null;
 		if (entry.key == SUB_MAP) {
 			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).lowerEntry(key);
 			if (subMapEntry != null) return subMapEntry;
 		} else {
-			if (comparator.compare(entry.key, key) < 0) return entry;
+			if (keyOrder.compare(entry.key, key) < 0) return entry;
 		}
-		if (entry.getIndex() == 0) return null;
+		if (entry.index == 0) return null;
 		entry = root.floorEntry(i-1);
 		if ((entry != null) && (entry.key == SUB_MAP)) 
 			return ((FastMap<K,V>)entry.value).lastEntry();
@@ -230,16 +245,16 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> ceilingEntry(K key) {
-		int i = comparator.indexOf(key);
+		int i = keyOrder.indexOf(key);
 		EntryNode<K,V> entry = root.ceilingEntry(i);
 		if (entry == null) return null;
 		if (entry.key == SUB_MAP) {
 			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).ceilingEntry(key);
 			if (subMapEntry != null) return subMapEntry;
 		} else {
-			if (comparator.compare(entry.key, key) >= 0) return entry;
+			if (keyOrder.compare(entry.key, key) >= 0) return entry;
 		}
-		if (entry.getIndex() == -1) return null;
+		if (entry.index == -1) return null;
 		entry = root.ceilingEntry(i+1);
 		if ((entry != null) && (entry.key == SUB_MAP)) 
 			return ((FastMap<K,V>)entry.value).firstEntry();
@@ -249,20 +264,56 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> floorEntry(K key) {
-		int i = comparator.indexOf(key);
+		int i = keyOrder.indexOf(key);
 		EntryNode<K,V> entry = root.floorEntry(i);
 		if (entry == null) return null;
 		if (entry.key == SUB_MAP) {
 			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).floorEntry(key);
 			if (subMapEntry != null) return subMapEntry;
 		} else {
-			if (comparator.compare(entry.key, key) <= 0) return entry;
+			if (keyOrder.compare(entry.key, key) <= 0) return entry;
 		}
-		if (entry.getIndex() == 0) return null;
+		if (entry.index == 0) return null;
 		entry = root.floorEntry(i-1);
 		if ((entry != null) && (entry.key == SUB_MAP)) 
 			return ((FastMap<K,V>)entry.value).lastEntry();
 		return entry;
 	}
+
+    @Override
+    public boolean isEmpty() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator(K fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator(K fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public org.javolution.util.FastMap.Entry<K, V> putEntry(K key, V value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

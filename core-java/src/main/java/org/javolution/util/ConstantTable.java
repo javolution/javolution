@@ -8,165 +8,323 @@
  */
 package org.javolution.util;
 
+import java.util.Collection;
+import java.util.Comparator;
+
 import org.javolution.lang.Constant;
-import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
- * <p> A table for which immutability is guaranteed by construction
- *     (package private constructor).
+ * <p> A table for which immutability is guaranteed by construction.
  * <pre>{@code
  * // From literal elements.
  * ConstantTable<String> winners = ConstantTable.of("John Deuff", "Otto Graf", "Sim Kamil");
  * 
- * // From FastTable instances (same elements equality).
- * ConstantTable<String> caseInsensitiveWinners 
- *     = FastTable.newTable(LEXICAL_CASE_INSENSITIVE, String.class)
- *         .addAll("John Deuff", "Otto Graf", "Sim Kamil").constant();
+ * // From existing collections.
+ * ConstantTable<String> caseInsensitiveWinners = ConstantTable.of(Equality.LEXICAL_CASE_INSENSITIVE, winners);
  * }</pre></p>
+ * 
+ * <p> This class ensures that calling a method which may modify the table will most likely generate a warning
+ *     (deprecated warning) at compile time and will most certainly raise an exception at run-time.</p>
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, March 14, 2016
  */
-@Constant(comment = "Immutable")
+@Constant
 public final class ConstantTable<E> extends FastTable<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
+    private static final long serialVersionUID = 0x700L; // Version.
+    private static final String ERROR_MSG = "Constant tables cannot be modified.";
 
-	/**
-     * Returns a constant table (using default element equality) holding 
-     * the specified elements. 
+    /**
+     * Returns a constant table holding the elements from the specified collection. 
      */
-	public static <E> ConstantTable<E> of(@SuppressWarnings("unchecked") E... elements) {
-    	return new ConstantTable<E>(elements.clone(), Equality.DEFAULT);
+
+    @SuppressWarnings("unchecked")
+    public static <E> ConstantTable<E> of(Collection<? super E> elements) {
+        return new ConstantTable<E>(Equality.DEFAULT, (E[]) elements.toArray(new Object[elements.size()]));
     }
 
-	/** Holds the elements. */
-	private final E[] elements;
+    /**
+     * Returns a constant table holding the specified elements. 
+     */
+    public static <E> ConstantTable<E> of(@Constant E... elements) {
+        return new ConstantTable<E>(Equality.DEFAULT, elements);
+    }
 
-	/** Holds the equality comparator. */
-	private final Equality<? super E> equality;
+    /**
+     * Returns a constant table using the specified equality and holding the elements from the specified collection. 
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> ConstantTable<E> of(Equality<? super E> equality, Collection<? extends E> elements) {
+        return new ConstantTable<E>(equality, (E[]) elements.toArray(new Object[elements.size()]));
+    }
 
-	/** Creates a new instance from the specified elements and equality. */
-	ConstantTable(E[] elements, Equality<? super E> equality) {
-		this.elements = elements;
-		this.equality = equality;
-	}
+    /**
+     * Returns a constant table using the specified equality and holding the specified elements. 
+     */
+    public static <E> ConstantTable<E> of(Equality<? super E> equality, @Constant E... elements) {
+        return new ConstantTable<E>(equality, elements);
+    }
 
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public boolean add(E element) {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
+    /** Holds the equality comparator. */
+    private final Equality<? super E> equality;
 
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public void add(int index, E element) {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
-	
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public void clear() {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
+    /** Holds the elements. */
+    private final E[] elements;
 
-	/**  Returns {@code this}.*/
-	@Override
-	public ConstantTable<E> clone() {
-		return this;
-	}
+    /** Creates a new instance from the specified elements and equality. */
+    ConstantTable(Equality<? super E> equality, E[] elements) {
+        this.equality = equality;
+        this.elements = elements;
+    }
 
-	/** Returns {@code this}.*/
-	@Override
-	public ConstantTable<E> constant() {
-		return this;
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean add(E element) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public Equality<? super E> equality() {
-		return equality;
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public void add(int index, E element) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public void forEach(Consumer<? super E> consumer) { // Optimization.
-		for (E e : elements) consumer.accept(e);
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean addAll(Collection<? extends E> that) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public E until(Predicate<? super E> matching) { // Optimization.
-		for (E e : elements) if (matching.test(e)) return e;
-		return null;
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean addAll(E...elements) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public E get(int index) {
-		return elements[index];
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean addAll(int index, Collection<? extends E> that) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return elements.length == 0;
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean addAllSorted(Collection<? extends E> that, Comparator<? super E> cmp) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public E remove(int index) {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public void addFirst(E element) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public void addLast(E element) {
+        add(size(), element);
+    }
 
-	/** 
-	 * Guaranteed to throw an exception and leave the table unmodified.
-	 * @deprecated Should never be used on immutable table.
-	 */
-	@Override
-	public E set(int index, E element) {
-		throw new UnsupportedOperationException(
-				"Constant tables cannot be modified.");
-	}
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
 
-	@Override
-	public int size() {
-		return elements.length;
-	}
+    /**  Returns {@code this}.*/
+    @Override
+    public ConstantTable<E> clone() {
+        return this;
+    }
 
-	/** Returns {@code this}.*/
-	@Override
-	public ConstantTable<E> unmodifiable() {
-		return this;
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return equality;
+    }
 
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+    @Override
+    public E get(int index) {
+        return elements[index];
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return elements.length == 0;
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public E pollFirst() {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public E pollLast() {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public E remove(int index) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean remove(Object searched) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean removeAll(Collection<?> that) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public E removeFirst() {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean removeFirstOccurrence(Object o) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    public E removeLast() {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+    
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean removeLastOccurrence(Object o) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public boolean retainAll(Collection<?> that) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+    
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public E set(int index, E element) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    @Override
+    public int size() {
+        return elements.length;
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public void sort(Comparator<? super E> cmp) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** Returns {@code this}.*/
+    @Override
+    public ConstantTable<E> unmodifiable() {
+        return this;
+    }
+    
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public int addSorted(E element,  Comparator<? super E> cmp) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    /** 
+     * Guaranteed to throw an exception and leave the table unmodified.
+     * @deprecated Should never be used on immutable table.
+     */
+    @Override
+    public int removeSorted(E element,  Comparator<? super E> cmp) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
 }

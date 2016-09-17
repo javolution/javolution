@@ -17,15 +17,22 @@ import static org.javolution.lang.Realtime.Limit.N_SQUARE;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
+import org.javolution.lang.Parallel;
 import org.javolution.lang.Realtime;
+import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
+import org.javolution.util.function.Function;
+import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.table.AtomicTableImpl;
 import org.javolution.util.internal.table.CustomEqualityTableImpl;
+import org.javolution.util.internal.table.MappedTableImpl;
+import org.javolution.util.internal.table.ParallelTableImpl;
 import org.javolution.util.internal.table.QuickSortImpl;
 import org.javolution.util.internal.table.ReversedTableImpl;
 import org.javolution.util.internal.table.SharedTableImpl;
@@ -34,8 +41,7 @@ import org.javolution.util.internal.table.TableIteratorImpl;
 import org.javolution.util.internal.table.UnmodifiableTableImpl;
 
 /**
- * <p> A high-performance table (fractal-based) with {@link Realtime strict 
- *     timing constraints}.</p>
+ * <p> A high-performance table (fractal-based) with {@link Realtime strict timing constraints}.</p>
  *     
  * <p> Instances of this class can advantageously replace {@link java.util.ArrayList ArrayList},
  *     {@link java.util.LinkedList LinkedList} or {@link java.util.ArrayDeque ArrayDeque}
@@ -50,8 +56,7 @@ import org.javolution.util.internal.table.UnmodifiableTableImpl;
  * names.filter(str -> str.startsWith("A")).parallel().clear(); // Same as above but removal performed concurrently.
  * }</pre></p>
  *
- * <p> As for any {@link FastCollection}, iterations can be 
- *     performed using closures.
+ * <p> As for any {@link FastCollection}, iterations can be performed using closures.
  * <pre>{@code
  * FastTable<Person> persons = ...;
  * Person john = persons.filter(new Predicate<Person>() { 
@@ -66,18 +71,16 @@ import org.javolution.util.internal.table.UnmodifiableTableImpl;
  * Person john= persons.filter(person -> person.getName().equals("John")).any();
  * }</pre></p>
  * 
- * <p> Fast tables allows for sorting either through the {@link #sort} method
- *     or through the {@link #addSorted} method keeping the table sorted.
- *     For sorted tables, faster access is provided through 
- *     the {@link #indexOfSorted} method.</p> 
+ * <p> Fast tables allows for sorting either through the {@link #sort} method or through the {@link #addSorted} method 
+ *     keeping the table sorted. For sorted tables, faster access is provided through the {@link #indexOfSorted} 
+ *     method.</p> 
  * 
  * @param <E> the type of table element (can be {@code null})
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
-        Deque<E>, RandomAccess {
+public abstract class FastTable<E> extends FastCollection<E> implements List<E>, Deque<E>, RandomAccess {
 
 	
     private static final long serialVersionUID = 0x700L; // Version.
@@ -96,11 +99,10 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
-     * Returns a new high-performance table using the specified equality
-     * comparator for its elements.
+     * Returns a new high-performance table using the specified equality for elements {@link #equality comparisons}.
      */
     public static <E> FastTable<E> newTable(Equality<? super E> equality) {
-    	return new FractalTable<E>().equality(equality);
+        return equality == Equality.DEFAULT ? new FractalTable<E>() : new FractalTable<E>().equality(equality);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -117,30 +119,37 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
   		return new CustomEqualityTableImpl<E>(this, equality);
   	}
 
+    public <R> FastTable<R> map(Function<? super E, ? extends R> function) {
+        return new MappedTableImpl<E, R>(this, function);
+    }
+    
     @Override
-	public FastTable<E> parallel() {
-		return null;
-	}
-
-   @Override
+    public FastTable<E> parallel() {
+        return new ParallelTableImpl<E>(this);
+    }
+    
+    @Override
 	public FastTable<E> reversed() {
 		return new ReversedTableImpl<E>(this);
 	}
 
-   @Override
+    @Override
+    public FastTable<E> sequential() {
+        return this;
+    }
+
+    @Override
 	public FastTable<E> shared() {
 		return new SharedTableImpl<E>(this);
 	}
     
-    /**
-     * Returns a view over a portion of the table (equivalent to 
-     * {@link java.util.List#subList(int, int)}).
+   /**
+     * Returns a view over a portion of the table (equivalent to {@link java.util.List#subList(int, int)}).
+     * 
      * @param fromIndex Starting index for a subtable
      * @param toIndex Ending index for a subtable
      * @return Subtable representing the specified range of the parent FastTable
-     * @throws IndexOutOfBoundsException - if {@code (fromIndex < 0 ||
-     *         toIndex > size || fromIndex > toIndex)}
-
+     * @throws IndexOutOfBoundsException - if {@code (fromIndex < 0 || toIndex > size || fromIndex > toIndex)}
      */
     public FastTable<E> subTable(int fromIndex, int toIndex) {
         if ((fromIndex < 0) || (toIndex > size()) || (fromIndex > toIndex)) 
@@ -160,19 +169,12 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     //
 
 	@Override
-    @Realtime(limit = CONSTANT)
-    public abstract boolean add(E element);
-
-	@Override
-    @Realtime(limit = CONSTANT)
-    public abstract void clear();
-
-	@Override
-    @Realtime(limit = LINEAR, comment="For sorted tables indexOfSorted should be used.")
+    @Realtime(limit = LINEAR, comment="For sorted tables indexOfSorted should be used (LOG_N).")
     public boolean contains(Object searched) {
 		return indexOf(searched) >= 0;
 	}
 	
+    @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
     public boolean isEmpty() {
@@ -180,7 +182,7 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
     
 	@Override
-    @Realtime(limit = LINEAR)
+    @Realtime(limit = LINEAR, comment="For sorted tables removeSorted should be used (LOG_N).")
     public boolean remove(Object searched) {
 		int i = indexOf(searched);
 		if (i < 0) return false;
@@ -188,53 +190,77 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
 		return true;
 	}
 
+    @Parallel(false)
 	@Override
     @Realtime(limit = CONSTANT)
     public abstract int size();
-		
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public Iterator<E> iterator() {
+        return listIterator(0);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Iterative methods (optimization).
+    //
+
+	@Parallel
+    public void forEach(Consumer<? super E> consumer) {
+	    for (int i=0, n=size(); i < n;)
+            consumer.accept(get(i++));
+    }
+
+    @Parallel
+    public boolean until(Predicate<? super E> matching) {
+        for (int i=0, n=size(); i < n;)
+            if (matching.test(get(i++))) return true;
+        return false;
+    }
+
+    @Parallel
+    public boolean removeIf(Predicate<? super E> filter) {
+        int j = 0;
+        int n = size();
+        for (int i=0; i < n; i++) {
+            E e = get(i);
+            if (filter.test(e)) continue; // Removed (not copied)
+            if (i != j) set(j++, e); 
+        }
+        for (int i=j; i < n; i++) removeLast();
+        return j != n;
+    }		
+	
     ////////////////////////////////////////////////////////////////////////////
     // List Interface.
     //
 
-    /** 
-     * Inserts the specified element at the specified position in this table. 
-     */
     @Override
     @Realtime(limit = LOG_N)
     public abstract void add(int index, E element);
 
-    /** Inserts all of the elements in the specified collection into this table
-     *  at the specified position. */
     @Override
     @Realtime(limit = N_LOG_N)
-    public boolean addAll(int index, Collection<? extends E> elements) {
-        return subTable(index, index).addAll(elements);
+    public boolean addAll(int index, Collection<? extends E> that) {
+        return subTable(index, index).addAll(that);
     }
 
-    /** Removes the element at the specified position in this table. */
     @Override
     @Realtime(limit = LOG_N)
     public abstract E remove(int index);
 
-    /** Returns the element at the specified position in this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public abstract E get(int index);
 
-    /** 
-     * Replaces the element at the specified position in this table with the specified element.
-     *  
-     */
     @Override
-    @Realtime(limit = CONSTANT)
     public abstract E set(int index, E element);
 
     /**
-     *  Returns the index of the first occurrence of the specified object 
-     *  in this table, or -1 if this table does not contain the element.
+     *  Returns the index of the first occurrence of the specified object in this table, 
+     *  or -1 if this table does not contain the element. This methods uses this table
+     *  {@link #equality()} to perform the comparison.
      *  
-     *  <p> Note: For sorted tables, the method {@link #indexOfSorted} has 
-     *      better limit behavior (in O(Log(n)).</p> 
+     *  <p> Note: For sorted tables, the method {@link #indexOfSorted} has better limit behavior (in O(Log(n)).</p>
      */
     @Override
     @Realtime(limit = LINEAR, comment="For sorted tables indexOfSorted should be used.")
@@ -247,8 +273,11 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return -1;
     }
 
-    /** Returns the index of the last occurrence of the specified element in this table,
-     * or -1 if this table does not contain the element. */
+    /** 
+     * Returns the index of the last occurrence of the specified element in this table,
+     * or -1 if this table does not contain the element. This methods uses this table
+     * {@link #equality()} to perform the comparison.
+     */
     @Override
     @Realtime(limit = LINEAR)
     public int lastIndexOf(Object element) {
@@ -260,142 +289,137 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return -1;
     }
 
-    /** Returns an iterator over the elements in this table. */
     @Override
-    @Realtime(limit = CONSTANT)
-	public Iterator<E> iterator() {
-		return new Iterator<E>() {
-			int nextIndex = 0;
-			int size = size();
-
-			@Override
-			public boolean hasNext() {
-				return nextIndex < size;
-			}
-
-			@Override
-			public E next() {
-				if (nextIndex >= size)
-					throw new NoSuchElementException();
-				return get(nextIndex++);
-			}};
-	}
-
-    /** Returns a list iterator over the elements in this table. */
-    @Override
-    @Realtime(limit = CONSTANT)
     public ListIterator<E> listIterator() {
         return listIterator(0);
     }
 
-    /** Returns a list iterator over the elements in this table, starting 
-     * at the specified position in the table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public ListIterator<E> listIterator(int index) {
     	return new TableIteratorImpl<E>(this, index, size());
+    }
+
+    @Override
+    @Realtime(limit = LINEAR)
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof List))
+            return false;
+        @SuppressWarnings("unchecked")
+        List<E> list = (List<E>) obj;
+        if (size() != list.size())
+            return false; // Short-cut.
+        Equality<? super E> cmp = Equality.DEFAULT;
+        Iterator<E> it1 = this.iterator();
+        Iterator<E> it2 = list.iterator();
+        while (it1.hasNext()) {
+            if (!it2.hasNext())
+                return false;
+            if (!cmp.areEqual(it1.next(), it2.next()))
+                return false;
+        }
+        if (it2.hasNext())
+            return false;
+        return true;
+    }
+    
+    @Override
+    @Realtime(limit = LINEAR)
+    public int hashCode() {
+        int hash = 0;
+        Iterator<E> itr = iterator();
+        while (itr.hasNext()) {
+            E e = itr.next();
+            hash += 31 * hash + ((e != null) ? e.hashCode() : 0);
+        }
+        return hash;
+    }
+    
+    @Override
+    @Parallel
+    public FastTable<E> collect() {
+         final FastTable<E> reduction = FastTable.newTable(equality());
+         forEach(new Consumer<E>() {
+            @Override
+            public void accept(E param) {
+                synchronized (reduction) {
+                    add(param);
+                }
+            }});
+         return reduction;
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Deque Interface.
     //
 
-    /** Inserts the specified element at the front of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public void addFirst(E element) {
         add(0, element);
     }
 
-    /** Inserts the specified element at the end of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public void addLast(E element) {
         add(size(), element);
     }
 
-    /** Retrieves, but does not remove, the first element of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E getFirst() {
         if (isEmpty()) emptyError();
         return get(0);
     }
 
-    /** Retrieves, but does not remove, the last element of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E getLast() {
         if (isEmpty()) emptyError();
         return get(size() - 1);
     }
 
-    /** Retrieves, but does not remove, the first element of this table, 
-     * or returns null if this table is empty. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E peekFirst() {
         return (isEmpty()) ? null : getFirst();
     }
 
-    /** Retrieves, but does not remove, the last element of this table,
-     *  or returns null if this table is empty. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E peekLast() {
         return isEmpty() ? null : getLast();
     }
 
-    /** Retrieves and removes the first element of this table, 
-     * or returns null if this table is empty. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E pollFirst() {
         return isEmpty() ? null : removeFirst();
     }
 
-    /** Retrieves and removes the last element of this table, 
-     * or returns null if this table is empty. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E pollLast() {
         return isEmpty() ? null : removeLast();
     }
 
-    /** Retrieves and removes the last element of this table, 
-     * or returns null if this table is empty. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E removeFirst() {
         if (isEmpty()) emptyError();
         return remove(0);
     }
 
-    /** Retrieves and removes the last element of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public E removeLast() {
         if (isEmpty()) emptyError();
         return remove(size() - 1);
     }
 
-    /** Inserts the specified element at the front of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final boolean offerFirst(E e) {
         addFirst(e);
         return true;
     }
 
-    /** Inserts the specified element at the end of this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final boolean offerLast(E e) {
         addLast(e);
         return true;
     }
 
-    /** Removes the first occurrence of the specified element from this table. */
     @Override
     @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
     public boolean removeFirstOccurrence(Object o) {
@@ -405,7 +429,6 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return true;
     }
 
-    /** Removes the last occurrence of the specified element from this table. */
     @Override
     @Realtime(limit = LINEAR, comment="LOG_N for sorted tables.")
     public boolean removeLastOccurrence(Object o) {
@@ -415,58 +438,42 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return true;
     }
 
-    /** Inserts the specified element into the queue represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final boolean offer(E e) {
         return offerLast(e);
     }
 
-    /** Retrieves and removes the head of the queue represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final E remove() {
         return removeFirst();
     }
 
-    /** Retrieves and removes the head of the queue represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final E poll() {
         return pollFirst();
     }
 
-    /** Retrieves, but does not remove, the head of the queue represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final E element() {
         return getFirst();
     }
 
-    /** Retrieves, but does not remove, the head of the queue represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final E peek() {
         return peekFirst();
     }
 
-    /** Pushes an element onto the stack represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final void push(E e) {
         addFirst(e);
     }
 
-    /** Pops an element from the stack represented by this table. */
     @Override
-    @Realtime(limit = CONSTANT)
     public final E pop() {
         return removeFirst();
     }
 
-    /** Returns an iterator over the elements in this table in reverse sequential order. */
     @Override
-    @Realtime(limit = CONSTANT)
     public Iterator<E> descendingIterator() {
         return this.reversed().iterator();
     }
@@ -474,49 +481,51 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     ////////////////////////////////////////////////////////////////////////////
     // Misc.
     //
+ 
+    /** 
+     * Inserts all of the elements of the specified collection into this table keeping them sorted.
+     * 
+     * @param elements the elements to add
+     * @param cmp the comparator used for sorting
+     * @return {@code true} if this collection is modified; {@code false} otherwise
+     */
+    @Realtime(limit = N_LOG_N)
+    public boolean addAllSorted(Collection<? extends E> elements, Comparator<? super E> cmp) {
+        for (E e : elements) addSorted(e, cmp);
+        return !elements.isEmpty();
+    }
 
-	@Override
-	public FastTable<E> all() {
-		return (FastTable<E>) super.all();
-	}
-
-	@Override
-	public ConstantTable<E> constant() {
-		int size = size();
-		@SuppressWarnings("unchecked")
-		E[] elements = (E[]) new Object[size];
-		for (int i=0; i < size; i++)
-			elements[i] = get(i); 
-		return new ConstantTable<E>(elements, equality());
-	}
-	
-	@Override
-    public FastTable<E> addAll(E first, @SuppressWarnings("unchecked") E... others) {
-		super.addAll(first, others);
-		return this;
-	}
-
-	/**
-     * Assuming the table is sorted according to the specified comparator;
-     * inserts the specified element at the proper index and returns that index.
+    /**
+     * Assuming the table is sorted according to the specified comparator; inserts the specified element at the proper 
+     * index and returns that index.
      */
     @Realtime(limit = LOG_N)
-	public int addSorted(E element, Comparator<? super E> comparator) {
-    	int i = indexOfSorted(element, comparator);
+	public int addSorted(E element, Comparator<? super E> cmp) {
+    	int i = indexOfSorted(element, cmp);
     	if (i < 0) i = -(i+1);
     	add(i, element);
     	return i;
     }
 
     /**
-     * Assuming the table is sorted according to the specified comparator;
-     * returns the index of the specified element or a negative number 
-     * {@code n} such as {@code -(n+1)} would be the insertion index of 
-     * the element keeping this table sorted.
+     * Assuming the table is sorted according to the specified comparator; remove the specified element and returns
+     * its previous index or a negative number (see {@link #indexOfSorted}) if the element is not present.
      */
     @Realtime(limit = LOG_N)
-	public int indexOfSorted(Object obj, Comparator<? super E> comparator) {
-        return indexOfSorted(obj, comparator, 0, size());
+    public int removeSorted(E element, Comparator<? super E> cmp) {
+        int i = indexOfSorted(element, cmp);
+        if (i >= 0) remove(i);
+        return i;
+    }
+
+    /**
+     * Assuming the table is sorted according to the specified comparator; returns the index of the specified element 
+     * or a negative number {@code n} such as {@code -(n+1)} would be the insertion index of the element keeping 
+     * this table sorted.
+     */
+    @Realtime(limit = LOG_N)
+	public int indexOfSorted(Object obj, Comparator<? super E> cmp) {
+        return indexOfSorted(obj, cmp, 0, size());
     }
 
     @Realtime(limit = LINEAR)
@@ -530,10 +539,23 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         QuickSortImpl<E> qs = new QuickSortImpl<E>(this, cmp);
         qs.sort();
     }
-
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public FastTable<E>[] trySplit(int n) {
+        // Split into n subTables
+        FastTable<E>[] split = new FastTable[n];        
+        for (int i=0, from=0, size =size(), incr = size / n, rem = size % n; i < n; i++) {
+            int to = from + incr;
+            if (rem-- > 0) to++; 
+            split[i] = new SubTableImpl<E>(this, from, to, true /* Read-Only */);
+            from = to;
+        }
+        return split;
+    }
+        
     /**
-     * Replaced by  {@link #subTable(int, int)}. The term "List" for an 
-     * interface with random access is disturbing !
+     * Replaced by {@link #subTable(int, int)}. The term "List" for an interface with random access is disturbing !
      */
     @Override
     @Deprecated
@@ -541,19 +563,18 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return subTable(fromIndex, toIndex);
     }
 
-    /** Throws NoSuchElementException */
+    /** Throws NoSuchElementException. */
     protected void emptyError() {
         throw new NoSuchElementException("Empty Table");
     }
 
-    /** Throws IndexOutOfBoundsException */
+    /** Throws IndexOutOfBoundsException. */
     protected void indexError(int index) {
         throw new IndexOutOfBoundsException("index: " + index + ", size: "
                 + size());
     }
  
-    /** In sorted table find the real or "would be" index of the specified
-     *  element in the given range */
+    /** In sorted table find the real or "would be" index of the specified element in the given range. */
 	private int indexOfSorted(Object obj, Comparator<? super E> cmp, int start, int length) {
         if (length == 0) return -(start+1);
         int half = length >> 1;

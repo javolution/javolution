@@ -11,6 +11,7 @@ package org.javolution.util;
 import static org.javolution.lang.Realtime.Limit.CONSTANT;
 
 import java.io.Serializable;
+import java.util.Iterator;
 
 import org.javolution.lang.Index;
 import org.javolution.lang.Realtime;
@@ -33,7 +34,7 @@ import org.javolution.util.function.Order;
 public class SparseArray<E> extends FastMap<Index, E> {
 	
 	/**
-	 * Custom entry holding an additional index field (unsigned 32-bits).
+	 * Map entry holding an additional index field (unsigned 32-bits).
 	 */
 	public interface SparseEntry<K,V> extends Entry<K, V> {
 		
@@ -222,19 +223,19 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 	
 	/**
-	 * A Node is either an entry node (leaf) or a trie structure. To ensure
-	 * minimal depth and memory footprint, there is no trie structure with less
+	 * A Node is either an entry node (leaf), a trie structure or a null node. 
+	 * To ensure minimal depth and memory footprint, there is no trie structure with less
 	 * than two sub-nodes. Also there is no entry node with null elements.
 	 */
 	interface Node<K,V> extends Cloneable, Serializable {
 		Node<K,V> clone();
-		Node<K,V> downsize(int indexRemoved); // Returns the down-sized node.
+		Node<K,V> downsize(int indexRemoved); // Returns the down-sized node with the specified index removed.
 		EntryNode<K,V> getEntry(int index); // Returns the entry or null.
-		EntryNode<K,V> entry(int index); // Returns the entry, a new entry or UPSIZE 
+		EntryNode<K,V> entry(int index); // Returns the entry, a new entry or UPSIZE if a new entry cannot be immediately created (size adjustment).
 		EntryNode<K,V> ceilingEntry(int index); // Returns entry at or above specified index.
 		EntryNode<K,V> floorEntry(int index); // Returns entry at or below specified index.
-		EntryNode<K,V> removeEntry(int index); // May return DOWNSIZE (trie node) or DELETE (entry node)
-		Node<K,V> upsize(int indexAdded); // Returns the up-sized node.		
+		EntryNode<K,V> removeEntry(int index); // Returns the entry removed, null or DOWNSIZE/DELETE if the entry cannot be immediately removed (size adjustment).
+		Node<K,V> upsize(int indexAdded); // Returns the up-sized node with the specified index inserted.		
 	}
 	static final EntryNode<?,?> UPSIZE = new EntryNode<Object, Object>(-1);
 	static final EntryNode<?,?> DOWNSIZE = new EntryNode<Object, Object>(-1);
@@ -242,10 +243,10 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	
 
 	/** Defines the entry (leaf node) */
-	static final class EntryNode<K,V> implements Node<K,V>, SparseEntry<K,V> {
+	static final class EntryNode<K,V> implements SparseEntry<K,V>,  Node<K,V> {
 	    private static final long serialVersionUID = 0x700L; // Version. 
         static final Object NOT_INITIALIZED = new Object();
-		private final int index;
+		final int index;
 		K key;
 		V value;
 
@@ -326,14 +327,6 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			return value;
 		}
 
-		/**
-		 * @deprecated
-		 */
-		@Override
-		public V setValue(V newValue) {
-			throw new UnsupportedOperationException();
-		}
-
 		V setValueBypass(V newValue) {
 			V previous = value;
 			value = newValue;
@@ -359,6 +352,11 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		public String toString() {
 			return "(" + key + '=' + value + ')'; // For debug.
 		}
+		
+        @Override
+        public V setValue(V value) {
+            throw new UnsupportedOperationException("FastMap.Entry cannot be modified directly");
+        }
 	}
 	
 	/** Defines the trie node */
@@ -478,17 +476,20 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		}
 	}
 	
-	/** Defines the trie node */
+	/** Null node. */
 	static final class NullNode<K,V> implements Node<K,V> {
 	    private static final long serialVersionUID = 0x700L; // Version. 
-		private static final NullNode<?,?> NULL = new NullNode<Object, Object>();
-
-		@SuppressWarnings("unchecked")
+        private static NullNode<?,?> NULL = new NullNode<Object,Object>();
+	    
+        @SuppressWarnings("unchecked")
 		public static <K,V> NullNode<K,V> getInstance() {
-			return (NullNode<K, V>) NULL;
-		}
-		@Override
-		public Node<K, V> clone() {
+	    	return (NullNode<K,V>) NULL;	
+	    }
+	    
+	    private NullNode() {};
+	    
+	    @Override
+		public NullNode<K, V> clone() {
 			return this;
 		}
 
@@ -531,8 +532,9 @@ public class SparseArray<E> extends FastMap<Index, E> {
 	}
 
 	/**
-	 * Returns the minimal shift for two indices (the higher the number of
-	 * common high bits the minimal the shift)
+	 * Returns the minimal shift for two indices 
+	 * (based on common high-bits which can be 
+	 *  masked).
 	 */
 	private static int commonShift(int i, int j) {
 		int xor = i ^ j;
@@ -556,5 +558,41 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		else
 			return 28;
 	}
+
+    @Override
+    public boolean isEmpty() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<Index, E>> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<Index, E>> descendingIterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<Index, E>> iterator(Index fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<org.javolution.util.FastMap.Entry<Index, E>> descendingIterator(Index fromKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public org.javolution.util.FastMap.Entry<Index, E> putEntry(Index key, E value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

@@ -10,29 +10,39 @@ package org.javolution.util;
 
 import static org.javolution.lang.Realtime.Limit.CONSTANT;
 import static org.javolution.lang.Realtime.Limit.LINEAR;
-import static org.javolution.lang.Realtime.Limit.UNKNOWN;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.NavigableSet;
+import java.util.Set;
 
+import org.javolution.lang.MathLib;
+import org.javolution.lang.Parallel;
 import org.javolution.lang.Realtime;
+import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
+import org.javolution.util.internal.set.AtomicSetImpl;
+import org.javolution.util.internal.set.FilteredSetImpl;
+import org.javolution.util.internal.set.LinkedSetImpl;
+import org.javolution.util.internal.set.ParallelSetImpl;
+import org.javolution.util.internal.set.ReversedSetImpl;
+import org.javolution.util.internal.set.SharedSetImpl;
+import org.javolution.util.internal.set.SubSetImpl;
+import org.javolution.util.internal.set.UnmodifiableSetImpl;
 
 /**
- * <p> A high-performance ordered set (trie-based) with 
- *     {@link Realtime strict timing constraints}.</p>
+ * <p> A high-performance ordered set (trie-based) with {@link Realtime strict timing constraints}.</p>
  * 
- * <p> In general, ordered set methods have a limiting behavior in 
- *     {@link Realtime#Limit#CONSTANT O(1)} (constant) to be compared 
- *     with {@link Realtime#Limit#LOG_N O(log n)} for most sorted sets.</p>
+ * <p> In general, ordered set methods have a limiting behavior in {@link Realtime#Limit#CONSTANT O(1)} (constant) 
+ *     to be compared with {@link Realtime#Limit#LOG_N O(log n)} for most sorted sets.</p>
  *     
- * <p> Iterations order over the set elements is typically determined 
- *     by the set {@link #comparator() order} except for specific views 
- *     such as the {@link #linked linked} view for which the iterations 
- *     order is the insertion order.</p> 
+ * <p> Iterations order over the set elements is typically determined by the set {@link #comparator() order} except 
+ *     for specific views such as the {@link #linked linked} view for which the iterations order is the insertion 
+ *     order.</p> 
  * 
- * <p> Instances of this class can advantageously replace {@code java.util.*} 
- *     sets in terms of adaptability, space or performance. 
+ * <p> Instances of this class can advantageously replace {@code java.util.*} sets in terms of adaptability, 
+ *     space or performance. 
  * <pre>{@code
  * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
  * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY);
@@ -44,10 +54,10 @@ import org.javolution.util.function.Predicate;
  * ...
  * }</pre> </p>
  * 
- * <p> This class inherits all the {@link FastCollection} views and support 
- *     the new {@link #subSet subSet} view over a portion of the set.
+ * <p> This class inherits all the {@link FastCollection} views and support the new {@link #subSet subSet} view over
+ *     a portion of the set.
  * <pre>{@code
- * FastSet<String> names = FastSet.newSet(Equality.LEXICAL); 
+ * FastSet<String> names = FastSet.newSet(Order.LEXICAL); 
  * ...
  * names.subSet("A", "B").clear(); // Removes the names starting with "A"  (see java.util.SortedSet.subSet specification).
  * names.filter(str -> str.length < 5).clear(); // Removes all short name (Java 8 notation).
@@ -77,44 +87,101 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     }
 
     /**
-     * Returns a new high-performance set sorted according to the specified
-     * comparator.
+     * Returns a new high-performance set sorted according to the specified order.
      */
-    public static <E> FastSet<E> newSet(Order<? super E> comparator) {
-    	return new SparseSet<E>(comparator);
+    public static <E> FastSet<E> newSet(Order<? super E> order) {
+    	return new SparseSet<E>(order);
     }
 
-    @Override
-	@Realtime(limit = UNKNOWN)
-	public abstract Iterator<E> iterator(); // To avoid clash with java.util.NavigableSet#iterator
     
     ////////////////////////////////////////////////////////////////////////////
-    // Change in time limit behavior.
+    // Change in time limit behavior and parallelization.
     //
 
-	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract boolean add(E element);
-
-	@Override
-    @Realtime(limit = CONSTANT)
-    public abstract boolean isEmpty();
-
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract int size();
+    public abstract Iterator<E> iterator();
 
-    @Override
-    @Realtime(limit = CONSTANT)
-    public abstract void clear();
-
+    @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
     public abstract boolean contains(Object obj);
 
+    @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
     public abstract boolean remove(Object obj);
+
+    @Override
+    @Realtime(limit = LINEAR)
+    public boolean containsAll(Collection<?> that) {
+        return super.containsAll(that);
+    }
+    
+    @Override
+    @Realtime(limit = LINEAR)
+    public boolean removeAll(Collection<?> that) {
+        boolean modified = false;        
+        for (Object obj : that)
+            if (remove(obj)) modified = true;
+        return modified;
+    }
+    
+    @Override
+    @Realtime(limit = LINEAR)
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof Set))
+             return false;
+        @SuppressWarnings("unchecked")
+        Set<E> set = (Set<E>) obj;
+        return (size() == set.size()) && containsAll(set);
+    }    
+
+    @Override
+    @Realtime(limit = LINEAR)
+    public int hashCode() {
+        Iterator<E> itr = this.iterator();
+        int hash = 0;
+        while (itr.hasNext()) {
+            E e = itr.next();
+            hash += (e != null) ? e.hashCode() : 0;
+        }
+        return hash;
+    }
+    
+    @Override
+    public FastSet<E> collect() {
+         final FastSet<E> reduction = FastSet.newSet(comparator());
+         forEach(new Consumer<E>() {
+            @Override
+            public void accept(E param) {
+                synchronized (reduction) {
+                    add(param);
+                }
+            }});
+         return reduction;
+    }
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public FastSet<E>[] trySplit(final int n) {
+        // Split into filtered sets with filter based on the element index (hashed to ensure balanced distribution). 
+        final Order<? super E> order = comparator();
+        FastSet<E>[] split = new FastSet[n];        
+        for (int i=0; i < n; i++) {
+            final int m = i;
+            split[i] = this.filter(new Predicate<E>() {
+
+                @Override
+                public boolean test(E param) {
+                    int hash = MathLib.hash(order.indexOf(param));
+                    return Math.abs(hash) % n == m;
+                }});
+        }
+        return split;
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Views.
@@ -122,68 +189,73 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 
     @Override
 	public FastSet<E> atomic() {
-		return null;
-	}
-
-    @Override
-	public FastSet<E> filter(Predicate<? super E> filter) {
-		return null;
+        return new AtomicSetImpl<E>(this);
 	}
 
     @Override
     public FastSet<E> headSet(E toElement) {
-        return subSet(first(), true, toElement, false);
+        return new SubSetImpl<E>(this, null, null, toElement, false);
     }
 
     @Override
 	public FastSet<E> headSet(E toElement, boolean inclusive) {
-		return subSet(first(), true, toElement, inclusive);
+        return new SubSetImpl<E>(this, null, null, toElement, inclusive);
 	}
 
     @Override
+    public FastSet<E> filter(Predicate<? super E> filter) {
+        return new FilteredSetImpl<E>(this, filter);
+    }
+
+    @Override
 	public FastSet<E> linked() {
-		return null;
+		return new LinkedSetImpl<E>(this);
 	}
    
     @Override
 	public FastSet<E> parallel() {
-		return null;
+		return new ParallelSetImpl<E>(this);
 	}
 
     @Override
 	public FastSet<E> reversed() {
-		return null;
+		return new ReversedSetImpl<E>(this);
     }
     
     @Override
+    public FastSet<E> sequential() {
+        return this;
+    }
+
+    @Override
     public FastSet<E> subSet(E fromElement, E toElement) {
-    	return subSet(fromElement, true, toElement, false);
+        return new SubSetImpl<E>(this, fromElement, true, toElement, false);
     }
 
 	@Override
 	public FastSet<E> subSet(E fromElement, boolean fromInclusive,
 			E toElement, boolean toInclusive) {
-		return null;
+        return new SubSetImpl<E>(this, fromElement, fromInclusive, toElement, toInclusive);
 	}
 
     @Override
 	public FastSet<E> shared() {
-		return null;
+		return new SharedSetImpl<E>(this); 
 	}
 
     @Override
     public FastSet<E> tailSet(E fromElement) {
-        return subSet(fromElement, true, last(), true);
+        return new SubSetImpl<E>(this, fromElement, true, null, null);
     }
 
 	@Override
 	public FastSet<E> tailSet(E fromElement, boolean inclusive) {
-		return subSet(fromElement, inclusive, last(), true);
+        return new SubSetImpl<E>(this, fromElement, inclusive, null, null);
 	}
 
     @Override
 	public FastSet<E> unmodifiable() {
-		return null;
+		return new UnmodifiableSetImpl<E>(this);
 	}
 	
 	/** 
@@ -191,7 +263,6 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
      * @deprecated {@link #reversed()} should be used.
      */
 	@Override
-    @Realtime(limit = LINEAR)
 	public NavigableSet<E> descendingSet() {
 		return reversed();
 	}
@@ -200,75 +271,91 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     // Misc.
     //
 	
-    @Override
-    public FastSet<E> all() {
-    	return (FastSet<E>) super.all();
-    }
+    /** Returns an iterator starting from the specified element. */
+    public abstract Iterator<E> iterator(E fromElement);
     
-	@Override
-	public ConstantSet<E> constant() {
-		SparseSet<E> sparse = new SparseSet<E>(comparator());
-		sparse.addAll(this);
-		return new ConstantSet<E>(sparse);
-	}
-
-	@Override
-    public FastSet<E> addAll(E first, @SuppressWarnings("unchecked") E... others) {
-		super.addAll(first, others);
-		return this;
-	}
-
-	@Override
+    /** Returns a descending iterator starting from the specified element. */
+    public abstract Iterator<E> descendingIterator(E fromElement);
+    
+    @Override
 	public final Order<? super E> equality() {
 		return comparator();
 	}
-	
+    
 	@Override
 	public abstract FastSet<E> clone();
+  
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        final FastSet<E> toRemove = FastSet.newSet();
+        // Default equality comparator, assumes that if x.equals(y) then matching.test(x) == matching.
+
+        for (Iterator<E> itr=iterator(); itr.hasNext();) {
+            E e = itr.next();
+            if (filter.test(e)) toRemove.add(e);
+        }                   
+        for (Iterator<E> itr=toRemove.iterator(); itr.hasNext();) remove(itr.next());
+        return !toRemove.isEmpty();
+    }       
 
     ////////////////////////////////////////////////////////////////////////////
     // SortedSet / NavigableSet Interface.
     //
 
     @Override
-    @Realtime(limit = CONSTANT)
-    public abstract E first();
+    public E first() {
+        return iterator().next();
+    }
 
     @Override
-    @Realtime(limit = CONSTANT)
-    public abstract E last();
+    public E last() {
+        return descendingIterator().next();
+    }
 
 	@Override
-    @Realtime(limit = CONSTANT)
 	public abstract Order<? super E> comparator();
 	
 	@Override
-    @Realtime(limit = CONSTANT)
-	public abstract E ceiling(E element);
-
-	@Override
-    @Realtime(limit = CONSTANT)
-	public Iterator<E> descendingIterator() {
-		return reversed().iterator();
+	public E ceiling(E element) {
+        Iterator<E> itr = iterator(element);
+        return itr.hasNext() ? itr.next() : null;
 	}
 
 	@Override
-    @Realtime(limit = CONSTANT)
-	public abstract E floor(E element);
+	public abstract Iterator<E> descendingIterator();
+
+	@Override
+	public E floor(E element) {
+        Iterator<E> itr = descendingIterator(element);
+        return itr.hasNext() ? itr.next() : null;
+	}
 	
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract E higher(E element);
+	public E higher(E element) {
+        Iterator<E> itr = iterator(element);
+        if (!itr.hasNext()) return null;
+        E ceiling = itr.next();
+        if (!equality().areEqual(element, ceiling)) return ceiling;
+        return itr.hasNext() ? itr.next() : null;	    
+	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract E lower(E element);
+	public E lower(E element) {
+        Iterator<E> itr = descendingIterator(element);
+        if (!itr.hasNext()) return null;
+        E floor = itr.next();
+        if (!equality().areEqual(element, floor)) return floor;
+        return itr.hasNext() ? itr.next() : null;       
+	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract E pollFirst();
+	public E pollFirst() {
+	    return (isEmpty()) ? null : first();
+	}
 
 	@Override
-	@Realtime(limit = CONSTANT)
-	public abstract E pollLast();
+	public E pollLast() {
+        return (isEmpty()) ? null : first();
+	}
+
 }

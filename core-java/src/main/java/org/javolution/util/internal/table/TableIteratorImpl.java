@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 import org.javolution.util.FastTable;
 
 /**
- * A generic list iterator over a fast table.
+ * A generic list iterator over a table.
  */
 public final class TableIteratorImpl<E> implements ListIterator<E> {
 

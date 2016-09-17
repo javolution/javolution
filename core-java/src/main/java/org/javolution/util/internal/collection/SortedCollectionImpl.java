@@ -9,6 +9,7 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Comparator;
+import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
 import org.javolution.util.FastTable;
@@ -20,84 +21,60 @@ import org.javolution.util.function.Predicate;
  */
 public final class SortedCollectionImpl<E> extends FastCollection<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastCollection<E> inner;
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastCollection<E> inner;
+    private final Comparator<? super E> cmp;
 
-	private final Comparator<? super E> cmp;
+    public SortedCollectionImpl(FastCollection<E> inner, Comparator<? super E> cmp) {
+        this.inner = inner;
+        this.cmp = cmp;
+    }
 
-	public SortedCollectionImpl(FastCollection<E> inner,
-			Comparator<? super E> cmp) {
-		this.inner = inner;
-		this.cmp = cmp;
-	}
+    @Override
+    public boolean add(E element) {
+        return inner.add(element);
+    }
 
-	@Override
-	public boolean add(E element) {
-		return inner.add(element);
-	}
+    @Override
+    public void clear() {
+        inner.clear();
+    }
 
-	@Override
-	public void clear() { // Optimization.
-		inner.clear();
-	}
+    @Override
+    public SortedCollectionImpl<E> clone() {
+        return new SortedCollectionImpl<E>(inner.clone(), cmp);
+    }
 
-	@Override
-	public SortedCollectionImpl<E> clone() {
-		return new SortedCollectionImpl<E>(inner.clone(), cmp);
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return inner.equality();
+    }
 
-	@Override
-	public boolean contains(Object searched) { // Optimization.
-		return inner.contains(searched);
-	}
+    @Override
+    public boolean isEmpty() {
+        return inner.isEmpty();
+    }
 
-	@Override
-	public Equality<? super E> equality() {
-		return inner.equality();
-	}
+    @Override
+    public Iterator<E> iterator() {
+        FastTable<E> sorted = FastTable.newTable();
+        sorted.addAllSorted(inner, cmp); // TODO: Compare performance with FastTable.sort()
+        return ReadOnlyIteratorImpl.of(sorted.iterator());
+    }
 
-	@Override
-	public boolean isEmpty() { // Optimization.
-		return inner.isEmpty();
-	}
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        return inner.removeIf(filter);
+    }
 
-	@Override
-	public Iterator<E> iterator() {
-		final FastTable<E> sorted = FastTable.newTable(equality());
-		sorted.addAll(inner);
-		sorted.sort(cmp);
-		return sorted.iterator();
-	}
+    @Override
+    public int size() {
+        return inner.size();
+    }
 
-	@Override
-	public boolean remove(Object searched) { // Optimization.
-		return inner.remove(searched);
-	}
-
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		return inner.removeIf(filter);
-	}
-
-	@Override
-	public SortedCollectionImpl<E> reversed() { // Optimization.
-		return new SortedCollectionImpl<E>(inner, new Comparator<E>() {
-
-			@Override
-			public int compare(E left, E right) {
-				return cmp.compare(right, left);
-			}
-		});
-	}
-
-	@Override
-	public int size() { // Optimization.
-		return inner.size();
-	}
-
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		return inner.trySplit(n);
-	}
+    @Override
+    public FastCollection<E>[] trySplit(int n) {
+        return inner.trySplit(n);
+    }
 
 }

@@ -8,8 +8,10 @@
  */
 package org.javolution.util.internal.collection;
 
+import java.util.Iterator;
+
+import org.javolution.util.ConstantTable;
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -17,75 +19,62 @@ import org.javolution.util.function.Predicate;
  * A reversed view over a collection.
  */
 public final class ReversedCollectionImpl<E> extends FastCollection<E> {
-	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastCollection<E> inner;
 
-	public ReversedCollectionImpl(FastCollection<E> inner) {
-		this.inner = inner;
-	}
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastCollection<E> inner;
 
-	@Override
-	public boolean add(E element) {
-		return inner.add(element);
-	}
+    public ReversedCollectionImpl(FastCollection<E> inner) {
+        this.inner = inner;
+    }
 
-	@Override
-	public void clear() { // Optimization.
-		inner.clear();
-	}
+    @Override
+    public boolean add(E element) {
+        return inner.add(element);
+    }
 
-	@Override
-	public FastCollection<E> clone() {
-		return new ReversedCollectionImpl<E>(inner.clone());
-	}
+    @Override
+    public void clear() {
+        inner.clear();
+    }
 
-	@Override
-	public boolean contains(Object searched) { // Optimization.
-		return inner.contains(searched);
-	}
+    @Override
+    public FastCollection<E> clone() {
+        return new ReversedCollectionImpl<E>(inner.clone());
+    }
 
-	@Override
-	public Equality<? super E> equality() {
-		return inner.equality();
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return inner.equality();
+    }
 
-	@Override
-	public boolean isEmpty() { // Optimization.
-		return inner.isEmpty();
-	}
+    @Override
+    public boolean isEmpty() {
+        return inner.isEmpty();
+    }
 
-	@Override
-	public Iterator<E> iterator() {
-		FastTable<E> reversed = FastTable.newTable();
-		for (Iterator<E> itr = inner.iterator(); itr.hasNext();)
-			reversed.addFirst(itr.next());
-		return reversed.iterator();
-	}
+    @Override
+    public Iterator<E> iterator() {
+        return ConstantTable.of(inner).reversed().iterator();
+    }
 
-	@Override
-	public boolean remove(Object searched) { // Optimization.
-		return inner.remove(searched);
-	}
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        return inner.removeIf(filter);
+    }
 
-	@Override
-	public boolean removeIf(Predicate<? super E> filter) {
-		return inner.removeIf(filter);
-	}
+    @Override
+    public FastCollection<E> reversed() {
+        return inner;
+    }
 
-	@Override
-	public FastCollection<E> reversed() { // Optimization.
-		return inner;
-	}
+    @Override
+    public int size() {
+        return inner.size();
+    }
 
-	@Override
-	public int size() { // Optimization.
-		return inner.size();
-	}
-	
-	@Override
-	public FastCollection<E>[] trySplit(int n) {
-		return inner.trySplit(n);
-	}
-
+    @Override
+    public FastCollection<E>[] trySplit(int n) {
+        return inner.trySplit(n);
+    }
 
 }
