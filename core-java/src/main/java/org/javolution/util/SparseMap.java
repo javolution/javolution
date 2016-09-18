@@ -9,24 +9,23 @@
 package org.javolution.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+import org.javolution.lang.MathLib;
 import org.javolution.util.SparseArray.EntryNode;
 import org.javolution.util.SparseArray.Node;
 import org.javolution.util.SparseArray.NullNode;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.map.SortedMapImpl;
+import org.javolution.util.internal.map.UnorderedMapImpl;
 
 /**
- * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> 
- *     implementation of {@link FastMap}.</p> 
+ * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> implementation of {@link FastMap}.</p> 
  *     
- * <p> Worst-case execution time when adding new entries is significantly 
- *     better than when using standard hash table since there is
- *     no resize/rehash ever performed.</p> 
+ * <p> Worst-case execution time when adding new entries is significantly better than when using standard hash table
+ *     since there is no resize/rehash ever performed.</p> 
  *   
- * <p> Sparse maps are efficient for indexing multi-dimensional information 
- *     such as dictionaries, multi-keys attributes, geographical coordinates,
+ * <p> Sparse maps are efficient for indexing multi-dimensional information such as dictionaries, multi-keys attributes, geographical coordinates,
  *     sparse matrix elements, etc.
  * <pre>{@code
  * // Prefix Maps.
@@ -36,6 +35,8 @@ import org.javolution.util.internal.map.SortedMapImpl;
  * presidents.put("John Kennedy", johnKennedy);
  * ...
  * presidents.subMap("J", "K").clear(); // Removes all president whose first name starts with "J" ! 
+ * presidents.filter(str->str.startWith("John "); // Map holding presidents with "John" as first name.
+ * presidents.values().filter(p->p.birth<1900).parallel().clear(); // Concurrent removal of presidents born before 1900.
  *     
  * // Sparse Matrix.
  * class RowColumn extends Binary<Index, Index> { ... }
@@ -150,7 +151,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         Order<? super K> subOrder = keyOrder.subOrder(key);
         FastMap<K,V> subMap = (subOrder != null) ? 
 		         new SparseMap<K,V>(subOrder) : 
-		        	 new SortedMapImpl<K,V>(keyOrder);
+		        	 new UnorderedMapImpl<K,V>(keyOrder);
 	    subMap.put(entry.key, entry.value);
 	    entry.key = (K) SUB_MAP; // Cast has no effect.
 	    entry.value = (V) subMap; // Cast has no effect.
@@ -186,134 +187,160 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 		size = 0;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> firstEntry() {
-		EntryNode<K,V> entry = root.ceilingEntry(0);
-		if ((entry != null) && (entry.key == SUB_MAP))
-			return ((FastMap<K,V>)entry.value).firstEntry();
-		return entry;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> lastEntry() {
-		EntryNode<K,V> entry = root.floorEntry(-1);
-		if ((entry != null) && (entry.key == SUB_MAP))
-			return ((FastMap<K,V>)entry.value).lastEntry();
-		return entry;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> higherEntry(K key) {
-		int i = keyOrder.indexOf(key);
-		EntryNode<K,V> entry = root.ceilingEntry(i);
-		if (entry == null) return null;
-		if (entry.key == SUB_MAP) {
-			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).higherEntry(key);
-			if (subMapEntry != null) return subMapEntry;
-		} else {
-			if (keyOrder.compare(entry.key, key) > 0) return entry;
-		}
-		if (entry.index == -1) return null;
-		entry = root.ceilingEntry(i+1);
-		if ((entry != null) && (entry.key == SUB_MAP)) 
-			return ((FastMap<K,V>)entry.value).firstEntry();
-		return entry;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> lowerEntry(K key) {
-		int i = keyOrder.indexOf(key);
-		EntryNode<K,V> entry = root.floorEntry(i);
-		if (entry == null) return null;
-		if (entry.key == SUB_MAP) {
-			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).lowerEntry(key);
-			if (subMapEntry != null) return subMapEntry;
-		} else {
-			if (keyOrder.compare(entry.key, key) < 0) return entry;
-		}
-		if (entry.index == 0) return null;
-		entry = root.floorEntry(i-1);
-		if ((entry != null) && (entry.key == SUB_MAP)) 
-			return ((FastMap<K,V>)entry.value).lastEntry();
-		return entry;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> ceilingEntry(K key) {
-		int i = keyOrder.indexOf(key);
-		EntryNode<K,V> entry = root.ceilingEntry(i);
-		if (entry == null) return null;
-		if (entry.key == SUB_MAP) {
-			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).ceilingEntry(key);
-			if (subMapEntry != null) return subMapEntry;
-		} else {
-			if (keyOrder.compare(entry.key, key) >= 0) return entry;
-		}
-		if (entry.index == -1) return null;
-		entry = root.ceilingEntry(i+1);
-		if ((entry != null) && (entry.key == SUB_MAP)) 
-			return ((FastMap<K,V>)entry.value).firstEntry();
-		return entry;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> floorEntry(K key) {
-		int i = keyOrder.indexOf(key);
-		EntryNode<K,V> entry = root.floorEntry(i);
-		if (entry == null) return null;
-		if (entry.key == SUB_MAP) {
-			Entry<K,V> subMapEntry = ((FastMap<K,V>)entry.value).floorEntry(key);
-			if (subMapEntry != null) return subMapEntry;
-		} else {
-			if (keyOrder.compare(entry.key, key) <= 0) return entry;
-		}
-		if (entry.index == 0) return null;
-		entry = root.floorEntry(i-1);
-		if ((entry != null) && (entry.key == SUB_MAP)) 
-			return ((FastMap<K,V>)entry.value).lastEntry();
-		return entry;
-	}
-
     @Override
     public boolean isEmpty() {
-        // TODO Auto-generated method stub
-        return false;
+        return size != 0;
     }
 
     @Override
-    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterator<Entry<K, V>> iterator() {
+        return new NodeIterator();
     }
 
     @Override
-    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator() {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return new DescendingNodeIterator();
     }
 
     @Override
-    public Iterator<org.javolution.util.FastMap.Entry<K, V>> iterator(K fromKey) {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return new NodeIterator(fromKey);
     }
 
     @Override
-    public Iterator<org.javolution.util.FastMap.Entry<K, V>> descendingIterator(K fromKey) {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return new DescendingNodeIterator(fromKey);
     }
 
-    @Override
-    public org.javolution.util.FastMap.Entry<K, V> putEntry(K key, V value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    /** Iterator over the entries of a sparse map. */
+    private final class NodeIterator implements Iterator<Entry<K,V>> {
+        private Iterator<Entry<K,V>> subItr; // Set when iterating sub-maps (subItr.hasNext() is always true)
+        private EntryNode<K,V> next; 
+        private Entry<K,V> current;
+        public NodeIterator() {
+            next = root.ceilingEntry(0);
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                subItr = subMap.iterator(); // subMap cannot be empty.
+            }    
+        }
+        
+        public NodeIterator(K from) {
+            int index = keyOrder.indexOf(from);
+            next = root.ceilingEntry(index);
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                if (index == next.index) {
+                    subItr = subMap.iterator(from);
+                    if (!subItr.hasNext()) {
+                        subItr = null;
+                        next();                    
+                    }
+                } else { // We can ignore from.
+                    subItr = subMap.iterator(); // subMap cannot be empty.
+                }
+            }    
+        }
 
+        @Override
+        public boolean hasNext() {
+            return (subItr != null) || (next != null);
+        }
+
+        @Override
+        public Entry<K,V> next() {
+            if (subItr != null) {
+                current = subItr.next();
+                if (subItr.hasNext()) return current;
+                subItr = null;
+            } else {
+                if (next == null) throw new NoSuchElementException();
+                current = next;
+            }
+            // Moves to next node.
+            next = (next.index != -1) ?
+                    root.ceilingEntry((int) (MathLib.unsigned(next.index)+1)) : null;             
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                subItr = subMap.iterator();
+            }
+            return current;
+        }
+        
+        @Override
+        public void remove() {
+            if (current == null) throw new IllegalStateException();
+            removeEntry(current.getKey());
+            current = null;
+       }        
+    }
+    
+    /** Descending iterator overs the entries of a sparse map. */
+    private final class DescendingNodeIterator implements Iterator<Entry<K,V>> {
+        private Iterator<Entry<K,V>> subItr; // Set when iterating sub-maps (subItr.hasNext() is always true)
+        private EntryNode<K,V> next; 
+        private Entry<K,V> current = null;
+        public DescendingNodeIterator() {
+            next = root.floorEntry(-1);
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                subItr = subMap.iterator(); // subMap cannot be empty.
+            }    
+        }
+        public DescendingNodeIterator(K from) {
+            int index = keyOrder.indexOf(from);
+            next = root.floorEntry(index);
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                if (index == next.index) {
+                    subItr = subMap.descendingIterator(from);
+                    if (!subItr.hasNext()) {
+                        subItr = null;
+                        next();                    
+                    }
+                } else { // We can ignore from.
+                    subItr = subMap.descendingIterator(); // subMap cannot be empty.
+                }
+            }    
+        }
+
+        @Override
+        public boolean hasNext() {
+            return (subItr != null) || (next != null);
+        }
+
+        @Override
+        public Entry<K,V> next() {
+            if (subItr != null) {
+                current = subItr.next();
+                if (subItr.hasNext()) return current;
+                subItr = null;
+            } else {
+                if (next == null) throw new NoSuchElementException();
+                current = next;
+            }
+            // Moves to next node.
+            next = (next.index != 0) ?
+                    root.floorEntry((int) (MathLib.unsigned(next.index)-1)) : null;             
+            if ((next != null) && (next.key == SUB_MAP)) {
+                @SuppressWarnings("unchecked")
+                FastMap<K,V> subMap = ((FastMap<K,V>)next.value);
+                subItr = subMap.descendingIterator();
+            }
+            return current;
+        }
+        
+        @Override
+        public void remove() {
+            if (current == null) throw new IllegalStateException();
+            removeEntry(current.getKey());
+            current = null;
+       }        
+    }
+    
 }

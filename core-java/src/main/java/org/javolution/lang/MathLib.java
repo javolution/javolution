@@ -10,8 +10,7 @@ package org.javolution.lang;
 
 
 /**
- * <p> An utility class providing a {@link Realtime} implementation of 
- *     the math library.</p> 
+ * <p> An utility class providing {@link Realtime} implementation of the math library.</p> 
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 4.2, January 6, 2007
@@ -23,6 +22,16 @@ public final class MathLib {
      * Default constructor.
      */
     private MathLib() {
+    }
+
+    /**
+     * Returns the 64 bits value corresponding to the specified unsigned value.
+     *  
+     * @param value the 32 bits unsigned number.
+     * @return the corresponding long value.
+     */
+    public static long unsigned(int value) {
+        return value & 0xFFFFFFFFL;
     }
 
     /**

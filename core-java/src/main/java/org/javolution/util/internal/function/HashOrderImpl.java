@@ -8,6 +8,7 @@
  */
 package org.javolution.util.internal.function;
 
+import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
@@ -26,9 +27,7 @@ public enum HashOrderImpl implements Order<Object> {
 	public int compare(Object left, Object right) {
 		int hashLeft = (left != null) ? left.hashCode() : 0;
 		int hashRight = (right != null) ? right.hashCode() : 0;
-		return (hashLeft == hashRight) ? 0
-				: ((hashLeft & 0xffffffffL) < (hashRight & 0xffffffffL)) ? -1
-						: 1;
+		return (hashLeft == hashRight) ? 0 : MathLib.unsigned(hashLeft) < MathLib.unsigned(hashRight) ? -1 : 1;
 	}
 
 	@Override

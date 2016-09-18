@@ -69,7 +69,7 @@ public final class UnmodifiableMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public Entry<K, V> putEntry(K key, V value) {
+    public V put(K key, V value) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 

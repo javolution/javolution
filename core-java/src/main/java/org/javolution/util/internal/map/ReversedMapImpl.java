@@ -37,8 +37,8 @@ public final class ReversedMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public Entry<K,V> putEntry(K key, V value) {
-        return inner.putEntry(key, value);
+    public V put(K key, V value) {
+        return inner.put(key, value);
     }
 
     @Override

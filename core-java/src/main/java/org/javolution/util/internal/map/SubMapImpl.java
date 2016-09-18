@@ -85,8 +85,8 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Entry<K, V> putEntry(K key, V value) {
-        return inRange(key) ? inner.putEntry(key, value) : null;
+    public V put(K key, V value) {
+        return inRange(key) ? inner.put(key, value) : null;
     }
 
     @Override

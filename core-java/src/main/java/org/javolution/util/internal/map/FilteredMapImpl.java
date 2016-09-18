@@ -73,8 +73,8 @@ public final class FilteredMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public Entry<K, V> putEntry(K key, V value) {
-        return keyFilter.test(key) ? inner.putEntry(key, value) : null;
+    public V put(K key, V value) {
+        return keyFilter.test(key) ? inner.put(key, value) : null;
     }
 
     @Override

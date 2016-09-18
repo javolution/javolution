@@ -46,11 +46,10 @@ public final class LinkedMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public Entry<K,V> putEntry(K key, V value) {
-        Entry<K,V> previous = inner.putEntry(key, value);
-        if (previous == null)
+    public V put(K key, V value) {
+        if (!inner.containsKey(key))
             insertionTable.add(key);
-        return previous;
+        return inner.put(key, value);
     }
 
     @Override

@@ -181,13 +181,6 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
 		innerConst = inner.clone();
 		return previous;
 	}
-
-    @Override
-    public synchronized Entry<K,V> putEntry(K key, V value) {
-        Entry<K,V> previous = inner.putEntry(key, value);
-        innerConst = inner.clone();
-        return previous;
-    }
     
 	@Override
 	public synchronized void putAll(Map<? extends K, ? extends V> that) {

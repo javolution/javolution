@@ -322,16 +322,6 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Entry<K, V> putEntry(K key, V value) {
-        lock.writeLock.lock();
-        try {
-            return inner.putEntry(key, value);
-        } finally {
-            lock.writeLock.unlock();
-        }
-    }
-
-    @Override
     public void putAll(Map<? extends K, ? extends V> that) {
         lock.writeLock.lock();
         try {

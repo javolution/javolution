@@ -347,10 +347,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     }
 
     @Override
-    public V put(K key, V value) {
-        Entry<K,V> entry = putEntry(key, value);
-        return (entry != null) ? entry.getValue() : null;
-    }
+    public abstract V put(K key, V value);
         
     @Override
     @Realtime(limit = LINEAR)
@@ -531,12 +528,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
      * (e.g. {@link SparseArray#SparseEntry SparseEntry} for sparse arrays).
      */
     public abstract Entry<K,V> getEntry(K key);
-
-    /** 
-     * Associates the specified value with the specified key and returns the previous entry for that key 
-     * or {@code null} if none.
-     */
-    public abstract Entry<K,V> putEntry(K key, V value);
 
 	/** 
      * Removes and returns the entry for the specified key or {@code null} if none. Sub-classes may return specific

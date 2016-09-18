@@ -92,7 +92,7 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
             Collection<? extends Entry<? extends K, ? extends V>> entries) {
         SparseMap<K,V> sparse = new SparseMap<K,V>(keyOrder, valuesEquality);
         for (Entry<? extends K, ? extends V> e : entries)
-            sparse.putEntry(e.getKey(), e.getValue());
+            sparse.put(e.getKey(), e.getValue());
         return new ConstantMap<K,V>(sparse);
     }
     
