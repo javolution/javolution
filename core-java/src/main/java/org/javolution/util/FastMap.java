@@ -54,9 +54,9 @@ import org.javolution.util.internal.map.ValuesImpl;
  * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
  * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
  * FastMap<String, Bar> treeMap = FastMap.newMap(Order.LEXICAL); 
- * FastMap<Foo, Bar> linkedHashMap = new SparseMap<Foo, Bar>().linked(); // Insertion order.
- * FastMap<Foo, Bar> concurrentHashMap = new SparseMap<Foo, Bar>().shared(); // Implements ConcurrentMap interface.
- * FastMap<String, Bar> concurrentSkipListMap = new SparseMap<String, Bar>(Order.LEXICAL).shared();
+ * FastMap<Foo, Bar> linkedHashMap = FastMap.newMap().linked().downcast(); // Insertion order.
+ * FastMap<Foo, Bar> concurrentHashMap = FastMap.newMap().shared().downcast(); 
+ * FastMap<String, Bar> concurrentSkipListMap = FastMap.newMap(Order.LEXICAL).shared().downcast();
  * ...
  * }</pre> </p> 
  * <p> FastMap supports a great diversity of views.
@@ -145,11 +145,19 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality) {
         return new SparseMap<K,V>(keyOrder, valuesEquality);
     }
-    
+        
+    /**
+     * Downcast the parameterized types of a fast map (safe at creation).
+     */
+    @SuppressWarnings("unchecked")
+    public <K1 extends K,V1 extends V> FastMap<K1,V1> downcast() {
+        return (FastMap<K1, V1>) this; 
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
-
+    
 	/**
 	 * Returns an atomic view over this map. All operations that write or access multiple elements in the map 
 	 * are atomic. All read operations are mutex-free.
@@ -188,7 +196,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	 * (first added, first to iterate). This view can be useful for compatibility with Java linked collections
 	 * (e.g. {@code LinkedHashMap}). Elements not added through this view are ignored when iterating.
 	 */
-	public FastMap<K,V> linked() {
+    public FastMap<K,V> linked() {
 		return new LinkedMapImpl<K,V>(this); 
 	}
 
@@ -202,8 +210,8 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
 	
      /**
      * Returns a set view of the keys contained in this map. The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa.  The set supports adding new keys for which the corresponding entry value 
-     * is always {@code null}.
+     * reflected in the set, and vice-versa.  The set does not support adding new keys.
+     * Keys equality comparisons (e.g. for removal) are performed using this map key {@link #comparator()}.
      */
     @Override
     public FastSet<K> keySet() {
@@ -223,6 +231,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
      * Returns a collection view of the values contained in this map.The collection is backed by the map, 
      * so changes to the map are reflected in the collection, and vice-versa. The collection
      * supports removing values (hence entries) but not adding new values.
+     * Values equality comparisons (e.g. for removal) are performed using this map {@link #valuesEquality()}.
      */
     @Override
     public FastCollection<V> values() {
@@ -232,7 +241,9 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     /**
      * Returns a set view of the entries in this map. The set is backed by this map, so changes to this map are
      * reflected in the set, and vice-versa. The set supports element removal, which removes the corresponding 
-     * mapping from the map. It does not support the {@link FastSet#add} or {@link FastSet#addAll} operations.
+     * mapping from the map. It does not support adding new entries.
+     * Entries equality comparisons (e.g. for removal) are performed using this map key {@link #comparator()} 
+     * and {@link #valuesEquality()}.  
      */
     @SuppressWarnings("unchecked")
     @Override

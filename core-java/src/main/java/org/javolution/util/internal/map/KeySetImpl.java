@@ -53,10 +53,7 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
 	@Override
 	public boolean add(K key) {
-		if (map.containsKey(key))
-			return false;
-		map.put(key, null);
-		return true;
+        throw new UnsupportedOperationException("FastMap.keySet() does not support adding new keys.");
 	}
 
     @Override

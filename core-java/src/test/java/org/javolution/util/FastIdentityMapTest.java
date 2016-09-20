@@ -29,7 +29,7 @@ public class FastIdentityMapTest {
 	
 	@Before
 	public void init(){
-		_fastIdentityMap = FastMap.newMap(Order.IDENTITY);
+		_fastIdentityMap = FastMap.newMap(Order.IDENTITY).linked().downcast();
 	}
 
 	@Test

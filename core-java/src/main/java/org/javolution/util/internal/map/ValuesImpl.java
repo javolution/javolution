@@ -54,8 +54,7 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
 	@Override
 	public boolean add(V element) {
-		throw new UnsupportedOperationException(
-				"Values cannot be added directly to maps");
+        throw new UnsupportedOperationException("FastMap.values() does not support adding new values.");
 	}
 
 	@Override

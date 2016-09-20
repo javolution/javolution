@@ -24,9 +24,9 @@ public final class BitSetIteratorImpl implements Iterator<Index> {
     private int currentIndex = -1;
     private boolean reversed;
 
-    public BitSetIteratorImpl(BitSet that, boolean reversed) {
+    public BitSetIteratorImpl(BitSet that, int from, boolean reversed) {
         this.that = that;
-        this.nextIndex = reversed ? that.previousSetBit(that.length()-1) : that.nextSetBit(0);
+        this.nextIndex = reversed ? that.previousSetBit(from) : that.nextSetBit(from);
         this.reversed = reversed;
     }
 

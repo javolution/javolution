@@ -8,6 +8,7 @@
  */
 package org.javolution.util.internal.function;
 
+import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
@@ -27,92 +28,108 @@ public enum LexicalOrderImpl implements Order<CharSequence> {
 	INSTANCE_16(16), INSTANCE_18(18), INSTANCE_20(20), INSTANCE_22(22),
 	INSTANCE_24(24), INSTANCE_26(26), INSTANCE_28(28), INSTANCE_30(30); 
  
-	private final Helper helper;
+    private final int fromIndex;
 
-	/** Creates a lexical order from the specified index.
-	 *  Anything before that index is ignored. */
-	private LexicalOrderImpl(int fromIndex) {
-		this.helper = new Helper(fromIndex);
-	};
+    /**
+     * Creates a lexical order from the specified index. Anything before that
+     * index is ignored.
+     */
+    private LexicalOrderImpl(int fromIndex) {
+        this.fromIndex = fromIndex;
+    };
 
-	@Override
-	public boolean areEqual(CharSequence left, CharSequence right) {
-		return helper.areEqual(left, right);
-	}
+    @Override
+    public boolean areEqual(CharSequence left, CharSequence right) {
+        return areEqual(fromIndex, left, right);
+    }
 
-	@Override
-	public int compare(CharSequence left, CharSequence right) {
-		return helper.compare(left, right);
-	}
+    @Override
+    public int compare(CharSequence left, CharSequence right) {
+        return compare(fromIndex, left, right);
+    }
 
-	@Override
-	public int indexOf(CharSequence csq) {
-		return helper.indexOf(csq);
-	}
-	
-	@Override
-	public Order<CharSequence> subOrder(CharSequence csq) {
-		return helper.subOrder(csq);
-	}
-	
-	/** Actual implementation **/ 
-	private static class Helper implements Order<CharSequence> {
-		private static final long serialVersionUID = 0x700L; // Version.
-		private final int fromIndex;
+    @Override
+    public int indexOf(CharSequence csq) {
+        return indexOf(fromIndex, csq);
+    }
 
-		private Helper(int fromIndex) {
-			this.fromIndex = fromIndex;
-		}
+    @Override
+    public Order<CharSequence> subOrder(CharSequence csq) {
+        int newIndex = fromIndex + 2;
+        return newIndex <= 30 ? LexicalOrderImpl.values()[newIndex >> 1] : new DynamicImpl(newIndex);
+    }
+            
+    /** Dynamic implementation for long character sequences (not an enum) **/
+    private static class DynamicImpl implements Order<CharSequence> {
+        private static final long serialVersionUID = 0x700L; // Version.
+        private final int fromIndex;
 
-		@Override
-		public boolean areEqual(CharSequence left, CharSequence right) {
-			if (left == right)
-				return true;
-			if ((left == null) || (right == null))
-				return false;
-			int n = left.length();
-			if (right.length() != n)
-				return false;
-			for (int i = n; i > fromIndex;) { // Search from the tail.
-				if (left.charAt(--i) != right.charAt(i))
-					return false;
-			}
-			return true;
-		}
+        private DynamicImpl(int fromIndex) {
+            this.fromIndex = fromIndex;
+        }
 
-		@Override
-		public int compare(CharSequence left, CharSequence right) {
-			if (left == null)
-				return -1;
-			if (right == null)
-				return 1;
-			int i = fromIndex;
-			int n = Math.min(left.length(), right.length());
-			while (n-- > fromIndex) {
-				char c1 = left.charAt(i);
-				char c2 = right.charAt(i++);
-				if (c1 != c2)
-					return c1 - c2;
-			}
-			return left.length() - right.length();
-		}
+        @Override
+        public boolean areEqual(CharSequence left, CharSequence right) {
+            return LexicalOrderImpl.areEqual(fromIndex, left, right);
+        }
 
-		@Override
-		public int indexOf(CharSequence csq) {
-			if (csq == null) return 0;
-			int length = csq.length();
-			int j = fromIndex;
-			int i = (j < length) ? csq.charAt(j++) : 0;
-			i <<= 16;
-			i |= (j < length) ? csq.charAt(j++) : 0;
-			return i;
-		}
-		
-		@Override
-		public Order<CharSequence> subOrder(CharSequence csq) {
-			return fromIndex < 30 ? LexicalOrderImpl.values()[fromIndex >> 1] : new Helper(fromIndex +2);
-		}
-		
-	}	
-	
+        @Override
+        public int compare(CharSequence left, CharSequence right) {
+            return LexicalOrderImpl.compare(fromIndex, left, right);
+        }
+
+        @Override
+        public int indexOf(CharSequence csq) {
+            return LexicalOrderImpl.indexOf(fromIndex, csq);
+        }
+
+        @Override
+        public Order<CharSequence> subOrder(CharSequence csq) {
+            return new DynamicImpl(fromIndex + 2);
+        }
+
+    }
+
+    /** Check for equality of the two characters sequences starting at the specified index */
+    private static boolean areEqual(int fromIndex, CharSequence left, CharSequence right) {
+        if (left == right)
+            return true;
+        if ((left == null) || (right == null))
+            return false;
+        int n = left.length();
+        if (right.length() != n)
+            return false;
+        for (int i = n; i > fromIndex;) { // Search from the tail.
+            if (left.charAt(--i) != right.charAt(i))
+                return false;
+        }
+        return true;
+    }
+
+    /** Compares the two characters sequences starting at the specified index */
+    private static int compare(int fromIndex, CharSequence left, CharSequence right) {
+        if (left == null)
+            return -1;
+        if (right == null)
+            return 1;
+        for (int i = fromIndex, n = MathLib.min(left.length(),right.length()); i < n; i++) {
+            char c1 = left.charAt(i);
+            char c2 = right.charAt(i);
+            if (c1 != c2)
+                return c1 - c2;
+        }
+        return left.length() - right.length();
+    }
+
+    /** Returns the index starting at the specified index (two characters at a time).*/
+    private static int indexOf(int fromIndex, CharSequence csq) {
+        if (csq == null)
+            return 0;
+        int length = csq.length();
+        int j = fromIndex;
+        int i = (j < length) ? csq.charAt(j++) : 0;
+        i <<= 16;
+        i |= (j < length) ? csq.charAt(j++) : 0;
+        return i;
+    }
 }

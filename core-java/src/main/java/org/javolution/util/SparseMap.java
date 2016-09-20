@@ -73,8 +73,8 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      * 
      * @param keyOrder the key order of the map.
      */
-    public SparseMap(Order<? super K> order) {
-    	this(Order.DEFAULT, Equality.DEFAULT);
+    public SparseMap(Order<? super K> keyOrder) {
+    	this(keyOrder, Equality.DEFAULT);
     }
     
     /**
@@ -189,7 +189,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 
     @Override
     public boolean isEmpty() {
-        return size != 0;
+        return size == 0;
     }
 
     @Override

@@ -18,6 +18,7 @@ import org.javolution.lang.Index;
 import org.javolution.lang.MathLib;
 import org.javolution.lang.Realtime;
 import org.javolution.util.function.Order;
+import org.javolution.util.internal.bitset.BitSetIteratorImpl;
 import org.javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
@@ -614,26 +615,22 @@ public class BitSet extends FastSet<Index> {
 
     @Override
     public Iterator<Index> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new BitSetIteratorImpl(this, 0, false);
     }
 
     @Override
     public Iterator<Index> iterator(Index fromElement) {
-        // TODO Auto-generated method stub
-        return null;
+        return new BitSetIteratorImpl(this, fromElement.intValue(), false);
     }
 
     @Override
     public Iterator<Index> descendingIterator(Index fromElement) {
-        // TODO Auto-generated method stub
-        return null;
+        return new BitSetIteratorImpl(this, fromElement.intValue(), true);
     }
 
     @Override
     public Iterator<Index> descendingIterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new BitSetIteratorImpl(this, this.length()-1, true);
     }
 
 }

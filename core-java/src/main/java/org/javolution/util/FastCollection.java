@@ -80,7 +80,7 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * FastCollection<String> atomic = names.sorted().atomic(); 
  * FastCollection<String> nonAtomic = names.atomic().sorted();
  * 
- * FastCollection<String> threadSafe = names.linked().shared(); // 
+ * FastCollection<String> threadSafe = names.linked().shared();  
  * FastCollection<String> threadUnsafe = names.shared().linked(); 
  *  
  * }</pre></p>

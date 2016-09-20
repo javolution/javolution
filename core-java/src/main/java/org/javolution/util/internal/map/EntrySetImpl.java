@@ -123,7 +123,7 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
 
     @Override
     public boolean add(Entry<K, V> element) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("FastMap.entrySet() does not support adding new entries.");
     }
 
     @Override

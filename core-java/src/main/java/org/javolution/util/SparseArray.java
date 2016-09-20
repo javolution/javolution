@@ -198,8 +198,8 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		Node<K,V> downsize(int indexRemoved); // Returns the down-sized node with the specified index removed.
 		EntryNode<K,V> getEntry(int index); // Returns the entry or null.
 		EntryNode<K,V> entry(int index); // Returns the entry, a new entry or UPSIZE if a new entry cannot be immediately created (size adjustment).
-		EntryNode<K,V> ceilingEntry(int index); // Returns entry at or above specified index.
-		EntryNode<K,V> floorEntry(int index); // Returns entry at or below specified index.
+		EntryNode<K,V> ceilingEntry(int index); // Returns the entry at or above specified index or null if none found.
+		EntryNode<K,V> floorEntry(int index); // Returns entry at or below specified index or null if none found.
 		EntryNode<K,V> removeEntry(int index); // Returns the entry removed, null or DOWNSIZE/DELETE if the entry cannot be immediately removed (size adjustment).
 		Node<K,V> upsize(int indexAdded); // Returns the up-sized node with the specified index inserted.		
 	}
@@ -321,70 +321,82 @@ public class SparseArray<E> extends FastMap<Index, E> {
         }
 	}
 	
-	/** Defines the trie node */
+	/**  
+	 *  Each trie-node holds entries with indices in the range [prefix<<SHIFT<<shift .. (prefix+1)<<SHIFT<<shift)[ (unsigned)
+	 */
 	private static final class TrieNode<K,V> implements Node<K,V> {
 	    private static final long serialVersionUID = 0x700L; // Version. 
 		@SuppressWarnings("unchecked")
 		private final Node<K,V>[] trie = (Node<K,V>[]) new Node[SIZE];
 		private final int shift; // 0 for leaf trie-nodes
-		private final int prefix; // Lower (shift) bits are reset.
+		private final int prefix; 
 		int count; // Number of direct sub-nodes different from null.
 
 		public TrieNode(int shift, int index, Node<K,V> subNodeAtIndex) {
 			this.shift = shift;
-			this.prefix = index & (~MASK << shift);
+			this.prefix = index >>> SHIFT >>> shift;
 			trie[(index >>> shift) & MASK] = subNodeAtIndex;
 			count = 1;
 		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public TrieNode<K,V> clone() {
-			try {
-				TrieNode<K,V> copy = (TrieNode<K,V>)super.clone();
-				for (int i=0, n=copy.trie.length; i < n; i++)
-					if (trie[i] != null) trie[i] = trie[i].clone();
-				return copy;
-			} catch (CloneNotSupportedException e) {
-				throw new AssertionError(e);
-			}
+		
+		private TrieNode(int shift, int prefix) { // Constructor for cloning.
+		    this.shift = shift;
+		    this.prefix = prefix;
 		}
 
 		@Override
-		public Node<K,V> downsize(int indexRemoved) { // Called if count goes to 1
+		public TrieNode<K,V> clone() {
+            TrieNode<K,V> copy = new TrieNode<K,V>(shift, prefix);
+            for (int i=0; i < SIZE; i++) {
+                if (trie[i] != null) {
+                    copy.trie[i] = trie[i].clone();
+                    if (++copy.count == count) return copy; // Done.
+                }
+            }
+            throw new AssertionError("Trie Corruption !?");
+		}
+
+		@Override
+		public Node<K,V> downsize(int indexRemoved) { // Called only when count goes to 1
 			int j = (indexRemoved >>> shift) & MASK;
-			for (int i = 0; (i < trie.length) & (i != j); i++) {
+			for (int i = 0; (i < SIZE) && (i != j); i++) { // Search non-null node.
 				Node<K,V> n = trie[i];
-				if (n != null)
-					return n;
+				if (n != null) return n;
 			}
 			throw new AssertionError("Trie Corruption !?");
 		}
 
 		@Override
 		public EntryNode<K,V> getEntry(int i) {
-			// We don't check the prefix, since the index will be validated
-			// (or not) by the entry node.
+			// We don't check the prefix, since the index will be validated (or not) by the entry node.
 			Node<K,V> n = trie[(i >>> shift) & MASK];
 			return (n != null) ? n.getEntry(i) : null;
 		}
 
 		@Override
 		public EntryNode<K,V> ceilingEntry(int i) {
-			for (int j=(i >>> shift) & MASK; j < SIZE; j++) {
+            int iPrefix = i >>> SHIFT >>> shift;
+		    if (iPrefix > prefix) return null; 
+		    else if (iPrefix < prefix) i = prefix << SHIFT << shift;
+		    for (int j=(i >>> shift) & MASK; j < SIZE; j++) {
 				Node<K,V> n = trie[j];
 				if (n == null) continue;
-				return n.ceilingEntry(i); 
+				EntryNode<K,V> entry = n.ceilingEntry(i);
+				if (entry != null) return entry;
 			}
 			return null;
 		}
 		
 		@Override
 		public EntryNode<K,V> floorEntry(int i) {
+		    int iPrefix = i >>> SHIFT >>> shift;
+            if (iPrefix > prefix) i = ((prefix+1) << SHIFT << shift) - 1; 
+            else if (iPrefix < prefix) return null;
 			for (int j=(i >>> shift) & MASK; j >= 0; j--) {
 				Node<K,V> n = trie[j];
 				if (n == null) continue;
-				return n.floorEntry(i); 
+                EntryNode<K,V> entry = n.floorEntry(i);
+                if (entry != null) return entry;
 			}
 			return null;
 		}
@@ -392,10 +404,10 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		@SuppressWarnings("unchecked")
 		@Override
 		public EntryNode<K,V> removeEntry(int index) {
+            if (index >>> SHIFT >>> shift != prefix) return null; // Not in range.
 			final int i = (index >>> shift) & MASK;
 			Node<K,V> n = trie[i];
-			if (n == null)
-				return null;
+			if (n == null) return null;
 			EntryNode<K,V> previous = n.removeEntry(index);
 			if (previous == DOWNSIZE) {
 				previous = n.getEntry(index);
@@ -413,8 +425,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 		@SuppressWarnings("unchecked")
 		@Override
 		public EntryNode<K,V> entry(int index) {
-			if (((prefix ^ index) & (0xFFFFFFF0 << shift)) != 0)
-				return (EntryNode<K,V>) UPSIZE;
+		    if (index >>> SHIFT >>> shift != prefix) return (EntryNode<K,V>) UPSIZE; // Not in range.
 			final int i = (index >>> shift) & MASK;
 			Node<K,V> n = trie[i];
 			if (n == null) {
@@ -436,6 +447,7 @@ public class SparseArray<E> extends FastMap<Index, E> {
 			return new TrieNode<K,V>(commonShift(prefix, indexAdded), prefix,
 					this);
 		}
+		
 	}
 	
 	/** Null node. */

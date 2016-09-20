@@ -44,13 +44,13 @@ import org.javolution.util.internal.set.UnmodifiableSetImpl;
  * <p> Instances of this class can advantageously replace {@code java.util.*} sets in terms of adaptability, 
  *     space or performance. 
  * <pre>{@code
- * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order. 
- * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY);
+ * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order (type implicit). 
+ * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY); 
  * FastSet<String> treeSet = FastSet.newSet(Order.LEXICAL); 
- * FastSet<Foo> linkedHashSet = new SparseSet<Foo>().linked(); // Insertion order.
- * FastSet<Foo> concurrentHashSet = new SparseSet<Foo>().shared(); 
- * FastSet<String> concurrentSkipListSet = new SparseSet<String>(Order.LEXICAL).shared();
- * FastSet<Foo> copyOnWriteArraySet = new SparseSet<Foo>().atomic();
+ * FastSet<Foo> linkedHashSet = FastSet.newSet().linked().downcast(); // Insertion order.
+ * FastSet<Foo> concurrentHashSet = FastSet.newSet().shared().downcast(); 
+ * FastSet<String> concurrentSkipListSet = FastSet.newSet().shared().downcast();
+ * FastSet<Foo> copyOnWriteArraySet = FastSet.newSet().atomic().downcast();
  * ...
  * }</pre> </p>
  * 
@@ -91,6 +91,14 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
      */
     public static <E> FastSet<E> newSet(Order<? super E> order) {
     	return new SparseSet<E>(order);
+    }
+
+    /**
+     * Downcast the parameterized type of a fast set (safe at creation).
+     */
+    @SuppressWarnings("unchecked")
+    public <E1 extends E> FastSet<E1> downcast() {
+        return (FastSet<E1>) this; 
     }
 
     
