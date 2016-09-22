@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  * but the reverse would result in deadlock.
  */
 public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
-    
+
     /** Read-Lock Implementation. */
     public final class ReadLock implements Lock, Serializable {
         private static final long serialVersionUID = 0x600L; // Version.
@@ -30,13 +30,15 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         public void lock() {
             try {
                 lockInterruptibly();
-            } catch (java.lang.InterruptedException e) {}
+            } catch (java.lang.InterruptedException e) {
+            }
         }
 
         @Override
         public void lockInterruptibly() throws InterruptedException {
             synchronized (ReadWriteLockImpl.this) {
-                if (writerThread == Thread.currentThread()) return; // Current thread has the writer lock.
+                if (writerThread == Thread.currentThread())
+                    return; // Current thread has the writer lock.
                 while ((writerThread != null) || (waitingWriters != 0)) {
                     ReadWriteLockImpl.this.wait();
                 }
@@ -55,15 +57,15 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         }
 
         @Override
-        public boolean tryLock(long time, TimeUnit unit)
-                throws InterruptedException {
+        public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public void unlock() {
             synchronized (ReadWriteLockImpl.this) {
-                if (writerThread == Thread.currentThread()) return; // Itself is the writing thread.
+                if (writerThread == Thread.currentThread())
+                    return; // Itself is the writing thread.
                 assert (givenLocks > 0);
                 givenLocks--;
                 ReadWriteLockImpl.this.notifyAll();
@@ -79,7 +81,8 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         public void lock() {
             try {
                 lockInterruptibly();
-            } catch (java.lang.InterruptedException e) {}
+            } catch (java.lang.InterruptedException e) {
+            }
         }
 
         @Override
@@ -105,8 +108,7 @@ public final class ReadWriteLockImpl implements ReadWriteLock, Serializable {
         }
 
         @Override
-        public boolean tryLock(long time, TimeUnit unit)
-                throws InterruptedException {
+        public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
             throw new UnsupportedOperationException();
         }
 

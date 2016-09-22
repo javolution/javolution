@@ -41,7 +41,6 @@ import org.javolution.text.CharArray;
 import org.javolution.util.FastMap;
 import org.javolution.util.FastSet;
 import org.javolution.util.FastTable;
-import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.xml.jaxb.JAXBAnnotatedObjectReader;
 import org.javolution.xml.stream.XMLInputFactory;
@@ -945,7 +944,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void parseAttribute(final Method method, final CharArray attributeName, final FastMap<CharArray,Enum<?>> enumValueCache, final XMLStreamReader reader, final Object currentObj, final FastSet<CharArray> processedSet) throws UnmarshalException, ValidationException{
 
 		if(_isValidating && method == null){
@@ -1064,7 +1062,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void addToList(final FastTable<Object> listObj, Object element, final CharArray characters){
 		// If a class came in, it's a sign that special handling is needed.
 		if(element instanceof Class){

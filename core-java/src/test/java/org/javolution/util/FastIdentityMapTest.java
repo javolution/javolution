@@ -14,11 +14,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.javolution.util.FastMap;
 import org.javolution.util.function.Order;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +27,7 @@ public class FastIdentityMapTest {
 	
 	@Before
 	public void init(){
-		_fastIdentityMap = FastMap.newMap(Order.IDENTITY).linked().downcast();
+		_fastIdentityMap = FastMap.newMap(Order.IDENTITY);
 	}
 
 	@Test
@@ -67,7 +65,9 @@ public class FastIdentityMapTest {
 	
 	@Test
 	public void testEntrySetAndMapRetainsInsertOrder(){
-		_fastIdentityMap.put(Integer.class, int.class);
+        _fastIdentityMap = _fastIdentityMap.linked();
+
+        _fastIdentityMap.put(Integer.class, int.class);
 		_fastIdentityMap.put(Boolean.class, boolean.class);
 		_fastIdentityMap.put(Long.class, long.class);
 		
@@ -119,12 +119,8 @@ public class FastIdentityMapTest {
 	
 	@Test
 	public void testPutAll(){
-		Map<Class<?>,Class<?>> map = FastMap.newMap(Order.IDENTITY);
-		map.put(Integer.class, int.class);
-		map.put(Boolean.class, boolean.class);
-		map.put(Long.class, long.class);
-		
-		_fastIdentityMap.putAll(map);
+        _fastIdentityMap = _fastIdentityMap.linked();
+		_fastIdentityMap.putAll(Integer.class, int.class, Boolean.class, boolean.class, Long.class, long.class);
 		
 		Class<?> result = _fastIdentityMap.get(Integer.class);
 		assertEquals("Result Should Equal int.class", int.class, result);

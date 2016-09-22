@@ -9,10 +9,10 @@
 package org.javolution.util.internal.map;
 
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.javolution.util.FastCollection;
 import org.javolution.util.FastMap;
-import org.javolution.util.FastMap.Entry;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -21,11 +21,12 @@ import org.javolution.util.function.Predicate;
  */
 public final class ValuesImpl<K, V> extends FastCollection<V> {
 
-	/** Then generic iterator over the map values */
-    private static class ValuesIterator<K, V> implements Iterator<V> {
-        final Iterator<Entry<K,V>> mapItr;
+    /** The generic iterator over the map values. */
+    private class ValueIterator implements Iterator<V> {
+        final Iterator<Entry<K, V>> mapItr;
+        private Entry<K,V> next;
 
-        public ValuesIterator(Iterator<Entry<K,V>> mapItr) {
+        public ValueIterator(Iterator<Entry<K, V>> mapItr) {
             this.mapItr = mapItr;
         }
 
@@ -36,61 +37,43 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
         @Override
         public V next() {
-            return mapItr.next().getValue();
+            next = mapItr.next();
+            return next.getValue();
         }
-        
+
         @Override
         public void remove() {
-            mapItr.remove();
-        }        
-        
+            if (next == null) throw new IllegalArgumentException();
+            map.remove(next.getKey());
+            next = null;
+        }
     }
-	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastMap<K, V> map;
 
-	public ValuesImpl(FastMap<K, V> map) {
-		this.map = map;
-	}
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastMap<K, V> map;
 
-	@Override
-	public boolean add(V element) {
-        throw new UnsupportedOperationException("FastMap.values() does not support adding new values.");
-	}
-
-	@Override
-	public void clear() {
-		map.clear();
-	}
-
-	@Override
-	public FastCollection<V> clone() {
-		return new ValuesImpl<K, V>(map.clone());
-	}
-
-	@Override
-	public Equality<? super V> equality() {
-		return map.valuesEquality();
-	}
-
-	@Override
-	public Iterator<V> iterator() {
-		return new ValuesIterator<K, V>(map.iterator());
-	}
-
-	@Override
-	public int size() {
-		return map.size();
-	}
+    public ValuesImpl(FastMap<K, V> map) {
+        this.map = map;
+    }
 
     @Override
-    public boolean removeIf(final Predicate<? super V> filter) {
-        
-        return map.entrySet().removeIf(new Predicate<java.util.Map.Entry<K,V>>() {
+    public boolean add(V element) {
+        throw new UnsupportedOperationException("FastMap.values() does not support adding new values.");
+    }
 
-            @Override
-            public boolean test(java.util.Map.Entry<K, V> param) {
-                return filter.test(param.getValue());
-            }});
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
+    @Override
+    public FastCollection<V> clone() {
+        return new ValuesImpl<K, V>(map.clone());
+    }
+
+    @Override
+    public Equality<? super V> equality() {
+        return map.valuesEquality();
     }
 
     @Override
@@ -99,11 +82,34 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
     }
 
     @Override
+    public Iterator<V> iterator() {
+        return new ValueIterator(map.iterator());
+    }
+
+    @Override
+    public boolean removeIf(final Predicate<? super V> filter) {
+
+        return map.entrySet().removeIf(new Predicate<java.util.Map.Entry<K, V>>() {
+
+            @Override
+            public boolean test(java.util.Map.Entry<K, V> param) {
+                return filter.test(param.getValue());
+            }
+        });
+    }
+
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
     public FastCollection<V>[] trySplit(int n) {
-        FastMap<K,V>[] maps = map.trySplit(n);
+        FastMap<K, V>[] maps = map.trySplit(n);
         @SuppressWarnings("unchecked")
         FastCollection<V>[] split = new FastCollection[n];
-        for (int i=0; i < n; i++) split[i] = new ValuesImpl<K,V>(maps[i]);
+        for (int i = 0; i < n; i++)
+            split[i] = new ValuesImpl<K, V>(maps[i]);
         return split;
     }
 

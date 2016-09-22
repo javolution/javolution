@@ -27,18 +27,13 @@ public final class MappedTableImpl<E, R> extends FastTable<R> {
     }
 
     @Override
-    public boolean add(R element) {
+    public void add(int index, R element) {
         throw new UnsupportedOperationException("New elements cannot be added to mapped views");
     }
 
     @Override
-    public MappedTableImpl<E, R> clone() {
-        return new MappedTableImpl<E, R>(inner.clone(), function);
-    }
-    
-    @Override
-    public Equality<? super R> equality() {
-        return Equality.DEFAULT;
+    public boolean add(R element) {
+        throw new UnsupportedOperationException("New elements cannot be added to mapped views");
     }
 
     @Override
@@ -47,18 +42,23 @@ public final class MappedTableImpl<E, R> extends FastTable<R> {
     }
 
     @Override
-    public void add(int index, R element) {
-        throw new UnsupportedOperationException("New elements cannot be added to mapped views");
+    public MappedTableImpl<E, R> clone() {
+        return new MappedTableImpl<E, R>(inner.clone(), function);
     }
 
     @Override
-    public R remove(int index) {
-        return function.apply(inner.remove(index));
+    public Equality<? super R> equality() {
+        return Equality.DEFAULT;
     }
 
     @Override
     public R get(int index) {
         return function.apply(inner.get(index));
+    }
+
+    @Override
+    public R remove(int index) {
+        return function.apply(inner.remove(index));
     }
 
     @Override

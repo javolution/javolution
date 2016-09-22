@@ -20,8 +20,51 @@ import org.javolution.util.function.Predicate;
  */
 public final class FilteredCollectionImpl<E> extends FastCollection<E> {
 
+    /** Returns an iterator filtering elements iterated. */
+    public static class FilteredIterator<E> implements Iterator<E> {
+        final Iterator<E> itr;
+        final Predicate<? super E> filter;
+
+        boolean currentIsNext;
+
+        E current;
+        public FilteredIterator(Iterator<E> itr, Predicate<? super E> filter) {
+            this.itr = itr;
+            this.filter = filter;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (currentIsNext)
+                return true;
+            while (itr.hasNext()) {
+                current = itr.next();
+                if (!filter.test(current))
+                    continue; // Ignore.
+                currentIsNext = true;
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public E next() {
+            if (!hasNext())
+                throw new NoSuchElementException();
+            currentIsNext = false;
+            return current;
+        }
+
+        @Override
+        public void remove() {
+            if (currentIsNext)
+                throw new IllegalStateException();
+            itr.remove();
+        }
+    }
     private static final long serialVersionUID = 0x700L; // Version.
     private final Predicate<? super E> filter;
+
     private final FastCollection<E> inner;
 
     public FilteredCollectionImpl(FastCollection<E> inner, Predicate<? super E> filter) {
@@ -85,47 +128,5 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new FilteredCollectionImpl<E>(subViews[i], filter);
         return subViews;
-    }
-
-    /** Returns an iterator filtering elements iterated. */
-    public static class FilteredIterator<E> implements Iterator<E> {
-        final Iterator<E> itr;
-        final Predicate<? super E> filter;
-        public FilteredIterator(Iterator<E> itr, Predicate<? super E> filter){
-            this.itr = itr;
-            this.filter = filter;
-        }
-        
-        boolean currentIsNext;
-        E current;
-
-        @Override
-        public boolean hasNext() {
-            if (currentIsNext)
-                return true;
-            while (itr.hasNext()) {
-                current = itr.next();
-                if (!filter.test(current))
-                    continue; // Ignore.
-                currentIsNext = true;
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public E next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-            currentIsNext = false;
-            return current;
-        }
-
-        @Override
-        public void remove() {
-            if (currentIsNext)
-                throw new IllegalStateException();
-            itr.remove();
-        }    
     }
 }

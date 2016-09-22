@@ -22,6 +22,7 @@ import org.javolution.lang.Ternary;
 import org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
 import org.javolution.util.internal.function.HashOrderImpl;
 import org.javolution.util.internal.function.IdentityHashOrderImpl;
+import org.javolution.util.internal.function.IndexOrderImpl;
 import org.javolution.util.internal.function.LexicalOrderImpl;
 
 /**
@@ -76,10 +77,10 @@ public interface Order<T> extends Equality<T>, Comparator<T> {
     public static final Order<Number> NUMERIC = null; // TODO
     
     /**
-     * An unsigned 32-bits order.
+     * An unsigned 32-bits order ({@code null} values not supported}).
      */
     @Realtime(limit = LOG_N)
-    public static final Order<Index> INDEX = null; // TODO
+    public static final Order<Index> INDEX = IndexOrderImpl.INSTANCE;
     
      /**
      * A two-dimensional order (index-based) preserving space locality.

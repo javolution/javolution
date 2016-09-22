@@ -37,7 +37,7 @@ public final class ParallelSetImpl<E> extends FastSet<E> {
 
     @Override
     public void clear() { // Parallel.
-        removeIf(Predicate.TRUE); 
+        removeIf(Predicate.TRUE);
     }
 
     @Override
@@ -66,6 +66,16 @@ public final class ParallelSetImpl<E> extends FastSet<E> {
     }
 
     @Override
+    public void forEach(Consumer<? super E> consumer) {
+        ParallelCollectionImpl.forEach(inner, consumer);
+    }
+
+    @Override
+    public boolean isEmpty() { // Not parallel.
+        return inner.isEmpty();
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return inner.iterator();
     }
@@ -76,8 +86,23 @@ public final class ParallelSetImpl<E> extends FastSet<E> {
     }
 
     @Override
+    public E reduce(BinaryOperator<E> operator) {
+        return ParallelCollectionImpl.reduce(inner, operator);
+    }
+
+    @Override
     public boolean remove(Object obj) { // Not parallel.
         return inner.remove(obj);
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> matching) {
+        return ParallelCollectionImpl.removeIf(inner, matching);
+    }
+
+    @Override
+    public FastSet<E> sequential() {
+        return inner.sequential();
     }
 
     @Override
@@ -93,33 +118,8 @@ public final class ParallelSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public void forEach(Consumer<? super E> consumer) {
-        ParallelCollectionImpl.forEach(inner, consumer);
-    }
-
-    @Override
-    public E reduce(BinaryOperator<E> operator) {
-        return ParallelCollectionImpl.reduce(inner, operator);
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super E> matching) {
-        return ParallelCollectionImpl.removeIf(inner, matching);
-    }
-
-    @Override
-    public boolean until(Predicate<? super E> matching) {      
+    public boolean until(Predicate<? super E> matching) {
         return ParallelCollectionImpl.until(inner, matching);
     }
-    
-    @Override
-    public FastSet<E> sequential() {
-        return inner.sequential();
-    }
 
-    @Override
-    public boolean isEmpty() { // Not parallel.
-        return inner.isEmpty();
-    }
-    
 }

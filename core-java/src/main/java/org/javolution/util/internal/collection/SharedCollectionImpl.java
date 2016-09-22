@@ -9,9 +9,9 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -58,7 +58,7 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public boolean addAll(E...elements) {
+    public boolean addAll(E... elements) {
         lock.writeLock.lock();
         try {
             return inner.addAll(elements);
@@ -163,10 +163,10 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public ReadOnlyIterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().iterator());
+            return ReadOnlyIterator.of(inner.clone().iterator());
         } finally {
             lock.readLock.unlock();
         }

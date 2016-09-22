@@ -12,39 +12,29 @@ import org.javolution.util.FastMap;
 import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
-import org.javolution.util.function.Predicate;
-import org.javolution.util.internal.collection.FilteredCollectionImpl.FilteredIterator;
 
 /**
- * A filtered view over a map.
+ * A map with custom equality for its values.
  */
-public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
+public final class CustomValuesEqualityMapImpl<K, V> extends FastMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final Predicate<? super K> keyFilter;
-    private final Predicate<? super Entry<K, V>> entryFilter;
     private final FastMap<K, V> inner;
+    private Equality<? super V> valuesEquality;
 
-    public FilteredMapImpl(FastMap<K, V> inner, final Predicate<? super K> keyFilter) {
+    public CustomValuesEqualityMapImpl(FastMap<K, V> inner, Equality<? super V> valuesEquality) {
         this.inner = inner;
-        this.keyFilter = keyFilter;
-        this.entryFilter = new Predicate<Entry<K, V>>() {
-
-            @Override
-            public boolean test(Entry<K, V> param) {
-                return keyFilter.test(param.getKey());
-            }
-        };
+        this.valuesEquality = valuesEquality;
     }
 
     @Override
     public void clear() {
-        entrySet().removeIf(Predicate.TRUE);
+        inner.clear();
     }
 
     @Override
     public FastMap<K, V> clone() {
-        return new FilteredMapImpl<K, V>(inner.clone(), keyFilter);
+        return new CustomValuesEqualityMapImpl<K, V>(inner, valuesEquality);
     }
 
     @Override
@@ -54,52 +44,52 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.descendingIterator(), entryFilter));
+        return inner.descendingIterator();
     }
 
     @Override
     public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.descendingIterator(fromKey), entryFilter));
+        return inner.descendingIterator(fromKey);
     }
 
     @Override
     public Entry<K, V> getEntry(K key) {
-        return keyFilter.test(key) ? inner.getEntry(key) : null;
+        return inner.getEntry(key);
     }
 
     @Override
     public boolean isEmpty() {
-        return entrySet().isEmpty();
+        return inner.isEmpty();
     }
 
     @Override
     public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.iterator(), entryFilter));
+        return inner.iterator();
     }
 
     @Override
     public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.iterator(fromKey), entryFilter));
+        return inner.iterator(fromKey);
     }
 
     @Override
     public V put(K key, V value) {
-        return keyFilter.test(key) ? inner.put(key, value) : null;
+        return inner.put(key, value);
     }
 
     @Override
     public Entry<K, V> removeEntry(K key) {
-        return keyFilter.test(key) ? inner.removeEntry(key) : null;
+        return inner.removeEntry(key);
     }
 
     @Override
     public int size() {
-        return entrySet().size();
+        return inner.size();
     }
 
     @Override
     public Equality<? super V> valuesEquality() {
-        return inner.valuesEquality();
+        return valuesEquality;
     }
 
 }

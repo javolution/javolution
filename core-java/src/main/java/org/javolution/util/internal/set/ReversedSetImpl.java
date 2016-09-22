@@ -61,6 +61,11 @@ public final class ReversedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
+    public boolean isEmpty() {
+        return inner.isEmpty();
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return inner.descendingIterator();
     }
@@ -78,11 +83,6 @@ public final class ReversedSetImpl<E> extends FastSet<E> {
     @Override
     public int size() {
         return inner.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return inner.isEmpty();
     }
 
 }

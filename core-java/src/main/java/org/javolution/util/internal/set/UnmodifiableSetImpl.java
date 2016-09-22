@@ -8,11 +8,9 @@
  */
 package org.javolution.util.internal.set;
 
-import java.util.Iterator;
-
 import org.javolution.util.FastSet;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * An unmodifiable view over a set.
@@ -26,7 +24,7 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     public UnmodifiableSetImpl(FastSet<E> inner) {
         this.inner = inner;
     }
-    
+
     @Override
     public boolean add(E element) {
         throw new UnsupportedOperationException(ERROR_MSG);
@@ -53,23 +51,28 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return ReadOnlyIteratorImpl.of(inner.descendingIterator());
+    public ReadOnlyIterator<E> descendingIterator() {
+        return ReadOnlyIterator.of(inner.descendingIterator());
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(inner.descendingIterator(fromElement));
+    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
+        return ReadOnlyIterator.of(inner.descendingIterator(fromElement));
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ReadOnlyIteratorImpl.of(inner.iterator());
+    public boolean isEmpty() {
+        return inner.isEmpty();
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(inner.iterator(fromElement));
+    public ReadOnlyIterator<E> iterator() {
+        return ReadOnlyIterator.of(inner.iterator());
+    }
+
+    @Override
+    public ReadOnlyIterator<E> iterator(E fromElement) {
+        return ReadOnlyIterator.of(inner.iterator(fromElement));
     }
 
     @Override
@@ -86,10 +89,5 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     public UnmodifiableSetImpl<E> unmodifiable() {
         return this;
     }
-    
-    @Override
-    public boolean isEmpty() {
-        return inner.isEmpty();
-    }
-    
+
 }

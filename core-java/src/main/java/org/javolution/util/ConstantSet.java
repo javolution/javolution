@@ -9,12 +9,10 @@
 package org.javolution.util;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.javolution.lang.Constant;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * <p> A set for which immutability is guaranteed by construction.
@@ -140,23 +138,23 @@ public final class ConstantSet<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return ReadOnlyIteratorImpl.of(sparse.descendingIterator());
+    public ReadOnlyIterator<E> descendingIterator() {
+        return ReadOnlyIterator.of(sparse.descendingIterator());
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(sparse.descendingIterator(fromElement));
+    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
+        return ReadOnlyIterator.of(sparse.descendingIterator(fromElement));
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ReadOnlyIteratorImpl.of(sparse.iterator());
+    public ReadOnlyIterator<E> iterator() {
+        return ReadOnlyIterator.of(sparse.iterator());
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(sparse.iterator(fromElement));
+    public ReadOnlyIterator<E> iterator(E fromElement) {
+        return ReadOnlyIterator.of(sparse.iterator(fromElement));
     }
     
     /** 

@@ -9,10 +9,10 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Comparator;
-import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
 import org.javolution.util.FastTable;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -56,10 +56,10 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public ReadOnlyIterator<E> iterator() {
         FastTable<E> sorted = FastTable.newTable();
         sorted.addAllSorted(inner, cmp); // TODO: Compare performance with FastTable.sort()
-        return ReadOnlyIteratorImpl.of(sorted.iterator());
+        return ReadOnlyIterator.of(sorted.iterator());
     }
 
     @Override

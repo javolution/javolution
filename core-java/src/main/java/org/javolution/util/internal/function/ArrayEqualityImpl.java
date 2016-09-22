@@ -16,12 +16,12 @@ import org.javolution.util.function.Equality;
  * The array equality implementation.
  * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public enum ArrayEqualityImpl implements Equality<Object> { 
-	INSTANCE; 
+public enum ArrayEqualityImpl implements Equality<Object> {
+    INSTANCE;
 
-	@Override
-	public boolean areEqual(Object left, Object right) {
-	    if (left == right)
+    @Override
+    public boolean areEqual(Object left, Object right) {
+        if (left == right)
             return true;
         if ((left == null) || (right == null))
             return false;
@@ -44,6 +44,6 @@ public enum ArrayEqualityImpl implements Equality<Object> {
         if (left instanceof boolean[] && right instanceof boolean[])
             return Arrays.equals((boolean[]) left, (boolean[]) right);
         return left.equals(right);
-   }
+    }
 
 }

@@ -10,6 +10,7 @@ package org.javolution.util;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.NoSuchElementException;
 
 import org.javolution.lang.Constant;
 import org.javolution.util.function.Equality;
@@ -325,6 +326,23 @@ public final class ConstantTable<E> extends FastTable<E> {
     @Override
     public int removeSorted(E element,  Comparator<? super E> cmp) {
         throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    @Override
+    public ReadOnlyIterator<E> iterator() {
+        return new ReadOnlyIterator<E>() {
+            int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return index < elements.length;
+            }
+
+            @Override
+            public E next() {
+                if (index < elements.length) throw new NoSuchElementException();
+                return elements[index++];
+            }};
     }
 
 }

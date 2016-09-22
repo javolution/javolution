@@ -22,43 +22,11 @@ import org.javolution.util.function.Order;
  * 
  * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public enum LexicalOrderImpl implements Order<CharSequence> { 
-	INSTANCE(0), INSTANCE_2(2), INSTANCE_4(4), INSTANCE_6(6),
-	INSTANCE_8(8), INSTANCE_10(10), INSTANCE_12(12), INSTANCE_14(14), 
-	INSTANCE_16(16), INSTANCE_18(18), INSTANCE_20(20), INSTANCE_22(22),
-	INSTANCE_24(24), INSTANCE_26(26), INSTANCE_28(28), INSTANCE_30(30); 
- 
-    private final int fromIndex;
+public enum LexicalOrderImpl implements Order<CharSequence> {
+    INSTANCE(0), INSTANCE_2(2), INSTANCE_4(4), INSTANCE_6(6), INSTANCE_8(8), INSTANCE_10(10), INSTANCE_12(
+            12), INSTANCE_14(14), INSTANCE_16(16), INSTANCE_18(18), INSTANCE_20(
+                    20), INSTANCE_22(22), INSTANCE_24(24), INSTANCE_26(26), INSTANCE_28(28), INSTANCE_30(30);
 
-    /**
-     * Creates a lexical order from the specified index. Anything before that
-     * index is ignored.
-     */
-    private LexicalOrderImpl(int fromIndex) {
-        this.fromIndex = fromIndex;
-    };
-
-    @Override
-    public boolean areEqual(CharSequence left, CharSequence right) {
-        return areEqual(fromIndex, left, right);
-    }
-
-    @Override
-    public int compare(CharSequence left, CharSequence right) {
-        return compare(fromIndex, left, right);
-    }
-
-    @Override
-    public int indexOf(CharSequence csq) {
-        return indexOf(fromIndex, csq);
-    }
-
-    @Override
-    public Order<CharSequence> subOrder(CharSequence csq) {
-        int newIndex = fromIndex + 2;
-        return newIndex <= 30 ? LexicalOrderImpl.values()[newIndex >> 1] : new DynamicImpl(newIndex);
-    }
-            
     /** Dynamic implementation for long character sequences (not an enum) **/
     private static class DynamicImpl implements Order<CharSequence> {
         private static final long serialVersionUID = 0x700L; // Version.
@@ -104,7 +72,7 @@ public enum LexicalOrderImpl implements Order<CharSequence> {
                 return false;
         }
         return true;
-    }
+    };
 
     /** Compares the two characters sequences starting at the specified index */
     private static int compare(int fromIndex, CharSequence left, CharSequence right) {
@@ -112,7 +80,7 @@ public enum LexicalOrderImpl implements Order<CharSequence> {
             return -1;
         if (right == null)
             return 1;
-        for (int i = fromIndex, n = MathLib.min(left.length(),right.length()); i < n; i++) {
+        for (int i = fromIndex, n = MathLib.min(left.length(), right.length()); i < n; i++) {
             char c1 = left.charAt(i);
             char c2 = right.charAt(i);
             if (c1 != c2)
@@ -131,5 +99,36 @@ public enum LexicalOrderImpl implements Order<CharSequence> {
         i <<= 16;
         i |= (j < length) ? csq.charAt(j++) : 0;
         return i;
+    }
+
+    private final int fromIndex;
+
+    /**
+     * Creates a lexical order from the specified index. Anything before that
+     * index is ignored.
+     */
+    private LexicalOrderImpl(int fromIndex) {
+        this.fromIndex = fromIndex;
+    }
+
+    @Override
+    public boolean areEqual(CharSequence left, CharSequence right) {
+        return areEqual(fromIndex, left, right);
+    }
+
+    @Override
+    public int compare(CharSequence left, CharSequence right) {
+        return compare(fromIndex, left, right);
+    }
+
+    @Override
+    public int indexOf(CharSequence csq) {
+        return indexOf(fromIndex, csq);
+    }
+
+    @Override
+    public Order<CharSequence> subOrder(CharSequence csq) {
+        int newIndex = fromIndex + 2;
+        return newIndex <= 30 ? LexicalOrderImpl.values()[newIndex >> 1] : new DynamicImpl(newIndex);
     }
 }

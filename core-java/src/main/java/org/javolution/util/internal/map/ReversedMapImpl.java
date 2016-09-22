@@ -8,21 +8,20 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
-
 import org.javolution.util.FastMap;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
 /**
  * An reversed view over a map.
  */
-public final class ReversedMapImpl<K,V> extends FastMap<K,V> {
+public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K,V> inner;
+    private final FastMap<K, V> inner;
 
-    public ReversedMapImpl(FastMap<K,V> inner) {
+    public ReversedMapImpl(FastMap<K, V> inner) {
         this.inner = inner;
     }
 
@@ -32,32 +31,22 @@ public final class ReversedMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public ReversedMapImpl<K,V> clone() {
-        return new ReversedMapImpl<K,V>(inner.clone());
+    public ReversedMapImpl<K, V> clone() {
+        return new ReversedMapImpl<K, V>(inner.clone());
     }
 
     @Override
-    public V put(K key, V value) {
-        return inner.put(key, value);
+    public Order<? super K> comparator() {
+        return inner.comparator();
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
-        return inner.descendingIterator();
-    }
-
-    @Override
-    public Iterator<Entry<K, V>> descendingIterator() {
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
         return inner.iterator();
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {
-        return inner.descendingIterator(fromKey);
-    }
-
-    @Override
-    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
         return inner.iterator(fromKey);
     }
 
@@ -67,18 +56,28 @@ public final class ReversedMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
+    public boolean isEmpty() {
+        return inner.isEmpty();
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> iterator() {
+        return inner.descendingIterator();
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
+        return inner.descendingIterator(fromKey);
+    }
+
+    @Override
+    public V put(K key, V value) {
+        return inner.put(key, value);
+    }
+
+    @Override
     public Entry<K, V> removeEntry(K key) {
         return inner.removeEntry(key);
-    }
-
-    @Override
-    public Equality<? super V> valuesEquality() {
-        return inner.valuesEquality();
-    }
-
-    @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
     }
 
     @Override
@@ -87,8 +86,8 @@ public final class ReversedMapImpl<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public boolean isEmpty() {
-        return inner.isEmpty();
+    public Equality<? super V> valuesEquality() {
+        return inner.valuesEquality();
     }
 
 }

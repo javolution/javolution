@@ -8,14 +8,13 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import org.javolution.util.FastMap;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.internal.ReadWriteLockImpl;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * A shared view over a map.
@@ -102,20 +101,20 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator() {
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator());
+            return inner.clone().descendingIterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator(fromKey));
+            return inner.clone().descendingIterator(fromKey);
         } finally {
             lock.readLock.unlock();
         }
@@ -232,20 +231,20 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
+    public ReadOnlyIterator<Entry<K, V>> iterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().iterator());
+            return inner.clone().iterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {
+    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().iterator(fromKey));
+            return inner.clone().iterator(fromKey);
         } finally {
             lock.readLock.unlock();
         }
@@ -322,20 +321,20 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> that) {
+    public void putAll(K key, V value, Object... others) {
         lock.writeLock.lock();
         try {
-            inner.putAll(that);
+            inner.putAll(key, value, others);
         } finally {
             lock.writeLock.unlock();
         }
     }
 
     @Override
-    public void putAll(K key, V value, Object... others) {
+    public void putAll(Map<? extends K, ? extends V> that) {
         lock.writeLock.lock();
         try {
-            inner.putAll(key, value, others);
+            inner.putAll(that);
         } finally {
             lock.writeLock.unlock();
         }

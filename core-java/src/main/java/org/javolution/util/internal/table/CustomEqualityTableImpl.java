@@ -16,59 +16,58 @@ import org.javolution.util.function.Equality;
  */
 public final class CustomEqualityTableImpl<E> extends FastTable<E> {
 
-	private static final long serialVersionUID = 0x700L; // Version.
-	private final FastTable<E> inner;
-	private final Equality<? super E> equality;
+    private static final long serialVersionUID = 0x700L; // Version.
+    private final FastTable<E> inner;
+    private final Equality<? super E> equality;
 
-	public CustomEqualityTableImpl(FastTable<E> inner,
-			Equality<? super E> equality) {
-		this.inner = inner;
-		this.equality = equality;
-	}
+    public CustomEqualityTableImpl(FastTable<E> inner, Equality<? super E> equality) {
+        this.inner = inner;
+        this.equality = equality;
+    }
 
-	@Override
-	public boolean add(E element) {
-		return inner.add(element);
-	}
+    @Override
+    public boolean add(E element) {
+        return inner.add(element);
+    }
 
-	@Override
-	public void add(int index, E element) {
-		inner.add(index, element);
-	}
+    @Override
+    public void add(int index, E element) {
+        inner.add(index, element);
+    }
 
-	@Override
-	public void clear() {
-		inner.clear();
-	}
+    @Override
+    public void clear() {
+        inner.clear();
+    }
 
-	@Override
-	public FastTable<E> clone() {
-		return new CustomEqualityTableImpl<E>(inner.clone(), equality);
-	}
+    @Override
+    public FastTable<E> clone() {
+        return new CustomEqualityTableImpl<E>(inner.clone(), equality);
+    }
 
-	@Override
-	public Equality<? super E> equality() {
-		return equality;
-	}
+    @Override
+    public Equality<? super E> equality() {
+        return equality;
+    }
 
-	@Override
-	public E get(int index) {
-		return inner.get(index);
-	}
+    @Override
+    public E get(int index) {
+        return inner.get(index);
+    }
 
-	@Override
-	public E remove(int index) {
-		return inner.remove(index);
-	}
+    @Override
+    public E remove(int index) {
+        return inner.remove(index);
+    }
 
-	@Override
-	public E set(int index, E element) {
-		return inner.set(index, element);
-	}
+    @Override
+    public E set(int index, E element) {
+        return inner.set(index, element);
+    }
 
-	@Override
-	public int size() {
-		return inner.size();
-	}
+    @Override
+    public int size() {
+        return inner.size();
+    }
 
 }

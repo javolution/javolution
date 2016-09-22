@@ -8,12 +8,10 @@
  */
 package org.javolution.util.internal.set;
 
-import java.util.Iterator;
-
 import org.javolution.util.FastSet;
 import org.javolution.util.FastTable;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * A linked view over a set.
@@ -26,7 +24,7 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
 
     public LinkedSetImpl(FastSet<E> inner) {
         this.inner = inner;
-        insertionTable = FastTable.newTable(inner.equality()); 
+        insertionTable = FastTable.newTable(inner.equality());
     }
 
     private LinkedSetImpl(FastSet<E> inner, FastTable<E> insertionTable) {
@@ -64,44 +62,47 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return ReadOnlyIteratorImpl.of(insertionTable.reversed().iterator());
+    public ReadOnlyIterator<E> descendingIterator() {
+        return ReadOnlyIterator.of(insertionTable.reversed().iterator());
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
+    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
         FastTable<E> reversedTable = insertionTable.reversed();
         int index = reversedTable.indexOf(fromElement);
-        if (index < 0) throw new IllegalArgumentException("Not found: " + fromElement);
-        return ReadOnlyIteratorImpl.of(reversedTable.listIterator(index));
+        if (index < 0)
+            throw new IllegalArgumentException("Not found: " + fromElement);
+        return ReadOnlyIterator.of(reversedTable.listIterator(index));
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ReadOnlyIteratorImpl.of(insertionTable.iterator());
+    public boolean isEmpty() {
+        return insertionTable.isEmpty();
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
+    public ReadOnlyIterator<E> iterator() {
+        return ReadOnlyIterator.of(insertionTable.iterator());
+    }
+
+    @Override
+    public ReadOnlyIterator<E> iterator(E fromElement) {
         int index = insertionTable.indexOf(fromElement);
-        if (index < 0) throw new IllegalArgumentException("Not found: " + fromElement);
-        return ReadOnlyIteratorImpl.of(insertionTable.listIterator(index));
+        if (index < 0)
+            throw new IllegalArgumentException("Not found: " + fromElement);
+        return ReadOnlyIterator.of(insertionTable.listIterator(index));
     }
 
     @Override
     public boolean remove(Object obj) {
         boolean modified = inner.remove(obj);
-        if (modified) insertionTable.remove(obj);
+        if (modified)
+            insertionTable.remove(obj);
         return modified;
     }
 
     @Override
     public int size() {
         return insertionTable.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return insertionTable.isEmpty();
     }
 }

@@ -8,9 +8,9 @@
  */
 package org.javolution.util.internal.collection;
 
-import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -31,7 +31,7 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     public boolean add(E element) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
-  
+
     @Override
     public void clear() {
         throw new UnsupportedOperationException(ERROR_MSG);
@@ -53,8 +53,8 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ReadOnlyIteratorImpl.of(inner.iterator());
+    public ReadOnlyIterator<E> iterator() {
+        return ReadOnlyIterator.of(inner.iterator());
     }
 
     @Override

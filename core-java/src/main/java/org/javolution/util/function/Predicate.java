@@ -11,8 +11,7 @@ package org.javolution.util.function;
 /**
  * <p> A function which states or affirms the attribute or quality of something.</p>
  * 
- * <p> Note: In future version this interface may derive from 
- *     {@code Function<P, Boolean>}.</p>
+ * <p> Note: In future version this interface may derive from {@code Function<P, Boolean>}.</p>
  * 
  * @param <T>
  *            The type of input object to test.
@@ -26,7 +25,7 @@ package org.javolution.util.function;
 public interface Predicate<T> {
 
 	/**
-	 * Predicate always returning true.
+	 * Predicate always returning {@code true}.
 	 */
 	public static final Predicate<Object> TRUE = new Predicate<Object>() {
 
@@ -37,7 +36,7 @@ public interface Predicate<T> {
 	};
 
 	/**
-	 * Predicate always returning true.
+	 * Predicate always returning {@code false}.
 	 */
 	public static final Predicate<Object> FALSE = new Predicate<Object>() {
 
@@ -47,6 +46,27 @@ public interface Predicate<T> {
 		}
 	};
 
+    /**
+     * Predicate returning {@code true} if the specified object is {@code null}.
+     */
+    public static final Predicate<Object> IS_NULL = new Predicate<Object>() {
+
+        @Override
+        public boolean test(Object param) {
+            return param == null;
+        }
+    };
+
+    /**
+     * Predicate returning {@code true} if the specified object is not {@code null}.
+     */
+    public static final Predicate<Object> IS_NOT_NULL = new Predicate<Object>() {
+
+        @Override
+        public boolean test(Object param) {
+            return param != null;
+        }
+    };
 	/**
 	 * Tests the specified value.
 	 * 

@@ -47,6 +47,29 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
     }
 
     @Override
+    public Order<? super E> comparator() {
+        return inner.comparator();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean contains(Object obj) {
+        if (!filter.test((E) obj))
+            return false;
+        return inner.contains(obj);
+    }
+
+    @Override
+    public Iterator<E> descendingIterator() {
+        return new FilteredIterator<E>(inner.descendingIterator(), filter);
+    }
+
+    @Override
+    public Iterator<E> descendingIterator(E fromElement) {
+        return new FilteredIterator<E>(inner.descendingIterator(fromElement), filter);
+    }
+
+    @Override
     public boolean isEmpty() {
         return !iterator().hasNext();
     }
@@ -54,6 +77,19 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
     @Override
     public Iterator<E> iterator() {
         return new FilteredIterator<E>(inner.iterator(), filter);
+    }
+
+    @Override
+    public Iterator<E> iterator(E fromElement) {
+        return new FilteredIterator<E>(inner.iterator(fromElement), filter);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean remove(Object obj) {
+        if (!filter.test((E) obj))
+            return false;
+        return inner.remove(obj);
     }
 
     @Override
@@ -80,42 +116,6 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new FilteredSetImpl<E>(subViews[i], filter);
         return subViews;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean contains(Object obj) {
-        if (!filter.test((E)obj))
-            return false;
-        return inner.contains(obj);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean remove(Object obj) {
-        if (!filter.test((E)obj))
-            return false;
-        return inner.remove(obj);
-    }
-
-    @Override
-    public Iterator<E> iterator(E fromElement) {
-        return new FilteredIterator<E>(inner.iterator(fromElement), filter);
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return new FilteredIterator<E>(inner.descendingIterator(fromElement), filter);
-    }
-
-    @Override
-    public Order<? super E> comparator() {
-        return inner.comparator();
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        return new FilteredIterator<E>(inner.descendingIterator(), filter);
     }
 
 }

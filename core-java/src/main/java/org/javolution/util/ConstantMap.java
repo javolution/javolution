@@ -9,13 +9,11 @@
 package org.javolution.util;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.javolution.lang.Constant;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * <p> A map for which immutability is guaranteed by construction.
@@ -50,18 +48,9 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     /**
      * Returns a constant map sorted according to the specified order and holding the specified key/value pairs. 
      */
-    public static <K,V> ConstantMap<K,V> of(Order<? super K> keyOrder, K firstKey, V firstValue, Object...others) {
-        return ConstantMap.of(Order.DEFAULT, Equality.DEFAULT, firstKey, firstValue, others);
-    }
-    
-    /**
-     * Returns a constant map sorted according to the specified order, using the specified equality for values 
-     * comparisons and holding the specified key/value pairs. 
-     */
     @SuppressWarnings("unchecked")
-    public static <K,V> ConstantMap<K,V> of(Order<? super K> keyOrder, Equality<? super V> valuesEquality, 
-            K firstKey, V firstValue, Object...others) {
-        SparseMap<K,V> sparse = new SparseMap<K,V>(keyOrder, valuesEquality);
+    public static <K,V> ConstantMap<K,V> of(Order<? super K> keyOrder, K firstKey, V firstValue, Object...others) {
+        SparseMap<K,V> sparse = new SparseMap<K,V>(keyOrder);
         sparse.put(firstKey, firstValue);
         for (int i=0; i < others.length; i++) 
             sparse.put((K)others[i], (V)others[++i]);
@@ -81,21 +70,12 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
      */
     public static <K,V> ConstantMap<K,V> of(Order<? super K> keyOrder, 
             Collection<? extends Entry<? extends K, ? extends V>> entries) {
-        return ConstantMap.of(Order.DEFAULT, Equality.DEFAULT, entries);
-    }
-    
-    /**
-     * Returns a constant map sorted according to the specified order, using the specified equality for values 
-     * comparisons and holding the same entries as the specified collection. 
-     */
-    public static <K,V> ConstantMap<K,V> of(Order<? super K> keyOrder, Equality<? super V> valuesEquality, 
-            Collection<? extends Entry<? extends K, ? extends V>> entries) {
-        SparseMap<K,V> sparse = new SparseMap<K,V>(keyOrder, valuesEquality);
+        SparseMap<K,V> sparse = new SparseMap<K,V>(keyOrder);
         for (Entry<? extends K, ? extends V> e : entries)
             sparse.put(e.getKey(), e.getValue());
         return new ConstantMap<K,V>(sparse);
     }
-    
+        
     
     /** Holds the mapping (sparse). */
     private final SparseMap<K,V> sparse;
@@ -203,26 +183,6 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     public Entry<K, V> pollLastEntry() {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
-
-    @Override
-    public Iterator<Entry<K,V>> iterator() {
-        return ReadOnlyIteratorImpl.of(sparse.iterator());
-    }
-    
-    @Override
-    public Iterator<Entry<K,V>> descendingIterator() {
-        return ReadOnlyIteratorImpl.of(sparse.descendingIterator());
-    }
-        
-    @Override
-    public Iterator<Entry<K,V>> iterator(K fromKey) {
-        return ReadOnlyIteratorImpl.of(sparse.iterator(fromKey));
-    }
-    
-    @Override
-    public Iterator<Entry<K,V>> descendingIterator(K fromKey) {
-        return ReadOnlyIteratorImpl.of(sparse.descendingIterator(fromKey));
-    }
     
     /** 
      * Guaranteed to throw an exception and leave the map unmodified.
@@ -268,6 +228,26 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     @Override
     public boolean isEmpty() {
         return sparse.isEmpty();
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> iterator() {
+        return sparse.iterator();
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
+        return sparse.descendingIterator();
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
+        return sparse.iterator(fromKey);
+    }
+
+    @Override
+    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return sparse.descendingIterator(fromKey);
     }
 
 }

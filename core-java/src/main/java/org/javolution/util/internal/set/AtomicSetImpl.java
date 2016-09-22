@@ -9,14 +9,13 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.javolution.util.FastSet;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * An atomic view over a set (copy-on-write).
@@ -93,13 +92,13 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return ReadOnlyIteratorImpl.of(innerConst.descendingIterator());
+    public ReadOnlyIterator<E> descendingIterator() {
+        return ReadOnlyIterator.of(innerConst.descendingIterator());
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(innerConst.descendingIterator(fromElement));
+    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
+        return ReadOnlyIterator.of(innerConst.descendingIterator(fromElement));
     }
 
     @Override
@@ -138,13 +137,13 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ReadOnlyIteratorImpl.of(innerConst.iterator());
+    public ReadOnlyIterator<E> iterator() {
+        return ReadOnlyIterator.of(innerConst.iterator());
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
-        return ReadOnlyIteratorImpl.of(innerConst.iterator(fromElement));
+    public ReadOnlyIterator<E> iterator(E fromElement) {
+        return ReadOnlyIterator.of(innerConst.iterator(fromElement));
     }
 
     @Override

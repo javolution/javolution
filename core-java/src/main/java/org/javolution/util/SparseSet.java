@@ -9,8 +9,7 @@
 package org.javolution.util;
 
 import java.util.Iterator;
-
-import org.javolution.util.FastMap.Entry;
+import java.util.Map.Entry;
 import org.javolution.util.function.Order;
 
 /**

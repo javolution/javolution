@@ -9,15 +9,14 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.javolution.util.FastSet;
+import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.ReadWriteLockImpl;
-import org.javolution.util.internal.collection.ReadOnlyIteratorImpl;
 
 /**
  * A shared view over a set (reads-write locks).
@@ -59,7 +58,7 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public boolean addAll(E...elements) {
+    public boolean addAll(E... elements) {
         lock.writeLock.lock();
         try {
             return inner.addAll(elements);
@@ -134,20 +133,20 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
+    public ReadOnlyIterator<E> descendingIterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator());
+            return ReadOnlyIterator.of(inner.clone().descendingIterator());
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
+    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().descendingIterator(fromElement));
+            return ReadOnlyIterator.of(inner.clone().descendingIterator(fromElement));
         } finally {
             lock.readLock.unlock();
         }
@@ -224,20 +223,20 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public ReadOnlyIterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().iterator());
+            return ReadOnlyIterator.of(inner.clone().iterator());
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
+    public ReadOnlyIterator<E> iterator(E fromElement) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIteratorImpl.of(inner.clone().iterator(fromElement));
+            return ReadOnlyIterator.of(inner.clone().iterator(fromElement));
         } finally {
             lock.readLock.unlock();
         }

@@ -295,15 +295,16 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
   
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
-        final FastSet<E> toRemove = FastSet.newSet();
-        // Default equality comparator, assumes that if x.equals(y) then matching.test(x) == matching.
-
+        final FastTable<E> toRemove = FastTable.newTable();
         for (Iterator<E> itr=iterator(); itr.hasNext();) {
             E e = itr.next();
             if (filter.test(e)) toRemove.add(e);
-        }                   
-        for (Iterator<E> itr=toRemove.iterator(); itr.hasNext();) remove(itr.next());
-        return !toRemove.isEmpty();
+        }
+        boolean modified = false;
+        for (E e : toRemove) {
+            if (remove(e)) modified = true;
+        }
+        return modified;
     }       
 
     ////////////////////////////////////////////////////////////////////////////
