@@ -8,34 +8,6 @@
  */
 package org.javolution.xml.internal.jaxb;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.ParseException;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
-import javax.xml.bind.ValidationException;
-import javax.xml.bind.annotation.XmlRegistry;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlSchema;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.namespace.QName;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-
 import org.javolution.osgi.internal.OSGiServices;
 import org.javolution.text.CharArray;
 import org.javolution.util.FastMap;
@@ -48,6 +20,29 @@ import org.javolution.xml.stream.XMLStreamConstants;
 import org.javolution.xml.stream.XMLStreamException;
 import org.javolution.xml.stream.XMLStreamReader;
 import org.xml.sax.InputSource;
+
+import javax.xml.bind.*;
+import javax.xml.bind.annotation.XmlRegistry;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSchema;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import java.io.InputStream;
+import java.io.Reader;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.ParseException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Class to provide basic support for deserializing JAXB Annotated XML Objects
@@ -953,8 +948,6 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			return;
 		}
 
-		//LogContext.info("Parse Attribute Field: "+field.getName());
-
 		try {
 			final CharArray attributeValue = reader.getAttributeValue(null, attributeName);
 
@@ -1152,7 +1145,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				_processedSet = null;
 			}
 			else {
-				_processedSet = FastSet.newSet(Order.LEXICAL);
+				_processedSet = FastSet.newSet(Order.LEXICAL).linked().downcast();
 			}
 		}
 

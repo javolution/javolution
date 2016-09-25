@@ -8,27 +8,22 @@
  */
 package org.javolution.xml.jaxb;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.MarshalException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-
 import org.javolution.io.AppendableWriter;
 import org.javolution.io.CharSequenceReader;
 import org.javolution.text.TextBuilder;
 import org.javolution.xml.internal.jaxb.JAXBAnnotatedObjectWriterImpl;
-import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
 import org.javolution.xml.jaxb.common.test.schema.TestCommonRoot;
 import org.javolution.xml.jaxb.test.schema.TestRoot;
 import org.junit.Test;
+
+import javax.xml.bind.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Scanner;
+
+import static org.junit.Assert.assertEquals;
 
 public class JAXBAnnotatedObjectWriterTest {
 
@@ -202,8 +197,15 @@ public class JAXBAnnotatedObjectWriterTest {
 	private String readXMLResourceToString(final String resource) throws IOException, URISyntaxException{
 		final URL xmlUrl = JAXBAnnotatedObjectWriterTest.class.getResource(resource);
 		final File xmlFile = new File(xmlUrl.toURI());
-// Not JAVA 6		return new String(Files.readAllBytes(xmlFile.toPath()), StandardCharsets.UTF_8).replaceAll("[\n\r]", "").replaceAll(">\\s*<", "><").trim();
-return null;
+
+		Scanner scanner = null;
+
+		try {
+			scanner = new Scanner( xmlFile, "UTF-8" );
+			return scanner.useDelimiter("\\A").next();
+		} finally {
+			scanner.close();
+		}
 	}
 
 	private <T> T readJAXBObjectWithJDK(final Class<T> jaxbClass, final String xml) throws JAXBException{
