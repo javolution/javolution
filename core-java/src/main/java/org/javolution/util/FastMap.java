@@ -55,9 +55,9 @@ import org.javolution.util.internal.map.ValuesImpl;
  * FastMap<Foo, Bar> hashMap = FastMap.newMap(); // Hash order (default).
  * FastMap<Foo, Bar> identityHashMap = FastMap.newMap(Order.IDENTITY);
  * FastMap<String, Bar> treeMap = FastMap.newMap(Order.LEXICAL); 
- * FastMap<Foo, Bar> linkedHashMap = FastMap.newMap().linked().downcast(); // Insertion order.
- * FastMap<Foo, Bar> concurrentHashMap = FastMap.newMap().shared().downcast(); 
- * FastMap<String, Bar> concurrentSkipListMap = FastMap.newMap(Order.LEXICAL).shared().downcast();
+ * FastMap<Foo, Bar> linkedHashMap = FastMap.<Foo, Bar>newMap().linked(); // Insertion order.
+ * FastMap<Foo, Bar> concurrentHashMap = FastMap.<Foo, Bar>newMap().shared(); 
+ * FastMap<String, Bar> concurrentSkipListMap = FastMap.<Foo, Bar>newMap(Order.LEXICAL).shared();
  * FastMap<Index, Foo> sparseArray = FastMap.newMap(Order.INDEX);
  * ...
  * }</pre> </p> 
@@ -115,7 +115,7 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
      * Default constructor.
      */
     protected FastMap() {
-    }
+     }
 
     /**
      * Returns a new high-performance map sorted arbitrarily (hash order).
@@ -131,14 +131,6 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     	return new SparseMap<K,V>(keyOrder);
     }
     
-    /**
-     * Downcast the parameterized types of a fast map (safe at creation).
-     */
-    @SuppressWarnings("unchecked")
-    public <K1 extends K,V1 extends V> FastMap<K1,V1> downcast() {
-        return (FastMap<K1, V1>) this; 
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //

@@ -1145,7 +1145,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				_processedSet = null;
 			}
 			else {
-				_processedSet = FastSet.newSet(Order.LEXICAL).linked().downcast();
+				_processedSet = FastSet.<CharArray>newSet(Order.LEXICAL).linked();
 			}
 		}
 

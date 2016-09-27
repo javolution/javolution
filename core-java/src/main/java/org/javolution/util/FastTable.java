@@ -105,13 +105,6 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
         return equality == Equality.DEFAULT ? new FractalTable<E>() : new FractalTable<E>().equality(equality);
     }
 
-    /**
-     * Downcast the parameterized type of a fast table (safe at creation).
-     */
-    @SuppressWarnings("unchecked")
-    public <E1 extends E> FastTable<E1> downcast() {
-        return (FastTable<E1>) this; 
-    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Views.
