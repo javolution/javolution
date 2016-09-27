@@ -8,19 +8,17 @@
  */
 package org.javolution.xml.internal.jaxb;
 
-import java.io.OutputStream;
-import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Pattern;
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.text.CharArray;
+import org.javolution.text.TextBuilder;
+import org.javolution.util.FastMap;
+import org.javolution.util.FastSet;
+import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
+import org.javolution.xml.stream.XMLOutputFactory;
+import org.javolution.xml.stream.XMLStreamException;
+import org.javolution.xml.stream.XMLStreamWriter;
 
-import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.MarshalException;
-import javax.xml.bind.ValidationException;
+import javax.xml.bind.*;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -28,15 +26,13 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
-
-import org.javolution.osgi.internal.OSGiServices;
-import org.javolution.text.CharArray;
-import org.javolution.text.TextBuilder;
-import org.javolution.util.FastMap;
-import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
-import org.javolution.xml.stream.XMLOutputFactory;
-import org.javolution.xml.stream.XMLStreamException;
-import org.javolution.xml.stream.XMLStreamWriter;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Class to provide basic support for serializing JAXB Annotated Objects to XML
@@ -217,7 +213,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastIdentitySet<Method> attributeMethods = cacheData._attributeMethodsSet;
+		final FastSet<Method> attributeMethods = cacheData._attributeMethodsSet;
 
 		for(final Method method : attributeMethods){
 			writeAttributeValue(element, method, writer);
@@ -226,7 +222,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 	private void writeAttributeValue(final Object element, final Method method, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final CharArray attributeName = _methodAttributeNameCache.get(method);
-		final Object value = method.invoke(element, (Object)null);
+		final Object value = method.invoke(element, null);
 
 		if(value == null) {
 			if (_isValidating && _requiredCache.get(method.getDeclaringClass()).contains(attributeName)) {
@@ -296,7 +292,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 		// Complex Types W/ Simple Values - @XmlValue detection
 		else {
-			final Object fieldValue = xmlValueMethod.invoke(element, (Object) null);
+			final Object fieldValue = xmlValueMethod.invoke(element, null);
 
 			if(fieldValue == null) {
 				writer.writeEmptyElement(elementName);
@@ -322,7 +318,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			final CharArray prop = propOrder.next();
 
 			final Method method = propOrderMethodCache.get(prop);
-			final Object value = method.invoke(element, (Object)null);
+			final Object value = method.invoke(element, null);
 
 			if(value == null) {
 				if(_isValidating && method.isAnnotationPresent(XmlElement.class) &&
