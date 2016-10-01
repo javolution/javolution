@@ -8,14 +8,7 @@
  */
 package javolution.jmh.benchmark;
 
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.JAXBException;
-
-import javolution.util.FastMap;
-import javolution.util.function.Equalities;
-
+import org.javolution.util.FastMap;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -23,9 +16,9 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import javax.xml.bind.JAXBException;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 public class FastMapBenchmark {
@@ -35,7 +28,7 @@ public class FastMapBenchmark {
 
     @Setup
     public void setup() throws JAXBException{
-        fastMap = new FastMap<Class<?>, Integer>(Equalities.IDENTITY);
+        fastMap = FastMap.<Class<?>, Integer> newMap();
         fastMap.put(Integer.class, 0);
         fastMap.put(Boolean.class, 1);
         fastMap.put(Long.class, 2);

@@ -8,10 +8,10 @@
  */
 package javolution.jmh.benchmark;
 
-import javolution.osgi.internal.OSGiServices;
-import javolution.xml.annotation.JAXBAnnotatedObjectReader;
-import javolution.xml.annotation.JAXBAnnotationFactory;
-import javolution.xml.jaxb.test.schema.TestRoot;
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.xml.jaxb.JAXBAnnotatedObjectReader;
+import org.javolution.xml.jaxb.JAXBAnnotationFactory;
+import org.javolution.xml.jaxb.test.schema.TestRoot;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -27,9 +27,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
-
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
 
 @State(Scope.Thread)
 public class JAXBMarshallingWithJDKBenchmark {
