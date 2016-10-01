@@ -99,10 +99,18 @@ public abstract class FastTable<E> extends FastCollection<E> implements List<E>,
     }
 
     /**
-     * Returns a new high-performance table using the specified equality for elements {@link #equality comparisons}.
+     * Returns a new high-performance table using the specified equality for elements {@link #equality comparisons}
+     * (convenience method).
      */
-    public static <E> FastTable<E> newTable(Equality<? super E> equality) {
-        return equality == Equality.DEFAULT ? new FractalTable<E>() : new FractalTable<E>().equality(equality);
+    public static <E> FastTable<E> newTable(final Equality<? super E> equality) {
+        return new FractalTable<E>() {
+            private static final long serialVersionUID = FastTable.serialVersionUID;  
+
+            @Override
+            public Equality<? super E> equality() {
+                return equality;
+            }
+        };
     }
 
 

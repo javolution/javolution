@@ -131,6 +131,20 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     	return new SparseMap<K,V>(keyOrder);
     }
     
+    /**
+     * Returns a new high-performance map sorted according to the specified key order and using the specified
+     * values equality for the maps'values (convenience method).
+     */
+    public static <K,V> FastMap<K,V> newMap(Order<? super K> keyOrder, final Equality<? super V> valuesEquality) {
+        return new SparseMap<K,V>(keyOrder) {
+            private static final long serialVersionUID = FastMap.serialVersionUID;
+            @Override
+            public Equality<? super V> valuesEquality() {
+                return valuesEquality;
+            }
+        };
+    }
+    
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
@@ -631,5 +645,5 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
         }
 
     }
-
+    
 }

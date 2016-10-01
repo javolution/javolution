@@ -72,7 +72,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_classCacheData = FastMap.<Class<?>, CacheData>newMap(Order.IDENTITY).linked();
 		_classNameSpaceCache = FastMap.<Class<?>,String>newMap(Order.IDENTITY).linked();
 		_declaredFieldsCache = FastMap.<Class<?>,FastSet<Field>>newMap(Order.IDENTITY).linked();
-		_elementClassCache = FastMap.<CharArray,Class<?>>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
+		_elementClassCache = FastMap.<CharArray,Class<?>>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
 		_genericFieldTypeCache = FastMap.<Field,Class<?>>newMap(Order.IDENTITY).linked();
 		_genericMethodTypeCache = FastMap.<Method,Class<?>>newMap(Order.IDENTITY).linked();
 		_methodAttributeNameCache = FastMap.<Method,CharArray>newMap(Order.IDENTITY).linked();
@@ -82,7 +82,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		_registeredClassesCache = FastSet.newSet();
 		_requiredCache = FastMap.<Class<?>, FastSet<CharArray>>newMap(Order.IDENTITY).linked();
 		_xmlAccessTypeCache = FastMap.<Class<?>,XmlAccessType>newMap(Order.IDENTITY).linked();
-		_xmlElementNameCache = FastMap.<CharArray,CharArray> newMap(Order.LEXICAL).valuesEquality(Equality.LEXICAL).linked();
+		_xmlElementNameCache = FastMap.<CharArray,CharArray> newMap(Order.LEXICAL,Equality.LEXICAL).linked();
 		_xmlJavaTypeAdapterCache = FastMap.<Method,Class<? extends XmlAdapter>>newMap(Order.IDENTITY).linked();
 		_xmlSchemaTypeCache = FastMap.<Method,XmlSchemaTypeEnum>newMap(Order.IDENTITY).linked();
 		_xmlSeeAlsoCache = FastSet.newSet(Order.IDENTITY);
@@ -91,7 +91,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 		if (cacheMode == CacheMode.READER) {
 			_classElementNameCache = null;
 			_classObjectFactoryCache = FastMap.<Class<?>,Object>newMap(Order.IDENTITY).linked();
-			_namespaceObjectFactoryCache = FastMap.<String,Object>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
+			_namespaceObjectFactoryCache = FastMap.<String,Object>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
 			_objectFactoryCache = FastMap.<Class<?>, Method>newMap(Order.IDENTITY).linked();
 		}
 		else {
@@ -853,7 +853,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 		public CacheData() {
 			if(_cacheMode == CacheMode.READER) {
-				_attributeMethodsCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
+				_attributeMethodsCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
 				_attributeMethodsSet = null;
 			}
 			else {
@@ -861,12 +861,12 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 				_attributeMethodsSet = FastSet.<Method>newSet(Order.IDENTITY).linked();
 			}
 
-			_directSetValueCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
-			_elementFieldCache = FastMap.<CharArray,Field>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
-			_elementMethodCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
-			_enumValueCache = FastMap.<CharArray,Enum<?>>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
-			_mappedElementsCache = FastMap.<CharArray,FastSet<CharArray>>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
-			_propOrderMethodCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL).valuesEquality(Equality.IDENTITY).linked();
+			_directSetValueCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
+			_elementFieldCache = FastMap.<CharArray,Field>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
+			_elementMethodCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL, Equality.IDENTITY).linked();
+			_enumValueCache = FastMap.<CharArray,Enum<?>>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
+			_mappedElementsCache = FastMap.<CharArray,FastSet<CharArray>>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
+			_propOrderMethodCache = FastMap.<CharArray,Method>newMap(Order.LEXICAL,Equality.IDENTITY).linked();
 			_xmlValueMethod = null;
 		}
 	}
