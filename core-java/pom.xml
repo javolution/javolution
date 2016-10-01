@@ -72,11 +72,11 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Export-Package>!javolution.*.internal.*,javolution.*,org.osgi.service.log</Export-Package>
-						<Private-Package>javolution.*.internal.*,javax.realtime.*</Private-Package>
-						<Bundle-Activator>javolution.osgi.internal.JavolutionActivator</Bundle-Activator>
-						<Export-Service>javolution.xml.stream.XMLInputFactory,
-							javolution.xml.stream.XMLOutputFactory</Export-Service>
+						<Export-Package>!org.javolution.*.internal.*,org.javolution.*,org.osgi.service.log</Export-Package>
+						<Private-Package>org.javolution.*.internal.*,javax.realtime.*</Private-Package>
+						<Bundle-Activator>org.javolution.osgi.internal.JavolutionActivator</Bundle-Activator>
+						<Export-Service>org.javolution.xml.stream.XMLInputFactory,
+							org.javolution.xml.stream.XMLOutputFactory</Export-Service>
 					</instructions>
 				</configuration>
 			</plugin>
