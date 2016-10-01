@@ -8,7 +8,7 @@
  */
 package javolution.jmh.benchmark;
 
-import javolution.xml.jaxb.test.schema.*;
+import org.javolution.xml.jaxb.test.schema.TestRoot;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;

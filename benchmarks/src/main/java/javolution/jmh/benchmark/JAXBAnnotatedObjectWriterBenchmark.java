@@ -8,21 +8,10 @@
  */
 package javolution.jmh.benchmark;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
-import javolution.osgi.internal.OSGiServices;
-import javolution.xml.annotation.JAXBAnnotatedObjectWriter;
-import javolution.xml.annotation.JAXBAnnotationFactory;
-import javolution.xml.jaxb.test.schema.TestRoot;
-
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
+import org.javolution.xml.jaxb.JAXBAnnotationFactory;
+import org.javolution.xml.jaxb.test.schema.TestRoot;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -30,8 +19,14 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 public class JAXBAnnotatedObjectWriterBenchmark {

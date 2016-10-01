@@ -8,7 +8,8 @@
  */
 package javolution.jmh.benchmark;
 
-import javolution.util.internal.map.FastIdentityMapImpl;
+import org.javolution.util.FastMap;
+import org.javolution.util.function.Order;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -23,12 +24,12 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 public class FastIdentityMapBenchmark {
 
-    private FastIdentityMapImpl<Class<?>,Integer> fastIdentityMap;
+    private FastMap<Class<?>,Integer> fastIdentityMap;
     private Random random;
 
     @Setup
     public void setup() throws JAXBException{
-        fastIdentityMap = new FastIdentityMapImpl<Class<?>, Integer>();
+        fastIdentityMap = FastMap.<Class<?>, Integer> newMap(Order.IDENTITY);
         fastIdentityMap.put(Integer.class, 0);
         fastIdentityMap.put(Boolean.class, 1);
         fastIdentityMap.put(Long.class, 2);
