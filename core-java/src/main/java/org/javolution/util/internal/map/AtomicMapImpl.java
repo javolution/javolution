@@ -8,10 +8,10 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -66,13 +66,13 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return innerConst.descendingIterator();
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return innerConst.unmodifiable().descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return innerConst.descendingIterator(fromKey);
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return innerConst.unmodifiable().descendingIterator(fromKey);
     }
 
     @Override
@@ -131,13 +131,13 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return innerConst.iterator();
+    public Iterator<Entry<K, V>> iterator() {
+        return innerConst.unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        return innerConst.iterator(fromKey);
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return innerConst.unmodifiable().iterator(fromKey);
     }
 
     @Override

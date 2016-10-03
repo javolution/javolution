@@ -15,7 +15,6 @@ import java.util.ListIterator;
 
 import org.javolution.lang.Parallel;
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -178,8 +177,8 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(innerConst.iterator());
+    public Iterator<E> iterator() {
+        return innerConst.unmodifiable().iterator();
     }
 
     @Override

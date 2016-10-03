@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -22,7 +21,7 @@ import org.javolution.util.function.Order;
 public final class SubMapImpl<K, V> extends FastMap<K, V> {
 
     /** Iterator bounded by the to limit over the sub-set. */
-    private class LowerLimitIterator extends ReadOnlyIterator<Entry<K, V>> {
+    private class LowerLimitIterator implements Iterator<Entry<K, V>> {
         private final Iterator<Entry<K, V>> itr;
         boolean currentIsNext;
         Entry<K, V> current;
@@ -52,9 +51,15 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
             return current;
         }
 
+        @Override
+        public void remove() {
+            if ((currentIsNext) || (current == null)) throw new IllegalStateException();
+            SubMapImpl.this.remove(current.getKey());
+            current = null;
+        }
     }
     /** Iterator bounded by the from limit over the sub-set. */
-    private class UpperLimitIterator extends ReadOnlyIterator<Entry<K, V>> {
+    private class UpperLimitIterator implements Iterator<Entry<K, V>> {
         private final Iterator<Entry<K, V>> itr;
         boolean currentIsNext;
         Entry<K, V> current;
@@ -84,6 +89,12 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
             return current;
         }
 
+        @Override
+        public void remove() {
+            if ((currentIsNext) || (current == null)) throw new IllegalStateException();
+            SubMapImpl.this.remove(current.getKey());
+            current = null;
+        }
     }
     private static final long serialVersionUID = 0x700L; // Version.
     private final FastMap<K, V> inner;
@@ -122,17 +133,17 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
+    public Iterator<Entry<K, V>> descendingIterator() {
         if (toInclusive == null)
             return new LowerLimitIterator(inner.descendingIterator());
-        ReadOnlyIterator<Entry<K, V>> itr = new LowerLimitIterator(inner.descendingIterator(to));
+        Iterator<Entry<K, V>> itr = new LowerLimitIterator(inner.descendingIterator(to));
         if (!toInclusive && inner.containsKey(to))
             itr.next(); // Pass element.  
         return itr;
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromElement) {
+    public Iterator<Entry<K, V>> descendingIterator(K fromElement) {
         if (toInclusive == null)
             return new LowerLimitIterator(inner.descendingIterator(fromElement));
         return (inner.comparator().compare(to, fromElement) <= 0) ? descendingIterator()
@@ -154,17 +165,17 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
+    public Iterator<Entry<K, V>> iterator() {
         if (fromInclusive == null)
             return new UpperLimitIterator(inner.iterator());
-        ReadOnlyIterator<Entry<K, V>> itr = new UpperLimitIterator(inner.iterator(from));
+        Iterator<Entry<K, V>> itr = new UpperLimitIterator(inner.iterator(from));
         if (!fromInclusive && inner.containsKey(from))
             itr.next(); // Pass element.  
         return itr;
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromElement) {
+    public Iterator<Entry<K, V>> iterator(K fromElement) {
         if (fromInclusive == null)
             return new UpperLimitIterator(inner.iterator(fromElement));
         return (inner.comparator().compare(from, fromElement) >= 0) ? iterator()

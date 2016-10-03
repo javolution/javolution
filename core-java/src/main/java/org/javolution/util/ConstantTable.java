@@ -10,6 +10,7 @@ package org.javolution.util;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.javolution.lang.Constant;
@@ -329,8 +330,8 @@ public final class ConstantTable<E> extends FastTable<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return new ReadOnlyIterator<E>() {
+    public Iterator<E> iterator() {
+        return new Iterator<E>() {
             int index = 0;
 
             @Override
@@ -342,7 +343,14 @@ public final class ConstantTable<E> extends FastTable<E> {
             public E next() {
                 if (index < elements.length) throw new NoSuchElementException();
                 return elements[index++];
-            }};
+            }
+
+            @Override
+            public final void remove() {
+                throw new UnsupportedOperationException("Read-Only Iterator");
+            }
+            
+        };
     }
 
 }

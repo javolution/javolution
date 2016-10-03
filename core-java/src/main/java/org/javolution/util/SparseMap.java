@@ -8,6 +8,8 @@
  */
 package org.javolution.util;
 
+import java.util.Iterator;
+
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.internal.map.TrieNodeImpl;
@@ -174,23 +176,23 @@ public class SparseMap<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return new TrieNodeImpl.NodeIterator<K,V>(root);
+    public Iterator<Entry<K, V>> iterator() {
+        return new TrieNodeImpl.NodeIterator<K,V>(this, root);
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return new TrieNodeImpl.DescendingNodeIterator<K,V>(root);
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return new TrieNodeImpl.DescendingNodeIterator<K,V>(this, root);
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        return new TrieNodeImpl.NodeIterator<K,V>(root, fromKey, keyOrder.indexOf(fromKey));
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return new TrieNodeImpl.NodeIterator<K,V>(this, root, fromKey, keyOrder.indexOf(fromKey));
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return new TrieNodeImpl.DescendingNodeIterator<K,V>(root, fromKey, keyOrder.indexOf(fromKey));
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return new TrieNodeImpl.DescendingNodeIterator<K,V>(this, root, fromKey, keyOrder.indexOf(fromKey));
     }
     
    

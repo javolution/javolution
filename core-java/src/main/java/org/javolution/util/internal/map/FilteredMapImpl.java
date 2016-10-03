@@ -8,8 +8,9 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Iterator;
+
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
@@ -53,13 +54,13 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.descendingIterator(), entryFilter));
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return new FilteredIterator<Entry<K, V>>(inner.descendingIterator(), entryFilter);
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.descendingIterator(fromKey), entryFilter));
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return new FilteredIterator<Entry<K, V>>(inner.descendingIterator(fromKey), entryFilter);
     }
 
     @Override
@@ -73,13 +74,13 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.iterator(), entryFilter));
+    public Iterator<Entry<K, V>> iterator() {
+        return new FilteredIterator<Entry<K, V>>(inner.iterator(), entryFilter);
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        return ReadOnlyIterator.of(new FilteredIterator<Entry<K, V>>(inner.iterator(fromKey), entryFilter));
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return new FilteredIterator<Entry<K, V>>(inner.iterator(fromKey), entryFilter);
     }
 
     @Override

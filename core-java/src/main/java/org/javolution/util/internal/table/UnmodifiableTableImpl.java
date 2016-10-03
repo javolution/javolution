@@ -9,7 +9,6 @@
 package org.javolution.util.internal.table;
 
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 
 /**
@@ -75,8 +74,4 @@ public final class UnmodifiableTableImpl<E> extends FastTable<E> {
         return this;
     }
 
-    @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(inner.iterator());
-    }
 }

@@ -9,9 +9,9 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.javolution.util.FastSet;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Order;
@@ -133,20 +133,20 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator() {
+    public Iterator<E> descendingIterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIterator.of(inner.clone().descendingIterator());
+            return inner.clone().unmodifiable().descendingIterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
+    public Iterator<E> descendingIterator(E fromElement) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIterator.of(inner.clone().descendingIterator(fromElement));
+            return inner.clone().unmodifiable().descendingIterator(fromElement);
         } finally {
             lock.readLock.unlock();
         }
@@ -223,20 +223,20 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
+    public Iterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIterator.of(inner.clone().iterator());
+            return inner.clone().unmodifiable().iterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator(E fromElement) {
+    public Iterator<E> iterator(E fromElement) {
         lock.readLock.lock();
         try {
-            return ReadOnlyIterator.of(inner.clone().iterator(fromElement));
+            return inner.clone().unmodifiable().iterator(fromElement);
         } finally {
             lock.readLock.unlock();
         }

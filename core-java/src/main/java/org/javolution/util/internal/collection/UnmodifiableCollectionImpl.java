@@ -9,8 +9,9 @@
 package org.javolution.util.internal.collection;
 
 
+import java.util.Iterator;
+
 import org.javolution.util.FastCollection;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -53,8 +54,8 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(inner.iterator());
+    public Iterator<E> iterator() {
+        return new ReadOnlyIterator<E>(inner.iterator());
     }
 
     @Override
@@ -71,5 +72,27 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     public FastCollection<E>[] trySplit(int n) {
         return inner.trySplit(n); // Read-only views (see trySplit contract)
     }
+    
+    /** Read-only iterator (remove not supported). */
+    public static class ReadOnlyIterator<E> implements Iterator<E> {
+        private final Iterator<E> inner;
+        public ReadOnlyIterator(Iterator<E> inner) {
+            this.inner = inner;
+        }
+        @Override
+        public boolean hasNext() {
+            return inner.hasNext();
+        }
 
+        @Override
+        public E next() {
+            return inner.next();
+        }
+
+        @Override
+        @Deprecated
+        public void remove() {
+            throw new UnsupportedOperationException(ERROR_MSG);
+        }
+    }
 }

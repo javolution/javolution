@@ -8,8 +8,9 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Iterator;
+
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -41,12 +42,12 @@ public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
+    public Iterator<Entry<K, V>> descendingIterator() {
         return inner.iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
         return inner.iterator(fromKey);
     }
 
@@ -61,12 +62,12 @@ public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
+    public Iterator<Entry<K, V>> iterator() {
         return inner.descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
         return inner.descendingIterator(fromKey);
     }
 

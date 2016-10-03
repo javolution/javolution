@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 
 import org.javolution.lang.MathLib;
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Order;
 
 /**
@@ -304,12 +303,14 @@ public abstract class TrieNodeImpl<K,V> implements Cloneable, Serializable {
     
     
     /** Iterator over the entries of a sparse map. */
-    public static final class NodeIterator<K,V> extends ReadOnlyIterator<Entry<K,V>> {
+    public static final class NodeIterator<K,V> implements Iterator<Entry<K,V>> {
         private Iterator<Entry<K,V>> subItr; // Set when iterating sub-maps (subItr.hasNext() is always true)
         private EntryNode<Object,Object> next; 
         private Entry<K,V> current;
+        private final FastMap<K,V> map;
         private final TrieNodeImpl<Object,Object> root;
-        public NodeIterator(TrieNodeImpl<Object,Object> root) {
+        public NodeIterator(FastMap<K,V> map, TrieNodeImpl<Object,Object> root) {
+            this.map = map;
             this.root = root;
             next = root.ceilingEntry(0);
             if ((next != null) && (next.key == SUB_MAP)) {
@@ -319,7 +320,8 @@ public abstract class TrieNodeImpl<K,V> implements Cloneable, Serializable {
             }    
         }
         
-        public NodeIterator(TrieNodeImpl<Object,Object> root, K from, int fromIndex) {
+        public NodeIterator(FastMap<K,V> map, TrieNodeImpl<Object,Object> root, K from, int fromIndex) {
+            this.map = map;
             this.root = root;
             next = root.ceilingEntry(fromIndex);
             if ((next != null) && (next.key == SUB_MAP)) {
@@ -363,15 +365,24 @@ public abstract class TrieNodeImpl<K,V> implements Cloneable, Serializable {
             return current;
         }
   
+        @Override
+        public void remove() {
+            if (current == null) throw new IllegalStateException();
+            map.remove(current.getKey());
+            current = null;
+        }
+
     }
     
     /** Descending iterator overs the entries of a sparse map. */
-    public static final class DescendingNodeIterator<K,V> extends ReadOnlyIterator<Entry<K,V>> {
+    public static final class DescendingNodeIterator<K,V> implements Iterator<Entry<K,V>> {
         private Iterator<Entry<K,V>> subItr; // Set when iterating sub-maps (subItr.hasNext() is always true)
         private EntryNode<Object,Object> next; 
         private Entry<K,V> current = null;
+        private final FastMap<K,V> map;
         private final TrieNodeImpl<Object,Object> root;
-        public DescendingNodeIterator(TrieNodeImpl<Object,Object> root) {
+        public DescendingNodeIterator(FastMap<K,V> map, TrieNodeImpl<Object,Object> root) {
+            this.map = map;
             this.root = root;
             next = root.floorEntry(-1);
             if ((next != null) && (next.key == SUB_MAP)) {
@@ -380,7 +391,8 @@ public abstract class TrieNodeImpl<K,V> implements Cloneable, Serializable {
                 subItr = subMap.iterator(); // subMap cannot be empty.
             }    
         }
-        public DescendingNodeIterator(TrieNodeImpl<Object,Object> root, K from, int fromIndex) {
+        public DescendingNodeIterator(FastMap<K,V> map, TrieNodeImpl<Object,Object> root, K from, int fromIndex) {
+            this.map = map;
             this.root = root;
             next = root.floorEntry(fromIndex);
             if ((next != null) && (next.key == SUB_MAP)) {
@@ -424,7 +436,13 @@ public abstract class TrieNodeImpl<K,V> implements Cloneable, Serializable {
             return current;
         }
    
-    }
+        @Override
+        public void remove() {
+            if (current == null) throw new IllegalStateException();
+            map.remove(current.getKey());
+            current = null;
+        }
+   }
        
     /**
      * Returns the minimal shift for two indices (based on common high-bits which can be masked).

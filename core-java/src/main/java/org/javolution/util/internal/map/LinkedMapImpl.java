@@ -12,7 +12,6 @@ import java.util.Iterator;
 
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -21,38 +20,16 @@ import org.javolution.util.function.Order;
  */
 public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
-    /** Read-only entry iterator view insertion table */
-    private class KeyToEntryIterator extends ReadOnlyIterator<Entry<K, V>> {
-        final Iterator<K> keyIterator;
-        K nextKey;
-
-        public KeyToEntryIterator(Iterator<K> keyIterator) {
-            this.keyIterator = keyIterator;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return keyIterator.hasNext();
-        }
-
-        @Override
-        public Entry<K, V> next() {
-            nextKey = keyIterator.next();
-            return inner.getEntry(nextKey);
-        }
-
-    }
     private static final long serialVersionUID = 0x700L; // Version.
     private final FastMap<K, V> inner;
-
-    private final FastTable<K> insertionTable;
+    private final FastTable<Entry<K,V>> insertionTable;
 
     public LinkedMapImpl(FastMap<K, V> inner) {
         this.inner = inner;
-        insertionTable = FastTable.newTable(inner.comparator());
+        insertionTable = FastTable.newTable();
     }
 
-    private LinkedMapImpl(FastMap<K, V> inner, FastTable<K> insertionTable) {
+    private LinkedMapImpl(FastMap<K, V> inner, FastTable<Entry<K,V>> insertionTable) {
         this.inner = inner;
         this.insertionTable = insertionTable;
     }
@@ -74,19 +51,18 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return new KeyToEntryIterator(insertionTable.reversed().iterator());
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return insertionTable.reversed().unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        FastTable<K> reversedTable = insertionTable.reversed();
-        int index = reversedTable.indexOf(fromKey);
-        if (index < 0)
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        int i = indexOfKey(fromKey);
+        if (i < 0)
             throw new IllegalArgumentException("Not found: " + fromKey);
-        return new KeyToEntryIterator(reversedTable.listIterator(index));
+        return insertionTable.subTable(0, i+1).reversed().unmodifiable().iterator();
     }
-
+    
     @Override
     public Entry<K, V> getEntry(K key) {
         return inner.getEntry(key);
@@ -94,20 +70,20 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public boolean isEmpty() {
-        return insertionTable.isEmpty();
+        return inner.isEmpty();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return new KeyToEntryIterator(insertionTable.iterator());
+    public Iterator<Entry<K, V>> iterator() {
+        return insertionTable.unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        int index = insertionTable.indexOf(fromKey);
-        if (index < 0)
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        int i = indexOfKey(fromKey);
+        if (i < 0)
             throw new IllegalArgumentException("Not found: " + fromKey);
-        return new KeyToEntryIterator(insertionTable.listIterator(index));
+        return insertionTable.subTable(i, insertionTable.size()).unmodifiable().iterator();
     }
 
     @Override
@@ -115,25 +91,36 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
         Entry<K, V> entry = inner.getEntry(key);
         if (entry != null)
             return entry.setValue(value);
-        insertionTable.add(key);
-        return inner.put(key, value); // Returns null.
+        inner.put(key, value);
+        insertionTable.add(inner.getEntry(key));
+        return null; 
     }
 
     @Override
     public Entry<K, V> removeEntry(K key) {
         Entry<K, V> entry = inner.removeEntry(key);
-        if (entry != null)
-            insertionTable.remove(key);
+        if (entry == null) return null;
+        int i = indexOfKey(key);
+        insertionTable.remove(i);
         return entry;
     }
 
     @Override
     public int size() {
-        return insertionTable.size();
+        return inner.size();
     }
 
     @Override
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality();
     }
+
+    // Returns the index of the entry having the specified key.
+    private int indexOfKey(K key) {
+        final Order<? super K> cmp = inner.comparator();
+        for (int i=0, n = insertionTable.size(); i < n; i++)
+            if (cmp.areEqual(insertionTable.get(i).getKey(), key)) return i;
+        return -1;
+    }
+
 }

@@ -8,10 +8,10 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import org.javolution.util.FastMap;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.internal.ReadWriteLockImpl;
@@ -101,20 +101,20 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
+    public Iterator<Entry<K, V>> descendingIterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().descendingIterator();
+            return inner.clone().unmodifiable().descendingIterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
         lock.readLock.lock();
         try {
-            return inner.clone().descendingIterator(fromKey);
+            return inner.clone().unmodifiable().descendingIterator(fromKey);
         } finally {
             lock.readLock.unlock();
         }
@@ -231,20 +231,20 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
+    public Iterator<Entry<K, V>> iterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().iterator();
+            return inner.clone().unmodifiable().iterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
         lock.readLock.lock();
         try {
-            return inner.clone().iterator(fromKey);
+            return inner.clone().unmodifiable().iterator(fromKey);
         } finally {
             lock.readLock.unlock();
         }

@@ -514,16 +514,16 @@ public abstract class FastMap<K, V> implements ConcurrentMap<K, V>, NavigableMap
     //
 	
     /** Returns an entry iterator over this map's entries. */
-    public abstract ReadOnlyIterator<Entry<K,V>> iterator();
+    public abstract Iterator<Entry<K,V>> iterator();
     
     /** Returns a descending entry iterator over this map's entries. */
-    public abstract ReadOnlyIterator<Entry<K,V>> descendingIterator();
+    public abstract Iterator<Entry<K,V>> descendingIterator();
         
     /** Returns an entry iterator over this map's entries starting from the specified key. */
-    public abstract ReadOnlyIterator<Entry<K,V>> iterator(K fromKey);
+    public abstract Iterator<Entry<K,V>> iterator(K fromKey);
     
     /** Returns a descending entry iterator over this map's entries starting from the specified key. */
-    public abstract ReadOnlyIterator<Entry<K,V>> descendingIterator(K fromKey);
+    public abstract Iterator<Entry<K,V>> descendingIterator(K fromKey);
     
     /** 
      * Returns the entry for the specified key or {@code null} if none.

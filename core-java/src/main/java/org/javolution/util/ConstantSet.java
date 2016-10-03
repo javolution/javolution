@@ -9,6 +9,7 @@
 package org.javolution.util;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.javolution.lang.Constant;
 import org.javolution.util.function.Order;
@@ -138,23 +139,23 @@ public final class ConstantSet<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator() {
-        return ReadOnlyIterator.of(sparse.descendingIterator());
+    public Iterator<E> descendingIterator() {
+        return sparse.unmodifiable().descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIterator.of(sparse.descendingIterator(fromElement));
+    public Iterator<E> descendingIterator(E fromElement) {
+        return sparse.unmodifiable().descendingIterator(fromElement);
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(sparse.iterator());
+    public Iterator<E> iterator() {
+        return sparse.unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator(E fromElement) {
-        return ReadOnlyIterator.of(sparse.iterator(fromElement));
+    public Iterator<E> iterator(E fromElement) {
+        return sparse.unmodifiable().iterator(fromElement);
     }
     
     /** 

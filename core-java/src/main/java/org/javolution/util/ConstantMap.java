@@ -9,6 +9,7 @@
 package org.javolution.util;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.javolution.lang.Constant;
@@ -231,23 +232,23 @@ public final class ConstantMap<K,V> extends FastMap<K,V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return sparse.iterator();
+    public Iterator<Entry<K, V>> iterator() {
+        return sparse.unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return sparse.descendingIterator();
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return sparse.unmodifiable().descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
-        return sparse.iterator(fromKey);
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return sparse.unmodifiable().iterator(fromKey);
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return sparse.descendingIterator(fromKey);
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return sparse.unmodifiable().descendingIterator(fromKey);
     }
 
 }

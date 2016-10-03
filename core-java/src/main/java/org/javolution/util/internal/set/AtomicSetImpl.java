@@ -9,9 +9,9 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.javolution.util.FastSet;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Order;
@@ -92,13 +92,13 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator() {
-        return ReadOnlyIterator.of(innerConst.descendingIterator());
+    public Iterator<E> descendingIterator() {
+        return innerConst.unmodifiable().descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIterator.of(innerConst.descendingIterator(fromElement));
+    public Iterator<E> descendingIterator(E fromElement) {
+        return innerConst.unmodifiable().descendingIterator(fromElement);
     }
 
     @Override
@@ -137,13 +137,13 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(innerConst.iterator());
+    public Iterator<E> iterator() {
+        return innerConst.unmodifiable().iterator();
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator(E fromElement) {
-        return ReadOnlyIterator.of(innerConst.iterator(fromElement));
+    public Iterator<E> iterator(E fromElement) {
+        return innerConst.unmodifiable().iterator(fromElement);
     }
 
     @Override

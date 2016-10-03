@@ -8,11 +8,11 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -47,16 +47,16 @@ public final class UnorderedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator() {
-        return ReadOnlyIterator.of(entries.descendingIterator());
+    public Iterator<Entry<K, V>> descendingIterator() {
+        return entries.descendingIterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> descendingIterator(K fromKey) {
+    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
         int i = indexOf(fromKey);
         if (i < 0)
             throw new NoSuchElementException(fromKey + ": not found");
-        return ReadOnlyIterator.of(entries.subTable(0, i + 1).descendingIterator());
+        return entries.subTable(0, i + 1).descendingIterator();
     }
 
     /** Returns the entry with the specified key.*/
@@ -81,16 +81,16 @@ public final class UnorderedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator() {
-        return ReadOnlyIterator.of(entries.iterator());
+    public Iterator<Entry<K, V>> iterator() {
+        return entries.iterator();
     }
 
     @Override
-    public ReadOnlyIterator<Entry<K, V>> iterator(K fromKey) {
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
         int i = indexOf(fromKey);
         if (i < 0)
             throw new NoSuchElementException(fromKey + ": not found");
-        return ReadOnlyIterator.of(entries.listIterator(i));
+        return entries.listIterator(i);
     }
 
     @Override

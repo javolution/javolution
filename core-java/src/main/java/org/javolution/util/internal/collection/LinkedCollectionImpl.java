@@ -8,9 +8,10 @@
  */
 package org.javolution.util.internal.collection;
 
+import java.util.Iterator;
+
 import org.javolution.util.FastCollection;
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -59,12 +60,12 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public boolean isEmpty() {
-        return insertionTable.isEmpty();
+        return inner.isEmpty();
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(insertionTable.iterator());
+    public Iterator<E> iterator() {
+        return insertionTable.unmodifiable().iterator();
     }
 
     @Override
@@ -77,7 +78,7 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public int size() {
-        return insertionTable.size();
+        return inner.size();
     }
 
     @Override

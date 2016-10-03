@@ -8,9 +8,11 @@
  */
 package org.javolution.util.internal.set;
 
+import java.util.Iterator;
+
 import org.javolution.util.FastSet;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.Order;
+import org.javolution.util.internal.collection.UnmodifiableCollectionImpl.ReadOnlyIterator;
 
 /**
  * An unmodifiable view over a set.
@@ -51,13 +53,13 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator() {
-        return ReadOnlyIterator.of(inner.descendingIterator());
+    public Iterator<E> descendingIterator() {
+        return new ReadOnlyIterator<E>(inner.descendingIterator());
     }
 
     @Override
-    public ReadOnlyIterator<E> descendingIterator(E fromElement) {
-        return ReadOnlyIterator.of(inner.descendingIterator(fromElement));
+    public Iterator<E> descendingIterator(E fromElement) {
+        return new ReadOnlyIterator<E>(inner.descendingIterator(fromElement));
     }
 
     @Override
@@ -66,13 +68,13 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
-        return ReadOnlyIterator.of(inner.iterator());
+    public Iterator<E> iterator() {
+        return new ReadOnlyIterator<E>(inner.iterator());
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator(E fromElement) {
-        return ReadOnlyIterator.of(inner.iterator(fromElement));
+    public Iterator<E> iterator(E fromElement) {
+        return new ReadOnlyIterator<E>(inner.iterator(fromElement));
     }
 
     @Override

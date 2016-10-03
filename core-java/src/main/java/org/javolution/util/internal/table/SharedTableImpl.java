@@ -15,7 +15,6 @@ import java.util.ListIterator;
 
 import org.javolution.lang.Parallel;
 import org.javolution.util.FastTable;
-import org.javolution.util.ReadOnlyIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -272,10 +271,10 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public ReadOnlyIterator<E> iterator() {
+    public Iterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return ReadOnlyIterator.of(inner.clone().iterator());
+            return inner.clone().unmodifiable().iterator();
         } finally {
             lock.readLock.unlock();
         }
