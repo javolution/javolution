@@ -22,7 +22,8 @@ import org.javolution.context.ComputeContext;
 import static org.javolution.context.LogContext.*;
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
-
+import org.javolution.util.FractalTable;
+import org.javolution.util.SparseMap;
 import org.bridj.Pointer;
 
 import com.nativelibs4java.opencl.CLBuffer;
@@ -211,8 +212,8 @@ public final class ComputeContextImpl extends ComputeContext {
 		CLKernel clKernel;
 		int[] globalWorkSize;
 		int[] localWorkSize;
-		FastTable<BufferImpl> updatedBuffers = FastTable.newTable();
-		FastTable<CLEvent> dependencies = FastTable.newTable();
+		FractalTable<BufferImpl> updatedBuffers = new FractalTable<BufferImpl>();
+		FractalTable<CLEvent> dependencies = new FractalTable<CLEvent>();
 
 		KernelImpl(CLKernel clKernel) {
 			this.clKernel = clKernel;
@@ -278,7 +279,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	/** Program implementation. */
 	class ProgramImpl {
 		CLProgram clProgram;
-		FastMap<String, CLKernel> kernels = FastMap.newMap();
+		SparseMap<String, CLKernel> kernels = new SparseMap<String, CLKernel>();
 
 		ProgramImpl(String opencl) {
 			clProgram = clContext.createProgram(PRAGMA_DOUBLE_SUPPORT + opencl);

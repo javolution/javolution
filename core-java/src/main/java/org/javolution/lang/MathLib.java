@@ -8,6 +8,7 @@
  */
 package org.javolution.lang;
 
+import org.javolution.annotations.Realtime;
 
 /**
  * <p> An utility class providing {@link Realtime} implementation of the math library.</p> 
@@ -33,6 +34,28 @@ public final class MathLib {
     public static long unsigned(int value) {
         return value & 0xFFFFFFFFL;
     }
+
+    /**
+     * Compares two unsigned 32-bits numbers.
+     * 
+     * @param x the first unsigned 32-bits.
+     * @param y the second unsigned 32-bits
+     * @return {@code x < y}
+     */
+    public static boolean unsignedLessThan(int x, int y) {
+        return (x ^ 0x80000000) < (y ^ 0x80000000);
+    }
+    
+    /**
+     * Compares two unsigned 64-bits numbers.
+     * 
+     * @param x the first unsigned 64-bits.
+     * @param y the second unsigned 64-bits
+     * @return {@code x < y}
+     */
+    public static boolean unsignedLessThan(long x, long y) {
+        return (x ^ 0x8000000000000000L) < (y ^ 0x8000000000000000L);
+    }    
 
     /**
      * 32 bits hashing function based on FNV-1 algorithm.
@@ -254,31 +277,6 @@ public final class MathLib {
         longValue = longValue + (longValue >>> 16);
         longValue = longValue + (longValue >>> 32);
         return (int) longValue & 0x7f;
-    }
-
-    /**
-     * Compares the specified values as unsigned {@code int}.
-     * 
-     * @param left the first unsigned {@code int} to compare.
-     * @param right the second unsigned {@code int} to compare.
-     * @return  a negative integer, zero, or a positive integer as left
-     *          is less than, equal to, or greater than right.
-     */
-    public static int compareUnsigned(int left, int right) {
-        return (int) ((left & 0xffffffffL) - (right & 0xffffffffL));
-    }
-
-    /**
-     * Compares the specified values as unsigned {@code long}.
-     * 
-     * @param left the first unsigned {@code long} to compare.
-     * @param right the second unsigned {@code long} to compare.
-     * @return  a negative integer, zero, or a positive integer as left
-     *          is less than, equal to, or greater than right.
-     */
-    public static int compareUnsigned(long left, long right) {
-        return (left < right) ^ ((left < 0) != (right < 0)) ? -1
-                : (left == right) ? 0 : 1;
     }
 
     /**

@@ -67,8 +67,8 @@ public final class UnmodifiableBitSetImpl extends BitSet {
     }
 
     @Override
-    public Order<? super Index> comparator() {
-        return inner.comparator();
+    public Order<? super Index> order() {
+        return inner.order();
     }
 
     @Override

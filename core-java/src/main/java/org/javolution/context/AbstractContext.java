@@ -8,8 +8,8 @@
  */
 package org.javolution.context;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.context.SecurityContext.Permission;
-import org.javolution.lang.Realtime;
 
 /**
  * <p> The parent class for all contexts. 

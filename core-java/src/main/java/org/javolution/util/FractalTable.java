@@ -9,21 +9,18 @@
 package org.javolution.util;
 
 import org.javolution.util.function.Equality;
-import org.javolution.util.internal.table.FractalTableImpl;
 
 /**
- * <p> The default fractal-based implementation of {@link FastTable}.</p> 
+ * <p> The default fractal-based implementation of {@link FastTable} based upon high-performance 
+ *     {@link FractalArray}.</p> 
  *     
- * <p> The fractal-based implementation ensures that add/insertion/deletion operations 
- *     worst-case execution time is always less than <i><b>O(log(size))</b></i>. 
- *     For comparison {@code ArrayList.add} is in <i><b>O(size)</b></i> due to resize.</p>
+ * <p> The fractal-based implementation ensures that element add/insertion/deletion operations 
+ *     execution time is almost independent of the table size. For comparison,
+ *     {@code ArrayList.add} execution time is up to <i><b>O(size)</b></i> due to potential resize.</p>
  *     
  *     <a href="doc-files/FastTable-WCET.png">
  *     <img src="doc-files/FastTable-WCET.png" alt="Worst Case Execution Time" height="210" width="306" />
  *     </a>
- *    
- * <p> The memory footprint of the table is automatically adjusted up or down
- *     based on the table size (minimal when the table is cleared).</p>
  *     
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
@@ -31,18 +28,26 @@ import org.javolution.util.internal.table.FractalTableImpl;
 public class FractalTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version. 
-    private int capacity; 
-    private FractalTableImpl fractal; // Null if empty (capacity 0)
+    private final Equality<? super E> equality;
+    private FractalArray<E> array = FractalArray.empty();
     private int size;
 
     /**
-     * Creates an empty table whose capacity increments/decrements smoothly
-     * without large resize operations to best fit the table current size.
+     * Creates an empty fractal table.
      */
     public FractalTable() {
+        this(Equality.DEFAULT);
     }
  
-    @Override
+    /**
+     * Creates an empty fractal table using the specified equality for elements equality comparisons.
+     */
+    public FractalTable(Equality<? super E> equality) {
+        this.equality = equality;
+    }
+ 
+
+   @Override
     public boolean add(E element) {
         addLast(element);
         return true;
@@ -51,60 +56,43 @@ public class FractalTable<E> extends FastTable<E> {
     @Override
     public void add(int index, E element) {
         if ((index < 0) || (index > size)) indexError(index);
-        checkUpsize();
-        if (index >= (size >> 1)) {
-            fractal.shiftRight(element, index, size - index);
-        } else {
-            fractal.shiftLeft(element, index - 1, index);
-            fractal.offset--;
-        }
+        array = array.shiftRight(element, index, size - index);
         size++;
     }
 
     @Override
     public void addFirst(E element) {
-        checkUpsize();
-        fractal.offset--;
-        fractal.set(0, element);
+        array = array.shiftRight(element, 0, size);
         size++;
     }
 
     @Override
     public void addLast(E element) {
-        checkUpsize();
-        fractal.set(size++, element);
-    }
-
-    private void checkUpsize() {
-        if (size >= capacity) upsize();
+        array = array.set(size++, element);
     }
 
     @Override
     public void clear() {
-        fractal = null;
-        capacity = 0;
+        array = FractalArray.empty();
         size = 0;
     }
 
 	@Override
 	public FractalTable<E> clone() {
-		FractalTable<E> copy = new FractalTable<E>();
-		copy.capacity = capacity;
-		copy.size = size;
-		copy.fractal = (fractal != null) ? fractal.clone() : null;
+	    FractalTable<E> copy = (FractalTable<E>) super.clone();
+		copy.array = array.clone();
 		return copy;
 	}
 
     @Override
     public Equality<? super E> equality() {
-        return Equality.DEFAULT;
+        return equality;
     }
 
-	@SuppressWarnings("unchecked")
     @Override
     public E get(int index) {
         if ((index < 0) && (index >= size)) indexError(index);
-        return (E) fractal.get(index);
+        return (E) array.get(index);
     }
 
     @Override
@@ -124,54 +112,41 @@ public class FractalTable<E> extends FastTable<E> {
 		return size == 0;
 	}
 
-    @SuppressWarnings("unchecked")
     @Override
     public E remove(int index) {
         if ((index < 0) || (index >= size)) indexError(index);
-        E removed = (E) fractal.get(index);
-        if (index >= (size >> 1)) {
-            fractal.shiftLeft(null, size - 1, size - index - 1);
-        } else {
-            fractal.shiftRight(null, 0, index);
-            fractal.offset++;
-        }
-        size--;
+        E removed = (E) array.get(index);
+        array = array.shiftLeft(null, --size, size - index);
         return removed;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public E removeFirst() {
         if (size == 0) emptyError();
-        E first = (E) fractal.set(0, null);
-        fractal.offset++;
-        size--;
+        E first = array.get(0);
+        array = array.shiftLeft(null, --size, size);
         return first;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public E removeLast() {
         if (size == 0) emptyError();
-        E last = (E) fractal.set(--size, null);
+        E last = array.get(--size);
+        array = array.set(size, null);
         return last;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public E set(int index, E element) {
         if ((index < 0) && (index >= size)) indexError(index);
-        return (E) fractal.set(index, element);
+        E previous = array.get(index);
+        array = array.set(index, element);
+        return previous;
     }
 
     @Override
     public int size() {
         return size;
     }
-
-    private void upsize() {
-        fractal = (fractal == null) ? new FractalTableImpl() : fractal.upsize();
-        capacity = fractal.capacity();
-    }
-
+ 
 }

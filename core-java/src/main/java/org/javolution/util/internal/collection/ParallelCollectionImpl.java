@@ -12,10 +12,10 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.javolution.annotations.Parallel;
 import org.javolution.context.ConcurrentContext;
-import org.javolution.lang.Parallel;
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastSet;
+import org.javolution.util.SparseSet;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -78,7 +78,7 @@ public final class ParallelCollectionImpl<E> extends FastCollection<E> {
     }
 
     public static <E> boolean removeIf(FastCollection<E> that, final Predicate<? super E> matching) {
-        final FastSet<E> toRemove = FastSet.newSet();
+        final SparseSet<E> toRemove = new SparseSet<E>();
         // Default equality comparator, assumes that if x.equals(y) then matching.test(x) == matching.
 
         ParallelCollectionImpl.forEach(that, new Consumer<E>() { // Parallel

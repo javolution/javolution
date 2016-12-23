@@ -11,7 +11,7 @@ package org.javolution.util.internal.collection;
 import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastTable;
+import org.javolution.util.FractalTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -22,14 +22,14 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private final FastCollection<E> inner;
-    private final FastTable<E> insertionTable;
+    private final FractalTable<E> insertionTable;
 
     public LinkedCollectionImpl(FastCollection<E> inner) {
         this.inner = inner;
-        insertionTable = FastTable.newTable(inner.equality());
+        insertionTable = new FractalTable<E>(inner.equality());
     }
 
-    private LinkedCollectionImpl(FastCollection<E> inner, FastTable<E> insertionTable) {
+    private LinkedCollectionImpl(FastCollection<E> inner, FractalTable<E> insertionTable) {
         this.inner = inner;
         this.insertionTable = insertionTable;
     }

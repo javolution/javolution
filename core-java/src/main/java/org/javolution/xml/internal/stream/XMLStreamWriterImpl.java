@@ -14,8 +14,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.io.UTF8StreamWriter;
-import org.javolution.lang.Realtime;
 import org.javolution.text.CharArray;
 import org.javolution.text.TextBuilder;
 import org.javolution.xml.stream.XMLOutputFactory;

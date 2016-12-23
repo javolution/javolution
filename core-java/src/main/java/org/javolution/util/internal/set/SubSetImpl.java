@@ -11,7 +11,7 @@ package org.javolution.util.internal.set;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.javolution.lang.Parallel;
+import org.javolution.annotations.Parallel;
 import org.javolution.util.FastSet;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
@@ -135,8 +135,8 @@ public final class SubSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return inner.comparator();
+    public Order<? super E> order() {
+        return inner.order();
     }
 
     @SuppressWarnings("unchecked")

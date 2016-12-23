@@ -9,6 +9,7 @@
 package org.javolution.util.internal.map;
 
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.javolution.util.FastMap;
 import org.javolution.util.function.Equality;
@@ -49,8 +50,8 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
+    public Order<? super K> keyOrder() {
+        return inner.keyOrder();
     }
 
     @Override
@@ -88,6 +89,11 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
         return keyFilter.test(key) ? inner.put(key, value) : null;
     }
 
+    @Override
+    public Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
+        return keyFilter.test(entry.getKey()) ? inner.putEntry(entry) : null;
+    }
+    
     @Override
     public Entry<K, V> removeEntry(K key) {
         return keyFilter.test(key) ? inner.removeEntry(key) : null;

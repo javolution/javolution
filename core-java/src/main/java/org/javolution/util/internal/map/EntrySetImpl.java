@@ -9,7 +9,6 @@
 package org.javolution.util.internal.map;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.javolution.util.FastMap;
@@ -23,7 +22,7 @@ import org.javolution.util.function.Order;
 public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
 
     /** The entry order (must support generic Map.Entry) */
-    private static class EntryOrder<K, V> implements Order<Map.Entry<K, V>> {
+    private static class EntryOrder<K, V> implements Order<Entry<K, V>> {
         private static final long serialVersionUID = 0x700L; // Version.
         private final Order<? super K> keyOrder;
         private final Equality<? super V> valueEquality;
@@ -34,7 +33,7 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
         }
 
         @Override
-        public boolean areEqual(Map.Entry<K, V> left, Map.Entry<K, V> right) {
+        public boolean areEqual(Entry<K, V> left, Entry<K, V> right) {
             if (left == null)
                 return right == null;
             if (right == null)
@@ -44,7 +43,7 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
         }
 
         @Override
-        public int compare(Map.Entry<K, V> left, Map.Entry<K, V> right) {
+        public int compare(Entry<K, V> left, Entry<K, V> right) {
             if (left == null)
                 return (right == null) ? 0 : -1;
             if (right == null)
@@ -53,43 +52,15 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
         }
 
         @Override
-        public int indexOf(Map.Entry<K, V> entry) {
+        public int indexOf(Entry<K, V> entry) {
             return entry != null ? keyOrder.indexOf(entry.getKey()) : 0;
         }
 
         @Override
-        public Order<Map.Entry<K, V>> subOrder(Map.Entry<K, V> entry) {
+        public Order<Entry<K, V>> subOrder(Entry<K, V> entry) {
             return entry != null ? new EntryOrder<K, V>(keyOrder.subOrder(entry.getKey()), valueEquality) : null;
         }
 
-    }
-
-    /** The generic iterator over the map entries (support entry removal). */
-    private class EntryIterator implements Iterator<Entry<K,V>> {
-        final Iterator<Entry<K, V>> mapItr;
-        private Entry<K,V> next;
-
-        public EntryIterator(Iterator<Entry<K, V>> mapItr) {
-            this.mapItr = mapItr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return mapItr.hasNext();
-        }
-
-        @Override
-        public Entry<K,V> next() {
-            next = mapItr.next();
-            return next;
-        }
-
-        @Override
-        public void remove() {
-            if (next == null) throw new IllegalArgumentException();
-            map.remove(next.getKey());
-            next = null;
-        }
     }
     
     private static final long serialVersionUID = 0x700L; // Version.
@@ -100,8 +71,11 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
     }
 
     @Override
-    public boolean add(Entry<K, V> element) {
-        throw new UnsupportedOperationException("FastMap.entrySet() does not support adding new entries.");
+    public boolean add(Entry<K, V> entry) {
+        Entry<K,V> previous = map.getEntry(entry.getKey());
+        if ((previous != null) && (previous.equals(entry))) return false;
+        map.put(entry.getKey(), entry.getValue());
+        return true;
     }
 
     @Override
@@ -115,28 +89,32 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
     }
 
     @Override
-    public Order<? super Entry<K, V>> comparator() {
-        return new EntryOrder<K, V>(map.comparator(), map.valuesEquality());
+    public Order<? super Entry<K, V>> order() {
+        return new EntryOrder<K, V>(map.keyOrder(), map.valuesEquality());
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean contains(Object obj) {
-        if (!(obj instanceof Map.Entry))
+        if (!(obj instanceof Entry))
             return false;
-        Map.Entry<K, V> entry = (Map.Entry<K, V>) obj;
+        Entry<K, V> entry = (Entry<K, V>) obj;
         Entry<K, V> mapEntry = map.getEntry(entry.getKey());
         return map.valuesEquality().areEqual(mapEntry.getValue(), entry.getValue());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Iterator<Entry<K, V>> descendingIterator() {
-        return new EntryIterator(map.descendingIterator());
+        Iterator<?> itr = map.descendingIterator();
+        return (Iterator<Entry<K, V>>) itr;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Iterator<Entry<K, V>> descendingIterator(Entry<K, V> fromElement) {
-        return  new EntryIterator(map.descendingIterator(fromElement.getKey()));
+        Iterator<?> itr = map.descendingIterator(fromElement.getKey());
+        return (Iterator<Entry<K, V>>) itr;
     }
 
     @Override
@@ -144,22 +122,26 @@ public final class EntrySetImpl<K, V> extends FastSet<Entry<K, V>> {
         return map.isEmpty();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Iterator<Entry<K, V>> iterator() {
-        return new EntryIterator(map.iterator());
+        Iterator<?> itr = map.iterator();
+        return (Iterator<Entry<K, V>>) itr;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Iterator<Entry<K, V>> iterator(Entry<K, V> fromElement) {
-        return new EntryIterator(map.iterator(fromElement.getKey()));
+        Iterator<?> itr = map.iterator(fromElement.getKey());
+        return (Iterator<Entry<K, V>>) itr;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object obj) {
-        if (!(obj instanceof Map.Entry))
+        if (!(obj instanceof Entry))
             return false;
-        Map.Entry<K, V> entry = (Map.Entry<K, V>) obj;
+        Entry<K, V> entry = (Entry<K, V>) obj;
         return map.remove(entry.getKey(), entry.getValue());
     }
 

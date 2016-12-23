@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-import org.javolution.lang.Parallel;
+import org.javolution.annotations.Parallel;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
@@ -116,7 +116,7 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public int addSorted(E element, Comparator<? super E> cmp) {
+    public boolean addSorted(E element, Comparator<? super E> cmp) {
         lock.writeLock.lock();
         try {
             return inner.addSorted(element, cmp);
@@ -160,6 +160,16 @@ public final class SharedTableImpl<E> extends FastTable<E> {
         lock.readLock.lock();
         try {
             return inner.contains(searched);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean containsSorted(E searched, Comparator<? super E> cmp) {
+        lock.readLock.lock();
+        try {
+            return inner.containsSorted(searched, cmp);
         } finally {
             lock.readLock.unlock();
         }
@@ -265,6 +275,16 @@ public final class SharedTableImpl<E> extends FastTable<E> {
         lock.readLock.lock();
         try {
             return inner.isEmpty();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public int insertionIndexOf(E element, Comparator<? super E> cmp) {
+        lock.readLock.lock();
+        try {
+            return inner.insertionIndexOf(element, cmp);
         } finally {
             lock.readLock.unlock();
         }
@@ -461,7 +481,7 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public int removeSorted(E element, Comparator<? super E> cmp) {
+    public boolean removeSorted(E element, Comparator<? super E> cmp) {
         lock.writeLock.lock();
         try {
             return inner.removeSorted(element, cmp);

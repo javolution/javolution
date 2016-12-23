@@ -9,7 +9,7 @@
 package org.javolution.text;
 
 import org.javolution.lang.MathLib;
-import org.javolution.lang.ValueType;
+import org.javolution.lang.Immutable;
 
 /**
  * <p> A set of characters (typically used for parsing purpose where it is 
@@ -32,7 +32,7 @@ import org.javolution.lang.ValueType;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 3.7, January 1, 2006
  */
-public final class CharSet implements ValueType {
+public final class CharSet implements Immutable {
 
     /**
      * Represents an empty character set.

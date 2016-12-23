@@ -43,8 +43,8 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return inner.comparator();
+    public Order<? super E> order() {
+        return inner.order();
     }
 
     @Override

@@ -10,8 +10,11 @@ package org.javolution.util.internal.set;
 
 import java.util.Iterator;
 
+import org.javolution.util.ConstSet;
 import org.javolution.util.FastSet;
 import org.javolution.util.FastTable;
+import org.javolution.util.FractalTable;
+import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
 /**
@@ -20,17 +23,11 @@ import org.javolution.util.function.Order;
 public final class LinkedSetImpl<E> extends FastSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastSet<E> inner;
-    private final FastTable<E> insertionTable;
+    private FastSet<E> inner;
+    private FastTable<E> insertionTable = new FractalTable<E>(Equality.IDENTITY);
 
     public LinkedSetImpl(FastSet<E> inner) {
         this.inner = inner;
-        insertionTable = FastTable.newTable(inner.equality());
-    }
-
-    private LinkedSetImpl(FastSet<E> inner, FastTable<E> insertionTable) {
-        this.inner = inner;
-        this.insertionTable = insertionTable;
     }
 
     @Override
@@ -49,12 +46,15 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
 
     @Override
     public LinkedSetImpl<E> clone() {
-        return new LinkedSetImpl<E>(inner.clone(), insertionTable.clone());
+        LinkedSetImpl<E> copy = (LinkedSetImpl<E>)super.clone();
+        copy.inner = inner.clone();
+        copy.insertionTable = insertionTable.clone();
+        return copy;
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return inner.comparator();
+    public Order<? super E> order() {
+        return inner.order();
     }
 
     @Override
@@ -69,10 +69,11 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
 
     @Override
     public Iterator<E> descendingIterator(E fromElement) {
+        E start = inner.floor(fromElement);
+        if (start == null) return ConstSet.<E>empty().iterator();
         FastTable<E> reversedTable = insertionTable.reversed();
-        int index = reversedTable.indexOf(fromElement);
-        if (index < 0)
-            throw new IllegalArgumentException("Not found: " + fromElement);
+        int index = reversedTable.indexOf(start);
+        if (index < 0) throw new AssertionError();
         return reversedTable.unmodifiable().listIterator(index);
     }
 
@@ -88,17 +89,19 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
 
     @Override
     public Iterator<E> iterator(E fromElement) {
-        int index = insertionTable.indexOf(fromElement);
-        if (index < 0)
-            throw new IllegalArgumentException("Not found: " + fromElement);
+        E start = inner.ceiling(fromElement);
+        if (start == null) return ConstSet.<E>empty().iterator();
+        int index = insertionTable.indexOf(start);
+        if (index < 0) throw new AssertionError();
         return insertionTable.unmodifiable().listIterator(index);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object obj) {
         boolean modified = inner.remove(obj);
         if (modified)
-            insertionTable.remove(obj);
+            insertionTable.remove(inner.ceiling((E)obj)); // Remove the stored instance.
         return modified;
     }
 
@@ -106,4 +109,5 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
     public int size() {
         return inner.size();
     }
+    
 }

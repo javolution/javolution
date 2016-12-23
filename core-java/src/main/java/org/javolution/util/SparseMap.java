@@ -10,36 +10,30 @@ package org.javolution.util;
 
 import java.util.Iterator;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.map.TrieNodeImpl;
-import org.javolution.util.internal.map.TrieNodeImpl.EntryNode;
-import org.javolution.util.internal.map.UnorderedMapImpl;
+import org.javolution.util.internal.SparseArrayDescendingIteratorImpl;
+import org.javolution.util.internal.SparseArrayIteratorImpl;
+import org.javolution.util.internal.map.InnerSortedMapImpl;
+import org.javolution.util.internal.map.InnerSparseMapImpl;
 
 /**
- * <p> The default <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> implementation of {@link FastMap}.</p> 
+* <p> A {@link FastMap} implementation based upon high-performance {@link SparseArray}.</p> 
  *     
- * <p> The trie-based structure allows for extremely fast (constant time) access/insertion/deletion.</p>
- * 
- * <p> The memory footprint of the array is automatically adjusted up or down in constant time 
- *     (minimal when the map is cleared).</p>
- * 
- * <p> Sparse maps are efficient for indexing multi-dimensional information such as dictionaries, multi-keys attributes, geographical coordinates,
- *     sparse matrix elements, etc.
+ * <p> Sparse maps are efficient for indexing multi-dimensional information such as dictionaries, multi-keys attributes,
+ *     geographical coordinates, sparse matrix elements, etc.
  * <pre>{@code
- * // Prefix Maps.
- * SparseMap<String, President> presidents = new SparseMap<>(Order.LEXICAL);
- * presidents.put("John Adams", johnAdams);
- * presidents.put("John Tyler", johnTyler);
- * presidents.put("John Kennedy", johnKennedy);
+ * // Multimap supporting duplicate keys.
+ * SparseMap<String, String> presidents = new SparseMap<>(Order.MULTI); 
+ * presidents.put("John", "Adams");
+ * presidents.put("John", "Tyler");
+ * presidents.put("John", "Kennedy");
  * ...
- * presidents.subMap("J", "K").clear(); // Removes all president whose first name starts with "J" ! 
- * presidents.filter(str -> str.startWith("John "); // Map holding presidents with "John" as first name.
- * presidents.values().filter(p -> p.birth < 1900).parallel().clear(); // Concurrent removal of presidents born before 1900.
+ * presidents.subMap("John").clear(); // Removes all presidents whose first name is "John" ! 
+ * presidents.filter(str -> str.startWith("J"); // Map holding presidents whose first name starts with "J".
+ * presidents.values().filter(str -> str.length() > 6).parallel().clear(); // Concurrent removal of presidents with long names.
  *     
- * // Sparse Array.
- * SparseArray<Index, E> sparseArray = new SparseArray(Order.INDEX);
- * 
  * // Sparse Matrix.
  * class RowColumn extends Binary<Index, Index> { ... }
  * SparseMap<RowColumn, E> sparseMatrix = new SparseMap<>(Order.QUADTREE); 
@@ -57,14 +51,14 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	private static final long serialVersionUID = 0x700L; // Version. 
 	private final Order<? super K> keyOrder; 
-	private TrieNodeImpl<Object,Object> root = TrieNodeImpl.empty(); // Hold either Entry<K,V> or Entry<SUB_MAP, FastMap> 
 	private int size;
+    SparseArray<Object> array; // Holds entries or inner sub-maps when collision.
 	
 	/**
      * Creates an empty map sorted arbitrarily (hash based).
      */
     public SparseMap() {
-    	this(Order.DEFAULT);
+    	this(Order.DEFAULT, SparseArray.empty(), 0);
     }
     
 	/**
@@ -73,17 +67,35 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      * @param keyOrder the key order of the map.
      */
     public SparseMap(Order<? super K> keyOrder) {
-        this.keyOrder = keyOrder;
+        this(keyOrder, SparseArray.empty(), 0);
     }        
+
+    /**
+     * Creates a sparse map from specified parameters.
+     * 
+     * @param keyOrder the key order of the map.
+     * @param array the sparse array implementation.
+     * @param size the map size. 
+     */
+    protected SparseMap(Order<? super K> keyOrder, SparseArray<Object> array, int size) {
+        this.keyOrder = keyOrder;
+        this.array = array;
+        this.size = size;
+    }        
+
+    /** 
+     * Returns {@code putEntry(new Entry<K,V>(key, value)).getValue()}. This method may be overridden by 
+     * sub-classes to put custom entry types. 
+     */
+    @Override
+    public V put(K key, @Nullable V value) {
+        Entry<K,V> previous = putEntry(new Entry<K,V>(key, value));
+        return previous != null ? previous.getValue() : null;
+    }
         
 	@Override
 	public int size() {
 		return size;
-	}
-	
-	@Override
-	public Order<? super K> comparator() {
-		return keyOrder;
 	}
 	
 	@Override
@@ -93,80 +105,75 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 	
 	@Override
 	public SparseMap<K, V> clone() {
-		SparseMap<K,V> copy = new SparseMap<K,V>(keyOrder);
-		copy.root = root.clone();
-		copy.size = size;
-		return copy;
+        SparseMap<K,V> copy = (SparseMap<K,V>) super.clone();
+        copy.array = array.clone(); // Also clone inner structures.
+        return copy;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<K, V> getEntry(K key) {
-		EntryNode<?,?> entry = root.getEntry(keyOrder.indexOf(key));
-        if (entry == null) return null;
-        if (entry.getKey() == TrieNodeImpl.SUB_MAP)    
-             return ((FastMap<K,V>)entry.getValue()).getEntry(key); 
-        return keyOrder.areEqual((K)entry.getKey(), key) ? (Entry<K, V>)entry : null;
+	    Object obj = array.get(keyOrder.indexOf(key));
+	    if (obj instanceof FastMap) return ((FastMap<K,V>) obj).getEntry(key);
+	    Entry<K,V> entry = (Entry<K,V>) obj;
+	    return (entry != null) && keyOrder.areEqual(entry.getKey(), key) ? entry : null;
     }		
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public V put(K key, V value) {
-		int i = keyOrder.indexOf(key);
-		EntryNode<Object, Object> entry = root.entry(i);
-		if (entry.getKey() == TrieNodeImpl.SUB_MAP) {
-			FastMap<K,V> subMap = (FastMap<K,V>)entry.getValue();
-			int previousSize = subMap.size();
-			V previousValue = subMap.put(key, value);
-			if (subMap.size() > previousSize) size++;
-			return previousValue;			
-		}
-		if (entry == TrieNodeImpl.UPSIZE) { // Resizes.
-			root = root.upsize(i);
-			entry = root.entry(i);
-		}		
-		if (entry.getKey() == EntryNode.NOT_INITIALIZED) { // New entry.
-			entry.init(key,value);
-			size++;
-			return null;
-		} 
-		// Existing entry.
-		if (keyOrder.areEqual((K)entry.getKey(), key))
-			return (V) entry.setValue(value);
-		// Collision.
-        Order<? super K> subOrder = keyOrder.subOrder(key);
-        FastMap<K,V> subMap = (subOrder != null) ? 
-		         new SparseMap<K,V>(subOrder) : 
-		        	 new UnorderedMapImpl<K,V>(keyOrder);
-	    subMap.put((K)entry.getKey(), (V)entry.getValue());
-	    entry.init(TrieNodeImpl.SUB_MAP, subMap);
-	    size++;
-	    return subMap.put(key, value);
+    @SuppressWarnings("unchecked")
+    @Override
+    public Entry<K, V> putEntry(Entry<? extends K, ? extends V> entry) {
+        K key = entry.getKey();
+        int index = keyOrder.indexOf(key);
+        Object obj = array.get(index);
+        if (obj == null) {
+            array = array.set(index, entry);            
+        } else if (obj instanceof FastMap) {
+            Entry<K, V> previous = ((FastMap<K, V>) obj).putEntry(entry);
+            if (previous != null)
+                return previous;
+        } else { // Entry.
+            Entry<K,V> previous = (Entry<K,V>)obj;
+            if (keyOrder.areEqual(key, previous.getKey())) { // Replace.
+                array = array.set(index, entry);
+                return previous;
+            } else { // Collision.
+                Order<? super K> subOrder = keyOrder.subOrder(key);
+                FastMap<K, V> subMap = (subOrder != null) ? new InnerSparseMapImpl<K, V>(subOrder)
+                        : new InnerSortedMapImpl<K, V>(keyOrder);
+                subMap.putEntry(previous);
+                subMap.putEntry(entry);
+                array.set(index, subMap);
+            }
+        }
+        size++;
+        return null;
     }
-	
-	@SuppressWarnings("unchecked")
+    
+    @SuppressWarnings("unchecked")
 	@Override
 	public Entry<K,V> removeEntry(K key) {
-		int i = keyOrder.indexOf((K)key);
-		EntryNode<Object,Object> entry = root.getEntry(i);
-        if (entry == null) return null;
-        if (entry.getKey() == TrieNodeImpl.SUB_MAP) {
-        	Entry<K,V> previousEntry = ((FastMap<K,V>)entry.getValue()).removeEntry(key);
-        	if (previousEntry != null) size--;
-        	return previousEntry;
-        }
-        if (!keyOrder.areEqual((K)entry.getKey(), key)) return null;
-        Object tmp = root.removeEntry(i);
-        if (tmp == TrieNodeImpl.DOWNSIZE) {
-        	root = root.downsize(i);
+        int index = keyOrder.indexOf(key);
+        Object obj = array.get(index);
+        if (obj instanceof FastMap) {
+            FastMap<K,V> subMap = (FastMap<K,V>) obj;
+            Entry<K,V> previous = subMap.removeEntry(key);
+            if (previous != null) size--;
+            if (subMap.size() == 1) array.set(index, subMap.firstEntry()); // No sub-map with single entries allowed.
+            return previous;
         } 
-        size--;
-        return (Entry<K, V>) entry;
+        Entry<K,V> previous = (Entry<K,V>) obj;
+        if ((previous != null) && keyOrder.areEqual(previous.getKey(), key)) { // Found it.
+            array = array.set(index, null);
+            size--;
+            return previous;
+        } else {
+            return null;
+        }
 	}
 	
 	@Override
 	public void clear() {
-		root = TrieNodeImpl.empty();
+	    array = SparseArray.empty();
 		size = 0;
 	}
 
@@ -177,23 +184,48 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 
     @Override
     public Iterator<Entry<K, V>> iterator() {
-        return new TrieNodeImpl.NodeIterator<K,V>(this, root);
+        return new SparseArrayIteratorImpl<K, Entry<K,V>>(array) {
+            @Override
+            public void notifyRemoval(SparseArray<Object> newArray) {
+                if (newArray != null) array = newArray;
+                size--;                
+            }};
     }
 
     @Override
     public Iterator<Entry<K, V>> descendingIterator() {
-        return new TrieNodeImpl.DescendingNodeIterator<K,V>(this, root);
+        return new SparseArrayDescendingIteratorImpl<K, Entry<K,V>>(array) {
+            @Override
+            public void notifyRemoval(SparseArray<Object> newArray) {
+                if (newArray != null) array = newArray;
+                size--;                
+            }};
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {
-        return new TrieNodeImpl.NodeIterator<K,V>(this, root, fromKey, keyOrder.indexOf(fromKey));
+    public Iterator<Entry<K, V>> iterator(K fromKey) {        
+        return new SparseArrayIteratorImpl<K, Entry<K,V>>(array, fromKey, keyOrder, true) {
+            @Override
+            public void notifyRemoval(SparseArray<Object> newArray) {
+                if (newArray != null) array = newArray;
+                size--;                
+            }};
     }
 
     @Override
     public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return new TrieNodeImpl.DescendingNodeIterator<K,V>(this, root, fromKey, keyOrder.indexOf(fromKey));
+        return new SparseArrayDescendingIteratorImpl<K, Entry<K,V>>(array, fromKey, keyOrder, true) {
+            @Override
+            public void notifyRemoval(SparseArray<Object> newArray) {
+                if (newArray != null) array = newArray;
+                size--;                
+            }};
     }
-    
+
+    @Override
+    public Order<? super K> keyOrder() {
+        return keyOrder;
+    }
+
    
 }

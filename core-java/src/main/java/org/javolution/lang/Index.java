@@ -11,6 +11,7 @@ package org.javolution.lang;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.text.Cursor;
 import org.javolution.text.DefaultTextFormat;
 import org.javolution.text.TextContext;
@@ -38,7 +39,7 @@ import org.javolution.text.TypeFormat;
  */
 @Realtime
 @DefaultTextFormat(Index.Format.class)
-public final class Index extends Number implements Comparable<Index>, ValueType {
+public final class Index extends Number implements Comparable<Index>, Immutable {
 
     /**
      * Default text format for indices (32-bits unsigned decimal 
@@ -137,7 +138,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
 
     @Override
     public int compareTo(Index that) {
-        return MathLib.compareUnsigned(this.unsigned, that.unsigned);
+        return compareTo(that.unsigned);
     }
 
     /**
@@ -145,7 +146,7 @@ public final class Index extends Number implements Comparable<Index>, ValueType 
      * @see #compareTo(Index)
      */
     public int compareTo(int unsignedValue) {
-        return MathLib.compareUnsigned(this.unsigned, unsignedValue);
+        return MathLib.unsignedLessThan(this.unsigned, unsignedValue) ? -1 : this.unsigned == unsignedValue ? 0 : 1;
     }
 
     @Override

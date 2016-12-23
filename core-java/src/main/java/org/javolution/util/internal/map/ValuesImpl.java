@@ -9,10 +9,10 @@
 package org.javolution.util.internal.map;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
 
 import org.javolution.util.FastCollection;
 import org.javolution.util.FastMap;
+import org.javolution.util.FastMap.Entry;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -22,9 +22,8 @@ import org.javolution.util.function.Predicate;
 public final class ValuesImpl<K, V> extends FastCollection<V> {
 
     /** The generic iterator over the map values. */
-    private class ValueIterator implements Iterator<V> {
+    private static class ValueIterator<K, V> implements Iterator<V> {
         final Iterator<Entry<K, V>> mapItr;
-        private Entry<K,V> next;
 
         public ValueIterator(Iterator<Entry<K, V>> mapItr) {
             this.mapItr = mapItr;
@@ -37,15 +36,12 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
         @Override
         public V next() {
-            next = mapItr.next();
-            return next.getValue();
+            return mapItr.next().getValue();
         }
 
         @Override
         public void remove() {
-            if (next == null) throw new IllegalArgumentException();
-            map.remove(next.getKey());
-            next = null;
+            mapItr.remove();
         }
     }
 
@@ -83,19 +79,20 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
 
     @Override
     public Iterator<V> iterator() {
-        return new ValueIterator(map.iterator());
+        return new ValueIterator<K, V>(map.iterator());
     }
 
     @Override
-    public boolean removeIf(final Predicate<? super V> filter) {
-
-        return map.entrySet().removeIf(new Predicate<java.util.Map.Entry<K, V>>() {
-
-            @Override
-            public boolean test(java.util.Map.Entry<K, V> param) {
-                return filter.test(param.getValue());
+    public boolean removeIf(Predicate<? super V> filter) {
+        boolean removed = false;
+        for (Iterator<V> itr = iterator(); itr.hasNext();) {
+            V element = itr.next();
+            if (filter.test(element)) {
+                itr.remove();
+                removed = true;
             }
-        });
+        }
+        return removed;
     }
 
     @Override

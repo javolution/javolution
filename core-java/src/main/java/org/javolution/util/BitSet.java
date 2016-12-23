@@ -8,23 +8,22 @@
  */
 package org.javolution.util;
 
-import static org.javolution.lang.Realtime.Limit.LINEAR;
+import static org.javolution.annotations.Realtime.Limit.LINEAR;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.lang.Index;
 import org.javolution.lang.MathLib;
-import org.javolution.lang.Realtime;
 import org.javolution.util.function.Order;
 import org.javolution.util.internal.bitset.BitSetIteratorImpl;
 import org.javolution.util.internal.bitset.UnmodifiableBitSetImpl;
 
 /**
- * <p> A high-performance bit-set integrated with the collection framework as 
- *     a set of {@link Index indices} and obeying the collection semantic
- *     for methods such as {@link #size} (cardinality) or {@link #equals}
+ * <p> A high-performance bit-set integrated with the collection framework as a set of {@link Index indices} 
+ *     and obeying the collection semantic for methods such as {@link #size} (cardinality) or {@link #equals}
  *     (same set of indices).</p>
  *   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
@@ -76,7 +75,7 @@ public class BitSet extends FastSet<Index> {
  	}
 
      @Override
-     public Order<? super Index> comparator() {
+     public Order<? super Index> order() {
          return Order.INDEX;
      }
 
@@ -570,8 +569,8 @@ public class BitSet extends FastSet<Index> {
         }
     }
 
-    /** Returns the minimal length <code>long[]</code> representation of this 
-     * bitset.
+    /** Returns the minimal length <code>long[]</code> representation of this bitset.
+     * 
      * @return Array of longs representing this bitset 
      */
     public long[] toLongArray() {

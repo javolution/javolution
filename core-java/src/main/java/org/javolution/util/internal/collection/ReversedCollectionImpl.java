@@ -10,7 +10,7 @@ package org.javolution.util.internal.collection;
 
 import java.util.Iterator;
 
-import org.javolution.util.ConstantTable;
+import org.javolution.util.ConstTable;
 import org.javolution.util.FastCollection;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
@@ -54,7 +54,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return ConstantTable.of(inner).reversed().iterator();
+        return ConstTable.of(inner).reversed().iterator();
     }
 
     @Override

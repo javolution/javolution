@@ -8,18 +8,21 @@
  */
 package org.javolution.util;
 
-import static org.javolution.lang.Realtime.Limit.CONSTANT;
-import static org.javolution.lang.Realtime.Limit.LINEAR;
+import static org.javolution.annotations.Realtime.Limit.CONSTANT;
+import static org.javolution.annotations.Realtime.Limit.LINEAR;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.Set;
 
+import org.javolution.annotations.Parallel;
+import org.javolution.annotations.ReadOnly;
+import org.javolution.annotations.Realtime;
 import org.javolution.lang.MathLib;
-import org.javolution.lang.Parallel;
-import org.javolution.lang.Realtime;
 import org.javolution.util.function.Consumer;
+import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.set.AtomicSetImpl;
@@ -32,25 +35,31 @@ import org.javolution.util.internal.set.SubSetImpl;
 import org.javolution.util.internal.set.UnmodifiableSetImpl;
 
 /**
- * <p> A high-performance ordered set (trie-based) with {@link Realtime strict timing constraints}.</p>
+ * <p> A high-performance ordered set / multiset (trie-based) with {@link Realtime strict timing constraints}.</p>
  * 
- * <p> In general, ordered set methods have a limiting behavior in {@link Realtime#Limit#CONSTANT O(1)} (constant) 
+ * <p> In general, fast set methods have a limiting behavior in {@link Realtime#Limit#CONSTANT O(1)} (constant) 
  *     to be compared with {@link Realtime#Limit#LOG_N O(log n)} for most sorted sets.</p>
  *     
- * <p> Iterations order over the set elements is typically determined by the set {@link #comparator() order} except 
+ * <p> Iterations order over the set elements is typically determined by the set {@link #comparator() comparator} except 
  *     for specific views such as the {@link #linked linked} view for which the iterations order is the insertion 
  *     order.</p> 
  * 
  * <p> Instances of this class can advantageously replace {@code java.util.*} sets in terms of adaptability, 
  *     space or performance. 
  * <pre>{@code
- * FastSet<Foo> hashSet = FastSet.newSet(); // Hash order (type implicit). 
- * FastSet<Foo> identityHashSet = FastSet.newSet(Order.IDENTITY); 
- * FastSet<String> treeSet = FastSet.newSet(Order.LEXICAL); 
+ * import static javolution.util.function.Order.*;
+ * 
+ * FastSet<Foo> hashSet = FastSet.newSet(); // Arbitrary order (hash order) 
+ * FastSet<Foo> identitySet = FastSet.newSet(IDENTITY); 
+ * FastSet<Foo> multiset = FastSet.newSet(MULTI); // Arbitrary order (hash order) allowing duplicates.
+ * FastSet<String> treeSet = FastSet.newSet(LEXICAL); 
  * FastSet<Foo> linkedHashSet = FastSet.<Foo>newSet().linked(); // Insertion order.
- * FastSet<Foo> concurrentHashSet = FastSet.<Foo>newSet().shared(); 
- * FastSet<String> concurrentSkipListSet = FastSet.<String>newSet().shared();
+ * FastSet<Foo> linkedIdentitySet = FastSet.<Foo>newSet(IDENTITY).linked(); 
+ * FastSet<Foo> concurrentHashSet = FastSet.<Foo>newSet().shared();
+ * FastSet<String> concurrentSkipListSet = FastSet.<String>newSet(LEXICAL).shared()
  * FastSet<Foo> copyOnWriteArraySet = FastSet.<Foo>newSet().atomic();
+ * FastSet<Foo> concurrentLinkedHashSet = FastSet.<Foo>newSet().linked().shared(); 
+ * FastSet<Foo> linkedMultiset = FastSet.<Foo>newSet(MULTI).linked(); // Insertion order allowing duplicates.
  * ...
  * }</pre> </p>
  * 
@@ -64,10 +73,29 @@ import org.javolution.util.internal.set.UnmodifiableSetImpl;
  * names.filter(str -> str.length < 5).parallel().clear(); // Same as above but removal performed concurrently.
  * }</pre></p>
  *      
- * @param <E> the type of set element (can be {@code null})
+ * <p> Finally, this class provides full support for multisets (for which the same element may appear more than once).
+ *  
+ * <pre>{@code
+ * // Prime factors of 120 are {2, 2, 2, 3, 5}.
+ * ConstSet<Integer> primeFactors120 = ConstSet.of(MULTI, 2, 2, 2, 3, 5); // Arbitrary order allowing duplicates.
+ * int twoCount = primeFactors120.subSet(2).size();
+ * FastSet<Integer> primeFactors120bis = FastSet.<Integer>newSet(MULTI).linked(); 
+ * primeFactors120bis.addAll(5, 2, 3, 2, 2); // Keep insertion order (linked multiset).
+ *  
+ * System.out.println(twoCount);
+ * System.out.println(primeFactors120.equals(primeFactors120bis));
+ * System.out.println(primeFactors120bis);
+ * 
+ * >> 3
+ * >> true
+ * >> { 5, 2, 3, 2, 2 }
+ * }</pre></p>
+ * 
+ * @param <E> the type of set elements
  * 
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, March 14, 2016
+ * @see <a href="https://en.wikipedia.org/wiki/Multiset">Wikipedia: Multiset</a>
  */
 public abstract class FastSet<E> extends FastCollection<E> implements NavigableSet<E> {
 
@@ -83,34 +111,53 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
      * Returns a new high-performance set sorted arbitrarily (hash order).
      */
     public static <E> FastSet<E> newSet() {
-    	return new SparseSet<E>();
+        return new SparseSet<E>();
     }
 
     /**
      * Returns a new high-performance set sorted according to the specified order.
      */
     public static <E> FastSet<E> newSet(Order<? super E> order) {
-    	return new SparseSet<E>(order);
+        return new SparseSet<E>(order);
     }
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Change in time limit behavior and parallelization.
-    //
 
+    /** 
+     * Adds the specified element unless this set already {@link #contains(Object) contains} the specified element 
+     * (always added for multisets).
+     */
+    @Override
+    public abstract boolean add(E element);
+    
     @Override
     @Realtime(limit = CONSTANT)
     public abstract Iterator<E> iterator();
 
+    /** 
+     * Indicates if this set contains the specified element; for multisets, the method {@link #contains(Object, Equality)}
+     * makes more sense (multisets will always return {@code false} since its elements are all considered distinct).
+     */
     @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
     public abstract boolean contains(Object obj);
 
+    /** Equivalent to {@code !subSet(element, equality).isEmpty()} (convenience method). */
+    public boolean contains(E element, Equality<? super E> equality) {
+        return !subSet(element, equality).isEmpty();
+    }
+
+    /** Removes one element of this set for which {@code order.areEqual(element, obj) == true};
+     * for multisets, the method {@link #remove(Object, Equality)} makes more sense. */
     @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
     public abstract boolean remove(Object obj);
 
+    /** Equivalent to {@code subSet(element, equality).removeIf(Predicate.TRUE)} (convenience method). */
+    public boolean remove(E element, Equality<? super E> equality) {
+        return subSet(element, equality).removeIf(Predicate.TRUE);
+    }
+    
     @Override
     @Realtime(limit = LINEAR)
     public boolean containsAll(Collection<?> that) {
@@ -126,6 +173,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
         return modified;
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     @Realtime(limit = LINEAR)
     public boolean equals(Object obj) {
@@ -133,9 +181,17 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
             return true;
         if (!(obj instanceof Set))
              return false;
-        @SuppressWarnings("unchecked")
-        Set<E> set = (Set<E>) obj;
-        return (size() == set.size()) && containsAll(set);
+        if (this.size() == ((Set<E>)obj).size()) return false;
+        FastSet<E> that = (obj instanceof FastSet) ? (FastSet<E>)obj : ConstSet.of(Order.MULTI,((Set<E>)obj));
+        // Two sets are considered equals; if they have the same cardinality for all their distinct elements.
+        FastCollection<E> distinct = new FractalTable<E>().distinct();
+        distinct.addAll(this);
+        for (E e : distinct) {
+            int thisCount = this.subSet(e, Equality.DEFAULT).size();
+            int thatCount = that.subSet(e, Equality.DEFAULT).size();
+            if (thisCount != thatCount) return false;
+        }
+        return true;
     }    
 
     @Override
@@ -152,7 +208,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     
     @Override
     public FastSet<E> collect() {
-         final FastSet<E> reduction = FastSet.newSet(comparator());
+         final SparseSet<E> reduction = new SparseSet<E>(order());
          forEach(new Consumer<E>() {
             @Override
             public void accept(E param) {
@@ -167,7 +223,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     @SuppressWarnings("unchecked")
     public FastSet<E>[] trySplit(final int n) {
         // Split into filtered sets with filter based on the element index (hashed to ensure balanced distribution). 
-        final Order<? super E> order = comparator();
+        final Order<? super E> order = order();
         FastSet<E>[] split = new FastSet[n];        
         for (int i=0; i < n; i++) {
             final int m = i;
@@ -191,6 +247,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
         return new AtomicSetImpl<E>(this);
 	}
 
+    /** Returns all the elements such as {@code (order.compare(matching, toElement) < 0)}. */
     @Override
     public FastSet<E> headSet(E toElement) {
         return new SubSetImpl<E>(this, null, null, toElement, false);
@@ -226,6 +283,25 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
         return this;
     }
 
+    /** Equivalent to {@code subSet(element, Equality.DEFAULT)} (convenience method). */
+    public FastSet<E> subSet(E element) {
+        return subSet(element, Equality.DEFAULT);
+    }
+   /** 
+     * Returns the set/multiset holding all the elements equal to the specified element according to the specified 
+     * equality comparator (convenience method). The specified equality comparator should be consistent with 
+     * this set order; if {@code equality.areEqual(x,y)} then {@code (order().compare(x,y) == 0)}. */
+    public FastSet<E> subSet(final E element, final Equality<? super E> equality) {
+        return subSet(element, true, element, true).filter(new Predicate<E>(){
+            @Override
+            public boolean test(E param) {
+                return equality.areEqual(element, param);
+            }});
+        
+    }
+ 
+    /** Returns all the elements {@code matching} such as 
+     * {@code (order.compare(fromElement, matching) >= 0) && (order.compare(matching, toElement) < 0)}. */
     @Override
     public FastSet<E> subSet(E fromElement, E toElement) {
         return new SubSetImpl<E>(this, fromElement, true, toElement, false);
@@ -242,6 +318,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 		return new SharedSetImpl<E>(this); 
 	}
 
+    /** Returns all the elements {@code matching} such as {@code (order.compare(fromElement, matching) <= 0)}. */
     @Override
     public FastSet<E> tailSet(E fromElement) {
         return new SubSetImpl<E>(this, fromElement, true, null, null);
@@ -253,7 +330,7 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
 	}
 
     @Override
-	public FastSet<E> unmodifiable() {
+	public @ReadOnly FastSet<E> unmodifiable() {
 		return new UnmodifiableSetImpl<E>(this);
 	}
 	
@@ -270,32 +347,37 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
     // Misc.
     //
 	
+    /** Returns the order of this set. */
+    public abstract Order<? super E> order();
+
     /** Returns an iterator starting from the specified element. */
     public abstract Iterator<E> iterator(E fromElement);
     
     /** Returns a descending iterator starting from the specified element. */
     public abstract Iterator<E> descendingIterator(E fromElement);
     
+    /** Returns {@link #order order()}. */
     @Override
-	public final Order<? super E> equality() {
-		return comparator();
+	public final Equality<? super E> equality() {
+		return order();
 	}
     
 	@Override
-	public abstract FastSet<E> clone();
+	public FastSet<E> clone() {
+	    return (FastSet<E>) super.clone();
+	}
   
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
-        final FastTable<E> toRemove = FastTable.newTable();
+        boolean removed = false;
         for (Iterator<E> itr=iterator(); itr.hasNext();) {
-            E e = itr.next();
-            if (filter.test(e)) toRemove.add(e);
+            E element = itr.next();
+            if (filter.test(element)) {
+                itr.remove();
+                removed = true;
+            }
         }
-        boolean modified = false;
-        for (E e : toRemove) {
-            if (remove(e)) modified = true;
-        }
-        return modified;
+        return removed;
     }       
 
     ////////////////////////////////////////////////////////////////////////////
@@ -312,8 +394,11 @@ public abstract class FastSet<E> extends FastCollection<E> implements NavigableS
         return descendingIterator().next();
     }
 
+    /** Returns {@link #order order()}. */
 	@Override
-	public abstract Order<? super E> comparator();
+	public final Comparator<? super E> comparator() {
+	    return order();
+	}
 	
 	@Override
 	public E ceiling(E element) {

@@ -38,8 +38,8 @@ public final class UnmodifiableMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() { // Immutable.
-        return inner.comparator();
+    public Order<? super K> keyOrder() { // Immutable.
+        return inner.keyOrder();
     }
 
     @Override
@@ -59,40 +59,7 @@ public final class UnmodifiableMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public Entry<K, V> getEntry(K key) {
-        final Entry<K,V> entry = inner.getEntry(key);
-        if (entry == null) return entry;
-         return new Entry<K, V>() {
-            @Override
-            public K getKey() {
-                return entry.getKey();
-            }
-
-            @Override
-            public V getValue() {
-                return entry.getValue();
-            }
-
-            @Override
-            public boolean equals(Object obj) { // As per Map.Entry contract.
-                return entry.equals(obj);
-            }
-
-            @Override
-            public int hashCode() { // As per Map.Entry contract.
-                return entry.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return entry.toString(); // For debug.
-            }
-
-            @Override
-            public V setValue(V value) {
-                throw new UnsupportedOperationException(ERROR_MSG);
-            }
-
-        };
+        return inner.getEntry(key);
     }
 
     @Override
@@ -112,6 +79,11 @@ public final class UnmodifiableMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public V put(K key, V value) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    @Override
+    public Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
@@ -141,50 +113,24 @@ public final class UnmodifiableMapImpl<K, V> extends FastMap<K, V> {
     }
 
     /** Read-only entry iterator (also a read-only view over the current entry) */
-    private static class ReadOnlyEntryIterator<K,V> implements Iterator<Entry<K,V>>, Entry<K,V> {
+    private static class ReadOnlyEntryIterator<K,V> implements Iterator<Entry<K,V>> {
         private final Iterator<Entry<K,V>> inner;
-        private Entry<K,V> current;
         private ReadOnlyEntryIterator(Iterator<Entry<K,V>> inner) {
             this.inner = inner;
-        }
-        @Override
-        public K getKey() {
-            return current.getKey();
-        }
-
-        @Override
-        public V getValue() {
-            return current.getValue();
-        }
-
-        @Override
-        public V setValue(V value) {
-            throw new UnsupportedOperationException(ERROR_MSG);
         }
         @Override
         public boolean hasNext() {
             return inner.hasNext();
         }
+
         @Override
         public Entry<K, V> next() {
-            current = inner.next();
-            return this; // Read-only view over the current entry.
+            return inner.next(); 
         }
 
         @Override
-        public boolean equals(Object obj) { // As per Map.Entry contract.
-            return current.equals(obj);
+        public void remove() {
+            throw new UnsupportedOperationException("Unmodifiable map"); 
         }
-
-        @Override
-        public int hashCode() { // As per Map.Entry contract.
-            return current.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return current.toString(); // For debug.
-        }
-
     }
 }

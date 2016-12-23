@@ -10,9 +10,9 @@ package org.javolution.text;
 
 import java.io.PrintStream;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.lang.MathLib;
-import org.javolution.lang.Realtime;
-import org.javolution.lang.ValueType;
+import org.javolution.lang.Immutable;
 import org.javolution.util.FastMap;
 import org.javolution.util.function.Order;
 import org.javolution.xml.XMLSerializable;
@@ -62,7 +62,7 @@ import org.javolution.xml.XMLSerializable;
  */
 @Realtime
 public final class Text implements CharSequence, Comparable<CharSequence>,
-		XMLSerializable, ValueType {
+		XMLSerializable, Immutable {
 
 	private static final long serialVersionUID = 0x600L; // Version.
 
@@ -859,7 +859,7 @@ public final class Text implements CharSequence, Comparable<CharSequence>,
 
 	/**
 	 * Returns <code>this</code> (implements 
-	 * {@link org.javolution.lang.ValueType Realtime} interface).
+	 * {@link org.javolution.lang.Immutable Realtime} interface).
 	 *
 	 * @return <code>this</code>
 	 */

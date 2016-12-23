@@ -10,64 +10,75 @@ package org.javolution.util;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
-import org.javolution.lang.Constant;
+import org.javolution.annotations.ReadOnly;
+import org.javolution.lang.Immutable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * <p> A table for which immutability is guaranteed by construction.
- * <pre>{@code
- * // From literal elements.
- * ConstantTable<String> winners = ConstantTable.of("John Deuff", "Otto Graf", "Sim Kamil");
  * 
- * // From existing collections.
- * ConstantTable<String> caseInsensitiveWinners = ConstantTable.of(Equality.LEXICAL_CASE_INSENSITIVE, winners);
+ * <pre>{@code
+ * // Creation from literal elements.
+ * ConstTable<String> winners = ConstTable.of("John Deuff", "Otto Graf", "Sim Kamil");
+ * 
+ * // Creation from existing collections.
+ * ConstTable<String> caseInsensitiveWinners = ConstTable.of(Equality.LEXICAL_CASE_INSENSITIVE, winners);
  * }</pre></p>
  * 
- * <p> This class ensures that calling a method which may modify the table will most likely generate a warning
- *     (deprecated warning) at compile time and will most certainly raise an exception at run-time.</p>
+ * <p> This class ensures that calling a method which may modify the table will generate a deprecated warning
+ *     at compile time and will most raise an exception at run-time.</p>
+ * 
+ * @param <E> the immutable set element
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, March 14, 2016
  */
-@Constant
-public final class ConstantTable<E> extends FastTable<E> {
+@ReadOnly
+public final class ConstTable<E> extends FastTable<E> implements Immutable {
 
+    
     private static final long serialVersionUID = 0x700L; // Version.
     private static final String ERROR_MSG = "Constant tables cannot be modified.";
+    private static final ConstTable<?> EMPTY  = new ConstTable<Object>(Equality.DEFAULT, new Object[0]);
+
+    /**
+     * Returns a constant empty table. 
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> ConstTable<E> empty() {
+        return (ConstTable<E>) EMPTY;
+    }
 
     /**
      * Returns a constant table holding the elements from the specified collection. 
      */
-
     @SuppressWarnings("unchecked")
-    public static <E> ConstantTable<E> of(Collection<? super E> elements) {
-        return new ConstantTable<E>(Equality.DEFAULT, (E[]) elements.toArray(new Object[elements.size()]));
+    public static <E> ConstTable<E> of(Collection<? super E> elements) {    
+        return new ConstTable<E>(Equality.DEFAULT, (E[]) elements.toArray(new Object[elements.size()]));
     }
 
     /**
      * Returns a constant table holding the specified elements. 
      */
-    public static <E> ConstantTable<E> of(@Constant E... elements) {
-        return new ConstantTable<E>(Equality.DEFAULT, elements);
+    public static <E> ConstTable<E> of(@ReadOnly E... elements) {
+        return new ConstTable<E>(Equality.DEFAULT, elements);
     }
 
     /**
      * Returns a constant table using the specified equality and holding the elements from the specified collection. 
      */
     @SuppressWarnings("unchecked")
-    public static <E> ConstantTable<E> of(Equality<? super E> equality, Collection<? extends E> elements) {
-        return new ConstantTable<E>(equality, (E[]) elements.toArray(new Object[elements.size()]));
+    public static <E> ConstTable<E> of(Equality<? super E> equality, Collection<? extends E> elements) {
+        return new ConstTable<E>(equality, (E[]) elements.toArray(new Object[elements.size()]));
     }
 
     /**
      * Returns a constant table using the specified equality and holding the specified elements. 
      */
-    public static <E> ConstantTable<E> of(Equality<? super E> equality, @Constant E... elements) {
-        return new ConstantTable<E>(equality, elements);
+    public static <E> ConstTable<E> of(Equality<? super E> equality, @ReadOnly E... elements) {
+        return new ConstTable<E>(equality, elements);
     }
 
     /** Holds the equality comparator. */
@@ -77,7 +88,7 @@ public final class ConstantTable<E> extends FastTable<E> {
     private final E[] elements;
 
     /** Creates a new instance from the specified elements and equality. */
-    ConstantTable(Equality<? super E> equality, E[] elements) {
+    ConstTable(Equality<? super E> equality, E[] elements) {
         this.equality = equality;
         this.elements = elements;
     }
@@ -165,7 +176,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 
     /**  Returns {@code this}.*/
     @Override
-    public ConstantTable<E> clone() {
+    public ConstTable<E> clone() {
         return this;
     }
 
@@ -307,7 +318,7 @@ public final class ConstantTable<E> extends FastTable<E> {
 
     /** Returns {@code this}.*/
     @Override
-    public ConstantTable<E> unmodifiable() {
+    public ConstTable<E> unmodifiable() {
         return this;
     }
     
@@ -316,7 +327,7 @@ public final class ConstantTable<E> extends FastTable<E> {
      * @deprecated Should never be used on immutable table.
      */
     @Override
-    public int addSorted(E element,  Comparator<? super E> cmp) {
+    public boolean addSorted(E element,  Comparator<? super E> cmp) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
@@ -325,32 +336,8 @@ public final class ConstantTable<E> extends FastTable<E> {
      * @deprecated Should never be used on immutable table.
      */
     @Override
-    public int removeSorted(E element,  Comparator<? super E> cmp) {
+    public boolean removeSorted(E element,  Comparator<? super E> cmp) {
         throw new UnsupportedOperationException(ERROR_MSG);
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return new Iterator<E>() {
-            int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < elements.length;
-            }
-
-            @Override
-            public E next() {
-                if (index < elements.length) throw new NoSuchElementException();
-                return elements[index++];
-            }
-
-            @Override
-            public final void remove() {
-                throw new UnsupportedOperationException("Read-Only Iterator");
-            }
-            
-        };
     }
 
 }

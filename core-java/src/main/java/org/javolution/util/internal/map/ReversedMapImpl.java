@@ -37,8 +37,8 @@ public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
+    public Order<? super K> keyOrder() {
+        return inner.keyOrder();
     }
 
     @Override
@@ -72,8 +72,8 @@ public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public V put(K key, V value) {
-        return inner.put(key, value);
+    public Entry<K, V> putEntry(Entry<? extends K, ? extends V> entry) {
+        return inner.putEntry(entry);
     }
 
     @Override
@@ -89,6 +89,11 @@ public final class ReversedMapImpl<K, V> extends FastMap<K, V> {
     @Override
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality();
+    }
+
+    @Override
+    public V put(K key, V value) {
+        return inner.put(key, value);
     }
 
 }

@@ -8,9 +8,8 @@
  */
 package org.javolution.util;
 
-import static org.javolution.lang.Realtime.Limit.CONSTANT;
-import static org.javolution.lang.Realtime.Limit.LINEAR;
-import static org.javolution.lang.Realtime.Limit.N_SQUARE;
+import static org.javolution.annotations.Realtime.Limit.LINEAR;
+import static org.javolution.annotations.Realtime.Limit.N_SQUARE;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -22,9 +21,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.javolution.annotations.Parallel;
+import org.javolution.annotations.Realtime;
 import org.javolution.context.ConcurrentContext;
-import org.javolution.lang.Parallel;
-import org.javolution.lang.Realtime;
 import org.javolution.text.Cursor;
 import org.javolution.text.DefaultTextFormat;
 import org.javolution.text.TextContext;
@@ -87,7 +86,7 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * 
  * <p> It should be noted that {@link #unmodifiable Unmodifiable} views <b>are not immutable</b>; 
  *     constant/immutable collections (or maps) can only be obtained through class specializations (e.g. 
- *     {@link ConstantTable}, {@link ConstantSet}, {@link ConstantMap}, ...)
+ *     {@link ConstTable}, {@link ConstSet}, {@link ConstMap}, ...)
  * <pre>{@code
  * 
  * // Constant collections from literal elements.
@@ -226,21 +225,29 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
         return new SortedCollectionImpl<E>(this, comparator);
     }
     /**
-     * Returns an ordered view exposing elements sorted according to the elements natural order (
-     * the collection elements must implement the {@link Comparable} interface).
+     * Equivalent to {@code sorted(Order.NATURAL)} (convenience method).
+     * @see Order#NATURAL
      */
     @SuppressWarnings("unchecked")
     public FastCollection<E> sorted() {
-        return sorted((Comparator<? super E>) NATURAL);
+        return sorted((Comparator<? super E>) Order.NATURAL);
     }
 
     /**
-     * Returns a view exposing only distinct elements. It does not iterate twice over the  {@link #equality() same} 
-     * elements. Adding elements already present has no effect. If this collection is initially empty, 
+     * Returns a view exposing only distinct elements as seen through the specified equality. 
+     * Adding elements already present has no effect. If this collection is initially empty, 
      * using a distinct view to add new elements ensures that this collection has no duplicate element.
      */
+    public FastCollection<E> distinct(Equality<? super E> equality) {
+        return new DistinctCollectionImpl<E>(this, equality);
+    }
+
+    /**
+     * Equivalent to {@code distinct(Equality.DEFAULT)} (convenience method).
+     * @see Equality#DEFAULT
+     */
     public FastCollection<E> distinct() {
-        return new DistinctCollectionImpl<E>(this);
+        return distinct(Equality.DEFAULT);
     }
 
     /**
@@ -362,7 +369,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     @Parallel
     @Realtime(limit = LINEAR)
     public FastCollection<E> collect() { // Overridden by FastTable / FastSet to return the proper type.
-        final FastTable<E> reduction = FastTable.newTable(equality());
+        final FastTable<E> reduction = new FractalTable<E>(equality());
         forEach(new Consumer<E>() { // Parallel.
             @Override
             public void accept(E param) {
@@ -401,12 +408,10 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     /** Returns an iterator overs this collection; this iterator may not support element removal;
      *  for safe element removal the method {@link #removeIf} should be used. */
     @Override
-    @Realtime(limit = LINEAR, comment="Usually constant except for sorted collections.")
     public abstract Iterator<E> iterator();
 
     /** Adds the specified element to this collection. */
     @Override
-    @Realtime(limit = CONSTANT, comment = "Adding an element should not depend on the collection size")
     public abstract boolean add(E element);
 
     /** Indicates if this collection is empty.*/
@@ -501,8 +506,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     public boolean removeAll(Collection<?> that) {
         @SuppressWarnings("unchecked")
         Equality<Object> cmp = (Equality<Object>) equality();
-        final FastCollection<Object> toRemove = (cmp instanceof Order) ? FastSet.newSet((Order<Object>) cmp)
-                : FastTable.newTable(cmp);
+        final FastCollection<Object> toRemove = (cmp instanceof Order) ? new SparseSet<Object>((Order<Object>) cmp)
+                : new FractalTable<Object>(cmp);
         toRemove.addAll(that);
         return removeIf(new Predicate<E>() { // Parallel.
             @Override
@@ -520,8 +525,8 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     public boolean retainAll(final Collection<?> that) {
         @SuppressWarnings("unchecked")
         Equality<Object> cmp = (Equality<Object>) equality();
-        final FastCollection<Object> toKeep = (cmp instanceof Order) ? FastSet.newSet((Order<Object>) cmp)
-                : FastTable.newTable(cmp);
+        final FastCollection<Object> toKeep = (cmp instanceof Order) ? 
+                new SparseSet<Object>((Order<Object>) cmp) : new FractalTable<Object>(cmp);
         toKeep.addAll(that);
         return removeIf(new Predicate<E>() { // Parallel.
             @Override
@@ -600,9 +605,16 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     // Misc.
     //
 
+    @SuppressWarnings("unchecked")
     /** Returns a copy of this collection; updates of the copy should not impact the original. */
     @Realtime(limit = LINEAR)
-    public abstract FastCollection<E> clone();
+    public FastCollection<E> clone() {
+        try {
+            return (FastCollection<E>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Should not happen since this class is Cloneable !");
+        }        
+    }
 
     /** Returns the element equality for this collection. */
     public abstract Equality<? super E> equality();
@@ -646,21 +658,11 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
         }
     }
 
-    /** Natural comparator for comparable instances. */
-    private static final Comparator<Comparable<Object>> NATURAL = new Comparator<Comparable<Object>>() {
-        @Override
-        public int compare(Comparable<Object> left, Comparable<Object> right) {
-            return left != null ? left.compareTo((Comparable<Object>) right)
-                    : right != null ? -right.compareTo(left) : 0;
-        }
-
-    };
-
     /** Max operator for comparable instances. */
     private static final BinaryOperator<Comparable<Object>> MAX = new BinaryOperator<Comparable<Object>>() {
         @Override
         public Comparable<Object> apply(Comparable<Object> left, Comparable<Object> right) {
-            return NATURAL.compare(left, right) > 0 ? left : right;
+            return Order.NATURAL.compare(left, right) > 0 ? left : right;
         }
     };
 
@@ -668,7 +670,7 @@ public abstract class FastCollection<E> implements Collection<E>, Serializable, 
     private static final BinaryOperator<Comparable<Object>> MIN = new BinaryOperator<Comparable<Object>>() {
         @Override
         public Comparable<Object> apply(Comparable<Object> left, Comparable<Object> right) {
-            return NATURAL.compare(left, right) < 0 ? left : right;
+            return Order.NATURAL.compare(left, right) < 0 ? left : right;
         }
     };
 }

@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastTable;
+import org.javolution.util.FractalTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -57,7 +57,7 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public Iterator<E> iterator() {
-        FastTable<E> sorted = FastTable.newTable();
+        FractalTable<E> sorted = new FractalTable<E>();
         sorted.addAllSorted(inner, cmp); // TODO: Compare performance with FastTable.sort()
         return sorted.unmodifiable().iterator();
     }

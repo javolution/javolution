@@ -9,6 +9,8 @@
 package org.javolution.lang;
 
 import java.util.Vector;
+
+import org.javolution.annotations.Realtime;
 import org.javolution.context.LogContext;
 
 /**

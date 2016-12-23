@@ -8,14 +8,16 @@
  */
 package org.javolution.util.function;
 
-import static org.javolution.lang.Realtime.Limit.CONSTANT;
-import static org.javolution.lang.Realtime.Limit.LINEAR;
-import static org.javolution.lang.Realtime.Limit.UNKNOWN;
+import static org.javolution.annotations.Realtime.Limit.CONSTANT;
+import static org.javolution.annotations.Realtime.Limit.LINEAR;
+import static org.javolution.annotations.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;
 
-import org.javolution.lang.Constant;
-import org.javolution.lang.Realtime;
+import org.javolution.annotations.ReadOnly;
+import org.javolution.annotations.Nullable;
+import org.javolution.annotations.Realtime;
+import org.javolution.lang.Immutable;
 import org.javolution.util.internal.function.ArrayEqualityImpl;
 import org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
 import org.javolution.util.internal.function.HashOrderImpl;
@@ -23,16 +25,15 @@ import org.javolution.util.internal.function.IdentityHashOrderImpl;
 import org.javolution.util.internal.function.LexicalOrderImpl;
 
 /**
- * <p>  A function (functional interface) indicating if two objects 
- *      are considered equals.</p>
+ * <p>  A function (functional interface) indicating if two objects are considered equals.</p>
  * 
  * @param <T>the type of objects that may be compared for equality.
  * 
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0 September 13, 2015
  */
-@Constant
-public interface Equality<T> extends Serializable {
+@ReadOnly
+public interface Equality<T> extends  Immutable, Serializable {
 	
     /**
      * A default object equality (based on {@link Object#equals}).
@@ -44,8 +45,7 @@ public interface Equality<T> extends Serializable {
      * An identity object equality (instances are only equals to themselves).
      */
     @Realtime(limit = CONSTANT)
-    public static final Equality<Object> IDENTITY 
-       = IdentityHashOrderImpl.INSTANCE;
+    public static final Equality<Object> IDENTITY = IdentityHashOrderImpl.INSTANCE;
 
      /**
      * A content based array comparator (recursive). 
@@ -58,8 +58,7 @@ public interface Equality<T> extends Serializable {
      * A lexical equality for any {@link CharSequence}.
      */
     @Realtime(limit = LINEAR)
-    public static final Equality<CharSequence> LEXICAL
-        = LexicalOrderImpl.INSTANCE;
+    public static final Equality<CharSequence> LEXICAL = LexicalOrderImpl.INSTANCE;
 
     /**
      * A case insensitive lexical equality for any {@link CharSequence}.
@@ -73,9 +72,8 @@ public interface Equality<T> extends Serializable {
 	 * 
 	 * @param left the first object (can be {@code null}).
 	 * @param right the second object (can be {@code null}).
-	 * @return <code>true</code> if both objects are considered equal;
-	 *         <code>false</code> otherwise.
+	 * @return <code>true</code> if both objects are considered equal; <code>false</code> otherwise.
 	 */
-	boolean areEqual(T left, T right);
+	boolean areEqual(@Nullable T left, @Nullable T right);
 
 }

@@ -10,6 +10,7 @@ package org.javolution.util.internal.map;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Map.Entry;
 
 import org.javolution.util.FastMap;
 import org.javolution.util.function.Equality;
@@ -128,8 +129,8 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
+    public Order<? super K> keyOrder() {
+        return inner.keyOrder();
     }
 
     @Override
@@ -185,6 +186,11 @@ public final class SubMapImpl<K, V> extends FastMap<K, V> {
     @Override
     public V put(K key, V value) {
         return inRange(key) ? inner.put(key, value) : null;
+    }
+
+    @Override
+    public Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
+        return inRange(entry.getKey()) ? inner.putEntry(entry) : null;
     }
 
     @Override

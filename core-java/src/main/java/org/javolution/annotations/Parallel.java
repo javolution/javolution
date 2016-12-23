@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package org.javolution.lang;
+package org.javolution.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Indicates if the actual processing of a method can be performed concurrently using multiple threads.
+ * <p> Indicates if the actual processing of a method can be performed concurrently using multiple threads.</p>
  *     
  * <pre>{@code
  * public abstract class FastCollection<E> {

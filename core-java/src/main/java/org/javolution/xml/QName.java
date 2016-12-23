@@ -10,7 +10,7 @@ package org.javolution.xml;
 
 import java.io.ObjectStreamException;
 
-import org.javolution.lang.ValueType;
+import org.javolution.lang.Immutable;
 import org.javolution.text.CharArray;
 import org.javolution.text.TextBuilder;
 import org.javolution.util.FastMap;
@@ -33,7 +33,7 @@ import org.javolution.util.function.Order;
  * @version 5.3, January 14, 2007
  * @see <a href="http://en.wikipedia.org/wiki/Qname">Wikipedia: QName</a> 
  */
-public final class QName implements XMLSerializable, ValueType, CharSequence {
+public final class QName implements XMLSerializable, Immutable, CharSequence {
 
     /**
      * Holds the local name.

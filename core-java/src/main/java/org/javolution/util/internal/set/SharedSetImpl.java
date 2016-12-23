@@ -108,8 +108,8 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return inner.comparator(); // Immutable.
+    public Order<? super E> order() {
+        return inner.order(); // Immutable.
     }
 
     @Override

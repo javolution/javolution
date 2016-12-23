@@ -9,8 +9,9 @@
 package org.javolution.text;
 
 import java.io.IOException;
+
+import org.javolution.annotations.Realtime;
 import org.javolution.lang.MathLib;
-import org.javolution.lang.Realtime;
 
 /**
  * <p> Utility class to parse {@link CharSequence} into primitive types and 

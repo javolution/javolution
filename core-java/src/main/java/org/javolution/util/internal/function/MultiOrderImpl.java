@@ -12,28 +12,28 @@ import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
- * The identity hash order implementation.
+ * The multi hash-order implementation (all objects are considered different).
  * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public enum IdentityHashOrderImpl implements Order<Object> {
+public enum MultiOrderImpl implements Order<Object> {
     INSTANCE;
 
     @Override
     public boolean areEqual(Object left, Object right) {
-        return (left == right);
+        return false; // Considers all objects are different.
     }
 
+    /** Order based on hash value (never returns 0).*/
     @Override
     public int compare(Object left, Object right) {
-        int hashLeft = System.identityHashCode(left);
-        int hashRight = System.identityHashCode(right);
+        int hashLeft = left.hashCode();
+        int hashRight = right.hashCode();
         return (hashLeft == hashRight) ? 0 : MathLib.unsignedLessThan(hashLeft, hashRight) ? -1 : 1;
     }
 
     @Override
     public int indexOf(Object object) { // Unsigned 32-bits
-        if (object == null) throw new NullPointerException();
-        return System.identityHashCode(object);
+        return object.hashCode();
     }
 
     @Override

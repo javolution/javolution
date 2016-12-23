@@ -51,8 +51,8 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return innerConst.comparator();
+    public Order<? super K> keyOrder() {
+        return innerConst.keyOrder();
     }
 
     @Override
@@ -184,8 +184,15 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public synchronized void putAll(K key, V value, Object... others) {
-        inner.putAll(key, value, others);
+    public synchronized Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
+        Entry<K,V> previous = inner.putEntry(entry);
+        innerConst = inner.clone();
+        return previous;
+    }
+
+    @Override
+    public synchronized void putAll(Object... others) {
+        inner.putAll(others);
         innerConst = inner.clone();
     }
 

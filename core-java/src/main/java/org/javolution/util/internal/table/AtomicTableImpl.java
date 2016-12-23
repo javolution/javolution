@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-import org.javolution.lang.Parallel;
+import org.javolution.annotations.Parallel;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
@@ -94,10 +94,11 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public synchronized int addSorted(E element, Comparator<? super E> cmp) {
-        int i = inner.addSorted(element, cmp);
-        innerConst = inner.clone();
-        return i;
+    public synchronized boolean addSorted(E element, Comparator<? super E> cmp) {
+        boolean changed = inner.addSorted(element, cmp);
+        if (changed) 
+            innerConst = inner.clone();
+        return changed;
     }
 
     @Override
@@ -119,6 +120,11 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     @Override
     public boolean contains(Object searched) {
         return innerConst.contains(searched);
+    }
+
+    @Override
+    public boolean containsSorted(E searched, Comparator<? super E> cmp) {
+        return innerConst.containsSorted(searched, cmp);
     }
 
     @Override
@@ -174,6 +180,11 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     @Override
     public boolean isEmpty() {
         return innerConst.isEmpty();
+    }
+
+    @Override
+    public int insertionIndexOf(E element, Comparator<? super E> cmp) {
+        return innerConst.insertionIndexOf(element, cmp);
     }
 
     @Override
@@ -310,11 +321,11 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public synchronized int removeSorted(E element, Comparator<? super E> cmp) {
-        int i = inner.removeSorted(element, cmp);
-        if (i >= 0)
+    public synchronized boolean removeSorted(E element, Comparator<? super E> cmp) {
+        boolean changed = inner.removeSorted(element, cmp);
+        if (changed)
             innerConst = inner.clone();
-        return i;
+        return changed;
     }
 
     @Override

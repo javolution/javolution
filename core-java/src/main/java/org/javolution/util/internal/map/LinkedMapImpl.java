@@ -10,8 +10,10 @@ package org.javolution.util.internal.map;
 
 import java.util.Iterator;
 
+import org.javolution.util.ConstMap;
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
+import org.javolution.util.FractalTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -21,17 +23,11 @@ import org.javolution.util.function.Order;
 public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K, V> inner;
-    private final FastTable<Entry<K,V>> insertionTable;
+    private FastMap<K, V> inner;
+    private FastTable<Entry<K, V>> insertionTable = new FractalTable<Entry<K, V>>(Equality.IDENTITY);
 
     public LinkedMapImpl(FastMap<K, V> inner) {
         this.inner = inner;
-        insertionTable = FastTable.newTable();
-    }
-
-    private LinkedMapImpl(FastMap<K, V> inner, FastTable<Entry<K,V>> insertionTable) {
-        this.inner = inner;
-        this.insertionTable = insertionTable;
     }
 
     @Override
@@ -42,12 +38,10 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public LinkedMapImpl<K, V> clone() {
-        return new LinkedMapImpl<K, V>(inner.clone(), insertionTable.clone());
-    }
-
-    @Override
-    public Order<? super K> comparator() {
-        return inner.comparator();
+        LinkedMapImpl<K, V> copy = (LinkedMapImpl<K, V>) super.clone();
+        copy.inner = inner.clone();
+        copy.insertionTable = insertionTable.clone();
+        return copy;
     }
 
     @Override
@@ -57,15 +51,27 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
-        int i = indexOfKey(fromKey);
-        if (i < 0)
-            throw new IllegalArgumentException("Not found: " + fromKey);
-        return insertionTable.subTable(0, i+1).reversed().unmodifiable().iterator();
+        Entry<K, V> start = inner.floorEntry(fromKey);
+        if (start == null)
+            return ConstMap.<K, V>empty().iterator();
+        FastTable<Entry<K, V>> reversedTable = insertionTable.reversed();
+        int index = reversedTable.indexOf(start);
+        if (index < 0)
+            throw new AssertionError();
+        return reversedTable.unmodifiable().listIterator(index);
     }
-    
+
     @Override
     public Entry<K, V> getEntry(K key) {
         return inner.getEntry(key);
+    }
+
+    // Returns the index of the specified entry.
+    private int indexOf(Entry<K, V> entry) {
+        for (int i = 0, n = insertionTable.size(); i < n; i++)
+            if (insertionTable.get(i) == entry)
+                return i;
+        return -1;
     }
 
     @Override
@@ -80,29 +86,46 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
 
     @Override
     public Iterator<Entry<K, V>> iterator(K fromKey) {
-        int i = indexOfKey(fromKey);
-        if (i < 0)
-            throw new IllegalArgumentException("Not found: " + fromKey);
-        return insertionTable.subTable(i, insertionTable.size()).unmodifiable().iterator();
+        Entry<K, V> start = inner.ceilingEntry(fromKey);
+        if (start == null)
+            return ConstMap.<K, V>empty().iterator();
+        int index = insertionTable.indexOf(start);
+        if (index < 0)
+            throw new AssertionError();
+        return insertionTable.unmodifiable().listIterator(index);
+    }
+
+    @Override
+    public Order<? super K> keyOrder() {
+        return inner.keyOrder();
     }
 
     @Override
     public V put(K key, V value) {
-        Entry<K, V> entry = inner.getEntry(key);
-        if (entry != null)
-            return entry.setValue(value);
-        inner.put(key, value);
-        insertionTable.add(inner.getEntry(key));
-        return null; 
+        Entry<K, V> entry = new Entry<K,V>(key, value);
+        Entry<K, V> previous = putEntry(entry);
+        return (previous != null) ? previous.getValue() : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Entry<K, V> putEntry(Entry<? extends K, ? extends V> entry) {
+        Entry<K, V> previous = inner.putEntry(entry);
+        if (previous != null) {
+            int i = indexOf(previous);
+            insertionTable.set(i, (Entry<K, V>) entry);
+        } else {
+            insertionTable.add((Entry<K, V>) entry);
+        }
+        return previous;
     }
 
     @Override
     public Entry<K, V> removeEntry(K key) {
-        Entry<K, V> entry = inner.removeEntry(key);
-        if (entry == null) return null;
-        int i = indexOfKey(key);
-        insertionTable.remove(i);
-        return entry;
+        Entry<K, V> previous = inner.removeEntry(key);
+        if (previous != null)
+            insertionTable.remove(indexOf(previous));
+        return previous;
     }
 
     @Override
@@ -113,14 +136,6 @@ public final class LinkedMapImpl<K, V> extends FastMap<K, V> {
     @Override
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality();
-    }
-
-    // Returns the index of the entry having the specified key.
-    private int indexOfKey(K key) {
-        final Order<? super K> cmp = inner.comparator();
-        for (int i=0, n = insertionTable.size(); i < n; i++)
-            if (cmp.areEqual(insertionTable.get(i).getKey(), key)) return i;
-        return -1;
     }
 
 }

@@ -28,7 +28,7 @@ public enum IndexOrderImpl implements Order<Index> {
     public int compare(Index left, Index right) {
         int leftValue = left.intValue();
         int rightValue = right.intValue();
-        return (leftValue == rightValue) ? 0 : MathLib.unsigned(leftValue) < MathLib.unsigned(rightValue) ? -1 : 1;
+        return (leftValue == rightValue) ? 0 : MathLib.unsignedLessThan(leftValue, rightValue) ? -1 : 1;
     }
 
     @Override

@@ -77,8 +77,8 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return innerConst.comparator();
+    public Order<? super E> order() {
+        return innerConst.order();
     }
 
     @Override

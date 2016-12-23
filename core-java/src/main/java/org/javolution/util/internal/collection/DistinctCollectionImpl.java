@@ -12,7 +12,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.javolution.util.FastCollection;
-import org.javolution.util.FastSet;
+import org.javolution.util.FractalTable;
+import org.javolution.util.SparseSet;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
@@ -24,14 +25,16 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private final FastCollection<E> inner;
+    private final Equality<? super E> equality;
 
-    public DistinctCollectionImpl(FastCollection<E> inner) {
+    public DistinctCollectionImpl(FastCollection<E> inner, Equality<? super E> equality) {
         this.inner = inner;
+        this.equality = equality;
     }
 
     @Override
     public boolean add(E element) {
-        return inner.contains(element) ? false : inner.add(element);
+        return contains(element) ? false : inner.add(element);
     }
 
     @Override
@@ -41,12 +44,12 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public DistinctCollectionImpl<E> clone() {
-        return new DistinctCollectionImpl<E>(inner.clone());
+        return new DistinctCollectionImpl<E>(inner.clone(), equality);
     }
 
     @Override
     public Equality<? super E> equality() {
-        return inner.equality();
+        return equality;
     }
 
     @Override
@@ -54,13 +57,11 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
         return inner.isEmpty();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Iterator<E> iterator() {
-        Equality<? super E> equality = equality();
-        if (!(equality instanceof Order))
-            throw new UnsupportedOperationException("Distinct collections require an ordered equality !");
-        @SuppressWarnings("unchecked")
-        final FastSet<Object> iterated = FastSet.newSet((Order<Object>) equality);
+        final FastCollection<E> iterated = equality instanceof Order ? new SparseSet<E>((Order<E>)equality) :
+            new FractalTable<E>(equality);
         return new Iterator<E>() {
             Iterator<E> itr = inner.iterator();
             boolean currentIsNext;
@@ -99,8 +100,6 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
     @Override
     public boolean remove(final Object searched) { // Remove all occurrences.
         return inner.removeIf(new Predicate<E>() {
-            Equality<? super E> equality = equality();
-
             @SuppressWarnings("unchecked")
             @Override
             public boolean test(E param) {

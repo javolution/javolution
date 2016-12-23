@@ -47,8 +47,8 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> comparator() {
-        return inner.comparator();
+    public Order<? super E> order() {
+        return inner.order();
     }
 
     @SuppressWarnings("unchecked")

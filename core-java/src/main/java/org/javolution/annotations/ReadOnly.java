@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software is
  * freely granted, provided that this notice is preserved.
  */
-package org.javolution.lang;
+package org.javolution.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -16,29 +16,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Indicates that the state of a class instance, a static field, a method return value or a parameter 
- *     will not change ever. For objects tagged {@code Constant}, defensive copy is unnecessary. 
+ * <p> Indicates that any attempt to change the state of a class instance, a static field, a method return value 
+ *     or a parameter is forbidden. For elements tagged {@code ReadOnly}, the compiler may flag errors if an attempt 
+ *     to call a method modifying the state of the object is made. 
  * <pre>{@code
- * {@literal@}Constant(comment="Immutable")
- * class Polygon extends Shape  { 
- *     private Point2D[] vertices;
- *     public Polygon({@literal@}Constant Point2D... vertices) { 
- *         this.vertices = vertices; // No defensive copying required.
- *     }
- *     {@literal@}Constant 
- *     List<Point2D> getVertices() { 
- *         return ConstantTable.of(vertices); // Unmodifiable array wrapper. 
- *     }
- * }}</pre></p>
+ * {@literal@}ReadOnly 
+ * class ConstTable<E> extends FastTable<E> implements Immutable { ... }
  * 
- * <p> The constant annotation is primarily for API documentation purpose but static analyzers can be 
- *     used to detect rules violations. 
- * <pre>{@code
- * Polygon triangle = new Polygon(p1, p2, p3); // Ok, literals are always constant.
- * Point2D[] vertices = new Point2D[] { p1, p2, p3 };
- * triangle = new Polygon(vertices); // vertices object is now tagged as constant.
- * vertices[0] = null; // Rule violation!     
+ * {@literal@}ReadOnly Document [][] docs1; // Array of arrays of read-only documents
+ * Document {@literal@}ReadOnly [][] docs2; // Read-only array of arrays of documents (JDK 1.8+)
+ * Document[] {@literal@}ReadOnly [] docs3; // Array of read-only arrays of documents (JDK 1.8+)
  * }</pre></p>
+ * 
+ * <p> Note: Read-only classes for which the entire reachable graph is read-only may implement the 
+ *           {@link org.javolution.lang.Immutable} interface.</p>
  *   
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0 September 13, 2015
@@ -48,7 +39,7 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,
 	       ElementType.LOCAL_VARIABLE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Constant  {
+public @interface ReadOnly  {
 
     /**
      * Indicates if this element is constant (default {@code true}).

@@ -9,9 +9,9 @@
 package org.javolution.util.internal.map;
 
 import java.util.Iterator;
-import java.util.Map.Entry;
 
 import org.javolution.util.FastMap;
+import org.javolution.util.FastMap.Entry;
 import org.javolution.util.FastSet;
 import org.javolution.util.function.Order;
 
@@ -21,12 +21,11 @@ import org.javolution.util.function.Order;
 public final class KeySetImpl<K, V> extends FastSet<K> {
 
     /** The generic iterator over the map keys. */
-    private class KeyIterator implements Iterator<K> {
+    private static class KeyIterator<K,V> implements Iterator<K> {
         final Iterator<Entry<K, V>> mapItr;
-        private Entry<K,V> next;
 
-        public KeyIterator(Iterator<Entry<K, V>> mapItr) {
-            this.mapItr = mapItr;
+        public KeyIterator(Iterator<Entry<K, V>> iterator) {
+            this.mapItr = iterator;
         }
 
         @Override
@@ -36,15 +35,12 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
         @Override
         public K next() {
-            next = mapItr.next();
-            return next.getKey();
+            return mapItr.next().getKey();
         }
 
         @Override
         public void remove() {
-            if (next == null) throw new IllegalArgumentException();
-            map.remove(next.getKey());
-            next = null;
+            mapItr.remove();
         }
     }
     
@@ -57,7 +53,9 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
     @Override
     public boolean add(K key) {
-        throw new UnsupportedOperationException("FastMap.keySet() does not support adding new keys.");
+        if (map.containsKey(key)) return false;
+        map.put(key, null);
+        return true;
     }
 
     @Override
@@ -71,8 +69,8 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return map.comparator();
+    public Order<? super K> order() {
+        return map.keyOrder();
     }
 
     @Override
@@ -82,12 +80,12 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
     @Override
     public Iterator<K> descendingIterator() {
-        return new KeyIterator(map.descendingIterator());
+        return new KeyIterator<K,V>(map.descendingIterator());
     }
 
     @Override
     public Iterator<K> descendingIterator(K fromElement) {
-        return new KeyIterator(map.descendingIterator(fromElement));
+        return new KeyIterator<K,V>(map.descendingIterator(fromElement));
     }
 
     @Override
@@ -97,12 +95,12 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
     @Override
     public Iterator<K> iterator() {
-        return new KeyIterator(map.iterator());
+        return new KeyIterator<K,V>(map.iterator());
     }
 
     @Override
     public Iterator<K> iterator(K fromElement) {
-        return new KeyIterator(map.iterator(fromElement));
+        return new KeyIterator<K,V>(map.iterator(fromElement));
     }
 
     @SuppressWarnings("unchecked")

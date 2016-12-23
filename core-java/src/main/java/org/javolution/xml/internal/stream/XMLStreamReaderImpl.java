@@ -15,8 +15,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
+import org.javolution.annotations.Realtime;
 import org.javolution.io.UTF8StreamReader;
-import org.javolution.lang.Realtime;
 import org.javolution.text.CharArray;
 import org.javolution.xml.sax.Attributes;
 import org.javolution.xml.stream.Location;

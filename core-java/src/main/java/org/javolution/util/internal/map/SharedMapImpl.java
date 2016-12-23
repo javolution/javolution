@@ -76,8 +76,8 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Order<? super K> comparator() {
-        return inner.comparator(); // Immutable.
+    public Order<? super K> keyOrder() {
+        return inner.keyOrder(); // Immutable.
     }
 
     @Override
@@ -321,10 +321,10 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public void putAll(K key, V value, Object... others) {
+    public void putAll(Object... others) {
         lock.writeLock.lock();
         try {
-            inner.putAll(key, value, others);
+            inner.putAll(others);
         } finally {
             lock.writeLock.unlock();
         }
@@ -423,6 +423,16 @@ public final class SharedMapImpl<K, V> extends FastMap<K, V> {
     @Override
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality(); // Immutable.
+    }
+
+    @Override
+    public Entry<K, V> putEntry(Entry<? extends K, ? extends V> entry) {
+        lock.writeLock.lock();
+        try {
+            return inner.putEntry(entry);
+        } finally {
+            lock.writeLock.unlock();
+        }
     }
 
 }

@@ -12,12 +12,11 @@ import java.io.Serializable;
 import org.javolution.lang.MathLib;
 
 /**
- * <p> An {@link Appendable} text whose capacity expands 
- *     gently without incurring expensive resize/copy operations ever.</p>
+ * <p> An {@link Appendable} text whose capacity expands gently without incurring expensive 
+ *     resize/copy operations ever.</p>
  *     
- * <p> This class is not intended for large documents manipulations which 
- *     should be performed with the {@link Text} class directly 
- *     (<code>O(Log(n))</code> {@link Text#insert insertion} and 
+ * <p> This class is not intended for large documents manipulations which should be performed with the {@link Text}
+ *     class directly (<code>O(Log(n))</code> {@link Text#insert insertion} and 
  *     {@link Text#delete deletion} capabilities).</p>
  *     
  * <p> The textual format of any appended object is retrieved 
@@ -209,8 +208,7 @@ public class TextBuilder implements Appendable, CharSequence, Serializable {
 
     /**
      * Appends the textual representation of the specified object. 
-     * This method is equivalent to 
-     * {@code TextContext.getFormat(obj.getClass()).format(obj, this)}
+     * This method is equivalent to {@code TextContext.getFormat(obj.getClass()).format(obj, this)}
      * @param obj Object to append
      * @return Reference to this TextBuilder
      */

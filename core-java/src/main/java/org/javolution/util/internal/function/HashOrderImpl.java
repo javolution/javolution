@@ -23,16 +23,17 @@ public enum HashOrderImpl implements Order<Object> {
         return (left == right) || (left != null && left.equals(right));
     }
 
+    /** Order based on hash value.*/
     @Override
     public int compare(Object left, Object right) {
-        int hashLeft = (left != null) ? left.hashCode() : 0;
-        int hashRight = (right != null) ? right.hashCode() : 0;
-        return (hashLeft == hashRight) ? 0 : MathLib.unsigned(hashLeft) < MathLib.unsigned(hashRight) ? -1 : 1;
+        int hashLeft = left.hashCode();
+        int hashRight = right.hashCode();
+        return (hashLeft == hashRight) ? 0 : MathLib.unsignedLessThan(hashLeft, hashRight) ? -1 : 1;
     }
 
     @Override
     public int indexOf(Object object) { // Unsigned 32-bits
-        return (object != null) ? object.hashCode() : 0;
+        return object.hashCode();
     }
 
     @Override
