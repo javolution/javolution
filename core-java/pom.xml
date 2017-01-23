@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>org.javolution</groupId>
 		<artifactId>javolution</artifactId>
-		<version>7.0.0-SNAPSHOT</version> 
+		<version>7.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>javolution-core-java</artifactId>
 	<packaging>bundle</packaging>
@@ -108,6 +108,7 @@
 				<configuration>
 					<excludePackageNames>javax.*,*.internal</excludePackageNames>
 					<docfilessubdirs>true</docfilessubdirs>
+					<failOnError>false</failOnError>
 				</configuration>
 				<executions>
 					<execution>
