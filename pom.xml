@@ -23,7 +23,7 @@
     <!--     Project description (including license)          -->
     <!-- ==================================================== -->
     <groupId>org.javolution</groupId>
-    <artifactId>javolution-core-java</artifactId>
+    <artifactId>javolution</artifactId>
     <packaging>pom</packaging>
     <version>7.0.0-SNAPSHOT</version> 
     <name>Javolution</name>
