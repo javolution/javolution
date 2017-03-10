@@ -190,7 +190,7 @@
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <B><I>Javolution</I></B> real-time goals are simple: <B>To make your application faster and more time predictable!</B><BR>
                                 <UL>
-                                    <LI> <B>High-Performance -</B> <IMG SRC="css/img/new.gif"/> Hardware accelerated computing (GPUs) with   
+                                    <LI> <B>High-Performance -</B> Hardware accelerated computing (GPUs) with   
                                          <A HREF="apidocs/javolution/context/ComputeContext.html">ComputeContext</A>.</LI>
                                     <LI> <B>Minimalistic -</B> <A HREF="apidocs/javolution/util/package-summary.html#package_description">Collection</A> classes, 
                                          supporting custom <A HREF="apidocs/javolution/util/FastCollection.html">views</A>,
@@ -339,7 +339,7 @@
                             <TD HEIGHT="29" BACKGROUND="css/img/getproduct_bg.jpg">
                                 <DIV ALIGN="center"> <IMG SRC="css/img/new.gif"/>
                                 <SPAN CLASS="quotetext"><B><SPAN CLASS="style2"><B>&nbsp;&nbsp;&nbsp;</B></SPAN></B></SPAN><SPAN
-                                        CLASS="style16">Javolution Version 7.0 - September 1st, 2016 (Soon!)</SPAN></DIV>
+                                        CLASS="style16">Javolution Version 7.0 - March 19, 2017 (Soon!)</SPAN></DIV>
                             </TD>
                         <TR>
                             <TD BGCOLOR="#F4F4F2">
@@ -347,10 +347,10 @@
                                                                                                   BORDER="0"
                                                                                                   SRC="css/img/browseapi.jpg"
                                                                                                   WIDTH="198"></A>
-                                    <A HREF="https://github.com/javolution/javolution"><IMG HEIGHT="51" BORDER="0"
+                                    <A HREF="https://github.com/javolution"><IMG HEIGHT="51" BORDER="0"
                                                                                                SRC="css/img/getsource.jpg"
                                                                                                WIDTH="194"></A>
-                                    <A HREF="https://maven.java.net/content/repositories/snapshots/org/javolution/"><IMG HEIGHT="51" BORDER="0"
+                                    <A HREF="https://mvnrepository.com/artifact/org.javolution/javolution"><IMG HEIGHT="51" BORDER="0"
                                                                                                  SRC="css/img/getlibrary.jpg"
                                                                                                  WIDTH="198"></A></DIV></TD>
                         </TR>
@@ -416,14 +416,14 @@
                                 with the following dependency in your POM.xml
                                 <pre>      &lt;dependency&gt;
           &lt;groupId&gt;org.javolution&lt;/groupId&gt;
-          &lt;artifactId&gt;javolution-core-java&lt;/artifactId&gt;
+          &lt;artifactId&gt;javolution&lt;/artifactId&gt;
           &lt;version&gt;7.0.0&lt;/version&gt;
       &lt;/dependency&gt;  </pre>
-      The native dynamic library (.dll or .so) is generated from the sources using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
-      <BR>
-          
-                               Released artifacts are available from the maven central repository, 
-                                all snapshots (with sources/javadoc) are deployed to the <A HREF="https://maven.java.net/content/repositories/snapshots/org/javolution">java.net repository</A>
+      The Javolution project is currently being migrated to <A HREF="https://github.com/javolution">GitHub</A>
+      in the form of three sub-projects (Java, C++ mirror and C++ Test/Benchmark). The C++ mirror library is a static library 
+      which can be install/deployed  
+      using the <A HREF="http://mojo.codehaus.org/maven-native/native-maven-plugin/">Maven Native Plugin</A> 
+      (Visual C++ and Linux platform supported).
                             </TD></TR>
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">The standard Java  distribution is an OSGi bundle 
@@ -449,23 +449,23 @@
                             <TD>
                                 <DIV CLASS="style9" ALIGN="center">java.lang
                                 </DIV></TD>
-                            <TD CLASS="style9">javolution::lang</TD>
+                            <TD CLASS="style9">java::lang</TD>
                             <TD CLASS="style9">Includes Thread, Class&lt;T&gt, Enum&lt;T&gt; etc.
                                 </TD>
                         </TR>
                          <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
                             <TD>
-                                <DIV CLASS="style9" ALIGN="center">java.util
+                                <DIV CLASS="style9" ALIGN="center">org.javolution
                                 </DIV></TD>
-                            <TD CLASS="style9">javolution::util</TD>
-                            <TD CLASS="style9">Holds standard Java interfaces and Javolution implementations: FastMap&lt;T&gt;, FastTable&lt;T&gt;, FastSet&lt;T&gt; etc</TD>
+                            <TD CLASS="style9">org::javolution</TD>
+                            <TD CLASS="style9">Holds Javolution classes: FastMap&lt;T&gt;, FastTable&lt;T&gt;, FastSet&lt;T&gt; etc</TD>
                         </TR>
                         <TR BGCOLOR="#FFFFFF" CLASS="quotetable2">
                             <TD>
                                 <DIV CLASS="style9" ALIGN="center">org.osgi
                                 </DIV></TD>
                             <TD CLASS="style9">org::osgi</TD>
-                            <TD CLASS="style9">Also provides an embedded OSGi runtime (light).
+                            <TD CLASS="style9">OSGi Support.
                                 </TD>
                         </TR>
                         <TR BGCOLOR="#F8FDEE" CLASS="quotetable2">
@@ -473,17 +473,15 @@
                                 <DIV CLASS="style9" ALIGN="center">junit.framework
                                 </DIV></TD>
                             <TD CLASS="style9">junit::framework</TD>
-                            <TD CLASS="style9">Usage examples are provided with Javolution source distribution (module test-cpp)</TD>
+                            <TD CLASS="style9">JUnit 3.8 port (public domain)</TD>
                         </TR>                         
                     </TABLE>
                     <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="4"
                            WIDTH="90%">
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
-                                Developpers may <A HREF="http://java.net/projects/javolution/sources">download</A> the <code>test-cpp</code> maven submodule which illustrates the use of OSGi and JUnit in C++
-                                Both libraries (Java and C++) provide benchmark tests.
-                                <A HREF="doc/benchmark_java.html">Here</A> are the Java benchmark results and 
-                                <A HREF="doc/benchmark_cpp.html">here</A> are the C++ native test results.</TD>
+                                Developers may <A HREF="http://github.com/javolution/javolution-cpp-test">download</A>
+                                 the <code>cpp-test</code> project which illustrates the use of OSGi and JUnit in C++.</TD>
                         </TR>
                     </TABLE>
 
@@ -544,18 +542,16 @@
                            WIDTH="89%">
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top"><SPAN CLASS="style13">Runtime
-                                    Environment:</SPAN> <B>Any </B> (Android, J2SE, Native Windows/Linux/Solaris)<BR>
-                                <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including Visual C++, GCC, SOLARIS Studio)<BR>
+                                    Environment:</SPAN> <B>Any </B> (Android, J2SE, Native Windows/Linux)<BR>
+                                <SPAN CLASS="style13">Compilers:</SPAN> <B>All </B> (including Visual C++, GCC)<BR>
                                 <SPAN CLASS="style13">Build tool: </SPAN><A HREF="http://maven.apache.org/">Maven<BR> </A>
                                 <SPAN CLASS="style13">OpenCL Binding: </SPAN><A HREF="https://code.google.com/p/javacl/">JavaCL<BR> </A>
-                                <SPAN CLASS="style13">Issues Tracking: </SPAN><A HREF="https://java.net/jira/browse/JAVOLUTION">JIRA (java.net)</A> <BR>
+                                <SPAN CLASS="style13">Issues Tracking: </SPAN><A HREF="https://github.com/javolution/javolution/issues">GitHub Issue</A> <BR>
                                 <SPAN CLASS="style13">Style Guide:</SPAN>
                                 <A HREF="doc/coding_standard.txt">Coding Standard Addendum</A>.<BR>
                                 <SPAN CLASS="style13">Preferred Environment:</SPAN>
                                 <A HREF="http://www.eclipse.org/">Eclipse</A> (Import Project from Git, e.g. 
                                 <code>https://github.com/javolution/javolution</code>).<BR>
-                                <SPAN CLASS="style13">Others:</SPAN>
-                                <A HREF="http://javolution.org/colapi/index.html">Colapi</A> - Maven Plugin to format/colorize Java code in API documentation.</TD>
                         </TR>
                     </TABLE>
                     <BR>
@@ -733,7 +729,7 @@
                         <TR>
                             <TD CLASS="simplespacer_body style14" VALIGN="top">
                                 <UL>
-                                    <LI CLASS="simplespacer_body"><B>September 1st, 2016: Javolution 7.0</B><BR>
+                                    <LI CLASS="simplespacer_body"><B>March 19, 2017: Javolution 7.0</B><BR>
                                         Moved to <A HREF="https://github.com/javolution/javolution">GitHub</A>
                                         Moved packages from javolution.* to org.javolution.*
                                     </LI>
@@ -767,16 +763,10 @@
                     <TABLE ALIGN="center" BORDER="0" CELLSPACING="0" CELLPADDING="10"
                            WIDTH="92%">
                         <TR>
-                            <TD CLASS="simplespacer_body style14" >
-                                <A HREF="http://java.net/projects/javolution"><IMG BORDER="0" SRC="css/img/javanet.gif" WIDTH="90" HEIGHT="31"></A>
-                            </TD>
                             <TD CLASS="simplespacer_body style14">
-                                <A HREF="http://www.javalobby.org/" TITLE="Javalobby: Java Community"><IMG src="css/img/javalobby-88x31.gif" alt="Javalobby.org" WIDTH="88" HEIGHT="31" BORDER="0"></A>
-                            </TD>
-                            <TD CLASS="simplespacer_body style14">
-                                Comments      : <A HREF="http://java.net/projects/javolution/lists">Mailing Lists</A><BR>
-                                Project Owner : <A HREF="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle </A><BR>
-                                Revision      : August 19th, 2016<BR>
+                                Comments      : <A HREF="mailto:owner@javolution.org">owner@javolution.org</A><BR>
+                                Project Owner : <A HREF="mailto:owner@javolution.org">Jean-Marie Dautelle </A><BR>
+                                Revision      : February 27th, 2017<BR>
                         </TR>
                     </TABLE>
                     <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" WIDTH="100%">
