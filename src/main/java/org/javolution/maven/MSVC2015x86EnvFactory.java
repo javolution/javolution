@@ -4,14 +4,11 @@ import org.codehaus.mojo.natives.msvc.AbstractMSVCEnvFactory;
 import java.util.Map;
 import org.codehaus.mojo.natives.NativeBuildException;
 
-public class MSVC2015x86EnvFactory extends AbstractMSVCEnvFactory
-{
+public class MSVC2015x86EnvFactory extends AbstractMSVCEnvFactory {
 
     @SuppressWarnings("rawtypes")
-    protected Map createEnvs()
-        throws NativeBuildException
-    {
-        return this.createEnvs( "VS140COMNTOOLS", "x86" );
+    protected Map createEnvs() throws NativeBuildException {
+        return this.createEnvs("VS140COMNTOOLS", "x86");
     }
 
 }

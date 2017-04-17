@@ -9,30 +9,29 @@
 package org.javolution.context;
 
 import org.javolution.annotations.Realtime;
-import org.javolution.context.SecurityContext.Permission;
 
 /**
- * <p> The parent class for all contexts. 
- *     Contexts allow for cross cutting concerns (performance, logging, 
- *     security, ...) to be addressed at run-time through OSGi published 
- *     services without polluting the application code 
- *     (<a href="http://en.wikipedia.org/wiki/Separation_of_concerns">
- *     Separation of Concerns</a>).</p>
+ * The parent class for all contexts. Contexts allow for cross cutting concerns (performance, logging, security, ...) 
+ * to be addressed at run-time through OSGi published services without polluting the application code 
+ * ([Separation of Concerns]).</p>
  *     
- * <p> Context configuration is performed in a {@code try, finally}
- *     block statement and impacts only the current thread (although inherited 
- *     by inner {@link ConcurrentContext} threads). 
- * {@code
- * AnyContext ctx = AnyContext.enter(); // Enters a context scope. 
+ * Context configuration is performed in a `try, finally` block statement and impacts only the current thread and 
+ * inner {@link ConcurrentContext concurrent} threads.
+ *  
+ * ```java
+ * LogContext ctx = LogContext.enter(); // Enters a context scope. 
  * try {                             
- *     ctx.configure(...); // Local configuration (optional).
+ *     ctx.setLevel(Level.WARNING); // Local configuration (optional).
  *     ... // Current thread executes using the configured context.
  * } finally {
- *     ctx.exit(); 
- * }}</p>
+ *     ctx.exit(); // Reverts to previous settings.
+ * }
+ * ```
+ * 
+ * [Separation of Concerns]: "http://en.wikipedia.org/wiki/Separation_of_concerns
  *      
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 @Realtime
 public abstract class AbstractContext {
@@ -50,20 +49,21 @@ public abstract class AbstractContext {
     /**
      * Default constructor. 
      */
-    protected AbstractContext() {}
+    protected AbstractContext() {
+    }
 
     /**
-     * @return the current context for the current thread or {@code null}
-     * if this thread has no context (default).
+     * Returns the current context for the current thread or `null` if this thread has no context (default).
      */
     public static AbstractContext current() {
         return AbstractContext.CURRENT.get();
     }
 
     /**
-     * @param <T> type of the context to search for
-     * @param type Class of the type of context to search for
-     * @return the current context of specified type or {@code null} if none. 
+     * Returns the current context of specified type.
+     * 
+     * @param type the type of context to search for.
+     * @return the current context of specified type or `null` if none. 
      */
     @SuppressWarnings("unchecked")
     protected static <T extends AbstractContext> T current(Class<T> type) {
@@ -77,46 +77,11 @@ public abstract class AbstractContext {
     }
 
     /**
-     * <p> Enters the scope of a custom context. This method raises a 
-     *    {@link SecurityException} if the permission to enter contexts of 
-     *     the specified class is not granted. For example, the following
-     *     disallow entering any custom context.
-     *{@code
-     * SecurityContext ctx = SecurityContext.enter(); 
-     * try {
-     *     ctx.revoke(new SecurityContext.Permission(AbstractContext.class, "enter"));
-     *     ... // Cannot enter any custom context.
-     * } finally {
-     *     ctx.exit(); // Back to previous security settings. 
-     * }}</p>   
-     *
-     * @param <T> type of the context to enter
-     * @param  custom the custom context to enter.
-     * @throws IllegalArgumentException if the specified class default constructor
-     *         cannot be instantiated.
-     * @throws SecurityException if {@code SecurityContext.Permission(custom, "enter")} 
-     *         is not granted. 
-     * @return Reference to the entered context
-     * @see    SecurityContext.Permission
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends AbstractContext> T enter(Class<T> custom) {
-        SecurityContext.check(new Permission<T>(custom, "enter"));
-        try {
-            return (T) custom.newInstance().enterInner();
-        } catch (InstantiationException e) {
-            throw new IllegalArgumentException(
-                    "Cannot instantiate instance of " + custom, e);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Cannot access " + custom, e);
-        }
-    }
-
-    /**
-     * <p>Inherits the specified context which becomes the context of the current
-     * thread. This method is particularly useful when creating new threads to 
-     * make them inherits from the context stack of the parent thread.</p>
-     * <pre>{@code
+     * Inherits the specified context which becomes the context of the current thread. 
+     * This method is particularly useful when creating new threads to make them inherits 
+     * from the context stack of the parent thread.
+     * 
+     * ```java
      * //Spawns a new thread inheriting the context of the current thread.
      * MyThread myThread = new MyThread();
      * myThread.inherited = AbstractContext.current(); 
@@ -128,16 +93,17 @@ public abstract class AbstractContext {
      *         AbstractContext.inherit(inherited); // Sets current context. 
      *         ...
      *     }
-     * }}</pre>
-     * @param ctx Context to inherit
+     * }
+     * ```
+     * @param ctx the context to inherit
      */
     public static void inherit(AbstractContext ctx) {
         CURRENT.set(ctx);
     }
 
     /**
-     * Enters the scope of an inner context which becomes the current context; 
-     * the previous current context becomes the outer of this context.
+     * Enters the scope of an inner context which becomes the current context; the previous current context becomes 
+     * the outer of this context.
      *  
      * @return the inner context entered.
      */
@@ -149,34 +115,48 @@ public abstract class AbstractContext {
     }
 
     /**
-     * Exits the scope of this context; the outer of this context becomes  
-     * the current context.
+     * Exits the scope of this context; the outer of this context becomes the current context.
      * 
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
+     * @throws IllegalStateException if this context is not the current context.
      */
     public void exit() {
         if (this != AbstractContext.CURRENT.get())
-            throw new IllegalStateException(
-                    "This context is not the current context");
+            throw new IllegalStateException("This context is not the current context");
         AbstractContext.CURRENT.set(outer);
         outer = null;
     }
 
     /**
-     * Returns the outer context of this context or {@code null} if this 
-     * context has no outer context.
-     * @return Outer Context
+     * Returns the outer context of this context.
+     * 
+     * @return outer context or {@code null} if this context has no outer context.
      */
     protected AbstractContext getOuter() {
         return outer;
     }
 
     /**
-     * Returns a new inner instance of this context inheriting the properties 
-     * of this context. The new instance can be configured independently 
-     * from its parent. 
-     * @return Inner Context
+     * Returns the outer context of this context of specified type.
+     * 
+     * @param type the class of the outer context to return.
+     * @return outer context or {@code null} if this context has no outer context.
+     */
+    @SuppressWarnings("unchecked")
+    protected <T extends AbstractContext> T getOuter(Class<T> type) {
+        AbstractContext ctx = outer;
+        while (ctx != null) {
+            if (type.isInstance(ctx))
+                return (T) ctx;
+            ctx = ctx.outer;
+        }
+        return null;
+    }
+
+    /**
+     * Returns a new inner instance of this context inheriting the properties of this context. 
+     * The new instance can be configured independently from its parent.
+     *  
+     * @return the inner context.
      */
     protected abstract AbstractContext inner();
 

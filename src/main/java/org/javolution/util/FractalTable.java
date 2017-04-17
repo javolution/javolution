@@ -29,8 +29,8 @@ public class FractalTable<E> extends FastTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version. 
     private final Equality<? super E> equality;
-    private FractalArray<E> array = FractalArray.empty();
-    private int size;
+    private FractalArray<E> array = FractalArray.newArray();
+    private int size; // Keeps track of the size since fractal arrays are unbounded.
 
     /**
      * Creates an empty fractal table.
@@ -38,31 +38,31 @@ public class FractalTable<E> extends FastTable<E> {
     public FractalTable() {
         this(Equality.DEFAULT);
     }
- 
+
     /**
      * Creates an empty fractal table using the specified equality for elements equality comparisons.
      */
     public FractalTable(Equality<? super E> equality) {
         this.equality = equality;
     }
- 
 
-   @Override
+    @Override
     public boolean add(E element) {
-        addLast(element);
+        array = array.set(size++, element);
         return true;
     }
 
     @Override
     public void add(int index, E element) {
-        if ((index < 0) || (index > size)) indexError(index);
-        array = array.shiftRight(element, index, size - index);
+        if (index > size)
+            indexError(index);
+        array = array.add(index, element);
         size++;
     }
-
+    
     @Override
     public void addFirst(E element) {
-        array = array.shiftRight(element, 0, size);
+        array = array.add(0, element);
         size++;
     }
 
@@ -73,16 +73,16 @@ public class FractalTable<E> extends FastTable<E> {
 
     @Override
     public void clear() {
-        array = FractalArray.empty();
+        array = FractalArray.newArray();
         size = 0;
     }
 
-	@Override
-	public FractalTable<E> clone() {
-	    FractalTable<E> copy = (FractalTable<E>) super.clone();
-		copy.array = array.clone();
-		return copy;
-	}
+    @Override
+    public FractalTable<E> clone() {
+        FractalTable<E> copy = (FractalTable<E>) super.clone();
+        copy.array = array.clone();
+        return copy;
+    }
 
     @Override
     public Equality<? super E> equality() {
@@ -91,46 +91,54 @@ public class FractalTable<E> extends FastTable<E> {
 
     @Override
     public E get(int index) {
-        if ((index < 0) && (index >= size)) indexError(index);
-        return (E) array.get(index);
+        if (index >= size)
+            indexError(index);
+        return array.get(index);
     }
 
     @Override
     public E getFirst() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         return get(0);
     }
 
     @Override
     public E getLast() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         return get(size - 1);
     }
 
     @Override
-	public boolean isEmpty() {
-		return size == 0;
-	}
+    public boolean isEmpty() {
+        return size == 0;
+    }
 
     @Override
     public E remove(int index) {
-        if ((index < 0) || (index >= size)) indexError(index);
-        E removed = (E) array.get(index);
-        array = array.shiftLeft(null, --size, size - index);
+        if (index >= size)
+            indexError(index);
+        E removed = array.get(index);
+        array = array.remove(index);
+        --size;
         return removed;
     }
 
     @Override
     public E removeFirst() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         E first = array.get(0);
-        array = array.shiftLeft(null, --size, size);
+        array = array.remove(0);
+        --size;
         return first;
     }
 
     @Override
     public E removeLast() {
-        if (size == 0) emptyError();
+        if (size == 0)
+            emptyError();
         E last = array.get(--size);
         array = array.set(size, null);
         return last;
@@ -138,7 +146,8 @@ public class FractalTable<E> extends FastTable<E> {
 
     @Override
     public E set(int index, E element) {
-        if ((index < 0) && (index >= size)) indexError(index);
+        if (index >= size)
+            indexError(index);
         E previous = array.get(index);
         array = array.set(index, element);
         return previous;
@@ -148,5 +157,5 @@ public class FractalTable<E> extends FastTable<E> {
     public int size() {
         return size;
     }
- 
+
 }

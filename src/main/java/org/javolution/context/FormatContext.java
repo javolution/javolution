@@ -9,13 +9,13 @@
 package org.javolution.context;
 
 /**
- * <p> The parent class for all serializer/deserializer contexts.
- *     The context format type (plain text, XML, JSON, ...) is specified by 
- *     sub-classes. Classes may identify the plain text format through the  
- *     {@link javolution.text.DefaultTextFormat DefaultTextFormat} annotation
- *     or the default XML format through the 
- *     {@link javolution.xml.DefaultXMLFormat DefaultXMLFormat} annotation.
- * {@code
+ * The parent class for all serializer/deserializer contexts. The context format type (plain text, XML, JSON, ...) 
+ * is specified by sub-classes. Classes may identify the plain text format through the 
+ * {@link javolution.text.DefaultTextFormat DefaultTextFormat} annotation
+ * or the default XML format through the 
+ * {@link javolution.xml.DefaultXMLFormat DefaultXMLFormat} annotation.
+ * 
+ * ```java
  * {@literal@}DefaultTextFormat(Complex.Cartesian.class)
  * {@literal@}DefaultXMLFormat(Complex.XML.class)
  * public Complex {
@@ -24,10 +24,10 @@ package org.javolution.context;
  *     public static final class XML extends javolution.text.XMLFormat<Complex> { ... }
  *     ...
  * }
- * }</p>
+ * ```
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0 December 12, 2012
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 public abstract class FormatContext extends AbstractContext {
 

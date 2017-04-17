@@ -15,13 +15,12 @@ import org.javolution.lang.Configurable;
 import org.javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context for persistent storage integrated with OSGi and
- *     {@link SecurityContext}.</p>
+ * A context for persistent storage integrated with OSGi and {@link SecurityContext}.
  *     
- * <p> How the data is going to be stored (database, files) is implementation
- *     dependent. But how the resources are structured (hierarchical, semantics)
- *     is defined by the client implementing the {@link Resource} class. 
- * {@code
+ * How the data is going to be stored (database, files) is implementation dependent. But how the resources are 
+ * structured (hierarchical, semantics) is defined by the client implementing the {@link Resource} class.
+ *  
+ * ```java
  * class SemanticResource<T> extends SemanticEntity implements Resource<T> { ... }
  * ...
  * StorageContext ctx = StorageContext.enter(); // Enters the current storage service.
@@ -35,17 +34,16 @@ import org.javolution.osgi.internal.OSGiServices;
  *     Image logoImg = ctx.read(logoId); // May raise SecurityException. 
  *  } finally {
  *     ctx.exit(); 
- *  }}</p>
+ *  }
+ * ```
  *  
- * <p> Permission to read/write resource values may or not be granted at all 
- *     or only for particular resources. Sensitive data should always be 
- *     encrypted (e.g. using a {@code SecuredStorageContext} sub-class).
- *     There is no limit in the size of the data being stored (except the actual 
- *     storage available). It is nonetheless recommended to split large data 
- *     set in smaller resources to allow for partial/concurrent retrieval.</p> 
+ * Permission to read/write resource values may or not be granted at all or only for particular resources. 
+ * Sensitive data should always be encrypted (e.g. using a `SecuredStorageContext` sub-class).
+ * There is no limit in the size of the data being stored (except the actual storage available). 
+ * It is nonetheless recommended to split large data set in smaller resources to allow for partial/concurrent retrieval. 
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 public abstract class StorageContext extends AbstractContext {
 
@@ -63,8 +61,8 @@ public abstract class StorageContext extends AbstractContext {
             return new File(pathname);
         }
     };
-    
-   /**
+
+    /**
      * A resource identifier. 
      * 
      * @param <T> The resource type (the type of the value stored).
@@ -81,7 +79,8 @@ public abstract class StorageContext extends AbstractContext {
     /**
      * Default constructor.
      */
-    protected StorageContext() {}
+    protected StorageContext() {
+    }
 
     /**
      * Enters and returns a storage context instance.
@@ -101,8 +100,7 @@ public abstract class StorageContext extends AbstractContext {
      *         is not granted ({@code new 
      *         Permission<Resource<V>>(Resource.class, "read", resource)}).
      */
-    public abstract <V extends Serializable> V read(Resource<V> resource)
-            throws SecurityException;
+    public abstract <V extends Serializable> V read(Resource<V> resource) throws SecurityException;
 
     /**
      * Writes the persistent value of the specified resource.
@@ -114,15 +112,15 @@ public abstract class StorageContext extends AbstractContext {
      *         is not granted ({@code new 
      *         Permission<Resource<V>>(Resource.class, "write", resource)}).
      */
-    public abstract <V extends Serializable> void write(Resource<V> resource,
-            V value) throws SecurityException;
+    public abstract <V extends Serializable> void write(Resource<V> resource, V value) throws SecurityException;
 
     /**
      * Returns the current storage context. 
      */
     private static StorageContext currentStorageContext() {
         StorageContext ctx = current(StorageContext.class);
-        if (ctx != null) return ctx;
+        if (ctx != null)
+            return ctx;
         return OSGiServices.getStorageContext();
     }
 }

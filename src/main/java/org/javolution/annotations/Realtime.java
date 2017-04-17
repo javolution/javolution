@@ -16,48 +16,51 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Indicates that an element has strict timing constraints and has a deterministic time behavior.</p>
+ * Indicates that an element has strict timing constraints and has a deterministic time behaviour.
  *  
- * <p> The {@link #limit limit} parameter shows the evolution of the 
- *     <a href="http://en.wikipedia.org/wiki/Worst-case_execution_time"> worst-case execution time</a> of a method with 
+ * The {@link #limit limit} parameter shows the evolution of the [Worst Case Execution Time] of a method with 
  *     the cumulative size of the instance and its inputs (or only the size of the inputs for static methods).    
  *     
- * <pre>{@code
+ * ```java
  * public class FastCollection<E> {
- *     {@literal@}Realtime(limit = LINEAR)
+ *     ​@Realtime(limit = LINEAR)
  *     public boolean contains(Object obj) { ... }
  *     
- *     {@literal@}Realtime(limit = N_SQUARE)
+ *     ​@Realtime(limit = N_SQUARE)
  *     public boolean containsAll(Collection<?> that) { ... }
  *     
- *     {@literal@}Realtime(limit = LINEAR, comment = "Could count the elements (e.g. filtered view).")
+ *     ​@Realtime(limit = LINEAR, comment = "Could count the elements (e.g. filtered view).")
  *     public abstract int size();
- * }}</pre></p>
+ * }
+ * ```
  * 
- * <p> The {@link #concurrency} parameter documents the temporal behavior in case of concurrent access, the default is 
- *     {@code NOT_THREAD_SAFE} which means that external synchronization or coordination is required. 
+ * The {@link #concurrency} parameter documents the temporal behaviour in case of concurrent access, the default is 
+ * {@code NOT_THREAD_SAFE} which means that external synchronisation or coordination is required. 
  *     
- * <pre>{@code
+ * ```java
  * public class MyCache<K,V> { 
  *      final FastMap<K,V> map = FastMap.<K,V>newMap().atomic();
  *      
- *      {@literal@}Realtime(concurrency = LOCK_FREE)
+ *      ​@Realtime(concurrency = LOCK_FREE)
  *      public V get(K key) {
  *          return map.get(key); // Reads over atomic maps are lock-free.
  *      }
  *      
- *      {@literal@}Realtime(concurrency = SYNCHRONIZED)
+ *      ​@Realtime(concurrency = SYNCHRONIZED)
  *      public V put(K key, V value) {
- *          return map.put(key, value); // Writes over atomic maps are synchronized.
+ *          return map.put(key, value); // Writes over atomic maps are synchronised.
  *      }
- * }</pre></p>
+ * }
+ * ```
  *          
- * <p> If a class is annotated {@link Realtime}, all its methods and constructors are assumed the same temporal behavior 
- *     unless explicitly stated. Although Java methods annotations are not inherited, overridden methods 
- *     are expected to have to same or more strenuous timing behavior as their parents (otherwise timing 
- *     assumptions could be broken by an implementation).</p>
+ * If a class is annotated {@link Realtime}, all its methods and constructors are assumed the same temporal behaviour 
+ * unless explicitly stated. Although Java methods annotations are not inherited, overridden methods 
+ * are expected to have to same or more strenuous timing behaviour as their parents (otherwise timing assumptions 
+ * could be broken by an implementation).
  *     
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * [Worst Case Execution Time]: http://en.wikipedia.org/wiki/Worst-case_execution_time
+ * 
+ * @author  <jean-marie@dautelle.com>
  * @version 7.0, November 15, 2016
  * @see <a href="http://en.wikipedia.org/wiki/Real-time_computing">Real-Time Computing</a>
  */
@@ -73,12 +76,12 @@ public @interface Realtime {
     boolean value() default true;
 
     /**
-     * Returns the limit behavior for the worst-case execution time (default {@link Limit#CONSTANT}).
+     * Returns the limit behaviour for the worst-case execution time (default {@link Limit#CONSTANT}).
      */
     Limit limit() default Limit.CONSTANT;
 
     /**
-     * Returns the temporal behavior in case of concurrent access (default {@link Concurrency#NOT_THREAD_SAFE}).
+     * Returns the temporal behaviour in case of concurrent access (default {@link Concurrency#NOT_THREAD_SAFE}).
      */
     Concurrency concurrency() default Concurrency.NOT_THREAD_SAFE;
 
@@ -88,7 +91,7 @@ public @interface Realtime {
     String comment() default "";
 
     /**
-     * Identifies the limit behavior for the worst case execution time.
+     * Identifies the limit behaviour for the worst case execution time.
      */
     public enum Limit {
 
@@ -122,18 +125,18 @@ public @interface Realtime {
         N_SQUARE,
 
         /**
-         * The limit behavior of the worst case execution time is unknown or unspecified.
+         * The limit behaviour of the worst case execution time is unknown or unspecified.
          */
         UNKNOWN,
     }
 
     /**
-     * Identifies the temporal behavior in case of concurrent access (e.g. blocking or not).
+     * Identifies the temporal behaviour in case of concurrent access (e.g. blocking or not).
      */
     public enum Concurrency {
 
         /**
-         * Additional synchronization or coordination on the part of the caller is required.
+         * Additional synchronisation or coordination on the part of the caller is required.
          */
         NOT_THREAD_SAFE,
 
@@ -164,7 +167,7 @@ public @interface Realtime {
         SPINLOCK,
         
         /**
-         * Custom locking behavior (should be documented in the comment field). 
+         * Custom locking behaviour (should be documented in the comment field). 
          */
         CUSTOM,
     }

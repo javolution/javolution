@@ -17,13 +17,13 @@ import java.lang.annotation.Target;
 
 
 /**
- * <p> Specifies the default text format of a class (for parsing/formatting). 
- *     The default format is typically used by the {@link Object#toString()}
- *     method and can be locally overridden in the scope of a   
- *     {@link javolution.text.TextContext TextContext}.</p>
+ * Specifies the default text format of a class (for parsing/formatting).
+ *  
+ * The default format is typically used by the {@link Object#toString()} method and can be locally overridden in 
+ * the scope of a {@link javolution.text.TextContext TextContext}.
  *     
- * [code]
- * @DefaultTextFormat(Complex.Cartesian.class) 
+ * ```java
+ * ​@DefaultTextFormat(Complex.Cartesian.class) 
  * public class Complex {
  *     public String toString() { // Uses the default format unless locally overridden.
  *         return TextContext.toString(this);
@@ -41,9 +41,10 @@ import java.lang.annotation.Target;
  *     System.out.println(complexMatrix); // Displays complex numbers in polar coordinates.
  * } finally {
  *     ctx.exit(); // Exits local context (reverts to previous Cartesian format).
- * }[/code]
+ * }
+ * ```
  *
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @author  <jean-marie@dautelle.com>
  * @version 6.0, July 21, 2013
  */
 @Documented

@@ -16,25 +16,26 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Indicates if the actual processing of a method can be performed concurrently using multiple threads.</p>
+ * Indicates if the actual processing of a method can be performed concurrently using multiple threads.
  *     
- * <pre>{@code
+ * ```java
  * public abstract class FastCollection<E> {
  * 
- *    {@literal@}Parallel
+ *    ​@Parallel
  *    public void forEach(Consumer<? super E> consumer) { ... }
-
- *    {@literal@}Parallel
+ *    
+ *    ​@Parallel
  *    public boolean removeIf(Predicate<? super E> filter) { ... }
  *    
- *    {@literal@}Parallel
+ *    ​@Parallel
  *    public E reduce(BinaryOperator<E> operator) { ... }
  *    
- *    {@literal@}Parallel
+ *    ​@Parallel
  *    public boolean contains(Object obj) { ... }
-* }}</pre></p>
+ * }
+ * ```
  *  
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @author  <jean-marie@dautelle.com>
  * @version 7.0, July 21, 2013
  */
 @Documented
@@ -44,8 +45,7 @@ import java.lang.annotation.Target;
 public @interface Parallel {
 
     /**
-     * Indicates if this element may perform its processing in parallel 
-     * (default {@code true}).
+     * Indicates if this element may perform its processing in parallel (default {@code true}).
      */
     boolean value() default true;
 

@@ -9,21 +9,21 @@
 package org.javolution.lang;
 
 /**
- * <p> An object composed of two items.</p>
+ * An object composed of two items.
  * 
- * <p> Binary types may be encountered as the results of methods calls or as 
- *     {@link org.javolution.util.function functions} parameters.
- * <pre>{@code
+ * Binary types may be encountered as the results of methods calls or as 
+ * {@link org.javolution.util.function functions} parameters.
+ * 
+ * ```java
  * E reduce(Function<Binary<E, E>, E> operator) { ... }
  * Binary<Double, Unit<Mass>> getWeight() { ... }
  * Binary<Integer, Integer> deinterleave2D(int interleaved) { ... } // MathLib.
- * class RowColumn implements Binary<Index, Index> { ... }
- * }</pre></p>
+ * ```
  * 
  * @param <A> the first type.
  * @param <B> the second type.
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
+ * @author <jean-marie@dautelle.com>
  * @version 6.1, February 25, 2015
  * @see Ternary    
  */

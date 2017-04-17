@@ -9,84 +9,82 @@
 package org.javolution.context.internal;
 
 import org.javolution.context.LogContext;
-import org.javolution.osgi.internal.OSGiServices;
 import org.javolution.text.TextBuilder;
 
-import org.osgi.service.log.LogService;
-
 /**
- * The default implementation of LogContext.
+ * Default implementation of LogContext.
  */
-public class LogContextImpl extends LogContext {
+public final class LogContextImpl extends LogContext {
 
-    private static final Object[] NONE = new Object[0];
-    private static final int[] TO_OSGI_LEVEL = { LogService.LOG_DEBUG,
-            LogService.LOG_INFO, LogService.LOG_WARNING, LogService.LOG_ERROR };
+    private static final LoggingThread LOGGING_THREAD = new LoggingThread();        
+    private Level actualLevel = DEFAULT_LEVEL.get(); 
+    private String actualPrefix = "";
+    private String actualSuffix = "";
 
-    private Level level; // Null to use configurable LEVEL.
-    private Object[] prefix = NONE;
-    private Object[] suffix = NONE;
+    public LogContextImpl() {
+        if (!LOGGING_THREAD.isAlive()) LOGGING_THREAD.start();        
+    }
+    
+    @Override
+    public Level level() {
+        return actualLevel;
+    }
 
     @Override
-    public void prefix(Object... pfx) {
-        Object[] tmp = new Object[prefix.length + pfx.length];
-        System.arraycopy(pfx, 0, tmp, 0, pfx.length);
-        System.arraycopy(prefix, 0, tmp, pfx.length, prefix.length);
-        prefix = tmp;
+    public String prefix() {
+        return actualPrefix;
+    }
+
+    @Override
+    public String suffix() {
+        return actualSuffix;
     }
 
     @Override
     public void setLevel(Level level) {
-        this.level = level;
+        LogContext outer = getOuter(LogContext.class);
+        Level currentLevel = (outer != null) ? outer.level() : DEFAULT_LEVEL.get();
+        actualLevel = (currentLevel.compareTo(level) > 0) ? currentLevel : level;
     }
 
     @Override
-    public void suffix(Object... sfx) {
-        Object[] tmp = new Object[suffix.length + sfx.length];
-        System.arraycopy(suffix, 0, tmp, 0, suffix.length);
-        System.arraycopy(sfx, 0, tmp, suffix.length, sfx.length);
-        suffix = tmp;
+    public void setPrefix(Object... prefixes) {
+        TextBuilder tb = new TextBuilder();
+        LogContext outer = getOuter(LogContext.class);
+        if (outer != null) tb.append(outer.prefix());
+        for (Object obj : prefixes)
+            tb.append(obj);
+        actualPrefix = tb.toString();
     }
 
+    @Override
+    public void setSuffix(Object... suffixes) {
+        TextBuilder tb = new TextBuilder();
+        for (Object obj : suffixes)
+            tb.append(obj);
+        LogContext outer = getOuter(LogContext.class);
+        if (outer != null)
+            tb.append(outer.suffix());
+        actualSuffix = tb.toString();
+    }
+
+    public void put(String key, Object value) {
+        // TODO
+    }
+
+    protected void log(Level level, Throwable error, Object... messages) {
+        if (level.compareTo(actualLevel) < 0)
+            return;
+        LOGGING_THREAD.queueEvent(level, actualPrefix, actualSuffix, messages, error);
+    }
+    
     @Override
     protected LogContext inner() {
         LogContextImpl ctx = new LogContextImpl();
-        ctx.prefix = prefix;
-        ctx.suffix = suffix;
-        ctx.level = level;
+        ctx.actualLevel = level();
+        ctx.actualPrefix = prefix();
+        ctx.actualSuffix = suffix();
         return ctx;
     }
 
-    @Override
-    protected void log(Level level, Object... message) {
-        if (level.compareTo(currentLevel()) < 0)
-            return;
-        TextBuilder tmp = new TextBuilder();
-        Throwable exception = null;
-        for (Object pfx : prefix) {
-            tmp.append(pfx); // Uses TextContext for formatting.
-        }
-        for (Object obj : message) {
-            if ((exception == null) && (obj instanceof Throwable)) {
-                exception = (Throwable) obj;
-            } else {
-                tmp.append(obj); // Uses TextContext for formatting.
-            }
-        }
-        for (Object sfx : suffix) {
-            tmp.append(sfx); // Uses TextContext for formatting.
-        }
-        int osgiLevel = TO_OSGI_LEVEL[level.ordinal()];
-        String msg = tmp.toString();
-        Object[] logServices = OSGiServices.getLogServices();
-        for (Object logService : logServices) {
-            ((LogService)logService).log(osgiLevel, msg, exception);
-        }
-    }
-    
-    protected Level currentLevel() {
-        if (LEVEL == null) return Level.INFO; // Only during class initialization.
-        if (level == null) return LEVEL.get();
-        return level;
-    }
 }

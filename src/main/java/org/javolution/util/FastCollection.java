@@ -47,32 +47,35 @@ import org.javolution.util.internal.collection.SortedCollectionImpl;
 import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
 
 /**
- * <p> A high-performance collection with {@link Realtime strict timing constraints}.</p>
+ * A high-performance collection with {@link Realtime strict timing constraints}.
  * 
- * <p> Instances of this class support numerous views which can be chained:
- * <ul>
- * <li>{@link #parallel} - View allowing parallel processing of {@link Parallel} operations.</li>
- * <li>{@link #sequential} - View disallowing parallel processing of {@link Parallel} operations.</li>
- * <li>{@link #unmodifiable} - View which does not allow for modifications.</li>
- * <li>{@link #shared} - Thread-safe view based on <a href= "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
- *                       readers-writer locks</a>.</li>
- * <li>{@link #atomic} - Thread-safe view for which all reads are mutex-free and collection updates 
- *                       (e.g. {@link #addAll addAll}, {@link #removeIf removeIf}, ...) are atomic.</li>
- * <li>{@link #filter filter(Predicate)} - View exposing only the elements matching the specified filter and 
- *                                         preventing elements not matching the specified filter to be added.</li>
- * <li>{@link #map map(Function)} - View exposing elements through the specified mapping function.</li>
- * <li>{@link #sorted(Comparator)} - View exposing elements sorted according to the specified comparator.</li>
- * <li>{@link #reversed} - View exposing elements in the reverse iterative order.</li>
- * <li>{@link #distinct} - View exposing each element only once.</li>
- * <li>{@link #linked} - View exposing each element based on its {@link #add insertion} order.</li>
- * <li>{@link #equality(Equality)} - View using the specified comparator to test for element equality 
- *                                   (e.g. {@link #contains}, {@link #remove}, {@link #distinct}, ...)</li>
- * </ul></p>
+ * Instances of this class support numerous views which can be chained:
  * 
- * <p> In general, the chaining order does matter !
- * <pre>{@code 
+ *  - {@link #parallel} - View allowing parallel processing of {@link Parallel} operations.
+ *  - {@link #sequential} - View disallowing parallel processing of {@link Parallel} operations.
+ *  - {@link #unmodifiable} - View which does not allow for modifications.
+ *  - {@link #shared} - Thread-safe view based on <a href= "http://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">
+ *                      readers-writer locks</a>.
+ *  - {@link #atomic} - Thread-safe view for which all reads are mutex-free and collection updates 
+ *                      (e.g. {@link #addAll addAll}, {@link #removeIf removeIf}, ...) are atomic.
+ *  - {@link #filter filter(Predicate)} - View exposing only the elements matching the specified filter and 
+ *                                         preventing elements not matching the specified filter to be added.
+ *  - {@link #map map(Function)} - View exposing elements through the specified mapping function.
+ *  - {@link #sorted(Comparator)} - View exposing elements sorted according to the specified comparator.
+ *  - {@link #reversed} - View exposing elements in the reverse iterative order.
+ *  - {@link #distinct} - View exposing each element only once.
+ *  - {@link #linked} - View exposing each element based on its {@link #add insertion} order.
+ *  - {@link #equality(Equality)} - View using the specified comparator to test for element equality 
+ *                                   (e.g. {@link #contains}, {@link #remove}, {@link #distinct}, ...)
+ * 
+ * For all these views, the chaining order does matter!
+ * 
+ * ```java
  * FastCollection<String> names ...;
  *      
+ * names.sorted().reversed(); // Reversed sorting order.
+ * names.reversed().sorted(); // Standard sorting order.
+ * 
  * names.filter(s -> s.startsWith("X")).parallel().clear(); // Parallel removal of names starting with "X"
  * names.parallel().filter(s -> s.startsWith("X")).clear(); // Sequential removal of names starting with "X"
  * 
@@ -81,28 +84,27 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * 
  * FastCollection<String> threadSafe = names.linked().shared();  
  * FastCollection<String> threadUnsafe = names.shared().linked(); 
- *  
- * }</pre></p>
+ * ``` 
  * 
- * <p> It should be noted that {@link #unmodifiable Unmodifiable} views <b>are not immutable</b>; 
- *     constant/immutable collections (or maps) can only be obtained through class specializations (e.g. 
- *     {@link ConstTable}, {@link ConstSet}, {@link ConstMap}, ...)
- * <pre>{@code
+ * It should be noted that {@link #unmodifiable unmodifiable} views *are not immutable*; 
+ * constant/immutable collections (or maps) can only be obtained through class specialisations (e.g. 
+ * {@link ConstTable}, {@link ConstSet}, {@link ConstMap}, ...)
  * 
- * // Constant collections from literal elements.
+ * ```java
+ * // Immutable from literal elements.
  * ConstantSet<String> winners = ConstantSet.of("John Deuff", "Otto Graf", "Sim Kamil");
  * 
- * // Constant collections from existing collections.
- * ConstantSet<String> caseInsensitiveWinners = ConstantSet.of(Order.LEXICAL_CASE_INSENSITIVE, winners);
- *         
- * }</pre></p>
+ * // Immutable from existing collections.
+ * ConstantSet<String> winnersOrdered = ConstantSet.of(Order.LEXICAL, winners);
+ * ``` 
  * 
- * <p> Views are similar to <a href="http://lambdadoc.net/api/java/util/stream/package-summary.html">
- *     Java 8 streams</a> except that views are themselves collections and actions on the view will impact 
- *     the original collection. Collection views are nothing "new" since they already existed in the original 
- *     java.util collection classes (e.g. List.subList(...), Map.keySet(), Map.values()). Javolution extends to 
- *     this concept and allows views to be chained in order to address the issue of class proliferation.
- * <pre>{@code
+ * Views are similar to [Java 8 streams](http://lambdadoc.net/api/java/util/stream/package-summary.html)
+ * except that views are themselves collections and actions on the view *will impact* 
+ * the original collection. Collection views are nothing "new" since they already existed in the original 
+ * java.util collection classes (e.g. `List.subList(...), Map.keySet(), Map.values()`). Javolution extends to 
+ * this concept and allows views to be chained in order to address the issue of class proliferation.
+ * 
+ * ```java
  * FastTable<String> names = FastTable.newTable();
  * names.addAll("Sim Ilicuir", "Pat Ibulair");
  * names.subTable(0, n).clear(); // Removes the n first names (see java.util.List.subList).
@@ -110,12 +112,12 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * names.filter(s -> s.length > 16).clear(); // Removes all the persons with long names.
  * names.sorted().reversed().forEach(str -> System.out.println(str)); // Prints names in reverse alphabetical order.
  * tasks.parallel().forEach(task -> task.run()); // Execute concurrently the tasks and wait for their completion.
- * ...
- * }</pre></p>
+ * ``` 
  * 
- * <p> Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
- *     Parallelism support, excellent memory characteristics (no caching, cost nothing to create), etc.
- * <pre>{@code 
+ * Views can of course be used to perform "stream" oriented filter-map-reduce operations with the same benefits:
+ * Parallelism support, excellent memory characteristics (no caching, cost nothing to create), etc.
+ * 
+ * ```java
  * String anyFound = names.filter(s -> s.length > 16).any(); // Sequential search (returns the first found).
  * String anyFound = names.filter(s -> s.length > 16).parallel().any(); // Parallel search.
  * FastCollection<String> allFound = names.filter(s -> s.length > 16).collect(); // Sequential reduction.
@@ -124,19 +126,19 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
  * int maxLength = names.map(s -> s.length).parallel().max(); // Finds the maximum length in parallel.
  * int sumLength = names.map(s -> s.length).parallel().reduce((x,y)-> x + y); // Calculates the sum in parallel.
  * 
- * // JDK Class.getEnclosingMethod using Javolution's views and Java 8.
+ * // Class.getEnclosingMethod (JDK) using Javolution's views and Java 8.
  * Method matching = ConstantTable.of(enclosingInfo.getEnclosingClass().getDeclaredMethods())
  *     .filter(m -> Objects.equals(m.getName(), enclosingInfo.getName())
  *     .filter(m -> Arrays.equals(m.getParameterTypes(), parameterClasses))
  *     .filter(m -> Objects.equals(m.getReturnType(), returnType)).any(); 
  * if (matching == null) throw new InternalError("Enclosing method not found");
  * return matching;
- * }</pre></p>
+ * ``` 
  * 
- * @param <E> the type of collection element (can be {@code null})
+ * @param <E> the type of collection element (can be `null`)
  * 
- * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 7.0, September 13, 2015
+ * @author <jean-marie@dautelle.com>
+ * @version 7.0, March 31st, 2017
  */
 @Realtime
 @DefaultTextFormat(FastCollection.Format.class)

@@ -65,16 +65,6 @@ public class SparseArrayImpl  {
          public Empty<E> clone() {
              return this; // Immutable.
          }
-         
-         @Override
-         public boolean equals(Object obj) {
-             return obj instanceof Empty;
-         }
-
-         @Override
-         public int hashCode() {
-             return 0;
-         }
 
     }    
 
@@ -112,6 +102,11 @@ public class SparseArrayImpl  {
             return MathLib.unsignedLessThan(index, before) ? index : -1;
         }
   
+        @Override
+        public Unary<E> clone() {
+            return new Unary<E>(index, element);
+        }
+        
     }
     
     /** Sparse Array Trie Structure. */

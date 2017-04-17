@@ -17,23 +17,23 @@ import org.javolution.osgi.internal.OSGiServices;
 import org.javolution.text.TextContext;
 
 /**
- * <p> An element which is configurable without presupposing how the
- *     configuration is done.</p>
+ * An element which is configurable without presupposing how the configuration is done.
  *     
- * <p> Does your class need to know or has to assume that the configuration is
- *      coming from system properties ??</p>
+ * Does your class need to know or has to assume that the configuration is coming from system properties ??
  *      
- * <p> The response is obviously NO !</p>
+ * The response is obviously *NO* !
  *
- * <p> Let's compare the following examples:
- * <pre>{@code
+ * Let's compare the following examples:
+ * 
+ * ```java
  * class Document {
  *     private static final Font FONT = Font.decode(System.getProperty("myPkg.Document#FONT") != null ?
  *             System.getProperty("FONT") : "Arial-BOLD-18");
- * }}</pre></p>
+ * }
+ * ```
  * 
- * <p>With the following:
- * <pre>{@code
+ * With the following:
+ * ```java
  * class Document {
  *     public static final Configurable<Font> FONT = new Configurable<Font>() {
  *         {@literal@}Override

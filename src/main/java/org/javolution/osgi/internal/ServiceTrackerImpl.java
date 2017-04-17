@@ -12,8 +12,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
- * Bridge to service tracker (does not trigger class loading exception 
- * if running outside OSGi).
+ * Bridge to service tracker (does not trigger class loading exception if running outside OSGi).
  */
 public final class ServiceTrackerImpl<C> {
 
@@ -48,6 +47,7 @@ public final class ServiceTrackerImpl<C> {
             Object[] services = trk.getServices();
             if (services != null) return services;        
         }
+        if (defaultImplClass == null) return null;        
         synchronized (this) {
             if (defaultImpl == null) {
                 try {

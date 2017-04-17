@@ -8,3 +8,4 @@ core-java/target
 core-cpp/target
 test-cpp/target
 benchmarks/target
+/bin/

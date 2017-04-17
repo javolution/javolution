@@ -11,12 +11,12 @@ package org.javolution.context;
 import org.javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A high-level security context integrated with OSGi.</p>
+ * A high-level security context integrated with OSGi.
  *     
- * <p> When granting/revoking permission the order is important. 
- *     For example, the following code revokes all configurable permissions 
- *     except for setting the concurrency level.
- * {@code
+ * When granting/revoking permission the order is important. For example, the following code revokes all configurable 
+ * permissions except for setting the concurrency level.
+ * 
+ * ```java
  * SecurityContext ctx = SecurityContext.enter(); 
  * try {
  *     ctx.revoke(Configurable.RECONFIGURE_PERMISSION);
@@ -24,26 +24,27 @@ import org.javolution.osgi.internal.OSGiServices;
  *     ...
  *     ConcurrentContext.CONCURRENCY.reconfigure(0); // Ok (permission specifically granted).
  *     ...
- *  } finally {
+ * } finally {
  *     ctx.exit(); // Back to previous security settings. 
- *  }}</p>
+ * }
+ * ```
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0, July 21, 2013
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 public abstract class SecurityContext extends AbstractContext {
 
     /**
      * A permission associated to a specific class/action/instance. 
-     * There are three levels of permission possible, at 
-     * the class/category level, at the action level and at the instance level.
-     * Any permission granted/revoked at the higher level is explicitly 
-     * granted/revoked at the lower level. The order in which the permission 
-     * are granted/revoked is important. For example, it is possible to grant 
-     * a permission at the class level, then to revoke it at the action or 
-     * instance level. In which case, for that class the permission is granted 
-     * for all actions/instances except for those actions/instances for which the 
-     * permission has been explicitly revoked.
+     * 
+     * There are three levels of permission possible, at the class/category level, at the action level 
+     * and at the instance level. Any permission granted/revoked at the higher level is explicitly 
+     * granted/revoked at the lower level.
+     * 
+     * The order in which the permission are granted/revoked is important. 
+     * For example, it is possible to grant a permission at the class level, then to revoke it at the action or 
+     * instance level. In which case, for that class the permission is granted for all actions/instances except 
+     * for those actions/instances for which the permission has been explicitly revoked.
      */
     public static class Permission<T> {
 
@@ -184,9 +185,9 @@ public abstract class SecurityContext extends AbstractContext {
     protected SecurityContext() {}
 
     /**
-     * Enters and returns a new security context instance.
+     * Enters a new security context instance.
      * 
-     * @return the new security context implementation entered. 
+     * @return the new security context entered. 
      */
     public static SecurityContext enter() {
         return (SecurityContext) currentSecurityContext().enterInner();

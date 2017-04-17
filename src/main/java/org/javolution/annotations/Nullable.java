@@ -15,9 +15,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p> Indicates that a parameter, variable or method return value can be {@code null}. 
- *     Unless specified by this annotation, {@code null} values are prohibited for parameters,
- *     variables and methods return values.</p> 
+ * Indicates that a parameter, variable or method return value can be {@code null}. 
+ * Unless specified by this annotation, {@code null} values are prohibited for parameters, 
+ * variables and methods return values. 
  */
 @Documented
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,ElementType.LOCAL_VARIABLE})
@@ -26,12 +26,14 @@ public @interface Nullable  {
 
     /**
      * Indicates if this element supports {@code null} value (default {@code true}).
-     * @return true if {@code null} value is supported.
+     * 
+     * @return true if {@code null} value is supported
      */
     boolean value() default true;
 
     /**
      * Provides additional information (default {@code ""}).
+     * 
      * @return comment
      */
     String comment() default "";

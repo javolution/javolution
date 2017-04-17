@@ -16,11 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of LogService to route through SLF4j API 
- * outside OSGi or when the Javolution bundle is not started.
+ * Implementation of LogService to route through SLF4j API outside OSGi or when the Javolution bundle is not started.
  * 
- * Will be used instead of the Default LogServiceImpl if SLF4j
- * API is present on the classpath
+ * Will be used instead of the Default LogServiceImpl if SLF4j API is present on the classpath
  */
 public final class SLF4jLogServiceImpl extends Thread implements LogService {
 	

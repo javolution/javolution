@@ -13,15 +13,14 @@ import org.javolution.lang.MathLib;
 import org.javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context able to take advantage of concurrent algorithms on 
- *     multi-processors systems.</p>
+ * A context able to take advantage of concurrent algorithms on multi-processors systems.
  *     
- * <p> When a thread enters a concurrent context, it may performs concurrent
- *     executions by calling the {@link #execute(Runnable)} static method.
- *     The logic is then executed by a concurrent thread or by the current 
- *     thread itself if there is no concurrent thread immediately available 
- *     (the number of concurrent threads is limited, see {@link #CONCURRENCY}).
- * {@code
+ * When a thread enters a concurrent context, it may performs concurrent executions by calling the 
+ * {@link #execute(Runnable)} static method. The logic is then executed by a concurrent thread or by the current 
+ * thread itself if there is no concurrent thread immediately available (the number of concurrent threads is limited, 
+ * see {@link #CONCURRENCY}).
+ * 
+ * ```java
  * ConcurrentContext ctx = ConcurrentContext.enter(); 
  * try { 
  *     ctx.execute(new Runnable() {...}); 
@@ -29,29 +28,27 @@ import org.javolution.osgi.internal.OSGiServices;
  * } finally {
  *     ctx.exit(); // Waits for all concurrent executions to complete.
  *                 // Re-exports any exception raised during concurrent executions. 
- * }}</p>
+ * }
+ * ```
+ * or equivalent shorter notation:
  * 
- * <p> or equivalent shorter notation:
- * {@code
+ * ```java
  * ConcurrentContext.execute(new Runnable() {...}, new Runnable() {...});}</p>
+ * ```
  *     
- * <p> Only after all concurrent executions are completed, is the current 
- *     thread allowed to exit the scope of the concurrent context 
- *     (internal synchronization).</p>
+ * Only after all concurrent executions are completed, is the current thread allowed to exit the scope of the 
+ * concurrent context (internal synchronisation).
  *     
- * <p> Concurrent logics always execute within the same {@link AbstractContext
- *     context} as the calling thread.</p>
+ * Concurrent logics always execute within the same {@link AbstractContext context} as the calling thread.
  *
- * <p> Concurrent contexts ensure the same behavior whether or not the execution
- *     is performed by the current thread or a concurrent thread. Any error or 
- *     runtime exception raised during the concurrent logic executions is 
- *     propagated to the current thread.</p>
+ * Concurrent contexts ensure the same behaviour whether or not the execution is performed by the current thread or 
+ * a concurrent thread. Any error or runtime exception raised during the concurrent logic executions is 
+ * propagated to the current thread.
  *
- * <p> Concurrent contexts are easy to use, and provide automatic 
- *     load-balancing between processors with almost no overhead. 
- *     Here is a concurrent/recursive quick/merge sort using anonymous inner 
- *     classes.
- * {@code
+ * Concurrent contexts are easy to use, and provide automatic load-balancing between processors with almost no overhead. 
+ * Here is a concurrent/recursive quick/merge sort using anonymous inner classes.
+ * 
+ * ```java
  * static void concurrentSort(final FastTable<? extends Comparable> table) {
  *     final int size = table.size();
  *     if (size < 100) { 
@@ -96,66 +93,67 @@ import org.javolution.osgi.internal.OSGiServices;
  *             }
  *         }
  *     }
- * }}</p>
+ * }
+ * ```
  *     
- * <p> Here is another example using {@link #execute(java.lang.Runnable[]) 
- *     execute(Runnable ...)} static method 
- *    (Karatsuba recursive multiplication for large integers).
- * {@code
- *  public LargeInteger times(LargeInteger that) {
- *      if (that._size <= 1) {
- *          return times(that.longValue()); // Direct multiplication.
- *      } else { // Karatsuba multiplication in O(n^log2(3))
- *          int bitLength = this.bitLength();
- *          int n = (bitLength >> 1) + (bitLength & 1);
+ * Here is another example using {@link #execute(java.lang.Runnable[]) execute(Runnable ...)} static method 
+ * (Karatsuba recursive multiplication for large integers).
+ * 
+ * ```java
+ * public LargeInteger times(LargeInteger that) {
+ *     if (that._size <= 1) {
+ *         return times(that.longValue()); // Direct multiplication.
+ *     } else { // Karatsuba multiplication in O(n^log2(3))
+ *         int bitLength = this.bitLength();
+ *         int n = (bitLength >> 1) + (bitLength & 1);
  *                 
- *          // this = a + 2^n b,   that = c + 2^n d
- *          LargeInteger b = this.shiftRight(n);
- *          LargeInteger a = this.minus(b.shiftLeft(n));
- *          LargeInteger d = that.shiftRight(n);
- *          LargeInteger c = that.minus(d.shiftLeft(n));
- *          Multiply ac = new Multiply(a, c);
- *          Multiply bd = new Multiply(b, d);
- *          Multiply abcd = new Multiply(a.plus(b), c.plus(d));
- *          ConcurrentContext.execute(ac, bd, abcd); // Convenience method.  
- *          // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
- *          return  ac.result.plus(abcd.result.minus(ac.result.plus(bd.result)).shiftWordLeft(n))
- *              .plus(bd.result.shiftWordLeft(n << 1));
- *      }
- *  }
- *  private static class Multiply implements Runnable {
- *      LargeInteger left, right, result;
- *      Multiply(LargeInteger left, LargeInteger right) {
- *         this.left = left;
- *         this.right = right;
- *      }
- *      public void run() {
- *         result = left.times(right); // Recursive.
- *      }
- *  }}</p>
+ *         // this = a + 2^n b,   that = c + 2^n d
+ *         LargeInteger b = this.shiftRight(n);
+ *         LargeInteger a = this.minus(b.shiftLeft(n));
+ *         LargeInteger d = that.shiftRight(n);
+ *         LargeInteger c = that.minus(d.shiftLeft(n));
+ *         Multiply ac = new Multiply(a, c);
+ *         Multiply bd = new Multiply(b, d);
+ *         Multiply abcd = new Multiply(a.plus(b), c.plus(d));
+ *         ConcurrentContext.execute(ac, bd, abcd); // Convenience method.  
+ *         // a*c + ((a+b)*(c+d)-a*c-b*d) 2^n + b*d 2^2n 
+ *         return  ac.result.plus(abcd.result.minus(ac.result.plus(bd.result)).shiftWordLeft(n))
+ *             .plus(bd.result.shiftWordLeft(n << 1));
+ *     }
+ * }
+ * private static class Multiply implements Runnable {
+ *     LargeInteger left, right, result;
+ *     Multiply(LargeInteger left, LargeInteger right) {
+ *        this.left = left;
+ *        this.right = right;
+ *     }
+ *     public void run() {
+ *        result = left.times(right); // Recursive.
+ *     }
+ * }
+ * ```
  *          
- * <p> Concurrency can be adjusted or disabled. The default concurrency 
- *     is defined by the {@link #CONCURRENCY} configurable. 
- * {@code
+ * Concurrency can be adjusted or disabled. The default concurrency is defined by the {@link #CONCURRENCY} configurable. 
+ * 
+ * ```java
  * ConcurrentContext ctx = ConcurrentContext.enter(); 
  * try { 
  *    ctx.setConcurrency(0); // Disables concurrency
  *    runAnalysis();         // Performs analysis sequentially.
  * } finally {
  *    ctx.exit(); // Back to previous concurrency settings.  
- * }}</p>
+ * }
+ * ```
  * 
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0 December 12, 2012
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 public abstract class ConcurrentContext extends AbstractContext {
 
     /**
-     * Holds the maximum concurrency  
-     * (default {@code Runtime.getRuntime().availableProcessors() - 1}).
-     * The maximum concurrency is configurable. For example, the JVM option 
-     * {@code -Djavolution.context.ConcurrentContext#CONCURRENCY=0}
-     * disables concurrency. 
+     * Holds the maximum concurrency (default: `Runtime.getRuntime().availableProcessors() - 1`).
+     * The maximum concurrency is configurable. 
+     * For example, the JVM option `-Djavolution.context.ConcurrentContext#CONCURRENCY=0` disables concurrency. 
      */
     public static final Configurable<Integer> CONCURRENCY = new Configurable<Integer>() {
         @Override
@@ -181,8 +179,9 @@ public abstract class ConcurrentContext extends AbstractContext {
     protected ConcurrentContext() {}
 
     /**
-     * Enters and returns a new concurrent context instance.
-     * @return Reference to the entered ConcurrentContext
+     * Enters a new concurrent context instance.
+     * 
+     * @return the ConcurrentContext entered.
      */
     public static ConcurrentContext enter() {
         ConcurrentContext ctx = current(ConcurrentContext.class);
@@ -193,9 +192,9 @@ public abstract class ConcurrentContext extends AbstractContext {
     }
 
     /**
-     * Convenience method to executes the specified logics concurrently. 
-     * This method is equivalent to:
-     * [code]
+     * Convenience method to executes the specified logics concurrently. This method is equivalent to:
+     * 
+     * ```java
      * ConcurrentContext ctx = ConcurrentContext.enter();
      * try {
      *     ctx.execute(logics[0]);
@@ -203,7 +202,8 @@ public abstract class ConcurrentContext extends AbstractContext {
      *     ...
      * } finally {
      *     ctx.exit();
-     * }[/code]
+     * }
+     * ```
      * 
      * @param  logics the logics to execute concurrently if possible.
      */
@@ -219,40 +219,36 @@ public abstract class ConcurrentContext extends AbstractContext {
     }
 
     /**
-     * Executes the specified logic by a concurrent thread if 
-     * one available; otherwise the logic is executed by the current thread.
-     * Any exception or error occurring during the concurrent execution is
-     * propagated to the current thread upon exit of the concurrent context.
+     * Executes the specified logic by a concurrent thread if one available; otherwise the logic is executed by 
+     * the current thread. Any exception or error occurring during the concurrent execution is propagated to 
+     * the current thread upon exit of the concurrent context.
      * 
      * @param  logic the logic to be executed concurrently when possible.
      */
     public abstract void execute(Runnable logic);
 
     /**
-     * Sets the maximum concurrency. Setting a value greater than the 
-     * {@link #getConcurrency() current concurrency} has no effect 
-     * (concurrency can only be reduced).
-     * @param concurrency number of concurrent threads authorized
+     * Sets the maximum concurrency. Setting a value greater than the {@link #getConcurrency() current concurrency} 
+     * has no effect (concurrency can only be reduced).
+     * 
+     * @param concurrency number of concurrent threads authorised
      */
     public abstract void setConcurrency(int concurrency);
 
     /**
-     * Returns the current concurrency which is basically the number of 
-     * concurrent threads authorized to do concurrent work (on top of all
-     * others threads of course).
-     * @return number of concurrent threads authorized
+     * Returns the current concurrency which is basically the number of concurrent threads authorised 
+     * to do concurrent work (on top of all others threads of course).
+     * 
+     * @return number of concurrent threads authorised
      */
     public abstract int getConcurrency();
 
     /**
-     * Exits the scope of this concurrent context; this method blocks until 
-     * all the concurrent executions are completed.
+     * Exits the scope of this concurrent context; this method blocks until all the concurrent executions are completed.
      * 
-     * @throws RuntimeException re-exports any exception raised during concurrent
-     *         executions.
+     * @throws RuntimeException re-exports any exception raised during concurrent executions.
      * @throws Error re-exports any error raised during concurrent executions.
-     * @throws IllegalStateException if this context is not the current 
-     *         context.
+     * @throws IllegalStateException if this context is not the current context.
      */
     @Override
     public void exit() { // Redefine here for documentation purpose.

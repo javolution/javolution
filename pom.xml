@@ -6,13 +6,13 @@
 	<!-- ==================== -->
 	<!-- GitHub configuration -->
 	<!-- ==================== -->
-	
+
 	<scm>
 		<url>https://github.com/javolution/javolution</url>
 		<connection>scm:git:git://github.com/javolution/javolution</connection>
 		<developerConnection>scm:git:git@github.com:javolution/javolution.git</developerConnection>
 	</scm>
-	
+
 	<issueManagement>
 		<url>https://github.com/javolution/javolution/issues</url>
 		<system>GitHub Issues</system>
@@ -26,16 +26,16 @@
 	<artifactId>javolution</artifactId>
 	<version>7.0.0-SNAPSHOT</version>
 
-    <packaging>bundle</packaging>
+	<packaging>bundle</packaging>
 	<name>Javolution</name>
 	<url>http://javolution.org</url>
 	<description>Java Library for Real-Time and High-Performance Applications.</description>
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>https://github.com/javolution/javolution/blob/master/LICENSE</url>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://github.com/javolution/javolution/blob/master/LICENSE</url>
+		</license>
+	</licenses>
 
 	<!-- ==================== -->
 	<!-- Library Dependencies -->
@@ -77,20 +77,25 @@
 
 	<build>
 		<plugins>
-		
-			<plugin> <!--  TEMPORARY UNTIL MIGRATION COMPLETE -->
+
+            <!-- ============================= -->
+            <!-- Java Compiler Required (1.6+) -->
+            <!-- ============================= -->
+
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19.1</version>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.6.1</version>
 				<configuration>
-					<skipTests>true</skipTests>
+				    <source>1.6</source>
+				    <target>1.6</target>
 				</configuration>
 			</plugin>
-
+			
 			<!-- ============== -->
 			<!-- OSGi Packaging -->
 			<!-- ============== -->
-			
+
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
@@ -110,7 +115,7 @@
 			<!-- =============================== -->
 			<!-- Source code packaging (for IDE) -->
 			<!-- =============================== -->
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -128,12 +133,18 @@
 			<!-- =========================== -->
 			<!-- Javadoc packaging (for IDE) -->
 			<!-- =========================== -->
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.10.4</version>
 				<configuration>
+					<doclet>ch.raffael.doclets.pegdown.PegdownDoclet</doclet>
+					<docletArtifact>
+						<groupId>ch.raffael.pegdown-doclet</groupId>
+						<artifactId>pegdown-doclet</artifactId>
+						<version>1.3</version>
+					</docletArtifact>
 					<excludePackageNames>javax.*,*.internal</excludePackageNames>
 					<docfilessubdirs>true</docfilessubdirs>
 					<failOnError>false</failOnError>
@@ -151,8 +162,8 @@
 		</plugins>
 	</build>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-        
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 </project>

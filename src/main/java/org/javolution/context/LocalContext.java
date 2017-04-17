@@ -13,11 +13,12 @@ import org.javolution.lang.Configurable;
 import org.javolution.osgi.internal.OSGiServices;
 
 /**
- * <p> A context holding locally scoped {@link Parameter parameters} values.</p>
- * <p> For example, when performing modulo arithmetics the actual modulo 
- *     being used is usually the same for most operations and does not need 
- *     to be specified for each operation.
- * {@code
+ * A context holding locally scoped {@link Parameter parameters} values.
+ * 
+ * For example, when performing modulo arithmetics the actual modulo being used is usually the same for most operations
+ * and does not need to be specified for each operation.
+ * 
+ * ```java
  * import javolution.context.LocalContext.Parameter;
  * public class ModuloInteger extends Number {
  *     public static final Parameter<Integer> MODULO = new Parameter<Integer>() {
@@ -33,24 +34,23 @@ import org.javolution.osgi.internal.OSGiServices;
  * } finally {
  *     ctx.exit(); // Reverts to previous modulo setting. 
  * }}</p>
+ * ```
  *     
- * <p> As for any context, local context settings are inherited during 
- *     {@link ConcurrentContext} executions.</p> 
+ * As for any context, local context settings are inherited during {@link ConcurrentContext} executions. 
  *
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 6.0 December 12, 2012
+ * @author  <jean-marie@dautelle.com>
+ * @version 7.0, March 31, 2017
  */
 public abstract class LocalContext extends AbstractContext {
 
     /**
-     * A {@link Configurable configurable} parameter whose value can 
-     * be locally superseded within the scope of {@link LocalContext}.
+     * A {@link Configurable configurable} parameter whose value can be locally superseded within the scope of 
+     * {@link LocalContext}.
      */
     public static abstract class Parameter<T> extends Configurable<T> {
 
         /**
-         * Holds the general permission to supersede any parameter value 
-         * (action "supersede").
+         * Holds the general permission to supersede any parameter value (action "supersede").
          */
         public static final Permission<Parameter<?>> SUPERSEDE_PERMISSION = new Permission<Parameter<?>>(
                 Parameter.class, "supersede");
@@ -92,8 +92,8 @@ public abstract class LocalContext extends AbstractContext {
     protected LocalContext() {}
 
     /**
-     * Enters and returns a new local context instance.
-     * @return Reference to the entered LocalContext
+     * Enters a new local context instance.
+     * @return the inner local context entered.
      */
     public static LocalContext enter() {
         LocalContext ctx = current(LocalContext.class);

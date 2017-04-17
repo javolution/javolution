@@ -47,28 +47,28 @@ import org.javolution.util.internal.map.InnerSparseMapImpl;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 7.0, September 13, 2015
  */
-public class SparseMap<K,V> extends FastMap<K,V> {
-	
-	private static final long serialVersionUID = 0x700L; // Version. 
-	private final Order<? super K> keyOrder; 
-	private int size;
+public class SparseMap<K, V> extends FastMap<K, V> {
+
+    private static final long serialVersionUID = 0x700L; // Version. 
+    private final Order<? super K> keyOrder;
+    private int size;
     SparseArray<Object> array; // Holds entries or inner sub-maps when collision.
-	
-	/**
-     * Creates an empty map sorted arbitrarily (hash based).
-     */
+
+    /**
+    * Creates an empty map sorted arbitrarily (hash based).
+    */
     public SparseMap() {
-    	this(Order.DEFAULT, SparseArray.empty(), 0);
+        this(Order.DEFAULT, SparseArray.empty(), 0);
     }
-    
-	/**
-     * Creates an empty map sorted according to the specified order.
-     * 
-     * @param keyOrder the key order of the map.
-     */
+
+    /**
+    * Creates an empty map sorted according to the specified order.
+    * 
+    * @param keyOrder the key order of the map.
+    */
     public SparseMap(Order<? super K> keyOrder) {
         this(keyOrder, SparseArray.empty(), 0);
-    }        
+    }
 
     /**
      * Creates a sparse map from specified parameters.
@@ -81,7 +81,7 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         this.keyOrder = keyOrder;
         this.array = array;
         this.size = size;
-    }        
+    }
 
     /** 
      * Returns {@code putEntry(new Entry<K,V>(key, value)).getValue()}. This method may be overridden by 
@@ -89,35 +89,36 @@ public class SparseMap<K,V> extends FastMap<K,V> {
      */
     @Override
     public V put(K key, @Nullable V value) {
-        Entry<K,V> previous = putEntry(new Entry<K,V>(key, value));
+        Entry<K, V> previous = putEntry(new Entry<K, V>(key, value));
         return previous != null ? previous.getValue() : null;
     }
-        
-	@Override
-	public int size() {
-		return size;
-	}
-	
-	@Override
-	public Equality<? super V> valuesEquality() {
-		return Equality.DEFAULT;
-	}
-	
-	@Override
-	public SparseMap<K, V> clone() {
-        SparseMap<K,V> copy = (SparseMap<K,V>) super.clone();
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public Equality<? super V> valuesEquality() {
+        return Equality.DEFAULT;
+    }
+
+    @Override
+    public SparseMap<K, V> clone() {
+        SparseMap<K, V> copy = (SparseMap<K, V>) super.clone();
         copy.array = array.clone(); // Also clone inner structures.
         return copy;
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public Entry<K, V> getEntry(K key) {
-	    Object obj = array.get(keyOrder.indexOf(key));
-	    if (obj instanceof FastMap) return ((FastMap<K,V>) obj).getEntry(key);
-	    Entry<K,V> entry = (Entry<K,V>) obj;
-	    return (entry != null) && keyOrder.areEqual(entry.getKey(), key) ? entry : null;
-    }		
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Entry<K, V> getEntry(K key) {
+        Object obj = array.get(keyOrder.indexOf(key));
+        if (obj instanceof FastMap)
+            return ((FastMap<K, V>) obj).getEntry(key);
+        Entry<K, V> entry = (Entry<K, V>) obj;
+        return (entry != null) && keyOrder.areEqual(entry.getKey(), key) ? entry : null;
+    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -126,13 +127,13 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         int index = keyOrder.indexOf(key);
         Object obj = array.get(index);
         if (obj == null) {
-            array = array.set(index, entry);            
+            array = array.set(index, entry);
         } else if (obj instanceof FastMap) {
             Entry<K, V> previous = ((FastMap<K, V>) obj).putEntry(entry);
             if (previous != null)
                 return previous;
         } else { // Entry.
-            Entry<K,V> previous = (Entry<K,V>)obj;
+            Entry<K, V> previous = (Entry<K, V>) obj;
             if (keyOrder.areEqual(key, previous.getKey())) { // Replace.
                 array = array.set(index, entry);
                 return previous;
@@ -148,20 +149,22 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         size++;
         return null;
     }
-    
+
     @SuppressWarnings("unchecked")
-	@Override
-	public Entry<K,V> removeEntry(K key) {
+    @Override
+    public Entry<K, V> removeEntry(K key) {
         int index = keyOrder.indexOf(key);
         Object obj = array.get(index);
         if (obj instanceof FastMap) {
-            FastMap<K,V> subMap = (FastMap<K,V>) obj;
-            Entry<K,V> previous = subMap.removeEntry(key);
-            if (previous != null) size--;
-            if (subMap.size() == 1) array.set(index, subMap.firstEntry()); // No sub-map with single entries allowed.
+            FastMap<K, V> subMap = (FastMap<K, V>) obj;
+            Entry<K, V> previous = subMap.removeEntry(key);
+            if (previous != null)
+                size--;
+            if (subMap.size() == 1)
+                array.set(index, subMap.firstEntry()); // No sub-map with single entries allowed.
             return previous;
-        } 
-        Entry<K,V> previous = (Entry<K,V>) obj;
+        }
+        Entry<K, V> previous = (Entry<K, V>) obj;
         if ((previous != null) && keyOrder.areEqual(previous.getKey(), key)) { // Found it.
             array = array.set(index, null);
             size--;
@@ -169,13 +172,13 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         } else {
             return null;
         }
-	}
-	
-	@Override
-	public void clear() {
-	    array = SparseArray.empty();
-		size = 0;
-	}
+    }
+
+    @Override
+    public void clear() {
+        array = SparseArray.empty();
+        size = 0;
+    }
 
     @Override
     public boolean isEmpty() {
@@ -184,42 +187,50 @@ public class SparseMap<K,V> extends FastMap<K,V> {
 
     @Override
     public Iterator<Entry<K, V>> iterator() {
-        return new SparseArrayIteratorImpl<K, Entry<K,V>>(array) {
+        return new SparseArrayIteratorImpl<K, Entry<K, V>>(array) {
             @Override
             public void notifyRemoval(SparseArray<Object> newArray) {
-                if (newArray != null) array = newArray;
-                size--;                
-            }};
+                if (newArray != null)
+                    array = newArray;
+                size--;
+            }
+        };
     }
 
     @Override
     public Iterator<Entry<K, V>> descendingIterator() {
-        return new SparseArrayDescendingIteratorImpl<K, Entry<K,V>>(array) {
+        return new SparseArrayDescendingIteratorImpl<K, Entry<K, V>>(array) {
             @Override
             public void notifyRemoval(SparseArray<Object> newArray) {
-                if (newArray != null) array = newArray;
-                size--;                
-            }};
+                if (newArray != null)
+                    array = newArray;
+                size--;
+            }
+        };
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {        
-        return new SparseArrayIteratorImpl<K, Entry<K,V>>(array, fromKey, keyOrder, true) {
+    public Iterator<Entry<K, V>> iterator(K fromKey) {
+        return new SparseArrayIteratorImpl<K, Entry<K, V>>(array, fromKey, keyOrder, true) {
             @Override
             public void notifyRemoval(SparseArray<Object> newArray) {
-                if (newArray != null) array = newArray;
-                size--;                
-            }};
+                if (newArray != null)
+                    array = newArray;
+                size--;
+            }
+        };
     }
 
     @Override
     public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return new SparseArrayDescendingIteratorImpl<K, Entry<K,V>>(array, fromKey, keyOrder, true) {
+        return new SparseArrayDescendingIteratorImpl<K, Entry<K, V>>(array, fromKey, keyOrder, true) {
             @Override
             public void notifyRemoval(SparseArray<Object> newArray) {
-                if (newArray != null) array = newArray;
-                size--;                
-            }};
+                if (newArray != null)
+                    array = newArray;
+                size--;
+            }
+        };
     }
 
     @Override
@@ -227,5 +238,4 @@ public class SparseMap<K,V> extends FastMap<K,V> {
         return keyOrder;
     }
 
-   
 }

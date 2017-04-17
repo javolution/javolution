@@ -17,26 +17,28 @@ import org.javolution.annotations.Realtime;
 import org.javolution.util.internal.SparseArrayImpl;
 
 /**
- * <p> A high-performance <a href="http://en.wikipedia.org/wiki/Trie">trie-based</a> array whose capacity 
- *     adjusts incrementally up or down.</p>
+ * A high-performance [trie-based], unbounded array whose internal capacity adjusts incrementally up or down.
  *      
- * <p> Operations on sparse array can be chained for maximum efficiency.
+ * Updates operations on [sparse array] may return a new array holding the added/deleted elements. 
  * 
- *  <pre>{@code
+ * ```java
  *  class SparseVector<E> {
- *      SparseArray<E> elements = SparseArray.empty();
- *      void set(int i, E ei, int j, E ej) {
- *           elements = elements.set(i, ei).set(j, ej);
+ *      private SparseArray<E> elements = SparseArray.empty();
+ *      void set(int index, E element) {
+ *           elements = elements.set(index, element);
  *      }
- * }</pre></p>
+ * }
+ * ```
  * 
- * <p> Sparse array access time is almost constant regardless of the number of elements held by the array.</p>  
+ * Sparse array access time is almost constant regardless of the number of elements held by the array.  
  * 
- * <p> Note: Sparse arrays support 32-bits unsigned index for a range double the range of standard arrays.</p>   
+ * Sparse arrays support 32-bits unsigned index for a range double the range of standard arrays.   
  *  
- * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
- * @version 7.0, November 15, 2016
- * @see <a href="https://en.wikipedia.org/wiki/Sparse_array">Wikipedia: Sparse Array</a>
+ * [trie-based]: http://en.wikipedia.org/wiki/Trie
+ * [sparse array]: https://en.wikipedia.org/wiki/Sparse_array
+ * 
+ * @author <jean-marie@dautelle.com>
+ * @version 7.0, April 1st, 2017
  */
 @Realtime(limit=CONSTANT)
 public abstract class SparseArray<E> implements Cloneable, Serializable {
@@ -60,16 +62,16 @@ public abstract class SparseArray<E> implements Cloneable, Serializable {
      * Returns the element at the specified index.
      * 
      * @param index the unsigned 32-bits index of the element to return.
-     * @return the element at the specified index of {@code null} if none.
+     * @return the element at the specified index or {@code null} if none.
      */
     public abstract E get(int index);
     
     /** 
-     * Returns the element at the specified index or the specified value if {@code null} (convenience method). 
+     * Returns the element at the specified index or the specified default if {@code null} (convenience method). 
      * 
      * @param index the unsigned 32-bits index of the element to return.
      * @param defaultIfNull the elements to return instead of {@code null}.
-     * @return the element at the specified index or the specified element.
+     * @return the element at the specified index or the specified default.
      */
     public final E get(int index, E defaultIfNull) {
         E element = get(index);
@@ -80,7 +82,7 @@ public abstract class SparseArray<E> implements Cloneable, Serializable {
      * Replaces the element at the specified position with the specified element.
      * 
      * @param index the unsigned 32-bits index of the element.
-     * @param element the new element at the specified position (can be {@code null}).
+     * @param element the new element at the specified position (can be {@code null} to remove the element).
      * @return a new sparse array or {@code this}. 
      */
     public abstract SparseArray<E> set(int index, E value);
@@ -101,7 +103,11 @@ public abstract class SparseArray<E> implements Cloneable, Serializable {
      */
     public abstract int previous(int before);
  
-    /** Returns a copy of this sparse array; updates of the copy should not impact the original. */
+    /** 
+     * Returns a copy of this sparse array; updates of the copy should not impact the original. 
+     * 
+     * @return a copy of this sparse array.
+     */
     @Realtime(limit = LINEAR)
     @SuppressWarnings("unchecked")
     public SparseArray<E> clone() {
