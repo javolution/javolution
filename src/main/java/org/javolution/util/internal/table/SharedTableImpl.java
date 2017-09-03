@@ -10,11 +10,12 @@ package org.javolution.util.internal.table;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.ListIterator;
 
-import org.javolution.annotations.Parallel;
-import org.javolution.util.FastTable;
+import org.javolution.annotations.Nullable;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.AbstractTable;
+import org.javolution.util.FastIterator;
+import org.javolution.util.FastListIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -24,15 +25,21 @@ import org.javolution.util.internal.ReadWriteLockImpl;
 /**
  * A shared view over a table allowing concurrent access and sequential updates.
  */
-public final class SharedTableImpl<E> extends FastTable<E> {
+public final class SharedTableImpl<E> //implements AbstractTableMethods<E> {
+         extends AbstractTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastTable<E> inner;
+    private final AbstractTable<E> inner;
     private final ReadWriteLockImpl lock;
 
-    public SharedTableImpl(FastTable<E> inner) {
+    public SharedTableImpl(AbstractTable<E> inner) {
         this.inner = inner;
         this.lock = new ReadWriteLockImpl();
+    }
+
+    private SharedTableImpl(AbstractTable<E> inner,  ReadWriteLockImpl lock) {
+        this.inner = inner;
+        this.lock = lock;
     }
 
     @Override
@@ -86,16 +93,6 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean addAllSorted(Collection<? extends E> that, Comparator<? super E> cmp) {
-        lock.writeLock.lock();
-        try {
-            return inner.addAllSorted(that, cmp);
-        } finally {
-            lock.writeLock.unlock();
-        }
-    }
-
-    @Override
     public void addFirst(E element) {
         lock.writeLock.lock();
         try {
@@ -110,16 +107,6 @@ public final class SharedTableImpl<E> extends FastTable<E> {
         lock.writeLock.lock();
         try {
             inner.addLast(element);
-        } finally {
-            lock.writeLock.unlock();
-        }
-    }
-
-    @Override
-    public boolean addSorted(E element, Comparator<? super E> cmp) {
-        lock.writeLock.lock();
-        try {
-            return inner.addSorted(element, cmp);
         } finally {
             lock.writeLock.unlock();
         }
@@ -166,16 +153,6 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean containsSorted(E searched, Comparator<? super E> cmp) {
-        lock.readLock.lock();
-        try {
-            return inner.containsSorted(searched, cmp);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
     public boolean containsAll(Collection<?> that) {
         lock.readLock.lock();
         try {
@@ -186,10 +163,10 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
+    public FastIterator<E> descendingIterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().unmodifiable().descendingIterator();
+            return inner.clone().descendingIterator();
         } finally {
             lock.readLock.unlock();
         }
@@ -271,36 +248,6 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean isEmpty() {
-        lock.readLock.lock();
-        try {
-            return inner.isEmpty();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public int insertionIndexOf(E element, Comparator<? super E> cmp) {
-        lock.readLock.lock();
-        try {
-            return inner.insertionIndexOf(element, cmp);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        lock.readLock.lock();
-        try {
-            return inner.clone().unmodifiable().iterator();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
     public int lastIndexOf(Object element) {
         lock.readLock.lock();
         try {
@@ -311,40 +258,10 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public ListIterator<E> listIterator() {
+    public FastListIterator<E> listIterator(int index) {
         lock.readLock.lock();
         try {
-            return inner.clone().unmodifiable().listIterator();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public ListIterator<E> listIterator(int index) {
-        lock.readLock.lock();
-        try {
-            return inner.clone().unmodifiable().listIterator(index);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E max() {
-        lock.readLock.lock();
-        try {
-            return inner.max();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E min() {
-        lock.readLock.lock();
-        try {
-            return inner.min();
+            return inner.clone().listIterator(index);
         } finally {
             lock.readLock.unlock();
         }
@@ -481,16 +398,6 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean removeSorted(E element, Comparator<? super E> cmp) {
-        lock.writeLock.lock();
-        try {
-            return inner.removeSorted(element, cmp);
-        } finally {
-            lock.writeLock.unlock();
-        }
-    }
-
-    @Override
     public boolean retainAll(Collection<?> elements) {
         lock.writeLock.lock();
         try {
@@ -561,7 +468,7 @@ public final class SharedTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public FastTable<E>[] trySplit(int n) {
+    public AbstractTable<E>[] trySplit(int n) {
         lock.readLock.lock();
         try {
             return inner.clone().trySplit(n);
@@ -570,14 +477,102 @@ public final class SharedTableImpl<E> extends FastTable<E> {
         }
     }
 
-    @Parallel
-    public boolean until(Predicate<? super E> matching) {
+    @Override
+    public final boolean offer(@Nullable E e) {
+        return offerLast(e);
+    }
+
+    @Override
+    public final @Nullable E remove() {
+        return removeFirst();
+    }
+
+    @Override
+    public final @Nullable E poll() {
+        return pollFirst();
+    }
+
+    @Override
+    public final @Nullable E element() {
+        return getFirst();
+    }
+
+    @Override
+    public final @Nullable E peek() {
+        return peekFirst();
+    }
+
+    @Override
+    public final void push(@Nullable E e) {
+        addFirst(e);
+    }
+
+    @Override
+    public final @Nullable E pop() {
+        return removeFirst();
+    }
+ 
+    @Override
+    public final boolean offerFirst(@Nullable E e) {
+        addFirst(e);
+        return true;
+    }
+
+    @Override
+    public final boolean offerLast(@Nullable E e) {
+        addLast(e);
+        return true;
+    }
+
+    @Override
+    public AbstractCollection<E> collect() {
         lock.readLock.lock();
         try {
-            return inner.until(matching);
+            return inner.collect();
         } finally {
             lock.readLock.unlock();
         }
     }
 
+    @Override
+    public FastIterator<E> iterator() {
+        lock.readLock.lock();
+        try {
+            return inner.clone().iterator();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean isEmpty() {
+        lock.readLock.lock();
+        try {
+            return inner.isEmpty();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public FastListIterator<E> listIterator() {
+        lock.readLock.lock();
+        try {
+            return inner.clone().listIterator();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public SharedTableImpl<E> subList(int arg0, int arg1) {
+        lock.readLock.lock();
+        try {
+            return new SharedTableImpl<E>(inner.subTable(arg0, arg1), lock); // Share the same lock.
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    
 }

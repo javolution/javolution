@@ -8,114 +8,67 @@
  */
 package org.javolution.util.internal.function;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
- * The lexicographic order implementation. Enum-based singleton, ref. Effective
- * Java Reloaded (Joshua Bloch).
- */
-public enum CaseInsensitiveLexicalOrderImpl implements Order<CharSequence> {
-    INSTANCE(0), INSTANCE_2(2), INSTANCE_4(4), INSTANCE_6(6), INSTANCE_8(8), INSTANCE_10(10), INSTANCE_12(
-            12), INSTANCE_14(14), INSTANCE_16(16), INSTANCE_18(18), INSTANCE_20(
-                    20), INSTANCE_22(22), INSTANCE_24(24), INSTANCE_26(26), INSTANCE_28(28), INSTANCE_30(30);
+ * The case insensitive lexicographic order default implementation.
+ * 
+ * This implementation calculates ordered indices from up to seven first characters 
+ * (compression using English letter frequency).
+ * 
+ * @see <a href="https://en.wikipedia.org/wiki/Letter_frequency">Wikipedia: Letter Frequency</a>
+  */
+public final class CaseInsensitiveLexicalOrderImpl implements Order<CharSequence> {
+    
+    private static final long serialVersionUID = 0x700L; // Version.
 
-    private final int fromIndex;
-
-    /**
-     * Creates a lexical order from the specified index. Anything before that index is ignored.
-     */
-    private CaseInsensitiveLexicalOrderImpl(int fromIndex) {
-        this.fromIndex = fromIndex;
-    }
-
+    // Characters 'J', 'X', 'Q', 'Z' have the same indices as their previous character (low frequency characters).
+    private static final int[] ENCODING_5_BITS = { 
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10, 10, // '0' ...  
+            10, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18 /*J*/, 19, 20, 21, 22, 23,  // '@', 'A', ...   
+            24, 24 /*Q*/, 25, 26, 27, 28, 29, 30, 30 /*X*/, 31, 31 /*Z*/, 31, 31, 31, 31, 31, // 'P' ...   
+            31, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18 /*j*/, 19, 20, 21, 22, 23, // ''', 'a' ...  
+            24, 24 /*q*/, 25, 26, 27, 28, 29, 30, 30 /*x*/, 31, 31 /*z*/, 31, 31, 31, 31, 31 }; // 'p' ...
+    
     @Override
-    public boolean areEqual(CharSequence left, CharSequence right) {
-        return areEqual(fromIndex, left, right);
+    public boolean areEqual(@Nullable CharSequence left, @Nullable CharSequence right) {
+        if (left == right) return true;
+        if ((left == null) || (right == null)) return false;
+        int n = left.length();
+        if (right.length() != n) return false;
+        for (int i = n; i > 0;)  // Iterates from tail.
+            if (Character.toUpperCase(left.charAt(--i)) != Character.toUpperCase(right.charAt(i))) return false;
+        return true;
     }
 
     @Override
     public int compare(CharSequence left, CharSequence right) {
-        return compare(fromIndex, left, right);
-    }
-
-    @Override
-    public int indexOf(CharSequence csq) {
-        return indexOf(fromIndex, csq);
-    }
-
-    @Override
-    public Order<CharSequence> subOrder(CharSequence csq) {
-        int newIndex = fromIndex + 2;
-        return newIndex <= 30 ? LexicalOrderImpl.values()[newIndex >> 1] : new DynamicImpl(newIndex);
-    }
-
-    /** Dynamic implementation for long character sequences (not an enum) **/
-    private static class DynamicImpl implements Order<CharSequence> {
-        private static final long serialVersionUID = 0x700L; // Version.
-        private final int fromIndex;
-
-        private DynamicImpl(int fromIndex) {
-            this.fromIndex = fromIndex;
-        }
-
-        @Override
-        public boolean areEqual(CharSequence left, CharSequence right) {
-            return CaseInsensitiveLexicalOrderImpl.areEqual(fromIndex, left, right);
-        }
-
-        @Override
-        public int compare(CharSequence left, CharSequence right) {
-            return CaseInsensitiveLexicalOrderImpl.compare(fromIndex, left, right);
-        }
-
-        @Override
-        public int indexOf(CharSequence csq) {
-            return CaseInsensitiveLexicalOrderImpl.indexOf(fromIndex, csq);
-        }
-
-        @Override
-        public Order<CharSequence> subOrder(CharSequence csq) {
-            return new DynamicImpl(fromIndex + 2);
-        }
-
-    }
-
-    /** Check for equality of the two characters sequences starting at the specified index */
-    private static boolean areEqual(int fromIndex, CharSequence left, CharSequence right) {
-        if (left == right)
-            return true;
-        if ((left == null) || (right == null))
-            return false;
-        int n = left.length();
-        if (right.length() != n)
-            return false;
-        for (int i = n; i > fromIndex;) { // Search from the tail.
-            if (Character.toUpperCase(left.charAt(--i)) != Character.toUpperCase(right.charAt(i)))
-                return false;
-        }
-        return true;
-    };
-
-    /** Compares the two characters sequences starting at the specified index */
-    private static int compare(int fromIndex, CharSequence left, CharSequence right) {
-        for (int i = fromIndex, n = MathLib.min(left.length(), right.length()); i < n; i++) {
+        for (int i = 0, n = MathLib.min(left.length(), right.length()); i < n; i++) {
             char c1 = Character.toUpperCase(left.charAt(i));
             char c2 = Character.toUpperCase(right.charAt(i));
-            if (c1 != c2)
-                return c1 - c2;
+            if (c1 != c2) return c1 - c2;
         }
         return left.length() - right.length();
     }
 
-    /** Returns the index starting at the specified index (two characters at a time).*/
-    private static int indexOf(int fromIndex, CharSequence csq) {
+    @Override
+    public int indexOf(CharSequence csq) {
         int length = csq.length();
-        int j = fromIndex;
-        int i = (j < length) ? Character.toUpperCase(csq.charAt(j++)) : 0;
-        i <<= 16;
-        i |= (j < length) ? Character.toUpperCase(csq.charAt(j++)) : 0;
-        return i;
+        for (int i = 0, index = 0;;) {
+            if (i >= length) return index; // No more character to read.
+            if (i == 6) return index | (encoding5bits(csq.charAt(6)) >> 4); // Only 2 bits left for 7th character.
+            index |= encoding5bits(csq.charAt(i++)) << (32 - (5 * i));
+        }
+    }
+
+    private static final int encoding5bits(char c) { // Must preserve lexical order.
+        return c < 128 ? ENCODING_5_BITS[c] : (c = Character.toUpperCase(c)) < 128 ?
+            ENCODING_5_BITS[c] : 31;
     }
 
 }

@@ -10,137 +10,80 @@ package org.javolution.util;
 
 import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
+import static org.javolution.annotations.Realtime.Limit.LOG_N;
 
 import java.io.Serializable;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.Immutable;
 import org.javolution.util.internal.FractalArrayImpl;
 
 /**
- * A [fractal-based], fast-rotating, unbounded array whose memory footprint is minimized.
- *     
+ * A [fractal-based], fast-rotating, variable length array maintaining its own memory footprint minimal. 
+ * Using fractal arrays, there is no "memory leak" due to the reduction of the array usage and there 
+ * is no large "resize/copy" operations ever performed. 
+ * 
+ * Updates operations on fractal arrays may return new instances with greater or lesser capacity. 
  * 
  * ```java
  * class FractalTable<E> {
- *     private FractalArray<E> elements = FractalArray.newArray(); // See FractalArray::CopyOnWrite for atomic tables.
- *     int size; // Keeps track of the size since fractal arrays are unbounded.
+ *     private final FractalArray<E> elements = FractalArray.empty(); 
  *      
- *     void add(E element) {
- *         elements = elements.set(size++, element); 
- *     }
- *      
- *     void add(int index, E element) {
- *         if (index > size) throw new IndexOutOfBoundsException();
- *         elements = elements.add(index, element);
- *         size++;
+ *     ​@Realtime(limit = CONSTANT)
+ *     public int size() {
+ *         return elements.length(); 
  *     }
  *     
- *     E remove(int index) {
- *         if (index >= size) throw new IndexOutOfBoundsException();
+ *     ​@Realtime(limit = CONSTANT)
+ *     public void add(E element) {
+ *         elements = elements.append(element); 
+ *     }
+ *      
+ *     ​@Realtime(limit = LOG_N) // Versus LINEAR for ArrayList
+ *     public void add(int index, E element) {
+ *         elements = elements.insert(index, element);
+ *     }
+ *     
+ *     ​@Realtime(limit = LOG_N) // Versus LINEAR for ArrayList
+ *     public E remove(int index) {
  *         E removed = elements.get(index); 
  *         elements = elements.remove(index); 
- *         size--;
  *         return removed;
+ *     }
+ *     
+ *     ​@Realtime(limit = CONSTANT) 
+ *     E set(int index, E element) {
+ *         return elements.replace(index, element);
  *     }
  * }
  * ```
- * 
- * Fractal array elements insertion/deletion is almost constant regardless of the number of elements held by the array.  
+ * Fractal array element insertion / deletion time is in {@link Realtime.Limit#LOG_N O(Log(n))}
+ * regardless of the number of elements held by the array.  
  * 
  * [fractal-based]: http://en.wikipedia.org/wiki/Fractal
  * 
  * @author <jean-marie@dautelle.com>
- * @version 7.0, April 1st, 2017
+ * @version 7.0, July 1st, 2017
  */
 @Realtime(limit = CONSTANT)
-public abstract class FractalArray<E> implements Cloneable, Serializable {
+public abstract class FractalArray<E> implements Iterable<E>, Cloneable, Serializable {
     private static final long serialVersionUID = 0x700L; // Version.
 
-    /**
-    *  Unbounded fractal array for which any update results into a new array. 
-    */
-    public static abstract class CopyOnWrite<E> extends FractalArray<E> implements Immutable {
-        private static final long serialVersionUID = 0x700L; // Version.
-
-        /** 
-         * Returns a new copy-on-write fractal array holding the specified elements.
-         */
-        public static <E> FractalArray<E> newArray(E...elements) {
-            throw new UnsupportedOperationException("Not implemented yet"); // TODO
-        }
-
-        /** 
-         * Returns this instance (immutable).
-         * 
-         * @return {@code this}.
-         */
-        @Realtime(limit = CONSTANT)
-        public CopyOnWrite<E> clone() {
-            return this;
-        }
-
+    /** 
+     * Returns an empty instance.
+     */
+    @Realtime(limit = CONSTANT)
+    public static <E> FractalArray<E> empty() {
+        return new FractalArrayImpl<E>();
     }
 
     /** 
-     * Returns a new unbounded fractal array (mutable).
-     */
-    public static <E> FractalArray<E> newArray() {
-        return FractalArrayImpl.newInstance();
-    }
-
-    /** 
-     * Default constructor.
-     */
-    protected FractalArray() {
-    }
-
-    /** 
-     * Returns the element at the specified index.
-     * 
-     * @param index the unsigned 32-bits index of the element to return.
-     * @return the element at the specified index or {@code null} if none.
-     * @throws ArrayIndexOutOfBoundsException if {@code index} is negative.
-     */
-    public abstract E get(int index);
-
-    /**
-     * Replaces the element at the specified position with the specified element.
-     * 
-     * @param index the unsigned 32 bits index of the element to replace.
-     * @param element the element being set or {@code null} to remove the previous element.
-     * @return {@code this} or a new fractal array if this array should be replaced (capacity changed up or down).
-     * @throws ArrayIndexOutOfBoundsException if {@code index} is negative.
-     */
-    public abstract FractalArray<E> set(int index, E element);
-
-    /**
-     * Inserts the specified element at {@code index} position, shifting the elements from {@code index} 
-     * one position to the right.
-     * 
-     * @param index the insertion index.
-     * @param inserted the element being inserted (can be {@code null}).
-     * @return {@code this} or a new fractal array if this array should be replaced with a new array.
-     * @throws ArrayIndexOutOfBoundsException if {@code index} is negative.
-    */
-    public abstract FractalArray<E> add(int index, E inserted);
-
-    /**
-     * Removes from this array the element at {@code index} position, shifting the elements from {@code index} 
-     * one position to the left.
-     * 
-     * @param index the deletion index.
-     * @return {@code this} or a new fractal array if this array should be replaced with a new array.
-     * @throws ArrayIndexOutOfBoundsException if {@code index} is negative.
-     */
-    public abstract FractalArray<E> remove(int index);
-
-    /** 
-     * Returns a copy of this fractal array; updates of the copy should not impact the original.
+     * Returns a copy of this fractal array; updates of the copy will not impact the original.
      * 
      * @return a copy of this fractal array.
      */
-    @Realtime(limit = LINEAR, comment = "Constant for FractalArray::CopyOnWrite instances.")
+    @Realtime(limit = LINEAR)
     @SuppressWarnings("unchecked")
     public FractalArray<E> clone() {
         try {
@@ -149,5 +92,106 @@ public abstract class FractalArray<E> implements Cloneable, Serializable {
             throw new AssertionError("Should not happen since this class is Cloneable!");
         }
     }
+
+    /** 
+     * Returns the element at the specified position.
+     * 
+     * @param index the index position of the element to return.
+     * @return the element at the specified position.
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index >= length()} 
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract @Nullable E get(int index);
+    
+    /** 
+     * Returns the element at the specified position or the specified default if {@code null} (convenience method). 
+     * 
+     * @param index the index position of the element to return.
+     * @param defaultIfNull the elements to return instead of {@code null}.
+     * @return the element at the specified position or the specified default if {@code null}.
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index >= length()} 
+     */
+    @Realtime(limit = CONSTANT)
+    public final E get(int index, E defaultIfNull) {
+        E element = get(index);
+        return (element != null) ? element : defaultIfNull;
+    }
+    
+    /**
+     * Appends the specified element at the end of this array (increments the length of this array).
+     * 
+     * @param element the element being appended.
+     * @return the array with the specified element appended.
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract FractalArray<E> append(@Nullable E element);
+    
+    /**
+     * Inserts the specified element at the {@code index} position, shifting the previous elements from {@code index} 
+     * one position to the right (increments the length of this array).
+     * 
+     * @param index the index position of the element to be inserted.
+     * @param element the element being inserted.
+     * @return the array with the specified element inserted.
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index > length()} 
+     */
+    @Realtime(limit = LOG_N)
+    public abstract FractalArray<E> insert(int index, @Nullable E element);
+    
+    /** 
+     * Indicates if this array is empty (length is zero).
+     */
+    @Realtime(limit = CONSTANT)
+    public final boolean isEmpty() {
+        return length() == 0;
+    }
+
+    /** 
+     * Returns a list iterator over this array starting from the specified index.
+     * 
+     * The specified index indicates the first element that would be returned by an initial call to 
+     * {@link FastListIterator#next}. An initial call to {@link FastListIterator#previous} would 
+     * return the element with the specified index minus one.
+     * 
+     * @param index the index of the first element to be returned from the list iterator (by a call to next).
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index > length()} 
+     */  
+    @Realtime(limit = CONSTANT)
+    public abstract FastListIterator<E> iterator(int index);
+  
+    /** 
+     * Returns the current length of this array.
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract int length();    
+    
+    /**
+     * Removes from this array the element at the specified {@code index} position, shifting the elements from 
+     * {@code index} one position to the left (decrements the length of this array).
+     * 
+     * @param index the index position of the element to remove.
+     * @return the array with the specified element removed.
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index >= length()} 
+     */
+    @Realtime(limit = LOG_N)
+    public abstract FractalArray<E> remove(int index);
+
+    /**
+     * Replaces the element at the specified position with the specified element (does not change the length of 
+     * this array).
+     * 
+     * @param index the index position of the element.
+     * @param element the new element at the specified position.
+     * @return the previous element at the specified position.
+     * @throws ArrayIndexOutOfBoundsException if {@code (index < 0) || (index >= length()} 
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract @Nullable E replace(int index, @Nullable E element);
+    
+    /** 
+     * Returns an unmodifiable view over this array. 
+     */  
+    @Realtime(limit = CONSTANT)
+    public abstract FractalArray<E> unmodifiable();
 
 }

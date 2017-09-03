@@ -8,37 +8,27 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
 import java.util.Map;
 
-import org.javolution.util.FastMap;
+import org.javolution.util.AbstractMap;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
 /**
  * An a shared view over a map.
  */
-public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
+public final class AtomicMapImpl<K, V> extends AbstractMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K, V> inner;
-    private volatile FastMap<K, V> innerConst; // The copy used by readers.
+    private final AbstractMap<K, V> inner;
+    private volatile AbstractMap<K, V> innerConst; // The copy used by readers.
 
-    public AtomicMapImpl(FastMap<K, V> inner) {
+    public AtomicMapImpl(AbstractMap<K, V> inner) {
         this.inner = inner;
         this.innerConst = inner.clone();
     }
-
-    @Override
-    public Entry<K, V> ceilingEntry(K key) {
-        return innerConst.ceilingEntry(key);
-    }
-
-    @Override
-    public K ceilingKey(K key) {
-        return innerConst.ceilingKey(key);
-    }
-
+ 
     @Override
     public synchronized void clear() {
         inner.clear();
@@ -66,13 +56,13 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator() {
-        return innerConst.unmodifiable().descendingIterator();
+    public FastIterator<Entry<K, V>> descendingIterator() {
+        return innerConst.descendingIterator();
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return innerConst.unmodifiable().descendingIterator(fromKey);
+    public FastIterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return innerConst.descendingIterator(fromKey);
     }
 
     @Override
@@ -81,23 +71,8 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Entry<K, V> firstEntry() {
-        return innerConst.firstEntry();
-    }
-
-    @Override
     public K firstKey() {
         return innerConst.firstKey();
-    }
-
-    @Override
-    public Entry<K, V> floorEntry(K key) {
-        return innerConst.floorEntry(key);
-    }
-
-    @Override
-    public K floorKey(K key) {
-        return innerConst.floorKey(key);
     }
 
     @Override
@@ -116,33 +91,18 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Entry<K, V> higherEntry(K key) {
-        return innerConst.higherEntry(key);
-    }
-
-    @Override
-    public K higherKey(K key) {
-        return innerConst.higherKey(key);
-    }
-
-    @Override
     public boolean isEmpty() {
         return innerConst.isEmpty();
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
-        return innerConst.unmodifiable().iterator();
+    public FastIterator<Entry<K, V>> iterator() {
+        return innerConst.iterator();
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {
-        return innerConst.unmodifiable().iterator(fromKey);
-    }
-
-    @Override
-    public Entry<K, V> lastEntry() {
-        return innerConst.lastEntry();
+    public FastIterator<Entry<K, V>> iterator(K fromKey) {
+        return innerConst.iterator(fromKey);
     }
 
     @Override
@@ -150,31 +110,6 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
         return innerConst.lastKey();
     }
 
-    @Override
-    public Entry<K, V> lowerEntry(K key) {
-        return innerConst.lowerEntry(key);
-    }
-
-    @Override
-    public K lowerKey(K key) {
-        return innerConst.lowerKey(key);
-    }
-
-    @Override
-    public synchronized Entry<K, V> pollFirstEntry() {
-        Entry<K, V> entry = inner.pollFirstEntry();
-        if (entry != null)
-            innerConst = inner.clone();
-        return entry;
-    }
-
-    @Override
-    public synchronized Entry<K, V> pollLastEntry() {
-        Entry<K, V> entry = inner.pollLastEntry();
-        if (entry != null)
-            innerConst = inner.clone();
-        return entry;
-    }
 
     @Override
     public synchronized V put(K key, V value) {
@@ -184,16 +119,10 @@ public final class AtomicMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public synchronized Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
-        Entry<K,V> previous = inner.putEntry(entry);
+    public synchronized boolean addEntry(Entry<K, V> entry) {
+        if (!inner.addEntry(entry)) return false;
         innerConst = inner.clone();
-        return previous;
-    }
-
-    @Override
-    public synchronized void putAll(Object... others) {
-        inner.putAll(others);
-        innerConst = inner.clone();
+        return true;
     }
 
     @Override

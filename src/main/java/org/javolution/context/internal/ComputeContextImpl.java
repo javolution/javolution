@@ -318,8 +318,8 @@ public final class ComputeContextImpl extends ComputeContext {
 
 	// Each context instance has its own local programs and buffers.
 	private final ComputeContextImpl parent;
-	private final FastMap<Class<? extends Program>, ProgramImpl> programs = FastMap.newMap();
-	private final FastTable<BufferImpl> buffers = FastTable.newTable();
+	private final FastMap<Class<? extends Program>, ProgramImpl> programs = FastMap.newInstance();
+	private final FastTable<BufferImpl> buffers = FastTable.newInstance();
 
 	public ComputeContextImpl() {
 		parent = null;

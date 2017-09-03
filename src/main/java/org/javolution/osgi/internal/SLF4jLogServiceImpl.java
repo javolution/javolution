@@ -30,7 +30,7 @@ public final class SLF4jLogServiceImpl extends Thread implements LogService {
 		String message;
 	}
 	
-	private final FastTable<LogEvent> eventQueue = FastTable.newTable();
+	private final FastTable<LogEvent> eventQueue = FastTable.newInstance();
 	
 	public SLF4jLogServiceImpl() {
 		super("SLF4j Logging-Thread");

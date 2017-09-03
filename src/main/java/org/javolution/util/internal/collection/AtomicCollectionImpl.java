@@ -9,9 +9,9 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -20,13 +20,14 @@ import org.javolution.util.function.Predicate;
 /**
  * An atomic view over a collection (copy-on-write).
  */
-public final class AtomicCollectionImpl<E> extends FastCollection<E> {
+public final class AtomicCollectionImpl<E> // implements AbstractCollectionMethods<E> {
+         extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
-    private volatile FastCollection<E> innerConst; // The copy used by readers.
+    private final AbstractCollection<E> inner;
+    private volatile AbstractCollection<E> innerConst; // The copy used by readers.
 
-    public AtomicCollectionImpl(FastCollection<E> inner) {
+    public AtomicCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
         this.innerConst = inner.clone();
     }
@@ -67,8 +68,13 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E> clone() {
+    public AtomicCollectionImpl<E> clone() {
         return new AtomicCollectionImpl<E>(innerConst.clone());
+    }
+
+    @Override
+    public AbstractCollection<E> collect() {
+        return innerConst.collect();
     }
 
     @Override
@@ -79,6 +85,11 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     @Override
     public boolean containsAll(Collection<?> that) {
         return innerConst.containsAll(that);
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return innerConst.descendingIterator();
     }
 
     @Override
@@ -107,18 +118,8 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return innerConst.unmodifiable().iterator();
-    }
-
-    @Override
-    public E max() {
-        return innerConst.max();
-    }
-
-    @Override
-    public E min() {
-        return innerConst.min();
+    public FastIterator<E> iterator() {
+        return innerConst.iterator();
     }
 
     @Override
@@ -179,13 +180,8 @@ public final class AtomicCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         return innerConst.trySplit(n);
-    }
-
-    @Override
-    public boolean until(Predicate<? super E> matching) {
-        return innerConst.until(matching);
     }
 
 }

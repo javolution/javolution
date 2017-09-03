@@ -29,12 +29,12 @@ public class FastMapTest {
 	
 	@Before
 	public void init(){
-		_fastMap = FastMap.newMap();
+		_fastMap = FastMap.newInstance();
 	}
 	
 	@Test
 	public void testCaseInsensitiveMapWithLexicalCaseInsensitive(){
-		_fastMap = FastMap.newMap(Order.LEXICAL_CASE_INSENSITIVE);
+		_fastMap = FastMap.newInstance(Order.LEXICAL_CASE_INSENSITIVE);
 		_fastMap.put("TestKey1", "TestValue1");
 		String result = _fastMap.get("TestKey1");
 		assertEquals("Result Should Equal TestValue1", "TestValue1", result);
@@ -131,7 +131,7 @@ public class FastMapTest {
 	
 	@Test
 	public void testPutAll(){
-		Map<String,String> map = FastMap.newMap();
+		Map<String,String> map = FastMap.newInstance();
 		map.put("TestKey1", "TestValue1");
 		map.put("TestKey2", "TestValue2");
 		map.put("TestKey3", "TestValue3");

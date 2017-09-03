@@ -29,7 +29,7 @@ import org.javolution.text.Text;
 import org.javolution.text.TextContext;
 import org.javolution.text.TypeFormat;
 import org.javolution.text.internal.TextContextImpl;
-import org.javolution.util.BitSet;
+import org.javolution.util.FastBitSet;
 import org.javolution.xml.XMLContext;
 import org.javolution.xml.internal.XMLContextImpl;
 import org.javolution.xml.internal.jaxb.JAXBAnnotatedObjectReaderImpl;
@@ -150,7 +150,7 @@ public class OSGiServices {
         initializer.loadClass(Text.class);
         initializer.loadClass(TypeFormat.class);
         initializer.loadClass(Struct.class);
-        initializer.loadClass(BitSet.class);
+        initializer.loadClass(FastBitSet.class);
         initializer.loadClass(Index.class); // Preallocates.
         initializer.loadClass(JAXBAnnotatedObjectReaderImpl.class);
         initializer.loadClass(JAXBAnnotatedObjectWriterImpl.class);

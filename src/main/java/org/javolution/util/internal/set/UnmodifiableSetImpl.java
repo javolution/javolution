@@ -8,27 +8,31 @@
  */
 package org.javolution.util.internal.set;
 
-import java.util.Iterator;
-
-import org.javolution.util.FastSet;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.collection.UnmodifiableCollectionImpl.ReadOnlyIterator;
+import org.javolution.util.function.Predicate;
+import org.javolution.util.AbstractSet;
 
 /**
  * An unmodifiable view over a set.
  */
-public final class UnmodifiableSetImpl<E> extends FastSet<E> {
+public final class UnmodifiableSetImpl<E> extends AbstractSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private static final String ERROR_MSG = "Unmodifiable View.";
-    private final FastSet<E> inner;
+    private final AbstractSet<E> inner;
 
-    public UnmodifiableSetImpl(FastSet<E> inner) {
+    public UnmodifiableSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
     }
 
     @Override
     public boolean add(E element) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    @Override
+    public boolean addMulti(E element) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
@@ -43,38 +47,8 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> order() {
-        return inner.order();
-    }
-
-    @Override
     public boolean contains(Object obj) {
         return inner.contains(obj);
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        return new ReadOnlyIterator<E>(inner.descendingIterator());
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return new ReadOnlyIterator<E>(inner.descendingIterator(fromElement));
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return inner.isEmpty();
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return new ReadOnlyIterator<E>(inner.iterator());
-    }
-
-    @Override
-    public Iterator<E> iterator(E fromElement) {
-        return new ReadOnlyIterator<E>(inner.iterator(fromElement));
     }
 
     @Override
@@ -92,4 +66,39 @@ public final class UnmodifiableSetImpl<E> extends FastSet<E> {
         return this;
     }
 
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return inner.descendingIterator();
+    }
+
+    @Override
+    public FastIterator<E> iterator() {
+        return inner.iterator();
+    }
+
+    @Override
+    public Order<? super E> order() {
+        return inner.order();
+    }
+
+    @Override
+    public FastIterator<E> iterator(E from) {
+        return inner.iterator(from);
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator(E from) {
+        return inner.descendingIterator(from);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return inner.isEmpty();
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+    
 }

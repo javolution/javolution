@@ -8,45 +8,35 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-
-import org.javolution.util.FastMap;
+import org.javolution.util.AbstractMap;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
-import org.javolution.util.internal.collection.FilteredCollectionImpl.FilteredIterator;
+import org.javolution.util.internal.collection.FilteredCollectionImpl;
 
 /**
  * A filtered view over a map.
  */
-public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
+public final class FilteredMapImpl<K, V> extends AbstractMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final Predicate<? super K> keyFilter;
-    private final Predicate<? super Entry<K, V>> entryFilter;
-    private final FastMap<K, V> inner;
+    private final AbstractMap<K, V> inner;
+    private final Predicate<? super Entry<K,V>> filter;
 
-    public FilteredMapImpl(FastMap<K, V> inner, final Predicate<? super K> keyFilter) {
+    public FilteredMapImpl(AbstractMap<K, V> inner, Predicate<? super Entry<K,V>> filter) {
         this.inner = inner;
-        this.keyFilter = keyFilter;
-        this.entryFilter = new Predicate<Entry<K, V>>() {
-
-            @Override
-            public boolean test(Entry<K, V> param) {
-                return keyFilter.test(param.getKey());
-            }
-        };
+        this.filter = filter;
     }
 
     @Override
     public void clear() {
-        entrySet().removeIf(Predicate.TRUE);
+        inner.removeIf(filter);
     }
 
     @Override
-    public FastMap<K, V> clone() {
-        return new FilteredMapImpl<K, V>(inner.clone(), keyFilter);
+    public AbstractMap<K, V> clone() {
+        return new FilteredMapImpl<K, V>(inner.clone(), filter);
     }
 
     @Override
@@ -55,48 +45,51 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator() {
-        return new FilteredIterator<Entry<K, V>>(inner.descendingIterator(), entryFilter);
+    public FastIterator<Entry<K, V>> descendingIterator() {
+        return new FilteredCollectionImpl.IteratorImpl<Entry<K, V>>(inner.descendingIterator(), filter);
     }
 
     @Override
-    public Iterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return new FilteredIterator<Entry<K, V>>(inner.descendingIterator(fromKey), entryFilter);
+    public FastIterator<Entry<K, V>> descendingIterator(K fromKey) {
+        return new FilteredCollectionImpl.IteratorImpl<Entry<K, V>>(inner.descendingIterator(fromKey), filter);
     }
 
     @Override
     public Entry<K, V> getEntry(K key) {
-        return keyFilter.test(key) ? inner.getEntry(key) : null;
+        Entry<K,V> entry = inner.getEntry(key);
+        return filter.test(entry) ? entry : null;
     }
 
     @Override
     public boolean isEmpty() {
-        return entrySet().isEmpty();
+        return !iterator().hasNext();
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
-        return new FilteredIterator<Entry<K, V>>(inner.iterator(), entryFilter);
+    public FastIterator<Entry<K, V>> iterator() {
+        return new FilteredCollectionImpl.IteratorImpl<Entry<K, V>>(inner.iterator(), filter);
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator(K fromKey) {
-        return new FilteredIterator<Entry<K, V>>(inner.iterator(fromKey), entryFilter);
+    public FastIterator<Entry<K, V>> iterator(K fromKey) {
+        return new FilteredCollectionImpl.IteratorImpl<Entry<K, V>>(inner.iterator(fromKey), filter);
     }
 
     @Override
     public V put(K key, V value) {
-        return keyFilter.test(key) ? inner.put(key, value) : null;
-    }
+        if (!filter.test(new Entry<K,V>(key, value))) return null; 
+        return inner.put(key, value);
+    }    
 
     @Override
-    public Entry<K,V> putEntry(Entry<? extends K, ? extends V> entry) {
-        return keyFilter.test(entry.getKey()) ? inner.putEntry(entry) : null;
+    public Entry<K,V> putEntry(Entry<K, V> entry) {
+        return filter.test(entry) ? inner.putEntry(entry) : null;
     }
     
     @Override
     public Entry<K, V> removeEntry(K key) {
-        return keyFilter.test(key) ? inner.removeEntry(key) : null;
+        Entry<K,V> previous = getEntry(key);
+        return filter.test(previous) ? removeEntry(key) : null;
     }
 
     @Override
@@ -108,5 +101,15 @@ public final class FilteredMapImpl<K, V> extends FastMap<K, V> {
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality();
     }
+
+    @Override
+    public boolean removeIf(final Predicate<? super Entry<K, V>> toRemove) {
+        return inner.removeIf(new Predicate<Entry<K, V>>() {
+
+            @Override
+            public boolean test(Entry<K, V> param) {
+                return filter.test(param) && toRemove.test(param);
+            }});
+     }
 
 }

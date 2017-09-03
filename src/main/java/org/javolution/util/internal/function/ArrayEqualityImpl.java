@@ -10,17 +10,17 @@ package org.javolution.util.internal.function;
 
 import java.util.Arrays;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.util.function.Equality;
 
 /**
  * The array equality implementation.
- * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
  */
-public enum ArrayEqualityImpl implements Equality<Object> {
-    INSTANCE;
+public final class ArrayEqualityImpl implements Equality<Object> {
+    private static final long serialVersionUID = 0x700L; // Version.
 
     @Override
-    public boolean areEqual(Object left, Object right) {
+    public boolean areEqual(@Nullable Object left, @Nullable Object right) {
         if (left == right)
             return true;
         if ((left == null) || (right == null))

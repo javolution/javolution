@@ -8,19 +8,20 @@
  */
 package org.javolution.util.internal.table;
 
-import org.javolution.util.FastTable;
+import org.javolution.util.AbstractTable;
+import org.javolution.util.FastListIterator;
 import org.javolution.util.function.Equality;
 
 /**
  * A table view using a custom equality.
  */
-public final class CustomEqualityTableImpl<E> extends FastTable<E> {
+public final class CustomEqualityTableImpl<E> extends AbstractTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastTable<E> inner;
+    private final AbstractTable<E> inner;
     private final Equality<? super E> equality;
 
-    public CustomEqualityTableImpl(FastTable<E> inner, Equality<? super E> equality) {
+    public CustomEqualityTableImpl(AbstractTable<E> inner, Equality<? super E> equality) {
         this.inner = inner;
         this.equality = equality;
     }
@@ -41,7 +42,7 @@ public final class CustomEqualityTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public FastTable<E> clone() {
+    public CustomEqualityTableImpl<E> clone() {
         return new CustomEqualityTableImpl<E>(inner.clone(), equality);
     }
 
@@ -53,6 +54,11 @@ public final class CustomEqualityTableImpl<E> extends FastTable<E> {
     @Override
     public E get(int index) {
         return inner.get(index);
+    }
+
+    @Override
+    public FastListIterator<E> listIterator(int index) {
+        return inner.listIterator(index);
     }
 
     @Override

@@ -90,12 +90,12 @@ public class XMLBinding implements XMLSerializable {
      * Holds the class to alias (QName) mapping.
      */
     private final FastMap<Class<?>, QName> _classToAlias 
-        = FastMap.newMap();
+        = FastMap.newInstance();
 
     /**
      * Holds the alias (QName) to class mapping.
      */
-    private final FastMap<QName, Class<?>> _aliasToClass = FastMap.newMap();
+    private final FastMap<QName, Class<?>> _aliasToClass = FastMap.newInstance();
 
     /**
      * Default constructor.

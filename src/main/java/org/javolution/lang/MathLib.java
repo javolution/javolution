@@ -199,12 +199,10 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of bits in the minimal two's-complement representation
-     * of the specified <code>int</code>, excluding a sign bit.
-     * For positive <code>int</code>, this is equivalent to the number of bits
-     * in the ordinary binary representation. For negative <code>int</code>,
-     * it is equivalent to the number of bits of the positive value 
-     * <code>-(i + 1)</code>.
+     * Returns the number of bits in the minimal two's-complement representation of the specified <code>int</code>, 
+     * excluding a sign bit. For positive <code>int</code>, this is equivalent to the number of bits
+     * in the ordinary binary representation. For negative <code>int</code>, it is equivalent to the number of bits of
+     * the positive value <code>-(i + 1)</code>.
      * 
      * @param i the <code>int</code> value for which the bit length is returned.
      * @return the bit length of <code>i</code>.
@@ -214,12 +212,10 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of bits in the minimal two's-complement representation
-     * of the specified <code>long</code>, excluding a sign bit.
-     * For positive <code>long</code>, this is equivalent to the number of bits
-     * in the ordinary binary representation. For negative <code>long</code>,
-     * it is equivalent to the number of bits of the positive value 
-     * <code>-(l + 1)</code>.
+     * Returns the number of bits in the minimal two's-complement representation of the specified <code>long</code>, 
+     * excluding a sign bit. For positive <code>long</code>, this is equivalent to the number of bits
+     * in the ordinary binary representation. For negative <code>long</code>, it is equivalent to the number of bits 
+     * of the positive value <code>-(l + 1)</code>.
      * 
      * @param l the <code>long</code> value for which the bit length is returned.
      * @return the bit length of <code>l</code>.
@@ -230,41 +226,17 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of one-bits in the two's complement binary
-     * representation of the specified <code>long</code> value. 
-     * This function is sometimes referred to as the <i>population count</i>.
-     *
-     * @param longValue the <code>long</code> value.
-     * @return the number of one-bits in the two's complement binary
-     *         representation of the specified <code>longValue</code>.
-     */
-    public static int bitCount(long longValue) {
-        longValue = longValue - ((longValue >>> 1) & 0x5555555555555555L);
-        longValue = (longValue & 0x3333333333333333L)
-                + ((longValue >>> 2) & 0x3333333333333333L);
-        longValue = (longValue + (longValue >>> 4)) & 0x0f0f0f0f0f0f0f0fL;
-        longValue = longValue + (longValue >>> 8);
-        longValue = longValue + (longValue >>> 16);
-        longValue = longValue + (longValue >>> 32);
-        return (int) longValue & 0x7f;
-    }
-
-    /**
-     * Returns the number of zero bits preceding the highest-order
-     * ("leftmost") one-bit in the two's complement binary representation
-     * of the specified <code>long</code> value. Returns 64 if the specifed
-     *  value is zero.
+     * Returns the number of zero bits preceding the highest-order ("leftmost") one-bit in the two's complement binary 
+     * representation of the specified 32 bits unsigned value. Returns 32 if the specified value is zero.
      * 
-     * @param longValue the <code>long</code> value.
+     * @param unsigned the unsigned 32 bits value.
      * @return the number of leading zero bits.
      */
-    public static int numberOfLeadingZeros(long longValue) {
-        // From Hacker's Delight
-        if (longValue == 0)
-            return 64;
+    public static int numberOfLeadingZeros(int unsigned) { // From Hacker's Delight
+        if (unsigned == 0)
+            return 32;
         int n = 1;
-        int x = (int)(longValue >>> 32);
-        if (x == 0) { n += 32; x = (int)longValue; }
+        int x = unsigned;
         if (x >>> 16 == 0) { n += 16; x <<= 16; }
         if (x >>> 24 == 0) { n +=  8; x <<=  8; }
         if (x >>> 28 == 0) { n +=  4; x <<=  4; }
@@ -274,19 +246,38 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of zero bits following the lowest-order ("rightmost")
-     * one-bit in the two's complement binary representation of the specified
-     * <code>long</code> value. Returns 64 if the specifed value is zero.
+     * Returns the number of zero bits preceding the highest-order ("leftmost") one-bit in the two's complement binary 
+     * representation of the specified 64 bits unsigned value. Returns 64 if the specified value is zero.
+     * 
+     * @param unsigned the unsigned 64 bits value.
+     * @return the number of leading zero bits.
+     */
+    public static int numberOfLeadingZeros(long unsigned) { // From Hacker's Delight
+        if (unsigned == 0)
+            return 64;
+        int n = 1;
+        int x = (int)(unsigned >>> 32);
+        if (x == 0) { n += 32; x = (int)unsigned; }
+        if (x >>> 16 == 0) { n += 16; x <<= 16; }
+        if (x >>> 24 == 0) { n +=  8; x <<=  8; }
+        if (x >>> 28 == 0) { n +=  4; x <<=  4; }
+        if (x >>> 30 == 0) { n +=  2; x <<=  2; }
+        n -= x >>> 31;
+        return n;
+    }
+
+    /**
+     * Returns the number of zero bits following the lowest-order ("rightmost") one-bit in the two's complement binary 
+     * representation of the specified unsigned 32 bits value. Returns 32 if the specified value is zero.
      *
-     * @param longValue the <code>long</code> value.
+     * @param unsigned the unsigned 32 bits value.
      * @return the number of trailing zero bits.
      */
-    public static int numberOfTrailingZeros(long longValue) {
-        // From Hacker's Delight
+    public static int numberOfTrailingZeros(int unsigned) { // From Hacker's Delight
         int x, y;
-        if (longValue == 0) return 64;
-        int n = 63;
-        y = (int)longValue; if (y != 0) { n = n -32; x = y; } else x = (int)(longValue>>>32);
+        if (unsigned == 0) return 32;
+        int n = 31;
+        x = y = unsigned; 
         y = x <<16; if (y != 0) { n = n -16; x = y; }
         y = x << 8; if (y != 0) { n = n - 8; x = y; }
         y = x << 4; if (y != 0) { n = n - 4; x = y; }
@@ -295,8 +286,62 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of digits of the decimal representation of the 
-     * specified <code>int</code> value, excluding the sign character if any.
+     * Returns the number of zero bits following the lowest-order ("rightmost") one-bit in the two's complement binary 
+     * representation of the specified unsigned 64 bits value. Returns 64 if the specified value is zero.
+     *
+     * @param unsigned the unsigned 64 bits value.
+     * @return the number of trailing zero bits.
+     */
+    public static int numberOfTrailingZeros(long unsigned) { // From Hacker's Delight
+        int x, y;
+        if (unsigned == 0) return 64;
+        int n = 63;
+        y = (int)unsigned; if (y != 0) { n = n -32; x = y; } else x = (int)(unsigned>>>32);
+        y = x <<16; if (y != 0) { n = n -16; x = y; }
+        y = x << 8; if (y != 0) { n = n - 8; x = y; }
+        y = x << 4; if (y != 0) { n = n - 4; x = y; }
+        y = x << 2; if (y != 0) { n = n - 2; x = y; }
+        return n - ((x << 1) >>> 31);
+    }
+
+    /**
+     * Returns the number of one-bits in the two's complement binary representation of the specified 32 bits unsigned 
+     * value. This function is sometimes referred to as the <i>population count</i>.
+     *
+     * @param unsigned the 32 bits unsigned value.
+     * @return the number of one-bits in the two's complement binary representation of the specified value.
+     */
+    public static int bitCount(int unsigned) { // From Hacker's Delight
+        unsigned = (unsigned & 0x55555555) + ((unsigned >> 1) & 0x55555555);
+        unsigned = (unsigned & 0x33333333) + ((unsigned >> 2) & 0x33333333);
+        unsigned = (unsigned & 0x0F0F0F0F) + ((unsigned >> 4) & 0x0F0F0F0F);
+        unsigned = (unsigned & 0x00FF00FF) + ((unsigned >> 8) & 0x00FF00FF);
+        unsigned = (unsigned & 0x0000FFFF) + ((unsigned >>16) & 0x0000FFFF);
+        return unsigned;
+     }
+
+    /**
+     * Returns the number of one-bits in the two's complement binary representation of the specified 64 bits unsigned 
+     * value. This function is sometimes referred to as the <i>population count</i>.
+     *
+     * @param unsigned the 64 bits unsigned value.
+     * @return the number of one-bits in the two's complement binary representation of the specified value.
+     */
+    public static int bitCount(long unsigned) { // From Hacker's Delight
+        unsigned = unsigned - ((unsigned >>> 1) & 0x5555555555555555L);
+        unsigned = (unsigned & 0x3333333333333333L)
+                + ((unsigned >>> 2) & 0x3333333333333333L);
+        unsigned = (unsigned + (unsigned >>> 4)) & 0x0f0f0f0f0f0f0f0fL;
+        unsigned = unsigned + (unsigned >>> 8);
+        unsigned = unsigned + (unsigned >>> 16);
+        unsigned = unsigned + (unsigned >>> 32);
+        return (int) unsigned & 0x7f;
+    }
+
+
+    /**
+     * Returns the number of digits of the decimal representation of the specified <code>int</code> value, 
+     * excluding the sign character if any.
      * 
      * @param i the <code>int</code> value for which the digit length is returned.
      * @return <code>String.valueOf(i).length()</code> for zero or positive values;
@@ -314,8 +359,8 @@ public final class MathLib {
     }
 
     /**
-     * Returns the number of digits of the decimal representation of the 
-     * the specified <code>long</code>, excluding the sign character if any.
+     * Returns the number of digits of the decimal representation of the the specified <code>long</code>, 
+     * excluding the sign character if any.
      * 
      * @param l the <code>long</code> value for which the digit length is returned.
      * @return <code>String.valueOf(l).length()</code> for zero or positive values;
@@ -337,8 +382,8 @@ public final class MathLib {
     }
 
     /**
-     * Returns the closest <code>double</code> representation of the
-     * specified <code>long</code> number multiplied by a power of two.
+     * Returns the closest <code>double</code> representation of the specified <code>long</code> number 
+     * multiplied by a power of two.
      *
      * @param m the <code>long</code> multiplier.
      * @param n the power of two exponent.
@@ -371,11 +416,9 @@ public final class MathLib {
         return Double.longBitsToDouble(bits);
     }
 
-    /**/
-
     /**
-     * Returns the closest <code>double</code> representation of the
-     * specified <code>long</code> number multiplied by a power of ten.
+     * Returns the closest <code>double</code> representation of the specified <code>long</code> number multiplied by
+     * a power of ten.
      *
      * @param m the <code>long</code> multiplier.
      * @param n the power of ten exponent.
@@ -498,8 +541,8 @@ public final class MathLib {
     /**/
 
     /**
-     * Returns the closest <code>long</code> representation of the
-     * specified <code>double</code> number multiplied by a power of two.
+     * Returns the closest <code>long</code> representation of the specified <code>double</code> number multiplied 
+     * by a power of two.
      *
      * @param d the <code>double</code> multiplier.
      * @param n the power of two exponent.
@@ -534,8 +577,8 @@ public final class MathLib {
     /**/
 
     /**
-     * Returns the closest <code>long</code> representation of the
-     * specified <code>double</code> number multiplied by a power of ten.
+     * Returns the closest <code>long</code> representation of the specified <code>double</code> number multiplied 
+     * by a power of ten.
      *
      * @param d the <code>double</code> multiplier.
      * @param n the power of two exponent.
@@ -656,11 +699,8 @@ public final class MathLib {
         return isNegative ? -m : m;
     }
 
-    /**/
-
     /**
-     * Returns the largest power of 2 that is less than or equal to the
-     * the specified positive value.
+     * Returns the largest power of 2 that is less than or equal to the the specified positive value.
      *
      * @param d the <code>double</code> number.
      * @return <code>floor(Log2(abs(d)))</code>
@@ -679,11 +719,8 @@ public final class MathLib {
         return exp - 1023;
     }
 
-    /**/
-
     /**
-     * Returns the largest power of 10 that is less than or equal to the
-     * the specified positive value.
+     * Returns the largest power of 10 that is less than or equal to the the specified positive value.
      *
      * @param d the <code>double</code> number.
      * @return <code>floor(Log10(abs(d)))</code>
@@ -812,9 +849,8 @@ public final class MathLib {
     /**/
 
     /**
-     * Returns the smallest (closest to negative infinity) 
-     * <code>double</code> value that is not less than the argument and is 
-     * equal to a mathematical integer.
+     * Returns the smallest (closest to negative infinity) <code>double</code> value that is not less than the argument 
+     * and is equal to a mathematical integer.
      *
      * @param x the value.
      * @return <code>java.lang.Math.ceil(x)</code>
@@ -826,9 +862,8 @@ public final class MathLib {
     /**/
 
     /**
-     * Returns the largest (closest to positive infinity) 
-     * <code>double</code> value that is not greater than the argument and 
-     * is equal to a mathematical integer.
+     * Returns the largest (closest to positive infinity) <code>double</code> value that is not greater than the 
+     * argument and is equal to a mathematical integer.
      *
      * @param x the value.
      * @return <code>java.lang.Math.ceil(x)</code>
@@ -873,11 +908,8 @@ public final class MathLib {
         return Math.tan(radians); // CLDC 1.1
     }
 
-    /**/
-
     /**
-     * Returns the arc sine of the specified value, 
-     * in the range of -<i>pi</i>/2 through <i>pi</i>/2. 
+     * Returns the arc sine of the specified value, in the range of -<i>pi</i>/2 through <i>pi</i>/2. 
      *
      * @param x the value whose arc sine is to be returned.
      * @return the arc sine in radians for the specified value.
@@ -892,11 +924,8 @@ public final class MathLib {
         return MathLib.atan(x / MathLib.sqrt(1.0 - x * x));
     }
 
-    /**/
-
     /**
-     * Returns the arc cosine of the specified value,
-     * in the range of 0.0 through <i>pi</i>. 
+     * Returns the arc cosine of the specified value, in the range of 0.0 through <i>pi</i>. 
      *
      * @param x the value whose arc cosine is to be returned.
      * @return the arc cosine in radians for the specified value.
@@ -904,8 +933,6 @@ public final class MathLib {
     public static double acos(double x) {
         return HALF_PI - MathLib.asin(x);
     }
-
-    /**/
 
     /**
      * Returns the arc tangent of the specified value,
@@ -920,11 +947,8 @@ public final class MathLib {
         return MathLib._atan(x);
     }
 
-    /**/
-
     /**
-     * Returns the angle theta such that
-     * <code>(x == cos(theta)) && (y == sin(theta))</code>. 
+     * Returns the angle theta such that <code>(x == cos(theta)) && (y == sin(theta))</code>. 
      *
      * @param y the y value.
      * @param x the x value.
@@ -941,8 +965,6 @@ public final class MathLib {
         return Double.NaN; // ((y == 0) && (x == 0)) 
     }
 
-    /**/
-
     /**
      * Returns the hyperbolic sine of x.
      * 
@@ -952,8 +974,6 @@ public final class MathLib {
     public static double sinh(double x) {
         return (MathLib.exp(x) - MathLib.exp(-x)) * 0.5;
     }
-
-    /**/
 
     /**
      * Returns the hyperbolic cosine of x.
@@ -965,8 +985,6 @@ public final class MathLib {
         return (MathLib.exp(x) + MathLib.exp(-x)) * 0.5;
     }
 
-    /**/
-
     /**
      * Returns the hyperbolic tangent of x.
      * 
@@ -976,8 +994,6 @@ public final class MathLib {
     public static double tanh(double x) {
         return (MathLib.exp(2 * x) - 1) / (MathLib.exp(2 * x) + 1);
     }
-
-    /**/
 
     /**
      * Returns <i>{@link #E e}</i> raised to the specified power.
@@ -991,8 +1007,6 @@ public final class MathLib {
         return MathLib._ieee754_exp(x);
     }
 
-    /**/
-
     /**
      * Returns the natural logarithm (base <i>{@link #E e}</i>) of the specified
      * value.
@@ -1003,8 +1017,6 @@ public final class MathLib {
     public static double log(double x) {
         return MathLib._ieee754_log(x);
     }
-
-    /**/
 
     /**
      * Returns the decimal logarithm of the specified value.
@@ -1096,8 +1108,6 @@ public final class MathLib {
         return (d < 0) ? -d : d;
     }
 
-    /**/
-
     /**
      * Returns the greater of two <code>int</code> values. 
      *
@@ -1142,8 +1152,6 @@ public final class MathLib {
         return (x >= y) ? x : y;
     }
 
-    /**/
-
     /**
      * Returns the smaller of two <code>int</code> values. 
      *
@@ -1176,8 +1184,6 @@ public final class MathLib {
     public static float min(float x, float y) {
         return (x < y) ? x : y;
     }
-
-    /**/
 
     /**
      * Returns the smaller of two <code>double</code> values. 

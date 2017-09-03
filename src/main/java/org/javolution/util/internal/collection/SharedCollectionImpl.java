@@ -9,9 +9,9 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
@@ -21,18 +21,19 @@ import org.javolution.util.internal.ReadWriteLockImpl;
 /**
  * A shared view over a collection (reads-write locks).
  */
-public final class SharedCollectionImpl<E> extends FastCollection<E> {
+public final class SharedCollectionImpl<E> //implements AbstractCollectionMethods<E> {
+        extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
     private final ReadWriteLockImpl lock;
 
-    public SharedCollectionImpl(FastCollection<E> inner) {
+    public SharedCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
         this.lock = new ReadWriteLockImpl();
     }
 
-    public SharedCollectionImpl(FastCollection<E> inner, ReadWriteLockImpl lock) {
+    public SharedCollectionImpl(AbstractCollection<E> inner, ReadWriteLockImpl lock) {
         this.inner = inner;
         this.lock = lock;
     }
@@ -98,6 +99,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
+    public AbstractCollection<E> collect() {
+        lock.readLock.lock();
+        try {
+            return inner.collect();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
     public boolean contains(final Object searched) {
         lock.readLock.lock();
         try {
@@ -112,6 +123,16 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
         lock.readLock.lock();
         try {
             return inner.containsAll(that);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        lock.readLock.lock();
+        try {
+            return inner.clone().descendingIterator();
         } finally {
             lock.readLock.unlock();
         }
@@ -163,30 +184,10 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public FastIterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().unmodifiable().iterator();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E max() {
-        lock.readLock.lock();
-        try {
-            return inner.max();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E min() {
-        lock.readLock.lock();
-        try {
-            return inner.min();
+            return inner.clone().iterator();
         } finally {
             lock.readLock.unlock();
         }
@@ -283,20 +284,10 @@ public final class SharedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         lock.readLock.lock();
         try {
             return inner.clone().trySplit(n);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public boolean until(Predicate<? super E> matching) {
-        lock.readLock.lock();
-        try {
-            return inner.until(matching);
         } finally {
             lock.readLock.unlock();
         }

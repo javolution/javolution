@@ -8,34 +8,39 @@
  */
 package org.javolution.util.internal.set;
 
-import java.util.Iterator;
-
-import org.javolution.util.ConstSet;
-import org.javolution.util.FastSet;
+import org.javolution.util.FastIterator;
+import org.javolution.util.AbstractSet;
 import org.javolution.util.FastTable;
-import org.javolution.util.FractalTable;
-import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
+import org.javolution.util.function.Predicate;
 
 /**
  * A linked view over a set.
  */
-public final class LinkedSetImpl<E> extends FastSet<E> {
-
+public final class LinkedSetImpl<E> extends AbstractSet<E> {
+    
     private static final long serialVersionUID = 0x700L; // Version.
-    private FastSet<E> inner;
-    private FastTable<E> insertionTable = new FractalTable<E>(Equality.IDENTITY);
+    private final AbstractSet<E> inner;
+    private final FastTable<E> insertionTable;
 
-    public LinkedSetImpl(FastSet<E> inner) {
+    public LinkedSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
+        this.insertionTable = new FastTable<E>(inner.order());
+    }
+
+    private LinkedSetImpl(AbstractSet<E> inner, FastTable<E> insertionTable) {
+        this.inner = inner;
+        this.insertionTable = insertionTable;
     }
 
     @Override
     public boolean add(E element) {
-        boolean added = inner.add(element);
-        if (added)
-            insertionTable.add(element);
-        return added;
+        return inner.add(element) ? insertionTable.add(element) : false;
+    }
+
+    @Override
+    public boolean addMulti(E element) {
+        return inner.addMulti(element) ? insertionTable.add(element) : false;
     }
 
     @Override
@@ -46,15 +51,7 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
 
     @Override
     public LinkedSetImpl<E> clone() {
-        LinkedSetImpl<E> copy = (LinkedSetImpl<E>)super.clone();
-        copy.inner = inner.clone();
-        copy.insertionTable = insertionTable.clone();
-        return copy;
-    }
-
-    @Override
-    public Order<? super E> order() {
-        return inner.order();
+        return new LinkedSetImpl<E>(inner.clone(), insertionTable.clone());
     }
 
     @Override
@@ -63,18 +60,40 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return insertionTable.reversed().unmodifiable().iterator();
+    public FastIterator<E> iterator() {
+        return insertionTable.iterator();
     }
 
     @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        E start = inner.floor(fromElement);
-        if (start == null) return ConstSet.<E>empty().iterator();
-        FastTable<E> reversedTable = insertionTable.reversed();
-        int index = reversedTable.indexOf(start);
-        if (index < 0) throw new AssertionError();
-        return reversedTable.unmodifiable().listIterator(index);
+    public FastIterator<E> descendingIterator() {
+        return insertionTable.descendingIterator();
+    }
+
+    @Override
+    public boolean remove(Object obj) {
+        if (!inner.remove(obj)) return false;
+        insertionTable.remove(obj);
+        return true;
+    }
+   
+    @Override
+    public int size() {
+        return inner.size();
+    }
+
+    @Override
+    public Order<? super E> order() {
+        return inner.order();
+    }
+
+    @Override
+    public FastIterator<E> iterator(E from) {
+        return inner.iterator(from);
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator(E from) {
+        return inner.descendingIterator(from);
     }
 
     @Override
@@ -83,31 +102,10 @@ public final class LinkedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return insertionTable.unmodifiable().iterator();
+    public boolean removeIf(Predicate<? super E> filter) {
+        if (!inner.removeIf(filter)) return false;
+        insertionTable.removeIf(filter);
+        return true;
     }
 
-    @Override
-    public Iterator<E> iterator(E fromElement) {
-        E start = inner.ceiling(fromElement);
-        if (start == null) return ConstSet.<E>empty().iterator();
-        int index = insertionTable.indexOf(start);
-        if (index < 0) throw new AssertionError();
-        return insertionTable.unmodifiable().listIterator(index);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean remove(Object obj) {
-        boolean modified = inner.remove(obj);
-        if (modified)
-            insertionTable.remove(inner.ceiling((E)obj)); // Remove the stored instance.
-        return modified;
-    }
-
-    @Override
-    public int size() {
-        return inner.size();
-    }
-    
 }

@@ -8,19 +8,20 @@
  */
 package org.javolution.util.internal.table;
 
-import org.javolution.util.FastTable;
+import org.javolution.util.FastListIterator;
 import org.javolution.util.function.Equality;
+import org.javolution.util.AbstractTable;
 
 /**
  * An unmodifiable view over a table. 
  */
-public final class UnmodifiableTableImpl<E> extends FastTable<E> {
+public final class UnmodifiableTableImpl<E> extends AbstractTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private static final String ERROR_MSG = "Unmodifiable View.";
-    private final FastTable<E> inner;
+    private final AbstractTable<E> inner;
 
-    public UnmodifiableTableImpl(FastTable<E> inner) {
+    public UnmodifiableTableImpl(AbstractTable<E> inner) {
         this.inner = inner;
     }
 
@@ -44,14 +45,19 @@ public final class UnmodifiableTableImpl<E> extends FastTable<E> {
         return new UnmodifiableTableImpl<E>(inner.clone());
     }
 
-    @Override
-    public Equality<? super E> equality() { // Immutable.
+     @Override
+    public Equality<? super E> equality() {
         return inner.equality();
     }
 
     @Override
     public E get(int index) {
         return inner.get(index);
+    }
+
+    @Override
+    public FastListIterator<E> listIterator(int index) {
+        return inner.listIterator(index);
     }
 
     @Override

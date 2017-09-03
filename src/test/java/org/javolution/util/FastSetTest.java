@@ -28,7 +28,7 @@ public class FastSetTest {
 	
 	@Before
 	public void init(){
-		_fastSet = FastSet.newSet();
+		_fastSet = FastSet.newInstance();
 	}
 	
 	@Test
@@ -45,7 +45,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testCaseInsensitiveSetWithLexicalCaseInsensitive(){
-		_fastSet = FastSet.newSet(Order.LEXICAL_CASE_INSENSITIVE);
+		_fastSet = FastSet.newInstance(Order.LEXICAL_CASE_INSENSITIVE);
 		_fastSet.add("Test");
 		
 		assertTrue("Set Contains Test", _fastSet.contains("Test"));
@@ -70,7 +70,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testContainsAll(){
-		Set<String> set = FastSet.newSet();
+		Set<String> set = FastSet.newInstance();
 		set.add("Test1");
 		set.add("Test2");
 		set.add("Test3");
@@ -126,7 +126,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testRetainAll(){
-		Set<String> set = FastSet.newSet();
+		Set<String> set = FastSet.newInstance();
 		set.add("A");
 		
 		_fastSet.add("AA");

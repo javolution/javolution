@@ -17,8 +17,9 @@ import java.lang.annotation.Target;
 
 /**
  * Indicates that any attempt to change the state of a class instance, a static field, a method return value 
- * or a parameter is forbidden. For elements tagged {@code ReadOnly}, the compiler may flag errors if an attempt 
- * to call a method modifying the state of the object is made. 
+ * or a parameter is forbidden (equivalent to C++ {@code const} keyword). 
+ * For elements tagged {@code ReadOnly}, the compiler may flag errors if an attempt to call a method modifying 
+ * the state of the object is made. 
  * 
  * ```java
  * ​@ReadOnly
@@ -30,8 +31,8 @@ import java.lang.annotation.Target;
  * }
  * ```
  * 
- * Note: Read-only classes for which the entire reachable graph is read-only may implement the 
- *       {@link org.javolution.lang.Immutable} interface.
+ * Note: Read-only classes for which the entire reachable graph is read-only should implement the 
+ *       {@link org.javolution.lang.Immutable Immutable} interface.
  *   
  * @author  <jean-marie@dautelle.com>
  * @version 7.0 September 13, 2015

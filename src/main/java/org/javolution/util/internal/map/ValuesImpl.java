@@ -10,7 +10,7 @@ package org.javolution.util.internal.map;
 
 import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
 import org.javolution.util.FastMap;
 import org.javolution.util.FastMap.Entry;
 import org.javolution.util.function.Equality;
@@ -19,7 +19,7 @@ import org.javolution.util.function.Predicate;
 /**
  * A collection view over the map values.
  */
-public final class ValuesImpl<K, V> extends FastCollection<V> {
+public final class ValuesImpl<K, V> extends AbstractCollection<V> {
 
     /** The generic iterator over the map values. */
     private static class ValueIterator<K, V> implements Iterator<V> {
@@ -63,7 +63,7 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
     }
 
     @Override
-    public FastCollection<V> clone() {
+    public AbstractCollection<V> clone() {
         return new ValuesImpl<K, V>(map.clone());
     }
 
@@ -101,10 +101,10 @@ public final class ValuesImpl<K, V> extends FastCollection<V> {
     }
 
     @Override
-    public FastCollection<V>[] trySplit(int n) {
+    public AbstractCollection<V>[] trySplit(int n) {
         FastMap<K, V>[] maps = map.trySplit(n);
         @SuppressWarnings("unchecked")
-        FastCollection<V>[] split = new FastCollection[n];
+        AbstractCollection<V>[] split = new AbstractCollection[n];
         for (int i = 0; i < n; i++)
             split[i] = new ValuesImpl<K, V>(maps[i]);
         return split;

@@ -11,6 +11,7 @@ package org.javolution.util.internal.map;
 import java.util.Iterator;
 
 import org.javolution.util.FastMap;
+import org.javolution.util.FastMap.Entry;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
@@ -110,6 +111,11 @@ public final class UnmodifiableMapImpl<K, V> extends FastMap<K, V> {
     @Override
     public Equality<? super V> valuesEquality() { // Immutable.
         return inner.valuesEquality();
+    }
+
+    @Override
+    protected V setValue(Entry<K,V> entry, V newValue) {
+        throw new UnsupportedOperationException(ERROR_MSG);
     }
 
     /** Read-only entry iterator (also a read-only view over the current entry) */

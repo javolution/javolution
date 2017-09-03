@@ -8,37 +8,28 @@
  */
 package org.javolution.util.internal.function;
 
-import org.javolution.lang.MathLib;
+import org.javolution.annotations.Nullable;
 import org.javolution.util.function.Order;
 
 /**
- * The hash order implementation.
- * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
+ * The standard equality implementation (it also defines an order based on hash value).
  */
-public enum HashOrderImpl implements Order<Object> {
-    INSTANCE;
+public final class StandardOrderImpl implements Order<Object> {
+    private static final long serialVersionUID = 0x700L; // Version.
 
     @Override
-    public boolean areEqual(Object left, Object right) {
+    public boolean areEqual(@Nullable Object left, @Nullable Object right) {
         return (left == right) || (left != null && left.equals(right));
     }
 
-    /** Order based on hash value.*/
     @Override
     public int compare(Object left, Object right) {
-        int hashLeft = left.hashCode();
-        int hashRight = right.hashCode();
-        return (hashLeft == hashRight) ? 0 : MathLib.unsignedLessThan(hashLeft, hashRight) ? -1 : 1;
+        return 0;
     }
 
     @Override
     public int indexOf(Object object) { // Unsigned 32-bits
         return object.hashCode();
-    }
-
-    @Override
-    public Order<Object> subOrder(Object obj) {
-        return null; // No sub-order.
     }
 
 }

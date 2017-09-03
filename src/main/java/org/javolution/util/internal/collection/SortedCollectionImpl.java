@@ -9,23 +9,23 @@
 package org.javolution.util.internal.collection;
 
 import java.util.Comparator;
-import java.util.Iterator;
 
-import org.javolution.util.FastCollection;
-import org.javolution.util.FractalTable;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
+import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * A sorted view over a collection.
  */
-public final class SortedCollectionImpl<E> extends FastCollection<E> {
+public final class SortedCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
     private final Comparator<? super E> cmp;
 
-    public SortedCollectionImpl(FastCollection<E> inner, Comparator<? super E> cmp) {
+    public SortedCollectionImpl(AbstractCollection<E> inner, Comparator<? super E> cmp) {
         this.inner = inner;
         this.cmp = cmp;
     }
@@ -56,10 +56,19 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        FractalTable<E> sorted = new FractalTable<E>();
-        sorted.addAllSorted(inner, cmp); // TODO: Compare performance with FastTable.sort()
-        return sorted.unmodifiable().iterator();
+    public FastIterator<E> iterator() {
+        FastTable<E> sorted = new FastTable<E>();
+        sorted.addAll(inner);
+        sorted.sort(cmp);
+        return sorted.iterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        FastTable<E> sorted = new FastTable<E>();
+        sorted.addAll(inner);
+        sorted.sort(cmp);
+        return sorted.descendingIterator();
     }
 
     @Override
@@ -73,7 +82,7 @@ public final class SortedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         return inner.trySplit(n);
     }
 

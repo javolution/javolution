@@ -8,22 +8,21 @@
  */
 package org.javolution.util.internal.collection;
 
-import java.util.Iterator;
-
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * A view using a custom equality.
  */
-public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
+public final class CustomEqualityCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
     private final Equality<? super E> equality;
 
-    public CustomEqualityCollectionImpl(FastCollection<E> inner, Equality<? super E> equality) {
+    public CustomEqualityCollectionImpl(AbstractCollection<E> inner, Equality<? super E> equality) {
         this.inner = inner;
         this.equality = equality;
     }
@@ -54,8 +53,13 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public FastIterator<E> iterator() {
         return inner.iterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return inner.descendingIterator();
     }
 
     @Override
@@ -69,8 +73,8 @@ public final class CustomEqualityCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
-        FastCollection<E>[] subViews = inner.trySplit(n);
+    public AbstractCollection<E>[] trySplit(int n) {
+        AbstractCollection<E>[] subViews = inner.trySplit(n);
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new CustomEqualityCollectionImpl<E>(subViews[i], equality);
         return subViews;

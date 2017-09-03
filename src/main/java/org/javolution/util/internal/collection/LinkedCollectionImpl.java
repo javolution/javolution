@@ -8,38 +8,32 @@
  */
 package org.javolution.util.internal.collection;
 
-import java.util.Iterator;
-
-import org.javolution.util.FastCollection;
-import org.javolution.util.FractalTable;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
+import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * A view tracking the insertion order.
  */
-public final class LinkedCollectionImpl<E> extends FastCollection<E> {
+public final class LinkedCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
-    private final FractalTable<E> insertionTable;
+    private final AbstractCollection<E> inner;
+    private final FastTable<E> insertionTable = new FastTable<E>();
 
-    public LinkedCollectionImpl(FastCollection<E> inner) {
+    public LinkedCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
-        insertionTable = new FractalTable<E>(inner.equality());
     }
 
-    private LinkedCollectionImpl(FastCollection<E> inner, FractalTable<E> insertionTable) {
+    private LinkedCollectionImpl(AbstractCollection<E> inner, FastTable<E> insertionTable) {
         this.inner = inner;
-        this.insertionTable = insertionTable;
     }
 
     @Override
     public boolean add(E element) {
-        boolean added = inner.add(element);
-        if (added)
-            insertionTable.add(element);
-        return added;
+        return inner.add(element) ? insertionTable.add(element) : false;
     }
 
     @Override
@@ -64,16 +58,18 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return insertionTable.unmodifiable().iterator();
+    public FastIterator<E> iterator() {
+        return insertionTable.iterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return insertionTable.descendingIterator();
     }
 
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
-        boolean modified = inner.removeIf(filter);
-        if (modified)
-            insertionTable.removeIf(filter);
-        return modified;
+        return inner.removeIf(filter) ? insertionTable.removeIf(filter) : false;
     }
 
     @Override
@@ -82,7 +78,7 @@ public final class LinkedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         return inner.trySplit(n);
     }
 }

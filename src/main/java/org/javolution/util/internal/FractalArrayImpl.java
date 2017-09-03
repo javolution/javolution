@@ -8,330 +8,280 @@
  */
 package org.javolution.util.internal;
 
+import java.io.Serializable;
+
+import org.javolution.lang.MathLib;
 import org.javolution.util.FractalArray;
 
 /**
- * Holds fractal array default implementation.
+ * Holds fractal array base implementation (bounded capacity).
+ * This base implementation maintains a memory footprint proportional to the number of elements contained. 
+ * This property is also valid for fixed size arrays holding instances of this class (such as FractalArrayImpl.Outer).
  */
 public final class FractalArrayImpl<E> extends FractalArray<E> {
-
     private static final long serialVersionUID = 0x700L;
-    private static final FractalArrayImpl<Object> INSTANCE = new FractalArrayImpl<Object>();
+    private static final int SHIFT = 8;
+    private static final int MIN_CAPACITY = 4; // For non-empty.
+    private static final int MAX_CAPACITY = 1 << SHIFT;
+    public static final FractalArrayImpl<Object> EMPTY = new FractalArrayImpl<Object>(new Object[0]);
 
-    /**  Prevents instantiation (singleton). */
-    private FractalArrayImpl() {
+    private E[] elements;
+    
+    private FractalArrayImpl(E[] elements) {
+        this.elements = elements;
     }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // COMMON TO ALL IMPLEMENTATIONS
+    // 
 
-    /** Returns an empty instance. */
-    @SuppressWarnings("unchecked")
-    public static final <E> FractalArray<E> newInstance() {
-        return (FractalArray<E>) INSTANCE;
-    }
+    private int offset; // Index of first element.
+    private int last = -1; // Index of the last element different from null 
+                           // -1 when empty, MAX_CAPACITY if inner fractal.
+
 
     @Override
     public E get(int index) {
-        if (index < 0)
-            throw new ArrayIndexOutOfBoundsException();
-        return null;
+        if (index < 0) negativeIndexException(index);
+        return (index <= last) ? getNoCheck(index) : null;
     }
 
     @Override
     public FractalArray<E> set(int index, E element) {
-        if (index < 0)
-            throw new ArrayIndexOutOfBoundsException();
-        return (element != null) ? new Block<E>().set(index, element) : this;
-    }
-
-    @Override
-    public FractalArray<E> clone() {
+        if (index < 0) negativeIndexException(index);
+        if (element == null) return clear(index);
+        if (index > last) {
+            if (index >= capacity()) return upsize().set(index, element);
+            last = index;
+        }
+        setNoCheck(index, element);
         return this;
     }
 
     @Override
-    public FractalArray<E> add(int index, E inserted) {
-        if (index < 0)
-            throw new ArrayIndexOutOfBoundsException();
-        if (inserted == null)
-            return this;
-        return new Block<E>().add(index, inserted);
+    public FractalArray<E> remove(int index) {
+        if (index < 0) negativeIndexException(index);
+        if (index >= last) return clear(index); // Nothing to shift.
+        if (last - index < index) {
+            shiftLeft(index, last, null);
+        } else {
+            shiftRight(0, index, null);
+            offset++;
+        }
+        --last;
+        return isOverCapacity() ? downsize() : this;
     }
 
     @Override
-    public FractalArray<E> remove(int index) {
-        if (index < 0)
-            throw new ArrayIndexOutOfBoundsException();
-        return null;
+    public FractalArray<E> add(int index, E inserted) {
+        if (index < 0) negativeIndexException(index);
+        if (index > last) return set(index, inserted); // Nothing to shift.
+        if (last + 1 >= capacity()) return upsize().add(index, inserted);
+        if (++last - index < index) {
+            shiftRight(index, last, inserted);
+        } else {
+            offset--;
+            shiftLeft(0, index, inserted);
+        }
+        return this;
     }
 
-    /** Fractal Block Base Class. */
-    private static abstract class FractalBlock<E> extends FractalArray<E> {
-        private static final long serialVersionUID = 0x700L;
-        public static final int SHIFT_INCREMENT = 4;
+    private FractalArray<E> clear(int index) {
+        if (index > last) return this; // Nothing to clear.
+        setNoCheck(index, null);
+        if (index != last) return this;
+        while (last >= 0)
+            if (getNoCheck(--last) != null) break;
+        return isOverCapacity() ? downsize() : this;
+    }
+    
+    private static void negativeIndexException(int index) {
+        throw new ArrayIndexOutOfBoundsException("Negative index: " + index);
+    }
 
-        public int offset; // Index of elements[0]
-        public int last = -1; // Index of last element different from null (not maintained when inner block)
+    //
+    // END COMMON PART
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void shiftLeft(int head, int tail, E insertTail) {
+        for (int i = head; i != tail;)
+            setNoCheck(i++, getNoCheck(i));
+        setNoCheck(tail, insertTail);
+    }
+
+    public void shiftRight(int head, int tail, E insertHead) {
+        for (int i = tail; i != head;)
+            setNoCheck(i--, getNoCheck(i));
+        setNoCheck(head, insertHead);
+    }
+
+    @Override
+    public FractalArrayImpl<E> clone() {
+        FractalArrayImpl<E> copy = (FractalArrayImpl<E>) super.clone();
+        copy.elements = elements.clone();
+        return copy;
+    }
+
+    @SuppressWarnings("unchecked")
+    private FractalArray<E> upsize() { // Doubles the capacity. 
+        E[] tmp = (E[]) ((elements.length == 0) ? new Object[4] : new Object[elements.length << 1]);
+        for (int i = 0; i < last;)
+            tmp[i] = getNoCheck(i++);
+        elements = tmp;
+        offset = 0;
+        return (elements.length >= MAX_CAPACITY) ? new Block16<E>(this) : this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private FractalArrayImpl<E> downsize() { // Reduces by a half the capacity.
+        while (isOverCapacity()) {
+            E[] tmp = (E[]) new Object[elements.length >> 1];
+            for (int i = 0; i < last; i++)
+                tmp[i] = getNoCheck(i++);
+            elements = tmp;
+            offset = 0;
+        }
+        return this;
+    }
+
+    /////////////////////////////////////////////
+    // Small convenient methods to be inlined. // 
+    /////////////////////////////////////////////
+
+    private E getNoCheck(int index) {
+        return elements[(index + offset) & (elements.length - 1)];
+    }
+
+    private void setNoCheck(int index, E element) {
+        elements[(index + offset) & (elements.length - 1)] = element;
+    }
+
+    private boolean isOverCapacity() { // When at least a quarter empty (except when empty cannot go below 4)
+        return elements.length > (last+1) << 2;
+    }
+
+    private int capacity() {
+        return elements.length;
+    }
+
+    /** Fractal array of capacity up to 65536.  */
+    private static final class Block16<E> extends FractalArray<E> {
+        private static final long serialVersionUID = 0x700L;
+        private static final int INNER_SHIFT = FractalArrayImpl.SHIFT;
+        private static final int SHIFT_INCREMENT = 8;
+        private static final int SHIFT = INNER_SHIFT + SHIFT_INCREMENT;
+        private static final int MAX_BLOCKS = 1 << SHIFT;
+        
+        @SuppressWarnings("unchecked")
+        private final FractalArrayImpl<E>[] blocks = new FractalArrayImpl[MAX_BLOCKS];
+
+        /** Constructor from the specified base fractal. */
+        @SuppressWarnings("unchecked")
+        public Block16(FractalArrayImpl<E> block0) {
+            blocks[0] = block0;
+            for (int i=1; i < MAX_BLOCKS; i++) 
+                blocks[i] = (FractalArrayImpl<E>) EMPTY;
+        }
+        
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // COMMON TO ALL IMPLEMENTATIONS
+        // 
+
+        private int offset; // Index of first element.
+        private int last = -1; // Index of the last element different from null 
+                               // -1 when empty, MAX_CAPACITY if inner fractal.
 
         @Override
-        public FractalArray<E> set(int index, E element) {
-            if (index < 0)
-                throw new ArrayIndexOutOfBoundsException();
-            if (element == null)
-                return clear(index);
-            if (index >= size())
-                return newOuter().set(index, element);
-            setElementAt(index, element);
-            if (index > last)
-                last = index;
-            return this;
-        }
-
-        @SuppressWarnings("unchecked")
-        public FractalArray<E> clear(int index) {
-            if (index > last) // Nothing to clear.
-                return this;
-            setElementAt(index, null);
-            if (index == last) { // Decreases last.
-                while (--last >= 0)
-                    if (elementAt(last) != null)
-                        return this;
-                return (FractalArray<E>) INSTANCE;
-            }
-            return this;
+        public boolean isEmpty() {
+            return last < 0;
         }
 
         @Override
         public E get(int index) {
-            if (index < 0)
-                throw new ArrayIndexOutOfBoundsException();
-            return (index <= last) ? elementAt(index) : null;
+            return (index >= 0) & (index <= last) ? getNoCheck(index) : null;
         }
 
         @Override
-        public FractalArray<E> remove(int index) {
-            if (index < 0)
-                throw new ArrayIndexOutOfBoundsException();
-            if (index >= last)
-                return (index == last) ? clear(last) : this;
-            if (last - index <= index) {
-                shiftLeft(index, last--, null);
-            } else { // shift right should be faster.
-                shiftRight(0, index, null);
-                ++offset; // Full shift left.
-                --last;
+        public FractalArray<E> set(int index, E element) {
+            if (element == null) return clear(index);
+            if (index > last) {
+                if (index >= capacity()) return upsize().set(index, element);
+                last = index;
             }
+            setNoCheck(index, element);
             return this;
         }
 
         @Override
+        public FractalArray<E> remove(int index) {
+            if (index >= last) return clear(index); // Nothing to shift.
+            if (last - index < index) {
+                shiftLeft(index, last, null);
+            } else {
+                shiftRight(0, index, null);
+                offset++;
+            }
+            --last;
+            return isOverCapacity() ? downsize() : this;
+        }
+
+        @Override
         public FractalArray<E> add(int index, E inserted) {
-            if (index < 0)
-                throw new ArrayIndexOutOfBoundsException();
-            if (index > last) // Nothing to shift.
-                return set(index, inserted);
-            if (last == size() - 1) // Overflow.
-                return newOuter().add(index, inserted);
-            if (last - index <= index) {
-                shiftRight(index, ++last, inserted);
-            } else { // shift left should be faster.
-                --offset;
-                ++last;
+            if (index > last) return set(index, inserted); // Nothing to shift.
+            if (last + 1 >= capacity()) return upsize().add(index, inserted);
+            if (++last - index < index) {
+                shiftRight(index, last, inserted);
+            } else {
+                offset--;
                 shiftLeft(0, index, inserted);
             }
             return this;
         }
 
-        @Override
-        public FractalBlock<E> clone() {
-            return (FractalBlock<E>) super.clone();
+        private FractalArray<E> clear(int index) {
+            if (index > last) return this; // Nothing to clear.
+            setNoCheck(index, null);
+            if (index != last) return this;
+            while (last >= 0)
+                if (getNoCheck(--last) != null) break;
+            return isOverCapacity() ? downsize() : this;
         }
 
-        public abstract FractalBlock<E> newOuter();
-
-        public abstract E shiftLeft(int head, int tail, E insertTail);
-
-        public abstract E shiftRight(int head, int tail, E insertHead);
-
-        public abstract E shiftLeft(E element); // Full shift left.
-
-        public abstract E shiftRight(E element); // Full shift right.
-
-        public abstract E elementAt(int index);
-
-        public abstract void setElementAt(int index, E element);
-
-        public abstract int shift();
-
-        public final int size() {
-            return 1 << shift();
-        }
-    }
-
-    private static final class Block<E> extends FractalBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        public static final int SHIFT = 4;
-        public static final int SIZE = 1 << SHIFT;
-
-        @SuppressWarnings("unchecked")
-        private E[] elements = (E[]) new Object[SIZE]; // At least one element is non-null
+        //
+        // END COMMON PART
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         @Override
-        public Block4<E> newOuter() {
-            Block4<E> block = new Block4<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
-        }
-
-        @Override
-        public Block<E> clone() {
-            Block<E> copy = (Block<E>) super.clone();
-            copy.elements = elements.clone();
+        public Block16<E> clone() {
+            Block16<E> copy = (Block16<E>) super.clone();
+            for (int i = 0; i < blocks.length; i++)
+                if (blocks[i] != null) copy.blocks[i] = blocks[i].clone();
             return copy;
         }
 
-        @Override
-        public E shiftLeft(int head, int tail, E insertTail) {
-            if (tail - head > SIZE / 2) { // Optimization
-                offset += head + 1;
-                E removed = shiftRight(tail - head, SIZE - 1, insertTail);
-                offset -= head;
-                return removed;
-            }
-            E removed = elementAt(head);
-            for (int i = head; i < tail;)
-                setElementAt(i, elementAt(++i));
-            setElementAt(tail, insertTail);
-            return removed;
-        }
-
-        @Override
-        public E shiftRight(int head, int tail, E insertHead) {
-            if (tail - head > SIZE / 2) { // Optimization
-                offset += head;
-                E removed = shiftLeft(tail - head, SIZE - 1, insertHead);
-                offset -= head + 1;
-                return removed;
-            }
-            E removed = elementAt(tail);
-            for (int i = tail; i > head;)
-                setElementAt(i, elementAt(--i));
-            setElementAt(head, insertHead);
-            return removed;
-        }
-
-        @Override
-        public E shiftLeft(E element) { // Full shift left.
-            int i = mask(offset++);
-            E carry = elements[i];
-            elements[i] = element;
-            return carry;
-        }
-
-        @Override
-        public E shiftRight(E element) { // Full shift right.
-            int i = mask(--offset);
-            E carry = elements[i];
-            elements[i] = element;
-            return carry;
-        }
-
-        @Override
-        public E elementAt(int index) {
-            return elements[mask(index + offset)];
-        }
-
-        @Override
-        public void setElementAt(int index, E element) {
-            elements[mask(index + offset)] = element;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
-
-        private static int mask(int i) {
-            return i << (32 - SHIFT) >>> (32 - SHIFT);
-        }
-    }
-
-    private static abstract class OuterBlock<E> extends FractalBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        protected static final int BLOCK_COUNT = 1 << SHIFT_INCREMENT;
-
-        @Override
-        public FractalBlock<E> clone() {
-            OuterBlock<E> copy = (OuterBlock<E>) super.clone();
-            int iZero = mask(offset);
-            int iiZero = iZero >>> innerShift();
-            int iLast = mask(last + offset);
-            int iiLast = iLast >>> innerShift();
-            if ((iiZero == iiLast) && (iZero < iLast))
-                return blockAt(iiZero).clone();
-            for (int i = iiZero;; i = (i + 1) & (BLOCK_COUNT - 1)) {
-                copy.setBlockAt(i, blockAt(i).clone());
-                if (i == iLast)
-                    break;
-            }
-            return copy;
-        }
-
-        @SuppressWarnings("unchecked")
-        public FractalArray<E> clear(int index) {
-            if (index > last) // Nothing to clear.
-                return this;
-            setElementAt(index, null);
-            if (index == last) { // Decreases last.
-                int iZero = mask(offset);
-                int iiZero = iZero >>> innerShift();
-                while (last >= 0) { // While last element is null.
-                    int iLast = mask(last + offset);
-                    int iiLast = iLast >>> innerShift();
-                    if ((iiLast << innerShift() == iLast) && (iiLast != iiZero)) 
-                        setBlockAt(iiLast, null); // Empty block.
-                    if (elementAt(--last) != null) { // Exit.
-                        if ((iiLast == iiZero) && (iZero < iLast)) { // Single block left!
-                            FractalBlock<E> lastBlock = blockAt(iiLast);
-                            lastBlock.last = last;
-                            lastBlock.offset += offset;                            
-                            return lastBlock;
-                        }
-                        return this;
-                    }
+        private void shiftLeft(int head, int tail, E insertTail) {
+            int iHead = mask(head + offset);
+            int iiHead = iHead >>> INNER_SHIFT;
+            int iTail = mask(tail + offset);
+            int iiTail = iTail >>> INNER_SHIFT;
+            if ((iiHead == iiTail) && (iHead <= iTail)) { // Local to inner block. 
+                blockAt(iiTail).shiftLeft(innerMask(iHead), innerMask(iTail), insertTail);
+            } else { 
+                    return blockAt(iiTail).shiftLeft(innerMask(iHead), innerMask(iTail), insertTail);
+                E carry = blockAt(iiTail).shiftLeft(0, innerMask(iTail), insertTail);
+                while (true) {
+                     iiTail = (iiTail - 1) & (BLOCK_COUNT - 1);
+                     if (iiTail == iiHead) break;
+                     carry = blockAt(iiTail).shiftLeft(0, getNoCheck(0);
+                     blockAt(iiTail).offset++;
                 }
-                return (FractalArray<E>) INSTANCE;
-            }
-            return this;
-        }
-
-        @Override
-        public E shiftLeft(int head, int tail, E insertTail) {
-            if (tail - head > size() / 2) { // Optimization
-                offset += head + 1;
-                E removed = shiftRight(tail - head, size() - 1, insertTail);
-                offset -= head;
-                return removed;
-            }
-            int iHead = mask(head + offset);
-            int iiHead = iHead >>> innerShift();
-            int iTail = mask(tail + offset);
-            int iiTail = iTail >>> innerShift();
-            if ((iiHead == iiTail) && (iHead <= iTail)) // Local to inner block.
-                return blockAt(iiTail).shiftLeft(innerMask(iHead), innerMask(iTail), insertTail);
-            E carry = blockAt(iiTail).shiftLeft(0, innerMask(iTail), insertTail);
-            while (true) {
-                iiTail = (iiTail - 1) & (BLOCK_COUNT - 1);
-                if (iiTail == iiHead)
-                    break;
-                carry = blockAt(iiTail).shiftLeft(carry);
-            }
-            return blockAt(iiHead).shiftLeft(innerMask(iHead), innerSize() - 1, carry);
+                return blockAt(iiHead).shiftLeft(innerMask(iHead), innerSize() - 1, carry);
         }
 
         public E shiftRight(int head, int tail, E insertHead) {
-            if (tail - head > size() / 2) { // Optimization
+            if (tail - head > (capacity() >> 1)) { // Optimization
                 offset += head;
-                E removed = shiftLeft(tail - head, size() - 1, insertHead);
+                E removed = shiftLeft(tail - head, capacity() - 1, insertHead);
                 offset -= head + 1;
                 return removed;
             }
@@ -340,292 +290,70 @@ public final class FractalArrayImpl<E> extends FractalArray<E> {
             int iTail = mask(tail + offset);
             int iiTail = iTail >>> innerShift();
             if ((iiHead == iiTail) && (iHead <= iTail)) // Local to inner block.
-                return blockAt(iiHead).shiftRight(innerMask(iHead), innerMask(iTail), insertHead);
-            E carry = blockAt(iiHead).shiftRight(innerMask(iHead), innerSize() - 1, insertHead);
+                return fractalAt(iiHead).shiftRight(innerMask(iHead), innerMask(iTail), insertHead);
+            E carry = fractalAt(iiHead).shiftRight(innerMask(iHead), innerSize() - 1, insertHead);
             while (true) {
                 iiHead = (iiHead + 1) & (BLOCK_COUNT - 1);
-                if (iiHead == iiTail)
-                    break;
-                carry = blockAt(iiHead).shiftRight(carry);
+                if (iiHead == iiTail) break;
+                carry = fractalAt(iiHead).shiftRight(carry);
             }
-            return blockAt(iiTail).shiftRight(0, innerMask(iTail), carry);
+            return fractalAt(iiTail).shiftRight(0, innerMask(iTail), carry);
         }
 
-        @Override
-        public E shiftLeft(E element) {
-            int i = mask(offset++);
-            E carry = blockAt(i >>> innerShift()).elementAt(i);
-            blockAt(i >>> innerShift()).setElementAt(i, element);
-            return carry;
+        private FractalArray<E> upsize() { // Double the capacity.
+            return null; // TODO;
         }
-
-        @Override
-        public E shiftRight(E element) {
-            int i = mask(--offset);
-            E carry = blockAt(i >>> innerShift()).elementAt(i);
-            blockAt(i >>> innerShift()).setElementAt(i, element);
-            return carry;
-        }
-
-        @Override
-        public E elementAt(int index) {
-            int i = mask(index + offset);
-            return blockAt(i >>> innerShift()).elementAt(i);
-        }
-
-        @Override
-        public void setElementAt(int index, E element) {
-            int i = mask(index + offset);
-            blockAt(i >>> innerShift()).setElementAt(i, element);
-        }
-
-        private final int mask(int i) {
-            return i << (32 - shift()) >>> (32 - shift());
-        }
-
-        private final int innerShift() {
-            return shift() - SHIFT_INCREMENT;
-        }
-
-        public final int innerMask(int i) {
-            return i << (32 - innerShift()) >>> (32 - innerShift());
-        }
-
-        public final int innerSize() {
-            return 1 << innerShift();
-        }
-
-        public abstract FractalBlock<E> blockAt(int i); // Creates a new inner block if it does not exist.
-
-        public abstract void setBlockAt(int i, FractalBlock<E> block);
-
-    }
-
-    private static final class Block4<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block.SHIFT + SHIFT_INCREMENT;
 
         @SuppressWarnings("unchecked")
-        private final Block<E>[] elements = new Block[BLOCK_COUNT];
-
-        @Override
-        public Block8<E> newOuter() {
+        private FractalArray<E> downsize() {
+            int newLength = FractalArrayImpl.MAX_CAPACITY;
+            while ((newLength > Block8.MIN_CAPACITY) && (newLength >= 4 * last))
+                newLength /= 2;
+            if (newLength == Block8.MAX_CAPACITY) return this;
+            E[] tmp = (E[]) new Object[newLength];
+            for (int i = 0; i < last; i++)
+                tmp[i] = getNoCheck(i++);
             Block8<E> block = new Block8<E>();
-            block.elements[0] = this;
+            block.elements = tmp;
             block.last = last;
             return block;
         }
 
-        @Override
-        public Block<E> blockAt(int i) {
-            Block<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block<E>());
+        /////////////////////////////////////////////
+        // Small convenient methods to be inlined. // 
+        /////////////////////////////////////////////
+
+        private E getNoCheck(int index) {
+            int i = mask(index + offset);
+            return blocks[i >>> INNER_SHIFT].getNoCheck(i);
         }
 
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block<E>) block;
+        private void setNoCheck(int index, E element) {
+            int i = mask(index + offset);
+            blocks[i >>> INNER_SHIFT].setNoCheck(i, element);
         }
 
-        @Override
-        public final int shift() {
-            return SHIFT;
+        private FractalArrayImpl<E> blockAt(int index) {
+            int i = mask(index + offset);
+            return blocks[i >>> INNER_SHIFT];
         }
 
-    }
-
-    private static final class Block8<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block4.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block4<E>[] elements = new Block4[BLOCK_COUNT];
-
-        @Override
-        public Block12<E> newOuter() {
-            Block12<E> block = new Block12<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
+        private int mask(int i) {
+            return i << (32 - SHIFT) >>> (32 - SHIFT);
         }
 
-        @Override
-        public Block4<E> blockAt(int i) {
-            Block4<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block4<E>());
+        private int innerMask(int i) {
+            return i << (32 - INNER_SHIFT) >>> (32 - INNER_SHIFT);
         }
 
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block4<E>) block;
+        private boolean isOverCapacity() {
+            return FractalArrayImpl.MAX_CAPACITY >= last * 4;
         }
 
-        @Override
-        public final int shift() {
-            return SHIFT;
+        private int capacity() {
+            return MAX_CAPACITY;
         }
 
-    }
-
-    private static final class Block12<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block8.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block8<E>[] elements = new Block8[BLOCK_COUNT];
-
-        @Override
-        public Block16<E> newOuter() {
-            Block16<E> block = new Block16<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
-        }
-
-        @Override
-        public Block8<E> blockAt(int i) {
-            Block8<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block8<E>());
-        }
-
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block8<E>) block;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
-
-    }
-
-    private static final class Block16<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block12.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block12<E>[] elements = new Block12[BLOCK_COUNT];
-
-        @Override
-        public Block20<E> newOuter() {
-            Block20<E> block = new Block20<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
-        }
-
-        @Override
-        public Block12<E> blockAt(int i) {
-            Block12<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block12<E>());
-        }
-
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block12<E>) block;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
-
-    }
-
-    private static final class Block20<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block16.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block16<E>[] elements = new Block16[BLOCK_COUNT];
-
-        @Override
-        public Block24<E> newOuter() {
-            Block24<E> block = new Block24<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
-        }
-
-        @Override
-        public Block16<E> blockAt(int i) {
-            Block16<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block16<E>());
-        }
-
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block16<E>) block;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
-
-    }
-
-    private static final class Block24<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block20.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block20<E>[] elements = new Block20[BLOCK_COUNT];
-
-        @Override
-        public Block28<E> newOuter() {
-            Block28<E> block = new Block28<E>();
-            block.elements[0] = this;
-            block.last = last;
-            return block;
-        }
-
-        @Override
-        public Block20<E> blockAt(int i) {
-            Block20<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block20<E>());
-        }
-
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block20<E>) block;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
-
-    }
-
-    private static final class Block28<E> extends OuterBlock<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int SHIFT = Block24.SHIFT + SHIFT_INCREMENT;
-
-        @SuppressWarnings("unchecked")
-        private final Block24<E>[] elements = new Block24[BLOCK_COUNT];
-
-        @Override
-        public OuterBlock<E> newOuter() {
-            throw new UnsupportedOperationException("FractalArray Overflow!");
-        }
-
-        @Override
-        public Block24<E> blockAt(int i) {
-            Block24<E> block = elements[i];
-            return (block != null) ? block : (elements[i] = new Block24<E>());
-        }
-
-        @Override
-        public void setBlockAt(int i, FractalBlock<E> block) {
-            elements[i] = (Block24<E>) block;
-        }
-
-        @Override
-        public final int shift() {
-            return SHIFT;
-        }
     }
 
 }

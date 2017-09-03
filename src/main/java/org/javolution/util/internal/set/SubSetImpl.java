@@ -11,116 +11,43 @@ package org.javolution.util.internal.set;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Parallel;
-import org.javolution.util.FastSet;
+import org.javolution.util.FastIterator;
+import org.javolution.util.AbstractSet;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 
 /**
  * A sub-set view over a set.
  */
-public final class SubSetImpl<E> extends FastSet<E> {
+public final class SubSetImpl<E> extends AbstractSet<E> {
 
-    /** Iterator bounded by the to limit over the sub-set. */
-    private class LowerLimitIterator implements Iterator<E> {
-        private final Iterator<E> itr;
-        boolean currentIsNext;
-        E current;
-
-        public LowerLimitIterator(Iterator<E> itr) {
-            this.itr = itr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (currentIsNext)
-                return true;
-            if (!itr.hasNext())
-                return false;
-            current = itr.next();
-            if (tooLow(current))
-                return false;
-            currentIsNext = true;
-            return true;
-        }
-
-        @Override
-        public E next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-            currentIsNext = false;
-            return current;
-        }
-
-        @Override
-        public void remove() {
-            if (currentIsNext)
-                throw new IllegalStateException();
-            itr.remove();
-        }
-    }
-    /** Iterator bounded by the from limit over the sub-set. */
-    private class UpperLimitIterator implements Iterator<E> {
-        private final Iterator<E> itr;
-        boolean currentIsNext;
-        E current;
-
-        public UpperLimitIterator(Iterator<E> itr) {
-            this.itr = itr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (currentIsNext)
-                return true;
-            if (!itr.hasNext())
-                return false;
-            current = itr.next();
-            if (tooHigh(current))
-                return false;
-            currentIsNext = true;
-            return true;
-        }
-
-        @Override
-        public E next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-            currentIsNext = false;
-            return current;
-        }
-
-        @Override
-        public void remove() {
-            if (currentIsNext)
-                throw new IllegalStateException();
-            itr.remove();
-        }
-
-    }
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastSet<E> inner;
-    private final E from;
-    private final Boolean fromInclusive;
+    private final AbstractSet<E> inner;
+    private final E fromElement; 
+    private final E toElement;
+    private final boolean fromInclusive;
+    private final boolean toInclusive;
 
-    private final E to;
-
-    private final Boolean toInclusive;
-
-    /** Returns a sub-set, there is no bound when inclusive Boolean value is null. */
-    public SubSetImpl(FastSet<E> inner, E from, Boolean fromInclusive, E to, Boolean toInclusive) {
+    /** Returns a sub-set, there is no bound when null element. */
+    public SubSetImpl(AbstractSet<E> inner, @Nullable E fromElement, 
+            boolean fromInclusive, @Nullable E toElement, boolean toInclusive) {
         this.inner = inner;
-        this.from = from;
+        this.fromElement = fromElement;
         this.fromInclusive = fromInclusive;
-        this.to = to;
+        this.toElement = toElement;
         this.toInclusive = toInclusive;
     }
 
     @Override
     public boolean add(E element) {
-        if (!inRange(element))
-            return false;
-        return inner.add(element);
+        return inRange(element) ? inner.add(element) : false;
+    }
+
+    @Override
+    public boolean addMulti(E element) {
+        return inRange(element) ? inner.addMulti(element) : false;
     }
 
     @Parallel
@@ -131,7 +58,36 @@ public final class SubSetImpl<E> extends FastSet<E> {
 
     @Override
     public SubSetImpl<E> clone() {
-        return new SubSetImpl<E>(inner.clone(), from, fromInclusive, to, toInclusive);
+        return new SubSetImpl<E>(inner.clone(), fromElement, fromInclusive, toElement, toInclusive);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean contains(Object obj) {
+        return inRange((E) obj) ? inner.contains(obj) : false;
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator(@Nullable E from) {
+        if ((from == null) || tooHigh(from))  // Starts from subset higher bound.
+            from = toInclusive ? toElement : lower(toElement);
+        if (fromElement == null) return inner.descendingIterator(from); // No lower bound.
+        E end = fromInclusive ? lower(toElement) : floor(toElement);
+        return new IteratorImpl<E>(inner.descendingIterator(from), end);        
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return !iterator().hasNext();
+    }
+
+    @Override
+    public FastIterator<E> iterator(@Nullable E from) {
+        if ((from == null) || tooLow(from))  // Starts from subset lower bound.
+            from = fromInclusive ? fromElement : higher(fromElement);
+        if (toElement == null) return inner.iterator(from); // No upper bound.
+        E end = toInclusive ? higher(toElement) : ceiling(toElement);
+        return new IteratorImpl<E>(inner.iterator(from), end);        
     }
 
     @Override
@@ -141,86 +97,119 @@ public final class SubSetImpl<E> extends FastSet<E> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean contains(Object obj) {
-        if (!inRange((E) obj))
-            return false;
-        return inner.contains(obj);
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        if (toInclusive == null)
-            return new LowerLimitIterator(inner.descendingIterator());
-        Iterator<E> itr = new LowerLimitIterator(inner.descendingIterator(to));
-        if (!toInclusive && inner.contains(to))
-            itr.next(); // Pass element.  
-        return itr;
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        if (toInclusive == null)
-            return new LowerLimitIterator(inner.descendingIterator(fromElement));
-        return (inner.comparator().compare(to, fromElement) <= 0) ? descendingIterator()
-                : new LowerLimitIterator(inner.descendingIterator(fromElement));
-    }
-
-    private boolean inRange(E e) {
-        return !tooHigh(e) && !tooLow(e);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return !iterator().hasNext();
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        if (fromInclusive == null)
-            return new UpperLimitIterator(inner.iterator());
-        Iterator<E> itr = new UpperLimitIterator(inner.iterator(from));
-        if (!fromInclusive && inner.contains(from))
-            itr.next(); // Pass element.  
-        return itr;
-    }
-
-    @Override
-    public Iterator<E> iterator(E fromElement) {
-        if (fromInclusive == null)
-            return new UpperLimitIterator(inner.iterator(fromElement));
-        return (inner.comparator().compare(from, fromElement) >= 0) ? iterator()
-                : new UpperLimitIterator(inner.iterator(fromElement));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public boolean remove(Object obj) {
-        if (!inRange((E) obj))
-            return false;
-        return inner.remove(obj);
+        return inRange((E) obj) ? inner.remove(obj) : false;
     }
-
+    
     @Parallel
     @Override
     public int size() {
         int count = 0;
-        for (Iterator<E> itr = iterator(); itr.hasNext(); itr.next())
-            count++;
+        for (Iterator<E> itr = iterator(); itr.hasNext(); itr.next()) count++;
         return count;
+    }
+    
+    private E ceiling(E element) {
+        FastIterator<E> itr = inner.iterator(element);
+        if (!itr.hasNext()) return null;
+        E next = itr.next();
+        if (order().compare(next, element) >= 0) return next;
+        if (!itr.hasNext()) return null;
+        return itr.next();       
+    }
+    
+    private E floor(E element) {
+        FastIterator<E> itr = inner.descendingIterator(element);
+        if (!itr.hasNext()) return null;
+        E next = itr.next();
+        if (order().compare(next, element) <= 0) return next;
+        if (!itr.hasNext()) return null;
+        return itr.next();       
+    }       
+
+    private E higher(E element) {
+        FastIterator<E> itr = inner.iterator(element);
+        if (!itr.hasNext()) return null;
+        E next = itr.next();
+        if (order().compare(next, element) > 0) return next;
+        if (!itr.hasNext()) return null;
+        return itr.next();       
+    }
+ 
+    private boolean inRange(E e) {
+        return !tooHigh(e) && !tooLow(e);
+    }
+
+    private E lower(E element) {
+        FastIterator<E> itr = inner.descendingIterator(element);
+        if (!itr.hasNext()) return null;
+        E next = itr.next();
+        if (order().compare(next, element) < 0) return next;
+        if (!itr.hasNext()) return null;
+        return itr.next();       
     }
 
     private boolean tooHigh(E e) {
-        if (toInclusive == null)
-            return false;
-        int i = inner.comparator().compare(to, e);
-        return (i < 0) || ((i == 0) && !toInclusive);
+        if (toElement == null) return false;
+        int cmp = order().compare(toElement, e);
+        return toInclusive ? cmp < 0 : cmp <= 0;
     }
 
     private boolean tooLow(E e) {
-        if (fromInclusive == null)
-            return false;
-        int i = inner.comparator().compare(from, e);
-        return (i > 0) || ((i == 0) && !toInclusive);
+        if (fromElement == null) return false;
+        int cmp = order().compare(fromElement, e);
+        return fromInclusive ? cmp > 0 : cmp >= 0;
+    }
+
+    /** Iterate up to the specified end element (exclusive). */
+    private static class IteratorImpl<E> implements FastIterator<E> {
+        private final FastIterator<E> itr; 
+        private final E end;  
+        private E next; 
+        private IteratorImpl(FastIterator<E> itr, E end) {
+            this.itr = itr;
+            this.end = end;
+            next = itr.hasNext() ? itr.next() : end;
+        }
+        
+        @Override
+        public boolean hasNext() {
+            return next != end;
+        }
+
+        @Override
+        public boolean hasNext(final Predicate<? super E> matching) {
+            while (true) {
+                if (next == end) return false;
+                if (matching.test(next)) return true;
+                next = itr.hasNext() ? itr.next() : end;
+            }
+        }
+
+        @Override
+        public E next() {
+            if (next == end) throw new NoSuchElementException();
+            E current = next;
+            next = itr.hasNext() ? itr.next() : end;
+            return current;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();            
+        }
+ 
+    }
+
+    @Override
+    public boolean removeIf(final Predicate<? super E> filter) {
+        return inner.removeIf(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+                if (!inRange(param)) return false;
+                return filter.test(param);
+            }});
     }
 
 }

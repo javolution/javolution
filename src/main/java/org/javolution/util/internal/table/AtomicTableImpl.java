@@ -10,27 +10,28 @@ package org.javolution.util.internal.table;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.ListIterator;
 
-import org.javolution.annotations.Parallel;
-import org.javolution.util.FastTable;
+import org.javolution.annotations.Nullable;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.AbstractTable;
+import org.javolution.util.FastIterator;
+import org.javolution.util.FastListIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
- * An atomic view over a table. All updates are synchronized, reads are
- * performed on immutable copy.
+ * An atomic view over a table. All updates are synchronized, reads are performed on immutable copy.
  */
-public final class AtomicTableImpl<E> extends FastTable<E> {
+public final class AtomicTableImpl<E> // implements AbstractTableMethods<E> {
+        extends AbstractTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastTable<E> inner;
-    private volatile FastTable<E> innerConst; // The copy used by readers.
+    private final AbstractTable<E> inner;
+    private volatile AbstractTable<E> innerConst; // The copy used by readers.
 
-    public AtomicTableImpl(FastTable<E> inner) {
+    public AtomicTableImpl(AbstractTable<E> inner) {
         this.inner = inner;
         this.innerConst = inner.clone();
     }
@@ -74,14 +75,6 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public synchronized boolean addAllSorted(Collection<? extends E> that, Comparator<? super E> cmp) {
-        boolean changed = inner.addAllSorted(that, cmp);
-        if (changed)
-            innerConst = inner.clone();
-        return changed;
-    }
-
-    @Override
     public synchronized void addFirst(E element) {
         inner.addFirst(element);
         innerConst = inner.clone();
@@ -91,14 +84,6 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     public synchronized void addLast(E element) {
         inner.addLast(element);
         innerConst = inner.clone();
-    }
-
-    @Override
-    public synchronized boolean addSorted(E element, Comparator<? super E> cmp) {
-        boolean changed = inner.addSorted(element, cmp);
-        if (changed) 
-            innerConst = inner.clone();
-        return changed;
     }
 
     @Override
@@ -113,7 +98,7 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public FastTable<E> clone() {
+    public AtomicTableImpl<E> clone() {
         return new AtomicTableImpl<E>(innerConst.clone());
     }
 
@@ -123,18 +108,13 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean containsSorted(E searched, Comparator<? super E> cmp) {
-        return innerConst.containsSorted(searched, cmp);
-    }
-
-    @Override
     public boolean containsAll(Collection<?> that) {
         return innerConst.containsAll(that);
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return innerConst.unmodifiable().descendingIterator();
+    public FastIterator<E> descendingIterator() {
+        return innerConst.descendingIterator();
     }
 
     @Override
@@ -178,46 +158,16 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public boolean isEmpty() {
-        return innerConst.isEmpty();
-    }
-
-    @Override
-    public int insertionIndexOf(E element, Comparator<? super E> cmp) {
-        return innerConst.insertionIndexOf(element, cmp);
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return innerConst.unmodifiable().iterator();
-    }
-
-    @Override
     public int lastIndexOf(Object element) {
         return innerConst.lastIndexOf(element);
     }
 
     @Override
-    public ListIterator<E> listIterator() {
-        return innerConst.unmodifiable().listIterator();
+    public FastListIterator<E> listIterator(int index) {
+        return innerConst.listIterator(index);
     }
 
-    @Override
-    public ListIterator<E> listIterator(int index) {
-        return innerConst.unmodifiable().listIterator();
-    }
-
-    @Override
-    public E max() {
-        return innerConst.max();
-    }
-
-    @Override
-    public E min() {
-        return innerConst.min();
-    }
-
-    @Override
+     @Override
     public E peekFirst() {
         return innerConst.peekFirst();
     }
@@ -229,8 +179,7 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 
     @Override
     public synchronized E pollFirst() {
-        if (inner.isEmpty())
-            return null;
+        if (inner.isEmpty()) return null;
         E result = inner.removeFirst();
         innerConst = inner.clone();
         return result;
@@ -238,8 +187,7 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 
     @Override
     public synchronized E pollLast() {
-        if (inner.isEmpty())
-            return null;
+        if (inner.isEmpty()) return null;
         E result = inner.removeLast();
         innerConst = inner.clone();
         return result;
@@ -275,8 +223,6 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 
     @Override
     public synchronized E removeFirst() {
-        if (inner.isEmpty())
-            emptyError();
         E result = inner.remove(0);
         innerConst = inner.clone();
         return result;
@@ -303,8 +249,6 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
 
     @Override
     public synchronized E removeLast() {
-        if (inner.isEmpty())
-            emptyError();
         E result = inner.remove(size() - 1);
         innerConst = inner.clone();
         return result;
@@ -313,26 +257,16 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     @Override
     public synchronized boolean removeLastOccurrence(Object o) {
         int i = lastIndexOf(o);
-        if (i < 0)
-            return false;
+        if (i < 0) return false;
         inner.remove(i);
         innerConst = inner.clone();
         return true;
     }
 
     @Override
-    public synchronized boolean removeSorted(E element, Comparator<? super E> cmp) {
-        boolean changed = inner.removeSorted(element, cmp);
-        if (changed)
-            innerConst = inner.clone();
-        return changed;
-    }
-
-    @Override
     public synchronized boolean retainAll(Collection<?> that) {
         boolean changed = inner.retainAll(that);
-        if (changed)
-            innerConst = inner.clone();
+        if (changed) innerConst = inner.clone();
         return changed;
     }
 
@@ -370,13 +304,80 @@ public final class AtomicTableImpl<E> extends FastTable<E> {
     }
 
     @Override
-    public FastTable<E>[] trySplit(int n) {
+    public AbstractTable<E>[] trySplit(int n) {
         return innerConst.trySplit(n);
     }
 
-    @Parallel
-    public boolean until(Predicate<? super E> matching) {
-        return inner.until(matching);
+    @Override
+    public AbstractCollection<E> collect() {
+        return innerConst.collect();
+    }
+
+    @Override
+    public FastIterator<E> iterator() {
+        return innerConst.iterator();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return innerConst.isEmpty();
+    }
+
+    @Override
+    public FastListIterator<E> listIterator() {
+        return innerConst.listIterator();
+    }
+
+    @Override
+    public  AbstractTable<E> subList(int arg0, int arg1) {
+        return innerConst.unmodifiable().subTable(arg0, arg1);
+    }
+
+    @Override
+    public final boolean offer(@Nullable E e) {
+        return offerLast(e);
+    }
+
+    @Override
+    public final @Nullable E remove() {
+        return removeFirst();
+    }
+
+    @Override
+    public final @Nullable E poll() {
+        return pollFirst();
+    }
+
+    @Override
+    public final @Nullable E element() {
+        return getFirst();
+    }
+
+    @Override
+    public final @Nullable E peek() {
+        return peekFirst();
+    }
+
+    @Override
+    public final void push(@Nullable E e) {
+        addFirst(e);
+    }
+
+    @Override
+    public final @Nullable E pop() {
+        return removeFirst();
+    }
+ 
+    @Override
+    public final boolean offerFirst(@Nullable E e) {
+        addFirst(e);
+        return true;
+    }
+
+    @Override
+    public final boolean offerLast(@Nullable E e) {
+        addLast(e);
+        return true;
     }
 
 }

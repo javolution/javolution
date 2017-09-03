@@ -11,9 +11,10 @@ package org.javolution.util.internal.collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.javolution.util.FastCollection;
-import org.javolution.util.FractalTable;
-import org.javolution.util.SparseSet;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
+import org.javolution.util.FastSet;
+import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
@@ -21,15 +22,13 @@ import org.javolution.util.function.Predicate;
 /**
  * A view which does not iterate twice over the same elements.
  */
-public final class DistinctCollectionImpl<E> extends FastCollection<E> {
+public final class DistinctCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
-    private final Equality<? super E> equality;
+    private final AbstractCollection<E> inner;
 
-    public DistinctCollectionImpl(FastCollection<E> inner, Equality<? super E> equality) {
+    public DistinctCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
-        this.equality = equality;
     }
 
     @Override
@@ -44,12 +43,12 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
     @Override
     public DistinctCollectionImpl<E> clone() {
-        return new DistinctCollectionImpl<E>(inner.clone(), equality);
+        return new DistinctCollectionImpl<E>(inner.clone());
     }
 
     @Override
     public Equality<? super E> equality() {
-        return equality;
+        return inner.equality();
     }
 
     @Override
@@ -57,49 +56,20 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
         return inner.isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Iterator<E> iterator() {
-        final FastCollection<E> iterated = equality instanceof Order ? new SparseSet<E>((Order<E>)equality) :
-            new FractalTable<E>(equality);
-        return new Iterator<E>() {
-            Iterator<E> itr = inner.iterator();
-            boolean currentIsNext;
-            E current;
+    public FastIterator<E> iterator() {
+        return new IteratorImpl<E>(inner.iterator(), inner.equality());
+    }
 
-            @Override
-            public boolean hasNext() {
-                if (currentIsNext)
-                    return true;
-                while (itr.hasNext()) {
-                    current = itr.next();
-                    if (iterated.contains(current))
-                        continue; // Ignore.
-                    currentIsNext = true;
-                    iterated.add(current);
-                    return true;
-                }
-                return false;
-            }
-
-            @Override
-            public E next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                currentIsNext = false;
-                return current;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return new IteratorImpl<E>(inner.descendingIterator(), inner.equality());
     }
 
     @Override
     public boolean remove(final Object searched) { // Remove all occurrences.
         return inner.removeIf(new Predicate<E>() {
+            final Equality<? super E> equality = inner.equality();
             @SuppressWarnings("unchecked")
             @Override
             public boolean test(E param) {
@@ -123,8 +93,57 @@ public final class DistinctCollectionImpl<E> extends FastCollection<E> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public FastCollection<E>[] trySplit(int n) {
-        return new FastCollection[] { this }; // Does not split.
+    public AbstractCollection<E>[] trySplit(int n) {
+        return new AbstractCollection[] { this }; // Does not split.
+    }
+
+    /** Iterator not returning twice the same element. */
+    private static final class IteratorImpl<E> implements FastIterator<E> {
+        private final FastIterator<E> innerItr;
+        private final AbstractCollection<E> iterated;
+        private E current;
+        private boolean currentIsNext;
+
+        @SuppressWarnings("unchecked")
+        private IteratorImpl(FastIterator<E> innerItr, Equality<? super E> equality) {
+            this.innerItr = innerItr;
+            iterated = equality instanceof Order ? new FastSet<E>((Order<E>) equality)
+                    : new FastTable<E>(equality);
+       }
+
+        @Override
+        public boolean hasNext() {
+            if (currentIsNext) return true;
+            while (innerItr.hasNext()) {
+                current = innerItr.next();
+                if (iterated.contains(current)) continue; // Ignore.
+                currentIsNext = true;
+                iterated.add(current);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public E next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            currentIsNext = false;
+            return current;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean hasNext(Predicate<? super E> matching) {
+            while (hasNext()) {
+                if (matching.test(current)) return true; // currentIsNext always true.
+                next(); 
+            }
+            return false;
+        }
     }
 
 }

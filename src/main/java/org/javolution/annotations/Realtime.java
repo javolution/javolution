@@ -16,10 +16,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that an element has strict timing constraints and has a deterministic time behaviour.
+ * Indicates that an element has strict timing constraints and has a deterministic time behavior.
  *  
  * The {@link #limit limit} parameter shows the evolution of the [Worst Case Execution Time] of a method with 
- *     the cumulative size of the instance and its inputs (or only the size of the inputs for static methods).    
+ * the cumulative size of the instance and the method inputs (only the size of the inputs for static methods).    
  *     
  * ```java
  * public class FastCollection<E> {
@@ -34,12 +34,12 @@ import java.lang.annotation.Target;
  * }
  * ```
  * 
- * The {@link #concurrency} parameter documents the temporal behaviour in case of concurrent access, the default is 
- * {@code NOT_THREAD_SAFE} which means that external synchronisation or coordination is required. 
+ * The {@link #concurrency} parameter documents the temporal behavior in case of concurrent access, the default is 
+ * {@code NOT_THREAD_SAFE} which means that external synchronization or coordination is required. 
  *     
  * ```java
  * public class MyCache<K,V> { 
- *      final FastMap<K,V> map = FastMap.<K,V>newMap().atomic();
+ *      final FastMap<K,V> map = new SparseMap<K,V>().atomic();
  *      
  *      ​@Realtime(concurrency = LOCK_FREE)
  *      public V get(K key) {
@@ -48,14 +48,14 @@ import java.lang.annotation.Target;
  *      
  *      ​@Realtime(concurrency = SYNCHRONIZED)
  *      public V put(K key, V value) {
- *          return map.put(key, value); // Writes over atomic maps are synchronised.
+ *          return map.put(key, value); // Writes over atomic maps are synchronized.
  *      }
  * }
  * ```
  *          
- * If a class is annotated {@link Realtime}, all its methods and constructors are assumed the same temporal behaviour 
+ * If a class is annotated {@link Realtime}, all its methods and constructors are assumed the same temporal behavior 
  * unless explicitly stated. Although Java methods annotations are not inherited, overridden methods 
- * are expected to have to same or more strenuous timing behaviour as their parents (otherwise timing assumptions 
+ * are expected to have to same or more strenuous timing behavior as their parents (otherwise timing assumptions 
  * could be broken by an implementation).
  *     
  * [Worst Case Execution Time]: http://en.wikipedia.org/wiki/Worst-case_execution_time

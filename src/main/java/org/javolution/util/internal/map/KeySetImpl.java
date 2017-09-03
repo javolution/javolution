@@ -8,23 +8,23 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
-
-import org.javolution.util.FastMap;
-import org.javolution.util.FastMap.Entry;
-import org.javolution.util.FastSet;
+import org.javolution.util.AbstractMap;
+import org.javolution.util.AbstractMap.Entry;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Order;
+import org.javolution.util.function.Predicate;
 
 /**
  * A key set view over a map.
  */
-public final class KeySetImpl<K, V> extends FastSet<K> {
+public final class KeySetImpl<K, V> extends AbstractSet<K> {
 
     /** The generic iterator over the map keys. */
-    private static class KeyIterator<K,V> implements Iterator<K> {
-        final Iterator<Entry<K, V>> mapItr;
+    private static class KeyIterator<K,V> implements FastIterator<K> {
+        final FastIterator<Entry<K, V>> mapItr;
 
-        public KeyIterator(Iterator<Entry<K, V>> iterator) {
+        public KeyIterator(FastIterator<Entry<K, V>> iterator) {
             this.mapItr = iterator;
         }
 
@@ -40,14 +40,24 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
 
         @Override
         public void remove() {
-            mapItr.remove();
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean hasNext(final Predicate<? super K> matching) {
+            return mapItr.hasNext(new Predicate<Entry<K,V>>() {
+
+                @Override
+                public boolean test(Entry<K, V> param) {
+                    return matching.test(param.getKey());
+                }});
         }
     }
     
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K, V> map;
+    private final AbstractMap<K, V> map;
 
-    public KeySetImpl(FastMap<K, V> map) {
+    public KeySetImpl(AbstractMap<K, V> map) {
         this.map = map;
     }
 
@@ -64,7 +74,7 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
     }
 
     @Override
-    public FastSet<K> clone() {
+    public AbstractSet<K> clone() {
         return new KeySetImpl<K, V>(map.clone());
     }
 
@@ -79,12 +89,12 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
     }
 
     @Override
-    public Iterator<K> descendingIterator() {
+    public FastIterator<K> descendingIterator() {
         return new KeyIterator<K,V>(map.descendingIterator());
     }
 
     @Override
-    public Iterator<K> descendingIterator(K fromElement) {
+    public FastIterator<K> descendingIterator(K fromElement) {
         return new KeyIterator<K,V>(map.descendingIterator(fromElement));
     }
 
@@ -94,12 +104,12 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
     }
 
     @Override
-    public Iterator<K> iterator() {
+    public FastIterator<K> iterator() {
         return new KeyIterator<K,V>(map.iterator());
     }
 
     @Override
-    public Iterator<K> iterator(K fromElement) {
+    public FastIterator<K> iterator(K fromElement) {
         return new KeyIterator<K,V>(map.iterator(fromElement));
     }
 
@@ -112,6 +122,16 @@ public final class KeySetImpl<K, V> extends FastSet<K> {
     @Override
     public int size() {
         return map.size();
+    }
+
+    @Override
+    public boolean removeIf(final Predicate<? super K> filter) {
+        return map.removeIf(new Predicate<Entry<K,V>>() {
+
+            @Override
+            public boolean test(Entry<K, V> param) {
+                return filter.test(param.getKey());
+            }});
     }
 
 }

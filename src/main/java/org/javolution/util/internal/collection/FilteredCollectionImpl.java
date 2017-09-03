@@ -11,63 +11,22 @@ package org.javolution.util.internal.collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * A filtered view over a collection.
  */
-public final class FilteredCollectionImpl<E> extends FastCollection<E> {
+public final class FilteredCollectionImpl<E> extends AbstractCollection<E> {
 
-    /** Returns an iterator filtering elements iterated. */
-    public static class FilteredIterator<E> implements Iterator<E> {
-        final Iterator<E> itr;
-        final Predicate<? super E> filter;
-
-        boolean currentIsNext;
-
-        E current;
-        public FilteredIterator(Iterator<E> itr, Predicate<? super E> filter) {
-            this.itr = itr;
-            this.filter = filter;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (currentIsNext)
-                return true;
-            while (itr.hasNext()) {
-                current = itr.next();
-                if (!filter.test(current))
-                    continue; // Ignore.
-                currentIsNext = true;
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public E next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-            currentIsNext = false;
-            return current;
-        }
-
-        @Override
-        public void remove() {
-            if (currentIsNext)
-                throw new IllegalStateException();
-            itr.remove();
-        }
-    }
     private static final long serialVersionUID = 0x700L; // Version.
     private final Predicate<? super E> filter;
 
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
 
-    public FilteredCollectionImpl(FastCollection<E> inner, Predicate<? super E> filter) {
+    public FilteredCollectionImpl(AbstractCollection<E> inner, Predicate<? super E> filter) {
         this.inner = inner;
         this.filter = filter;
     }
@@ -85,7 +44,7 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E> clone() {
+    public AbstractCollection<E> clone() {
         return new FilteredCollectionImpl<E>(inner.clone(), filter);
     }
 
@@ -100,8 +59,13 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return new FilteredIterator<E>(inner.iterator(), filter);
+    public FastIterator<E> iterator() {
+        return new IteratorImpl<E>(inner.iterator(), filter);
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return new IteratorImpl<E>(inner.descendingIterator(), filter);
     }
 
     @Override
@@ -123,10 +87,48 @@ public final class FilteredCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
-        FastCollection<E>[] subViews = inner.trySplit(n);
+    public AbstractCollection<E>[] trySplit(int n) {
+        AbstractCollection<E>[] subViews = inner.trySplit(n);
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new FilteredCollectionImpl<E>(subViews[i], filter);
         return subViews;
+    }
+
+    /** Returns an iterator filtering elements iterated. */
+    public static final class IteratorImpl<E> implements FastIterator<E> {
+        private final FastIterator<E> innerItr;
+        private final Predicate<? super E> filter;
+        
+        public IteratorImpl(FastIterator<E> innerItr, Predicate<? super E> filter) {
+            this.innerItr = innerItr;
+            this.filter = filter;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return innerItr.hasNext(filter);
+        }
+
+        @Override
+        public E next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            return innerItr.next();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean hasNext(final Predicate<? super E> matching) {
+            return innerItr.hasNext(new Predicate<E>() {
+
+                @Override
+                public boolean test(E param) {
+                    return filter.test(param) && matching.test(param);
+                }});
+        }
+
     }
 }

@@ -8,20 +8,20 @@
  */
 package org.javolution.util.internal.function;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.lang.Index;
 import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
- * The index order implementation.
- * Enum-based singleton, ref. Effective Java Reloaded (Joshua Bloch). 
+ * The index order default implementation.
  */
-public enum IndexOrderImpl implements Order<Index> {
-    INSTANCE;
-
+public final class IndexOrderImpl implements Order<Index> {
+    private static final long serialVersionUID = 0x700L; // Version.
+   
     @Override
-    public boolean areEqual(Index left, Index right) {
-        return left.intValue() == right.intValue();
+    public boolean areEqual(@Nullable Index left, @Nullable Index right) {
+        return (left == right) || (left != null && left.equals(right));
     }
 
     @Override
@@ -34,11 +34,6 @@ public enum IndexOrderImpl implements Order<Index> {
     @Override
     public int indexOf(Index index) { // Unsigned 32-bits
         return index.intValue();
-    }
-
-    @Override
-    public Order<Index> subOrder(Index index) {
-        return null; // No sub-order.
     }
 
 }

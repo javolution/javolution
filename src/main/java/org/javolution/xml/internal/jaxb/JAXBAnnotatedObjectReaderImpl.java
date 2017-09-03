@@ -286,12 +286,12 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		final T outputObject = reflectNewInstance(inputClass);
 
 		// The processing in this implementation is stack based. We will make use of FastTable's implementation of the Deque interface
-		final FastTable<AnnotationStackData> outputStack = FastTable.newTable();
+		final FastTable<AnnotationStackData> outputStack = FastTable.newInstance();
 
 		// We'll push the output object onto the stack as an initial entry. All stack entries get wrapped in an AnnotationStackData class.
 		// The fields in this class are package-private to provide as cheap of access as possible since they are used frequently.
 		AnnotationStackData stackData;
-		FastSet<CharArray> requiredSet = FastSet.newSet(Order.LEXICAL);
+		FastSet<CharArray> requiredSet = FastSet.newInstance(Order.LEXICAL);
 		
 		if(_isValidating){
 			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null,
@@ -702,7 +702,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					//LogContext.info("<STACK NOOP> - [KEEP CURRENT LIST]: (List) "+listStackData._xmlElementName);
 				}
 				else {
-					final FastTable<Object> list = FastTable.newTable();
+					final FastTable<Object> list = FastTable.newInstance();
 					listStackData = new AnnotationStackData(AnnotationStackType.UNBOUNDED, parentStackData, null,
 							list, genericType, xmlElementName, null, null);
 					setList(listStackData);
@@ -1145,7 +1145,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				_processedSet = null;
 			}
 			else {
-				_processedSet = FastSet.<CharArray>newSet(Order.LEXICAL).linked();
+				_processedSet = FastSet.<CharArray>newInstance(Order.LEXICAL).linked();
 			}
 		}
 

@@ -9,24 +9,29 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Comparator;
 
-import org.javolution.util.FastSet;
+import org.javolution.annotations.Nullable;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
+import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 
 /**
  * An atomic view over a set (copy-on-write).
  */
-public final class AtomicSetImpl<E> extends FastSet<E> {
+public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
+        extends AbstractSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastSet<E> inner;
-    private volatile FastSet<E> innerConst; // The copy used by readers.
+    private final AbstractSet<E> inner;
+    private volatile AbstractSet<E> innerConst; // The copy used by readers.
 
-    public AtomicSetImpl(FastSet<E> inner) {
+    public AtomicSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
         this.innerConst = inner.clone();
     }
@@ -34,6 +39,14 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     @Override
     public synchronized boolean add(E element) {
         boolean changed = inner.add(element);
+        if (changed)
+            innerConst = inner.clone();
+        return changed;
+    }
+
+    @Override
+    public synchronized boolean addMulti(E element) {
+        boolean changed = inner.addMulti(element);
         if (changed)
             innerConst = inner.clone();
         return changed;
@@ -60,11 +73,7 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
         return innerConst.any();
     }
 
-    @Override
-    public E ceiling(E element) {
-        return innerConst.ceiling(element);
-    }
-
+ 
     @Override
     public synchronized void clear() {
         inner.clear();
@@ -72,13 +81,8 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public FastSet<E> clone() {
+    public AtomicSetImpl<E> clone() {
         return new AtomicSetImpl<E>(innerConst.clone());
-    }
-
-    @Override
-    public Order<? super E> order() {
-        return innerConst.order();
     }
 
     @Override
@@ -92,16 +96,6 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> descendingIterator() {
-        return innerConst.unmodifiable().descendingIterator();
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return innerConst.unmodifiable().descendingIterator(fromElement);
-    }
-
-    @Override
     public boolean equals(Object obj) {
         return innerConst.equals(obj);
     }
@@ -110,12 +104,7 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     public E first() {
         return innerConst.first();
     }
-
-    @Override
-    public E floor(E element) {
-        return innerConst.floor(element);
-    }
-
+    
     @Override
     public void forEach(Consumer<? super E> consumer) {
         innerConst.forEach(consumer);
@@ -127,53 +116,28 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public E higher(E element) {
-        return innerConst.higher(element);
-    }
-
-    @Override
     public boolean isEmpty() {
         return innerConst.isEmpty();
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return innerConst.unmodifiable().iterator();
+    public FastIterator<E> iterator(@Nullable E from) {
+        return innerConst.iterator(from);
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
-        return innerConst.unmodifiable().iterator(fromElement);
+    public FastIterator<E> descendingIterator(@Nullable E from) {
+        return innerConst.descendingIterator(from);
     }
 
-    @Override
+     @Override
     public E last() {
         return innerConst.last();
     }
 
     @Override
-    public E lower(E element) {
-        return innerConst.lower(element);
-    }
-
-    @Override
-    public E max() {
-        return innerConst.max();
-    }
-
-    @Override
-    public E min() {
-        return innerConst.min();
-    }
-
-    @Override
-    public E pollFirst() {
-        return innerConst.pollFirst();
-    }
-
-    @Override
-    public E pollLast() {
-        return innerConst.pollLast();
+    public Order<? super E> order() {
+        return innerConst.order();
     }
 
     @Override
@@ -234,13 +198,53 @@ public final class AtomicSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public FastSet<E>[] trySplit(int n) {
+    public AbstractSet<E>[] trySplit(int n) {
         return innerConst.trySplit(n);
     }
 
     @Override
-    public boolean until(Predicate<? super E> matching) {
-        return innerConst.until(matching);
+    public AbstractCollection<E> collect() {
+        return innerConst.collect();
     }
 
+    @Override
+    public FastIterator<E> iterator() {
+        return innerConst.iterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return innerConst.descendingIterator();
+    }
+
+    @Override
+    public Equality<? super E> equality() {
+        return innerConst.equality();
+    }
+
+    @Override
+    public Comparator<? super E> comparator() {
+        return innerConst.comparator();
+    }
+
+    @Override
+    public AbstractSet<E> headSet(E arg0) {
+        return innerConst.headSet(arg0).unmodifiable();
+    }
+
+    @Override
+    public AbstractSet<E> subSet(E arg0, E arg1) {
+        return innerConst.subSet(arg0, arg1).unmodifiable();
+    }
+
+    @Override
+    public AbstractSet<E> tailSet(E arg0) {
+        return innerConst.tailSet(arg0).unmodifiable();
+    }
+
+    @Override
+    public AbstractSet<E> subSet(E element) {
+        return innerConst.subSet(element).unmodifiable();
+    }
+ 
 }

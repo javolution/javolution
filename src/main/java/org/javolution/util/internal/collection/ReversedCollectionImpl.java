@@ -8,22 +8,20 @@
  */
 package org.javolution.util.internal.collection;
 
-import java.util.Iterator;
-
-import org.javolution.util.ConstTable;
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * A reversed view over a collection.
  */
-public final class ReversedCollectionImpl<E> extends FastCollection<E> {
+public final class ReversedCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
 
-    public ReversedCollectionImpl(FastCollection<E> inner) {
+    public ReversedCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
     }
 
@@ -38,7 +36,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E> clone() {
+    public AbstractCollection<E> clone() {
         return new ReversedCollectionImpl<E>(inner.clone());
     }
 
@@ -53,8 +51,13 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return ConstTable.of(inner).reversed().iterator();
+    public FastIterator<E> iterator() {
+        return inner.descendingIterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return inner.iterator();
     }
 
     @Override
@@ -63,7 +66,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E> reversed() {
+    public AbstractCollection<E> reversed() {
         return inner;
     }
 
@@ -73,7 +76,7 @@ public final class ReversedCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         return inner.trySplit(n);
     }
 

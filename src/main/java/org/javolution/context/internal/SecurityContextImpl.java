@@ -16,7 +16,7 @@ import org.javolution.util.FastTable;
  */
 public final class SecurityContextImpl extends SecurityContext {
 
-    private FastTable<Action> actions = FastTable.newTable();
+    private FastTable<Action> actions = FastTable.newInstance();
 
     @Override
     public boolean isGranted(Permission<?> permission) {

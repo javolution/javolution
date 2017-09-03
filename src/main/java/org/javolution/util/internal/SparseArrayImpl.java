@@ -8,297 +8,275 @@
  */
 package org.javolution.util.internal;
 
-import java.util.Iterator;
+import static org.javolution.lang.MathLib.*;
 
-import org.javolution.lang.Immutable;
 import org.javolution.lang.MathLib;
+import org.javolution.util.FastListIterator;
 import org.javolution.util.SparseArray;
 
 /**
- * Holds the sparse array default implementations.
+ * The sparse array default implementation. There is not constraint on the index range (which is dynamically adjusted),
+ * elements are ordered smallest indices first (unsigned). The strategy when collisions occur is to increase 
+ * the array capacity as long as the capacity is kept less or equal to {@code (size() << MAX_CAPACITY_SHIFT)}. 
+ * The reverse occurs when elements are removed (the array capacity is reduced to avoid reaching the capacity limit). 
+ * The same instance is used for size up to {@link #MAX_SIZE}; for greater sizes, {@link SparseArrayFractalImpl fractal} 
+ * instances are returned. 
  */
-public class SparseArrayImpl  {
+public final class SparseArrayImpl<E> extends SparseArray<E> {
+    private static final long serialVersionUID = 0x700L;
 
-    /** SparseArray inner structure must be implemented by array elements which must propagate cloning. */
-    public interface Inner<K, E> extends Cloneable {
-        Inner<K, E> clone();
-        Iterator<E> iterator();
-        Iterator<E> iterator(K from);
-        Iterator<E> descendingIterator();
-        Iterator<E> descendingIterator(K from);
+    /** Defines the maximum factor between the number of elements and the array capacity (memory footprint). 
+     *  The array capacity is automatically adjusted up or down to ensure that this limit is always respected. */
+    public static final int MAX_CAPACITY_SHIFT = 2; // Should be >= 1
+
+    /** Holds the maximum size supported by instances of this class (to bound worst case execution time). */
+    public static final int MAX_SIZE = 256;
+
+    private static final int[] NONE = new int[0]; // When empty.
+    private int count; // Number of elements different from null.
+    private int shift; // Minimum unsigned right shift for index to array position.
+    private int[] indices = NONE; // In range [0 .. count << MAX_CAPACITY_SHIFT] 
+    private E[] elements;
+
+    /** Default constructor (empty instance). */
+    public SparseArrayImpl() {
+    }
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public E get(int index) {
+        int slot = index >>> shift;
+        return ((slot < indices.length) && (slot >= 0)) ? (index == indices[slot]) ? elements[slot] : searchFrom(slot, index)
+                : null;
+    }
+
+    private E searchFrom(int slot, int index) {
+        while (true) {
+            if (++slot >= indices.length) return null;
+            int indexFound = indices[slot];
+            if (indexFound == index) return elements[slot];
+            if ((indexFound == 0) || unsignedLessThan(index, indexFound)) return null;
+        }
     }
     
-    /** Holds the unique empty instance. */
-    private static Empty<Object> EMPTY = new Empty<Object>();
-    
-    /** Returns an empty sparse array. */
-    @SuppressWarnings("unchecked")
-    public static <E> SparseArray<E> empty() {
-        return (SparseArray<E>) EMPTY;
-    }
-        
-    /** Empty sparse array implementation (singleton). */
-    private static final class Empty<E> extends SparseArray<E> implements Immutable {
-         private static final long serialVersionUID = 0x700L; 
 
-         @Override
-         public final E get(int index) {
-             return null;
-         }
-         
-         @Override
-         public SparseArray<E> set(int index, E element) {
-             return (element != null) ? new Unary<E>(index, element) : this;
-         }
-
-         @Override
-         public final int next(int after) {
-             return 0;    
-         }
-
-         @Override
-         public final int previous(int before) {
-             return -1;    
-         }
-
-         @Override
-         public Empty<E> clone() {
-             return this; // Immutable.
-         }
-
-    }    
-
-    /** Sparse array holding a single element . */
-    private static final class Unary<E> extends SparseArray<E> {
-        private static final long serialVersionUID = 0x700L; 
-        private final int index;
-        private E element; // Always different from null.
-        
-        private Unary(int index, E element) {
-            this.index = index;
-            this.element = element;
-        }
-  
-        @Override
-        public E get(int i) {
-            return (index == i) ? element : null;
-        }            
-
-        @Override
-        public SparseArray<E> set(int i, E e) {
-            if (e == null) if (index == i) return empty(); else return this;
-            if (index != i) return new Trie<E>(index, element, i, e);
-            element = e;
-            return this;
-        }
-       
-        @Override
-        public int next(int after) {
-            return MathLib.unsignedLessThan(after, index) ? index : 0;
-        }
-
-        @Override
-        public int previous(int before) {
-            return MathLib.unsignedLessThan(index, before) ? index : -1;
-        }
-  
-        @Override
-        public Unary<E> clone() {
-            return new Unary<E>(index, element);
-        }
-        
-    }
-    
-    /** Sparse Array Trie Structure. */
-    private static final class Trie<E> extends SparseArray<E> {
-        private static final long serialVersionUID = 0x700L; 
-        private static final int SHIFT = 4;
-        private static final int SIZE = 1 << SHIFT;
-        private static final int MASK = SIZE - 1;         
-        
-        private final Object[] trie; 
-        private final int[] indices;
-        private final int shift;
-        private final int prefix;
-        private int count; // Always greater than l. 
-        
-        private Trie(int xIndex, Object x, int yIndex, Object y) {
-            trie = new Object[SIZE];
-            indices = new int[SIZE];
-            shift = commonShift(xIndex, yIndex);
-            prefix = xIndex >>> shift >>> SHIFT;
-            indices[(xIndex >>> shift) & MASK] = xIndex;
-            trie[(xIndex >>> shift) & MASK] = x;
-            indices[(yIndex >>> shift) & MASK] = yIndex;
-            trie[(yIndex >>> shift) & MASK] = y;
-            count = 2;
-        }
-        
-        private Trie(Object[] trie, int[] indices, int shift, int prefix, int count) { // For cloning (ok since final)
-            this.trie = trie;
-            this.indices = indices;
-            this.shift = shift;
-            this.prefix = prefix;
-            this.count = count;
-        }
-        
-        @SuppressWarnings("unchecked")
-        @Override
-        public E get(int index) {
-            if (isOutOfRange(index)) return null;
-            int i = (index >>> shift) & MASK; 
-            Object obj = trie[i];
-            if (obj instanceof Trie) return ((Trie<E>)obj).get(index);
-            return (obj != null) && (indices[i] == index) ? (E) obj : null;
-        }            
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public SparseArray<E> set(int index, E element) {
-            if (element == null) return remove(index);
-            if (isOutOfRange(index)) return new Trie<E>(prefix << shift << SHIFT, this, index, element);
-            int i = (index >>> shift) & MASK;
-            Object obj = trie[i];
-            if (obj instanceof Trie) {
-                 SparseArray<E> tmp = ((Trie<E>)obj).set(index, element);
-                 if (tmp != obj) trie[i] = tmp;
-            } else if (obj == null) {
-                trie[i] = element;
-                indices[i] = index;
+    @Override
+    public SparseArray<E> set(int index, E value) {
+        if (value == null) clear(index);
+        int slot = index >>> shift;
+        while (true) {
+            if ((slot >= indices.length) || (slot < 0)) slot = overflow(index);
+            int indexFound = indices[slot];
+            if (indexFound == index) { // Replaces.
+                if (isFree(slot, indexFound)) count++; // Resolves element at zero ambiguity.
+                elements[slot] = value;
+                return this;
+            } else if (indexFound == 0) { // Free slot. 
+                indices[slot] = index;
+                elements[slot] = value;
                 count++;
-            } else {
-                int j = indices[i];
-                trie[i] = (j == index) ? element : new Trie<E>(j, obj, index, element);
+                return this;
+            } else if (unsignedLessThan(index, indexFound)) { // Swaps with existing index/value pair.
+                E elementFound = elements[slot];
+                indices[slot] = index;
+                elements[slot] = value;
+                index = indexFound;
+                value = elementFound;
             }
-            return this;
-        }
-         
-        /** Sets null element at specified index. */
-        @SuppressWarnings("unchecked")
-        private SparseArray<E> remove(int index) {
-            if (isOutOfRange(index)) return this;
-            int i = (index >>> shift) & MASK;
-            Object obj = trie[i];
-            if (obj instanceof Trie) { 
-                SparseArray<E> tmp = ((Trie<E>)obj).remove(index);
-                if (obj != tmp) {
-                     if (tmp instanceof Unary) { // We can access unary directly.
-                          Unary<E> unary = (Unary<E>) tmp;
-                          trie[i] = unary.element;
-                          indices[i] = unary.index;
-                     } else {
-                         trie[i] = tmp;
-                     }
-                }
-            } else if ((obj != null) && (indices[i] == index)) {
-                trie[i] = null;
-                if (--count == 1) {
-                    int j = nonNull();
-                    obj = trie[j];
-                    return (obj instanceof Trie) ? (SparseArray<E>)obj : new Unary<E>(indices[j], (E)obj); 
-                }
-            }
-            return this;
-        }
-        
-        @Override
-        public int next(int after) {
-            int from = after + 1;
-            if (from == 0) return 0; // Overflow.
-            if (isOutOfRange(from)) { // Does not contains from.
-                if (MathLib.unsignedLessThan(prefix, from >>> shift >>> SHIFT)) return 0; // All elements < from.
-                from = 0; // All elements are after.
-            }
-            for(int i=(from >>> shift) & MASK; i < SIZE; i++) {
-                Object obj = trie[i];
-                if (obj instanceof Trie) {
-                    @SuppressWarnings("unchecked")
-                    int n = ((Trie<E>)obj).next(after);
-                    if (n != 0) return n;
-                } else if (obj != null) {
-                    int index = indices[i];
-                    if (MathLib.unsignedLessThan(after, index)) return index; 
-                }
-            }
-            return 0;
-        }
-
-        @Override
-        public int previous(int before) {
-            int from = before - 1;
-            if (from == -1) return -1; // Overflow.
-            if (isOutOfRange(from)) { // Does not contains from.
-                if (MathLib.unsignedLessThan(from >>> shift >>> SHIFT, prefix)) return -1; // All elements > from.
-                from = -1; // All elements are before.
-            }
-            for(int i=(from >>> shift) & MASK; i < SIZE; i++) {
-                Object obj = trie[i];
-                if (obj instanceof Trie) {
-                    @SuppressWarnings("unchecked")
-                    int n = ((Trie<E>)obj).previous(before);
-                    if (n != -1) return n;
-                } else if (obj != null) {
-                    int index = indices[i];
-                    if (MathLib.unsignedLessThan(index, before)) return index; 
-                }
-            }
-            return -1;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Trie<E> clone() {
-            Trie<E> copy = new Trie<E>(trie.clone(), indices.clone(), shift, prefix, count);
-            for (int i=0; i < SIZE; i++) {
-                Object obj = copy.trie[i];
-                if (obj instanceof SparseArray) {
-                    SparseArray<E> subTrie  = (SparseArray<E>) obj;
-                    copy.trie[i] = subTrie.clone();
-                } else if (obj instanceof Inner) {
-                    Inner<?, E> internal  = (Inner<?,E>) obj;
-                    copy.trie[i] = internal.clone();
-                }
-            }
-            return copy;
-        }
-
-        /** Returns the trie index of a non-null element. */
-        private int nonNull() {
-            for (int i=0; i < SIZE; i++) 
-                if (trie[i] != null) return i; 
-            return -1;
-        }
-        
-        /** Indicates if the specified index if out of range. */
-        private boolean isOutOfRange(int index) {
-            return index >>> shift >>> SHIFT != prefix;
+            // No direct fit, check if capacity can increase.
+            if (count << MAX_CAPACITY_SHIFT <= indices.length * 2) return upsize().set(index, value);
+            ++slot;
         }
     }
- 
-    /**
-     * Returns the minimal shift for two indices (based on common high-bits which can be masked).
-     */
-    private static int commonShift(int i, int j) {
-        int xor = i ^ j;
-        if ((xor & 0xFFFF0000) == 0)
-            if ((xor & 0xFFFFFF00) == 0)
-                if ((xor & 0xFFFFFFF0) == 0)
-                    return 0;
-                else
-                    return 4;
-            else if ((xor & 0xFFFFF000) == 0)
-                return 8;
-            else
-                return 12;
-        else if ((xor & 0xFF000000) == 0)
-            if ((xor & 0xFFF00000) == 0)
-                return 16;
-            else
-                return 20;
-        else if ((xor & 0xF0000000) == 0)
-            return 24;
-        else
-            return 28;
+    
+    private boolean isFree(int slot, int indexAtSlot) {
+        return (indexAtSlot == 0) && ((slot != 0) || (elements[0] == null)); 
     }
 
- }
+    /** Equivalent to {@code set(index, null)} */
+    public SparseArrayImpl<E> clear(int index) {
+        int slot = index >>> shift;
+        while (true) {
+            if ((slot >= indices.length) || (slot < 0)) return this; // Not found.
+            int indexFound = indices[slot];
+            if (indexFound == index) { // Found.
+                if (isFree(slot, indexFound)) return this; // Nothing to clear.
+                while (true) { // Shift to pos following misplaced elements.
+                    if (slot + 1 >= indices.length) break;
+                    int i = indices[slot + 1];
+                    if (i == 0) break; // Empty slot.
+                    if ((i >>> shift) > slot) break; // Not misplaced.
+                    indices[slot] = i;
+                    elements[slot] = elements[++slot];
+                }
+                indices[slot] = 0;
+                elements[slot] = null;
+                return (--count << MAX_CAPACITY_SHIFT < indices.length) ? downsize() : this;
+            } else if (indexFound == 0) { // Not found. 
+                return this;
+            } else if (unsignedLessThan(index, indexFound)) { // Not found.
+                return this;
+            }
+            ++slot;
+        }
+    }
+
+    /** Increases shift in case of overflow  (compacting elements to the head). */
+    @SuppressWarnings("unchecked")
+    private int overflow(int index) {
+        if (indices == NONE) { // Empty array.
+            shift = max(0, 32 - MAX_CAPACITY_SHIFT - numberOfLeadingZeros(index));
+            indices = new int[1 << MAX_CAPACITY_SHIFT];
+            elements = (E[]) new Object[1 << MAX_CAPACITY_SHIFT];
+        } else { // Either index too large or no slot available at the end of array.
+            shift = max(0, numberOfLeadingZeros(indices.length) - 1 - numberOfLeadingZeros(index));
+            int[] newIndices = new int[indices.length];
+            E[] newElements = (E[]) new Object[elements.length];
+            copyTo(newIndices, newElements);
+            indices = newIndices;
+            elements = newElements;
+        }
+        return index >>> shift;
+    }
+
+    /** Doubles capacity or move to fractal implementation. */
+    @SuppressWarnings("unchecked")
+    private SparseArray<E> upsize() {
+        if (count >= MAX_SIZE) return newFractal();
+        shift = max(0, shift - 1); // Reduces shift (expands)
+        int[] newIndices = new int[indices.length * 2];
+        E[] newElements = (E[]) new Object[elements.length * 2];
+        copyTo(newIndices, newElements);
+        indices = newIndices;
+        elements = newElements;
+        return this;
+    }
+
+    private SparseArrayFractalImpl<E> newFractal() {
+        SparseArrayFractalImpl<E> sparse = new SparseArrayFractalImpl<E>(shift >> 1);
+        for (int i = 0; i < elements.length; i++) {
+            E element = elements[i];
+            if (element != null) sparse.set(indices[i], element);
+        }
+        return sparse;
+    }
+
+    private void copyTo(int[] dstI, E[] dstE) {
+        int dstLast = -1;
+        for (int i = 0; i < elements.length; i++) {
+            E e = elements[i];
+            if (e == null) continue;
+            int index = indices[i];
+            int slot = index >>> shift;
+            dstLast = dstLast < slot ? slot : dstLast + 1;
+            dstI[dstLast] = index;
+            dstE[dstLast] = e;
+        }
+    }
+
+    /** Divides by two capacity (or empty). */
+    @SuppressWarnings("unchecked")
+    private SparseArrayImpl<E> downsize() {
+        if (count == 0) {
+            indices = NONE;
+            elements = null;
+        } else {
+            ++shift;
+            int[] newIndices = new int[indices.length >> 1];
+            E[] newElements = (E[]) new Object[elements.length >> 1];
+            copyTo(newIndices, newElements);
+            indices = newIndices;
+            elements = newElements;
+        }
+        return this;
+    }
+
+    @Override
+    public IteratorImpl iterator(int from, int to) {
+        return new IteratorImpl(from, to);
+    }
+
+    /** ListIterator Implementation. */
+    public final class IteratorImpl implements FastListIterator<E> {
+        int slotFrom; // position of first non-null element with index >= from (indices.length if none)
+        int slotTo; // position of last non-null element with index <= to (-1 if none)
+        int slotNext; // (posTo + 1) if none.
+        int slotPrev; // (posFrom - 1) if none.
+        byte direction;
+
+        private IteratorImpl(int from, int to) {
+            slotFrom = from >>> shift;
+            if ((slotFrom >= indices.length) || (slotFrom < 0)) slotFrom = indices.length; // Hard-Limit
+            while (slotFrom < indices.length) {
+                int index = indices[slotFrom];
+                if (!isFree(slotFrom, index) && !unsignedLessThan(index, from)) break; // index >= from 
+                slotFrom++;
+            }
+            
+            slotTo = from >>> shift;
+            if ((slotTo >= indices.length) || (slotTo < 0)) slotTo = indices.length; // Hard-Limit
+            while (slotFrom < indices.length) {
+                int index = indices[slotFrom];
+                if (!isFree(slotFrom, index) && !unsignedLessThan(index, from)) break; // index >= from 
+                slotFrom++;
+            }
+            
+            
+            slotNext = from >>> shift;
+            if ((slotNext >= indices.length) || (slotNext < 0)) slotNext = posEnd; // Overflow.
+            while (slotNext < posEnd) {
+                int index = indices[slotNext];
+                if (!unsignedLessThan(index, from)) // (index >= from), found it ? 
+                    if ((index != 0) || (elements[0] != null)) break; // Confirmation...
+                slotNext++;
+            }
+            slotPrev = slotNext;
+            while (--slotPrev > 0)
+                if (elements[slotPrev] != null) break;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return slotNext > slotTo;
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            return slotPrev < slotFrom;
+        }
+
+        @Override
+        public E next() {
+            direction = 1;
+            slotPrev = slotNext;
+            while (++slotNext <= slotTo)
+                if (elements[slotNext] != null) break;
+            return elements[slotPrev];
+        }
+
+        @Override
+        public int nextIndex() {
+            return (slotNext <= slotTo) ? indices[slotNext] : 0;
+        }
+
+        @Override
+        public E previous() {
+            direction = -1;
+            slotNext = slotPrev;
+            while (--slotPrev >= slotFrom)
+                if (elements[slotPrev] != null) break;
+            return elements[slotNext];
+        }
+
+        @Override
+        public int previousIndex() {
+            return (slotPrev >= slotFrom) ? indices[slotPrev] : -1;
+        }
+
+    }
+
+}

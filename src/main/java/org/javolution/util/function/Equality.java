@@ -14,18 +14,16 @@ import static org.javolution.annotations.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;
 
-import org.javolution.annotations.ReadOnly;
 import org.javolution.annotations.Nullable;
+import org.javolution.annotations.ReadOnly;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.Immutable;
 import org.javolution.util.internal.function.ArrayEqualityImpl;
-import org.javolution.util.internal.function.CaseInsensitiveLexicalOrderImpl;
-import org.javolution.util.internal.function.HashOrderImpl;
-import org.javolution.util.internal.function.IdentityHashOrderImpl;
-import org.javolution.util.internal.function.LexicalOrderImpl;
+import org.javolution.util.internal.function.IdentityOrderImpl;
+import org.javolution.util.internal.function.StandardOrderImpl;
 
 /**
- * <p>  A function (functional interface) indicating if two objects are considered equals.</p>
+ * A function (functional interface) indicating if two objects are considered equals.
  * 
  * @param <T>the type of objects that may be compared for equality.
  * 
@@ -33,47 +31,63 @@ import org.javolution.util.internal.function.LexicalOrderImpl;
  * @version 7.0 September 13, 2015
  */
 @ReadOnly
-public interface Equality<T> extends  Immutable, Serializable {
-	
+public interface Equality<T> extends Immutable, Serializable {
+
     /**
-     * A default object equality (based on {@link Object#equals}).
+     * An equality always returning {@code false}.
      */
     @Realtime(limit = UNKNOWN)
-    public static final Equality<Object> DEFAULT = HashOrderImpl.INSTANCE;
+    public static final Equality<Object> NEVER_EQUALS = new Equality<Object>() {
+        private static final long serialVersionUID = 0x700L; // Version.
+
+        @Override
+        public boolean areEqual(Object left, Object right) {
+            return false;
+        }
+    };
 
     /**
-     * An identity object equality (instances are only equals to themselves).
+     * An equality always returning {@code false}.
+     */
+    @Realtime(limit = UNKNOWN)
+    public static final Equality<Object> ALWAYS_EQUALS = new Equality<Object>() {
+        private static final long serialVersionUID = 0x700L; // Version.
+
+        @Override
+        public boolean areEqual(Object left, Object right) {
+            return false;
+        }
+    };
+    
+    /**
+     * The standard object equality (based on {@link Object#equals}). 
+     * It also defines an arbitrary order based on {@link Object#hashCode}.
+     */
+    @Realtime(limit = UNKNOWN)
+    public static final StandardOrderImpl STANDARD = new StandardOrderImpl();
+
+    /**
+     * The identity object equality (instances are only equals to themselves).
+     * It also defines an arbitrary order based on {@link System#identityHashCode)}.
      */
     @Realtime(limit = CONSTANT)
-    public static final Equality<Object> IDENTITY = IdentityHashOrderImpl.INSTANCE;
-
-     /**
-     * A content based array comparator (recursive). 
-     * The {@link #DEFAULT default} equality is used for non-array elements. 
-     */
-    @Realtime(limit = LINEAR)
-    public static final Equality<Object> ARRAY = ArrayEqualityImpl.INSTANCE;
- 
-    /**
-     * A lexical equality for any {@link CharSequence}.
-     */
-    @Realtime(limit = LINEAR)
-    public static final Equality<CharSequence> LEXICAL = LexicalOrderImpl.INSTANCE;
+    public static final IdentityOrderImpl IDENTITY = new IdentityOrderImpl();
+    
 
     /**
-     * A case insensitive lexical equality for any {@link CharSequence}.
-     */
+    * A content based array comparator (recursive). 
+    * The {@link #STANDARD standard} equality is used for non-array elements. 
+    */
     @Realtime(limit = LINEAR)
-    public static final Equality<CharSequence> LEXICAL_CASE_INSENSITIVE
-        = CaseInsensitiveLexicalOrderImpl.INSTANCE;
-  
-	/**
-	 * Indicates if two specified objects are considered equal.
-	 * 
-	 * @param left the first object (can be {@code null}).
-	 * @param right the second object (can be {@code null}).
-	 * @return <code>true</code> if both objects are considered equal; <code>false</code> otherwise.
-	 */
-	boolean areEqual(@Nullable T left, @Nullable T right);
+    public static final ArrayEqualityImpl ARRAY = new ArrayEqualityImpl();
+
+    /**
+     * Indicates if two specified objects are considered equal.
+     * 
+     * @param left the first object.
+     * @param right the second object.
+     * @return {@code true} if both objects are considered equal; {@code false} otherwise.
+     */
+    boolean areEqual(@Nullable T left, @Nullable T right);
 
 }

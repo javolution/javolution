@@ -9,11 +9,14 @@
 package org.javolution.util.internal.set;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Comparator;
 
-import org.javolution.util.FastSet;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Consumer;
+import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.ReadWriteLockImpl;
@@ -21,18 +24,19 @@ import org.javolution.util.internal.ReadWriteLockImpl;
 /**
  * A shared view over a set (reads-write locks).
  */
-public final class SharedSetImpl<E> extends FastSet<E> {
+public final class SharedSetImpl<E> // implements AbstractSetMethods<E> {
+     extends AbstractSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastSet<E> inner;
+    private final AbstractSet<E> inner;
     private final ReadWriteLockImpl lock;
 
-    public SharedSetImpl(FastSet<E> inner) {
+    public SharedSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
         this.lock = new ReadWriteLockImpl();
     }
 
-    public SharedSetImpl(FastSet<E> inner, ReadWriteLockImpl lock) {
+    public SharedSetImpl(AbstractSet<E> inner, ReadWriteLockImpl lock) {
         this.inner = inner;
         this.lock = lock;
     }
@@ -42,6 +46,16 @@ public final class SharedSetImpl<E> extends FastSet<E> {
         lock.writeLock.lock();
         try {
             return inner.add(element);
+        } finally {
+            lock.writeLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean addMulti(E element) {
+        lock.writeLock.lock();
+        try {
+            return inner.addMulti(element);
         } finally {
             lock.writeLock.unlock();
         }
@@ -78,16 +92,6 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public E ceiling(E element) {
-        lock.readLock.lock();
-        try {
-            return inner.ceiling(element);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
     public void clear() {
         lock.writeLock.lock();
         try {
@@ -108,11 +112,6 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Order<? super E> order() {
-        return inner.order(); // Immutable.
-    }
-
-    @Override
     public boolean contains(final Object searched) {
         lock.readLock.lock();
         try {
@@ -127,26 +126,6 @@ public final class SharedSetImpl<E> extends FastSet<E> {
         lock.readLock.lock();
         try {
             return inner.containsAll(that);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        lock.readLock.lock();
-        try {
-            return inner.clone().unmodifiable().descendingIterator();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        lock.readLock.lock();
-        try {
-            return inner.clone().unmodifiable().descendingIterator(fromElement);
         } finally {
             lock.readLock.unlock();
         }
@@ -173,16 +152,6 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public E floor(E element) {
-        lock.readLock.lock();
-        try {
-            return inner.floor(element);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
     public void forEach(Consumer<? super E> consumer) {
         lock.readLock.lock();
         try {
@@ -203,16 +172,6 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public E higher(E element) {
-        lock.readLock.lock();
-        try {
-            return inner.higher(element);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
     public boolean isEmpty() {
         lock.readLock.lock();
         try {
@@ -223,20 +182,41 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public FastIterator<E> iterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().unmodifiable().iterator();
+            return inner.clone().iterator();
         } finally {
             lock.readLock.unlock();
         }
     }
 
     @Override
-    public Iterator<E> iterator(E fromElement) {
+    public FastIterator<E> descendingIterator() {
         lock.readLock.lock();
         try {
-            return inner.clone().unmodifiable().iterator(fromElement);
+            return inner.clone().descendingIterator();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+
+    @Override
+    public FastIterator<E> iterator(E from) {
+        lock.readLock.lock();
+        try {
+            return inner.clone().iterator(from);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator(E from) {
+        lock.readLock.lock();
+        try {
+            return inner.clone().descendingIterator(from);
         } finally {
             lock.readLock.unlock();
         }
@@ -253,53 +233,8 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public E lower(E element) {
-        lock.readLock.lock();
-        try {
-            return inner.lower(element);
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E max() {
-        lock.readLock.lock();
-        try {
-            return inner.max();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E min() {
-        lock.readLock.lock();
-        try {
-            return inner.min();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E pollFirst() {
-        lock.readLock.lock();
-        try {
-            return inner.pollFirst();
-        } finally {
-            lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public E pollLast() {
-        lock.readLock.lock();
-        try {
-            return inner.pollLast();
-        } finally {
-            lock.readLock.unlock();
-        }
+    public Order<? super E> order() {
+        return inner.order();
     }
 
     @Override
@@ -393,7 +328,7 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public FastSet<E>[] trySplit(int n) {
+    public AbstractSet<E>[] trySplit(int n) {
         lock.readLock.lock();
         try {
             return inner.clone().trySplit(n);
@@ -403,10 +338,70 @@ public final class SharedSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public boolean until(Predicate<? super E> matching) {
+    public AbstractCollection<E> collect() {
         lock.readLock.lock();
         try {
-            return inner.until(matching);
+            return inner.collect();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public Equality<? super E> equality() {
+        lock.readLock.lock();
+        try {
+            return inner.equality();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public Comparator<? super E> comparator() {
+        lock.readLock.lock();
+        try {
+            return inner.comparator();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public SharedSetImpl<E> headSet(E arg0) {
+        lock.readLock.lock();
+        try {
+            return new SharedSetImpl<E>(inner.headSet(arg0), lock); // Share the same lock.
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+  
+    @Override
+    public SharedSetImpl<E> subSet(E arg0, E arg1) {
+        lock.readLock.lock();
+        try {
+            return new SharedSetImpl<E>(inner.subSet(arg0, arg1), lock); // Share the same lock.
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public SharedSetImpl<E> tailSet(E arg0) {
+        lock.readLock.lock();
+        try {
+            return new SharedSetImpl<E>(inner.tailSet(arg0), lock); // Share the same lock.
+        } finally {
+            lock.readLock.unlock();
+        }
+      }
+
+    @Override
+    public SharedSetImpl<E> subSet(E element) {
+        lock.readLock.lock();
+        try {
+            return new SharedSetImpl<E>(inner.subSet(element), lock); // Share the same lock.
         } finally {
             lock.readLock.unlock();
         }

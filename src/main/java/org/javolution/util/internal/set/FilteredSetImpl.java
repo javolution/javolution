@@ -10,40 +10,76 @@ package org.javolution.util.internal.set;
 
 import java.util.Iterator;
 
-import org.javolution.util.FastSet;
+import org.javolution.util.FastIterator;
+import org.javolution.annotations.Nullable;
+import org.javolution.util.AbstractSet;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
-import org.javolution.util.internal.collection.FilteredCollectionImpl.FilteredIterator;
+import org.javolution.util.internal.collection.FilteredCollectionImpl;
 
 /**
  * A filtered view over a set.
  */
-public final class FilteredSetImpl<E> extends FastSet<E> {
+public final class FilteredSetImpl<E> extends AbstractSet<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private final Predicate<? super E> filter;
-    private final FastSet<E> inner;
+    private final AbstractSet<E> inner;
 
-    public FilteredSetImpl(FastSet<E> inner, Predicate<? super E> filter) {
+    public FilteredSetImpl(AbstractSet<E> inner, Predicate<? super E> filter) {
         this.inner = inner;
         this.filter = filter;
     }
 
     @Override
     public boolean add(E element) {
-        if (!filter.test(element))
-            return false;
-        return inner.add(element);
+        return filter.test(element) ? inner.add(element) : false;
+    }
+
+    @Override
+    public boolean addMulti(E element) {
+        return filter.test(element) ? inner.addMulti(element) : false;
     }
 
     @Override
     public void clear() {
-        removeIf(Predicate.TRUE);
+        inner.removeIf(filter);
     }
 
     @Override
-    public FastSet<E> clone() {
+    public AbstractSet<E> clone() {
         return new FilteredSetImpl<E>(inner.clone(), filter);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean contains(Object obj) {
+        return filter.test((E) obj) ? inner.contains(obj) : false;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return !iterator().hasNext();
+    }
+
+    @Override
+    public FastIterator<E> iterator() {
+        return new FilteredCollectionImpl.IteratorImpl<E>(inner.iterator(), filter);
+    }
+    
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return new FilteredCollectionImpl.IteratorImpl<E>(inner.descendingIterator(), filter);
+    }
+
+    @Override
+    public FastIterator<E> iterator(@Nullable E from) {
+        return new FilteredCollectionImpl.IteratorImpl<E>(inner.iterator(from), filter);
+    }
+    
+    @Override
+    public FastIterator<E> descendingIterator(@Nullable E from) {
+        return new FilteredCollectionImpl.IteratorImpl<E>(inner.descendingIterator(from), filter);
     }
 
     @Override
@@ -53,43 +89,8 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean contains(Object obj) {
-        if (!filter.test((E) obj))
-            return false;
-        return inner.contains(obj);
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        return new FilteredIterator<E>(inner.descendingIterator(), filter);
-    }
-
-    @Override
-    public Iterator<E> descendingIterator(E fromElement) {
-        return new FilteredIterator<E>(inner.descendingIterator(fromElement), filter);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return !iterator().hasNext();
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return new FilteredIterator<E>(inner.iterator(), filter);
-    }
-
-    @Override
-    public Iterator<E> iterator(E fromElement) {
-        return new FilteredIterator<E>(inner.iterator(fromElement), filter);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public boolean remove(Object obj) {
-        if (!filter.test((E) obj))
-            return false;
-        return inner.remove(obj);
+        return filter.test((E) obj) ? inner.remove(obj) : false;
     }
 
     @Override
@@ -111,11 +112,12 @@ public final class FilteredSetImpl<E> extends FastSet<E> {
     }
 
     @Override
-    public FastSet<E>[] trySplit(int n) {
-        FastSet<E>[] subViews = inner.trySplit(n);
+    public AbstractSet<E>[] trySplit(int n) {
+        AbstractSet<E>[] subViews = inner.trySplit(n);
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new FilteredSetImpl<E>(subViews[i], filter);
         return subViews;
     }
+
 
 }

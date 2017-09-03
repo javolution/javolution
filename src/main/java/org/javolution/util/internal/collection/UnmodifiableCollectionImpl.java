@@ -9,22 +9,21 @@
 package org.javolution.util.internal.collection;
 
 
-import java.util.Iterator;
-
-import org.javolution.util.FastCollection;
+import org.javolution.util.AbstractCollection;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
 /**
  * An unmodifiable view over a collection.
  */
-public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
+public final class UnmodifiableCollectionImpl<E> extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private static final String ERROR_MSG = "Unmodifiable View.";
-    private final FastCollection<E> inner;
+    private final AbstractCollection<E> inner;
 
-    public UnmodifiableCollectionImpl(FastCollection<E> inner) {
+    public UnmodifiableCollectionImpl(AbstractCollection<E> inner) {
         this.inner = inner;
     }
 
@@ -54,8 +53,13 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
-        return new ReadOnlyIterator<E>(inner.iterator());
+    public FastIterator<E> iterator() {
+        return inner.iterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return inner.descendingIterator();
     }
 
     @Override
@@ -69,30 +73,7 @@ public final class UnmodifiableCollectionImpl<E> extends FastCollection<E> {
     }
 
     @Override
-    public FastCollection<E>[] trySplit(int n) {
+    public AbstractCollection<E>[] trySplit(int n) {
         return inner.trySplit(n); // Read-only views (see trySplit contract)
-    }
-    
-    /** Read-only iterator (remove not supported). */
-    public static class ReadOnlyIterator<E> implements Iterator<E> {
-        private final Iterator<E> inner;
-        public ReadOnlyIterator(Iterator<E> inner) {
-            this.inner = inner;
-        }
-        @Override
-        public boolean hasNext() {
-            return inner.hasNext();
-        }
-
-        @Override
-        public E next() {
-            return inner.next();
-        }
-
-        @Override
-        @Deprecated
-        public void remove() {
-            throw new UnsupportedOperationException(ERROR_MSG);
-        }
     }
 }
