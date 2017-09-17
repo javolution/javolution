@@ -9,8 +9,11 @@
 package org.javolution.util.internal.set;
 
 import org.javolution.util.FastIterator;
+import org.javolution.annotations.Nullable;
 import org.javolution.util.AbstractSet;
+import org.javolution.util.AbstractTable;
 import org.javolution.util.FastTable;
+import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 
@@ -21,26 +24,21 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
     
     private static final long serialVersionUID = 0x700L; // Version.
     private final AbstractSet<E> inner;
-    private final FastTable<E> insertionTable;
+    private final AbstractTable<E> insertionTable;
 
     public LinkedSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
-        this.insertionTable = new FastTable<E>(inner.order());
+        this.insertionTable = new FastTable<E>().equality(Equality.IDENTITY);
     }
 
-    private LinkedSetImpl(AbstractSet<E> inner, FastTable<E> insertionTable) {
+    public LinkedSetImpl(AbstractSet<E> inner, AbstractTable<E> insertionTable) {
         this.inner = inner;
         this.insertionTable = insertionTable;
     }
 
     @Override
-    public boolean add(E element) {
-        return inner.add(element) ? insertionTable.add(element) : false;
-    }
-
-    @Override
-    public boolean addMulti(E element) {
-        return inner.addMulti(element) ? insertionTable.add(element) : false;
+    public boolean add(E element, boolean allowDuplicate) {
+        return inner.add(element, allowDuplicate) ? insertionTable.add(element) : false;
     }
 
     @Override
@@ -55,11 +53,6 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
     }
 
     @Override
-    public boolean contains(Object obj) {
-        return inner.contains(obj);
-    }
-
-    @Override
     public FastIterator<E> iterator() {
         return insertionTable.iterator();
     }
@@ -69,13 +62,6 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
         return insertionTable.descendingIterator();
     }
 
-    @Override
-    public boolean remove(Object obj) {
-        if (!inner.remove(obj)) return false;
-        insertionTable.remove(obj);
-        return true;
-    }
-   
     @Override
     public int size() {
         return inner.size();
@@ -87,13 +73,29 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
     }
 
     @Override
-    public FastIterator<E> iterator(E from) {
-        return inner.iterator(from);
+    public FastIterator<E> iterator(@Nullable final E low) {
+        if (low == null) return insertionTable.iterator();
+        return insertionTable.filter(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+                Order<? super E> order = order();
+                int cmp = order.compare(low, param);
+                return (cmp == 0) ? order.areEqual(low, param) : cmp < 0;
+            }}).iterator();
     }
 
     @Override
-    public FastIterator<E> descendingIterator(E from) {
-        return inner.descendingIterator(from);
+    public FastIterator<E> descendingIterator(@Nullable final E high) {
+            if (high == null) return insertionTable.descendingIterator();
+            return insertionTable.filter(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+                Order<? super E> order = order();
+                int cmp = order.compare(high, param);
+                return (cmp == 0) ? order.areEqual(high, param) : cmp > 0;
+            }}).descendingIterator();
     }
 
     @Override
@@ -106,6 +108,18 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
         if (!inner.removeIf(filter)) return false;
         insertionTable.removeIf(filter);
         return true;
+    }
+
+    @Override
+    public E getAny(E element) {
+        return inner.getAny(element);
+    }
+
+    @Override
+    public E removeAny(E element) {
+        E removed = inner.removeAny(element);
+        if (removed != null) insertionTable.remove(removed);
+        return removed;
     }
 
 }

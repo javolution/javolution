@@ -43,7 +43,27 @@ public final class ParallelCollectionImpl<E> extends AbstractCollection<E> {
     @SuppressWarnings("unchecked")
     @Override
     @Parallel
-    public E any() {
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        AnyMatchRunnable<E>[] results;
+        ConcurrentContext ctx = ConcurrentContext.enter();
+        try {
+            AbstractCollection<E>[] subViews = inner.trySplit(ctx.getConcurrency() + 1);
+            results = new AnyMatchRunnable[subViews.length];
+            for (int i = 1; i < subViews.length; i++)
+                ctx.execute(results[i] = new AnyMatchRunnable<E>(subViews[i], predicate));
+            (results[0] = new AnyMatchRunnable<E>(subViews[0], predicate)).run(); // Current thread needs to work too!
+        } finally {
+            ctx.exit(); // Waits for concurrent completion.
+        }
+        for (AnyMatchRunnable<E> result : results)
+            if (result.matchFound) return true;
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    @Parallel
+    public E findAny() {
         AnyRunnable<E>[] results;
         ConcurrentContext ctx = ConcurrentContext.enter();
         try {
@@ -212,6 +232,22 @@ public final class ParallelCollectionImpl<E> extends AbstractCollection<E> {
         return inner.trySplit(n);
     }
 
+    private static final class AnyMatchRunnable<E> implements Runnable {
+        private final AbstractCollection<E> subView;
+        private final Predicate<? super E> predicate;
+        private boolean matchFound;
+
+        private AnyMatchRunnable(AbstractCollection<E> subView, Predicate<? super E> predicate) {
+            this.subView = subView;
+            this.predicate = predicate;
+        }
+
+        @Override
+        public void run() {
+            matchFound = subView.anyMatch(predicate);
+        }
+    }
+
     private static final class AnyRunnable<E> implements Runnable {
         private final AbstractCollection<E> subView;
         private E found;
@@ -222,7 +258,7 @@ public final class ParallelCollectionImpl<E> extends AbstractCollection<E> {
 
         @Override
         public void run() {
-            found = subView.any();
+            found = subView.findAny();
         }
     }
 

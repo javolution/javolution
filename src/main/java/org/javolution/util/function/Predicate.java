@@ -9,12 +9,9 @@
 package org.javolution.util.function;
 
 /**
- * <p> A function which states or affirms the attribute or quality of something.</p>
+ * A function which states or affirms the attribute or quality of something.
  * 
- * <p> Note: In future version this interface may derive from {@code Function<P, Boolean>}.</p>
- * 
- * @param <T>
- *            The type of input object to test.
+ * @param <T> The type of input object to test.
  * 
  * @see <a href="http://en.wikipedia.org/wiki/Predicate_(mathematical_logic)">
  *      Wikipedia: Predicate</a>

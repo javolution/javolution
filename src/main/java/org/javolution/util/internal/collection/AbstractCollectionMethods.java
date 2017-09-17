@@ -30,7 +30,9 @@ public interface AbstractCollectionMethods<E> extends Collection<E>, Serializabl
 
     boolean removeIf(Predicate<? super E> filter);
 
-    E any();
+    E findAny();
+    
+    boolean anyMatch(Predicate<? super E> predicate);
     
     AbstractCollection<E> collect();
     

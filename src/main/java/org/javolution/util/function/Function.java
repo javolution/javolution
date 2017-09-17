@@ -10,7 +10,7 @@ package org.javolution.util.function;
 
 
 /**
- * <p> A function that perform some operation and returns the result of that operation.</p>
+ * A function that perform some operation and returns the result of that operation.
  * 
  * @param <T> the type of the input parameter of the apply operation.
  * @param <R> the type of the result of the apply operation.

@@ -61,12 +61,6 @@ public abstract class AbstractTable<E> extends AbstractCollection<E> implements 
         return this;
     }
 
-    @Override
-    public AbstractTable<E> with(Collection<? extends E> elements) {
-        addAll(elements);
-        return this;
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //

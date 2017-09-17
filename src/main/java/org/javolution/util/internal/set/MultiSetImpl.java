@@ -14,7 +14,7 @@ import org.javolution.util.function.Predicate;
 import org.javolution.util.AbstractSet;
 
 /**
- * A view for which 'add' is equivalent to 'addMulti'.
+ * A view for which default 'add' allows duplicate.
  */
 public final class MultiSetImpl<E> extends AbstractSet<E> {
 
@@ -27,12 +27,12 @@ public final class MultiSetImpl<E> extends AbstractSet<E> {
 
     @Override
     public boolean add(E element) {
-        return inner.addMulti(element);
+        return inner.add(element, true);
     }
 
     @Override
-    public boolean addMulti(E element) {
-        return inner.addMulti(element);
+    public boolean add(E element, boolean allowDuplicate) {
+        return inner.add(element, true);
     }
 
     @Override
@@ -43,16 +43,6 @@ public final class MultiSetImpl<E> extends AbstractSet<E> {
     @Override
     public MultiSetImpl<E> clone() {
         return new MultiSetImpl<E>(inner.clone());
-    }
-
-    @Override
-    public boolean contains(Object obj) {
-        return inner.contains(obj);
-    }
-
-    @Override
-    public boolean remove(Object obj) {
-        return inner.remove(obj);
     }
 
     @Override
@@ -93,6 +83,16 @@ public final class MultiSetImpl<E> extends AbstractSet<E> {
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
         return inner.removeIf(filter);
+    }
+
+    @Override
+    public E getAny(E element) {
+        return inner.removeAny(element);
+    }
+
+    @Override
+    public E removeAny(E element) {
+        return inner.removeAny(element);
     }
     
 }

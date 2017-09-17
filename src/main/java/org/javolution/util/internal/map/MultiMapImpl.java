@@ -8,32 +8,27 @@
  */
 package org.javolution.util.internal.map;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.util.AbstractMap;
 import org.javolution.util.AbstractSet;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 
 /**
- * An unmodifiable view over a map.
+ * A view for which entries are added even if already there.
  */
-public final class UnmodifiableMapImpl<K, V> extends AbstractMap<K, V> {
+public final class MultiMapImpl<K, V> extends AbstractMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private static final String ERROR_MSG = "Unmodifiable View.";
     private final AbstractMap<K, V> inner;
 
-    public UnmodifiableMapImpl(AbstractMap<K, V> inner) {
+    public MultiMapImpl(AbstractMap<K, V> inner) {
         this.inner = inner;
     }
 
     @Override
     public AbstractSet<Entry<K, V>> entrySet() {
-        return inner.entrySet().unmodifiable();
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException(ERROR_MSG);
+        return inner.entrySet();
     }
 
     @Override
@@ -43,7 +38,7 @@ public final class UnmodifiableMapImpl<K, V> extends AbstractMap<K, V> {
 
     @Override
     public Entry<K, V> removeEntry(K key) {
-        throw new UnsupportedOperationException(ERROR_MSG);
+        return inner.removeEntry(key);
     }
 
     @Override
@@ -56,14 +51,14 @@ public final class UnmodifiableMapImpl<K, V> extends AbstractMap<K, V> {
         return inner.valuesEquality();
     }
 
-    @Override
-    public V updateValue(Entry<K, V> entry, V newValue) {
-        throw new UnsupportedOperationException(ERROR_MSG);
+    public @Nullable V put(K key, @Nullable V value) {
+        entrySet().add(new EntryImpl<K,V>(key, value), true /* allowDuplicate */);
+        return null; 
     }
 
     @Override
-    public V put(K key, V value) {
-        throw new UnsupportedOperationException(ERROR_MSG);
+    public V updateValue(java.util.Map.Entry<K, V> entry, V newValue) {
+        return inner.updateValue(entry, newValue);
     }
 
 }

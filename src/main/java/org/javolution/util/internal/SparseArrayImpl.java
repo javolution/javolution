@@ -42,7 +42,6 @@ public final class SparseArrayImpl<E> extends SparseArray<E> {
     public SparseArrayImpl() {
     }
 
-    @Override
     public int size() {
         return count;
     }

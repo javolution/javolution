@@ -23,7 +23,11 @@ public interface AbstractSetMethods<E> extends AbstractCollectionMethods<E>,  So
     
     SortedSet<E> subSet(E element);
         
-    boolean addMulti(E element);
+    boolean add(E element, boolean allowDuplicate);
+
+    E getAny(E element);
+    
+    E removeAny(E element);
     
     Order<? super E> order();
  

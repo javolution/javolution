@@ -32,13 +32,12 @@ public class XMLReferenceResolver {
     /**
      * Holds object to identifier (FastTable.Index) mapping.
      */
-    private FastMap<Object, Index> _objectToId 
-        = FastMap.newInstance(Order.IDENTITY);
+    private FastMap<Object, Index> _objectToId = new FastMap<Object, Index>(Order.IDENTITY);
 
     /**
      * Holds the objects (index to object mapping).
      */
-    private FastTable<Object> _idToObject = FastTable.newInstance();
+    private FastTable<Object> _idToObject = new FastTable<Object>();
 
     /**
      * Holds the id counter.

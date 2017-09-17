@@ -23,11 +23,11 @@ import org.junit.Test;
 
 public class FastIdentityMapTest {
 
-	private FastMap<Class<?>,Class<?>> _fastIdentityMap;
+	private AbstractMap<Class<?>,Class<?>> _fastIdentityMap;
 	
 	@Before
 	public void init(){
-		_fastIdentityMap = FastMap.newInstance(Order.IDENTITY);
+		_fastIdentityMap = new FastMap<Class<?>,Class<?>>(Order.IDENTITY);
 	}
 
 	@Test
@@ -119,8 +119,8 @@ public class FastIdentityMapTest {
 	
 	@Test
 	public void testPutAll(){
-        _fastIdentityMap = _fastIdentityMap.linked();
-		_fastIdentityMap.putAll(Integer.class, int.class, Boolean.class, boolean.class, Long.class, long.class);
+        _fastIdentityMap = _fastIdentityMap.linked().with(Integer.class, int.class)
+                .with(Boolean.class, boolean.class).with(Long.class, long.class);
 		
 		Class<?> result = _fastIdentityMap.get(Integer.class);
 		assertEquals("Result Should Equal int.class", int.class, result);

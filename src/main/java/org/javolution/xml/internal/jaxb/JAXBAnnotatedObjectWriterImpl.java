@@ -8,24 +8,6 @@
  */
 package org.javolution.xml.internal.jaxb;
 
-import org.javolution.osgi.internal.OSGiServices;
-import org.javolution.text.CharArray;
-import org.javolution.text.TextBuilder;
-import org.javolution.util.FastMap;
-import org.javolution.util.FastSet;
-import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
-import org.javolution.xml.stream.XMLOutputFactory;
-import org.javolution.xml.stream.XMLStreamException;
-import org.javolution.xml.stream.XMLStreamWriter;
-
-import javax.xml.bind.*;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.datatype.DatatypeConstants;
-import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.namespace.QName;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +15,29 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.MarshalException;
+import javax.xml.bind.ValidationException;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
+
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.text.CharArray;
+import org.javolution.text.TextBuilder;
+import org.javolution.util.AbstractMap;
+import org.javolution.util.AbstractSet;
+import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
+import org.javolution.xml.stream.XMLOutputFactory;
+import org.javolution.xml.stream.XMLStreamException;
+import org.javolution.xml.stream.XMLStreamWriter;
 
 /**
  * Class to provide basic support for serializing JAXB Annotated Objects to XML
@@ -213,7 +218,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastSet<Method> attributeMethods = cacheData._attributeMethodsSet;
+		final AbstractSet<Method> attributeMethods = cacheData._attributeMethodsSet;
 
 		for(final Method method : attributeMethods){
 			writeAttributeValue(element, method, writer);
@@ -244,7 +249,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		//LogContext.info("writeElement: "+elementName);
 
 		final CacheData cacheData = _classCacheData.get(elementClass);
-		final FastMap<CharArray, Method> propOrderMethodCache = cacheData._propOrderMethodCache;
+		final AbstractMap<CharArray, Method> propOrderMethodCache = cacheData._propOrderMethodCache;
 		final Method xmlValueMethod = cacheData._xmlValueMethod;
 
 		// Normal Element Processing

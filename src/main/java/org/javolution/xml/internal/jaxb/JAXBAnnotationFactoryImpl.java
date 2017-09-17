@@ -17,8 +17,8 @@ import org.javolution.xml.jaxb.JAXBAnnotationFactory;
 
 public class JAXBAnnotationFactoryImpl implements JAXBAnnotationFactory {
 
-	private FastMap<Class<?>,JAXBAnnotatedObjectReader> _cachedReaders = FastMap.newInstance();
-	private FastMap<Class<?>,JAXBAnnotatedObjectWriter> _cachedWriters = FastMap.newInstance();
+	private FastMap<Class<?>,JAXBAnnotatedObjectReader> _cachedReaders = new FastMap<Class<?>,JAXBAnnotatedObjectReader>();
+	private FastMap<Class<?>,JAXBAnnotatedObjectWriter> _cachedWriters = new FastMap<Class<?>,JAXBAnnotatedObjectWriter>();
 	
 	@Override
 	public JAXBAnnotatedObjectReader createJAXBAnnotatedObjectReader(final Class<?> inputClass) throws JAXBException {

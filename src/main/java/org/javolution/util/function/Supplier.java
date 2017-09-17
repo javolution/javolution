@@ -9,11 +9,7 @@
 package org.javolution.util.function;
 
 /**
- * <p> A function which does not take any argument and returns instances
- *      of a particular class.</p>
- *                  
- * <p> Note: In future version this interface may derive from 
- *           {@code Function<Void, R>}.</p>
+ * A function which does not take any argument and returns instances  of a particular class.
  *           
  * @param <T> The type of result this supplier returns.
  * 

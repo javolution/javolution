@@ -41,13 +41,10 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
     }
 
     @Override
-    public boolean add(E element) {
-        return inRange(element) ? inner.add(element) : false;
-    }
-
-    @Override
-    public boolean addMulti(E element) {
-        return inRange(element) ? inner.addMulti(element) : false;
+    public boolean add(E element, boolean allowDuplicate) {
+        if (!inRange(element)) 
+            throw new UnsupportedOperationException("element out of sub-set range");
+        return inner.add(element, allowDuplicate);
     }
 
     @Parallel
@@ -61,12 +58,6 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         return new SubSetImpl<E>(inner.clone(), fromElement, fromInclusive, toElement, toInclusive);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean contains(Object obj) {
-        return inRange((E) obj) ? inner.contains(obj) : false;
-    }
-
     @Override
     public FastIterator<E> descendingIterator(@Nullable E from) {
         if ((from == null) || tooHigh(from))  // Starts from subset higher bound.
@@ -74,6 +65,13 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         if (fromElement == null) return inner.descendingIterator(from); // No lower bound.
         E end = fromInclusive ? lower(toElement) : floor(toElement);
         return new IteratorImpl<E>(inner.descendingIterator(from), end);        
+    }
+
+    @Override
+    public E getAny(E element) {
+        if (!inRange(element)) 
+            throw new UnsupportedOperationException("element out of sub-set range");
+        return inner.getAny(element);
     }
 
     @Override
@@ -94,13 +92,25 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
     public Order<? super E> order() {
         return inner.order();
     }
-
-    @SuppressWarnings("unchecked")
+    
     @Override
-    public boolean remove(Object obj) {
-        return inRange((E) obj) ? inner.remove(obj) : false;
+    public E removeAny(E element) {
+        if (!inRange(element)) 
+            throw new UnsupportedOperationException("element out of sub-set range");
+        return inner.removeAny(element);
     }
     
+    @Override
+    public boolean removeIf(final Predicate<? super E> filter) {
+        return inner.removeIf(new Predicate<E>() {
+
+            @Override
+            public boolean test(E param) {
+                if (!inRange(param)) return false;
+                return filter.test(param);
+            }});
+    }       
+
     @Parallel
     @Override
     public int size() {
@@ -108,7 +118,7 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         for (Iterator<E> itr = iterator(); itr.hasNext(); itr.next()) count++;
         return count;
     }
-    
+ 
     private E ceiling(E element) {
         FastIterator<E> itr = inner.iterator(element);
         if (!itr.hasNext()) return null;
@@ -117,7 +127,7 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         if (!itr.hasNext()) return null;
         return itr.next();       
     }
-    
+
     private E floor(E element) {
         FastIterator<E> itr = inner.descendingIterator(element);
         if (!itr.hasNext()) return null;
@@ -125,7 +135,7 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         if (order().compare(next, element) <= 0) return next;
         if (!itr.hasNext()) return null;
         return itr.next();       
-    }       
+    }
 
     private E higher(E element) {
         FastIterator<E> itr = inner.iterator(element);
@@ -135,7 +145,7 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
         if (!itr.hasNext()) return null;
         return itr.next();       
     }
- 
+
     private boolean inRange(E e) {
         return !tooHigh(e) && !tooLow(e);
     }
@@ -199,17 +209,6 @@ public final class SubSetImpl<E> extends AbstractSet<E> {
             throw new UnsupportedOperationException();            
         }
  
-    }
-
-    @Override
-    public boolean removeIf(final Predicate<? super E> filter) {
-        return inner.removeIf(new Predicate<E>() {
-
-            @Override
-            public boolean test(E param) {
-                if (!inRange(param)) return false;
-                return filter.test(param);
-            }});
     }
 
 }

@@ -27,12 +27,7 @@ public final class UnmodifiableSetImpl<E> extends AbstractSet<E> {
     }
 
     @Override
-    public boolean add(E element) {
-        throw new UnsupportedOperationException(ERROR_MSG);
-    }
-
-    @Override
-    public boolean addMulti(E element) {
+    public boolean add(E element, boolean allowDuplicate) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
@@ -44,16 +39,6 @@ public final class UnmodifiableSetImpl<E> extends AbstractSet<E> {
     @Override
     public UnmodifiableSetImpl<E> clone() {
         return new UnmodifiableSetImpl<E>(inner.clone());
-    }
-
-    @Override
-    public boolean contains(Object obj) {
-        return inner.contains(obj);
-    }
-
-    @Override
-    public boolean remove(Object obj) {
-        throw new UnsupportedOperationException(ERROR_MSG);
     }
 
     @Override
@@ -98,6 +83,16 @@ public final class UnmodifiableSetImpl<E> extends AbstractSet<E> {
 
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
+        throw new UnsupportedOperationException(ERROR_MSG);
+    }
+
+    @Override
+    public E getAny(E element) {
+        return inner.getAny(element);
+    }
+
+    @Override
+    public E removeAny(E element) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
     

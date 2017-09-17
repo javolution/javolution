@@ -52,10 +52,10 @@ public final class SharedSetImpl<E> // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public boolean addMulti(E element) {
+    public boolean add(E element, boolean allowDuplicate) {
         lock.writeLock.lock();
         try {
-            return inner.addMulti(element);
+            return inner.add(element, allowDuplicate);
         } finally {
             lock.writeLock.unlock();
         }
@@ -82,10 +82,20 @@ public final class SharedSetImpl<E> // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public E any() {
+    public E findAny() {
         lock.readLock.lock();
         try {
-            return inner.any();
+            return inner.findAny();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        lock.readLock.lock();
+        try {
+            return inner.anyMatch(predicate);
         } finally {
             lock.readLock.unlock();
         }
@@ -404,6 +414,26 @@ public final class SharedSetImpl<E> // implements AbstractSetMethods<E> {
             return new SharedSetImpl<E>(inner.subSet(element), lock); // Share the same lock.
         } finally {
             lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E getAny(E element) {
+        lock.readLock.lock();
+        try {
+            return inner.getAny(element);
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public E removeAny(E element) {
+        lock.writeLock.lock();
+        try {
+            return inner.removeAny(element);
+        } finally {
+            lock.writeLock.unlock();
         }
     }
 

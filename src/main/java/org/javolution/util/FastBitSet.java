@@ -47,16 +47,9 @@ public class FastBitSet extends AbstractSet<Index> {
      // Set operations.
      //
 
-     @Override
-     public final boolean add(Index index) {
-         return !getAndSet(index.intValue(), true);
-     }
-
-     /** Throws UnsupportedOperationException. 
-      * @deprecated Should never be used (unsupported). */
-     @Override
-     public boolean addMulti(Index element) {
-         throw new UnsupportedOperationException();
+    @Override
+     public final boolean add(Index index, boolean allowDuplicate) {
+         return add(index); // allowDuplicate flag ignored.
      }
 
      /**
@@ -170,22 +163,9 @@ public class FastBitSet extends AbstractSet<Index> {
      //
 
     @Override
-     public final boolean contains(Object index) {
-    	 if (!(index instanceof Index)) return false;
-         return get(((Index)index).intValue());
-     }
-
-    @Override
     public final FastIterator<Index> descendingIterator(@Nullable Index from) {
         int start = (from == null) ? this.length() - 1 : from.intValue();
         return new IteratorImpl(this, start, true);
-    }
-
-    // Checks capacity.
-    private void ensureCapacity(int capacity) {
-        if (bits.length < capacity) {
-            bits = Arrays.copyOf(bits, MathLib.max(bits.length * 2, capacity));
-        }
     }
 
     /**
@@ -260,7 +240,7 @@ public class FastBitSet extends AbstractSet<Index> {
         bitSet.clear(toIndex, length << 6);
         return bitSet;
     }
-   
+
     /** 
      * Sets the specified bit, returns <code>true</code>
      * if previously set. */
@@ -274,6 +254,11 @@ public class FastBitSet extends AbstractSet<Index> {
             bits[i] &= ~(1L << bitIndex);
         }
         return previous;
+    }
+   
+    @Override
+    public Index getAny(Index index) {
+        return get(index.intValue()) ? index : null;
     }
 
     /**
@@ -449,9 +434,20 @@ public class FastBitSet extends AbstractSet<Index> {
     }
 
     @Override
-     public final boolean remove(Object index) {
-         return getAndSet(((Index)index).intValue(), false);
-     }
+    public Index removeAny(Index index) {
+        return getAndSet(index.intValue(), false) ? index : null;
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super Index> filter) {
+        boolean modified = false;
+        FastIterator<Index> itr = iterator();
+        while (itr.hasNext(filter)) {
+            clear(itr.next().intValue());
+            modified = true;
+        }
+        return modified;
+    }
 
     /**
      * Adds the specified integer to this set (corresponding bit is set to 
@@ -466,7 +462,7 @@ public class FastBitSet extends AbstractSet<Index> {
         bits[i] |= 1L << bitIndex;
     }
 
-    /**
+	/**
      * Sets the bit at the given index to the specified value.
      *
      * @param bitIndex the position to set.
@@ -508,7 +504,7 @@ public class FastBitSet extends AbstractSet<Index> {
         }
     }
 
-	/**
+    /**
      * Sets the bits between from (inclusive) and to (exclusive) to the
      * specified value.
      *
@@ -540,15 +536,6 @@ public class FastBitSet extends AbstractSet<Index> {
         return bits;
     }
 
-    // Removes trailing zeros.
-    private void trim() {
-        int n = bits.length;
-        while ((--n >= 0) && (bits[n] == 0L)) {}
-        if (++n != bits.length) { // Trim.
-            bits = Arrays.copyOf(bits, n);
-        }        
-    }
-
     /**
      * Performs the logical XOR operation on this bit set and the one specified.
      * In other words, builds the symmetric remainder of the two sets 
@@ -565,6 +552,22 @@ public class FastBitSet extends AbstractSet<Index> {
         for (int i = thatBits.length; --i >= 0;) {
             bits[i] ^= thatBits[i];
         }
+    }
+
+    // Checks capacity.
+    private void ensureCapacity(int capacity) {
+        if (bits.length < capacity) {
+            bits = Arrays.copyOf(bits, MathLib.max(bits.length * 2, capacity));
+        }
+    }
+
+    // Removes trailing zeros.
+    private void trim() {
+        int n = bits.length;
+        while ((--n >= 0) && (bits[n] == 0L)) {}
+        if (++n != bits.length) { // Trim.
+            bits = Arrays.copyOf(bits, n);
+        }        
     }
 
     /** BitSet iterator implementation. */
@@ -609,16 +612,5 @@ public class FastBitSet extends AbstractSet<Index> {
             currentIndex = -1;
         }
 
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super Index> filter) {
-        boolean modified = false;
-        FastIterator<Index> itr = iterator();
-        while (itr.hasNext(filter)) {
-            clear(itr.next().intValue());
-            modified = true;
-        }
-        return modified;
     }
 }

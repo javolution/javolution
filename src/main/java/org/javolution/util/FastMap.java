@@ -10,16 +10,13 @@ package org.javolution.util;
 
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
 
-import java.util.Comparator;
-import java.util.Map;
-
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.MathLib;
-import org.javolution.util.FastSet.SortedTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Indexer;
 import org.javolution.util.function.Order;
+import org.javolution.util.internal.map.EntryImpl;
 
 /**
  * High-performance ordered map / multimap based upon fast-access {@link SparseArray}. 
@@ -81,18 +78,19 @@ import org.javolution.util.function.Order;
  * 
  * Unlike {@code ConcurrentHashMap}, FastMap allows for {@code null} values; to differentiate between no entry
  * and a {@code null} value, the method {@link #getEntry} can be used in place of {@link #get}.
+ * Map updates can be especially fast using lambda expression (one call).
  *  
  * ```java
- * FastMap<String, Index> wordCounts = new FastMap<>(Order.LEXICAL); 
- * Entry<String, Index> count = wordCounts.getEntry(word); 
- * wordsCount.put(word, (count != null) ? count.getValue().next() : Index.ONE);
+ * FastMap<String, Index> wordCounts = new FastMap<>(LEXICAL); // Sorted. 
+ * ...
+ * wordCounts.put(word, (v) -> v != null ? v.next() : Index.ONE); // Increments word count.
  * ```
  * 
  * Finally, this class provides full support for multimaps (multimaps stores pairs of (key, value) where both 
  * key and value can appear several times).
  *  
  * ```java
- *  FastMap<String, String> multimap = new FastMap<String, String>().multi().linked(); // Keep insertion order.
+ *  AbstractMap<String, String> multimap = new FastMap<String, String>().multi().linked(); // Keep insertion order.
  *  for (President pres : US_PRESIDENTS_IN_ORDER) {
  *      multimap.put(pres.firstName(), pres.lastName());
  *  }
@@ -118,19 +116,17 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
 
-    /** Immutable Map (can only be created through the {@link #immutable()} method). */
+    /** Immutable Map (can only be created through the {@link #freeze()} method). */
     public static final class Immutable<K,V> extends FastMap<K,V> implements org.javolution.lang.Immutable {
         private static final long serialVersionUID = FastMap.serialVersionUID;
-        private Immutable(Order<? super K> order, SparseArray<Entry<K,V>> first, 
-                SparseArray<SortedEntries<K,V>> collisions, int size) {
-            super(order, first, collisions, size);
+        private Immutable(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<EntryImpl<K,V>> entries) {
+            super(keyOrder, valuesEquality, entries);
         }
     }
  
-    private final Order<? super K> keyOrder;
-    private SparseArray<Entry<K,V>> first; // Hold element at first position at index.
-    private SparseArray<SortedEntries<K,V>> collisions; // Holds others elements (sorted). 
-    private int size; // Keep tracks of the size since sparse array are unbounded.
+    private final Order<? super K> keyOrder; 
+    private final Equality<? super V> valuesEquality; 
+    private final FastSet<EntryImpl<K,V>> entries; // Entry Set View.
     
     /** Creates a {@link Equality#STANDARD standard} map arbitrarily ordered. */
     public FastMap() {
@@ -165,27 +161,51 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     }
 
     /** Creates a custom map ordered using the specified key order. */
-    public FastMap(Order<? super K> keyOrder) {
-        this.keyOrder = keyOrder;
-        this.first = SparseArray.empty();
-        this.collisions = SparseArray.empty();        
+    public FastMap(final Order<? super K> keyOrder) {
+        this(keyOrder, Equality.STANDARD);
     }
 
-    /**  Base constructor (private). */
-    private FastMap(Order<? super K> keyOrder,  SparseArray<Entry<K,V>> first, 
-            SparseArray<SortedEntries<K,V>> collisions, int size) {
-       this.keyOrder = keyOrder;
-       this.first = first;
-       this.collisions = collisions;
-       this.size = size;
+    /** Creates a custom map ordered using the specified key order and using the specified equality for 
+     *  its map's values. */
+    public FastMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality) {
+        this.keyOrder = keyOrder;
+        this.valuesEquality = valuesEquality;
+        this.entries = new FastSet<EntryImpl<K,V>>(new Order<EntryImpl<K,V>>() {
+            private static final long serialVersionUID = FastMap.serialVersionUID;
+
+            @Override
+            public boolean areEqual(EntryImpl<K, V> left, EntryImpl<K, V> right) {
+                return FastMap.this.keyOrder.areEqual(left.getKey(), right.getKey()) && 
+                        FastMap.this.valuesEquality.areEqual(left.getValue(), right.getValue());
+            }
+
+            @Override
+            public int compare(EntryImpl<K, V> left, EntryImpl<K, V> right) {
+                return FastMap.this.keyOrder.compare(left.getKey(), right.getKey());
+            }
+
+            @Override
+            public int indexOf(EntryImpl<K, V> entry) {
+                return FastMap.this.keyOrder.indexOf(entry.getKey());
+            }});
     }
     
-    /** Makes this map immutable and returns the corresponding {@link Immutable} instance (cannot be reversed). */
-    public final Immutable<K,V> immutable() {
-        first = first.unmodifiable();
-        collisions = collisions.unmodifiable();
-        for (SortedEntries<K,V> set : collisions) set.immutable();
-        return new Immutable<K,V>(keyOrder, first, collisions, size);
+    /**  Base constructor (private). */
+    private FastMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<EntryImpl<K,V>> entries) {
+       this.keyOrder = keyOrder;
+       this.valuesEquality = valuesEquality;
+       this.entries = entries;
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public final FastSet<Entry<K, V>> entrySet() {
+        return (FastSet<Entry<K, V>>) (Object) entries;
+    }
+
+    /** Freezes this map and returns the corresponding {@link Immutable} instance (cannot be reversed). */
+    public final Immutable<K,V> freeze() {
+        return new Immutable<K,V>(keyOrder, valuesEquality, entries.freeze());
     }
 
     @Override
@@ -195,159 +215,57 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public final FastMap<K,V> with(Map<? extends K, ? extends V> that) {
-        putAll(that);
-        return this;
-    }
-
-    @Override
-    public final V put(K key, @Nullable V value) {
-        return super.put(key, value);
-    }
-
-    @Override
     public final int size() {
-        return size;
+        return entries.size();
     }
 
     @Override
     public final Equality<? super V> valuesEquality() {
-        return Equality.STANDARD;
+        return valuesEquality;
     }
 
     @Override
     @Realtime(limit = LINEAR)
     public FastMap<K, V> clone() {
-        FastMap<K,V> copy = (FastMap<K,V>) super.clone();
-        copy.first = first.clone();
-        copy.collisions = collisions.clone();
-        for ( FastListIterator<SortedEntries<K,V>> itr = collisions.iterator(0); itr.hasNext();) {
-            int index = itr.nextIndex();
-            SortedEntries<K,V> set = itr.next();
-            copy.collisions.set(index, set.clone());
-        }
-        return copy;
+        return new FastMap<K,V>(keyOrder, valuesEquality, entries.clone());
     }
 
     @Override
-    public final Entry<K, V> getEntry(K key) {
-        int index = keyOrder.indexOf(key);
-        Entry<K,V> existing  = first.get(index);
-        if (existing == null) return null;
-        if (keyOrder.areEqual(key, existing.getKey())) return existing;
-        SortedEntries<K,V> others = collisions.get(index);
-        if (others == null) return null;
-        int insertionIndex = others.firstKeyIndex(key, keyOrder);
-        if (insertionIndex >= others.size()) return null;
-        existing = others.get(insertionIndex);
-        return keyOrder.areEqual(key, existing.getKey()) ? existing : null; 
-      }
-
+    public final EntryImpl<K, V> getEntry(K key) {
+        return entries.getAny(new EntryImpl<K,V>(key, null)); 
+    }
+    
     @Override
-    public boolean addEntry(Entry<K, V> entry) { // Equivalent to SortedSet.addMulti
-        int index = keyOrder.indexOf(entry.getKey());
-        Entry<K,V> existing = first.get(index);
-        if (existing == null) { // Most frequent.
-            first = first.set(index, entry);
-        } else { // Multiple instances at index.
-            SortedEntries<K,V> others = collisions.get(index);
-            if (others == null) collisions = collisions.set(index, (others = new SortedEntries<K,V>()));
-            if (keyOrder.compare(entry.getKey(), existing.getKey()) < 0) { // New element should be first.
-                others.addFirst(existing);
-                first.set(index, entry); // Replaces existing as first.
-            } else {
-                int insertionIndex = others.firstKeyIndex(entry.getKey(), keyOrder);
-                others.add(insertionIndex, entry);
-            }
-        }
-        size++;
-        return true;
+    public @Nullable V put(K key, @Nullable V value) {
+        EntryImpl<K, V> entry = getEntry(key);
+        if (entry != null) return entry.setValueUnsafe(value);
+        entries.add(new EntryImpl<K,V>(key, value), true /* allowDuplicate */);
+        return null; 
+    }
+ 
+    @Override
+    public final EntryImpl<K, V> removeEntry(K key) {
+        return entries.removeAny(new EntryImpl<K,V>(key, null));
     }
 
     @Override
-    public Entry<K, V> removeEntry(K key) {
-        int index = keyOrder.indexOf(key);
-        Entry<K,V> removed  = first.get(index);
-        if (removed == null) return null; // Not found.
-        SortedEntries<K,V> others = collisions.get(index);
-        if (keyOrder.areEqual(key, removed.getKey())) {
-            first = first.set(index, others != null ? others.removeFirst() : null);
-        } else {
-            if (others == null) return null;
-            int insertionIndex = others.firstKeyIndex(key, keyOrder);
-            if ((insertionIndex >= others.size()) || !keyOrder.areEqual(key, others.get(insertionIndex).getKey()))
-                return null;
-            removed = others.remove(insertionIndex);
-        }
-        if ((others != null) && (others.size() == 0)) collisions = collisions.set(index, null);
-        --size;
-        return removed;
-   }
-
-    @Override
-    public void clear() {
-        first = SparseArray.empty();
-        collisions = SparseArray.empty();
-        size = 0;
+    public final void clear() {
+        entries.clear();
     }
 
     @Override
-    public boolean isEmpty() {
-        return size == 0;
+    public final boolean isEmpty() {
+        return entries.isEmpty();
     }
 
     @Override
-    public Order<? super K> keyOrder() {
+    public final Order<? super K> keyOrder() {
         return keyOrder;
     }
 
     @Override
-    public FastIterator<Entry<K, V>> iterator(@Nullable K from) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public FastIterator<Entry<K, V>> descendingIterator(@Nullable K from) {
-        // TODO Auto-generated method stub
-        return null;
+    public final V updateValue(Entry<K, V> entry, V newValue) {
+       return ((EntryImpl<K,V>)entry).setValueUnsafe(newValue);
     }
     
-    /** Sorted table for Entry<K,V>.*/
-    private static final class SortedEntries<K,V> extends SortedTable<Entry<K,V>> {
-        private static final long serialVersionUID = FastMap.serialVersionUID;
-        
-        // Returns the (smallest) insertion index of the specified key (range 0..size())
-        public final int firstKeyIndex(K key, Comparator<? super K> cmp) { 
-            return firstKeyIndex(key, cmp, 0, size());
-        }
-    
-        // Returns the (largest) insertion index of the specified key (range 0..size()).
-        public final int lastKeyIndex(K key, Comparator<? super K> cmp) { 
-            return lastKeyIndex(key, cmp, 0, size());
-        }
-                    
-        @SuppressWarnings("unchecked")
-        public SortedEntries<K,V> clone() {
-            return (SortedEntries<K,V>) super.clone();
-        }
-                
-          /** In sorted table find the first position real or "would be" of the specified element in the given range. */
-        private int firstKeyIndex(K key, Comparator<? super K> cmp, int start, int length) {
-            if (length == 0) return start;
-            int half = length >> 1;
-            return cmp.compare(key, get(start + half).getKey()) <= 0 ? firstKeyIndex(key, cmp, start, half) :
-                firstKeyIndex(key, cmp, start + half, length - half);
-        }
-  
-        /** In sorted table find the last position real or "would be" of the specified element in the given range. */
-        private int lastKeyIndex(K key, Comparator<? super K> cmp, int start, int length) {
-            if (length == 0) return start;
-            int half = length >> 1;
-            return cmp.compare(key, get(start + half).getKey()) < 0 ? lastKeyIndex(key, cmp, start, half) :
-                lastKeyIndex(key, cmp, start + half, length - half);
-        }   
-        
-    }
-
 }

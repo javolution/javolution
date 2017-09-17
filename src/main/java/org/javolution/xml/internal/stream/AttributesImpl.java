@@ -30,7 +30,7 @@ public final class AttributesImpl implements Attributes {
     /**
      * Holds the attributes.
      */
-    private final FastTable<AttributeImpl> attributes = FastTable.newInstance();
+    private final FastTable<AttributeImpl> attributes = new FastTable<AttributeImpl>();
 
     /**
      * Holds the current number of attributes set.

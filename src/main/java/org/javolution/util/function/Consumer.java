@@ -9,11 +9,10 @@
 package org.javolution.util.function;
 
 /**
- * <p> An operation that accepts a single input argument and returns no result.
- *     Unlike most other functional interfaces, Consumers are expected to operate via side-effects.</p>
+ * An operation that accepts a single input argument and returns no result.
+ * Unlike most other functional interfaces, Consumers are expected to operate via side-effects.
  * 
- * <p> Note: In future version this interface may derive from 
- *           {@code Function<P, Void>}.</p>
+ * Note: In future version this interface may derive from {@code Function<P, Void>}.
  *           
  * @param <T> The type of input parameter to accept.
  *           

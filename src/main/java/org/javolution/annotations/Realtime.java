@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  *     
  * ```java
  * public class MyCache<K,V> { 
- *      final FastMap<K,V> map = new SparseMap<K,V>().atomic();
+ *      final Map<K,V> map = new FastMap<K,V>().atomic();
  *      
  *      ​@Realtime(concurrency = LOCK_FREE)
  *      public V get(K key) {

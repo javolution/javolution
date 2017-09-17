@@ -54,7 +54,7 @@ public final class QName implements XMLSerializable, Immutable, CharSequence {
      * Holds the full name (String) to QName mapping.
      */
     private static final FastMap<CharSequence, QName> FULL_NAME_TO_QNAME 
-        = FastMap.newInstance(Order.LEXICAL);
+        = new FastMap<CharSequence, QName>(Order.LEXICAL);
 
     /**
      * Creates a qualified name having the specified local name and namespace 

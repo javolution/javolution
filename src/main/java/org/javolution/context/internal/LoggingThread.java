@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  */
 class LoggingThread extends Thread {
     private static final Logger LOG = LoggerFactory.getLogger(LoggingThread.class);
-    private final FastTable<Event> eventQueue = FastTable.newInstance();
+    private final FastTable<Event> eventQueue = new FastTable<Event>();
 
     /** Default Constructor.*/
     public LoggingThread() {

@@ -26,6 +26,11 @@ public final class FractalArrayImpl<E> extends FractalArray<E> {
     public static final FractalArrayImpl<Object> EMPTY = new FractalArrayImpl<Object>(new Object[0]);
 
     private E[] elements;
+
+    @SuppressWarnings("unchecked")
+    public FractalArrayImpl() {
+        this((E[])new Object[MIN_CAPACITY]);
+    }
     
     private FractalArrayImpl(E[] elements) {
         this.elements = elements;

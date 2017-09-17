@@ -32,13 +32,8 @@ public final class FilteredSetImpl<E> extends AbstractSet<E> {
     }
 
     @Override
-    public boolean add(E element) {
-        return filter.test(element) ? inner.add(element) : false;
-    }
-
-    @Override
-    public boolean addMulti(E element) {
-        return filter.test(element) ? inner.addMulti(element) : false;
+    public boolean add(E element, boolean allowDuplicate) {
+        return filter.test(element) ? inner.add(element, allowDuplicate) : false;
     }
 
     @Override
@@ -49,12 +44,6 @@ public final class FilteredSetImpl<E> extends AbstractSet<E> {
     @Override
     public AbstractSet<E> clone() {
         return new FilteredSetImpl<E>(inner.clone(), filter);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean contains(Object obj) {
-        return filter.test((E) obj) ? inner.contains(obj) : false;
     }
 
     @Override
@@ -87,12 +76,6 @@ public final class FilteredSetImpl<E> extends AbstractSet<E> {
         return inner.order();
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean remove(Object obj) {
-        return filter.test((E) obj) ? inner.remove(obj) : false;
-    }
-
     @Override
     public boolean removeIf(final Predicate<? super E> toRemove) {
         return inner.removeIf(new Predicate<E>() {
@@ -117,6 +100,16 @@ public final class FilteredSetImpl<E> extends AbstractSet<E> {
         for (int i = 0; i < subViews.length; i++)
             subViews[i] = new FilteredSetImpl<E>(subViews[i], filter);
         return subViews;
+    }
+
+    @Override
+    public E getAny(E element) {
+        return filter.test(element) ? inner.getAny(element) : null;
+    }
+
+    @Override
+    public E removeAny(E element) {
+        return filter.test(element) ? inner.removeAny(element) : null;        
     }
 
 

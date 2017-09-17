@@ -11,17 +11,13 @@ package org.javolution.util;
 import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
 
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.NoSuchElementException;
 
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Parallel;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.MathLib;
-import org.javolution.util.FastMap.Immutable;
 import org.javolution.util.function.Equality;
-import org.javolution.util.function.Function;
 import org.javolution.util.function.Indexer;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
@@ -65,7 +61,7 @@ import org.javolution.util.function.Predicate;
  * ``` 
  *      
  * Multiple instances of set's elements are supported (multiset). For two sets / multisets to be considered equal 
- * the cardinality of their elements must be the same.
+ * the cardinality of each of their elements must be the same (the cardinality of standard sets elements is one).
  * 
  * ```java
  * // Prime factors of 120 are {2, 2, 2, 3, 5}.
@@ -91,7 +87,7 @@ import org.javolution.util.function.Predicate;
 public class FastSet<E> extends AbstractSet<E> {
     private static final long serialVersionUID = 0x700L; // Version.
 
-    /** Immutable Set (can only be created through the {@link #immutable()} method). */
+    /** Immutable Set (can only be created through the {@link #freeze()} method). */
     public static final class Immutable<E> extends FastSet<E> implements org.javolution.lang.Immutable {
         private static final long serialVersionUID = FastSet.serialVersionUID;
         private Immutable(Order<? super E> order, SparseArray<E> first, SparseArray<SortedTable<E>> others, int size) {
@@ -100,8 +96,8 @@ public class FastSet<E> extends AbstractSet<E> {
     }
 
     private final Order<? super E> order;
-    private SparseArray<E> first; // Hold element at first position at index.
-    private SparseArray<SortedTable<E>> collisions; // Holds others elements (sorted). 
+    private SparseArray<E> elements; // Hold elements at first position at index.
+    private SparseArray<SortedTable<E>> collisions; // Holds others elements (collisions). 
     private int size; // Keep tracks of the size since sparse array are unbounded.
 
     /** Creates a {@link Equality#STANDARD standard} set arbitrarily ordered. */
@@ -139,24 +135,24 @@ public class FastSet<E> extends AbstractSet<E> {
     /** Creates a custom set ordered using the specified order. */
     public FastSet(Order<? super E> order) {
         this.order = order;
-        this.first = SparseArray.empty();
+        this.elements = SparseArray.empty();
         this.collisions = SparseArray.empty();        
     }
 
     /**  Base constructor (package private). */
     FastSet(Order<? super E> order, SparseArray<E> first, SparseArray<SortedTable<E>> collisions, int size) {
        this.order = order;
-       this.first = first;
+       this.elements = first;
        this.collisions = collisions;
        this.size = size;
     }
 
-    /** Makes this set immutable and returns the corresponding {@link Immutable} instance (cannot be reversed). */
-    public final Immutable<E> immutable() {
-        first = first.unmodifiable();
+    /** Freezes this set and returns the corresponding {@link Immutable} instance (cannot be reversed). */
+    public final Immutable<E> freeze() {
+        elements = elements.unmodifiable();
         collisions = collisions.unmodifiable();
-        for (SortedTable<E> set : collisions) set.immutable();
-        return new Immutable<E>(order, first, collisions, size);
+        for (SortedTable<E> set : collisions) set.freeze();
+        return new Immutable<E>(order, elements, collisions, size);
     }
 
     @Override
@@ -166,29 +162,30 @@ public class FastSet<E> extends AbstractSet<E> {
     }
 
     @Override
-    public final FastSet<E> with(Collection<? extends E> elements) {
-        addAll(elements);
-        return this;
-    }
-
-    @Override
     @Realtime(limit = CONSTANT)
     public final boolean add(E element) {
+        return add(element, false);
+    }
+    
+    @Override
+    @Realtime(limit = CONSTANT)
+    public final boolean add(E element, boolean allowDuplicate) {
         int index = order.indexOf(element);
-        E existing = first.get(index);
+        E existing = elements.get(index);
         if (existing == null) { // Most frequent.
-            first = first.set(index, element);
-        } else if (order.areEqual(element, existing)) {
+            elements = elements.set(index, element);
+        } else if (!allowDuplicate && order.areEqual(element, existing)) {
             return false;
         } else { // Collision.
             SortedTable<E> others = collisions.get(index);
             if (others == null) collisions = collisions.set(index, (others = new SortedTable<E>()));
             if (order.compare(element, existing) < 0) { // New element should be first.
                 others.addFirst(existing);
-                first.set(index, element); // Replaces existing as first.
+                elements.set(index, element); // Replaces existing as first.
             } else {
                 int insertionIndex = others.firstIndex(element, order);
-                if ((insertionIndex < others.size()) && order.areEqual(element, others.get(insertionIndex)))
+                if (!allowDuplicate && (insertionIndex < others.size()) 
+                        && order.areEqual(element, others.get(insertionIndex)))
                      return false; // Already present.
                 others.add(insertionIndex, element);
             }
@@ -197,48 +194,26 @@ public class FastSet<E> extends AbstractSet<E> {
         return true;
     }
 
-    @Override
-    @Realtime(limit = CONSTANT)
-    public final boolean addMulti(E element) {
-        int index = order.indexOf(element);
-        E existing = first.get(index);
-        if (existing == null) { // Most frequent.
-            first = first.set(index, element);
-        } else { // Multiple instances at index.
-            SortedTable<E> others = collisions.get(index);
-            if (others == null) collisions = collisions.set(index, (others = new SortedTable<E>()));
-            if (order.compare(element, existing) < 0) { // New element should be first.
-                others.addFirst(existing);
-                first.set(index, element); // Replaces existing as first.
-            } else {
-                int insertionIndex = others.firstIndex(element, order);
-                others.add(insertionIndex, element);
-            }
-        }
-        size++;
-        return true;
-   } 
-
+    
     @Parallel(false)
     @Realtime(limit = CONSTANT)
-    @SuppressWarnings("unchecked")
     @Override
-    public final boolean contains(Object element) {
-        int index = order.indexOf((E) element);
-        E existing  = first.get(index);
-        if (existing == null) return false;
-        if (order.areEqual((E)element, existing)) return true;
+    public final E getAny(E element) {
+        int index = order.indexOf(element);
+        E atIndex = elements.get(index);
+        if (atIndex == null) return null;
+        if (order.areEqual(element, atIndex)) return atIndex;
         SortedTable<E> others = collisions.get(index);
-        if (others == null) return false;
-        int insertionIndex = others.firstIndex((E)element, order);
-        if (insertionIndex >= others.size()) return false;
-        existing = others.get(insertionIndex);
-        return order.areEqual((E)element, existing);
+        if (others == null) return null;
+        int insertionIndex = others.firstIndex(element, order);
+        if (insertionIndex >= others.size()) return null;
+        atIndex = others.get(insertionIndex);
+        return order.areEqual(element, atIndex) ? atIndex: null;         
     }
-
+    
     @Override
     public final void clear() {
-        first = SparseArray.empty();
+        elements = SparseArray.empty();
         collisions = SparseArray.empty();
         size = 0;
     }
@@ -247,7 +222,7 @@ public class FastSet<E> extends AbstractSet<E> {
     @Realtime(limit = LINEAR)
     public FastSet<E> clone() {
         FastSet<E> copy = (FastSet<E>) super.clone();
-        copy.first = first.clone();
+        copy.elements = elements.clone();
         copy.collisions = collisions.clone();
         for ( FastListIterator<SortedTable<E>> itr = collisions.iterator(0); itr.hasNext();) {
             int index = itr.nextIndex();
@@ -297,36 +272,34 @@ public class FastSet<E> extends AbstractSet<E> {
     @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
-    @SuppressWarnings("unchecked")
-    public final boolean remove(Object element) {
-        int index = order.indexOf((E) element);
-        E removed = first.get(index);
-        if (removed == null) return false; // Not found.
+    public final E removeAny(E element) {
+        int index = order.indexOf(element);
+        E removed = elements.get(index);
+        if (removed == null) return null;
         SortedTable<E> others = collisions.get(index);
-        if (order.areEqual((E)element, removed)) {
-            first = first.set(index, others != null ? others.removeFirst() : null);
+        if (order.areEqual(element, removed)) {
+            elements = elements.set(index, others != null ? others.removeFirst() : null);
         } else {
-            if (others == null) return false;
-            int insertionIndex = others.firstIndex((E)element, order);
-            if ((insertionIndex >= others.size()) || !order.areEqual((E)element, others.get(insertionIndex)))
-                return false;
-            others.remove(insertionIndex);
+            if (others == null) return null;
+            int insertionIndex = others.firstIndex(element, order);
+            if ((insertionIndex >= others.size()) || !order.areEqual(element, others.get(insertionIndex))) return null;
+            removed = others.remove(insertionIndex);
         }
         if ((others != null) && (others.size() == 0)) collisions = collisions.set(index, null);
         --size;
-        return true;
+        return removed;
     }
 
     @Override
     public final boolean removeIf(Predicate<? super E> filter) {
         int initialSize = size;
-        FastListIterator<E> firstItr = first.iterator(0);
+        FastListIterator<E> firstItr = elements.iterator(0);
         while (firstItr.hasNext()) {
             int index = firstItr.nextIndex();
             E firstElement = firstItr.next();
             SortedTable<E> others = collisions.get(index);
             if (filter.test(firstElement)) {
-                first.set(index, (others != null) ? others.removeFirst() : null);
+                elements.set(index, (others != null) ? others.removeFirst() : null);
                 --size;
             }
             int initialOtherSize = others.size();
@@ -342,21 +315,36 @@ public class FastSet<E> extends AbstractSet<E> {
     public final int size() {
         return size;
     }       
-   
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public final E first() {
+        return elements.iterator().next();
+    }
+
+    @Override
+    @Realtime(limit = CONSTANT)
+    public E last() {
+        FastListIterator<E> itr = elements.iterator(-1);
+        int lastIndex = itr.previousIndex();
+        SortedTable<E> others = collisions.get(lastIndex);
+        return (others != null) ?  others.getLast() : itr.previous();
+    }
+    
     /** Ascending iterator implementation. */
     private final class AscendingIteratorImpl implements FastIterator<E> {
         private final FastListIterator<E> firstItr;
-        private FastIterator<E> nextItr; // if 'null' then next() is firstItr.next()
+        private FastIterator<E> othersItr; // if 'null' then next() is firstItr.next()
 
         public AscendingIteratorImpl(@Nullable E from) {
-             firstItr = first.iterator(from != null ? order.indexOf(from) : 0);
+             firstItr = elements.iterator(from != null ? order.indexOf(from) : 0);
              if ((from == null) || !firstItr.hasNext()) return; // Ready.
              int index = firstItr.nextIndex();
-             E firstElement = first.get(index);
+             E firstElement = elements.get(index);
              if (order.compare(from, firstElement) <=  0) return; // 'from' not greater than first element at index.
              SortedTable<E> others = collisions.get(index);
              if (others != null) {
-                 nextItr = others.listIterator(others.firstIndex(from, order));
+                 othersItr = others.listIterator(others.firstIndex(from, order));
              } else { 
                 firstItr.next(); 
              }
@@ -364,24 +352,24 @@ public class FastSet<E> extends AbstractSet<E> {
 
         @Override
         public boolean hasNext() {
-            return firstItr.hasNext() || ((nextItr != null) && (nextItr.hasNext()));
+            return firstItr.hasNext() || ((othersItr != null) && (othersItr.hasNext()));
         }
 
         @Override
         public boolean hasNext(final Predicate<? super E> matching) { // Move iterators until matching verified.
             while (true) {
-                if (nextItr != null) { // next iteration in progress.
-                    if (nextItr.hasNext(matching)) return true;
+                if (othersItr != null) { // next iteration in progress.
+                    if (othersItr.hasNext(matching)) return true;
                     if (!firstItr.hasNext()) return false;
-                    nextItr = null;
+                    othersItr = null;
                     firstItr.next(); // Skips current index.
                 } else { // next is first at index.
                     if (!firstItr.hasNext()) return false;
                     int index = firstItr.nextIndex();
-                    if (matching.test(first.get(index))) return true;
+                    if (matching.test(elements.get(index))) return true;
                     SortedTable<E> others = collisions.get(index);
                     if (others != null) {
-                        nextItr = others.iterator();
+                        othersItr = others.iterator();
                     } else {
                         firstItr.next(); // Skips current index.
                     }
@@ -391,10 +379,10 @@ public class FastSet<E> extends AbstractSet<E> {
 
         @Override
         public E next() {
-            if ((nextItr != null) && (nextItr.hasNext())) return nextItr.next(); // next iteration in progress.
+            if ((othersItr != null) && (othersItr.hasNext())) return othersItr.next(); // next iteration in progress.
             int index = firstItr.nextIndex();
             SortedTable<E> others = collisions.get(index);
-            nextItr = (others != null) ? others.iterator() : null;
+            othersItr = (others != null) ? others.iterator() : null;
             return firstItr.next();
         }
 
@@ -438,18 +426,19 @@ public class FastSet<E> extends AbstractSet<E> {
     /** 
      * Sorted table (fast insertion/deletion operations). 
      * Elements should always be inserted at their proper sorted position (firstIndex or lastIndex). */
-    static class SortedTable<E> extends FastTable<E> { // TODO
+    private static final class SortedTable<E> extends FastTable<E> { 
         private static final long serialVersionUID = 0x700L; // Version.
     
         // Returns the (smallest) insertion index of the specified element (range 0..size())
-        public final int firstIndex(E element, Comparator<? super E> cmp) { 
+        public int firstIndex(E element, Comparator<? super E> cmp) { 
             return firstIndex(element, cmp, 0, size());
         }
     
         // Returns the (largest) insertion index of the specified element (range 0..size()).
-        public final int lastIndex(E element, Comparator<? super E> cmp) { 
+        public int lastIndex(E element, Comparator<? super E> cmp) { 
             return lastIndex(element, cmp, 0, size());
         }
+    
     
         public SortedTable<E> clone() {
             return (SortedTable<E>) super.clone();
@@ -464,7 +453,7 @@ public class FastSet<E> extends AbstractSet<E> {
         }
   
         /** In sorted table find the last position real or "would be" of the specified element in the given range. */
-        private int lastIndex(E element, Comparator<? super E> cmp, int start, int length) {
+        private <K> int lastIndex(E element, Comparator<? super E> cmp, int start, int length) {
             if (length == 0) return start;
             int half = length >> 1;
             return cmp.compare(element, get(start + half)) < 0 ? lastIndex(element, cmp, start, half) :
@@ -472,5 +461,6 @@ public class FastSet<E> extends AbstractSet<E> {
         }
       
     }
+    
 
 }

@@ -45,8 +45,8 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public synchronized boolean addMulti(E element) {
-        boolean changed = inner.addMulti(element);
+    public synchronized boolean add(E element, boolean allowDuplicate) {
+        boolean changed = inner.add(element, allowDuplicate);
         if (changed)
             innerConst = inner.clone();
         return changed;
@@ -69,11 +69,15 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public E any() {
-        return innerConst.any();
+    public E findAny() {
+        return innerConst.findAny();
     }
 
- 
+    @Override
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        return innerConst.anyMatch(predicate);
+    }
+
     @Override
     public synchronized void clear() {
         inner.clear();
@@ -86,6 +90,16 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
+    public AbstractCollection<E> collect() {
+        return innerConst.collect();
+    }
+
+    @Override
+    public Comparator<? super E> comparator() {
+        return innerConst.comparator();
+    }
+
+    @Override
     public boolean contains(Object searched) {
         return innerConst.contains(searched);
     }
@@ -93,6 +107,21 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     @Override
     public boolean containsAll(Collection<?> that) {
         return innerConst.containsAll(that);
+    }
+    
+    @Override
+    public FastIterator<E> descendingIterator() {
+        return innerConst.descendingIterator();
+    }
+
+    @Override
+    public FastIterator<E> descendingIterator(@Nullable E from) {
+        return innerConst.descendingIterator(from);
+    }
+
+    @Override
+    public Equality<? super E> equality() {
+        return innerConst.equality();
     }
 
     @Override
@@ -104,10 +133,15 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     public E first() {
         return innerConst.first();
     }
-    
-    @Override
+
+     @Override
     public void forEach(Consumer<? super E> consumer) {
         innerConst.forEach(consumer);
+    }
+
+    @Override
+    public E getAny(E element) {
+        return innerConst.getAny(element);
     }
 
     @Override
@@ -116,8 +150,18 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
+    public AbstractSet<E> headSet(E arg0) {
+        return innerConst.headSet(arg0).unmodifiable();
+    }
+
+    @Override
     public boolean isEmpty() {
         return innerConst.isEmpty();
+    }
+
+    @Override
+    public FastIterator<E> iterator() {
+        return innerConst.iterator();
     }
 
     @Override
@@ -126,11 +170,6 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public FastIterator<E> descendingIterator(@Nullable E from) {
-        return innerConst.descendingIterator(from);
-    }
-
-     @Override
     public E last() {
         return innerConst.last();
     }
@@ -162,6 +201,14 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
+    public synchronized E removeAny(E element) {
+        E removed = inner.removeAny(element);
+        if (removed != null)
+            innerConst = inner.clone();
+        return removed;
+     }
+
+    @Override
     public synchronized boolean removeIf(Predicate<? super E> filter) {
         boolean changed = inner.removeIf(filter);
         if (changed)
@@ -183,6 +230,21 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
+    public AbstractSet<E> subSet(E element) {
+        return innerConst.subSet(element).unmodifiable();
+    }
+
+    @Override
+    public AbstractSet<E> subSet(E arg0, E arg1) {
+        return innerConst.subSet(arg0, arg1).unmodifiable();
+    }
+
+    @Override
+    public AbstractSet<E> tailSet(E arg0) {
+        return innerConst.tailSet(arg0).unmodifiable();
+    }
+
+    @Override
     public Object[] toArray() {
         return innerConst.toArray();
     }
@@ -200,51 +262,6 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     @Override
     public AbstractSet<E>[] trySplit(int n) {
         return innerConst.trySplit(n);
-    }
-
-    @Override
-    public AbstractCollection<E> collect() {
-        return innerConst.collect();
-    }
-
-    @Override
-    public FastIterator<E> iterator() {
-        return innerConst.iterator();
-    }
-
-    @Override
-    public FastIterator<E> descendingIterator() {
-        return innerConst.descendingIterator();
-    }
-
-    @Override
-    public Equality<? super E> equality() {
-        return innerConst.equality();
-    }
-
-    @Override
-    public Comparator<? super E> comparator() {
-        return innerConst.comparator();
-    }
-
-    @Override
-    public AbstractSet<E> headSet(E arg0) {
-        return innerConst.headSet(arg0).unmodifiable();
-    }
-
-    @Override
-    public AbstractSet<E> subSet(E arg0, E arg1) {
-        return innerConst.subSet(arg0, arg1).unmodifiable();
-    }
-
-    @Override
-    public AbstractSet<E> tailSet(E arg0) {
-        return innerConst.tailSet(arg0).unmodifiable();
-    }
-
-    @Override
-    public AbstractSet<E> subSet(E element) {
-        return innerConst.subSet(element).unmodifiable();
     }
  
 }

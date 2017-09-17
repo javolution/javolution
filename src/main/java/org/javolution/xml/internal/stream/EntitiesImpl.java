@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.javolution.text.CharArray;
 import org.javolution.util.FastTable;
+import org.javolution.util.function.BinaryOperator;
 import org.javolution.util.function.Function;
 import org.javolution.xml.stream.XMLStreamException;
 
@@ -127,17 +128,27 @@ public final class EntitiesImpl {
      * new FastMap().put("copy", "©")} to define the copyright entity.
      */
     public void setEntitiesMapping(Map<String, String> entityToReplacementText) {
-        FastTable<String> values = FastTable.newInstance();
+        FastTable<String> values = new FastTable<String>();
         values.addAll(entityToReplacementText.values());
         _maxLength = values.map(new Function<CharSequence, Integer>() {
 
             @Override
             public Integer apply(CharSequence csq) {
                 return csq.length();
-            }}).max();
+            }}).reduce(MAX);
         
           _entitiesMapping = entityToReplacementText;
     }
+    
+    static final BinaryOperator<Integer> MAX = new BinaryOperator<Integer>() {
+
+        @Override
+        public Integer apply(Integer first, Integer second) {
+            return first.intValue() > second.intValue() ? first : second;
+        }
+        
+    };
+
 
     /**
      * Returns the custom entity mapping or {@code null} if none.

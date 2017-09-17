@@ -108,7 +108,7 @@ public final class DistinctCollectionImpl<E> extends AbstractCollection<E> {
         private IteratorImpl(FastIterator<E> innerItr, Equality<? super E> equality) {
             this.innerItr = innerItr;
             iterated = equality instanceof Order ? new FastSet<E>((Order<E>) equality)
-                    : new FastTable<E>(equality);
+                    : new FastTable<E>().equality(equality);
        }
 
         @Override

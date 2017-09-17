@@ -59,12 +59,6 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
         return this;
     }
 
-    @Override
-    public AbstractSet<E> with(Collection<? extends E> elements) {
-        addAll(elements);
-        return this;
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //
@@ -147,27 +141,35 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
    
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract boolean add(E element);
+    public boolean add(E element) {
+        return add(element, false); // By default we don't allow duplicate.
+    }
     
     /** 
-     * Adds the specified element regardless if this element is already present or not; allowing multiple 
-     * instances of the same element. 
+     * Adds the specified element allowing multiple instances if {@code allowDuplicate} parameter is set.   
+     * Allowing duplicate is usually faster since there is no check if the element is already presents.
      * 
-     * This method is usually faster than standard {@link #add} method since there is no check if the element is 
-     * already presents.
+     * @param element the element to be added.
+     * @param allowDuplicate indicates if multiple instances are supported.
      */
-   @Realtime(limit = CONSTANT)
-   public abstract boolean addMulti(E element);
+    @Realtime(limit = CONSTANT)
+    public abstract boolean add(E element, boolean allowDuplicate);
     
+    @SuppressWarnings("unchecked")
     @Parallel(false)
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract boolean contains(Object element);
+    public boolean contains(Object element) {
+        return getAny((E)element) != null;
+    }
   
+    @SuppressWarnings("unchecked")
     @Parallel(false)
     @Override
     @Realtime(limit = LINEAR, comment="Linear removal time for linked sets")
-    public abstract boolean remove(Object element);
+    public boolean remove(Object element) {
+        return removeAny((E)element) != null;
+    }
 
     @Override
     @Realtime(limit = LINEAR)
@@ -243,7 +245,18 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
     // Misc.
     //
 	    
- 
+    /** 
+     * Returns any element equals to the specified element (or {@code null} if none).
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract E getAny(E element);
+    
+    /** 
+     * Removes and returns any element equals to the specified element (or {@code null} if none).
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract E removeAny(E element);
+    
     /** 
      * Returns this set order.
      */
@@ -251,24 +264,28 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
     public abstract Order<? super E> order();
  
     /**
-     * Returns an ordered iterator over the elements of this set starting from the specified element.
+     * Returns an iterator over the elements of this set higher or equal to the specified element.
+     * The iteration order is implementation dependent (e.g. insertion order for linked set).
      * 
-     * @param from the starting point (inclusive) or {@code null} to start from the first element. 
+     * @param low the lower point (inclusive) or {@code null} to start from the first element. 
      */
     @Realtime(limit = LINEAR, comment="For shared sets a copy of this set may be performed")
-    public abstract FastIterator<E> iterator(@Nullable E from);
+    public abstract FastIterator<E> iterator(@Nullable E low);
  
     /**
-     * Returns an ordered descending iterator over the elements of this set starting from the specified element.
+     * Returns a descending iterator over the elements of this set lower than the specified element.
+     * The iteration order is implementation dependent (e.g. insertion order for linked set).
      * 
-     * @param from the starting point (inclusive) or {@code null} to start from the last element. 
+     * @param high the higher point (inclusive) or {@code null} to start from the last element. 
      */
     @Realtime(limit = LINEAR, comment="For shared sets a copy of this set may be performed")
-    public abstract FastIterator<E> descendingIterator(@Nullable E from);
+    public abstract FastIterator<E> descendingIterator(@Nullable E high);
          
     /**
      * Returns an iterator over this set, the iteration order is implementation dependent 
-     * (e.g. insertion order for linked set). 
+     * (e.g. insertion order for linked set).
+     *  
+     * @return {@code iterator(null)}
      */
     @Override
     @Realtime(limit = LINEAR, comment="For shared sets a copy of this set may be performed")
@@ -279,6 +296,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
     /**
      * Returns a descending iterator over this set, the iteration order is implementation dependent 
      * (e.g. reversed insertion order for linked set). 
+     *  
+     * @return {@code descendingIterator(null)}
      */
     @Override
     @Realtime(limit = LINEAR, comment="For shared sets a copy of this set may be performed")
@@ -312,13 +331,13 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
     @Override
     @Realtime(limit = LINEAR, comment="Filtered sets may iterate the whole collection")
     public E first() {
-        return iterator(null).next();
+        return iterator().next();
     }
 
     @Override
     @Realtime(limit = LINEAR, comment="Filtered sets may iterate the whole collection")
     public E last() {
-        return descendingIterator(null).next();
+        return descendingIterator().next();
     }
 
    

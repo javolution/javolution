@@ -16,7 +16,7 @@ import org.javolution.util.FastMap;
  */
 public final class LocalContextImpl extends LocalContext {
 
-    private FastMap<Parameter<?>, Object> localSettings = FastMap.newInstance();
+    private FastMap<Parameter<?>, Object> localSettings = new FastMap<Parameter<?>, Object>();
     private LocalContextImpl parent;
 
     @Override

@@ -22,8 +22,6 @@ import org.javolution.context.ComputeContext;
 import static org.javolution.context.LogContext.*;
 import org.javolution.util.FastMap;
 import org.javolution.util.FastTable;
-import org.javolution.util.FractalTable;
-import org.javolution.util.SparseMap;
 import org.bridj.Pointer;
 
 import com.nativelibs4java.opencl.CLBuffer;
@@ -212,8 +210,8 @@ public final class ComputeContextImpl extends ComputeContext {
 		CLKernel clKernel;
 		int[] globalWorkSize;
 		int[] localWorkSize;
-		FractalTable<BufferImpl> updatedBuffers = new FractalTable<BufferImpl>();
-		FractalTable<CLEvent> dependencies = new FractalTable<CLEvent>();
+		FastTable<BufferImpl> updatedBuffers = new FastTable<BufferImpl>();
+		FastTable<CLEvent> dependencies = new FastTable<CLEvent>();
 
 		KernelImpl(CLKernel clKernel) {
 			this.clKernel = clKernel;
@@ -279,7 +277,7 @@ public final class ComputeContextImpl extends ComputeContext {
 	/** Program implementation. */
 	class ProgramImpl {
 		CLProgram clProgram;
-		SparseMap<String, CLKernel> kernels = new SparseMap<String, CLKernel>();
+		FastMap<String, CLKernel> kernels = new FastMap<String, CLKernel>();
 
 		ProgramImpl(String opencl) {
 			clProgram = clContext.createProgram(PRAGMA_DOUBLE_SUPPORT + opencl);
@@ -318,8 +316,8 @@ public final class ComputeContextImpl extends ComputeContext {
 
 	// Each context instance has its own local programs and buffers.
 	private final ComputeContextImpl parent;
-	private final FastMap<Class<? extends Program>, ProgramImpl> programs = FastMap.newInstance();
-	private final FastTable<BufferImpl> buffers = FastTable.newInstance();
+	private final FastMap<Class<? extends Program>, ProgramImpl> programs = new FastMap<Class<? extends Program>, ProgramImpl>();
+	private final FastTable<BufferImpl> buffers = new FastTable<BufferImpl>();
 
 	public ComputeContextImpl() {
 		parent = null;

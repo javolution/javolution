@@ -87,8 +87,13 @@ public final class AtomicTableImpl<E> // implements AbstractTableMethods<E> {
     }
 
     @Override
-    public E any() {
-        return innerConst.any();
+    public E findAny() {
+        return innerConst.findAny();
+    }
+
+    @Override
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        return innerConst.anyMatch(predicate);
     }
 
     @Override

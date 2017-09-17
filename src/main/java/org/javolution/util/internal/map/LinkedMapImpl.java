@@ -9,10 +9,12 @@
 package org.javolution.util.internal.map;
 
 import org.javolution.util.AbstractMap;
-import org.javolution.util.FastIterator;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.AbstractTable;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
+import org.javolution.util.internal.set.LinkedSetImpl;
 
 /**
  * An linked view over a map.
@@ -20,36 +22,17 @@ import org.javolution.util.function.Order;
 public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private AbstractMap<K, V> inner;
-    private FastTable<Entry<K, V>> insertionTable;
+    private AbstractMap<K,V> inner;
+    private final AbstractTable<Entry<K,V>> insertionTable;
  
     public LinkedMapImpl(AbstractMap<K,V> inner) {
         this.inner = inner;
-        this.insertionTable = new FastTable<Entry<K,V>>();
+        this.insertionTable = new FastTable<Entry<K,V>>().equality(Equality.IDENTITY);
     }
 
     @Override
-    public void clear() {
-        inner.clear();
-        insertionTable.clear();
-    }
-
-    @Override
-    public LinkedMapImpl<K, V> clone() {
-        LinkedMapImpl<K, V> copy = (LinkedMapImpl<K, V>) super.clone();
-        copy.inner = inner.clone();
-        copy.insertionTable = insertionTable.clone();
-        return copy;
-    }
-
-    @Override
-    public FastIterator<Entry<K, V>> descendingIterator() {
-        return insertionTable.reversed().unmodifiable().iterator();
-    }
-
-    @Override
-    public FastIterator<Entry<K, V>> descendingIterator(K fromKey) {
-        return inner.descendingIterator(fromKey);
+    public AbstractSet<Entry<K, V>> entrySet() {
+        return new LinkedSetImpl<Entry<K,V>>(inner.entrySet(), insertionTable);
     }
 
     @Override
@@ -58,18 +41,10 @@ public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public boolean isEmpty() {
-        return inner.isEmpty();
-    }
-
-    @Override
-    public FastIterator<Entry<K, V>> iterator() {
-        return insertionTable.iterator();
-    }
-
-    @Override
-    public FastIterator<Entry<K, V>> iterator(K fromKey) {
-        return inner.iterator(fromKey);
+    public Entry<K, V> removeEntry(K key) {
+        Entry<K,V> removed = inner.removeEntry(key);
+        if (removed != null) insertionTable.remove(removed);
+        return removed;
     }
 
     @Override
@@ -78,26 +53,23 @@ public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public boolean addEntry(Entry<K, V> entry) {        
-        insertionTable.add(entry);
-        return inner.addEntry(entry);
-    }
-
-    @Override
-    public Entry<K, V> removeEntry(K key) {
-        Entry<K, V> previous = inner.removeEntry(key);
-        if (previous != null) insertionTable.equality(Equality.IDENTITY).remove(previous);
-        return previous;
-    }
-
-    @Override
-    public int size() {
-        return inner.size();
-    }
-
-    @Override
     public Equality<? super V> valuesEquality() {
         return inner.valuesEquality();
+    }
+
+    @Override
+    public V updateValue(java.util.Map.Entry<K, V> entry, V newValue) {
+        return inner.updateValue(entry, newValue);
+    }
+
+    @Override
+    public V put(K key, V value) {
+        Entry<K, V> entry = getEntry(key);
+        if (entry != null) return updateValue(entry, value);
+        entry = new EntryImpl<K,V>(key, value);
+        inner.entrySet().add(entry, true /* allowDuplicate */);
+        insertionTable.add(entry);
+        return null; 
     }
 
 }

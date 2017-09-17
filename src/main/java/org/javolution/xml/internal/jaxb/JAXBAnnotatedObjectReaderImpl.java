@@ -8,20 +8,22 @@
  */
 package org.javolution.xml.internal.jaxb;
 
-import org.javolution.osgi.internal.OSGiServices;
-import org.javolution.text.CharArray;
-import org.javolution.util.FastMap;
-import org.javolution.util.FastSet;
-import org.javolution.util.FastTable;
-import org.javolution.util.function.Order;
-import org.javolution.xml.jaxb.JAXBAnnotatedObjectReader;
-import org.javolution.xml.stream.XMLInputFactory;
-import org.javolution.xml.stream.XMLStreamConstants;
-import org.javolution.xml.stream.XMLStreamException;
-import org.javolution.xml.stream.XMLStreamReader;
-import org.xml.sax.InputSource;
+import java.io.InputStream;
+import java.io.Reader;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.ParseException;
+import java.util.Iterator;
+import java.util.List;
 
-import javax.xml.bind.*;
+import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.UnmarshalException;
+import javax.xml.bind.ValidationException;
 import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchema;
@@ -33,16 +35,20 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-import java.io.InputStream;
-import java.io.Reader;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.ParseException;
-import java.util.Iterator;
-import java.util.List;
+
+import org.javolution.osgi.internal.OSGiServices;
+import org.javolution.text.CharArray;
+import org.javolution.util.AbstractMap;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.FastSet;
+import org.javolution.util.FastTable;
+import org.javolution.util.function.Order;
+import org.javolution.xml.jaxb.JAXBAnnotatedObjectReader;
+import org.javolution.xml.stream.XMLInputFactory;
+import org.javolution.xml.stream.XMLStreamConstants;
+import org.javolution.xml.stream.XMLStreamException;
+import org.javolution.xml.stream.XMLStreamReader;
+import org.xml.sax.InputSource;
 
 /**
  * Class to provide basic support for deserializing JAXB Annotated XML Objects
@@ -286,12 +292,12 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		final T outputObject = reflectNewInstance(inputClass);
 
 		// The processing in this implementation is stack based. We will make use of FastTable's implementation of the Deque interface
-		final FastTable<AnnotationStackData> outputStack = FastTable.newInstance();
+		final FastTable<AnnotationStackData> outputStack = new FastTable<AnnotationStackData>();
 
 		// We'll push the output object onto the stack as an initial entry. All stack entries get wrapped in an AnnotationStackData class.
 		// The fields in this class are package-private to provide as cheap of access as possible since they are used frequently.
 		AnnotationStackData stackData;
-		FastSet<CharArray> requiredSet = FastSet.newInstance(Order.LEXICAL);
+		FastSet<CharArray> requiredSet = new FastSet<CharArray>(Order.LEXICAL);
 		
 		if(_isValidating){
 			stackData = new AnnotationStackData(AnnotationStackType.ROOT, null, outputObject, null, inputClass, null,
@@ -381,7 +387,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					//LogContext.info("END ELEMENT SPECIAL HANDLING - LOCAL NAME = "+localName);
 
 					// Detect if this element is mapped to multiple things (xs:choice support)
-					FastSet<CharArray> mappedElements = null;
+					AbstractSet<CharArray> mappedElements = null;
 					boolean mappedElement = false;
 
 					// Detect Mapped Elements for use with xs:choice
@@ -463,7 +469,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 							// cached already at this point (see code below the special handling block for more details).
 							// This data is needed on the stack so that later when the element ends, we can check if we have
 							// all of the required fields.
-							FastSet<CharArray> requiredFieldsSet = null;
+							AbstractSet<CharArray> requiredFieldsSet = null;
 							Iterator<CharArray> propOrderIterator = null;
 
 							if(_isValidating){
@@ -517,8 +523,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				final Class<?> elementClass = _elementClassCache.get(localXmlElementName);
 
 				// Next we are determining if we've already cached which fields are XML Attributes
-				FastMap<CharArray, Method> cachedAttributeFields = cacheData._attributeMethodsCache;
-				FastSet<CharArray> requiredFieldsSet = _requiredCache.get(elementClass);
+				AbstractMap<CharArray, Method> cachedAttributeFields = cacheData._attributeMethodsCache;
+				AbstractSet<CharArray> requiredFieldsSet = _requiredCache.get(elementClass);
 
 				// If we're continuing the same element, we can skip here because the element is already done and we only
 				// need to parse attributes.
@@ -663,7 +669,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 	}
 
 	private AnnotationStackData handleFieldStartElement(final AnnotationStackData parentStackData, final CharArray xmlElementName, final Object currentObj, final Field field,
-			final FastTable<AnnotationStackData> outputStack, final FastSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
+			final FastTable<AnnotationStackData> outputStack, final AbstractSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
 		final AnnotationStackData elementStackData;
 		final CacheData parentCacheData = _classCacheData.get(parentStackData._type);
 		final Class<?> fieldType = field.getType();
@@ -702,7 +708,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					//LogContext.info("<STACK NOOP> - [KEEP CURRENT LIST]: (List) "+listStackData._xmlElementName);
 				}
 				else {
-					final FastTable<Object> list = FastTable.newInstance();
+					final FastTable<Object> list = new FastTable<Object>();
 					listStackData = new AnnotationStackData(AnnotationStackType.UNBOUNDED, parentStackData, null,
 							list, genericType, xmlElementName, null, null);
 					setList(listStackData);
@@ -939,7 +945,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
-	private void parseAttribute(final Method method, final CharArray attributeName, final FastMap<CharArray,Enum<?>> enumValueCache, final XMLStreamReader reader, final Object currentObj, final FastSet<CharArray> processedSet) throws UnmarshalException, ValidationException{
+	private void parseAttribute(final Method method, final CharArray attributeName, final AbstractMap<CharArray,Enum<?>> enumValueCache, final XMLStreamReader reader, final Object currentObj, final AbstractSet<CharArray> processedSet) throws UnmarshalException, ValidationException{
 
 		if(_isValidating && method == null){
 			throw new ValidationException("Unmapped Attribute Encountered");
@@ -955,7 +961,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				final Class<?> methodType = method.getParameterTypes()[0];
 
 				if(methodType.isEnum()){
-					final FastMap<CharArray,Enum<?>> classEnumValueCache = _classCacheData.get(methodType)._enumValueCache;
+					final AbstractMap<CharArray,Enum<?>> classEnumValueCache = _classCacheData.get(methodType)._enumValueCache;
 					final Enum<?> enumValue = classEnumValueCache.get(attributeValue);
 					invokeMethod(method, methodType, currentObj, null, enumValue);
 				}
@@ -1023,7 +1029,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 		try {
 			final CacheData parentCacheData = _classCacheData.get(parentType);
-			final FastMap<CharArray,Field> elementFieldCache = parentCacheData._elementFieldCache;
+			final AbstractMap<CharArray,Field> elementFieldCache = parentCacheData._elementFieldCache;
 			final Field field = elementFieldCache.get(xmlElementName);
 			field.set(parentObj, listStackData._list);
 
@@ -1125,12 +1131,12 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		final CharArray _xmlElementName;
 		final Iterator<CharArray> _propOrderIterator;
 
-		FastSet<CharArray> _processedSet;
-		FastSet<CharArray> _requiredSet;
+		AbstractSet<CharArray> _processedSet;
+		AbstractSet<CharArray> _requiredSet;
 
 		public AnnotationStackData(final AnnotationStackType annotationStackType,
 				final AnnotationStackData parent, final Object object, final FastTable<Object> list,
-				final Class<?> type, final CharArray xmlElementName, final FastSet<CharArray> requiredSet,
+				final Class<?> type, final CharArray xmlElementName, final AbstractSet<CharArray> requiredSet,
 				final Iterator<CharArray> propOrderIterator){
 			_annotationStackType = annotationStackType;
 			_object = object;
@@ -1145,7 +1151,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				_processedSet = null;
 			}
 			else {
-				_processedSet = FastSet.<CharArray>newInstance(Order.LEXICAL).linked();
+				_processedSet = new FastSet<CharArray>(Order.LEXICAL).linked();
 			}
 		}
 

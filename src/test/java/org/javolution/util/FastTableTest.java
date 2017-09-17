@@ -22,7 +22,7 @@ public class FastTableTest {
 	
 	@Before
 	public void init(){
-		_fastTable = FastTable.newInstance();
+		_fastTable = new FastTable<String>();
 		_fastTable.add("Test1");
 		_fastTable.add("Test2");
 		_fastTable.add("Test3");
@@ -70,7 +70,7 @@ public class FastTableTest {
 	
 	@Test
 	public void testIsEmpty(){
-		_fastTable = FastTable.newInstance();
+		_fastTable = new FastTable<String>();
 		assertTrue("Table Is Empty", _fastTable.isEmpty());
 		_fastTable.add("Test");
 		assertFalse("Table Is NOT Empty", _fastTable.isEmpty());
@@ -141,7 +141,7 @@ public class FastTableTest {
 	
 	@Test
 	public void testPushPop(){
-		_fastTable = FastTable.newInstance();
+		_fastTable = new FastTable<String>();
 		_fastTable.push("Test1");
 		_fastTable.push("Test2");
 		_fastTable.push("Test3");

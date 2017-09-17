@@ -16,7 +16,6 @@ import java.io.Serializable;
 
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
-import org.javolution.lang.Immutable;
 import org.javolution.util.internal.FractalArrayImpl;
 
 /**
@@ -27,7 +26,7 @@ import org.javolution.util.internal.FractalArrayImpl;
  * Updates operations on fractal arrays may return new instances with greater or lesser capacity. 
  * 
  * ```java
- * class FractalTable<E> {
+ * class FastTable<E> {
  *     private final FractalArray<E> elements = FractalArray.empty(); 
  *      
  *     ​@Realtime(limit = CONSTANT)

@@ -12,8 +12,6 @@ import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
 import static org.javolution.annotations.Realtime.Limit.LOG_N;
 
-import java.util.Collection;
-
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
 import org.javolution.util.function.Equality;
@@ -63,7 +61,7 @@ public class FastTable<E> extends AbstractTable<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
 
-    /** Immutable Table (can only be created through the {@link #immutable()} method). */
+    /** Immutable Table (can only be created through the {@link #freeze()} method). */
     public static final class Immutable<E> extends FastTable<E> implements org.javolution.lang.Immutable {
         private static final long serialVersionUID = FastTable.serialVersionUID;
 
@@ -84,20 +82,14 @@ public class FastTable<E> extends AbstractTable<E> {
        this.array = array; 
     }
 
-    /** Makes this table immutable and returns the corresponding {@link Immutable} instance (cannot be reversed). */
-    public final Immutable<E> immutable() {
+    /** Freezes this table and returns the corresponding {@link Immutable} instance (cannot be reversed). */
+    public final Immutable<E> freeze() {
         array = array.unmodifiable();
         return new Immutable<E>(array);
     }
 
     @Override
     public final FastTable<E> with(E... elements) {
-        addAll(elements);
-        return this;
-    }
-
-    @Override
-    public final FastTable<E> with(Collection<? extends E> elements) {
         addAll(elements);
         return this;
     }
@@ -131,7 +123,7 @@ public class FastTable<E> extends AbstractTable<E> {
 
     @Override
     @Realtime(limit = CONSTANT)
-    public Equality<? super E> equality() {
+    public final Equality<? super E> equality() {
         return Equality.STANDARD;
     }
 

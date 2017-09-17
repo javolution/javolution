@@ -41,7 +41,7 @@ public class TestFractal {
             }
         }
         System.out.println("Size ArrayList: " + aa.size());
-        System.out.println("Size FractalTable: " + ff.size());
+        System.out.println("Size FastTable: " + ff.size());
         System.out.println("Time: " + (System.currentTimeMillis() - time));
     }
 }

@@ -9,6 +9,7 @@
  * 
  * All collections classes support numerous views which can be chained:
  * 
+ *  - {@link AbstractCollection#concat concat(Collection)} - View resulting of the concatenation of two collections.
  *  - {@link AbstractCollection#parallel parallel()} - View allowing parallel processing of {@link Parallel} operations.
  *  - {@link AbstractCollection#sequential sequential()} - View disallowing parallel processing of {@link Parallel} operations.
  *  - {@link AbstractCollection#unmodifiable unmodifiable()} - View which does not allow for modifications.
@@ -29,7 +30,7 @@
  * For all these views, the chaining order <b>does matter!</b>
  * 
  * ```java
- * FastTable<String> names = new FastTable<String>().with("Sim Ilicuir").with("Pat Ibulair");
+ * FastTable<String> names = new FastTable<String>().with("Sim Ilicuir", "Pat Ibulair");
  *      
  * names.sorted().reversed(); // Reversed sorting order.
  * names.reversed().sorted(); // Standard sorting order.
@@ -71,19 +72,19 @@
  * Parallelism support, excellent memory characteristics (no caching, cost nothing to create), etc.
  * 
  * ```java
- * String anyFound = names.filter(s -> s.length > 16).any(); // Sequential search (returns the first found).
- * String anyFound = names.filter(s -> s.length > 16).parallel().any(); // Parallel search.
+ * String anyFound = names.filter(s -> s.length > 16).findAny(); // Sequential search (returns the first found).
+ * String anyFound = names.filter(s -> s.length > 16).parallel().findAny(); // Parallel search.
  * Collection<String> allFound = names.filter(s -> s.length > 16).collect(); // Sequential reduction.
  * Collection<String> allFound = names.filter(s -> s.length > 16).parallel().collect(); // Parallel reduction.
  * 
- * int maxLength = names.map(s -> s.length).parallel().max(); // Finds the maximum length in parallel.
+ * String maxName = names.parallel().maxBy((x,y) -> x.length - y.length); // Finds the name of maximum length in parallel.
  * int sumLength = names.map(s -> s.length).parallel().reduce((x,y)-> x + y); // Calculates the sum in parallel.
  * 
  * // Class.getEnclosingMethod (JDK) using Javolution's views and Java 8.
  * Method matching = new FastTable<Method>().with(enclosingInfo.getEnclosingClass().getDeclaredMethods())
  *     .filter(m -> Objects.equals(m.getName(), enclosingInfo.getName())
  *     .filter(m -> Arrays.equals(m.getParameterTypes(), parameterClasses))
- *     .filter(m -> Objects.equals(m.getReturnType(), returnType)).any(); 
+ *     .filter(m -> Objects.equals(m.getReturnType(), returnType)).findAny(); 
  * if (matching == null) throw new InternalError("Enclosing method not found");
  * return matching;
  * ``` 

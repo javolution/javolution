@@ -17,18 +17,17 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.javolution.util.FastSet;
 import org.javolution.util.function.Order;
 import org.junit.Before;
 import org.junit.Test;
 
 public class FastSetTest {
 
-	private FastSet<String> _fastSet;
+	private AbstractSet<String> _fastSet;
 	
 	@Before
 	public void init(){
-		_fastSet = FastSet.newInstance();
+		_fastSet = new FastSet<String>();
 	}
 	
 	@Test
@@ -38,14 +37,14 @@ public class FastSetTest {
 		_fastSet.add("AAAA");
 		_fastSet.add("AAA");	
 		
-		String anyString = _fastSet.any();
+		String anyString = _fastSet.findAny();
 		assertNotNull("Any String Obtained", anyString);
 		assertTrue("Set Contains String", _fastSet.contains(anyString));
 	}
 	
 	@Test
 	public void testCaseInsensitiveSetWithLexicalCaseInsensitive(){
-		_fastSet = FastSet.newInstance(Order.LEXICAL_CASE_INSENSITIVE);
+		_fastSet = new FastSet<String>(Order.LEXICAL_CASE_INSENSITIVE);
 		_fastSet.add("Test");
 		
 		assertTrue("Set Contains Test", _fastSet.contains("Test"));
@@ -70,7 +69,7 @@ public class FastSetTest {
 	
 	@Test
 	public void testContainsAll(){
-		Set<String> set = FastSet.newInstance();
+		Set<String> set = new FastSet<String>();
 		set.add("Test1");
 		set.add("Test2");
 		set.add("Test3");
@@ -105,28 +104,8 @@ public class FastSetTest {
 	}
 	
 	@Test
-	public void testMax(){
-		_fastSet.add("AA");
-		_fastSet.add("A");		
-		_fastSet.add("AAAA");
-		_fastSet.add("AAA");	
-		
-		assertEquals("Set Max Is AAAA", "AAAA", _fastSet.max());
-	}
-	
-	@Test
-	public void testMin(){
-		_fastSet.add("AA");
-		_fastSet.add("A");		
-		_fastSet.add("AAAA");
-		_fastSet.add("AAA");	
-		
-		assertEquals("Set Min Is A", "A", _fastSet.min());
-	}
-	
-	@Test
 	public void testRetainAll(){
-		Set<String> set = FastSet.newInstance();
+		Set<String> set = new FastSet<String>();
 		set.add("A");
 		
 		_fastSet.add("AA");

@@ -140,7 +140,7 @@ public final class NamespacesImpl implements NamespaceContext {
 
     // Implements NamespaceContext
     public Iterator<CharArray> getPrefixes(CharSequence namespaceURI) {
-        FastTable<CharArray> prefixes = FastTable.newInstance();
+        FastTable<CharArray> prefixes = new FastTable<CharArray>();
         for (int i = _namespacesCount[_nesting]; --i >= 0;) {
             if (_namespaces[i].equals(namespaceURI)) {
                 prefixes.add(_prefixes[i]);

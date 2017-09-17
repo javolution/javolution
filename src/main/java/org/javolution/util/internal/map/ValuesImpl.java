@@ -8,11 +8,10 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Iterator;
-
+import java.util.Map.Entry;
 import org.javolution.util.AbstractCollection;
-import org.javolution.util.FastMap;
-import org.javolution.util.FastMap.Entry;
+import org.javolution.util.AbstractSet;
+import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Predicate;
 
@@ -21,35 +20,47 @@ import org.javolution.util.function.Predicate;
  */
 public final class ValuesImpl<K, V> extends AbstractCollection<V> {
 
-    /** The generic iterator over the map values. */
-    private static class ValueIterator<K, V> implements Iterator<V> {
-        final Iterator<Entry<K, V>> mapItr;
+    /** A generic iterator over the map values. */
+    private static class IteratorImpl<K, V> implements FastIterator<V> {
+        final FastIterator<Entry<K, V>> entriesItr;
 
-        public ValueIterator(Iterator<Entry<K, V>> mapItr) {
-            this.mapItr = mapItr;
+        public IteratorImpl(FastIterator<Entry<K, V>> entriesItr) {
+            this.entriesItr = entriesItr;
         }
 
         @Override
         public boolean hasNext() {
-            return mapItr.hasNext();
+            return entriesItr.hasNext();
         }
 
         @Override
         public V next() {
-            return mapItr.next().getValue();
+            return entriesItr.next().getValue();
         }
 
         @Override
         public void remove() {
-            mapItr.remove();
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean hasNext(final Predicate<? super V> matching) {
+            return entriesItr.hasNext(new Predicate<Entry<K,V>>() {
+
+                @Override
+                public boolean test(Entry<K, V> param) {
+                    return matching.test(param.getValue());
+                }});
         }
     }
 
     private static final long serialVersionUID = 0x700L; // Version.
-    private final FastMap<K, V> map;
+    private final AbstractSet<Entry<K, V>> entries;
+    private final Equality<? super V> equality;
 
-    public ValuesImpl(FastMap<K, V> map) {
-        this.map = map;
+    public ValuesImpl(AbstractSet<Entry<K, V>> entries, Equality<? super V> equality) {
+        this.entries = entries;
+        this.equality = equality;
     }
 
     @Override
@@ -59,55 +70,57 @@ public final class ValuesImpl<K, V> extends AbstractCollection<V> {
 
     @Override
     public void clear() {
-        map.clear();
+        entries.clear();
     }
 
     @Override
     public AbstractCollection<V> clone() {
-        return new ValuesImpl<K, V>(map.clone());
+        return new ValuesImpl<K, V>(entries.clone(), equality);
     }
 
     @Override
-    public Equality<? super V> equality() {
-        return map.valuesEquality();
+    public boolean removeIf(final Predicate<? super V> filter) {
+        return entries.removeIf(new Predicate<Entry<K,V>>() {
+
+            @Override
+            public boolean test(Entry<K, V> param) {
+                return filter.test(param.getValue());
+            }});
+    }
+
+    @Override
+    public FastIterator<V> iterator() {
+        return new IteratorImpl<K,V>(entries.iterator());
+    }
+
+    @Override
+    public FastIterator<V> descendingIterator() {
+        return new IteratorImpl<K,V>(entries.descendingIterator());
     }
 
     @Override
     public boolean isEmpty() {
-        return map.isEmpty();
-    }
-
-    @Override
-    public Iterator<V> iterator() {
-        return new ValueIterator<K, V>(map.iterator());
-    }
-
-    @Override
-    public boolean removeIf(Predicate<? super V> filter) {
-        boolean removed = false;
-        for (Iterator<V> itr = iterator(); itr.hasNext();) {
-            V element = itr.next();
-            if (filter.test(element)) {
-                itr.remove();
-                removed = true;
-            }
-        }
-        return removed;
+        return entries.isEmpty();
     }
 
     @Override
     public int size() {
-        return map.size();
+        return entries.size();
+    }
+
+    @Override
+    public Equality<? super V> equality() {
+        return equality;
     }
 
     @Override
     public AbstractCollection<V>[] trySplit(int n) {
-        FastMap<K, V>[] maps = map.trySplit(n);
+        AbstractSet<Entry<K,V>>[] entriesSplit = entries.trySplit(n);
         @SuppressWarnings("unchecked")
-        AbstractCollection<V>[] split = new AbstractCollection[n];
-        for (int i = 0; i < n; i++)
-            split[i] = new ValuesImpl<K, V>(maps[i]);
+        AbstractCollection<V>[] split = new AbstractCollection[entriesSplit.length];
+        for (int i=0; i < split.length; i++) split[i] = new ValuesImpl<K,V>(entriesSplit[i], equality);
         return split;
     }
+
 
 }

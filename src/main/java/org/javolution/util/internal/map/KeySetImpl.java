@@ -8,8 +8,9 @@
  */
 package org.javolution.util.internal.map;
 
+import java.util.Map.Entry;
+
 import org.javolution.util.AbstractMap;
-import org.javolution.util.AbstractMap.Entry;
 import org.javolution.util.AbstractSet;
 import org.javolution.util.FastIterator;
 import org.javolution.util.function.Order;
@@ -62,13 +63,6 @@ public final class KeySetImpl<K, V> extends AbstractSet<K> {
     }
 
     @Override
-    public boolean add(K key) {
-        if (map.containsKey(key)) return false;
-        map.put(key, null);
-        return true;
-    }
-
-    @Override
     public void clear() {
         map.clear();
     }
@@ -89,49 +83,58 @@ public final class KeySetImpl<K, V> extends AbstractSet<K> {
     }
 
     @Override
-    public FastIterator<K> descendingIterator() {
-        return new KeyIterator<K,V>(map.descendingIterator());
-    }
-
-    @Override
-    public FastIterator<K> descendingIterator(K fromElement) {
-        return new KeyIterator<K,V>(map.descendingIterator(fromElement));
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return map.isEmpty();
-    }
-
-    @Override
-    public FastIterator<K> iterator() {
-        return new KeyIterator<K,V>(map.iterator());
-    }
-
-    @Override
-    public FastIterator<K> iterator(K fromElement) {
-        return new KeyIterator<K,V>(map.iterator(fromElement));
+    public boolean add(K element, boolean allowDuplicate) {
+        throw new UnsupportedOperationException("New entries cannot be added through the keySet() view.");
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean remove(Object obj) {
-        return map.removeEntry((K) obj) != null;
-    }
-
-    @Override
-    public int size() {
-        return map.size();
+    public boolean remove(Object element) {
+        return map.removeEntry((K)element) != null;
     }
 
     @Override
     public boolean removeIf(final Predicate<? super K> filter) {
-        return map.removeIf(new Predicate<Entry<K,V>>() {
+        return map.entrySet().removeIf(new Predicate<Entry<K,V>>() {
 
             @Override
             public boolean test(Entry<K, V> param) {
                 return filter.test(param.getKey());
             }});
+    }
+
+    @Override
+    public FastIterator<K> iterator(K low) {
+        return low != null ? new KeyIterator<K,V>(map.entrySet().iterator(new EntryImpl<K,V>(low, null))) :
+            new KeyIterator<K,V>(map.entrySet().iterator(null));
+    }
+
+    @Override
+    public FastIterator<K> descendingIterator(K high) {
+        return high != null ? new KeyIterator<K,V>(map.entrySet().descendingIterator(new EntryImpl<K,V>(high, null))) :
+            new KeyIterator<K,V>(map.entrySet().descendingIterator(null));
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.entrySet().isEmpty();
+    }
+
+    @Override
+    public int size() {
+        return map.entrySet().size();
+    }
+
+    @Override
+    public K getAny(K key) {
+        Entry<K,V> entry = map.getEntry(key);
+        return entry != null ? entry.getKey() : null;
+    }
+
+    @Override
+    public K removeAny(K key) {
+        Entry<K,V> entry = map.removeEntry(key);
+        return entry != null ? entry.getKey() : null;
     }
 
 }

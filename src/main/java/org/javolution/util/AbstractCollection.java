@@ -32,6 +32,7 @@ import org.javolution.util.function.Equality;
 import org.javolution.util.function.Function;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.collection.AtomicCollectionImpl;
+import org.javolution.util.internal.collection.ConcatCollectionImpl;
 import org.javolution.util.internal.collection.CustomEqualityCollectionImpl;
 import org.javolution.util.internal.collection.DistinctCollectionImpl;
 import org.javolution.util.internal.collection.FilteredCollectionImpl;
@@ -45,6 +46,9 @@ import org.javolution.util.internal.collection.UnmodifiableCollectionImpl;
 
 /**
  * High-performance collection with {@link Realtime strict timing constraints}.
+ * 
+ * This class implements most of the {@link java.util.stream.Stream} functions and can be used directly 
+ * to perform sequential or parallel aggregate operations.
  * 
  * Instance of this class may use custom element comparators instead of the default object equality 
  * when comparing elements. This affects the behavior of the contains, remove, containsAll, equals, and 
@@ -68,15 +72,18 @@ public abstract class AbstractCollection<E> implements Collection<E>, Serializab
         return this;
     }
 
-    /** Returns this set with the elements from the specified collection added (convenience method). */
-    public AbstractCollection<E> with(Collection<? extends E> elements) {
-        addAll(elements);
-        return this;
-    }
-
     // //////////////////////////////////////////////////////////////////////////
     // Views.
     //
+
+    /**
+     * Returns a view whose elements are the elements of this collection followed by the elements of the 
+     * specified collection. New elements are added to this collection; others collection operations are 
+     * typically performed on both views (e.g. {@link #removeIf(Predicate)}).  
+     */
+    public AbstractCollection<E> concat(AbstractCollection<? extends E> that) {
+        return new ConcatCollectionImpl<E>(this, that);
+    }
 
     /**
      * Returns an atomic view over this collection. All operations that write or access multiple elements 
@@ -244,21 +251,83 @@ public abstract class AbstractCollection<E> implements Collection<E>, Serializab
     public abstract boolean removeIf(Predicate<? super E> filter);
 
     ////////////////////////////////////////////////////////////////////////////
-    // Common Reductions.
+    // Common Reductions (parallel).
     //
 
     /**
-     * Returns any {@code non-null} element from this collection or {@code null} if none (convenience method).
+     * Returns any element from this collection or {@code null} if this collection is empty.
      */
     @Parallel
     @Realtime(limit = LINEAR)
-    public E any() {
+    public E findAny() {
         FastIterator<E> itr = iterator();
-        return itr.hasNext(Predicate.IS_NOT_NULL) ? itr.next() : null;
+        return itr.hasNext() ? itr.next() : null;
     }
 
-    /**
-     * Returns the elements of this collection through reduction (convenience method). 
+    /** 
+     * Returns whether any elements of this collection match the provided predicate.
+     */
+    @Parallel
+    @Realtime(limit = LINEAR)
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        return iterator().hasNext(predicate);
+    }
+    
+    /** 
+     * Returns whether all elements of this collection match the provided predicate (convenience method).
+     * 
+     * @return {@code !anyMatch(!predicate)}
+     */
+    @Parallel
+    public final boolean allMatch(final Predicate<? super E> predicate) {
+        Predicate<? super E> reversedPredicate = new Predicate<E>() { 
+
+            @Override
+            public boolean test(E param) {
+                return !predicate.test(param);
+            }};
+         return !anyMatch(reversedPredicate);
+    }
+    
+    /** 
+     * Returns whether no elements of this stream match the provided predicate (convenience method).
+     * 
+     * @return {@code !anyMatch(predicate)}
+     */
+    @Parallel
+    public final boolean noneMatch(Predicate<? super E> predicate) {
+        return !anyMatch(predicate);
+    }
+    
+    /** 
+     * Returns the smallest element of this collection according to the specified comparator (convenience method). 
+     * @return {@code reduce((e1, e2) -> comparator.compare(e1, e2) <= 0 ? e1 : e2)}
+     */
+    @Parallel
+    public final E min(final Comparator<? super E> comparator) {
+        return reduce(new BinaryOperator<E>() {
+            @Override
+            public E apply(E first, E second) {
+                return comparator.compare(first, second) <= 0 ? first : second;
+            }});
+    }
+
+    /** 
+     * Returns the largest element of this collection according to the specified comparator (convenience method).
+     * 
+     * @return {@code reduce((e1, e2) -> comparator.compare(e1, e2) >= 0 ? e1 : e2)}
+     */
+    @Parallel
+    public final E max(final Comparator<? super E> comparator) {
+        return reduce(new BinaryOperator<E>() {
+            @Override
+            public E apply(E first, E second) {
+                return comparator.compare(first, second) >= 0 ? first : second;
+            }});
+    }
+
+   /**
+     * Returns the elements of this collection through reduction. 
      */
     @Parallel
     @Realtime(limit = LINEAR)
@@ -485,6 +554,10 @@ public abstract class AbstractCollection<E> implements Collection<E>, Serializab
     }
 
     // //////////////////////////////////////////////////////////////////////////
+    // Streams operations.
+    //
+    
+     // //////////////////////////////////////////////////////////////////////////
     // Misc.
     //
 

@@ -113,10 +113,20 @@ public final class SharedTableImpl<E> //implements AbstractTableMethods<E> {
     }
 
     @Override
-    public E any() {
+    public E findAny() {
         lock.readLock.lock();
         try {
-            return inner.any();
+            return inner.findAny();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        lock.readLock.lock();
+        try {
+            return inner.anyMatch(predicate);
         } finally {
             lock.readLock.unlock();
         }

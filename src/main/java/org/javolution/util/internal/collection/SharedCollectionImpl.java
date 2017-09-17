@@ -21,8 +21,8 @@ import org.javolution.util.internal.ReadWriteLockImpl;
 /**
  * A shared view over a collection (reads-write locks).
  */
-public final class SharedCollectionImpl<E> //implements AbstractCollectionMethods<E> {
-        extends AbstractCollection<E> {
+public final class SharedCollectionImpl<E> // implements AbstractCollectionMethods<E> {
+         extends AbstractCollection<E> {
 
     private static final long serialVersionUID = 0x700L; // Version.
     private final AbstractCollection<E> inner;
@@ -69,10 +69,20 @@ public final class SharedCollectionImpl<E> //implements AbstractCollectionMethod
     }
 
     @Override
-    public E any() {
+    public E findAny() {
         lock.readLock.lock();
         try {
-            return inner.any();
+            return inner.findAny();
+        } finally {
+            lock.readLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean anyMatch(Predicate<? super E> predicate) {
+        lock.readLock.lock();
+        try {
+            return inner.anyMatch(predicate);
         } finally {
             lock.readLock.unlock();
         }
