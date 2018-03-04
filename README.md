@@ -40,7 +40,7 @@ The simplest way to use Javolution is through Maven with the following dependenc
       <dependency>
           <groupId>org.javolution</groupId>
           <artifactId>javolution-core-java</artifactId>
-          <version>6.0.0</version>
+          <version>7.0.0</version>
       </dependency>
 ```
 
