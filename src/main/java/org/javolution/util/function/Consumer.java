@@ -8,6 +8,10 @@
  */
 package org.javolution.util.function;
 
+import static org.javolution.annotations.Realtime.Limit.CONSTANT;
+
+import org.javolution.annotations.Realtime;
+
 /**
  * An operation that accepts a single input argument and returns no result.
  * Unlike most other functional interfaces, Consumers are expected to operate via side-effects.
@@ -20,6 +24,17 @@ package org.javolution.util.function;
  * @version 6.0, July 21, 2013
  */
 public interface Consumer<T> {
+
+    /**
+     * A consumer doing nothing.
+     */
+    @Realtime(limit = CONSTANT)
+    public static final Consumer<Object> DO_NOTHING = new Consumer<Object>() {
+
+        @Override
+        public void accept(Object param) {
+        }
+    };
 
     /**
      * Accepts an input value.

@@ -8,6 +8,10 @@
  */
 package org.javolution.util.function;
 
+import static org.javolution.annotations.Realtime.Limit.CONSTANT;
+
+import org.javolution.annotations.Realtime;
+
 /**
  * A function which does not take any argument and returns instances  of a particular class.
  *           
@@ -17,6 +21,18 @@ package org.javolution.util.function;
  * @version 6.0, July 21, 2013
  */
 public interface Supplier<T> {
+
+    /**
+     * A supplier returning {@code null}.
+     */
+    @Realtime(limit = CONSTANT)
+    public static final Supplier<Object> NULL = new Supplier<Object>() {
+
+        @Override
+        public Object get() {
+            return null;
+        }
+    };
 
     /**
      * @return an object.

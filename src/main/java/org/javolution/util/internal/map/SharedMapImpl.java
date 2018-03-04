@@ -154,12 +154,21 @@ public final class SharedMapImpl<K, V> extends AbstractMap<K, V> {
         }
     }
 
-
     @Override
     public V put(K key, V value) {
         lock.writeLock.lock();
         try {
             return inner.put(key, value);
+        } finally {
+            lock.writeLock.unlock();
+        }
+    }
+
+    @Override
+    public Entry<K,V> addEntry(K key, V value) {
+        lock.writeLock.lock();
+        try {
+            return inner.addEntry(key, value);
         } finally {
             lock.writeLock.unlock();
         }
@@ -271,22 +280,12 @@ public final class SharedMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public AbstractSet<Entry<K, V>> entrySet() {
+    public AbstractSet<Entry<K, V>> entries() {
         lock.readLock.lock();
         try {
-            return new SharedSetImpl<Entry<K,V>>(inner.entrySet(), lock);
+            return new SharedSetImpl<Entry<K,V>>(inner.entries(), lock);
         } finally {
             lock.readLock.unlock();
-        }
-    }
-
-    @Override
-    public V updateValue(Entry<K, V> entry, V newValue) {
-        lock.writeLock.lock();
-        try {
-            return inner.updateValue(entry, newValue);
-        } finally {
-            lock.writeLock.unlock();
         }
     }
 

@@ -8,9 +8,8 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Map.Entry;
-
 import org.javolution.util.AbstractMap;
+import org.javolution.util.AbstractMap.Entry;
 import org.javolution.util.AbstractSet;
 import org.javolution.util.FastIterator;
 import org.javolution.util.function.Order;
@@ -95,7 +94,7 @@ public final class KeySetImpl<K, V> extends AbstractSet<K> {
 
     @Override
     public boolean removeIf(final Predicate<? super K> filter) {
-        return map.entrySet().removeIf(new Predicate<Entry<K,V>>() {
+        return map.entries().removeIf(new Predicate<Entry<K,V>>() {
 
             @Override
             public boolean test(Entry<K, V> param) {
@@ -105,24 +104,24 @@ public final class KeySetImpl<K, V> extends AbstractSet<K> {
 
     @Override
     public FastIterator<K> iterator(K low) {
-        return low != null ? new KeyIterator<K,V>(map.entrySet().iterator(new EntryImpl<K,V>(low, null))) :
-            new KeyIterator<K,V>(map.entrySet().iterator(null));
+        return low != null ? new KeyIterator<K,V>(map.entries().iterator(new Entry<K,V>(low, null))) :
+            new KeyIterator<K,V>(map.entries().iterator(null));
     }
 
     @Override
     public FastIterator<K> descendingIterator(K high) {
-        return high != null ? new KeyIterator<K,V>(map.entrySet().descendingIterator(new EntryImpl<K,V>(high, null))) :
-            new KeyIterator<K,V>(map.entrySet().descendingIterator(null));
+        return high != null ? new KeyIterator<K,V>(map.entries().descendingIterator(new Entry<K,V>(high, null))) :
+            new KeyIterator<K,V>(map.entries().descendingIterator(null));
     }
 
     @Override
     public boolean isEmpty() {
-        return map.entrySet().isEmpty();
+        return map.entries().isEmpty();
     }
 
     @Override
     public int size() {
-        return map.entrySet().size();
+        return map.entries().size();
     }
 
     @Override

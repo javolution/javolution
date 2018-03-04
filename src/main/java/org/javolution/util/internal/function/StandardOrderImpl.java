@@ -14,7 +14,7 @@ import org.javolution.util.function.Order;
 /**
  * The standard equality implementation (it also defines an order based on hash value).
  */
-public final class StandardOrderImpl implements Order<Object> {
+public final class StandardOrderImpl extends Order<Object> {
     private static final long serialVersionUID = 0x700L; // Version.
 
     @Override

@@ -37,9 +37,9 @@ public final class SubMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public SubSetImpl<Entry<K, V>> entrySet() {
-        return new SubSetImpl<Entry<K, V>>(inner.entrySet(), new EntryImpl<K,V>(fromKey, null), fromInclusive, 
-                new EntryImpl<K,V>(toKey, null), toInclusive);
+    public SubSetImpl<Entry<K, V>> entries() {
+        return new SubSetImpl<Entry<K, V>>(inner.entries(), new Entry<K,V>(fromKey, null), fromInclusive, 
+                new Entry<K,V>(toKey, null), toInclusive);
     }
 
     @Override
@@ -83,16 +83,10 @@ public final class SubMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public V updateValue(Entry<K, V> entry, V newValue) { // The entry is in range (coming from this sub-map).
-        return inner.updateValue(entry, newValue);
-    }
-
-    @Override
-    public V put(K key, V value) {
+    public Entry<K,V> addEntry(K key, V value) {
         if (!inRange(key)) 
             throw new UnsupportedOperationException("key out of sub-map range");
-        return inner.put(key, value);
+        return inner.addEntry(key, value);
     }
-
     
 }

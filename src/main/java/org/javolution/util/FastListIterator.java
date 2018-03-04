@@ -60,7 +60,7 @@ public interface FastListIterator<E> extends FastIterator<E>, ListIterator<E> {
     @Override
     E next();
 
-    /** Returns the index of the next element; if none returns the size of the collection ({@code 0} if unbounded). */
+    /** Returns the index of the next element or {@code 0} if there is no next element. */
     @Override
     int nextIndex();
 
@@ -71,7 +71,7 @@ public interface FastListIterator<E> extends FastIterator<E>, ListIterator<E> {
     @Override
     E previous();
 
-    /** Returns the index of the previous element or {@code -1} if none. */
+    /** Returns the index of the previous element or {@code -1} if there is no previous element. */
     @Override
     int previousIndex();
 

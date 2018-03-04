@@ -16,7 +16,7 @@ import org.javolution.util.function.Order;
 /**
  * The index order default implementation.
  */
-public final class IndexOrderImpl implements Order<Index> {
+public final class IndexOrderImpl extends Order<Index> {
     private static final long serialVersionUID = 0x700L; // Version.
    
     @Override

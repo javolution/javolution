@@ -45,13 +45,13 @@
  * List<String> threadUnsafe = names.shared().linked(); 
  * ``` 
 *  It should be noted that {@link AbstractCollection#unmodifiable unmodifiable} views *are not immutable*; 
- * {@link Immutable constant/immutable} collections (or maps) can only be obtained through class specialization.
+ * {@link Immutable constant/immutable} collections (or maps) can only be obtained through the freeze method.
  * 
  * ```java
  * FastSet.Immutable<String> winners 
- *     = new FastSet<String>().with("John Deuff", "Otto Graf", "Sim Kamil").immutable();
+ *     = new FastSet<String>().with("John Deuff", "Otto Graf", "Sim Kamil").freeze();
  * FastMap.Immutable<String, Integer> wordToInt 
- *     = new FastMap<String, Integer>().with("one", 1).with("two", 2).with("three", 3).immutable();
+ *     = new FastMap<String, Integer>().with("one", 1).with("two", 2).with("three", 3).freeze();
  * ``` 
   * 
  * Views are similar to [Java 8 streams](http://lambdadoc.net/api/java/util/stream/package-summary.html)

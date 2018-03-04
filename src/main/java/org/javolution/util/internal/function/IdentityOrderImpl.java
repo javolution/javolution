@@ -14,7 +14,7 @@ import org.javolution.util.function.Order;
 /**
  * The identity hash order implementation (it also defines an order based on system hash value).
  */
-public final class IdentityOrderImpl implements Order<Object> {
+public final class IdentityOrderImpl extends Order<Object> {
     private static final long serialVersionUID = 0x700L; // Version.
 
     @Override

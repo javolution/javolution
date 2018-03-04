@@ -10,13 +10,10 @@ package org.javolution.util;
 
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
 
-import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
-import org.javolution.lang.MathLib;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Indexer;
 import org.javolution.util.function.Order;
-import org.javolution.util.internal.map.EntryImpl;
 
 /**
  * High-performance ordered map / multimap based upon fast-access {@link SparseArray}. 
@@ -43,7 +40,7 @@ import org.javolution.util.internal.map.EntryImpl;
  * AbstractMap<Foo, Bar> linkedIdentityMap = new FastMap<Foo, Bar>(IDENTITY).linked();
  * AbstractMap<Foo, Bar> concurrentHashMap = new FastMap<Foo, Bar>().shared();  // Thread-safe.
  * AbstractMap<String, Bar> concurrentSkipListMap = new FastMap<Foo, Bar>(LEXICAL).shared(); // Thread-safe.
- * AbstractMap<Foo, Bar> linkedMultimap = new FastMap<Foo, Bar>().multi().linked(); 
+ * AbstractMap<Foo, Bar> linkedMultimap = new FastMap<Foo, Bar>().linked().multi(); 
  * ...
  * AbstractMap<Foo, Bar> identityLinkedAtomicMap = new FastMap<Foo, Bar>(IDENTITY).linked().atomic(); // Thread-safe.
  * ```
@@ -90,19 +87,19 @@ import org.javolution.util.internal.map.EntryImpl;
  * key and value can appear several times).
  *  
  * ```java
- *  AbstractMap<String, String> multimap = new FastMap<String, String>().multi().linked(); // Keep insertion order.
- *  for (President pres : US_PRESIDENTS_IN_ORDER) {
- *      multimap.put(pres.firstName(), pres.lastName());
- *  }
- *  for (String firstName : multimap.keySet().distinct()) { // keySet() returns a multiset (duplicate keys)
- *      FastCollection<String> lastNames = multimap.subMap(firstName).values();
- *      System.out.println(firstName + ": " + lastNames);
- *  }
- *  >> Zachary: {Taylor}
- *  >> John: {Adams, Adams, Tyler, Kennedy} 
- *  >> George: {Washington, Bush, Bush}
- *  >> Grover: {Cleveland, Cleveland}
- *  >> ...
+ * AbstractMap<String, String> multimap = new FastMap<String, String>().linked().multi(); // Keep insertion order.
+ * for (President pres : US_PRESIDENTS_IN_ORDER) {
+ *     multimap.put(pres.firstName(), pres.lastName()); 
+ * }
+ * for (String firstName : multimap.keySet().distinct()) { // keySet() returns a multiset (duplicate keys)
+ *     Collection<String> lastNames = multimap.subMap(firstName).values();
+ *     System.out.println(firstName + ": " + lastNames);
+ * }
+ * >> Zachary: {Taylor}
+ * >> John: {Adams, Adams, Tyler, Kennedy} 
+ * >> George: {Washington, Bush, Bush}
+ * >> Grover: {Cleveland, Cleveland}
+ * >> ...
  * ```
  * 
  * @param <K> the type of keys ({@code null} values are not supported)
@@ -119,46 +116,31 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     /** Immutable Map (can only be created through the {@link #freeze()} method). */
     public static final class Immutable<K,V> extends FastMap<K,V> implements org.javolution.lang.Immutable {
         private static final long serialVersionUID = FastMap.serialVersionUID;
-        private Immutable(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<EntryImpl<K,V>> entries) {
+        
+        private Immutable(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<Entry<K,V>> entries) {
             super(keyOrder, valuesEquality, entries);
         }
+ 
+        public V updateValue(Entry<K, V> entry, V newValue) {  
+            throw new UnsupportedOperationException("Immutable map");
+        }
+
     }
  
     private final Order<? super K> keyOrder; 
     private final Equality<? super V> valuesEquality; 
-    private final FastSet<EntryImpl<K,V>> entries; // Entry Set View.
+    private final FastSet<Entry<K,V>> entries; 
     
     /** Creates a {@link Equality#STANDARD standard} map arbitrarily ordered. */
     public FastMap() {
-        this(Equality.STANDARD);
+        this(Order.STANDARD);
     }
 
     /** Creates a {@link Equality#STANDARD standard} map ordered using the specified indexer function 
      * (convenience method).*/
     public FastMap(final Indexer<? super K> indexer) {
-        this(new Order<K>() {
-            private static final long serialVersionUID = FastMap.serialVersionUID;
-
-            @Override
-            public boolean areEqual(K left, K right) {
-                return left.equals(right); // K cannot be null.
-            }
-
-            @Override
-            public int compare(K left, K right) {
-                int leftIndex = indexer.indexOf(left);
-                int rightIndex = indexer.indexOf(right);
-                if (leftIndex == rightIndex) return 0;
-                return MathLib.unsignedLessThan(leftIndex, rightIndex) ? -1 : 1;
-            }
-
-            @Override
-            public int indexOf(K obj) {
-                return indexer.indexOf(obj);
-            }
-
-         });
-    }
+        this(Order.valueOf(indexer));
+     }
 
     /** Creates a custom map ordered using the specified key order. */
     public FastMap(final Order<? super K> keyOrder) {
@@ -170,37 +152,38 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     public FastMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality) {
         this.keyOrder = keyOrder;
         this.valuesEquality = valuesEquality;
-        this.entries = new FastSet<EntryImpl<K,V>>(new Order<EntryImpl<K,V>>() {
+        this.entries = new FastSet<Entry<K,V>>(new Order<Entry<K,V>>() {
             private static final long serialVersionUID = FastMap.serialVersionUID;
 
             @Override
-            public boolean areEqual(EntryImpl<K, V> left, EntryImpl<K, V> right) {
+            public boolean areEqual(Entry<K, V> left, Entry<K, V> right) {
                 return FastMap.this.keyOrder.areEqual(left.getKey(), right.getKey()) && 
                         FastMap.this.valuesEquality.areEqual(left.getValue(), right.getValue());
             }
 
             @Override
-            public int compare(EntryImpl<K, V> left, EntryImpl<K, V> right) {
+            public int compare(Entry<K, V> left, Entry<K, V> right) {
                 return FastMap.this.keyOrder.compare(left.getKey(), right.getKey());
             }
 
             @Override
-            public int indexOf(EntryImpl<K, V> entry) {
+            public int indexOf(Entry<K, V> entry) {
                 return FastMap.this.keyOrder.indexOf(entry.getKey());
-            }});
+            }
+
+        });
     }
     
     /**  Base constructor (private). */
-    private FastMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<EntryImpl<K,V>> entries) {
+    private FastMap(Order<? super K> keyOrder, Equality<? super V> valuesEquality, FastSet<Entry<K,V>> entries) {
        this.keyOrder = keyOrder;
        this.valuesEquality = valuesEquality;
        this.entries = entries;
     }
     
-    @SuppressWarnings("unchecked")
     @Override
-    public final FastSet<Entry<K, V>> entrySet() {
-        return (FastSet<Entry<K, V>>) (Object) entries;
+    public final FastSet<Entry<K, V>> entries() {
+        return entries;
     }
 
     /** Freezes this map and returns the corresponding {@link Immutable} instance (cannot be reversed). */
@@ -209,7 +192,7 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public final FastMap<K,V> with(K key, V value) {
+    public FastMap<K,V> with(K key, V value) {
         put(key, value);
         return this;
     }
@@ -231,21 +214,13 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public final EntryImpl<K, V> getEntry(K key) {
-        return entries.getAny(new EntryImpl<K,V>(key, null)); 
+    public final Entry<K, V> getEntry(K key) {
+        return entries.getAny(new Entry<K,V>(key, null)); 
     }
-    
+   
     @Override
-    public @Nullable V put(K key, @Nullable V value) {
-        EntryImpl<K, V> entry = getEntry(key);
-        if (entry != null) return entry.setValueUnsafe(value);
-        entries.add(new EntryImpl<K,V>(key, value), true /* allowDuplicate */);
-        return null; 
-    }
- 
-    @Override
-    public final EntryImpl<K, V> removeEntry(K key) {
-        return entries.removeAny(new EntryImpl<K,V>(key, null));
+    public final Entry<K, V> removeEntry(K key) {
+        return entries.removeAny(new Entry<K,V>(key, null));
     }
 
     @Override
@@ -264,8 +239,10 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public final V updateValue(Entry<K, V> entry, V newValue) {
-       return ((EntryImpl<K,V>)entry).setValueUnsafe(newValue);
+    public final Entry<K, V> addEntry(K key, V value) {
+        Entry<K,V> entry = new Entry<K,V>(key, value);
+        entries.add(entry, true /* allowDuplicate */);
+        return entry;
     }
     
 }

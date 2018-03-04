@@ -27,8 +27,8 @@ public final class MultiMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public AbstractSet<Entry<K, V>> entrySet() {
-        return inner.entrySet();
+    public AbstractSet<Entry<K, V>> entries() {
+        return inner.entries();
     }
 
     @Override
@@ -52,13 +52,13 @@ public final class MultiMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     public @Nullable V put(K key, @Nullable V value) {
-        entrySet().add(new EntryImpl<K,V>(key, value), true /* allowDuplicate */);
+        inner.addEntry(key, value);
         return null; 
     }
 
     @Override
-    public V updateValue(java.util.Map.Entry<K, V> entry, V newValue) {
-        return inner.updateValue(entry, newValue);
+    public Entry<K, V> addEntry(K key, V value) {
+        return inner.addEntry(key, value);
     }
 
 }

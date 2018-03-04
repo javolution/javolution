@@ -99,6 +99,13 @@ public final class AtomicMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
+    public synchronized Entry<K,V> addEntry(K key, V value) {
+        Entry<K,V> entry = inner.addEntry(key, value);
+        innerConst = inner.clone();
+        return entry;
+    }
+
+    @Override
     public synchronized void putAll(Map<? extends K, ? extends V> that) {
         inner.putAll(that);
         innerConst = inner.clone();
@@ -160,8 +167,8 @@ public final class AtomicMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public AbstractSet<Entry<K, V>> entrySet() {
-        return innerConst.entrySet().unmodifiable();
+    public AbstractSet<Entry<K, V>> entries() {
+        return innerConst.entries().unmodifiable();
     }
 
     @Override
@@ -169,11 +176,6 @@ public final class AtomicMapImpl<K, V> extends AbstractMap<K, V> {
         V previous = inner.put(key, update);
         innerConst = inner.clone();
         return previous;
-    }
-
-    @Override
-    public V updateValue(Entry<K, V> entry, V newValue) { // Called in synchronized block.
-        return inner.updateValue(entry, newValue); 
     }
 
 }

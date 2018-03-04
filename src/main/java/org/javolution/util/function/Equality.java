@@ -13,14 +13,12 @@ import static org.javolution.annotations.Realtime.Limit.LINEAR;
 import static org.javolution.annotations.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.ReadOnly;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.Immutable;
-import org.javolution.util.internal.function.ArrayEqualityImpl;
-import org.javolution.util.internal.function.IdentityOrderImpl;
-import org.javolution.util.internal.function.StandardOrderImpl;
 
 /**
  * A function (functional interface) indicating if two objects are considered equals.
@@ -61,17 +59,28 @@ public interface Equality<T> extends Immutable, Serializable {
     
     /**
      * The standard object equality (based on {@link Object#equals}). 
-     * It also defines an arbitrary order based on {@link Object#hashCode}.
      */
     @Realtime(limit = UNKNOWN)
-    public static final StandardOrderImpl STANDARD = new StandardOrderImpl();
+    public static final Equality<Object> STANDARD = new Equality<Object>() {
+        private static final long serialVersionUID = 0x700L; // Version.
 
+        @Override
+        public boolean areEqual(Object left, Object right) {
+            return (left == right) || (left != null && left.equals(right));
+        }};
+    
+    
     /**
      * The identity object equality (instances are only equals to themselves).
-     * It also defines an arbitrary order based on {@link System#identityHashCode)}.
      */
     @Realtime(limit = CONSTANT)
-    public static final IdentityOrderImpl IDENTITY = new IdentityOrderImpl();
+    public static final Equality<Object> IDENTITY = new Equality<Object>() {
+        private static final long serialVersionUID = 0x700L; // Version.
+
+        @Override
+        public boolean areEqual(Object left, Object right) {
+            return (left == right) || (left != null && left.equals(right));
+        }};
     
 
     /**
@@ -79,8 +88,38 @@ public interface Equality<T> extends Immutable, Serializable {
     * The {@link #STANDARD standard} equality is used for non-array elements. 
     */
     @Realtime(limit = LINEAR)
-    public static final ArrayEqualityImpl ARRAY = new ArrayEqualityImpl();
+    public static final Equality<Object> ARRAY = new Equality<Object>() {
+        private static final long serialVersionUID = 0x700L; // Version.
 
+        @Override
+        public boolean areEqual(@Nullable Object left, @Nullable Object right) {
+            if (left == right)
+                return true;
+            if ((left == null) || (right == null))
+                return false;
+            if (left instanceof Object[] && right instanceof Object[])
+                return Arrays.deepEquals((Object[]) left, (Object[]) right);
+            if (left instanceof byte[] && right instanceof byte[])
+                return Arrays.equals((byte[]) left, (byte[]) right);
+            if (left instanceof short[] && right instanceof short[])
+                return Arrays.equals((short[]) left, (short[]) right);
+            if (left instanceof int[] && right instanceof int[])
+                return Arrays.equals((int[]) left, (int[]) right);
+            if (left instanceof long[] && right instanceof long[])
+                return Arrays.equals((long[]) left, (long[]) right);
+            if (left instanceof char[] && right instanceof char[])
+                return Arrays.equals((char[]) left, (char[]) right);
+            if (left instanceof float[] && right instanceof float[])
+                return Arrays.equals((float[]) left, (float[]) right);
+            if (left instanceof double[] && right instanceof double[])
+                return Arrays.equals((double[]) left, (double[]) right);
+            if (left instanceof boolean[] && right instanceof boolean[])
+                return Arrays.equals((boolean[]) left, (boolean[]) right);
+            return left.equals(right);
+        }
+    };
+
+    
     /**
      * Indicates if two specified objects are considered equal.
      * 

@@ -31,8 +31,8 @@ public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public AbstractSet<Entry<K, V>> entrySet() {
-        return new LinkedSetImpl<Entry<K,V>>(inner.entrySet(), insertionTable);
+    public AbstractSet<Entry<K, V>> entries() {
+        return new LinkedSetImpl<Entry<K,V>>(inner.entries(), insertionTable);
     }
 
     @Override
@@ -58,18 +58,10 @@ public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public V updateValue(java.util.Map.Entry<K, V> entry, V newValue) {
-        return inner.updateValue(entry, newValue);
-    }
-
-    @Override
-    public V put(K key, V value) {
-        Entry<K, V> entry = getEntry(key);
-        if (entry != null) return updateValue(entry, value);
-        entry = new EntryImpl<K,V>(key, value);
-        inner.entrySet().add(entry, true /* allowDuplicate */);
-        insertionTable.add(entry);
-        return null; 
+    public Entry<K,V> addEntry(K key, V value) {
+       Entry<K, V> entry = inner.addEntry(key, value);
+       insertionTable.add(entry);
+       return entry; 
     }
 
 }

@@ -8,8 +8,8 @@
  */
 package org.javolution.util.internal.map;
 
-import java.util.Map.Entry;
 import org.javolution.util.AbstractCollection;
+import org.javolution.util.AbstractMap.Entry;
 import org.javolution.util.AbstractSet;
 import org.javolution.util.FastIterator;
 import org.javolution.util.function.Equality;

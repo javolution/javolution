@@ -20,7 +20,7 @@ import org.javolution.util.function.Order;
  * 
  * @see <a href="https://en.wikipedia.org/wiki/Letter_frequency">Wikipedia: Letter Frequency</a>
   */
-public final class CaseInsensitiveLexicalOrderImpl implements Order<CharSequence> {
+public final class CaseInsensitiveLexicalOrderImpl extends Order<CharSequence> {
     
     private static final long serialVersionUID = 0x700L; // Version.
 

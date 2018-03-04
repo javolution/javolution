@@ -12,9 +12,12 @@ import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
 import static org.javolution.annotations.Realtime.Limit.LOG_N;
 
+import java.util.NoSuchElementException;
+
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
 import org.javolution.util.function.Equality;
+import org.javolution.util.function.Predicate;
 
 /**
  * A high-performance table based upon fast-rotating {@link FractalArray}.
@@ -65,31 +68,41 @@ public class FastTable<E> extends AbstractTable<E> {
     public static final class Immutable<E> extends FastTable<E> implements org.javolution.lang.Immutable {
         private static final long serialVersionUID = FastTable.serialVersionUID;
 
-        private Immutable(FractalArray<E> array) {
-            super(array);
+        private Immutable(FractalArray<E> array, int length) {
+            super(array, length);
         }
+        
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("Immutable");
+        }
+ 
     }
 
     private FractalArray<E> array;
+    private int length; // Keep tracks of the length since fractal arrays are unbounded.
+
 
     /**  Creates an empty table using default object equality for elements comparisons. */
     public FastTable() {
         array = FractalArray.empty();
+        length = 0;
     }
 
     /**  Base constructor (private). */
-    private FastTable(FractalArray<E> array) {
+    private FastTable(FractalArray<E> array, int length) {
        this.array = array; 
+       this.length = length;
     }
 
     /** Freezes this table and returns the corresponding {@link Immutable} instance (cannot be reversed). */
     public final Immutable<E> freeze() {
         array = array.unmodifiable();
-        return new Immutable<E>(array);
+        return new Immutable<E>(array, length);
     }
 
     @Override
-    public final FastTable<E> with(E... elements) {
+    public FastTable<E> with(E... elements) {
         addAll(elements);
         return this;
     }
@@ -97,19 +110,21 @@ public class FastTable<E> extends AbstractTable<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final boolean add(@Nullable E element) {
-        array = array.append(element);
+        array = array.insert(length++, element);
         return true;
     }
 
     @Override
     @Realtime(limit = LOG_N)
     public final void add(int index, @Nullable E element) {
+        if (index < 0 || index > length) throw new IndexOutOfBoundsException();
         array = array.insert(index, element);
+        length++;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
-    public final void clear() {
+    public  void clear() {
         array = FractalArray.empty();
     }
 
@@ -130,33 +145,112 @@ public class FastTable<E> extends AbstractTable<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final @Nullable E get(int index) {
+        if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
         return array.get(index);
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final FastListIterator<E> listIterator(int index) {
-        return array.iterator(index);
+        return new IteratorImpl<E>(array, length, index);
     }
 
     @Override
     @Realtime(limit = LOG_N)
     public final @Nullable E remove(int index) {
+        if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
         E removed = array.get(index);
         array = array.remove(index);
+        --length;
         return removed;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final @Nullable E set(int index, @Nullable E element) {
-        return array.replace(index, element);
+        if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
+        E previous = array.get(index);
+        array = array.set(index, element);
+        return previous;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final int size() {
-        return array.length();
+        return length;
+    }
+
+    /** Iterator Implementation. */
+    private static final class IteratorImpl<E> implements FastListIterator<E> {
+        private final FractalArray<E> array;
+        private int next;
+        private int length;
+
+        public IteratorImpl(FractalArray<E> array, int length, int next) {
+            this.array = array;
+            this.length = length;
+            this.next = next;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next < length;
+        }
+
+        @Override
+        public boolean hasNext(Predicate<? super E> matching) {
+            while (next < length) if (matching.test(array.get(next++))) return true;
+            return false;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void add(E arg0) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            return next > 0;
+        }
+
+        @Override
+        public boolean hasPrevious(Predicate<? super E> matching) {
+            while (next > 0) if (matching.test(array.get(--next))) return true;
+            return false;
+        }
+
+        @Override
+        public E next() {
+            if (next >= length) throw new NoSuchElementException();
+            return array.get(next++);
+        }
+
+        @Override
+        public int nextIndex() {
+            return next;
+        }
+
+        @Override
+        public E previous() {
+            if (next <= 0) throw new NoSuchElementException();
+            return array.get(--next);
+        }
+
+        @Override
+        public int previousIndex() {
+            return next - 1;
+        }
+
+        @Override
+        public void set(E arg0) {
+            throw new UnsupportedOperationException();
+        }
+
     }
 
 }

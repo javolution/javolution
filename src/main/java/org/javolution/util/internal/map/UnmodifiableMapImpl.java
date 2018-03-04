@@ -27,8 +27,8 @@ public final class UnmodifiableMapImpl<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
-    public AbstractSet<Entry<K, V>> entrySet() {
-        return inner.entrySet().unmodifiable();
+    public AbstractSet<Entry<K, V>> entries() {
+        return inner.entries().unmodifiable();
     }
 
     @Override
@@ -56,13 +56,13 @@ public final class UnmodifiableMapImpl<K, V> extends AbstractMap<K, V> {
         return inner.valuesEquality();
     }
 
-    @Override
-    public V updateValue(Entry<K, V> entry, V newValue) {
+    @Override // By overriding this method, there is no need to override all the map methods updating the entries.
+    public V updateValue(Entry<K, V> entry, V newValue) {  
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 
     @Override
-    public V put(K key, V value) {
+    public Entry<K,V> addEntry(K key, V value) {
         throw new UnsupportedOperationException(ERROR_MSG);
     }
 

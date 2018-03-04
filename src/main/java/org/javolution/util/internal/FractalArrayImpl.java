@@ -8,357 +8,355 @@
  */
 package org.javolution.util.internal;
 
-import java.io.Serializable;
+import static org.javolution.lang.MathLib.unsignedLessThan;
 
-import org.javolution.lang.MathLib;
+import org.javolution.lang.Immutable;
 import org.javolution.util.FractalArray;
+import org.javolution.util.function.Consumer;
 
 /**
- * Holds fractal array base implementation (bounded capacity).
- * This base implementation maintains a memory footprint proportional to the number of elements contained. 
- * This property is also valid for fixed size arrays holding instances of this class (such as FractalArrayImpl.Outer).
+ * The fractal array default implementation (key for all Javolution classes). 
  */
-public final class FractalArrayImpl<E> extends FractalArray<E> {
+public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     private static final long serialVersionUID = 0x700L;
-    private static final int SHIFT = 8;
-    private static final int MIN_CAPACITY = 4; // For non-empty.
-    private static final int MAX_CAPACITY = 1 << SHIFT;
-    public static final FractalArrayImpl<Object> EMPTY = new FractalArrayImpl<Object>(new Object[0]);
-
-    private E[] elements;
+    
+    private static final Empty<Object> EMPTY = new Empty<Object>();
 
     @SuppressWarnings("unchecked")
-    public FractalArrayImpl() {
-        this((E[])new Object[MIN_CAPACITY]);
+    public static <E> Empty<E> empty() {
+         return (Empty<E>) EMPTY;
     }
     
-    private FractalArrayImpl(E[] elements) {
-        this.elements = elements;
+    @Override
+    public final boolean isEmpty() {
+        return this == EMPTY;
     }
     
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // COMMON TO ALL IMPLEMENTATIONS
-    // 
-
-    private int offset; // Index of first element.
-    private int last = -1; // Index of the last element different from null 
-                           // -1 when empty, MAX_CAPACITY if inner fractal.
-
-
-    @Override
-    public E get(int index) {
-        if (index < 0) negativeIndexException(index);
-        return (index <= last) ? getNoCheck(index) : null;
-    }
-
-    @Override
-    public FractalArray<E> set(int index, E element) {
-        if (index < 0) negativeIndexException(index);
-        if (element == null) return clear(index);
-        if (index > last) {
-            if (index >= capacity()) return upsize().set(index, element);
-            last = index;
-        }
-        setNoCheck(index, element);
-        return this;
-    }
-
-    @Override
-    public FractalArray<E> remove(int index) {
-        if (index < 0) negativeIndexException(index);
-        if (index >= last) return clear(index); // Nothing to shift.
-        if (last - index < index) {
-            shiftLeft(index, last, null);
-        } else {
-            shiftRight(0, index, null);
-            offset++;
-        }
-        --last;
-        return isOverCapacity() ? downsize() : this;
-    }
-
-    @Override
-    public FractalArray<E> add(int index, E inserted) {
-        if (index < 0) negativeIndexException(index);
-        if (index > last) return set(index, inserted); // Nothing to shift.
-        if (last + 1 >= capacity()) return upsize().add(index, inserted);
-        if (++last - index < index) {
-            shiftRight(index, last, inserted);
-        } else {
-            offset--;
-            shiftLeft(0, index, inserted);
-        }
-        return this;
-    }
-
-    private FractalArray<E> clear(int index) {
-        if (index > last) return this; // Nothing to clear.
-        setNoCheck(index, null);
-        if (index != last) return this;
-        while (last >= 0)
-            if (getNoCheck(--last) != null) break;
-        return isOverCapacity() ? downsize() : this;
-    }
-    
-    private static void negativeIndexException(int index) {
-        throw new ArrayIndexOutOfBoundsException("Negative index: " + index);
-    }
-
-    //
-    // END COMMON PART
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private void shiftLeft(int head, int tail, E insertTail) {
-        for (int i = head; i != tail;)
-            setNoCheck(i++, getNoCheck(i));
-        setNoCheck(tail, insertTail);
-    }
-
-    public void shiftRight(int head, int tail, E insertHead) {
-        for (int i = tail; i != head;)
-            setNoCheck(i--, getNoCheck(i));
-        setNoCheck(head, insertHead);
-    }
-
-    @Override
-    public FractalArrayImpl<E> clone() {
-        FractalArrayImpl<E> copy = (FractalArrayImpl<E>) super.clone();
-        copy.elements = elements.clone();
-        return copy;
-    }
-
-    @SuppressWarnings("unchecked")
-    private FractalArray<E> upsize() { // Doubles the capacity. 
-        E[] tmp = (E[]) ((elements.length == 0) ? new Object[4] : new Object[elements.length << 1]);
-        for (int i = 0; i < last;)
-            tmp[i] = getNoCheck(i++);
-        elements = tmp;
-        offset = 0;
-        return (elements.length >= MAX_CAPACITY) ? new Block16<E>(this) : this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private FractalArrayImpl<E> downsize() { // Reduces by a half the capacity.
-        while (isOverCapacity()) {
-            E[] tmp = (E[]) new Object[elements.length >> 1];
-            for (int i = 0; i < last; i++)
-                tmp[i] = getNoCheck(i++);
-            elements = tmp;
-            offset = 0;
-        }
-        return this;
-    }
-
-    /////////////////////////////////////////////
-    // Small convenient methods to be inlined. // 
-    /////////////////////////////////////////////
-
-    private E getNoCheck(int index) {
-        return elements[(index + offset) & (elements.length - 1)];
-    }
-
-    private void setNoCheck(int index, E element) {
-        elements[(index + offset) & (elements.length - 1)] = element;
-    }
-
-    private boolean isOverCapacity() { // When at least a quarter empty (except when empty cannot go below 4)
-        return elements.length > (last+1) << 2;
-    }
-
-    private int capacity() {
-        return elements.length;
-    }
-
-    /** Fractal array of capacity up to 65536.  */
-    private static final class Block16<E> extends FractalArray<E> {
-        private static final long serialVersionUID = 0x700L;
-        private static final int INNER_SHIFT = FractalArrayImpl.SHIFT;
-        private static final int SHIFT_INCREMENT = 8;
-        private static final int SHIFT = INNER_SHIFT + SHIFT_INCREMENT;
-        private static final int MAX_BLOCKS = 1 << SHIFT;
-        
-        @SuppressWarnings("unchecked")
-        private final FractalArrayImpl<E>[] blocks = new FractalArrayImpl[MAX_BLOCKS];
-
-        /** Constructor from the specified base fractal. */
-        @SuppressWarnings("unchecked")
-        public Block16(FractalArrayImpl<E> block0) {
-            blocks[0] = block0;
-            for (int i=1; i < MAX_BLOCKS; i++) 
-                blocks[i] = (FractalArrayImpl<E>) EMPTY;
-        }
-        
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // COMMON TO ALL IMPLEMENTATIONS
-        // 
-
-        private int offset; // Index of first element.
-        private int last = -1; // Index of the last element different from null 
-                               // -1 when empty, MAX_CAPACITY if inner fractal.
+    /** Empty array singleton (unbounded). */
+    private static final class Empty<E> extends FractalArrayImpl<E> implements Immutable {
+        private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
 
         @Override
-        public boolean isEmpty() {
-            return last < 0;
+        public FractalArray<E> clone() {
+            return this; // Immutable.
         }
 
         @Override
         public E get(int index) {
-            return (index >= 0) & (index <= last) ? getNoCheck(index) : null;
+            return null;
         }
 
         @Override
         public FractalArray<E> set(int index, E element) {
-            if (element == null) return clear(index);
-            if (index > last) {
-                if (index >= capacity()) return upsize().set(index, element);
-                last = index;
-            }
-            setNoCheck(index, element);
-            return this;
+            if (element == null) return this;
+            return Block.inRange(index) ? new Block<E>(index, element) : new Single<E>(index, element);
+        }
+    
+        @Override
+        public FractalArray<E> insert(int index, E element) {
+            if (element == null) return this;
+            return Block.inRange(index) ? new Block<E>(index, element) : new Single<E>(index, element);
         }
 
         @Override
         public FractalArray<E> remove(int index) {
-            if (index >= last) return clear(index); // Nothing to shift.
-            if (last - index < index) {
-                shiftLeft(index, last, null);
-            } else {
-                shiftRight(0, index, null);
-                offset++;
-            }
-            --last;
-            return isOverCapacity() ? downsize() : this;
-        }
-
-        @Override
-        public FractalArray<E> add(int index, E inserted) {
-            if (index > last) return set(index, inserted); // Nothing to shift.
-            if (last + 1 >= capacity()) return upsize().add(index, inserted);
-            if (++last - index < index) {
-                shiftRight(index, last, inserted);
-            } else {
-                offset--;
-                shiftLeft(0, index, inserted);
-            }
             return this;
         }
 
-        private FractalArray<E> clear(int index) {
-            if (index > last) return this; // Nothing to clear.
-            setNoCheck(index, null);
-            if (index != last) return this;
-            while (last >= 0)
-                if (getNoCheck(--last) != null) break;
-            return isOverCapacity() ? downsize() : this;
+        @Override
+        public int ceiling(int minIndex, Consumer<? super E> found) {
+            return -1;
         }
-
-        //
-        // END COMMON PART
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         @Override
-        public Block16<E> clone() {
-            Block16<E> copy = (Block16<E>) super.clone();
-            for (int i = 0; i < blocks.length; i++)
-                if (blocks[i] != null) copy.blocks[i] = blocks[i].clone();
-            return copy;
+        public int floor(int maxIndex, Consumer<? super E> found) {
+            return 0;
         }
 
-        private void shiftLeft(int head, int tail, E insertTail) {
-            int iHead = mask(head + offset);
-            int iiHead = iHead >>> INNER_SHIFT;
-            int iTail = mask(tail + offset);
-            int iiTail = iTail >>> INNER_SHIFT;
-            if ((iiHead == iiTail) && (iHead <= iTail)) { // Local to inner block. 
-                blockAt(iiTail).shiftLeft(innerMask(iHead), innerMask(iTail), insertTail);
-            } else { 
-                    return blockAt(iiTail).shiftLeft(innerMask(iHead), innerMask(iTail), insertTail);
-                E carry = blockAt(iiTail).shiftLeft(0, innerMask(iTail), insertTail);
-                while (true) {
-                     iiTail = (iiTail - 1) & (BLOCK_COUNT - 1);
-                     if (iiTail == iiHead) break;
-                     carry = blockAt(iiTail).shiftLeft(0, getNoCheck(0);
-                     blockAt(iiTail).offset++;
-                }
-                return blockAt(iiHead).shiftLeft(innerMask(iHead), innerSize() - 1, carry);
-        }
-
-        public E shiftRight(int head, int tail, E insertHead) {
-            if (tail - head > (capacity() >> 1)) { // Optimization
-                offset += head;
-                E removed = shiftLeft(tail - head, capacity() - 1, insertHead);
-                offset -= head + 1;
-                return removed;
-            }
-            int iHead = mask(head + offset);
-            int iiHead = iHead >>> innerShift();
-            int iTail = mask(tail + offset);
-            int iiTail = iTail >>> innerShift();
-            if ((iiHead == iiTail) && (iHead <= iTail)) // Local to inner block.
-                return fractalAt(iiHead).shiftRight(innerMask(iHead), innerMask(iTail), insertHead);
-            E carry = fractalAt(iiHead).shiftRight(innerMask(iHead), innerSize() - 1, insertHead);
-            while (true) {
-                iiHead = (iiHead + 1) & (BLOCK_COUNT - 1);
-                if (iiHead == iiTail) break;
-                carry = fractalAt(iiHead).shiftRight(carry);
-            }
-            return fractalAt(iiTail).shiftRight(0, innerMask(iTail), carry);
-        }
-
-        private FractalArray<E> upsize() { // Double the capacity.
-            return null; // TODO;
-        }
-
-        @SuppressWarnings("unchecked")
-        private FractalArray<E> downsize() {
-            int newLength = FractalArrayImpl.MAX_CAPACITY;
-            while ((newLength > Block8.MIN_CAPACITY) && (newLength >= 4 * last))
-                newLength /= 2;
-            if (newLength == Block8.MAX_CAPACITY) return this;
-            E[] tmp = (E[]) new Object[newLength];
-            for (int i = 0; i < last; i++)
-                tmp[i] = getNoCheck(i++);
-            Block8<E> block = new Block8<E>();
-            block.elements = tmp;
-            block.last = last;
-            return block;
-        }
-
-        /////////////////////////////////////////////
-        // Small convenient methods to be inlined. // 
-        /////////////////////////////////////////////
-
-        private E getNoCheck(int index) {
-            int i = mask(index + offset);
-            return blocks[i >>> INNER_SHIFT].getNoCheck(i);
-        }
-
-        private void setNoCheck(int index, E element) {
-            int i = mask(index + offset);
-            blocks[i >>> INNER_SHIFT].setNoCheck(i, element);
-        }
-
-        private FractalArrayImpl<E> blockAt(int index) {
-            int i = mask(index + offset);
-            return blocks[i >>> INNER_SHIFT];
-        }
-
-        private int mask(int i) {
-            return i << (32 - SHIFT) >>> (32 - SHIFT);
-        }
-
-        private int innerMask(int i) {
-            return i << (32 - INNER_SHIFT) >>> (32 - INNER_SHIFT);
-        }
-
-        private boolean isOverCapacity() {
-            return FractalArrayImpl.MAX_CAPACITY >= last * 4;
-        }
-
-        private int capacity() {
-            return MAX_CAPACITY;
-        }
-
+        
     }
 
+    /** Single element (unbounded). 
+     *  Only for indices greater or equal to Block.LENGTH to extra cost of Trie structures. */
+    private static final class Single<E> extends FractalArrayImpl<E>  {
+        private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
+     
+        private int index; // Greater or equal to Block.LENGTH
+        private E element;
+
+        public Single(int index, E element) {
+            this.index = index;
+            this.element = element;
+        }
+        
+        @Override
+        public FractalArray<E> clone() {
+            return new Single<E>(index, element);
+        }
+
+        @Override
+        public E get(int i) {
+            return (index == i) ? element : null;
+        }
+
+        @Override
+        public FractalArray<E> set(int i, E e) {
+            if (index == i) {
+                if (e == null) return empty();    
+                element = e;
+                return this;
+            } 
+            if (e == null) return this;
+            return (Block.inRange(index)) ? new Block<E>(index, element).set(i, e) : new Trie<E>(this).set(i, e); 
+        }
+
+        @Override
+        public FractalArray<E> insert(int i, E e) {
+            if (!unsignedLessThan(index, i)) index++; 
+            if (e == null) return this;
+            return (Block.inRange(index)) ? new Block<E>(index, element).set(i, e) : new Trie<E>(this).set(i, e); 
+        }
+    
+        @Override
+        public FractalArray<E> remove(int i) {
+            if (i == index) return empty();
+            if (unsignedLessThan(i, index)) --index; 
+            return this;
+        }
+
+        @Override
+        public int ceiling(int minIndex, Consumer<? super E> found) {
+            if (unsignedLessThan(index, minIndex)) return -1;
+            found.accept(element);
+            return index;
+        }
+
+        @Override
+        public int floor(int maxIndex, Consumer<? super E> found) {
+            if (unsignedLessThan(maxIndex, index)) return 0;
+            found.accept(element);
+            return index;
+        }
+        
+    }
+
+    /** Block (bounded, only for small indices). */
+    private static final class Block<E> extends FractalArrayImpl<E>  {
+        private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
+        private static final int INDEX_BIT_SIZE = 4;
+        private static final int LENGTH = 1 << INDEX_BIT_SIZE; 
+
+        private final E[] elements;
+        
+        @SuppressWarnings("unchecked")
+        public Block(int index, E element) { // index < LENGTH
+            elements = (E[]) new Object[LENGTH];
+            elements[index] = element;
+        }
+        
+        private Block(E[] elements) {
+            this.elements = elements;
+        }
+        
+        @Override
+        public FractalArray<E> clone() {
+            return new Block<E>(elements.clone());
+        }
+
+        @Override
+        public E get(int index) {
+            return inRange(index) ? elements[index] : null;
+        }
+       
+        @Override
+        public FractalArray<E> set(int index, E element) {
+            if (!inRange(index)) return (element != null) ? new Trie<E>(this).set(index, element) : this;
+            elements[index] = element;
+            return (element != null) ? this : checkEmpty();
+        }
+
+        @Override
+        public FractalArray<E> insert(int index, E element) {
+            if (!inRange(index)) return set(index, element);
+            E carry = elements[LENGTH-1];
+            for (int i = LENGTH-1; i > index;) elements[i] = elements[--i];
+            elements[index] = element;
+            if (carry == null) return this;
+            if (element != null) return new Trie<E>(this).set(LENGTH, carry);
+            return checkEmpty().set(LENGTH,  carry);
+        }
+
+        @Override
+        public FractalArray<E> remove(int index) {
+            if (!inRange(index)) return this;
+            for (int i=index; i < LENGTH-1;) elements[i] = elements[++i];
+            elements[LENGTH-1] = null;
+            return checkEmpty();
+        }
+
+        @Override
+        public int ceiling(int minIndex, Consumer<? super E> found) {
+            for (int i=minIndex; inRange(i); i++) {
+                E e = elements[i];
+                if (e == null) continue;
+                found.accept(e);  
+                return i;
+            }
+            return -1;
+        }
+
+        @Override
+        public int floor(int maxIndex, Consumer<? super E> found) {
+            if (!inRange(maxIndex)) maxIndex = LENGTH-1;    
+            for (int i=maxIndex; inRange(i); --i)  {
+                E e = elements[i];
+                if (e == null) continue;
+                found.accept(e);
+                return i;
+            }
+            return 0;
+        }
+        
+        private FractalArray<E> checkEmpty() { // Returns empty() if no element set. 
+            for (E e : elements) if (e != null) return this;
+            return empty();
+        }
+        
+        private static boolean inRange(int index) {
+            return index >>> INDEX_BIT_SIZE == 0;
+        }
+    }
+
+    /** Trie / Fractal Structure. */
+    private static final class Trie<E> extends FractalArrayImpl<E>  {
+        private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
+        private static final int SHIFT_INC = 4;
+        private static final int LENGTH = 1 << SHIFT_INC;
+  
+        private final FractalArray<E>[] fractals;
+        private int shift; // Bit size of inner fractals (>= Block.INDEX_BIT_SIZE).
+        private int count; // Number of inner fractals (> 1 except at creation)
+        
+        @SuppressWarnings("unchecked")
+        public Trie(FractalArray<E> inner) {
+             fractals = new FractalArrayImpl[LENGTH];
+             for (int i=0; i < LENGTH; i++) fractals[i] = empty();
+             
+             shift = Block.INDEX_BIT_SIZE;
+             int maxIndex = inner.floor(-1, Consumer.DO_NOTHING);
+             while (maxIndex >>> (shift + SHIFT_INC) != 0) shift += SHIFT_INC;
+             fractals[maxIndex >>> shift] = inner;
+             count = 1;
+        }
+        
+        private Trie(FractalArray<E>[] fractals, int shift, int count) {
+            this.fractals = fractals;
+            this.shift = shift;
+            this.count = count;
+        }
+        
+        @Override
+        public E get(int index) {
+            int i = index >>> shift;    
+            return (i < LENGTH) ? fractals[i].get(inner(index)) : null;
+        }
+        
+        @Override
+        public FractalArray<E> set(int index, E element) {
+            int i = index >>> shift;
+            if (i >= LENGTH) return (element != null) ? new Trie<E>(this).set(index, element) : this;
+            FractalArray<E> oldFractal = fractals[i]; 
+            FractalArray<E> newFractal = oldFractal.set(inner(index), element);
+            if (oldFractal == newFractal) return this;
+            fractals[i] = newFractal;
+            updateCount(oldFractal, newFractal);
+            return (count == 1) ? single() : this;
+        }
+ 
+        @Override
+        public FractalArray<E> remove(int index) {
+            int i = index >>> shift;
+            if (i >= LENGTH) return this; // Out of range.
+            int ii = inner(index);
+            do { 
+                FractalArray<E> oldFractal = fractals[i];                
+                FractalArray<E> newFractal = oldFractal.remove(ii);
+                if (i + 1 < LENGTH) newFractal = newFractal.set(inner(-1), fractals[i+1].get(0));
+                ii = 0;
+                if (oldFractal != newFractal) {
+                    fractals[i] = newFractal;
+                    updateCount(oldFractal, newFractal);
+                }
+            } while (++i < LENGTH);
+            return (count <= 1) ? single() : this;
+        }
+      
+        @Override
+        public FractalArray<E> insert(int index, E element) {
+            int i = index >>> shift;
+            if (i >= LENGTH) return set(index, element); // Out of range.
+            int ii = inner(index);
+            do {
+                FractalArray<E> oldFractal = fractals[i];
+                E carry = oldFractal.get(inner(-1));
+                FractalArray<E> newFractal = oldFractal.set(inner(-1), null); // Clears last element to avoid overflow.
+                newFractal = newFractal.insert(ii, element);
+                ii = 0;
+                element = carry;
+                if (oldFractal != newFractal) {
+                    fractals[i] = newFractal;
+                    updateCount(oldFractal, newFractal);
+                }
+            } while (++i < LENGTH); 
+            FractalArray<E> that = (count <= 1) ? single() : this;
+            return (element != null) ? that.set(LENGTH << shift, element) : that;
+        }
+        
+        @Override
+        public int ceiling(int index, Consumer<? super E> found) {
+            for (int i = index >>> shift, ii=inner(index); i < LENGTH; i++) {
+                 int innerIndex = fractals[i].ceiling(ii, found);
+                 if (innerIndex != -1) return (i << shift) | innerIndex; // No ambiguity, -1 cannot be an inner index.
+                 ii = 0;
+            }
+            return -1;
+        }
+        
+        @Override
+        public int floor(int index, Consumer<? super E> found) {
+            if (index >>> shift >= LENGTH) index = (LENGTH << shift) - 1; // Out of bounds.
+            for (int i = index >>> shift, ii=inner(index); i >= 0; --i) {
+                int innerIndex = fractals[i].floor(ii, found);
+                if ((innerIndex != 0) || (fractals[i].get(0) != null)) return (i << shift) | innerIndex;
+                ii = inner(-1);
+            }
+            return 0;
+        }
+  
+        @Override
+        public FractalArray<E> clone() {
+            Trie<E> trie = new Trie<E>(fractals.clone(), shift, count);    
+            for (int i=0; i < trie.fractals.length; i++) trie.fractals[i] = trie.fractals[i].clone();
+            return trie;
+        }
+        
+        /** Returns inner index. */
+        private int inner(int i) {
+            return i << (32 - shift) >>> (32 - shift);
+        }
+        
+        /** Returns the single inner fractal when (count == 1). */
+        private FractalArray<E> single() {
+            for (int i=0; i < LENGTH; i++) if (fractals[i] != EMPTY) return fractals[i];
+            throw new Error("Array Corruption");
+        }
+        
+        /** Updates count of inner fractal. */
+        private void updateCount(FractalArray<E> oldFractal, FractalArray<E> newFractal) {
+            if ((oldFractal == EMPTY) && (newFractal != EMPTY)) count++;
+            if ((oldFractal != EMPTY) && (newFractal == EMPTY)) count--;
+        }       
+
+    }
+    
 }

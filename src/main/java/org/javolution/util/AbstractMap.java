@@ -24,7 +24,6 @@ import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.UnaryOperator;
 import org.javolution.util.internal.map.AtomicMapImpl;
-import org.javolution.util.internal.map.EntryImpl;
 import org.javolution.util.internal.map.KeySetImpl;
 import org.javolution.util.internal.map.LinkedMapImpl;
 import org.javolution.util.internal.map.MultiMapImpl;
@@ -40,9 +39,9 @@ import org.javolution.util.internal.map.ValuesImpl;
  * be associated with and returned for a given key.
  * 
  * From a semantic standpoint, {@link AbstractMap} is considered equivalent to an {@link AbstractSet} 
- * of {@link Entry} elements (its order is based upon entries keys order).
+ * of not directly modifiable {@link Entry} elements (the set order is based upon the entries keys order).
  * Accessing/adding/removing custom entries is allowed through the methods: 
- * {@link  #getEntry}, {@link  #addEntry} and {@link #removeEntry} (or {@code entrySet().remove(entry)} to 
+ * {@link  #getEntry}, {@link  #addEntry} and {@link #removeEntry} (or {@code entries().remove(entry)} to 
  * remove a specific mapping).
  *     
  * Instances of this class may use custom key comparators instead of the default object equality 
@@ -68,20 +67,26 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
         return this;
     }
 
+    /** 
+     * Returns this map entries. The set supports element removal, which removes the corresponding mapping 
+     * from the map (if the exact mapping exists). 
+     */
+    @Realtime(limit = CONSTANT)
+    public abstract AbstractSet<Entry<K, V>> entries();
+     
     ////////////////////////////////////////////////////////////////////////////
     // Views.
     //    
 
-    /** 
-     * Returns this map {@link #entrySet()}. The set supports element removal, which removes the corresponding mapping 
-     * from the map. 
-     */
+    @SuppressWarnings("unchecked")
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract AbstractSet<Entry<K, V>> entrySet();
+    public final AbstractSet<Map.Entry<K, V>> entrySet() {
+        return (AbstractSet<Map.Entry<K, V>>) (Object) entries();
+    }
      
     /** 
-     * Returns a view allowing multiple entries having the same key to be put into this map (multimap).
+     * Returns a view for which the {@link #put} method allowing multiple entries having the same key to be put into this map (multimap).
      */
     @Realtime(limit = CONSTANT)
     public AbstractMap<K,V> multi() {
@@ -144,7 +149,7 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
     @Override
     @Realtime(limit = CONSTANT)
     public AbstractCollection<V> values() {
-        return new ValuesImpl<K,V>(entrySet(), valuesEquality());
+        return new ValuesImpl<K,V>(entries(), valuesEquality());
     }
 
     @Override
@@ -220,12 +225,14 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
         return entry != null ? entry.getValue() : null;
     }
 
-    /** 
-     * Add the specified key/value mapping; replacing or not (multimap) the previous mapping for the specified 
-     * key */
     @Override
     @Realtime(limit = CONSTANT)
-    public abstract @Nullable V put(K key, @Nullable V value);
+    public @Nullable V put(K key, @Nullable V value) {
+        Entry<K, V> entry = getEntry(key);
+        if (entry != null) return updateValue(entry, value);
+        addEntry(key, value);
+        return null; 
+    }
 
     @Override
     @Realtime(limit = LINEAR)
@@ -249,7 +256,7 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
     public V putIfAbsent(K key, @Nullable V value) {
         Entry<K, V> entry = getEntry(key);
         if (entry != null) return entry.getValue();
-        put(key, value);
+        addEntry(key, value);
         return null;
     }
 
@@ -257,17 +264,20 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
     @SuppressWarnings("unchecked")
     @Realtime(limit = CONSTANT)
     public boolean remove(Object key, @Nullable Object value) {
-        Entry<K,V> mappingToRemove = new EntryImpl<K,V>((K)key, (V)value);
-        return entrySet().remove(mappingToRemove);
+        Entry<K, V> entry = getEntry((K)key);
+        if ((entry != null) && valuesEquality().areEqual(entry.getValue(), (V) value)) return entrySet().remove(entry);
+        return false;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public boolean replace(K key, @Nullable V oldValue, @Nullable V newValue) {
-        Entry<K,V> entry = entrySet().getAny(new EntryImpl<K,V>(key, oldValue));
-        if (entry == null) return false;
-        updateValue(entry, newValue);
-        return true;
+        Entry<K, V> entry = getEntry((K)key);
+        if ((entry != null) && valuesEquality().areEqual(entry.getValue(), (V) oldValue)) {
+            updateValue(entry, newValue);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -302,6 +312,11 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
     @Realtime(limit = CONSTANT)
     public abstract @Nullable Entry<K, V> getEntry(K key);
 
+    /** Adds and return the specified entry to this map regardless if an entry with the same key already exists 
+     * (faster than using {@link #put} as it does not check for key presence)..*/
+    @Realtime(limit = LINEAR, comment="Linear removal time for linked maps")
+    public abstract @Nullable Entry<K, V> addEntry(K key, V value);
+    
     /** Removes and returns a single entry having the specified key.*/
     @Realtime(limit = LINEAR, comment="Linear removal time for linked maps")
     public abstract @Nullable Entry<K, V> removeEntry(K key);
@@ -311,10 +326,6 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
 
     /** Returns the value equality of this map. */
     public abstract Equality<? super V> valuesEquality();
-
-    /** Updates the the value for the specified entry and returns the previous value; 
-     * throws {@link UnsupportedOperationException}  if this map is not modifiable. */
-    public abstract V updateValue(Entry<K,V> entry, V newValue);
 
     /** 
      * Updates the value of the specified key using the specified operator.
@@ -373,5 +384,66 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
         return entrySet().toString();
     }
      
- 
+    /** Updates the the value for the specified entry and returns the previous value; 
+     *  this method should be overridden by unmodifiable maps to throw {@link UnsupportedOperationException}. */
+    protected V updateValue(Entry<K,V> entry, V newValue) {
+        V previousValue = entry.value;
+        entry.value = newValue;
+        return previousValue;
+    }
+
+    /**
+     * Entry whose value can only be modified through a map instance.
+     */
+    public static class Entry<K, V> implements Map.Entry<K, V>, Serializable {
+     
+        private static final long serialVersionUID = 0x700L; // Version.
+        private final K key;
+        private @Nullable V value;
+        
+
+        /** Creates an entry from the specified key/value pair.*/
+        public Entry(K key, @Nullable V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object obj) { // Default object equality as per Map.Entry contract.
+            if (!(obj instanceof Map.Entry))
+                return false;
+            @SuppressWarnings("unchecked")
+            Map.Entry<K, V> that = (Map.Entry<K, V>) obj;
+            return Order.STANDARD.areEqual(key, that.getKey()) && Order.STANDARD.areEqual(value, that.getValue());
+        }
+
+        @Override
+        public final K getKey() {
+            return key;
+        }
+
+        @Override
+        public final @Nullable V getValue() {
+            return value;
+        }
+
+        @Override
+        public int hashCode() { // Default hash as per Map.Entry contract.
+            return Order.STANDARD.indexOf(key) ^ Order.STANDARD.indexOf(value);
+        }
+
+        /** 
+         * Guaranteed to throw an exception and leave the entry unmodified.
+         * @deprecated Modification of an entry value should be performed through the map.
+         */
+        @Override
+        public @Nullable V setValue(@Nullable V value) {
+            throw new UnsupportedOperationException("Entry modification should be performed through the map");
+        }    
+
+        @Override
+        public String toString() {
+            return "(" + key + '=' + value + ')'; // For debug.
+        }
+    }
 }
