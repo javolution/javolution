@@ -110,7 +110,7 @@ public class FastTable<E> extends AbstractTable<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final boolean add(@Nullable E element) {
-        array = array.insert(length++, element);
+        array = array.set(length++, element);
         return true;
     }
 
@@ -118,8 +118,7 @@ public class FastTable<E> extends AbstractTable<E> {
     @Realtime(limit = LOG_N)
     public final void add(int index, @Nullable E element) {
         if (index < 0 || index > length) throw new IndexOutOfBoundsException();
-        array = array.insert(index, element);
-        length++;
+        array = array.shift(index, length++, element);
     }
 
     @Override
@@ -160,8 +159,7 @@ public class FastTable<E> extends AbstractTable<E> {
     public final @Nullable E remove(int index) {
         if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
         E removed = array.get(index);
-        array = array.remove(index);
-        --length;
+        array = array.shift(--length, index, null);
         return removed;
     }
 

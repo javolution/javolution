@@ -16,7 +16,7 @@ import org.javolution.util.function.Indexer;
 import org.javolution.util.function.Order;
 
 /**
- * High-performance ordered map / multimap based upon fast-access {@link SparseArray}. 
+ * High-performance ordered map / multimap based upon fast-access {@link FractalArray}. 
  *     
  * Iterations order over map keys, values or entries is determined by the map {@link #keyOrder key order} except 
  * for specific views such as the {@link #linked linked view} for which iteration is performed according to the 
@@ -80,7 +80,7 @@ import org.javolution.util.function.Order;
  * ```java
  * FastMap<String, Index> wordCounts = new FastMap<>(LEXICAL); // Sorted. 
  * ...
- * wordCounts.put(word, (v) -> v != null ? v.next() : Index.ONE); // Increments word count.
+ * wordCounts.put(word, (previousCount) -> previousCount != null ? previousCount.next() : Index.ONE); 
  * ```
  * 
  * Finally, this class provides full support for multimaps (multimaps stores pairs of (key, value) where both 

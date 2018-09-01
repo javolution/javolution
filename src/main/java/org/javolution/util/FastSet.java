@@ -140,7 +140,7 @@ public class FastSet<E> extends AbstractSet<E> {
     public final Immutable<E> freeze() {
         singles = singles.unmodifiable();
         for (FractalArray.Iterator<AbstractSet<E>> itr = multiples.iterator(); itr.hasNext();) {
-            int index = itr.nextIndex();
+            long index = itr.nextIndex();
             multiples.set(index, itr.next().unmodifiable()); // Replaces.
         }
         multiples = multiples.unmodifiable();
@@ -211,7 +211,7 @@ public class FastSet<E> extends AbstractSet<E> {
         copy.singles = singles.clone();
         copy.multiples = multiples.clone();
         for (FractalArray.Iterator<AbstractSet<E>> itr = multiples.iterator(); itr.hasNext();) {
-            int index = itr.nextIndex();
+            long index = itr.nextIndex();
             AbstractSet<E> multiple = itr.next();
             copy.multiples.set(index, multiple.clone()); // Replaces.
         }
@@ -282,7 +282,7 @@ public class FastSet<E> extends AbstractSet<E> {
     public final boolean removeIf(Predicate<? super E> filter) {
         int initialSize = size;
         for (FractalArray.Iterator<AbstractSet<E>> itr = multiples.iterator(); itr.hasNext();) {
-            int index = itr.nextIndex();
+            long index = itr.nextIndex();
             AbstractSet<E> multiple = itr.next();
             int sizeBefore = multiple.size();
             multiple.removeIf(filter);
@@ -315,8 +315,8 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final E first() {
-        int s = singles.ceiling(0, Consumer.DO_NOTHING);
-        int m = multiples.ceiling(0, Consumer.DO_NOTHING);
+        long s = singles.ceiling(0, Consumer.DO_NOTHING);
+        long m = multiples.ceiling(0, Consumer.DO_NOTHING);
         AbstractSet<E> innerSet;
         if (!MathLib.unsignedLessThan(s, m) && ((innerSet = multiples.get(m)) != null)) 
             return innerSet.first();
@@ -327,8 +327,8 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final E last() {
-        int s = singles.floor(-1, Consumer.DO_NOTHING);
-        int m = multiples.floor(-1, Consumer.DO_NOTHING);
+        long s = singles.floor(-1, Consumer.DO_NOTHING);
+        long m = multiples.floor(-1, Consumer.DO_NOTHING);
         AbstractSet<E> innerSet;
         if (!MathLib.unsignedLessThan(m, s) && ((innerSet = multiples.get(m)) != null)) 
             return innerSet.last();

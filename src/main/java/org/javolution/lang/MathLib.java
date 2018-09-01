@@ -58,6 +58,50 @@ public final class MathLib {
     }    
 
     /**
+     * Returns the maximum of two unsigned 32-bits numbers.
+     * 
+     * @param x the first unsigned 32-bits.
+     * @param y the second unsigned 32-bits
+     * @return {@code max(x,y) }
+     */
+    public static int unsignedMax(int x, int y) {
+        return (x ^ 0x80000000) < (y ^ 0x80000000) ? y : x;
+    }
+    
+    /**
+     * Returns the maximum of two unsigned 64-bits numbers.
+     * 
+     * @param x the first unsigned 64-bits.
+     * @param y the second unsigned 64-bits
+     * @return {@code max(x,y) }
+     */
+    public static long unsignedMax(long x, long y) {
+        return  (x ^ 0x8000000000000000L) < (y ^ 0x8000000000000000L) ? y : x;
+    }
+    
+    /**
+     * Returns the minimum of two unsigned 32-bits numbers.
+     * 
+     * @param x the first unsigned 32-bits.
+     * @param y the second unsigned 32-bits
+     * @return {@code min(x,y) }
+     */
+    public static int unsignedMin(int x, int y) {
+        return (x ^ 0x80000000) < (y ^ 0x80000000) ? x : y;
+    }
+    
+    /**
+     * Returns the minimum of two unsigned 64-bits numbers.
+     * 
+     * @param x the first unsigned 64-bits.
+     * @param y the second unsigned 64-bits
+     * @return {@code min(x,y) }
+     */
+    public static long unsignedMin(long x, long y) {
+        return  (x ^ 0x8000000000000000L) < (y ^ 0x8000000000000000L) ? x : y;
+    }
+    
+    /**
      * 32 bits hashing function based on FNV-1 algorithm.
      *  
      * @param intValue the 32 bits number input.
