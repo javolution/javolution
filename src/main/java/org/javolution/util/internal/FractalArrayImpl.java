@@ -8,14 +8,14 @@
  */
 package org.javolution.util.internal;
 
+import static org.javolution.lang.MathLib.max;
 import static org.javolution.lang.MathLib.unsignedLessThan;
 import static org.javolution.lang.MathLib.unsignedMax;
 import static org.javolution.lang.MathLib.unsignedMin;
-import static org.javolution.lang.MathLib.max;
 
 import org.javolution.lang.Immutable;
 import org.javolution.util.FractalArray;
-import org.javolution.util.function.Consumer;
+import org.javolution.util.function.Predicate;
 
 /**
  * The fractal array default implementation (key class in org.javolution.util package). 
@@ -23,9 +23,11 @@ import org.javolution.util.function.Consumer;
  * is reached (no resize ever).
  */
 public abstract class FractalArrayImpl<E> extends FractalArray<E> {
-    private static final long serialVersionUID = 0x700L;
-    
+    private static final long serialVersionUID = 0x700L;    
     private static final Empty<Object> EMPTY = new Empty<Object>(); // Singleton.
+    
+    /** High bits hold the prefix while the low bits may be holding an offset if any. */ 
+    long prefix; // In the form: <--- prefix ---><--- offset --->
     
     /** Returns the immutable empty instance. */
     @SuppressWarnings("unchecked")
@@ -100,12 +102,12 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
         }
 
         @Override
-        public long ceiling(long minIndex, Consumer<? super E> found) {
+        public long ceiling(long minIndex, Predicate<? super E> matching) {
             return 0;
         }
 
         @Override
-        public long floor(long maxIndex, Consumer<? super E> found) {
+        public long floor(long maxIndex, Predicate<? super E> matching) {
             return -1;
         }
 
@@ -124,65 +126,60 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     /** A single element. */
     private static final class Single<E> extends FractalArrayImpl<E>  {
         private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
-        private long index;
         private E element;
     
         public Single(long index, E element) {
-            this.index = index;
+            this.prefix = index;
             this.element = element;
         }
         
         @Override
         public Single<E> clone() {
-            return new Single<E>(index, element);
+            return new Single<E>(prefix, element);
         }
 
         @Override
         public E get(long i) {
-            return (index == i) ? element : null;
+            return (prefix == i) ? element : null;
         }
       
         @Override
         public FractalArrayImpl<E> clear(long i) {
-            if(index == i) return empty();
+            if(prefix == i) return empty();
             return this;
         }
       
         @Override
         public FractalArrayImpl<E> set(long i, E e) {
         	if (e == null) return clear(i);
-        	if (index != i) return overflow(i, e);
+        	if (prefix != i) return overflow(i, e);
         	element = e;
         	return this;  		
          }        
 
         @Override
         public FractalArrayImpl<E> shift(long from, long to, E inserted) {
-       		if (to == index) { // Current element is discarded.
-    			index = from;
+       		if (to == prefix) { // Current element is discarded.
+    			prefix = from;
     			element = inserted;
     			return this;
     		}
          	if (unsignedLessThan(from, to)) { // Right shift.
-        		if (!unsignedLessThan(index, from) && !unsignedLessThan(to, index)) index++;
+        		if (!unsignedLessThan(prefix, from) && !unsignedLessThan(to, prefix)) prefix++;
         	} else { // Left shift.
-           		if (!unsignedLessThan(index, to) && !unsignedLessThan(from, index)) index--;
+           		if (!unsignedLessThan(prefix, to) && !unsignedLessThan(from, prefix)) prefix--;
         	}
     		return set(from, inserted);
         }
 
         @Override
-        public long ceiling(long minIndex, Consumer<? super E> found) {
-            if (unsignedLessThan(index, minIndex)) return 0;
-            found.accept(element);
-            return index;
+        public long ceiling(long minIndex, Predicate<? super E> matching) {
+            return !unsignedLessThan(prefix, minIndex) && matching.test(element) ? prefix : 0;
         }
 
         @Override
-        public long floor(long maxIndex, Consumer<? super E> found) {
-            if (unsignedLessThan(maxIndex, index)) return -1;
-            found.accept(element);
-            return index;
+        public long floor(long maxIndex, Predicate<? super E> matching) {
+            return !unsignedLessThan(maxIndex, prefix) && matching.test(element) ? prefix : -1;
         }
 
 		@Override
@@ -196,12 +193,12 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 		}
 
 		private FractalArrayImpl<E> overflow(long i, E e) {
-        	return ((index ^ i) >>> Array.INDEX_SIZE == 0) ? new Array<E>(index, element, i, e) :
-        		new Fractal<E>(i, e, index, this);
+        	return ((prefix ^ i) >>> Array.INDEX_SIZE == 0) ? new Array<E>(prefix, element, i, e) :
+        		new Fractal<E>(i, e, this);
         }
     }
 
-    /** An array of elements. */
+    /** An array of elements (for elements very close together; e.g. having the same most of high bits). */
     private static final class Array<E> extends FractalArrayImpl<E>  {
         private static final long serialVersionUID = FractalArrayImpl.serialVersionUID;
         private static final int INDEX_SIZE = 4;
@@ -209,13 +206,12 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     	private static final int MASK = ARRAY_LENGTH - 1;
     		     			
     	private final E[] elements;
-    	private long prefix; // Lower bits holding offset.  
     	private int count; // Number of non-null elements (> 1)
     	
     	@SuppressWarnings("unchecked")
 		public Array(long i0, E e0, long i1, E e1) {
     		elements = (E[]) new Object[ARRAY_LENGTH];
-    	    prefix = i0 >>> (64 - INDEX_SIZE) << (64 - INDEX_SIZE);
+    	    prefix = clearLowBits(i0, INDEX_SIZE);
     	    elements[(int) (i0 - prefix)] = e0;
        	    elements[(int) (i1 - prefix)] = e1;
             count = 2;       	    	    
@@ -238,13 +234,13 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 			int i = arrayIndex(index);
 			if (elements[i] == null) return this;
 			elements[i] = null;
-			return (--count > 1) ? this : anyInner(index);
+			return (--count > 1) ? this : anyInner();
 		}		
 
 		@Override
 		public FractalArrayImpl<E> set(long index, E element) {
 			if (element == null) return clear(index);
-			if (!inRange(index)) return new Fractal<E>(index, element, prefix, this);
+			if (!inRange(index)) return new Fractal<E>(index, element, this);
 			int i = arrayIndex(index);
 			if (elements[i] == null) ++count;
 			elements[i] = element;
@@ -259,11 +255,11 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
          		if ((to - from) > ARRAY_LENGTH / 2) // Faster to do full shift right and two shifts left.
          			return shift(lastIndex(), to, get(firstIndex())).shift(from, firstIndex(), inserted).shiftRight();
          		if (inserted != null) count++; // non-null introduced.
-         		for (int i = arrayIndex(from), j=arrayIndex(to);;i = ++i & MASK) {
+         		for (int i = arrayIndex(from), n=arrayIndex(to);;i = ++i & MASK) {
          			E previous = elements[i];
          			elements[i] = inserted;
          			inserted = previous;
-          	        if (i == j) break;
+          	        if (i == n) break;
          		} 
          		if (inserted != null) count--; // inserted is discarded.
         	} else { // Left shift.
@@ -272,15 +268,15 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
          		if ((from - to) > ARRAY_LENGTH / 2) // Faster to do full shift left and two shifts right.
          			return shift(firstIndex(), to, get(lastIndex())).shift(from, lastIndex(), inserted).shiftLeft();
          		if (inserted != null) count++; // non-null introduced.
-         		for (int i = arrayIndex(from), j=arrayIndex(to);;i = --i & MASK) {
+         		for (int i = arrayIndex(from), n=arrayIndex(to);;i = --i & MASK) {
          			E previous = elements[i];
          			elements[i] = inserted;
          			inserted = previous;
-          	        if (i == j) break;
+          	        if (i == n) break;
          		} 
          		if (inserted != null) count--; // inserted is discarded.
         	}
-			return (count > 1) ? this : anyInner(from);
+			return (count > 1) ? this : anyInner();
 		}
 
 		@Override
@@ -290,25 +286,25 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 
 
 		@Override
-		public long ceiling(long minIndex, Consumer<? super E> found) {
-	   		for (long i=minIndex; inRange(i); i++) {
-    			E e = elements[arrayIndex(i)];
-    			if (e == null) continue;
-    			found.accept(e);  
-    			return i;
+		public long ceiling(long minIndex, Predicate<? super E> matching) {
+			if (isOverflow(minIndex)) return 0;
+			if (isUnderflow(minIndex)) minIndex = firstIndex();
+	   		for (int i=arrayIndex(minIndex), n=arrayIndex(lastIndex());; i = ++i & MASK) {
+    			E e = elements[i];
+    			if ((e != null) && matching.test(e)) return indexFor(i);
+    			if (i == n) return 0;
     		}
-    		return 0;
- 		}
+  		}
 
 		@Override
-		public long floor(long maxIndex, Consumer<? super E> found) {
-	  		for (long i=maxIndex; inRange(i); i--) {
-    			E e = elements[arrayIndex(i)];
-    			if (e == null) continue;
-    			found.accept(e);  
-    			return i;
+		public long floor(long maxIndex, Predicate<? super E> matching) {
+			if (isUnderflow(maxIndex)) return -1;
+			if (isOverflow(maxIndex)) maxIndex = lastIndex();
+	  		for (int i=arrayIndex(maxIndex), n=arrayIndex(firstIndex());; i = --i & MASK) {
+    			E e = elements[i];
+    			if ((e != null) && matching.test(e)) return indexFor(i);
+    			if (i == n) return -1;
     		}
-    		return -1;
  		}
 		
 		@Override
@@ -323,11 +319,9 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     		return this;
     	}
 		
-		private FractalArrayImpl<E> anyInner(long lastCleared) { // Called when count == 1
-			int j = arrayIndex(lastCleared);
-			for (int i = (j-1) & MASK; i != j; i = --i & MASK)   // Go backward from last cleared.
+		private FractalArrayImpl<E> anyInner() { // Called when count == 1
+			for (int i = arrayIndex(0);; i = ++i & MASK) 
 				if (elements[i] != null) return new Single<E>(indexFor(i), elements[i]);
-			throw new IllegalStateException("Corruption, single element not found!");
 		}
 
 		private boolean inRange(long index) { // Check prefix equality 
@@ -366,28 +360,24 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
         private static final int SIZE_INC = 4; 
     	private static final int ARRAY_LENGTH = 1 << SIZE_INC;
     	private static final int MASK = ARRAY_LENGTH - 1;
-    	@SuppressWarnings("rawtypes")
-		private static final FractalArrayImpl[] EMPTY_INIT;
-    	static {
-    		EMPTY_INIT = new FractalArrayImpl[ARRAY_LENGTH];
-    		for (int i=0; i < ARRAY_LENGTH; i++) EMPTY_INIT[i] = EMPTY;
-    	}
-
+  
+    	// <-- index --> = <-- prefix --><-- array index --><-- sub-index -->
+    	
     	private final FractalArrayImpl<E>[] inners;
-    	private long prefix; 
     	private final int innerIndexSize; // Always in range [Array.INDEX_SIZE .. 63] by construction.
        	private int count; // Number of non-empty inner fractals.
         
     	@SuppressWarnings("unchecked")
-		public Fractal(long index, E element, long innerPrefix, FractalArrayImpl<E> inner) {
-     		inners = EMPTY_INIT.clone();
+		public Fractal(long index, E element, FractalArrayImpl<E> inner) {
+     		inners = new FractalArrayImpl[ARRAY_LENGTH];
     		int s = Array.INDEX_SIZE;
-    		long l = innerPrefix ^ index;
+    		long l = inner.prefix ^ index;
     		while ((l >>> s >>> SIZE_INC) != 0)  s += SIZE_INC;
     		innerIndexSize = s;
-    		prefix = index >>> s >>> SIZE_INC << SIZE_INC << s;
-    		inners[(int) (index - prefix) >>> s] = new Single<E>(index, element);
-    		inners[(int) (innerPrefix - prefix) >>> s] = inner;
+    		prefix = clearLowBits(index >>> SIZE_INC, s) << SIZE_INC;
+    		inners[arrayIndex(index)] = new Single<E>(subIndex(index), element);
+    		inners[arrayIndex(inner.prefix)] = inner;
+    		inner.prefix = subIndex(inner.prefix); // Makes it relative to enclosing fractal.
             count = 2;       	    	    
     	}
     	
@@ -396,12 +386,17 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     		prefix = that.prefix;
     		innerIndexSize = that.innerIndexSize;
     		count = that.count;
-    		for (int i=0; i < ARRAY_LENGTH; i++) inners[i] = inners[i].clone();
+    		for (int i=0; i < ARRAY_LENGTH; i++) {
+    			FractalArrayImpl<E> fractal = inners[i];
+    			if (fractal != null) inners[i] = fractal.clone();
+    		}
     	}
 
     	@Override
 		public E get(long index) {
-    		return inRange(index) ? inners[arrayIndex(index)].get(subIndex(index)) : null;
+    		if (!inRange(index)) return null;
+    		FractalArrayImpl<E> fractal = inners[arrayIndex(index)];
+    		return (fractal != null) ? fractal.get(subIndex(index)) : null;
 		}
 
 		@Override
@@ -409,21 +404,25 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 			if (!inRange(index)) return this;
 			int i = arrayIndex(index);
 			FractalArrayImpl<E> fractal = inners[i];
-			if (fractal.isEmpty()) return this;
+			if (fractal == null) return this;
 			FractalArrayImpl<E> newFractal = fractal.clear(subIndex(index));
-			if (newFractal != fractal) inners[i] = newFractal;
-			return newFractal.isEmpty() && (--count < 2) ? anyInner(index) : this;
+			if (newFractal != fractal) inners[i] = newFractal.isEmpty() ? null : newFractal;
+			return newFractal.isEmpty() && (--count < 2) ? anyInner() : this;
 		}		
 
 		@Override
 		public FractalArrayImpl<E> set(long index, E element) {
 			if (element == null) return clear(index);
-			if (!inRange(index)) return new Fractal<E>(index, element, prefix, this);
+			if (!inRange(index)) return new Fractal<E>(index, element, this);
 			int i = arrayIndex(index);
 			FractalArrayImpl<E> fractal = inners[i];
-			if (fractal.isEmpty()) count++;
-			FractalArrayImpl<E> newFractal = fractal.set(subIndex(index), element);
-			if (newFractal != fractal) inners[i] = newFractal;	
+			if (fractal == null) {
+				inners[i] = new Single<E>(subIndex(index), element);
+				count++;
+			} else {
+				FractalArrayImpl<E> newFractal = fractal.set(subIndex(index), element);
+				if (newFractal != fractal) inners[i] = newFractal;	
+			}
 			return this;
 		}
 
@@ -432,39 +431,59 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
          	if (unsignedLessThan(from, to)) { // Right shift.
          		if (isUnderflow(from)) return shift(firstIndex(), to, null).set(from, inserted);
          		if (isOverflow(to)) return set(lastIndex() + 1, get(lastIndex())).shift(from, lastIndex(), inserted);
+         		
          		if ((to - from) >>> innerIndexSize > ARRAY_LENGTH / 2) // Faster to do full shift right and two shifts left.
          			return shift(lastIndex(), to, get(firstIndex())).shift(from, firstIndex(), inserted).shiftRight();
-         		for (int i = arrayIndex(from), j=arrayIndex(to);;i = ++i & MASK) {
-         			long first = unsignedMax(indexFor(i, 0), from);
-         			long last = unsignedMin(indexFor(i, 1L << innerIndexSize - 1L), to);
+         		
+         		int iFrom = arrayIndex(from);
+         		int iTo = arrayIndex(to);
+         		for (int i = iFrom;;i = ++i & MASK) {
+         	 		long minSubIndex = (i == iFrom) ? subIndex(from) : 0;
+             		long maxSubIndex = (i == iTo) ? subIndex(to) : subIndex(-1);
         			FractalArrayImpl<E> fractal = inners[i];
-        			if (fractal.isEmpty()) count++;
-        			E carry = fractal.get(subIndex(last));
-        			FractalArrayImpl<E> newFractal = fractal.shift(subIndex(first), subIndex(last), inserted);
-        			if (newFractal.isEmpty()) count--;
-        			if (fractal != newFractal) inners[i] = newFractal;
-          			inserted = carry;
-          	        if (i == j) break;
+        			if (fractal == null) {
+        				inners[i] = new Single<E>(minSubIndex, inserted);
+        				count++;
+        				inserted = null;
+        			} else {
+        				E carry = fractal.get(maxSubIndex);
+        				FractalArrayImpl<E> newFractal = fractal.shift(minSubIndex, maxSubIndex, inserted);
+                		if (newFractal != fractal) inners[i] = newFractal.isEmpty() ? null : newFractal;
+                		if (newFractal.isEmpty()) count--;
+                		inserted = carry;
+        			}
+          	        if (i == iTo) break;
          		} 
+         		
         	} else { // Left shift.
          		if (isUnderflow(to)) return set(firstIndex() - 1, get(firstIndex())).shift(from, firstIndex(), inserted);
          		if (isOverflow(from)) return shift(lastIndex(), to, null).set(from, inserted);
+         		
          		if ((from - to) >>> innerIndexSize > ARRAY_LENGTH / 2) // Faster to do full shift left and two shifts right.
          			return shift(firstIndex(), to, get(lastIndex())).shift(from, lastIndex(), inserted).shiftLeft();
-         		for (int i = arrayIndex(from), j=arrayIndex(to);;i = --i & MASK) {
-         			long first = unsignedMax(indexFor(i, 0), from);
-         			long last = unsignedMin(indexFor(i, 1L << innerIndexSize - 1L), to);
+  
+           		int iFrom = arrayIndex(from);
+         		int iTo = arrayIndex(to);
+         		for (int i = iFrom;;i = --i & MASK) {
+         	 		long minSubIndex = (i == iTo) ? subIndex(to) : 0;
+             		long maxSubIndex = (i == iFrom) ? subIndex(from) : subIndex(-1);
         			FractalArrayImpl<E> fractal = inners[i];
-        			if (fractal.isEmpty()) count++;
-        			E carry = fractal.get(subIndex(first));
-        			FractalArrayImpl<E> newFractal = fractal.shift(subIndex(last), subIndex(first), inserted);
-        			if (newFractal.isEmpty()) count--;
-        			if (fractal != newFractal) inners[i] = newFractal;
-          			inserted = carry;
-          	        if (i == j) break;
+        			if (fractal == null) {
+        				inners[i] = new Single<E>(maxSubIndex, inserted);
+        				count++;
+        				inserted = null;
+        			} else {
+        				E carry = fractal.get(minSubIndex);
+        				FractalArrayImpl<E> newFractal = fractal.shift(maxSubIndex, minSubIndex, inserted);
+                		if (newFractal != fractal) inners[i] = newFractal.isEmpty() ? null : newFractal;
+                		if (newFractal.isEmpty()) count--;
+                		inserted = carry;
+        			}
+          	        if (i == iFrom) break;
          		} 
         	}
-			return (count > 1) ? this : anyInner(from);
+
+         	return (count > 1) ? this : anyInner();
 		}
 
 		@Override
@@ -473,29 +492,40 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 		}
 
 		@Override
-		public long ceiling(long minIndex, Consumer<? super E> found) {
-	   		for (long i=minIndex; inRange(i); i += 1L << innerIndexSize) {
-	   			int aIndex = arrayIndex(i);
-	   			FractalArrayImpl<E> fractal = inners[aIndex];
-	   			long sIndex = subIndex(i);
-	   			long foundIndex = fractal.ceiling(sIndex, found);
-	   			if ((foundIndex == 0) && ((sIndex != 0) || (fractal.get(0) == null))) continue; // Not found.
-      			return indexFor(aIndex, sIndex);
+		public long ceiling(long minIndex, Predicate<? super E> matching) {
+			if (isOverflow(minIndex)) return 0;
+			if (isUnderflow(minIndex)) minIndex = firstIndex();
+			long minSubIndex = subIndex(minIndex);
+	   		for (int i=arrayIndex(minIndex), n=arrayIndex(lastIndex());; i = ++i & MASK) {
+	   			FractalArrayImpl<E> fractal = inners[i];
+	   			if (fractal != null) {
+	   				if (minSubIndex == 0) { // Avoid zero because of ambiguity in ceiling result.
+		   				E atZero = fractal.get(0);
+		   				if ((atZero != null) && matching.test(atZero)) return indexFor(i, 0);
+		   				minSubIndex++;
+		   			}
+	   				long subIndex = fractal.ceiling(minSubIndex, matching);
+	   			   	if (subIndex != 0) return indexFor(i, subIndex);
+	   			}
+    			if (i == n) return 0;
+    			minSubIndex = 0;
     		}
-    		return 0;
 		}
 
 		@Override
-		public long floor(long maxIndex, Consumer<? super E> found) {
-	   		for (long i=maxIndex; inRange(i); i -= 1L << innerIndexSize) {
-	   			int aIndex = arrayIndex(i);
-	   			FractalArrayImpl<E> fractal = inners[aIndex];
-	   			long sIndex = subIndex(i);
-	   			long foundIndex = fractal.floor(sIndex, found);
-	   			if ((foundIndex == -1) && ((sIndex != -1) || (fractal.get(-1) == null))) continue; // Not found.
-      			return indexFor(aIndex, sIndex);
+		public long floor(long maxIndex, Predicate<? super E> matching) {
+			if (isUnderflow(maxIndex)) return -1;
+			if (isOverflow(maxIndex)) maxIndex = lastIndex();
+			long maxSubIndex = subIndex(maxIndex);
+	   		for (int i=arrayIndex(maxIndex), n=arrayIndex(firstIndex());; i = --i & MASK) {
+	   			FractalArrayImpl<E> fractal = inners[i];
+	   			if (fractal != null) {
+	   				long subIndex = fractal.floor(maxSubIndex, matching);
+	   			   	if (subIndex != -1) return indexFor(i, subIndex);
+	   			}
+    			if (i == n) return -1;
+    			maxSubIndex = subIndex(-1);
     		}
-    		return -1;
 		}
 		
 		@Override
@@ -512,11 +542,14 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     		return this;
     	}
 		
-		private FractalArrayImpl<E> anyInner(long lastCleared) { // Called when count == 1
-			int j = arrayIndex(lastCleared);
-			for (int i = (j-1) & MASK; i != j; i = --i & MASK)   // Go backward from last cleared.
-				if (inners[i] != null) return inners[i];
-			throw new IllegalStateException("Corruption, single inner fractal not found!");
+		private FractalArrayImpl<E> anyInner() { // Called when count == 1
+			for (int i = arrayIndex(0);; i = ++i & MASK) {
+				FractalArrayImpl<E> inner = inners[i];
+				if (inner == null) continue;
+				// Appends this prefix to inner prefix.
+				inner.prefix = clearLowBits(indexFor(i, 0), innerIndexSize) | inner.prefix; 
+				return inner;
+			}
 		}
 
 		private boolean inRange(long index) { // Check prefix equality 
@@ -540,14 +573,14 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
     	}
   	
      	private int arrayIndex(long index) {  
-    		return (int) clearHighBits((index + prefix) >> innerIndexSize, 64 - SIZE_INC);
+    		return (int) clearHighBits((index + prefix) >>> innerIndexSize, 64 - SIZE_INC);
     	}
   	
      	private long subIndex(long index) {  
-    		return (int) clearHighBits(index + prefix, 64 - innerIndexSize);
+    		return clearHighBits(index + prefix, 64 - innerIndexSize);
     	}
   	
-     	private long indexFor(int arrayIndex, long subIndex) { 
+     	private long indexFor(long arrayIndex, long subIndex) { 
      		return (clearLowBits(prefix >>> SIZE_INC, innerIndexSize) << SIZE_INC) | 
      				clearHighBits((arrayIndex << innerIndexSize) + subIndex - prefix, max(0, 64 - SIZE_INC - innerIndexSize));
     	}

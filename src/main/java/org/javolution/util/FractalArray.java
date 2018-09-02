@@ -18,7 +18,6 @@ import java.util.NoSuchElementException;
 
 import org.javolution.annotations.Nullable;
 import org.javolution.annotations.Realtime;
-import org.javolution.util.function.Consumer;
 import org.javolution.util.function.Predicate;
 import org.javolution.util.internal.FractalArrayImpl;
 
@@ -206,27 +205,27 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
     
     /**
      * Returns the index (unsigned 64-bits) of the nearest non-null value greater than or equal 
-     * to the specified minimum index. If no such index exists {@code -1} is returned and the 
-     * specified consumer is not called. 
+     * to the specified minimum index and matching the specified filter. 
+     * If no such index exists {@code 0} is returned. 
      * 
      * @param minIndex the unsigned minimum index.
-     * @param found the consumer called when an element is found.
+     * @param matching the filter called on {@code non-null} elements.
      * @return the greatest index less than or equal to the specified index or {@code 0} if none.
      */
     @Realtime(limit=CONSTANT)
-    public abstract long ceiling(long minIndex, Consumer<? super E> found);
+    public abstract long ceiling(long minIndex, Predicate<? super E> matching);
 
     /**
      * Returns the index (unsigned 64-bits) of the nearest non-null value smaller than or equal 
-     * to the specified maximum index. If no such value exists {@code 0} is returned and the specified 
-     * consumer is not called.
+     * to the specified minimum index and matching the specified filter. 
+     * If no such index exists {@code -1} is returned. 
      * 
      * @param maxIndex the unsigned maximum index.
-     * @param found the consumer called when an element is found.
+     * @param matching the filter called on {@code non-null} elements.
      * @return the smallest index greater than or equal to the specified index or {@code -1} if none.
      */
     @Realtime(limit=CONSTANT)
-    public abstract long floor(long maxIndex, Consumer<? super E> found);
+    public abstract long floor(long maxIndex, Predicate<? super E> matching);
  
     /** 
      * Returns an ascending iterator over non-null values starting from the specified index (convenience method). 
@@ -260,7 +259,7 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
     }
 
     /** Ascending array iterator. */
-    private static final class AscendingIterator<E> implements Iterator<E>, Consumer<E> {
+    private static final class AscendingIterator<E> implements Iterator<E>, Predicate<E> {
         private final FractalArray<E> fractal;
         private long nextIndex;
         private E next;
@@ -277,20 +276,21 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
 
         @Override
         public boolean hasNext(Predicate<? super E> matching) {
-            while (next != null) {
-                if (matching.test(next)) return true;
-                next = null;
-                nextIndex = fractal.ceiling(nextIndex + 1, this);
-            }
-            return false;
+        	if (next == null) return false;
+        	if (matching.test(next)) return true;
+            next = null;
+            nextIndex = (nextIndex != -1) ? fractal.ceiling(nextIndex + 1, matching) : 0;
+            if (nextIndex == 0) return false; // Only possible if not found.
+            next = fractal.get(nextIndex);
+            return true;
         }
 
         @Override
         public E next() {
-            if (next != null) throw new NoSuchElementException();
+            if (next == null) throw new NoSuchElementException();
             E tmp = next;
             next = null;
-            nextIndex = fractal.ceiling(nextIndex + 1, this);
+            nextIndex = (nextIndex != -1) ? fractal.ceiling(nextIndex + 1, this) : 0;
             return tmp;
         }
 
@@ -304,15 +304,16 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
             throw new UnsupportedOperationException(); // As per contract.                
         }
 
-        @Override
-        public void accept(E value) {
+		@Override
+		public boolean test(E value) {
             next = value;            
-        }        
+			return true;
+		}        
         
     }
     
     /** Descending array iterator. */
-    private static final class DescendingIterator<E> implements Iterator<E>, Consumer<E> {
+    private static final class DescendingIterator<E> implements Iterator<E>, Predicate<E> {
         private final FractalArray<E> fractal;
         private long previousIndex;
         private E previous;
@@ -329,20 +330,21 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
 
         @Override
         public boolean hasNext(Predicate<? super E> matching) {
-            while (previous != null) {
-                if (matching.test(previous)) return true;
-                previous = null;
-                previousIndex = fractal.floor(previousIndex - 1, this);
-            }
-            return false;
+          	if (previous == null) return false;
+          	if (matching.test(previous)) return true;
+            previous = null;
+            previousIndex = (previousIndex != 0) ? fractal.floor(previousIndex - 1, matching) : -1;
+            if (previousIndex == -1) return false; // Only possible if not found.
+            previous = fractal.get(previousIndex);
+            return true;
         }
 
         @Override
         public E next() {
-            if (previous != null) throw new NoSuchElementException();
+            if (previous == null) throw new NoSuchElementException();
             E tmp = previous;
             previous = null;
-            previousIndex = fractal.floor(previousIndex - 1, this);
+            previousIndex = (previousIndex != 0) ? fractal.floor(previousIndex - 1, this) : -1;
             return tmp;
         }
 
@@ -356,10 +358,11 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
             throw new UnsupportedOperationException(); // As per contract.                
         }
 
-        @Override
-        public void accept(E value) {
-            previous = value;
-        }
+		@Override
+		public boolean test(E value) {
+		    previous = value;
+			return true;
+		}
    
     }
     
@@ -403,13 +406,13 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
 	 	}
 		
         @Override
-        public long ceiling(long minIndex, Consumer<? super E> value) {
-            return target.ceiling(minIndex, value);
+        public long ceiling(long minIndex, Predicate<? super E> matching) {
+            return target.ceiling(minIndex, matching);
         }
 
         @Override
-        public long floor(long maxIndex, Consumer<? super E> value) {
-            return target.floor(maxIndex, value);
+        public long floor(long maxIndex, Predicate<? super E> matching) {
+            return target.floor(maxIndex, matching);
         }
         
     }

@@ -125,6 +125,7 @@ public class FastTable<E> extends AbstractTable<E> {
     @Realtime(limit = CONSTANT)
     public  void clear() {
         array = FractalArray.empty();
+        length = 0;
     }
 
     @Override
@@ -178,26 +179,27 @@ public class FastTable<E> extends AbstractTable<E> {
         return length;
     }
 
-    /** Iterator Implementation. */
+    /** List Iterator Implementation. */
     private static final class IteratorImpl<E> implements FastListIterator<E> {
         private final FractalArray<E> array;
-        private int next;
+        private int nextIndex;
         private int length;
 
-        public IteratorImpl(FractalArray<E> array, int length, int next) {
+        public IteratorImpl(FractalArray<E> array, int length, int nextIndex) {
             this.array = array;
             this.length = length;
-            this.next = next;
+            this.nextIndex = nextIndex;
         }
 
         @Override
         public boolean hasNext() {
-            return next < length;
+            return nextIndex < length;
         }
 
         @Override
         public boolean hasNext(Predicate<? super E> matching) {
-            while (next < length) if (matching.test(array.get(next++))) return true;
+            for (; nextIndex < length; nextIndex++) 
+            	if (matching.test(array.get(nextIndex))) return true;
             return false;
         }
 
@@ -213,35 +215,36 @@ public class FastTable<E> extends AbstractTable<E> {
 
         @Override
         public boolean hasPrevious() {
-            return next > 0;
+            return nextIndex > 0;
         }
 
         @Override
         public boolean hasPrevious(Predicate<? super E> matching) {
-            while (next > 0) if (matching.test(array.get(--next))) return true;
+            for (; nextIndex > 0; nextIndex--) 
+            	if (matching.test(array.get(nextIndex - 1))) return true;
             return false;
         }
 
         @Override
         public E next() {
-            if (next >= length) throw new NoSuchElementException();
-            return array.get(next++);
+            if (nextIndex >= length) throw new NoSuchElementException();
+            return array.get(nextIndex++);
         }
 
         @Override
         public int nextIndex() {
-            return next;
+            return nextIndex;
         }
 
         @Override
         public E previous() {
-            if (next <= 0) throw new NoSuchElementException();
-            return array.get(--next);
+            if (nextIndex <= 0) throw new NoSuchElementException();
+            return array.get(--nextIndex);
         }
 
         @Override
         public int previousIndex() {
-            return next - 1;
+            return nextIndex - 1;
         }
 
         @Override
