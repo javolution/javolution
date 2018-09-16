@@ -54,7 +54,7 @@ public final class XMLContextImpl extends XMLContext {
         return new XMLContextImpl(this);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Override
     protected <T> XMLFormat<T> searchFormat(Class<? extends T> type) {
         XMLFormat<T> format = (XMLFormat<T>) classToFormat.get(type);

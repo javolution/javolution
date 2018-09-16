@@ -61,7 +61,7 @@ public final class AtomicSetImpl<E>  // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public synchronized boolean addAll(E... elements) {
+    public synchronized boolean addAll(@SuppressWarnings("unchecked") E... elements) {
         boolean changed = inner.addAll(elements);
         if (changed)
             innerConst = inner.clone();

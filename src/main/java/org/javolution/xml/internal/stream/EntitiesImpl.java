@@ -111,7 +111,7 @@ public final class EntitiesImpl {
         // Searches user defined entities.
         _tmp.setArray(buffer, start + 1, length - 2);
         CharSequence replacementText = (_entitiesMapping != null) ?  _entitiesMapping
-                .get(_tmp) : null;
+                .get(_tmp.toString()) : null;
         if (replacementText == null)
             throw new XMLStreamException("Entity " + _tmp + " not recognized");
         int replacementTextLength = replacementText.length();

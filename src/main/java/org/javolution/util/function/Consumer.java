@@ -23,7 +23,7 @@ import org.javolution.annotations.Realtime;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public interface Consumer<T> {
+public interface Consumer<T> extends java.util.function.Consumer<T> {
 
     /**
      * A consumer doing nothing.

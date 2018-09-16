@@ -769,7 +769,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		return elementStackData;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	private void invokeMethod(final Method method, final Class<?> type, final Object object, final CharArray value, final Enum<?> enumValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, UnmarshalException, ParseException{
 		InvocationClassType invocationClassType;
 
@@ -979,6 +979,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private static <T> T reflectNewInstance(final Class<T> objClass) throws UnmarshalException{
 		final T outputObject;
 
@@ -992,6 +993,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		return outputObject;
 	}
 
+	@SuppressWarnings("deprecation")
 	private Object reflectNewInstance(final Class<?> instanceClass, final CacheData cacheData, final CharArray localXmlElementName) throws UnmarshalException {
 		final Object instance;
 

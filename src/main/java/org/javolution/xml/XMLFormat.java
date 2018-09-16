@@ -137,7 +137,8 @@ public abstract class XMLFormat<T> {
      * @throws javolution.xml.stream.XMLStreamException Thrown when an error occurs while instantiating the specified class
      * @return the object corresponding to the specified XML element.
      */
-    public T newInstance(Class<? extends T> cls, InputElement xml)
+    @SuppressWarnings("deprecation")
+	public T newInstance(Class<? extends T> cls, InputElement xml)
             throws XMLStreamException {
         try {
             return cls.newInstance();

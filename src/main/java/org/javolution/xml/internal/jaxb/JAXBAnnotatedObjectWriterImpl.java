@@ -227,7 +227,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 	private void writeAttributeValue(final Object element, final Method method, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final CharArray attributeName = _methodAttributeNameCache.get(method);
-		final Object value = method.invoke(element, null);
+		final Object value = method.invoke(element, (Object[])null);
 
 		if(value == null) {
 			if (_isValidating && _requiredCache.get(method.getDeclaringClass()).contains(attributeName)) {
@@ -297,7 +297,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		}
 		// Complex Types W/ Simple Values - @XmlValue detection
 		else {
-			final Object fieldValue = xmlValueMethod.invoke(element, null);
+			final Object fieldValue = xmlValueMethod.invoke(element, (Object[]) null);
 
 			if(fieldValue == null) {
 				writer.writeEmptyElement(elementName);
@@ -323,7 +323,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			final CharArray prop = propOrder.next();
 
 			final Method method = propOrderMethodCache.get(prop);
-			final Object value = method.invoke(element, null);
+			final Object value = method.invoke(element, (Object[]) null);
 
 			if(value == null) {
 				if(_isValidating && method.isAnnotationPresent(XmlElement.class) &&
@@ -455,7 +455,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		return xmlGregorianCalendar.toXMLFormat();
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	private String getElementValue(final Method method, final InvocationClassType invocationClassType, final Object value) throws MarshalException{
 		final String elementValue;
 

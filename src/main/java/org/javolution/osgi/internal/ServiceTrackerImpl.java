@@ -41,7 +41,8 @@ public final class ServiceTrackerImpl<C> {
     }
 
     /** Returns the published services or the default implementation if none. */
-    public Object[] getServices() {
+    @SuppressWarnings("deprecation")
+	public Object[] getServices() {
         ServiceTracker<C, C> trk = tracker;
         if (trk != null) {
             Object[] services = trk.getServices();

@@ -56,7 +56,7 @@ public abstract class AbstractTable<E> extends AbstractCollection<E> implements 
     private static final long serialVersionUID = 0x700L; // Version.
 
     @Override
-    public AbstractTable<E> with(E... elements) {
+    public AbstractTable<E> with(@SuppressWarnings("unchecked") E... elements) {
         addAll(elements);
         return this;
     }

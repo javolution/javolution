@@ -17,7 +17,7 @@ package org.javolution.util.function;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.1, December 31, 2014
  */
-public interface UnaryOperator<T> extends Function<T,T> {
+public interface UnaryOperator<T> extends java.util.function.UnaryOperator<T> {
 
     /**
      * An unary operator that always returns its input argument.

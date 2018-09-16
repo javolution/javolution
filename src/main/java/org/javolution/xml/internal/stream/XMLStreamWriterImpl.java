@@ -617,13 +617,13 @@ public final class XMLStreamWriterImpl implements XMLStreamWriter {
     // Implements XMLStreamWriter interface.
     public Object getProperty(String name) throws IllegalArgumentException {
         if (name.equals(XMLOutputFactory.IS_REPAIRING_NAMESPACES)) {
-            return new Boolean(_isRepairingNamespaces);
+            return Boolean.valueOf(_isRepairingNamespaces);
         } else if (name.equals(XMLOutputFactory.REPAIRING_PREFIX)) {
             return _repairingPrefix;
         } else if (name.equals(XMLOutputFactory.AUTOMATIC_EMPTY_ELEMENTS)) {
-            return new Boolean(_automaticEmptyElements);
+            return Boolean.valueOf(_automaticEmptyElements);
         } else if (name.equals(XMLOutputFactory.NO_EMPTY_ELEMENT_TAG)) {
-            return new Boolean(_noEmptyElementTag);
+            return Boolean.valueOf(_noEmptyElementTag);
         } else if (name.equals(XMLOutputFactory.INDENTATION)) {
             return _indentation;
         } else if (name.equals(XMLOutputFactory.LINE_SEPARATOR)) {

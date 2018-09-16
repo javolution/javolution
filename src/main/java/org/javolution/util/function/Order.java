@@ -145,8 +145,9 @@ public abstract class Order<T> implements Equality<T>, Comparator<T>, Indexer<T>
      */
     public @Nullable Order<T> subOrder(T obj) {
         return new Order<T>() {
+			private static final long serialVersionUID = Order.serialVersionUID;
 
-            @Override
+			@Override
             public boolean areEqual(T left, T right) {
                 return Order.this.areEqual(left, right);
             }

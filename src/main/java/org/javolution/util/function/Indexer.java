@@ -8,7 +8,6 @@
  */
 package org.javolution.util.function;
 
-import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;

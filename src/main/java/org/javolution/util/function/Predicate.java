@@ -19,7 +19,7 @@ package org.javolution.util.function;
  * @author <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public interface Predicate<T> {
+public interface Predicate<T> extends java.util.function.Predicate<T> {
 
 	/**
 	 * Predicate always returning {@code true}.

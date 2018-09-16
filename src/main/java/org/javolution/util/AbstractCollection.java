@@ -67,7 +67,7 @@ public abstract class AbstractCollection<E> implements Collection<E>, Serializab
     private static final long serialVersionUID = 0x700L; // Version.
         
     /** Returns this collection with the specified elements added (convenience method). */
-    public AbstractCollection<E> with(E... elements) {
+    public AbstractCollection<E> with(@SuppressWarnings("unchecked") E... elements) {
         addAll(elements);
         return this;
     }
@@ -436,7 +436,7 @@ public abstract class AbstractCollection<E> implements Collection<E>, Serializab
 
     /** Adds all the elements specified  to this collection (convenience method).*/
     @Realtime(limit = LINEAR)
-    public boolean addAll(E... elements) {
+    public boolean addAll(@SuppressWarnings("unchecked") E... elements) {
         boolean changed = false;
         for (E e : elements)
             if (add(e)) changed = true;

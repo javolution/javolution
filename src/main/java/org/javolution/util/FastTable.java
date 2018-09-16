@@ -102,7 +102,7 @@ public class FastTable<E> extends AbstractTable<E> {
     }
 
     @Override
-    public FastTable<E> with(E... elements) {
+    public FastTable<E> with(@SuppressWarnings("unchecked") E... elements) {
         addAll(elements);
         return this;
     }
@@ -198,9 +198,10 @@ public class FastTable<E> extends AbstractTable<E> {
 
         @Override
         public boolean hasNext(Predicate<? super E> matching) {
-            for (; nextIndex < length; nextIndex++) 
-            	if (matching.test(array.get(nextIndex))) return true;
-            return false;
+        	nextIndex = (int) array.next(nextIndex, -1, matching);
+        	if (nextIndex != -1) return true;
+        	nextIndex = length;
+        	return false;
         }
 
         @Override
@@ -220,8 +221,10 @@ public class FastTable<E> extends AbstractTable<E> {
 
         @Override
         public boolean hasPrevious(Predicate<? super E> matching) {
-            for (; nextIndex > 0; nextIndex--) 
-            	if (matching.test(array.get(nextIndex - 1))) return true;
+        	if (nextIndex == 0) return false;
+           	nextIndex = (int) array.next(nextIndex - 1, 0, matching);
+          	if (nextIndex++ != -1) return true;
+           	nextIndex = 0;
             return false;
         }
 

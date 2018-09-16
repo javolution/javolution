@@ -72,7 +72,7 @@ public final class SharedSetImpl<E> // implements AbstractSetMethods<E> {
     }
 
     @Override
-    public boolean addAll(E... elements) {
+    public boolean addAll(@SuppressWarnings("unchecked") E... elements) {
         lock.writeLock.lock();
         try {
             return inner.addAll(elements);

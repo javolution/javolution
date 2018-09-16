@@ -13,12 +13,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.javolution.util.FastTable;
+import org.javolution.util.FractalArray;
 import org.junit.Before;
 import org.junit.Test;
 
 public class FastTableTest {
 
 	private FastTable<String> _fastTable;
+
 	
 	@Before
 	public void init(){
@@ -27,6 +29,24 @@ public class FastTableTest {
 		_fastTable.add("Test2");
 		_fastTable.add("Test3");
 	}
+
+	@Test
+	public void testArray(){
+		FractalArray<String> array = FractalArray.empty();
+	    array = array.set(1234567, "12345678%");
+	    array = array.set(3234567, "32345678%");
+	    array = array.set(3234568, "3222345679%");
+	    array = array.set(-1L, "Hello32345678%");
+	    array = array.shift(0L, -1L, "toto");
+		System.out.println(array.get(1234567L));
+		System.out.println(array.get(3234567L));
+		System.out.println(array.get(3234568));
+		System.out.println(array.get(-1L));
+		System.out.println(array.get(-2L));
+		for (FractalArray.Iterator<String> itr = array.iterator(); itr.hasNext();) 
+			System.out.println(itr.nextIndex() + " -> " + itr.next());
+	}
+	
 	
 	@Test
 	public void testAdd(){

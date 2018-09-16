@@ -38,7 +38,7 @@ public interface FastIterator<E> extends Iterator<E> {
     boolean hasNext();
 
     /** 
-     * Iterates partially or fully until the specified predicate is verified for the next element. 
+     * Iterates partially or fully until the specified predicate is verified for the next {@code non-null} element. 
      * 
      * @param matching the predicate to be verified.
      * @return {@code true} if there is a next element matching the specified predicate; {@code false} otherwise.

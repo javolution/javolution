@@ -147,7 +147,7 @@ public class FastSet<E> extends AbstractSet<E> {
     }
 
     @Override
-    public FastSet<E> with(E... elements) {
+    public FastSet<E> with(@SuppressWarnings("unchecked") E... elements) {
         addAll(elements);
         return this;
     }
@@ -306,16 +306,16 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final E findAny() {
-        if (!singles.isEmpty()) return singles.get(singles.ceiling(0, Predicate.TRUE));
-        if (!multiples.isEmpty()) return multiples.get(multiples.ceiling(0, Predicate.TRUE)).findAny();
+        if (!singles.isEmpty()) return singles.get(singles.next(0, -1, Predicate.TRUE));
+        if (!multiples.isEmpty()) return multiples.get(multiples.next(0, -1, Predicate.TRUE)).findAny();
         return null;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final E first() {
-        long s = singles.ceiling(0, Predicate.TRUE);
-        long m = multiples.ceiling(0, Predicate.TRUE);
+        long s = singles.next(0, -1, Predicate.TRUE);
+        long m = multiples.next(0, -1, Predicate.TRUE);
         AbstractSet<E> innerSet;
         if (!MathLib.unsignedLessThan(s, m) && ((innerSet = multiples.get(m)) != null)) 
             return innerSet.first();
@@ -326,8 +326,8 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final E last() {
-        long s = singles.floor(-1, Predicate.TRUE);
-        long m = multiples.floor(-1, Predicate.TRUE);
+        long s = singles.next(-1, 0, Predicate.TRUE);
+        long m = multiples.next(-1, 0, Predicate.TRUE);
         AbstractSet<E> innerSet;
         if (!MathLib.unsignedLessThan(m, s) && ((innerSet = multiples.get(m)) != null)) 
             return innerSet.last();

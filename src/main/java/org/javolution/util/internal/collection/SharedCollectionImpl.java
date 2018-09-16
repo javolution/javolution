@@ -59,7 +59,7 @@ public final class SharedCollectionImpl<E> // implements AbstractCollectionMetho
     }
 
     @Override
-    public boolean addAll(E... elements) {
+    public boolean addAll(@SuppressWarnings("unchecked") E... elements) {
         lock.writeLock.lock();
         try {
             return inner.addAll(elements);

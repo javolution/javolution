@@ -211,6 +211,7 @@ public abstract class AbstractJAXBAnnotatedObjectParser {
 
 				try {
 					final Class<?> objectFactoryClass = Class.forName(objectFactoryBuilder.toString());
+					@SuppressWarnings("deprecation")
 					final Object objectFactory = objectFactoryClass.newInstance();
 
 					scanObjectFactory(objectFactory, false);

@@ -54,7 +54,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements So
     private static final long serialVersionUID = 0x700L; // Version.
 
     @Override
-    public AbstractSet<E> with(E... elements) {
+    public AbstractSet<E> with(@SuppressWarnings("unchecked") E... elements) {
         addAll(elements);
         return this;
     }

@@ -46,7 +46,7 @@ public interface FastListIterator<E> extends FastIterator<E>, ListIterator<E> {
     boolean hasPrevious();
 
     /** 
-     * Iterates partially or fully until the specified predicate is verified for the previous element. 
+     * Iterates partially or fully until the specified predicate is verified for the previous {@code non-null} element. 
      * 
      * @param matching the predicate to be verified.
      * @return {@code true} if there is a previous element matching the specified predicate; {@code false} otherwise.
@@ -60,7 +60,7 @@ public interface FastListIterator<E> extends FastIterator<E>, ListIterator<E> {
     @Override
     E next();
 
-    /** Returns the index of the next element or {@code 0} if there is no next element. */
+    /**  Returns the index of the next element or the list size if there is no next element. */
     @Override
     int nextIndex();
 

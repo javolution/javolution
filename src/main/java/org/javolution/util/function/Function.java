@@ -19,7 +19,7 @@ package org.javolution.util.function;
  * @version 6.0, July 21, 2013
  * @see <a href="http://en.wikipedia.org/wiki/Function_(computer_science)">Wikipedia: Function</a>    
  */
-public interface Function<T, R> {
+public interface Function<T, R> extends java.util.function.Function<T, R> {
 
     /**
      * Returns the result of applying this function to the specified parameter. 

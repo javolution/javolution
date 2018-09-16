@@ -73,7 +73,7 @@ public final class SharedTableImpl<E> //implements AbstractTableMethods<E> {
     }
 
     @Override
-    public boolean addAll(E... elements) {
+    public boolean addAll(@SuppressWarnings("unchecked") E... elements) {
         lock.writeLock.lock();
         try {
             return inner.addAll(elements);

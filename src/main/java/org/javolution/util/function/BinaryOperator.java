@@ -17,7 +17,7 @@ package org.javolution.util.function;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.1, December 31, 2014
  */
-public interface BinaryOperator<T> {
+public interface BinaryOperator<T> extends java.util.function.BinaryOperator<T>{
 
     /**
      * Returns the result of applying this operator on the specified parameters. 

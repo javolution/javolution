@@ -54,7 +54,7 @@ public interface AbstractCollectionMethods<E> extends Collection<E>, Serializabl
     
     boolean addAll(Collection<? extends E> that);
 
-    boolean addAll(E... elements);
+    boolean addAll(@SuppressWarnings("unchecked") E... elements);
 
     boolean containsAll(Collection<?> that);
 

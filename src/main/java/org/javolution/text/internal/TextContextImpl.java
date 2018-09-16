@@ -60,7 +60,7 @@ public final class TextContextImpl extends TextContext {
         return new TextContextImpl(this);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Override
     protected <T> TextFormat<T> searchFormat(Class<? extends T> type) {
         TextFormat<T> format = (TextFormat<T>) classToFormat.get(type);
@@ -214,7 +214,8 @@ public final class TextContextImpl extends TextContext {
             return TypeFormat.format(obj.floatValue(), dest);
         }
 
-        @Override
+        @SuppressWarnings("deprecation")
+		@Override
         public Float parse(CharSequence csq, Cursor cursor) {
             return new Float(TypeFormat.parseFloat(csq, cursor));
         }
@@ -229,7 +230,8 @@ public final class TextContextImpl extends TextContext {
             return TypeFormat.format(obj.doubleValue(), dest);
         }
 
-        @Override
+        @SuppressWarnings("deprecation")
+		@Override
         public Double parse(CharSequence csq, Cursor cursor) {
             return new Double(TypeFormat.parseDouble(csq, cursor));
         }

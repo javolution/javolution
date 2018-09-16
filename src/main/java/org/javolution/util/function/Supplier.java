@@ -20,7 +20,7 @@ import org.javolution.annotations.Realtime;
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @version 6.0, July 21, 2013
  */
-public interface Supplier<T> {
+public interface Supplier<T> extends java.util.function.Supplier<T> {
 
     /**
      * A supplier returning {@code null}.
