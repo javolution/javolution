@@ -108,7 +108,7 @@ public class FastSet<E> extends AbstractSet<E> {
 
     /** Creates a {@link Equality#STANDARD standard} set arbitrarily ordered (hash order). */
     public FastSet() {
-        this(Order.STANDARD);
+        this(Order.standard());
     }
 
     /** Creates a {@link Equality#STANDARD standard} set ordered using the specified indexer function.*/
@@ -161,7 +161,7 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final boolean add(E element, boolean allowDuplicate) {
-        int index = order.indexOf(element);
+        long index = order.indexOf(element);
         AbstractSet<E> multiple = multiples.get(index);
         if (multiple != null) {
             if (!multiple.add(element, allowDuplicate)) return false;            
@@ -185,7 +185,7 @@ public class FastSet<E> extends AbstractSet<E> {
     @Realtime(limit = CONSTANT)
     @Override
     public final E getAny(E element) {
-        int index = order.indexOf(element);
+        long index = order.indexOf(element);
         AbstractSet<E> multiple = multiples.get(index);
         if (multiple != null) {
             return multiple.getAny(element);            
@@ -259,7 +259,7 @@ public class FastSet<E> extends AbstractSet<E> {
     @Realtime(limit = CONSTANT)
     public final E removeAny(E element) {
         E removed;
-        int index = order.indexOf(element);
+        long index = order.indexOf(element);
         AbstractSet<E> multiple = multiples.get(index);
         if (multiple != null) {
             removed = multiple.removeAny(element);
@@ -344,7 +344,7 @@ public class FastSet<E> extends AbstractSet<E> {
         
         @SuppressWarnings("unchecked")
         public AscendingIteratorImpl(@Nullable E from) {
-            int i = (from != null) ? order.indexOf(from) : 0;
+            long i = (from != null) ? order.indexOf(from) : 0;
             singleItr = singles.iterator(i);
             multipleItr = multiples.iterator(i);            
             if (multipleItr.hasNext() && !MathLib.unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
@@ -397,7 +397,7 @@ public class FastSet<E> extends AbstractSet<E> {
         
         @SuppressWarnings("unchecked")
         public DescendingIteratorImpl(@Nullable E from) {
-            int i = (from != null) ? order.indexOf(from) : -1;
+            long i = (from != null) ? order.indexOf(from) : -1;
             singleItr = singles.descendingIterator(i);
             multipleItr = multiples.descendingIterator(i);            
             if (multipleItr.hasNext() && !MathLib.unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {

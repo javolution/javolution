@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.javolution.util.function.Order;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,18 +40,7 @@ public class FastSetTest {
 		assertNotNull("Any String Obtained", anyString);
 		assertTrue("Set Contains String", _fastSet.contains(anyString));
 	}
-	
-	@Test
-	public void testCaseInsensitiveSetWithLexicalCaseInsensitive(){
-		_fastSet = new FastSet<String>(Order.LEXICAL_CASE_INSENSITIVE);
-		_fastSet.add("Test");
 		
-		assertTrue("Set Contains Test", _fastSet.contains("Test"));
-		assertTrue("Set Contains TEST", _fastSet.contains("TEST"));
-		assertTrue("Set Contains test", _fastSet.contains("test"));
-		assertTrue("Set Contains tESt", _fastSet.contains("tESt"));
-	}
-	
 	@Test
 	public void testClear(){
 		_fastSet.add("Test");

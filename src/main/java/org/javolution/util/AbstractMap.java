@@ -414,7 +414,7 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
                 return false;
             @SuppressWarnings("unchecked")
             Map.Entry<K, V> that = (Map.Entry<K, V>) obj;
-            return Order.STANDARD.areEqual(key, that.getKey()) && Order.STANDARD.areEqual(value, that.getValue());
+            return Order.standard().areEqual(key, that.getKey()) && Order.standard().areEqual(value, that.getValue());
         }
 
         @Override
@@ -429,7 +429,7 @@ public abstract class AbstractMap<K, V> implements ConcurrentMap<K, V>, SortedMa
 
         @Override
         public int hashCode() { // Default hash as per Map.Entry contract.
-            return Order.STANDARD.indexOf(key) ^ Order.STANDARD.indexOf(value);
+            return (int) (Order.standard().indexOf(key) ^ Order.standard().indexOf(value));
         }
 
         /** 

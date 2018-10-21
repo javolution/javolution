@@ -12,6 +12,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 import org.javolution.util.FastTable;
 import org.javolution.util.FractalArray;
 import org.junit.Before;
@@ -30,22 +33,30 @@ public class FastTableTest {
 		_fastTable.add("Test3");
 	}
 
+	
+	
+	// PROBLEM: OK WHEN SIZE = 100, KO WHEN SIZE = 1000
+	private static final int SIZE = 1000;
+	
 	@Test
 	public void testArray(){
-		FractalArray<String> array = FractalArray.empty();
-	    array = array.set(1234567, "12345678%");
-	    array = array.set(3234567, "32345678%");
-	    array = array.set(3234568, "3222345679%");
-	    array = array.set(-1L, "Hello32345678%");
-	    array = array.shift(0L, -1L, "toto");
-		System.out.println(array.get(1234567L));
-		System.out.println(array.get(3234567L));
-		System.out.println(array.get(3234568));
-		System.out.println(array.get(-1L));
-		System.out.println(array.get(-2L));
-		for (FractalArray.Iterator<String> itr = array.iterator(); itr.hasNext();) 
-			System.out.println(itr.nextIndex() + " -> " + itr.next());
+			Random rnd = new Random(0);
+			ArrayList<Integer> al = new ArrayList<>();
+			FastTable<Integer> ft = new FastTable<>();
+			for (int ii= 0; ii < SIZE; ii++) {
+		   	    int j = rnd.nextInt(al.size()+1);
+		   	    int n = rnd.nextInt(1000000);
+				al.add(j, n);
+			    ft.add(j, n);
+			    //System.out.println(al);
+			    //System.out.println(ft);
+			    assertEquals(al.toString(), ft.toString());
+			}
 	}
+	
+
+	
+	
 	
 	
 	@Test

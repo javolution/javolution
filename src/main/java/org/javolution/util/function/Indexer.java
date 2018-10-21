@@ -8,16 +8,18 @@
  */
 package org.javolution.util.function;
 
+import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.UNKNOWN;
 
 import java.io.Serializable;
 
+import org.javolution.annotations.Nullable;
 import org.javolution.annotations.ReadOnly;
 import org.javolution.annotations.Realtime;
 import org.javolution.lang.Immutable;
 
 /**
- * A function (functional interface) associating an unsigned 32-bits index value to an object.
+ * A function (functional interface) associating an unsigned 64-bits index value to an object.
  * 
  * @param <T> the type of objects that may be compared for equality.
  * 
@@ -31,36 +33,24 @@ public interface Indexer<T> extends Immutable, Serializable {
      * The hash indexer (based on {@link Object#hashCode}). 
      */
     @Realtime(limit = UNKNOWN)
-    public static final Indexer<Object> HASH = new Indexer<Object>() {
-        private static final long serialVersionUID = 0x700L; // Version.
-
-        @Override
-        public int indexOf(Object obj) {
-            return obj.hashCode();
-        }
-    };
+    static <T> Indexer<T> hash() {
+    	return (obj) -> (obj != null) ? obj.hashCode() : 0;
+	}
 
     /**
-     * The hash indexer (based on {@link Object#hashCode}). 
+     * The hash indexer (based on {@link System#identityHashCode}). 
      */
-    @Realtime(limit = UNKNOWN)
-    public static final Indexer<Object> SYSTEM_HASH = new Indexer<Object>() {
-        private static final long serialVersionUID = 0x700L; // Version.
-
-        @Override
-        public int indexOf(Object obj) {
-            return System.identityHashCode(obj);
-        }
-    };
+    @Realtime(limit = CONSTANT)
+    static <T> Indexer<T> identityHash() {
+    	return (obj) -> System.identityHashCode(obj);
+	}
 
     /**
-     * Returns the index (unsigned 32-bits value) of the specified object.
-     * If the specified object is {@code null}, returns {@code 0}.
+     * Returns the index (unsigned 64-bits value) for the specified object.
      * 
      * @param obj the object for which the index is calculated.
-     * @return the corresponding index (unsigned).
-     * @throws NullPointerException if the specified object is {@code null}
+     * @return the corresponding index (unsigned 64-bits).
      */
-    int indexOf(T obj);
+    long indexOf(@Nullable T obj);
 
 }

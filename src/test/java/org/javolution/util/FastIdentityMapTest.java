@@ -27,7 +27,7 @@ public class FastIdentityMapTest {
 	
 	@Before
 	public void init(){
-		_fastIdentityMap = new FastMap<Class<?>,Class<?>>(Order.IDENTITY);
+		_fastIdentityMap = new FastMap<Class<?>,Class<?>>(Order.identity());
 	}
 
 	@Test

@@ -28,7 +28,7 @@ public final class LinkedSetImpl<E> extends AbstractSet<E> {
 
     public LinkedSetImpl(AbstractSet<E> inner) {
         this.inner = inner;
-        this.insertionTable = new FastTable<E>().equality(Equality.IDENTITY);
+        this.insertionTable = new FastTable<E>().equality(Equality.identity());
     }
 
     public LinkedSetImpl(AbstractSet<E> inner, AbstractTable<E> insertionTable) {

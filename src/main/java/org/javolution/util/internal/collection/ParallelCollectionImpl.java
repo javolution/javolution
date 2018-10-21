@@ -197,7 +197,7 @@ public final class ParallelCollectionImpl<E> extends AbstractCollection<E> {
         } finally {
             ctx.exit(); // Waits for concurrent completion.
         }
-        final FastSet<E> toRemove = new FastSet<E>(Order.IDENTITY);
+        final FastSet<E> toRemove = new FastSet<E>(Order.identity());
         for (RemoveIfRunnable<E> result : results)
             toRemove.addAll(result.toRemove);
         return inner.removeIf(new Predicate<E>() {

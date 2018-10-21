@@ -109,19 +109,19 @@ public final class SortedSetImpl<E> extends AbstractSet<E> {
     } 
 
     /** Find the first position real or "would be" of the specified element in the given range. */
-    private int firstIndex(E element, int start, int length) {
-        if (length == 0) return start;
-        int half = length >> 1;
-        return comparator.compare(element, sorted.get(start + half)) <= 0 ? firstIndex(element, start, half) :
-            firstIndex(element, start + half, length - half);
+    private int firstIndex(E element, int start, int end) {
+        if (start == end) return start;
+        int midIndex = (start + end) >> 1;
+        return comparator.compare(element, sorted.get(midIndex)) <= 0 ? firstIndex(element, start, midIndex) :
+            firstIndex(element, midIndex + 1, end);
     }
 
     /** In sorted table find the last position real or "would be" of the specified element in the given range. */
-    private <K> int lastIndex(E element, int start, int length) {
-        if (length == 0) return start;
-        int half = length >> 1;
-        return comparator.compare(element, sorted.get(start + half)) < 0 ? lastIndex(element, start, half) :
-            lastIndex(element, start + half, length - half);
+    private <K> int lastIndex(E element, int start, int end) {
+        if (start == end) return start;
+        int midIndex = (start + end) >> 1;
+        return comparator.compare(element, sorted.get(midIndex)) < 0 ? lastIndex(element, start, midIndex) :
+            lastIndex(element, midIndex + 1, end);
     }
     
 }

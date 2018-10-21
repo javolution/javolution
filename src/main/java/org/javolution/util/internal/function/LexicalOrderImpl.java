@@ -13,25 +13,16 @@ import org.javolution.lang.MathLib;
 import org.javolution.util.function.Order;
 
 /**
- * The lexicographic order default implementation.
+ * The lexicographic order default implementation (four UTF-16 characters at a time).
  * 
- * This implementation calculates ordered indices from up to six first characters 
- * (compression using English letter frequency).
- * 
- * @see <a href="https://en.wikipedia.org/wiki/Letter_frequency">Wikipedia: Letter Frequency</a>
  */
 public final class LexicalOrderImpl extends Order<CharSequence> {
     private static final long serialVersionUID = 0x700L; // Version.
+    private int startIndex;
     
-    private static final int[] ENCODING_6_BITS = {
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    
-         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10, 10,            // '0' ...  
-         10, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,   // '@', 'A', ...   
-         25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 36, 36, 36, 36,   // 'P' ...   
-         36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,   // ''', 'a' ...  
-         52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 63, 63, 63, 63 }; // 'p' ...
+    public LexicalOrderImpl(int startIndex) {
+    	this.startIndex = startIndex;
+    }    
     
     @Override
     public boolean areEqual(@Nullable CharSequence left, @Nullable CharSequence right) {
@@ -39,14 +30,16 @@ public final class LexicalOrderImpl extends Order<CharSequence> {
         if ((left == null) || (right == null)) return false;
         int n = left.length();
         if (right.length() != n) return false;
-        for (int i = n; i > 0;) // Iterates from tail.
+        for (int i = n; i > startIndex;) // Iterates from tail.
             if (left.charAt(--i) != right.charAt(i)) return false;
         return true;
     }
 
     @Override
-    public int compare(CharSequence left, CharSequence right) {
-        for (int i = 0, n = MathLib.min(left.length(), right.length()); i < n; i++) {
+    public int compare(@Nullable CharSequence left, @Nullable CharSequence right) {
+    	if (left == null) return -1;
+    	if (right == null) return 1;
+        for (int i = startIndex, n = MathLib.min(left.length(), right.length()); i < n; i++) {
             char c1 = left.charAt(i);
             char c2 = right.charAt(i);
             if (c1 != c2) return c1 - c2;
@@ -55,16 +48,18 @@ public final class LexicalOrderImpl extends Order<CharSequence> {
     }
 
     @Override
-    public int indexOf(CharSequence csq) {
+    public long indexOf(@Nullable CharSequence csq) {
+    	if (csq == null) return 0;
         int length = csq.length();
-        for (int i = 0, index = 0;;) {
-            if (i >= length) return index; // No more character to read.
-            if (i == 5) return index | (encoding6bits(csq.charAt(5)) >> 4); // Only 2 bits left for 6th character.
-            index |= encoding6bits(csq.charAt(i++)) << (32 - (6 * i));
-        }
+        int index = 0;
+        for (int i = startIndex, n = MathLib.min(startIndex + 4, length); i < n;) 
+        	index = (index << 16) | csq.charAt(i++);
+        return index;	
     }
 
-    private static final int encoding6bits(int c) { // Must preserve lexical order.
-        return c < 128 ? ENCODING_6_BITS[c] : 63;
+    @Override
+    public LexicalOrderImpl subOrder(@Nullable CharSequence csq) {
+        return (csq != null) && csq.length() > startIndex + 4 ? 
+        		new LexicalOrderImpl(startIndex + 4) : null;
     }
 }

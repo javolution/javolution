@@ -396,7 +396,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence> {
      *          <code>CharSequence</code>.
      */
     public int compareTo(CharSequence seq) {
-        return Order.LEXICAL.compare(this, seq);
+        return Order.lexical().compare(this, seq);
     }
 
     /**

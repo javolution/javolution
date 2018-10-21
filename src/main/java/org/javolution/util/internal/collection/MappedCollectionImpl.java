@@ -46,7 +46,7 @@ public final class MappedCollectionImpl<E, R> extends AbstractCollection<R> {
 
     @Override
     public Equality<? super R> equality() {
-        return Equality.STANDARD;
+        return Equality.standard();
     }
 
     @Override

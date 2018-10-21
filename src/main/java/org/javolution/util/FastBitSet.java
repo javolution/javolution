@@ -376,7 +376,7 @@ public class FastBitSet extends AbstractSet<Index> {
 
     @Override
      public final Order<? super Index> order() {
-         return Order.INDEX;
+         return Index.ORDER;
      }
 
     /**

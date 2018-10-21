@@ -8,7 +8,6 @@
  */
 package org.javolution.util.function;
 
-
 /**
  * Represents an operation on a single operand that produces a result of the same type as its operand.
  *     
@@ -19,14 +18,14 @@ package org.javolution.util.function;
  */
 public interface UnaryOperator<T> extends java.util.function.UnaryOperator<T> {
 
-    /**
-     * An unary operator that always returns its input argument.
+	/**
+     * Returns a unary operator that always returns its input argument.
+     *
+     * @param <T> the type of the input and output of the operator.
+     * @return a unary operator that always returns its input argument.
      */
-    public static final UnaryOperator<Object> IDENTITY = new UnaryOperator<Object>() {
-
-        @Override
-        public Object apply(Object param) {
-            return param;
-        }}; 
+    static <T> UnaryOperator<T> identity() {
+        return t -> t;
+    }
     
 }

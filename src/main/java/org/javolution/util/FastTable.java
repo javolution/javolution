@@ -30,7 +30,7 @@ import org.javolution.util.function.Predicate;
  * ```java
  * FastTable<CharSequence> names = new FastTable<>(); 
  * ...
- * names.sort(Order.LEXICAL_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
+ * names.sort(Order.lexical()_CASE_INSENSITIVE); // Sorts the names in place (different from sorted() which returns a sorted view).
  * names.subTable(0, names.size() / 2).clear(); // Removes the first half of the table (see java.util.List.subList specification).
  * names.filter(str -> str.startsWith("A")).clear(); // Removes all the names starting with "A" (Java 8 notation).
  * names.filter(str -> str.startsWith("A")).parallel().clear(); // Same as above but removal performed concurrently.
@@ -139,7 +139,7 @@ public class FastTable<E> extends AbstractTable<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final Equality<? super E> equality() {
-        return Equality.STANDARD;
+        return Equality.standard();
     }
 
     @Override

@@ -19,7 +19,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.javolution.util.FastMap;
-import org.javolution.util.function.Order;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,19 +30,7 @@ public class FastMapTest {
 	public void init(){
 		_fastMap = new FastMap<String,String>();
 	}
-	
-	@Test
-	public void testCaseInsensitiveMapWithLexicalCaseInsensitive(){
-		_fastMap = new FastMap<String, String>(Order.LEXICAL_CASE_INSENSITIVE);
-		_fastMap.put("TestKey1", "TestValue1");
-		String result = _fastMap.get("TestKey1");
-		assertEquals("Result Should Equal TestValue1", "TestValue1", result);
-		result = _fastMap.get("TESTKEY1");
-		assertEquals("Result Should Equal TestValue1", "TestValue1", result);
-		result = _fastMap.get("Testkey1");
-		assertEquals("Result Should Equal TestValue1", "TestValue1", result);		
-	}
-	
+		
 	@Test
 	public void testClear(){
 		_fastMap.put("TestKey1", "TestValue1");

@@ -50,7 +50,7 @@ public final class MappedTableImpl<E, R> extends AbstractTable<R> {
 
     @Override
     public Equality<? super R> equality() {
-        return Equality.STANDARD;
+        return Equality.standard();
     }
 
     @Override

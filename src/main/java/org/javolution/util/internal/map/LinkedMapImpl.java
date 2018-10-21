@@ -27,7 +27,7 @@ public final class LinkedMapImpl<K, V> extends AbstractMap<K, V> {
  
     public LinkedMapImpl(AbstractMap<K,V> inner) {
         this.inner = inner;
-        this.insertionTable = new FastTable<Entry<K,V>>().equality(Equality.IDENTITY);
+        this.insertionTable = new FastTable<Entry<K,V>>().equality(Equality.identity());
     }
 
     @Override
