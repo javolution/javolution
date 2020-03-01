@@ -106,7 +106,30 @@ public class FastSetTest {
 		assertTrue("Set Still Contains A", _fastSet.contains("A"));
 		assertEquals("Set Size is Now 1", 1, _fastSet.size());
 	}
-	
+
+	@Test
+	public void testRemove(){
+		_fastSet.add("AA");
+		_fastSet.add("A");
+
+		_fastSet.remove("AA");
+
+		assertTrue("Set doesn't contains AA", !_fastSet.contains("AA"));
+		assertTrue("Set Still Contains A", _fastSet.contains("A"));
+		assertEquals("Set Size is Now 1", 1, _fastSet.size());
+	}
+
+	@Test
+	public void testGetAny(){
+		_fastSet.add("A");
+		_fastSet.add("AA");
+		_fastSet.remove("AA");
+
+		String any = _fastSet.getAny("A");
+
+		assertEquals("Set doesn't contains A", "A", any);
+	}
+
 	@Test
 	public void testReversedView(){
 		_fastSet.add("A");

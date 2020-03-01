@@ -12,6 +12,8 @@ import org.javolution.util.AbstractMap;
 import org.javolution.util.AbstractMap.Entry;
 import org.javolution.util.AbstractSet;
 import org.javolution.util.FastIterator;
+import org.javolution.util.FastMap;
+import org.javolution.util.FastMap.EntryWithoutValue;
 import org.javolution.util.function.Order;
 import org.javolution.util.function.Predicate;
 
@@ -104,13 +106,13 @@ public final class KeySetImpl<K, V> extends AbstractSet<K> {
 
     @Override
     public FastIterator<K> iterator(K low) {
-        return low != null ? new KeyIterator<K,V>(map.entries().iterator(new Entry<K,V>(low, null))) :
+        return low != null ? new KeyIterator<K,V>(map.entries().iterator(new EntryWithoutValue<>(low))) :
             new KeyIterator<K,V>(map.entries().iterator(null));
     }
 
     @Override
     public FastIterator<K> descendingIterator(K high) {
-        return high != null ? new KeyIterator<K,V>(map.entries().descendingIterator(new Entry<K,V>(high, null))) :
+        return high != null ? new KeyIterator<K,V>(map.entries().descendingIterator(new EntryWithoutValue<>(high))) :
             new KeyIterator<K,V>(map.entries().descendingIterator(null));
     }
 

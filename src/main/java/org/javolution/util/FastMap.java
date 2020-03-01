@@ -159,8 +159,10 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
             public boolean areEqual(Entry<K, V> left, Entry<K, V> right) {
             	if (left == right) return true;
             	if ((left == null) || (right == null)) return false;
-                return FastMap.this.keyOrder.areEqual(left.getKey(), right.getKey()) && 
-                        FastMap.this.valuesEquality.areEqual(left.getValue(), right.getValue());
+                boolean sameKey = FastMap.this.keyOrder.areEqual(left.getKey(), right.getKey());
+                boolean anyEntryWithoutValue = (left instanceof EntryWithoutValue) || (right instanceof EntryWithoutValue);
+                boolean sameValue = FastMap.this.valuesEquality.areEqual(left.getValue(), right.getValue());
+                return sameKey && (anyEntryWithoutValue || sameValue);
             }
 
             @Override
@@ -218,14 +220,21 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
         return new FastMap<K,V>(keyOrder, valuesEquality, entries.clone());
     }
 
+    public static class EntryWithoutValue<K, V> extends Entry<K, V> {
+
+        public EntryWithoutValue(K key) {
+            super(key, null);
+        }
+    }
+
     @Override
     public final Entry<K, V> getEntry(K key) {
-        return entries.getAny(new Entry<K,V>(key, null)); 
+        return entries.getAny(new EntryWithoutValue<K,V>(key));
     }
    
     @Override
     public final Entry<K, V> removeEntry(K key) {
-        return entries.removeAny(new Entry<K,V>(key, null));
+        return entries.removeAny(new EntryWithoutValue<>(key));
     }
 
     @Override

@@ -10,6 +10,8 @@ package org.javolution.util.internal.map;
 
 import org.javolution.annotations.Nullable;
 import org.javolution.util.AbstractMap;
+import org.javolution.util.FastMap;
+import org.javolution.util.FastMap.EntryWithoutValue;
 import org.javolution.util.function.Equality;
 import org.javolution.util.function.Order;
 import org.javolution.util.internal.set.SubSetImpl;
@@ -38,8 +40,8 @@ public final class SubMapImpl<K, V> extends AbstractMap<K, V> {
 
     @Override
     public SubSetImpl<Entry<K, V>> entries() {
-        return new SubSetImpl<Entry<K, V>>(inner.entries(), new Entry<K,V>(fromKey, null), fromInclusive, 
-                new Entry<K,V>(toKey, null), toInclusive);
+        return new SubSetImpl<Entry<K, V>>(inner.entries(), new EntryWithoutValue<>(fromKey), fromInclusive,
+                new EntryWithoutValue<>(toKey), toInclusive);
     }
 
     @Override

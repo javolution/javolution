@@ -34,10 +34,14 @@ import org.javolution.text.CharArray;
 import org.javolution.text.TextBuilder;
 import org.javolution.util.AbstractMap;
 import org.javolution.util.AbstractSet;
+import org.javolution.xml.internal.jaxb.Caches.CacheData;
+import org.javolution.xml.internal.jaxb.Caches.XmlSchemaTypeEnum;
 import org.javolution.xml.jaxb.JAXBAnnotatedObjectWriter;
 import org.javolution.xml.stream.XMLOutputFactory;
 import org.javolution.xml.stream.XMLStreamException;
 import org.javolution.xml.stream.XMLStreamWriter;
+
+import static org.javolution.xml.internal.jaxb.Caches.CacheMode.WRITER;
 
 /**
  * Class to provide basic support for serializing JAXB Annotated Objects to XML
@@ -70,7 +74,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private boolean _isUsingCDATA;
 
 	public <T> JAXBAnnotatedObjectWriterImpl(final Class<T> inputClass) throws JAXBException {
-		super(inputClass, CacheMode.WRITER);
+		super(inputClass, WRITER);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
 			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
@@ -80,7 +84,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		_isValidating = false;
 
 		try {
-			registerContextClasses(inputClass);
+			caches.registerContextClasses(inputClass);
 		}
 		catch (Exception e) {
 			throw new JAXBException("Error Scanning Context Classes!", e);
@@ -92,7 +96,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		XMLStreamWriter writer = null;
 
 		try {
-			if(_registeredClassesCache.contains(object.getClass())){
+			if(caches._registeredClassesCache.contains(object.getClass())){
 				writer = _XMLFactory.createXMLStreamWriter(outputStream);
 				writeObject(object, writer, null);
 			}
@@ -119,7 +123,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		XMLStreamWriter xmlWriter = null;
 
 		try {
-			if(_registeredClassesCache.contains(object.getClass())){
+			if(caches._registeredClassesCache.contains(object.getClass())){
 				xmlWriter = _XMLFactory.createXMLStreamWriter(writer);
 				writeObject(object, xmlWriter, null);
 			}
@@ -147,7 +151,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		XMLStreamWriter writer = null;
 
 		try {
-			if(_registeredClassesCache.contains(jaxbElement.getDeclaredType())){
+			if(caches._registeredClassesCache.contains(jaxbElement.getDeclaredType())){
 				writer = _XMLFactory.createXMLStreamWriter(outputStream);
 				writeObject(jaxbElement.getValue(), writer, jaxbElement.getName().getNamespaceURI());
 			}
@@ -175,7 +179,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		XMLStreamWriter xmlWriter = null;
 
 		try {
-			if(_registeredClassesCache.contains(jaxbElement.getDeclaredType())){
+			if(caches._registeredClassesCache.contains(jaxbElement.getDeclaredType())){
 				xmlWriter = _XMLFactory.createXMLStreamWriter(writer);
 				writeObject(jaxbElement.getValue(), xmlWriter, jaxbElement.getName().getNamespaceURI());
 			}
@@ -201,8 +205,8 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		writer.writeStartDocument("UTF-8", "1.0", true);
 
 		final Class<?> rootElementClass = object.getClass();
-		final String rootElementName = _classElementNameCache.get(rootElementClass);
-		final String rootNamespace = _classNameSpaceCache.get(rootElementClass);
+		final String rootElementName = caches._classElementNameCache.get(rootElementClass);
+		final String rootNamespace = caches._classNameSpaceCache.get(rootElementClass);
 
 		try{
 			writeElement(defaultNamespace, rootNamespace, object, rootElementName, writer);
@@ -217,7 +221,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 	private void writeAttributes(final Object element, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
-		final CacheData cacheData = _classCacheData.get(elementClass);
+		final CacheData cacheData = caches.getCacheData(elementClass);
 		final AbstractSet<Method> attributeMethods = cacheData._attributeMethodsSet;
 
 		for(final Method method : attributeMethods){
@@ -226,11 +230,11 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	}
 
 	private void writeAttributeValue(final Object element, final Method method, final XMLStreamWriter writer) throws IllegalArgumentException, IllegalAccessException, XMLStreamException, ValidationException, InvocationTargetException {
-		final CharArray attributeName = _methodAttributeNameCache.get(method);
+		final CharArray attributeName = caches._methodAttributeNameCache.get(method);
 		final Object value = method.invoke(element, (Object[])null);
 
 		if(value == null) {
-			if (_isValidating && _requiredCache.get(method.getDeclaringClass()).contains(attributeName)) {
+			if (_isValidating && caches._requiredCache.get(method.getDeclaringClass()).contains(attributeName)) {
 				throw new ValidationException("Missing Required Attribute Value: Attribute = " + attributeName);
 			}
 		}
@@ -242,13 +246,13 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 	private void writeElement(final String defaultNamespace, final String rootNamespace, final Object element, final String elementName, final XMLStreamWriter writer) throws MarshalException, XMLStreamException, ValidationException, IllegalAccessException, InvocationTargetException {
 		final Class<?> elementClass = element.getClass();
 
-		if(!_registeredClassesCache.contains(elementClass)) {
+		if(!caches._registeredClassesCache.contains(elementClass)) {
 			return;
 		}
 
 		//LogContext.info("writeElement: "+elementName);
 
-		final CacheData cacheData = _classCacheData.get(elementClass);
+		final CacheData cacheData = caches.getCacheData(elementClass);
 		final AbstractMap<CharArray, Method> propOrderMethodCache = cacheData._propOrderMethodCache;
 		final Method xmlValueMethod = cacheData._xmlValueMethod;
 
@@ -321,8 +325,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 
 		while(propOrder.hasNext()){
 			final CharArray prop = propOrder.next();
-
-			final Method method = propOrderMethodCache.get(prop);
+			final Method method = Caches.workaroundGet(propOrderMethodCache, prop);
 			final Object value = method.invoke(element, (Object[]) null);
 
 			if(value == null) {
@@ -335,7 +338,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			}
 
 			final Class<?> methodReturnClass = method.getReturnType();
-			String fieldElementName = _methodElementNameCache.get(method);
+			String fieldElementName = caches._methodElementNameCache.get(method);
 
 			InvocationClassType invocationClassType = getInvocationClassType(methodReturnClass);
 
@@ -356,9 +359,9 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 					// If the list has mapped elements, it's generic type will
 					// be Object. In that case we need to probe the real type of
 					// each object in the list.
-					if(genericClass == Object.class || _xmlSeeAlsoCache.contains(genericClass)) {
+					if(genericClass == Object.class || caches._xmlSeeAlsoCache.contains(genericClass)) {
 						listElementClass = listElement.getClass();
-						fieldElementName = _classElementNameCache.get(listElementClass);
+						fieldElementName = caches._classElementNameCache.get(listElementClass);
 						invocationClassType = getInvocationClassType(listElementClass);
 					}
 
@@ -464,7 +467,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 		case BYTE_ARRAY:
 		case PRIMITIVE_BYTE_ARRAY:
 			@SuppressWarnings("rawtypes")
-			final Class<? extends XmlAdapter> xmlJavaTypeAdapter = _xmlJavaTypeAdapterCache.get(method);;
+			final Class<? extends XmlAdapter> xmlJavaTypeAdapter = caches._xmlJavaTypeAdapterCache.get(method);;
 
 			// Default Binding for byte[] is Base64
 			if(xmlJavaTypeAdapter == null){
@@ -497,7 +500,7 @@ public class JAXBAnnotatedObjectWriterImpl extends AbstractJAXBAnnotatedObjectPa
 			break;
 
 		case XML_GREGORIAN_CALENDAR:
-			final XmlSchemaTypeEnum dateType = _xmlSchemaTypeCache.get(method);
+			final XmlSchemaTypeEnum dateType = caches._xmlSchemaTypeCache.get(method);
 			elementValue = getDateValue(dateType, value);
 			break;
 

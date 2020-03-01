@@ -49,7 +49,7 @@ public class FastBitSet extends AbstractSet<Index> {
 
     @Override
      public final boolean add(Index index, boolean allowDuplicate) {
-         return add(index); // allowDuplicate flag ignored.
+        return !getAndSet(index.intValue(), true); // allowDuplicate flag ignored.
      }
 
      /**

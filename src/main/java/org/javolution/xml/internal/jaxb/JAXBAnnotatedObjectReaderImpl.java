@@ -43,12 +43,16 @@ import org.javolution.util.AbstractSet;
 import org.javolution.util.FastSet;
 import org.javolution.util.FastTable;
 import org.javolution.util.function.Order;
+import org.javolution.xml.internal.jaxb.Caches.CacheData;
+import org.javolution.xml.internal.jaxb.Caches.XmlSchemaTypeEnum;
 import org.javolution.xml.jaxb.JAXBAnnotatedObjectReader;
 import org.javolution.xml.stream.XMLInputFactory;
 import org.javolution.xml.stream.XMLStreamConstants;
 import org.javolution.xml.stream.XMLStreamException;
 import org.javolution.xml.stream.XMLStreamReader;
 import org.xml.sax.InputSource;
+
+import static org.javolution.xml.internal.jaxb.Caches.CacheMode.READER;
 
 /**
  * Class to provide basic support for deserializing JAXB Annotated XML Objects
@@ -74,7 +78,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 	private final XMLInputFactory _XMLFactory;
 
 	public <T> JAXBAnnotatedObjectReaderImpl(final Class<T> inputClass) throws JAXBException {
-		super(inputClass, CacheMode.READER);
+		super(inputClass, READER);
 		if(!inputClass.isAnnotationPresent(XmlRootElement.class) && !inputClass.isAnnotationPresent(XmlType.class))
 			throw new JAXBException("Input Class Must Be A JAXB Element!");
 
@@ -90,7 +94,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		// The Data Type factory is used only for interpreting XMLGregorianCalendars, until a better/faster solution is made.
 		try {
 			// Register Context Classes
-			registerContextClasses(inputClass);
+			caches.registerContextClasses(inputClass);
 
 			_dataTypeFactory = DatatypeFactory.newInstance();
 		}
@@ -198,7 +202,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 	@Override
 	public <T> JAXBElement<T> read(final Source source, final Class<T> targetClass) throws JAXBException {
-		if(!_registeredClassesCache.contains(targetClass)){
+		if(!caches._registeredClassesCache.contains(targetClass)){
 			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!", targetClass));
 		}
 
@@ -233,7 +237,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 	@Override
 	public <T> JAXBElement<T> read(final StreamSource streamSource, final Class<T> targetClass) throws JAXBException {
-		if(!_registeredClassesCache.contains(targetClass)){
+		if(!caches._registeredClassesCache.contains(targetClass)){
 			throw new JAXBException(String.format("Class <%s> Is Not Recognized By This Reader!", targetClass));
 		}
 
@@ -269,7 +273,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			}
 		}
 
-		final String namespace = _classNameSpaceCache.get(targetClass);
+		final String namespace = caches._classNameSpaceCache.get(targetClass);
 		JAXBElement<T> jaxbElement;
 
 		if(namespace == null || "##default".equals(namespace)) {
@@ -392,7 +396,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 					// Detect Mapped Elements for use with xs:choice
 					if(stackData._annotationStackType != AnnotationStackType.ROOT) {
-						parentCacheData = _classCacheData.get(stackData._parent._type);
+						parentCacheData = caches.getCacheData(stackData._parent._type);
 						//LogContext.info("Mapped Elements: Lookup Class = "+stackData._parent._type);
 						mappedElements = parentCacheData._mappedElementsCache.get(localXmlElementName);
 						mappedElement = (mappedElements != null && mappedElements.contains(localXmlElementName));
@@ -425,11 +429,11 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 						}
 
 						// Refresh Cache Data
-						cacheData = _classCacheData.get(stackData._type);
+						cacheData = caches.getCacheData(stackData._type);
 
 						// Refresh mapped elements since we popped the stack (for xs:choice support)
 						if(stackData._annotationStackType != AnnotationStackType.ROOT) {
-							parentCacheData = _classCacheData.get(stackData._parent._type);
+							parentCacheData = caches.getCacheData(stackData._parent._type);
 							//LogContext.info("Mapped Elements: Lookup Class = "+stackData._parent._type);
 							mappedElements = parentCacheData._mappedElementsCache.get(localXmlElementName);
 							mappedElement = (mappedElements != null && mappedElements.contains(localXmlElementName));
@@ -440,7 +444,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					// If at this point, the element name matches the now-current stack data, then we're going to continue on with that element.
 					// In the case of xs:choice elements, we have to check mapped elements for the other choices as well
 					if(localXmlElementName == stackData._xmlElementName || (mappedElement && mappedElements.contains(stackData._xmlElementName))){
-						final Class<?> elementClass = _elementClassCache.get(localXmlElementName);
+						final Class<?> elementClass = caches._elementClassCache.get(localXmlElementName);
 						final Class<?> currentType = stackData._type;
 
 						final AnnotationStackData elementStackData;
@@ -448,7 +452,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 						// If the element class is an instance of a basic wrapper type, an enum, or a primitive, then we can't
 						// record the value until after we read the characters event, so we'll push the class alone onto the stack,
 						// and then commit later during the end element event.
-						if(isInstanceOfBasicType(elementClass)){
+						if(caches.isInstanceOfBasicType(elementClass)){
 							elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, stackData, elementClass, null, elementClass, null, null, null);
 							outputStack.push(elementStackData);
 
@@ -473,8 +477,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 							Iterator<CharArray> propOrderIterator = null;
 
 							if(_isValidating){
-								requiredFieldsSet = _requiredCache.get(currentType);
-								propOrderIterator = _propOrderCache.get(currentType).iterator();
+								requiredFieldsSet = caches._requiredCache.get(currentType);
+								propOrderIterator = caches._propOrderCache.get(currentType).iterator();
 							}
 
 							// Bundle up the new stack data
@@ -516,15 +520,15 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				// Capture state about the current object.
 				Object currentObj = stackData._object;
 				Class<?> currentObjClass = currentObj.getClass();
-				cacheData = _classCacheData.get(currentObjClass);
+				cacheData = caches.getCacheData(currentObjClass);
 
 				// Get the Cached Field
 				final Field targetField = cacheData._elementFieldCache.get(localXmlElementName);
-				final Class<?> elementClass = _elementClassCache.get(localXmlElementName);
+				final Class<?> elementClass = caches._elementClassCache.get(localXmlElementName);
 
 				// Next we are determining if we've already cached which fields are XML Attributes
 				AbstractMap<CharArray, Method> cachedAttributeFields = cacheData._attributeMethodsCache;
-				AbstractSet<CharArray> requiredFieldsSet = _requiredCache.get(elementClass);
+				AbstractSet<CharArray> requiredFieldsSet = caches._requiredCache.get(elementClass);
 
 				// If we're continuing the same element, we can skip here because the element is already done and we only
 				// need to parse attributes.
@@ -567,7 +571,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 				// If the data did change, we need to re-probe our attribute and required data.
 				if(originalObjClass != currentObjClass){
-					cacheData = _classCacheData.get(currentObjClass);
+					cacheData = caches.getCacheData(currentObjClass);
 					cachedAttributeFields = cacheData._attributeMethodsCache;
 				}
 
@@ -617,7 +621,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 				// For elements that come through with a list directly below them, we add the value to that list here.
 				if(stackData._annotationStackType == AnnotationStackType.BASIC){
-					parentCacheData = _classCacheData.get(parentStackData._type);
+					parentCacheData = caches.getCacheData(parentStackData._type);
 
 					if(parentStackData._annotationStackType == AnnotationStackType.UNBOUNDED){
 						addToList(parentStackData._list, stackData._object, characters);
@@ -671,7 +675,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 	private AnnotationStackData handleFieldStartElement(final AnnotationStackData parentStackData, final CharArray xmlElementName, final Object currentObj, final Field field,
 			final FastTable<AnnotationStackData> outputStack, final AbstractSet<CharArray> requiredFieldsSet) throws UnmarshalException, ValidationException{
 		final AnnotationStackData elementStackData;
-		final CacheData parentCacheData = _classCacheData.get(parentStackData._type);
+		final CacheData parentCacheData = caches.getCacheData(parentStackData._type);
 		final Class<?> fieldType = field.getType();
 
 		Iterator<CharArray> propOrderIterator = null;
@@ -717,7 +721,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					//LogContext.info("<STACK PUSH> - [START-LIST] New Head: (List) "+listStackData._xmlElementName);
 				}
 
-				if(isInstanceOfBasicType(genericType)){
+				if(caches.isInstanceOfBasicType(genericType)){
 					elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, listStackData, genericType, null, genericType, null, null, null);
 					outputStack.push(elementStackData);
 					//LogContext.info("<STACK PUSH> - [START-BASIC] New Head: "+elementStackData._type);
@@ -736,7 +740,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 					//LogContext.info("<STACK PUSH> - [START-COMPLEX] New Head: "+elementStackData._xmlElementName);
 				}
 			}
-			else if(isInstanceOfBasicType(fieldType)){
+			else if(caches.isInstanceOfBasicType(fieldType)){
 				elementStackData = new AnnotationStackData(AnnotationStackType.BASIC, parentStackData, fieldType, null, fieldType, null, null, null);
 				outputStack.push(elementStackData);
 				//LogContext.info("<STACK PUSH> - [START-AnnotationStackType.BASIC] New Head: "+elementStackData._type);
@@ -829,8 +833,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				throw new UnmarshalException("Invalid QName Element Encountered: "+value.toString());
 			}
 
-			final Class<?> elementClass = _elementClassCache.get(namespaceClass);
-			final String namespace = _classNameSpaceCache.get(elementClass);
+			final Class<?> elementClass = caches._elementClassCache.get(namespaceClass);
+			final String namespace = caches._classNameSpaceCache.get(elementClass);
 
 			final QName qname = new QName(namespace, tokens[1], tokens[0]);
 			method.invoke(object, qname);
@@ -884,7 +888,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			if(value == null) break;
 			final String byteString = value.toString();
 			@SuppressWarnings("rawtypes")
-			final Class<? extends XmlAdapter> typeAdapter = _xmlJavaTypeAdapterCache.get(method);
+			final Class<? extends XmlAdapter> typeAdapter = caches._xmlJavaTypeAdapterCache.get(method);
 
 			final byte[] byteArray;
 
@@ -924,7 +928,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 
 		case OBJECT:
 			if(value == null) break;
-			final XmlSchemaTypeEnum xmlSchemaType = _xmlSchemaTypeCache.get(method);
+			final XmlSchemaTypeEnum xmlSchemaType = caches._xmlSchemaTypeCache.get(method);
 
 			if(xmlSchemaType != null && xmlSchemaType == XmlSchemaTypeEnum.ANY_SIMPLE_TYPE){
 				method.invoke(object, DatatypeConverter.parseAnySimpleType(value.toString().trim())); // TODO: Handle more than Strings
@@ -961,7 +965,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 				final Class<?> methodType = method.getParameterTypes()[0];
 
 				if(methodType.isEnum()){
-					final AbstractMap<CharArray,Enum<?>> classEnumValueCache = _classCacheData.get(methodType)._enumValueCache;
+					final AbstractMap<CharArray,Enum<?>> classEnumValueCache = caches.getCacheData(methodType)._enumValueCache;
 					final Enum<?> enumValue = classEnumValueCache.get(attributeValue);
 					invokeMethod(method, methodType, currentObj, null, enumValue);
 				}
@@ -1001,19 +1005,19 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		try {
 			final Class<?> targetClass;
 			if(cacheData._mappedElementsCache.containsKey(localXmlElementName)){
-				targetClass = _elementClassCache.get(localXmlElementName);
+				targetClass = caches._elementClassCache.get(localXmlElementName);
 			}
 			else {
 				targetClass = instanceClass;
 			}
 
-			final Method targetFactoryMethod = _objectFactoryCache.get(targetClass);
+			final Method targetFactoryMethod = caches._objectFactoryCache.get(targetClass);
 
 			if(targetFactoryMethod == null) {
 				instance = targetClass.newInstance();
 			}
 			else {
-				instance = targetFactoryMethod.invoke(_classObjectFactoryCache.get(targetClass), (Object[])null);
+				instance = targetFactoryMethod.invoke(caches._classObjectFactoryCache.get(targetClass), (Object[])null);
 			}
 		}
 		catch (final Exception e) {
@@ -1030,7 +1034,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		final CharArray xmlElementName = listStackData._xmlElementName;
 
 		try {
-			final CacheData parentCacheData = _classCacheData.get(parentType);
+			final CacheData parentCacheData = caches.getCacheData(parentType);
 			final AbstractMap<CharArray,Field> elementFieldCache = parentCacheData._elementFieldCache;
 			final Field field = elementFieldCache.get(xmlElementName);
 			field.set(parentObj, listStackData._list);
@@ -1071,7 +1075,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 			// Special Handling for Enums: We have the value now so we need to convert it
 			// to the enum value before adding it to the list.
 			if(elementClass.isEnum()){
-				final CacheData cacheData = _classCacheData.get(elementClass);
+				final CacheData cacheData = caches.getCacheData(elementClass);
 				element = cacheData._enumValueCache.get(characters);
 			}
 			else if (elementClass == Object.class){
@@ -1089,7 +1093,7 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 		for(final Object objectFactory : objectFactories){
 			final Class<?> objectFactoryClass = objectFactory.getClass();
 
-			if(_registeredClassesCache.contains(objectFactoryClass)) {
+			if(caches._registeredClassesCache.contains(objectFactoryClass)) {
 				continue;
 			}
 
@@ -1109,8 +1113,8 @@ public class JAXBAnnotatedObjectReaderImpl extends AbstractJAXBAnnotatedObjectPa
 								objectFactoryClass));
 			}
 
-			scanObjectFactory(objectFactory, true);
-			_registeredClassesCache.add(objectFactoryClass);
+			caches.scanObjectFactory(objectFactory, true);
+			caches._registeredClassesCache.add(objectFactoryClass);
 		}
 	}
 

@@ -11,13 +11,15 @@ package org.javolution.context.internal;
 import org.javolution.context.LogContext;
 import org.javolution.text.TextBuilder;
 
+import static org.javolution.context.LogContext.Level.DEBUG;
+
 /**
  * Default implementation of LogContext.
  */
 public final class LogContextImpl extends LogContext {
 
     private static final LoggingThread LOGGING_THREAD = new LoggingThread();        
-    private Level actualLevel = DEFAULT_LEVEL.get(); 
+    private Level actualLevel = DEBUG;
     private String actualPrefix = "";
     private String actualSuffix = "";
 
