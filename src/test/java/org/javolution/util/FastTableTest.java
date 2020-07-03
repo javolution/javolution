@@ -35,8 +35,8 @@ public class FastTableTest {
 
 	
 	
-	// PROBLEM: OK WHEN SIZE = 100, KO WHEN SIZE = 1000
-	private static final int SIZE = 1000;
+	// PROBLEM: OK WHEN SIZE = 100, KO WHEN SIZE = 10000 FORMAT)
+	private static final int SIZE = 10000;
 	
 	@Test
 	public void testArray(){
@@ -46,19 +46,8 @@ public class FastTableTest {
 			for (int ii= 0; ii < SIZE; ii++) {
 		   	    int j = rnd.nextInt(al.size()+1);
 		   	    int n = rnd.nextInt(1000000);
-				System.out.println(" insert " + j);
-				System.out.println(" size " + al.size());
 				al.add(j, n);
 			    ft.add(j, n);
-						
-			    for (int k=0; k < al.size(); k++) {
-			    	if (!al.get(k).equals(ft.get(k))) {
-			    		System.out.println(k);
-					    		
-			    	}
-			    }
-			    //System.out.println(al);
-			    //System.out.println(ft);
 			    assertEquals(al.toString(), ft.toString());
 			}
 	}

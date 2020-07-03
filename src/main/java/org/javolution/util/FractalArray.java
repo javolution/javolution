@@ -83,7 +83,7 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
     /** 
      * Returns the value at the specified index (unsigned 64-bits).
      * 
-     * @param index the unsigned index of the value to return.
+     * @param index the unsigned 64-bits index of the value to return.
      * @return the value at the specified index or {@code null} if none.
      */
     @Realtime(limit=CONSTANT)
@@ -124,44 +124,60 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
     public abstract FractalArray<E> set(long index,  @Nullable E element);
 
     /**
-     * Shift the elements from the specified {@code from} index included (unsigned 64-bits) towards the specified 
-     * {@code to} index one position, to the right if {@code from < to}, to the left if {@code to < from}. 
-     * The element previously at {@code to} position is discarded and the specified element is inserted at 
-     * the {@code from} position.
+     * Inserts the specified elements at the specified position.
      * 
-     * @param from the unsigned 64-bits index of the element to be inserted.
-     * @param to the unsigned 64-bits index of the element to be discarded.
+     * @param index the unsigned 64-bits index of the element to be inserted.
      * @param inserted the element being inserted.
-     * @return the array with the specified elements shifted one position.
+     * @return a new fractal array with higher capacity or {@code this}. 
      */
     @Realtime(limit = LOG_N)
-    public abstract FractalArray<E> shift(long from, long to, @Nullable E inserted);
+    public abstract FractalArray<E> insert(long index, @Nullable E inserted);
     
     /**
-     * Returns the next non-null element matching the specified predicate starting at the specified {@code from} index
-     * and towards the specified {@code to} index.
-     * This method calls the specified predicate only on all non-null elements, in ascending order when 
-     * {@code from < to}, in descending order when {@code to < from}. 
+     * Deletes the element at the specified position.
      * 
-     * @param from the unsigned 64-bits index of the first element to consider.
-     * @param to the unsigned 64-bits index of the last element to consider.
-     * @param matching the filter called on {@code non-null} elements.
-     * @return the index of the next element matching the specified predicate or {@code -1} if there is none.
+     * @param index the index of the element to be deleted.
+     * @return the array with the specified elements shifted one position.
+     * @return a new fractal array with lower capacity or {@code this}. 
+     */
+    @Realtime(limit = LOG_N)
+    public abstract FractalArray<E> delete(long index);
+    
+    /**
+     * Returns the index of the next non-null element after the specified position, matching the specified
+     * predicate (if any). This method calls the specified predicate on the first non-null element found.
+     * 
+     * @param after the unsigned 64-bits starting position for the search (excluded).
+     * @param matching the filter called on {@code non-null} elements; or {@code null} if no test is performed.
+     * @return the index of the next element from the specified index and matching the specified predicate or
+     *         {@code 0} if none.
      */
     @Realtime(limit = LINEAR)
-    public abstract long next(long from, long to, Predicate<? super E> matching);
+    public abstract long next(long after, @Nullable Predicate<? super E> matching);
+    
+    /**
+     * Returns the index of the previous non-null element before the specified position, matching the specified
+     * predicate (if any). This method calls the specified predicate on the first non-null element found.
+     * 
+     * @param before the unsigned 64-bits starting position for the search (excluded).
+     * @param matching the filter called on {@code non-null} elements; or {@code null} if no test is performed.
+     * @return the index of the previous element before the specified index and matching the specified predicate or
+     *         {@code -1} if none.
+     */
+    @Realtime(limit = LINEAR)
+    public abstract long previous(long before, @Nullable Predicate<? super E> matching);
     
     /** 
-     * Returns an ascending iterator over non-null elements starting from the specified index.
+     * Returns an ascending iterator over non-null elements starting from the specified (unsigned 64-bits) index.
      * 
-     * @param from the starting index (inclusive).
+     * @param from the the unsigned 64-bits starting index (inclusive).
      */  
     public Iterator<E> iterator(long from) {
         return new AscendingIterator<E>(this, from);
     }
 
     /** 
-     * Returns a descending iterator over non-null elements starting from the specified index.
+     * Returns a descending iterator over non-null elements starting from the specified  (unsigned 64-bits) index.
      * 
      * @param from the starting index (inclusive).
      */  
@@ -185,13 +201,14 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
     /** Ascending array iterator. */
     private static final class AscendingIterator<E> implements Iterator<E>, Predicate<E> {
         private final FractalArray<E> fractal;
-        private Predicate<? super E> filter;
         private long nextIndex;
         private E next;
    
         public AscendingIterator(FractalArray<E> fractal, long from) {
              this.fractal = fractal;
-             this.nextIndex = fractal.next(from, -1, this);
+             nextIndex = from;
+             next = fractal.get(from);
+             if (next == null) nextIndex = fractal.next(from, this);
         }
         
         @Override
@@ -203,19 +220,26 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
         public boolean hasNext(Predicate<? super E> matching) {
         	if (next == null) return false;
         	if (matching.test(next)) return true;
-            next = null;
-            filter = matching;            
-            nextIndex = (nextIndex != -1) ? fractal.next(nextIndex + 1, -1, this) : -1;
-            filter = null;
-            return true;
+        	next = null;        	
+        	nextIndex = fractal.next(nextIndex, new Predicate<E>() {
+
+				@Override
+				public boolean test(E param) {
+					if (!matching.test(param)) return false;
+					next = param;
+					return true;
+				}
+        		
+        	});
+            return next != null;
         }
 
         @Override
         public E next() {
             if (next == null) throw new NoSuchElementException();
             E tmp = next;
-            next = null;
-            nextIndex = (nextIndex != -1) ? fractal.next(nextIndex + 1, -1, this) : -1;
+        	next = null;
+            nextIndex = fractal.next(nextIndex, this);
             return tmp;
         }
 
@@ -230,24 +254,24 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
         }
 
 		@Override
-		public boolean test(E value) {
-			if ((filter != null) && !filter.test(value)) return false;
-            next = value;            
+		public boolean test(E param) {
+			next = param;
 			return true;
-		}        
+		}
         
     }
     
     /** Descending array iterator. */
     private static final class DescendingIterator<E> implements Iterator<E>, Predicate<E> {
         private final FractalArray<E> fractal;
-        private Predicate<? super E> filter;
         private long previousIndex;
         private E previous;
  
-        public DescendingIterator(FractalArray<E> fractal, long fromIndex) {
-             this.fractal = fractal;
-             this.previousIndex = fractal.next(fromIndex, 0, this);
+        public DescendingIterator(FractalArray<E> fractal, long from) {
+            this.fractal = fractal;
+            previousIndex = from;
+            previous = fractal.get(from);
+            if (previous == null) previousIndex = fractal.previous(from, this);
         }
         
          @Override
@@ -257,21 +281,28 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
 
         @Override
         public boolean hasNext(Predicate<? super E> matching) {
-        	if (previous == null) return false;
+           	if (previous == null) return false;
         	if (matching.test(previous)) return true;
-            previous = null;
-            filter = matching;            
-            previousIndex = (previousIndex != 0) ? fractal.next(previousIndex - 1, 0, this) : -1;
-            filter = null;
-            return true;
+          	previous = null;
+        	previousIndex = fractal.previous(previousIndex, new Predicate<E>() {
+
+				@Override
+				public boolean test(E param) {
+					if (!matching.test(param)) return false;
+					previous = param;
+					return true;
+				}
+        		
+        	});
+            return previous != null;
         }
 
         @Override
         public E next() {
             if (previous == null) throw new NoSuchElementException();
             E tmp = previous;
-            previous = null;
-            previousIndex = (previousIndex != 0) ? fractal.next(previousIndex - 1, 0, this) : -1;
+        	previous = null;
+            previousIndex = fractal.previous(previousIndex, this);
             return tmp;
         }
 
@@ -286,12 +317,11 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
         }
 
 		@Override
-		public boolean test(E value) {
-			if ((filter != null) && !filter.test(value)) return false;
-            previous = value;            
+		public boolean test(E param) {
+			previous = param;
 			return true;
 		}
-   
+
     }
     
     /** Unmodifiable view over fractal array. */
@@ -329,15 +359,25 @@ public abstract class FractalArray<E> implements Cloneable, Serializable, Iterab
         }
 
 		@Override
-		public FractalArray<E> shift(long from, long to, E inserted) {
-		    throw new UnsupportedOperationException("Unmodifiable");
+		public FractalArray<E> insert(long index, E inserted) {
+            throw new UnsupportedOperationException("Unmodifiable");
+		}
+
+		@Override
+		public FractalArray<E> delete(long index) {
+            throw new UnsupportedOperationException("Unmodifiable");
+		}
+
+		@Override
+		public long next(long after, Predicate<? super E> matching) {
+            return target.next(after, matching);
+       }
+
+		@Override
+		public long previous(long before, Predicate<? super E> matching) {
+	        return target.previous(before, matching);
 	 	}
-		
-        @Override
-        public long next(long from, long to, Predicate<? super E> matching) {
-            return target.next(from, to, matching);
-        }
-        
+       
     }
     
  }

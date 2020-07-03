@@ -33,7 +33,8 @@ public final class SortedSetImpl<E> extends AbstractSet<E> {
     public boolean add(E element, boolean allowDuplicate) {
         int i = firstIndex(element, 0, size);
         if (!allowDuplicate && (i < size) && comparator.areEqual(element, sorted.get(i))) return false;
-        sorted.shift(i, size++, element);
+        sorted.insert(i, element);
+        size++;
         return true;
     }
 
@@ -70,7 +71,8 @@ public final class SortedSetImpl<E> extends AbstractSet<E> {
         for (int i = first; i <= last; i++) {
             E e = sorted.get(i);
             if (comparator.areEqual(element, e)) {
-                sorted = sorted.shift(size--, i, null);
+                sorted = sorted.delete(i);
+                size--;
                 return e;
             }
         }

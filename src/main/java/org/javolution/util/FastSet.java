@@ -10,6 +10,7 @@ package org.javolution.util;
 
 import static org.javolution.annotations.Realtime.Limit.CONSTANT;
 import static org.javolution.annotations.Realtime.Limit.LINEAR;
+import static org.javolution.lang.MathLib.unsignedLessThan;
 
 import java.util.NoSuchElementException;
 
@@ -102,8 +103,8 @@ public class FastSet<E> extends AbstractSet<E> {
     }
 
     final Order<? super E> order;
-    FractalArray<E> singles; // Hold single instances. If single is set, multiple is not, and reciprocally. 
-    FractalArray<AbstractSet<E>> multiples; // Holds multiple instances (collisions). 
+    FractalArray<E> singles; // Hold instances for which there is no collisions.  
+    FractalArray<AbstractSet<E>> multiples; // Holds instances for which there are collisions (same index value). 
     int size; // Keep tracks of the size since fractal arrays are unbounded.
 
     /** Creates a {@link Equality#STANDARD standard} set arbitrarily ordered (hash order). */
@@ -306,36 +307,23 @@ public class FastSet<E> extends AbstractSet<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final E findAny() {
-        if (!singles.isEmpty()) return singles.get(singles.next(0, -1, Predicate.TRUE));
-        if (!multiples.isEmpty()) return multiples.get(multiples.next(0, -1, Predicate.TRUE)).findAny();
+        if (!singles.isEmpty()) return singles.iterator().next();
+        if (!multiples.isEmpty()) return multiples.iterator().next().findAny();
         return null;
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final E first() {
-        long s = singles.next(0, -1, Predicate.TRUE);
-        long m = multiples.next(0, -1, Predicate.TRUE);
-        AbstractSet<E> innerSet;
-        if (!MathLib.unsignedLessThan(s, m) && ((innerSet = multiples.get(m)) != null)) 
-            return innerSet.first();
-        if (singles.isEmpty()) throw new NoSuchElementException();
-        return singles.get(s);
+    	return iterator().next();
     }
 
     @Override
     @Realtime(limit = CONSTANT)
     public final E last() {
-        long s = singles.next(-1, 0, Predicate.TRUE);
-        long m = multiples.next(-1, 0, Predicate.TRUE);
-        AbstractSet<E> innerSet;
-        if (!MathLib.unsignedLessThan(m, s) && ((innerSet = multiples.get(m)) != null)) 
-            return innerSet.last();
-        if (singles.isEmpty()) throw new NoSuchElementException();
-        return singles.get(s);
+    	return descendingIterator().next();
     }
-    
-    
+        
     /** Ascending iterator implementation. */
     private final class AscendingIteratorImpl implements FastIterator<E> {
         private FractalArray.Iterator<E> singleItr;
@@ -347,7 +335,7 @@ public class FastSet<E> extends AbstractSet<E> {
             long i = (from != null) ? order.indexOf(from) : 0;
             singleItr = singles.iterator(i);
             multipleItr = multiples.iterator(i);            
-            if (multipleItr.hasNext() && !MathLib.unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
+            if (multipleItr.hasNext() && !unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
                 subItr = multipleItr.next().iterator(from);
             } else {
                 subItr = (FastIterator<E>) EMPTY_ITERATOR; 
@@ -367,7 +355,7 @@ public class FastSet<E> extends AbstractSet<E> {
         @Override
         public E next() {
             if (subItr.hasNext()) return subItr.next();
-            if (multipleItr.hasNext() && !MathLib.unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
+            if (multipleItr.hasNext() && !unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
                 subItr = multipleItr.next().iterator();
                 return subItr.next();
             }
@@ -378,7 +366,7 @@ public class FastSet<E> extends AbstractSet<E> {
         public boolean hasNext(Predicate<? super E> matching) {
             while (true) {
                 if (subItr.hasNext(matching)) return true;
-                if (multipleItr.hasNext() && !MathLib.unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
+                if (multipleItr.hasNext() && !unsignedLessThan(singleItr.nextIndex(), multipleItr.nextIndex())) {
                     subItr = multipleItr.next().iterator();
                 } else {
                     if (!singleItr.hasNext()) return false;
@@ -400,7 +388,7 @@ public class FastSet<E> extends AbstractSet<E> {
             long i = (from != null) ? order.indexOf(from) : -1;
             singleItr = singles.descendingIterator(i);
             multipleItr = multiples.descendingIterator(i);            
-            if (multipleItr.hasNext() && !MathLib.unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
+            if (multipleItr.hasNext() && !unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
                 subItr = multipleItr.next().descendingIterator(from);
             } else {
                 subItr = (FastIterator<E>) EMPTY_ITERATOR; 
@@ -420,7 +408,7 @@ public class FastSet<E> extends AbstractSet<E> {
         @Override
         public E next() {
             if (subItr.hasNext()) return subItr.next();
-            if (multipleItr.hasNext() && !MathLib.unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
+            if (multipleItr.hasNext() && !unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
                 subItr = multipleItr.next().descendingIterator();
                 return subItr.next();
             }
@@ -431,7 +419,7 @@ public class FastSet<E> extends AbstractSet<E> {
         public boolean hasNext(Predicate<? super E> matching) {
             while (true) {
                 if (subItr.hasNext(matching)) return true;
-                if (multipleItr.hasNext() && !MathLib.unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
+                if (multipleItr.hasNext() && !unsignedLessThan(multipleItr.nextIndex(), singleItr.nextIndex())) {
                     subItr = multipleItr.next().descendingIterator();
                 } else {
                     if (!singleItr.hasNext()) return false;

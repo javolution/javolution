@@ -118,7 +118,8 @@ public class FastTable<E> extends AbstractTable<E> {
     @Realtime(limit = LOG_N)
     public final void add(int index, @Nullable E element) {
         if (index < 0 || index > length) throw new IndexOutOfBoundsException();
-        array = array.shift(index, length++, element);
+        array = array.insert(index, element);
+        length++;
     }
 
     @Override
@@ -152,7 +153,7 @@ public class FastTable<E> extends AbstractTable<E> {
     @Override
     @Realtime(limit = CONSTANT)
     public final FastListIterator<E> listIterator(int index) {
-        return new IteratorImpl<E>(array, length, index);
+        return new IteratorImpl<E>(array, index, length);
     }
 
     @Override
@@ -160,7 +161,8 @@ public class FastTable<E> extends AbstractTable<E> {
     public final @Nullable E remove(int index) {
         if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
         E removed = array.get(index);
-        array = array.shift(--length, index, null);
+        array = array.delete(index);
+        length--;
         return removed;
     }
 
@@ -183,12 +185,12 @@ public class FastTable<E> extends AbstractTable<E> {
     private static final class IteratorImpl<E> implements FastListIterator<E> {
         private final FractalArray<E> array;
         private int nextIndex;
-        private int length;
+        private final int length;
 
-        public IteratorImpl(FractalArray<E> array, int length, int nextIndex) {
+        public IteratorImpl(FractalArray<E> array, int nextIndex, int length) {
             this.array = array;
-            this.length = length;
             this.nextIndex = nextIndex;
+            this.length = length;
         }
 
         @Override
@@ -197,11 +199,12 @@ public class FastTable<E> extends AbstractTable<E> {
         }
 
         @Override
-        public boolean hasNext(Predicate<? super E> matching) {
-        	nextIndex = (int) array.next(nextIndex, -1, matching);
-        	if (nextIndex != -1) return true;
-        	nextIndex = length;
-        	return false;
+        public boolean hasNext(Predicate<? super E> matching) {       
+        	E next = array.get(nextIndex);
+        	if ((next != null) && matching.test(next)) return true;
+        	long i = array.next(nextIndex, matching);
+            nextIndex = (i == 0) ? length : (int) i;
+          	return nextIndex < length;
         }
 
         @Override
@@ -221,11 +224,9 @@ public class FastTable<E> extends AbstractTable<E> {
 
         @Override
         public boolean hasPrevious(Predicate<? super E> matching) {
-        	if (nextIndex == 0) return false;
-           	nextIndex = (int) array.next(nextIndex - 1, 0, matching);
-          	if (nextIndex++ != -1) return true;
-           	nextIndex = 0;
-            return false;
+        	long i = array.previous(nextIndex, matching);
+        	nextIndex = (i == -1) ? 0 : (int) (i+1);
+        	return nextIndex != 0;
         }
 
         @Override
