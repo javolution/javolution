@@ -259,7 +259,7 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 				if (length >= indices.length) return upsize().set(index, element);
 				i = -i - 1; // The "should be" position.
 				System.arraycopy(indices, i, indices, i+1, length - i);
-				System.arraycopy(elements, i, indices, i+1, length - i);
+				System.arraycopy(elements, i, elements, i+1, length - i);
 				length++;
 			}
 			return this;
@@ -272,7 +272,7 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 			i = (i >= 0) ? i : -i - 1;
 			for (int j=i; j < length; ++j) indices[j]++;
 			System.arraycopy(indices, i, indices, i+1, length - i);
-			System.arraycopy(elements, i, indices, i+1, length - i);
+			System.arraycopy(elements, i, elements, i+1, length - i);
 			indices[i] = index;
 			elements[i] = inserted;	
 			return this;
@@ -283,7 +283,7 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 			int i = positionOf(index, 0, length);
 			if (i >= 0) { // Remove element.
 				System.arraycopy(indices, i+1, indices, i, length - i - 1);
-				System.arraycopy(elements, i+1, indices, i, length - i - 1);
+				System.arraycopy(elements, i+1, elements, i, length - i - 1);
 				if (--length * 4 < indices.length) downsize();				
 			} else {
 				i = -i - 1;					
@@ -354,11 +354,11 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
  		@SuppressWarnings("unchecked")
  		private FractalArrayImpl<E> upsize() {
     		long[] indicesTmp = new long[indices.length * 2];
-    		System.arraycopy(indices, 0, indicesTmp, 0, length);
+    		E[] elementsTmp = (E[]) new Object[elements.length * 2];
+    	    System.arraycopy(indices, 0, indicesTmp, 0, length);
+     		System.arraycopy(elements, 0, elementsTmp, 0, length);
     		indices = indicesTmp;
-     		E[] elementsTmp = (E[]) new Object[indices.length * 2];
-    		System.arraycopy(elementsTmp, 0, elementsTmp, 0, length);
-    		elements = elementsTmp;
+    	    elements = elementsTmp;
     		return this;
     	}
 
@@ -367,11 +367,11 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
  			if (length == 1) return new Single<E>(indices[0], elements[0]);
  			if (indices.length <= INITIAL_CAPACITY) return this; 
  			long[] indicesTmp = new long[indices.length / 2];
-    		System.arraycopy(indices, 0, indicesTmp, 0, length);
+ 	 		E[] elementsTmp = (E[]) new Object[indices.length / 2];
+ 	 	    System.arraycopy(indices, 0, indicesTmp, 0, length);
+    		System.arraycopy(elements, 0, elementsTmp, 0, length);
     		indices = indicesTmp;
-     		E[] elementsTmp = (E[]) new Object[indices.length / 2];
-    		System.arraycopy(elementsTmp, 0, elementsTmp, 0, length);
-    		elements = elementsTmp;
+        	elements = elementsTmp;
     		return this;
     	}
 
