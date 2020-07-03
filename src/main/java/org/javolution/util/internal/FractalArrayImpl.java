@@ -244,7 +244,7 @@ public abstract class FractalArrayImpl<E> extends FractalArray<E> {
 			int i = positionOf(index, 0, length);
 			if (i >= 0) { // Found it.
 				System.arraycopy(indices, i+1, indices, i, length - i - 1);
-				System.arraycopy(elements, i+1, indices, i, length - i - 1);
+				System.arraycopy(elements, i+1, elements, i, length - i - 1);
 				if (--length * 4 < indices.length) return downsize();
 		    } 
 			return this;
