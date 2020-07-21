@@ -1,0 +1,15 @@
+language: java
+install: true
+
+os: linux
+dist: trusty
+jdk:
+  - openjdk8
+  - oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.m2/
+    -
+script:
+    - mvn install
